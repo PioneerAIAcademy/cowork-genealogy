@@ -1,0 +1,3954 @@
+{
+  "project": {
+    "id": "rp_clark_parents",
+    "objective": "Who were the parents of Christiana Clark, born 29 January 1783 in Pennsylvania, who married William Clark, lived in Coshocton County, Ohio, and died 27 December 1848 in Monroe, Green County, Wisconsin?",
+    "subject_person_ids": [
+      "GP3R-215"
+    ],
+    "status": "active",
+    "created": "2026-07-06",
+    "updated": "2026-07-06"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What do Green County, Wisconsin death, probate, and newspaper records (1848\u20131855) say about Christiana Clark's parents or family origins?",
+      "rationale": "Wisconsin state death registration did not begin until 1852, making a civil death certificate unavailable for Christiana's 27 December 1848 death. However, Green County probate records, newspaper death notices in the Monroe Atlas or similar, and early Green County histories are the records closest in time to her death and most likely to name her parents or state her origin. This is the gatekeeper question \u2014 it anchors her final context and may yield a direct statement of parentage before we work backward through Ohio and Pennsylvania.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "FamilySearch-accessible Green County Wisconsin records exhausted: death index nil (civil registration began 1852, predating Christiana's Dec 1848 death), probate packet full-text search non-functional for the Wisconsin Probate Estate Files image collection, 1850 and 1855 censuses searched, land records searched. Two interactive-capture searches remain outstanding \u2014 Newspapers.com (obituary search for Christiana Clark Dec 1848\u2013early 1849) and FindAGrave/Wisconsin gravestone projects \u2014 deferred because they require authenticated browser capture unavailable in an autonomous run. No direct statement of Christiana Clark's parentage was found in any consulted record. FAN leads identified: Joseph Clark (b. PA ~1780, Decatur Green Co. WI, possible sibling) and Daniel W Clark (b. PA ~1805, Monroe Green Co. WI, possible son not yet in tree). Research path shifts to Coshocton County Ohio and Berks County Pennsylvania records, where the preponderance of direct evidence is expected to reside.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "No direct parentage evidence found. The consulted Wisconsin records yield no statement naming Christiana Clark's parents. Two FAN leads (Joseph Clark, Daniel W Clark) are promising but speculative \u2014 neither names a parent.",
+          "repository_breadth": "FamilySearch Wisconsin records searched across five record types (death index, probate FTS, two censuses, land deeds). Newspapers.com and FindAGrave deferred to an interactive session. GenealogyBank Wisconsin newspapers not searched (autonomous mode; URL documented in log_012).",
+          "original_substitution": "Census results drawn from FamilySearch indexed personas; original images for the two FAN-lead households (ark:/61903/1:1:M4DV-MMT, ark:/61903/1:1:M4DN-TWB) not independently examined from the NARA microfilm. Noted as a gap in src_002.",
+          "independent_verification": "Not applicable \u2014 no parentage conclusion reached. Identified FAN leads rest on a single source each (one 1850 census record per household); corroboration is the purpose of the next research phase.",
+          "evidence_class": "Not applicable \u2014 no direct or indirect evidence of parentage found in the records consulted.",
+          "conflict_resolution": "No conflicting parentage claims identified in the Wisconsin-scope research. The absence of evidence is not a conflict.",
+          "overturn_risk": "Moderate. A newspaper obituary for Christiana Clark (d. 27 Dec 1848, Monroe WI) in a contemporary Green County paper could directly name her parents or Pennsylvania origin county. A Find A Grave memorial with a gravestone inscription could supply the same. These sources are deferred, not exhausted; overturn risk from them is real but estimated low given the sparseness of 1848 frontier Wisconsin newspapers."
+        }
+      },
+      "created": "2026-07-22"
+    },
+    {
+      "id": "q_002",
+      "question": "What does the baptismal entry for Christiana Clark (baptized 2 March 1783, Rehrersburg, Tulpehocken Township, Berks County, Pennsylvania) name as her father and mother?",
+      "rationale": "Christiana Clark's baptism on 2 March 1783 at Rehrersburg in Tulpehocken Township, Berks County, Pennsylvania is already documented in the tree. German-American church baptism registers in 18th-century Berks County almost universally name both parents \u2014 the father's full name and the mother's maiden name \u2014 making this the single highest-yield record for identifying Christiana's parents. The baptism entry, if found, carries primary information: the parents themselves provided the names to the pastor at the time of the rite. Tulpehocken Township was settled by German Reformed and Lutheran immigrants; both congregations kept detailed registers. FamilySearch has indexed many Berks County German church records, and the Historical Society of Berks County holds originals. The existing tree entry for this baptism cites a date and place but does not yet name the parents \u2014 the source behind that entry must be examined, and the original church register consulted if the current source is only an index or compiled genealogy. This question directly advances the project objective and, once answered, unblocks all further research into the Clark (or likely German-surname) family of Tulpehocken Township.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Green County, Wisconsin",
+          "date_range": "1820-1907",
+          "repository": "FamilySearch",
+          "rationale": "Wisconsin Death Index 1820\u20131907 (collection 1946789 / 1940759) is indexed and searchable. A death index entry for Christiana Clark (d. 27 Dec 1848) may point to an original registration or give informant data. Quick indexed check before browsing unindexed probate images.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "probate",
+          "jurisdiction": "Green County, Wisconsin",
+          "date_range": "1848-1855",
+          "repository": "FamilySearch",
+          "rationale": "Wisconsin Probate Estate Files 1848\u20131948 (collection 1874190) is a browse-only image collection of 1.4M images. Green County probate packets appear as individual full-text-searchable image groups (imageGroupPrefix 004659615). An estate file for Christiana Clark or William Clark would name heirs, debts, and creditors \u2014 potentially naming Christiana's siblings or her parents' estate as a source of assets. Search the full-text probate packets by 'Clark' for Green County ca. 1848\u20131855.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Green County, Wisconsin",
+          "date_range": "1850",
+          "repository": "FamilySearch",
+          "rationale": "Christiana died 27 December 1848; the 1850 federal census was taken in mid-1850. William Clark, widower, and any children still in the household would appear. The household composition may indicate which children remained, their approximate birth years and birthplaces, and may prompt a search for surviving children's death records that could name Christiana's parents. Also checks whether any Clark relatives live nearby (FAN cluster).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Green County, Wisconsin",
+          "date_range": "1855",
+          "repository": "FamilySearch",
+          "rationale": "Wisconsin State Census 1855 (collection 1443825) is indexed. William Clark's household five years after Christiana's death may reveal additional family members, birthplaces of older children (a Pennsylvania-born child could corroborate the family's origin), and neighbors who may be Clark relatives or associates.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "newspaper",
+          "jurisdiction": "Green County, Wisconsin",
+          "date_range": "1848-1855",
+          "repository": "other",
+          "rationale": "GenealogyBank holds Wisconsin newspaper archives 1833\u20131992 (genealogybank.com/explore/newspapers/all/usa/wisconsin). Monroe, Wisconsin had newspapers by the late 1840s. A death notice or obituary for Christiana Clark in December 1848 or January 1849 is the single record most likely to name her parents or state her Pennsylvania origin explicitly. Also search USGenWeb Wisconsin obituary project (usgwarchives.net/obits/wi/obitswi.htm).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "land",
+          "jurisdiction": "Green County, Wisconsin",
+          "date_range": "1836-1857",
+          "repository": "FamilySearch",
+          "rationale": "Green County deed records 1836\u20131857 are available as full-text-searchable image groups on FamilySearch (imageGroupPrefix 005713754, 008550112). Land transactions by William Clark and any Clark-surname co-grantors or witnesses may identify brothers or other relatives of Christiana. Deed grantors/grantees from Pennsylvania sometimes transferred land with family members, and a deed signed by a 'brother' or 'heir' of Christiana could point directly to her parentage.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "other",
+          "jurisdiction": "Green County, Wisconsin",
+          "date_range": "1848-1900",
+          "repository": "other",
+          "rationale": "Wisconsin Historical Society (wisconsinhistory.org) holds local county histories and biographical compilations for Green County. An 1881 or 1884 county history sketch for William Clark or any of their children may state Christiana's parentage explicitly. Also check the Wisconsin Gravestone Photo Project (wisconsingravestones.org) and FindAGrave for Christiana's burial marker in Monroe \u2014 a gravestone inscription sometimes names parents or gives exact birth details.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "completed",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_008",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Berks County, Pennsylvania",
+          "date_range": "1783",
+          "repository": "FamilySearch",
+          "rationale": "Pennsylvania, Births and Christenings, 1709-1950 (collection 1681005, 2.5M records indexed) is the fastest path. A search for Christina or Christiana Clark born ~March 1783 in Berks County / Tulpehocken Township may return an indexed entry naming her parents. German-American church baptism entries routinely record both parents' names. If the Altamaha Lutheran Church (Rehrersburg) submitted records to this collection, the parents will appear here without needing to browse the unindexed original images.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Tulpehocken Township, Berks County, Pennsylvania",
+          "date_range": "1730-1896",
+          "repository": "FamilySearch",
+          "rationale": "Full-text search in the Tulpehocken Township German Reformed / Host Church multi-volume compilation (imageGroupNumber 007899351_001_M9MP-SN8 and siblings 007899351_002, 007899351_003, 007899351_005 \u2014 fulltextSearchable: true). These volumes cover baptisms 1730-1896 in Tulpehocken and adjoining areas. A full-text co-occurrence search for 'Clark' within these volumes may surface a christening entry naming a Clark child and parents. Use search-full-text skill with imageGroupNumber and surname filter.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Rehrersburg, Tulpehocken Township, Berks County, Pennsylvania",
+          "date_range": "1757-1842",
+          "repository": "FamilySearch",
+          "rationale": "Altamaha Evangelical Lutheran Church, Rehrersburg, Berks PA \u2014 image group 007767897_013_M94S-YWF \u2014 150 images, births/christenings 1757-1842. This is the specific congregation at Rehrersburg where Christiana Clark was baptized on 2 March 1783. The volume is NOT indexed and NOT full-text searchable; it must be browsed image by image via the image-reader skill. Target: locate the page for late February or early March 1783 and read the entry, which should name both parents (father and mother's maiden name). This is the highest-evidential-value item: an original church register is a primary source, and the parents supplied the information at the time of the rite.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Berks County, Pennsylvania",
+          "date_range": "1760-1782",
+          "repository": "FamilySearch",
+          "rationale": "Dedicated search for the marriage record of Christiana Clark's parents \u2014 required for any parentage question (record-type-guide). Once the baptism entry (items 1-3) names the parents, a marriage record for that couple in Berks County 1760-1782 (before Christiana's birth) would: (a) confirm the couple as a unit; (b) supply the mother's maiden name if not given in the baptism entry; and (c) by its date relative to Christiana's 1783 birth, corroborate the parentage conclusion. Search Pennsylvania, Church Marriages, 1682-1976 (collection 2466360) and Pennsylvania, County Marriages, 1775-1991 (collection 1589502) in the Berks County jurisdiction.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Berks County, Pennsylvania",
+          "date_range": "1790",
+          "repository": "FamilySearch",
+          "rationale": "The 1790 U.S. Federal Census (FamilySearch indexed) lists only heads of household but places a Clark family in Tulpehocken Township or adjacent Berks County areas if Christiana's father was alive in 1790. A Clark head in his 40s-60s in Berks County (consistent with having a child born 1783) corroborates the family's location and composition. The census can also show if Joseph Clark (I1, b. PA ~1780) and other potential siblings appear in the same dwelling, supporting or refuting the sibling hypothesis.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Berks County, Pennsylvania",
+          "date_range": "1778-1782",
+          "repository": "FamilySearch",
+          "rationale": "FAN pivot: Joseph Clark (tree person I1, b. PA ~1780, Decatur Green County WI 1850) is 3 years older than Christiana and shares her Pennsylvania birthplace and Wisconsin destination \u2014 a plausible sibling. If he was baptized in the same Rehrersburg congregation ~1778-1780, his baptism entry would name their common parents. Search Pennsylvania, Births and Christenings, 1709-1950 (collection 1681005) for a Joseph Clark born ~1778-1780 in Berks County / Tulpehocken. A matching entry naming the same parents as Christiana's baptism would provide corroborating, independent evidence of parentage.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_014",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Berks County, Pennsylvania",
+          "date_range": "1708-1985",
+          "repository": "Ancestry",
+          "rationale": "Ancestry, Pennsylvania, Church and Town Records, 1708-1985 (collection 2451) is an independent collection of Pennsylvania church registers including many Berks County German Reformed and Lutheran congregations not fully covered by FamilySearch. If the Altamaha Lutheran Church or a neighboring Rehrersburg congregation submitted records to this Ancestry collection, a search for Christina Clark born 1783 in Berks County may surface the baptism entry with parental names. Fallback for items 1-3 when FamilySearch sources are exhausted.",
+          "fallback_for": "pli_010",
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_003",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_015",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Berks County, Pennsylvania",
+          "date_range": "1774-1814",
+          "repository": "FamilySearch",
+          "rationale": "Image group 007856339_010 \u2014 Zion (Spiess) Church, Stony Creek Mills, Berks County PA; combined Reformed and Lutheran records including records of Pastor John William Boos (who may have served multiple congregations on a circuit including Tulpehocken Township). Looking for Clark baptism ca. 1783.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_016",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Berks County, Pennsylvania",
+          "date_range": "1777-1810",
+          "repository": "FamilySearch",
+          "rationale": "Image group 007856339_011 \u2014 Pastor's record, Reformed churches in Berks County, 1777-1810. A circuit Reformed pastor's record covers multiple congregations across the county; most likely to contain a Clark baptism from Tulpehocken/Bethel Township area ca. 1783.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_017",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Heidelberg Township, Berks County, Pennsylvania",
+          "date_range": "1754-1851",
+          "repository": "FamilySearch",
+          "rationale": "Image group 004022578_005 \u2014 Host Reformed Church, Heidelberg Township, Berks County. Heidelberg Township borders Tulpehocken Township at Rehrersburg; Host Reformed is the German Reformed congregation serving the same Rehrersburg-area community as Altamaha Lutheran. High-priority source for the Clark 1783 baptism.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T15:25:54.646Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Wisconsin Death Index 1820-1907",
+        "collectionId": "1940759",
+        "surname": "Clark",
+        "givenName": "Christiana",
+        "deathYearFrom": 1846,
+        "deathYearTo": 1852,
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No results for Christiana Clark in Wisconsin Death Index 1820-1907 (collection 1940759). Consistent with Wisconsin civil registration beginning 1852; pre-1852 deaths may be absent or sparse in this collection."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T15:26:05.117Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Wisconsin Death Index 1820-1907",
+        "collectionId": "1940759",
+        "surname": "Clark",
+        "givenName": "Christina",
+        "deathYearFrom": 1846,
+        "deathYearTo": 1852,
+        "recordCountry": "United States",
+        "note": "spelling variant"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Variant spelling Christina Clark also returns nil in Wisconsin Death Index. Collection appears to lack coverage for Dec 1848 death. pli_001 exhausted at FamilySearch \u2014 no death index entry exists for Christiana/Christina Clark d. 1848 Green County WI."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-22T15:26:05.273Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States Census 1850",
+        "collectionId": "1401638",
+        "surname": "Clark",
+        "givenName": "William",
+        "residencePlace": "Green, Wisconsin",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850,
+        "recordType": "census"
+      },
+      "outcome": "positive",
+      "results_examined": 16,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 16,
+      "notes": "16 results for Clark households in Green County WI 1850 census. Notable households in Monroe, Green Co.: (1) Daniel W Clark (born PA 1805) \u2014 head, household ark:/61903/1:2:MWXN-FZ2; (2) Joseph Clark \u2014 head, household ark:/61903/1:2:MWXN-FH5; (3) Salas Clark \u2014 head, household ark:/61903/1:2:MWXN-FCM (children born IN). William Clark (Christiana's husband) not found as head of household; he may have died Dec 1848\u2013mid 1850. Daniel W Clark (born PA 1805) is potentially Christiana's son \u2014 reading full households next."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-22T15:26:10.052Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Wisconsin State Census 1855",
+        "collectionId": "1443825",
+        "surname": "Clark",
+        "givenName": "William",
+        "recordCountry": "United States",
+        "note": "broadened from Green County \u2014 no results found in Green County in prior search"
+      },
+      "outcome": "negative",
+      "results_examined": 46,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 46,
+      "notes": "46 William/Wm Clark households found across Wisconsin in 1855 state census, but none in Green County. Also searched specifically with residencePlace Green, Wisconsin: 3 results returned, none in Green County (in Adams and Polk counties). William Clark (Christiana's husband) absent from 1855 Wisconsin census entirely in Green County. He likely died between Dec 1848 and 1855."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-22T15:29:22.899Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States Census 1850",
+        "collectionId": "1401638",
+        "surname": "Clark",
+        "givenName": "Joseph",
+        "residencePlace": "Monroe, Green, Wisconsin",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850,
+        "recordType": "census",
+        "note": "ad-hoc follow-up to identify Joseph Clark and siblings in Green County 1850"
+      },
+      "outcome": "positive",
+      "results_examined": 11,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 11,
+      "notes": "Joseph Clark (born OH 1816) confirmed in Monroe, Green County WI 1850 (ark:/61903/1:1:M4DJ-878) \u2014 consistent with tree person LZLH-PPW. Key find: separate Joseph Clark (born PA 1780) in Decatur, Green County WI (ark:/61903/1:1:M4DV-MMT) \u2014 born same state as Christiana (PA), approx. 3 years older, possibly her brother. Also: Alexander Clark household in Decatur Green County (needs reading)."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T15:31:03.738Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Christiana +Clark",
+        "yearFrom": 1845,
+        "yearTo": 1860,
+        "recordPlace1": "Wisconsin"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Fulltext search for Christiana Clark in Wisconsin 1845-1860 returned nil. Year/place filters may be excluding probate packets that lack metadata dates."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T15:31:06.382Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+William +Clark",
+        "yearFrom": 1848,
+        "yearTo": 1855,
+        "recordPlace2": "Green",
+        "recordPlace1": "Wisconsin",
+        "recordType": "probate"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Fulltext search for William Clark in Green County Wisconsin probate 1848-1855 returned nil. Year/place/type filters may be too restrictive for image-only probate packets."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T15:44:49.624Z",
+      "tool": "fulltext_search",
+      "query": {
+        "approach": "individual probate packet imageGroupNumbers (004659615_001 through _004)",
+        "keywords": "+Clark",
+        "imageGroupNumbers_tried": [
+          "004659615_001_M9V2-CWG",
+          "004659615_002_M9V2-C43",
+          "004659615_003_M9V2-CWT",
+          "004659615_004_M9V2-CW2"
+        ],
+        "note": "These are the earliest-numbered Green County probate packets in the 004659615 series (cases 222-226)"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS returns 0 results on individual probate packet image groups despite them being marked fulltextSearchable:true in volume_search. This is a systematic failure of the FTS index for these packets \u2014 tried 4 individual volumes, all return 0 for '+Clark'. Also tried Wisconsin probate estate packets with broader place/type filters in earlier session (log_006, log_007): also 0 results. The wills/deeds collection (008198364_003_M99D-F1K) showed a 'William Clark' but dated 1897 \u2014 not our subject. FTS search of Green County probate packets is effectively non-functional at FamilySearch. Recommend Ancestry.com as fallback for Wisconsin probate estate files (collection 8815459 on Ancestry).\""
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-22T15:45:03.650Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+William +Clark",
+        "imageGroupNumbers": [
+          "008550112_011_M9MD-487",
+          "008550112_012_M9MD-48W"
+        ],
+        "collections": "Wisconsin Wills and Deeds (collection 3158834)",
+        "recordType": "Deed",
+        "place": "Green County, Wisconsin Territory"
+      },
+      "outcome": "positive",
+      "results_examined": 15,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 15,
+      "notes": "Two deed records found naming William Clark in Monroe, Green County: (1) May 20, 1846: Joseph Kelly and Malinda Kelly (Town of Monroe) sold Lots 2 and 4, Block 28, Wattars Addition to Monroe to William Clark for $20 \u2014 recorded Green County, Wisconsin Territory, witnesses Wm Rittenhouse and Joseph Forney, notarized by Wm Rittenhouse. No state of origin for William Clark stated in this deed. (2) January 6, 1847: William Clark and 'Hester his wife' of Green County (AI possibly misread county as 'Sion') sold Lots 6 and 8, Block 28, William's Addition to Monroe to John Christy of County of Coshocton, State of Ohio for $300, with acknowledgment January 8, 1847. SIGNIFICANT: Grantee John Christy is identified as being from Coshocton County, Ohio \u2014 exactly where our Christiana Clark lived before Wisconsin. Wife's name transcribed as 'Hester' by AI image reader \u2014 this may be a misread of 'Christiana' in cursive script, or there are two William Clarks in Monroe. Neither deed states William Clark's state of origin or Christiana's maiden name. Also found Daniel W Clark mentioned in a 1847 deed (ark:/61903/3:1:3Q9M-C3Q8-9STZ-V) as 'Daniel, W. Clark' with places including Ohio.\""
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-22T15:46:56.261Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Green, Wisconsin, United States",
+        "host": "newspapers.com",
+        "startYear": 1840,
+        "endYear": 1860
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "notes": "Curated Newspapers.com link for Wisconsin 1840-1860: Wisconsin Historical Newspapers at newspapers.com/place-wisconsin/?xid=186. GenealogyBank not in curated results; will use direct search URL."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-22T15:47:03.284Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Green, Wisconsin, United States",
+        "host": "findagrave.com",
+        "startYear": 1840,
+        "endYear": 1900
+      },
+      "outcome": "positive",
+      "results_examined": 13,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "notes": "Curated FindAGrave links for Wisconsin \u2014 general Wisconsin cemetery browse and named Milwaukee/Madison cemeteries. No specific Monroe, Green County cemetery links. Will use memorial search URL for Christiana Clark directly."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-22T15:47:15.758Z",
+      "tool": "external_site",
+      "query": {
+        "site": "newspapers.com",
+        "subject": "Christiana Clark",
+        "event": "death notice/obituary",
+        "deathYear": 1848,
+        "deathPlace": "Monroe, Green County, Wisconsin",
+        "searchTerms": "Christiana Clark",
+        "dateRange": "1848-1850"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "newspapers",
+        "url_generated": "https://www.newspapers.com/search/?query=Christiana+Clark&dr_year=1848-1850&dr_place=Monroe%2C+Wisconsin",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 requires interactive user capture and is not obtainable in an autonomous run. Generated URL: https://www.newspapers.com/search/?query=Christiana+Clark&dr_year=1848-1850&dr_place=Monroe%2C+Wisconsin \u2014 searches Wisconsin newspapers 1848-1850 for Christiana Clark death notice or obituary. The Monroe Atlas (or similar early Green County newspaper) would be the primary target. Note: Wisconsin had limited newspaper coverage in 1848; a death notice for a December 1848 death may not appear in surviving digitized issues. In an interactive session, also search GenealogyBank at https://www.genealogybank.com/explore/newspapers/all/usa/wisconsin?date-range-start=1848-01-01&date-range-end=1850-12-31 and USGenWeb Wisconsin obituary project at https://usgwarchives.net/obits/wi/obitswi.htm\""
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-22T15:47:26.041Z",
+      "tool": "external_site",
+      "query": {
+        "site": "findagrave.com",
+        "subject": "Christiana Clark",
+        "firstName": "Christiana",
+        "lastName": "Clark",
+        "birthYear": 1783,
+        "deathYear": 1848,
+        "location": "Monroe, Green County, Wisconsin"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "findagrave",
+        "url_generated": "https://www.findagrave.com/memorial/search?firstname=Christiana&lastname=Clark&birthyear=1783&deathyear=1848&location=Monroe%2C+Green+County%2C+Wisconsin",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 requires interactive user capture and is not obtainable in an autonomous run. Generated URL: https://www.findagrave.com/memorial/search?firstname=Christiana&lastname=Clark&birthyear=1783&deathyear=1848&location=Monroe%2C+Green+County%2C+Wisconsin \u2014 searches for Christiana Clark (born 1783 PA, died 1848 Monroe WI) burial memorial. A gravestone inscription is the single record most likely to name her parents or give exact birth details per plan rationale. Also search Wisconsin Gravestone Photo Project at https://www.wisconsingravestones.org \u2014 search Green County for Clark surname. Wisconsin Historical Society county history: https://www.wisconsinhistory.org/Records/Article/CS3835 \u2014 check 1881 History of Green County for William Clark or Christiana Clark biographical sketches. Variant spelling 'Christina Clark' should also be tried on FindAGrave in an interactive session.\""
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-22T16:16:55.546Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1681005",
+        "collectionTitle": "Pennsylvania, Births and Christenings, 1709-1950",
+        "surname": "Clark",
+        "givenName": "Christina / Christiana",
+        "birthYearFrom": 1782,
+        "birthYearTo": 1784,
+        "recordSubdivision": "Pennsylvania"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 1,
+      "notes": "Single result returned (Damson Clark, male) \u2014 not the subject. No indexed baptism entry for Christiana/Christina Clark born 1782-1784 in Pennsylvania in this collection. Confirms the Altamaha Lutheran register (pli_010) is not indexed in this collection and requires direct image browse."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-22T16:19:27.219Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Clark +Christina or +Clark; imageGroupNumbers tried: 007899351_001, 007899351_002, 007899351_003; also tried +Clark +Rehrersburg unscoped; +Klar +Christina PA 1778-1788",
+        "yearFrom": 1778,
+        "yearTo": 1790
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Tulpehocken German Reformed volumes 007899351_001/002/003 return zero results for all Clark searches, including unfiltered \u2014 these image groups lack AI transcriptions in the FTS system. Broader unscoped searches for +Clark +Rehrersburg and +Clark +Tulpehocken returned 20+ results but all from late 19th-20th century Pennsylvania biography/history collections, not church registers. No Christina Clark baptism c. 1783 found via FTS. Proceeding to direct image browse of Altamaha Lutheran register (pli_010).\""
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_012",
+      "performed": "2026-07-22T16:26:08.330Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1803959",
+        "surname": "Clark",
+        "residencePlace": "Berks, Pennsylvania, United States",
+        "residenceYearFrom": 1790,
+        "residenceYearTo": 1790,
+        "recordType": "census"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 3,
+      "notes": "Three Clark heads of household found in Berks County 1790: (1) 'Chrisr Clark', Bethel Township \u2014 MOST SIGNIFICANT: Bethel Twp borders Tulpehocken Twp where Christiana was baptized at Rehrersburg; 'Chrisr' likely abbreviates 'Christian', consistent with German-American naming. ARK ark:/61903/1:1:XHKJ-SS3. (2) 'Thos Clark', Caernarvon Township (ARK ark:/61903/1:1:XHKJ-98R) \u2014 further south, less likely. (3) 'Robert Clark', Amity Township (ARK ark:/61903/1:1:XHKN-YYN) \u2014 southwest Berks, not near Tulpehocken. The 1790 census only names the head; household tally numbers require original image (image-reader currently unavailable).\""
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": null,
+      "performed": "2026-07-22T16:27:58.881Z",
+      "tool": "fulltext_search",
+      "query": {
+        "nlQuery": "GP3R-215",
+        "count": 10,
+        "purpose": "Locate records linked to Christiana Clark FamilySearch person GP3R-215"
+      },
+      "outcome": "positive",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "results_available": 115563,
+      "notes": "Highly significant findings: (1) Green Co. WI Probate Estate File 1852 (ark:/61903/3:1:939J-HT78-7) names BOTH 'Christiana Clark' AND 'Joseph Clarke' in Monroe, Green Co. WI \u2014 Joseph's presence in Christiana's estate proceedings is strong evidence of a sibling/heir relationship. (2) Green Co. WI Probate 1851 (ark:/61903/3:1:939J-HT7V-5) names 'State of Christina Clark' (= her estate) and Adam Shrake. (3) Green Co. WI Probate 1849 (ark:/61903/3:1:939J-HT7G-X) names 'Christina Clark'. (4) Green Co. WI Deed 1850-1853 (ark:/61903/3:1:3Q9M-C3Q8-9T84) names both Christiana Clark and Joseph Clark/Clarke in Town of Monroe. (5) Coshocton OH Deed 1840 names Shrake family. Adam Shrake appears prominently as administrator/creditor in Christiana's estate. Joseph Clark/Clarke (b. PA ~1780) is 3 years OLDER than Christiana (b. 1783) so cannot be her son \u2014 must be sibling or collateral relative.\""
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-22T16:33:28.507Z",
+      "tool": "record_search",
+      "query": {
+        "description": "Clark marriage in Berks County PA German Lutheran church records 1760-1782",
+        "surnames": [
+          "Clark",
+          "Clarke"
+        ],
+        "eventType": "marriage",
+        "place": "Berks County, Pennsylvania",
+        "dateRange": "1760-1782",
+        "collections": "Pennsylvania German Lutheran church records"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1567,
+      "notes": "Searched for Clark marriage records in Berks County PA 1760-1782. Retrieved 1,567 results, but all examined records were from England, Delaware, or Philadelphia \u2014 none from Berks County German Lutheran churches. The indexed PA church marriage records for rural Berks County German-speaking congregations (including Altamaha/Rehrersburg area) are not available in the FamilySearch indexed collections for this period; they exist only as browse-only image groups. The parents' marriage record for Christiana Clark's parents cannot be found by indexed search. Negative result is inconclusive \u2014 the record may exist in unindexed German Reformed or Lutheran registers covering Tulpehocken Township/Bethel Township area but is not accessible via indexed search."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_013",
+      "performed": "2026-07-22T16:33:36.374Z",
+      "tool": "record_search",
+      "query": {
+        "description": "Joseph Clark baptism in Pennsylvania Births and Christenings collection 1681005, Berks County, 1777-1783",
+        "givenName": "Joseph",
+        "surname": "Clark",
+        "eventType": "baptism",
+        "collectionId": "1681005",
+        "place": "Berks County, Pennsylvania",
+        "dateRange": "1777-1783"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 18,
+      "notes": "Searched collection 1681005 (Pennsylvania Births and Christenings 1709-1950) for Joseph Clark in Berks County 1777-1783. Two 'Entry FOR Joseph Clark' records were read but proved incorrect: one from Philadelphia (1790) and one from Kittanning (1849). No Joseph Clark baptism from Berks County in this period found in the indexed collection. The Altamaha Lutheran Church register for Rehrersburg/Tulpehocken Township is NOT indexed in collection 1681005 \u2014 it exists only as browse-only image group 007767897. Any Joseph Clark baptism there would be invisible to indexed search. Negative result is inconclusive \u2014 the sibling relationship between Joseph and Christiana Clark remains supported by the Wisconsin probate and deed records but cannot yet be confirmed via a shared Berks County baptism record through indexed search."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-22T16:41:03.249Z",
+      "tool": "image_read",
+      "query": {
+        "description": "Browse Altamaha Evangelical Lutheran Church Rehrersburg Berks County PA baptism index 1757-1842 for Clark surname entries",
+        "imageGroup": "007767897",
+        "images": [
+          "00858",
+          "00860",
+          "00861",
+          "00862"
+        ],
+        "lookingFor": "Clark baptism entries, specifically Christina/Christiana Clark born ~1783 with parents named",
+        "pages": [
+          "30 (B surnames: Bonewitz, Bordner, Bausum)",
+          "32 (B surnames: Brooker-Buss)",
+          "33 (C surnames: Cahort-Clahr)",
+          "34 (C surnames: Clark-Coster)"
+        ]
+      },
+      "outcome": "partial",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Browsed 4 images from the Altamaha Evangelical Lutheran Church baptism index (image group 007767897). Image 00859 (page 31) failed to load (fetch failed \u2014 intermittent connectivity). Pages 30, 32, 33, and 34 were successfully read. The CLARK section appears on page 34 (image 00862) and contains EXACTLY ONE ENTRY: Anna Maria Clarck, born 27 Nov 1798, christened 9 Dec 1798, daughter of CHRISTOPH CLARCK AND BARBARA (serial number 01130-5). There is NO entry for a Christina or Christiana Clark born around January 1783 in the Altamaha Lutheran register. The 1783 baptism attributed to Christiana Clark is not in this church's records. The Christoph Clarck / Barbara family is significant: Christoph Clark ('Chrisr Clark') appears in the adjacent Bethel Township, Berks County in the 1790 census, and Christoph having a daughter at this church in 1798 corroborates his longstanding presence in the Rehrersburg area. Christiana Clark's 1783 baptism must be sought in the German Reformed church records for Tulpehocken Township / Rehrersburg area (Zion's Reformed or similar), or possibly a different Lutheran congregation not represented in this index."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-22T16:42:39.571Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Clark +Christiana AND +Clarck +Christiana",
+        "recordPlace1": "Pennsylvania",
+        "yearFrom": 1778,
+        "yearTo": 1788,
+        "description": "FTS search for Clark/Clarck + Christiana in PA church records 1778-1788"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Ran two FTS searches for Clark baptism in Pennsylvania 1778-1788: (1) '+Clarck +Christiana' PA, (2) '+Clark +Christiana' PA. Both returned 0 results. Also ran '+Clark +Christina' in Berks County PA 1778-1788 \u2014 0 results. The German Reformed church records for Berks County / Tulpehocken Township are not indexed in the FamilySearch FTS system for this period. These records exist only as browse-only image groups not AI-transcribed for FTS. Pivoting to volume_search to find the German Reformed church register for Rehrersburg/Tulpehocken area."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_014",
+      "performed": "2026-07-22T16:47:10.409Z",
+      "tool": "external_site",
+      "query": {
+        "description": "Ancestry fallback search for Clark baptism, Berks County PA 1783",
+        "site": "ancestry",
+        "rationale": "Fallback for pli_010 (Lutheran baptism index). However, pli_010 image browse confirmed the Altamaha Lutheran register contains NO Clark baptism for 1783 \u2014 only one Clark entry (Anna Maria Clarck, 1798, parents Christoph Clarck and Barbara). Ancestry holds the same Lutheran records digitized on FamilySearch; an Ancestry search for the same Lutheran register would yield the same negative result. Deferred in autonomous mode \u2014 no user to capture PDF \u2014 and superseded in priority by German Reformed church records for Berks County, which are the correct next target."
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/?name=Christiana_Clark&birth=1783&birthplace=Pennsylvania&f-recordtype=B",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "Deferred \u2014 autonomous mode, no interactive user to capture. Additionally, this fallback is now moot: pli_010 image browse confirmed no 1783 Clark baptism in the Altamaha Lutheran register; looking for the same Lutheran record on Ancestry would yield nothing. The German Reformed circuit pastor's records for Berks County (image groups 007856339_010 and 007856339_011) are the correct next source."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_017",
+      "performed": "2026-07-22T17:07:45.539Z",
+      "tool": "fulltext_search",
+      "query": {
+        "imageGroupNumber": "004022578_005_M9HV-L1C",
+        "keywords": "+Clark",
+        "description": "FTS search for Clark in Tulpehocken Host St. Johns Reformed Church Births/Baptisms Vol. 2"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_023.json",
+      "results_available": 3,
+      "notes": "FTS search within image group 004022578_005 (Tulpehocken Host St. John's Reformed Church, Births/Baptisms Vol. 2) returned 3 hits for 'Clark': (1) ARK 3:1:3QSQ-G92C-6WYJ, dated 1781, includes 'Jonas Clark Jr' in garbled OCR names list \u2014 likely Joseph Clark b. ~1780, the FAN sibling candidate for Christiana; (2) ARK 3:1:3QSQ-G92C-6WYD, dated 1847, includes 'Anne Maria Clark'; (3) ARK 3:1:3QSQ-G92C-6WTX, dated 1848, includes 'Clark Daniel Desmond'. The 1781 Clark record is the most significant \u2014 if 'Jonas Clark Jr' is actually Joseph Clark son of [Christoph] Clark, it would place the Clark family at this congregation 2 years before Christiana's 1783 baptism. NOTE: All names in FTS results are heavily garbled OCR from old German Kurrent script. The actual register text must be read from the original images."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States Census, 1850,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:M4DV-MMT : accessed 2026-07-22), Joseph Clark, Decatur, Green County, Wisconsin; citing NARA microfilm publication M432, roll 999; FHL microfilm 8,186,583.",
+      "citation_detail": {
+        "who": "Joseph Clark household",
+        "what": "1850 U.S. Federal Census population schedule, dwelling and family entry",
+        "when_created": "1850",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch, citing NARA microfilm M432",
+        "where_within": "Decatur township, Green County, Wisconsin; image of original schedule"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4DV-MMT",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States, Census, 1850,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:M4DN-TWB : accessed 2026-07-22), entry for Daniel W Clark household, Monroe, Green County, Wisconsin, dwelling [number per image], family [number per image]; citing NARA microfilm publication M432.",
+      "citation_detail": {
+        "who": "Daniel W Clark household",
+        "what": "1850 U.S. Federal Census population schedule, index and digital image",
+        "when_created": "1850",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Monroe, Green County, Wisconsin; ark:/61903/1:1:M4DN-TWB"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4DN-TWB",
+      "notes": "FamilySearch index entry with linked digital image of NARA microfilm M432. The original census schedule (image) was not independently examined for this extraction; facts are from the index/sidecar. Relationships are not stated in the 1850 census; all parent-child and spousal links are inferred from household position.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306026",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Joseph Clark",
+      "structured_value": {
+        "given": "Joseph",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306026",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born circa 1780, age approximately 70",
+      "structured_value": {
+        "year": "1780"
+      },
+      "date": "~1780",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year calculated from reported age on 1850 census; unknown household member answered for the dwelling. Age reporting on pre-1880 censuses is frequently approximate.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306026",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born Pennsylvania",
+      "structured_value": {
+        "place": "Pennsylvania"
+      },
+      "place": "Pennsylvania",
+      "standard_place": "Pennsylvania, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated in the record; unknown household member answered for the dwelling. Aligns with Christiana Clark's known Pennsylvania birthplace \u2014 potential sibling or close relative context.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306026",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Decatur, Green County, Wisconsin",
+      "structured_value": {
+        "place": "Decatur, Green, Wisconsin"
+      },
+      "place": "Decatur, Green, Wisconsin, United States",
+      "standard_place": "Decatur, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded the household at this location.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306026",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "spouse of Elizabeth Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1850 census. Elizabeth Clark is the only adult female in the household and is listed immediately after the head; spousal relationship inferred from household position and naming pattern. The 41-year age gap (Joseph ~70, Elizabeth ~29) is notable \u2014 she may be a second wife, a daughter, or another relative. This inference requires corroboration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306027",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Elizabeth Clark",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306027",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born circa 1821, age approximately 29",
+      "structured_value": {
+        "year": "1821"
+      },
+      "date": "~1821",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year calculated from reported age on 1850 census; unknown household member answered for the dwelling.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306027",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Pennsylvania",
+      "structured_value": {
+        "place": "Pennsylvania"
+      },
+      "place": "Pennsylvania",
+      "standard_place": "Pennsylvania, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306027",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Decatur, Green County, Wisconsin",
+      "structured_value": {
+        "place": "Decatur, Green, Wisconsin"
+      },
+      "place": "Decatur, Green, Wisconsin, United States",
+      "standard_place": "Decatur, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306027",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Joseph Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1850 census. Spousal relationship inferred from household position. The 41-year age gap is notable and weakens the wife inference; she may instead be a daughter or other relative. Corroboration required.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306028",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "John Clark",
+      "structured_value": {
+        "given": "John",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306028",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born circa 1824, age approximately 26",
+      "structured_value": {
+        "year": "1824"
+      },
+      "date": "~1824",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year calculated from reported age on 1850 census; unknown household member answered for the dwelling.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306028",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born Pennsylvania",
+      "structured_value": {
+        "place": "Pennsylvania"
+      },
+      "place": "Pennsylvania",
+      "standard_place": "Pennsylvania, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306028",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Decatur, Green County, Wisconsin",
+      "structured_value": {
+        "place": "Decatur, Green, Wisconsin"
+      },
+      "place": "Decatur, Green, Wisconsin, United States",
+      "standard_place": "Decatur, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306028",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Joseph Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1850 census. Child-of-head relationship inferred from household position and age (born ~1824, consistent with Joseph born ~1780 being the father). Requires corroboration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306029",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Sarah Clark",
+      "structured_value": {
+        "given": "Sarah",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306029",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born circa 1827, age approximately 23",
+      "structured_value": {
+        "year": "1827"
+      },
+      "date": "~1827",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year calculated from reported age on 1850 census; unknown household member answered for the dwelling.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306029",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born Pennsylvania",
+      "structured_value": {
+        "place": "Pennsylvania"
+      },
+      "place": "Pennsylvania",
+      "standard_place": "Pennsylvania, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306029",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Decatur, Green County, Wisconsin",
+      "structured_value": {
+        "place": "Decatur, Green, Wisconsin"
+      },
+      "place": "Decatur, Green, Wisconsin, United States",
+      "standard_place": "Decatur, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306029",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Joseph Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1850 census. Child-of-head relationship inferred from household position and age (born ~1827, consistent with Joseph born ~1780 being the father). Requires corroboration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306030",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Martha A Clark",
+      "structured_value": {
+        "given": "Martha A",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306030",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born circa 1828, age approximately 22",
+      "structured_value": {
+        "year": "1828"
+      },
+      "date": "~1828",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year calculated from reported age on 1850 census; unknown household member answered for the dwelling.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306030",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born Pennsylvania",
+      "structured_value": {
+        "place": "Pennsylvania"
+      },
+      "place": "Pennsylvania",
+      "standard_place": "Pennsylvania, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306030",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Decatur, Green County, Wisconsin",
+      "structured_value": {
+        "place": "Decatur, Green, Wisconsin"
+      },
+      "place": "Decatur, Green, Wisconsin, United States",
+      "standard_place": "Decatur, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:M4DV-MMT",
+      "record_persona_id": "p_180306030",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Joseph Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1850 census. Child-of-head relationship inferred from household position and age (born ~1828, consistent with Joseph born ~1780 being the father). Requires corroboration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275608",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Daniel W Clark",
+      "structured_value": {
+        "given": "Daniel W",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275608",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275608",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born Pennsylvania",
+      "place": "Pennsylvania",
+      "structured_value": {
+        "place": "Pennsylvania"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Pennsylvania, United States"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275608",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "age 45 (born circa 1805)",
+      "date": "~1805",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1805"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age 45 at 1850 census. Enumerator did not record who supplied household information; could be Daniel himself, his wife, or another household member.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275609",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Elizabeth Clark",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275609",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275609",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Pennsylvania",
+      "place": "Pennsylvania",
+      "structured_value": {
+        "place": "Pennsylvania"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Pennsylvania, United States"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275609",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "age 41 (born circa 1809)",
+      "date": "~1809",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1809"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age 41 at 1850 census.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275609",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Daniel W Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Elizabeth is listed immediately after the head Daniel W Clark, consistent with a spousal relationship, but not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275610",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Daniel Clark",
+      "structured_value": {
+        "given": "Daniel",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275610",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275610",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born Ohio",
+      "place": "Ohio",
+      "structured_value": {
+        "place": "Ohio"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275610",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "age 21 (born circa 1829)",
+      "date": "~1829",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1829"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age 21 at 1850 census.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275610",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Daniel W Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275610",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275611",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Hannah Clark",
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275611",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275611",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born Ohio",
+      "place": "Ohio",
+      "structured_value": {
+        "place": "Ohio"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275611",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "age 20 (born circa 1830)",
+      "date": "~1830",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1830"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age 20 at 1850 census.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275611",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Daniel W Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275611",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275612",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Samuel Clark",
+      "structured_value": {
+        "given": "Samuel",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275612",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275612",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born Ohio",
+      "place": "Ohio",
+      "structured_value": {
+        "place": "Ohio"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275612",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "age 19 (born circa 1831)",
+      "date": "~1831",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1831"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age 19 at 1850 census.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275612",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Daniel W Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275612",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275613",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "Atlys Clark",
+      "structured_value": {
+        "given": "Atlys",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275613",
+      "record_role": "child_4",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275613",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born Ohio",
+      "place": "Ohio",
+      "structured_value": {
+        "place": "Ohio"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275613",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "age 15 (born circa 1835)",
+      "date": "~1835",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1835"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age 15 at 1850 census.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275613",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Daniel W Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275613",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275614",
+      "record_role": "child_5",
+      "fact_type": "name",
+      "value": "Mary E Clark",
+      "structured_value": {
+        "given": "Mary E",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275614",
+      "record_role": "child_5",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275614",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "born Ohio",
+      "place": "Ohio",
+      "structured_value": {
+        "place": "Ohio"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275614",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "age 14 (born circa 1836)",
+      "date": "~1836",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1836"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age 14 at 1850 census.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275614",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "child of Daniel W Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275614",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275615",
+      "record_role": "child_6",
+      "fact_type": "name",
+      "value": "John W Clark",
+      "structured_value": {
+        "given": "John W",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275615",
+      "record_role": "child_6",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275615",
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "born Illinois",
+      "place": "Illinois",
+      "structured_value": {
+        "place": "Illinois"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Illinois, United States"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275615",
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "age 13 (born circa 1837)",
+      "date": "~1837",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1837"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age 13 at 1850 census. First child born in Illinois, marking a migration break from Ohio.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275615",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "child of Daniel W Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275615",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275616",
+      "record_role": "child_7",
+      "fact_type": "name",
+      "value": "Cynthia A Clark",
+      "structured_value": {
+        "given": "Cynthia A",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275616",
+      "record_role": "child_7",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275616",
+      "record_role": "child_7",
+      "fact_type": "birth",
+      "value": "born Illinois",
+      "place": "Illinois",
+      "structured_value": {
+        "place": "Illinois"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Illinois, United States"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275616",
+      "record_role": "child_7",
+      "fact_type": "birth",
+      "value": "age 10 (born circa 1840)",
+      "date": "~1840",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1840"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age 10 at 1850 census.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275616",
+      "record_role": "child_7",
+      "fact_type": "relationship",
+      "value": "child of Daniel W Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275616",
+      "record_role": "child_7",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275617",
+      "record_role": "child_8",
+      "fact_type": "name",
+      "value": "Wm H Clark",
+      "structured_value": {
+        "given": "Wm H",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275617",
+      "record_role": "child_8",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275617",
+      "record_role": "child_8",
+      "fact_type": "birth",
+      "value": "born Illinois",
+      "place": "Illinois",
+      "structured_value": {
+        "place": "Illinois"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Illinois, United States"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275617",
+      "record_role": "child_8",
+      "fact_type": "birth",
+      "value": "age 8 (born circa 1842)",
+      "date": "~1842",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1842"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age 8 at 1850 census.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275617",
+      "record_role": "child_8",
+      "fact_type": "relationship",
+      "value": "child of Daniel W Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275617",
+      "record_role": "child_8",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275618",
+      "record_role": "child_9",
+      "fact_type": "name",
+      "value": "George W Clark",
+      "structured_value": {
+        "given": "George W",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275618",
+      "record_role": "child_9",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275618",
+      "record_role": "child_9",
+      "fact_type": "birth",
+      "value": "born Wisconsin",
+      "place": "Wisconsin",
+      "structured_value": {
+        "place": "Wisconsin"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Wisconsin, United States"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275618",
+      "record_role": "child_9",
+      "fact_type": "birth",
+      "value": "age 5 (born circa 1845)",
+      "date": "~1845",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1845"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age 5 at 1850 census. First child born in Wisconsin, marking migration from Illinois.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275618",
+      "record_role": "child_9",
+      "fact_type": "relationship",
+      "value": "child of Daniel W Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275618",
+      "record_role": "child_9",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275619",
+      "record_role": "child_10",
+      "fact_type": "name",
+      "value": "Sarah E Clark",
+      "structured_value": {
+        "given": "Sarah E",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275619",
+      "record_role": "child_10",
+      "fact_type": "residence",
+      "value": "Monroe, Green County, Wisconsin",
+      "place": "Monroe, Green, Wisconsin, United States",
+      "standard_place": "Monroe, Green, Wisconsin, United States",
+      "date": "1850",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275619",
+      "record_role": "child_10",
+      "fact_type": "birth",
+      "value": "born Wisconsin",
+      "place": "Wisconsin",
+      "structured_value": {
+        "place": "Wisconsin"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Wisconsin, United States"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275619",
+      "record_role": "child_10",
+      "fact_type": "birth",
+      "value": "age under 1 (born circa 1850)",
+      "date": "~1850",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1850"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age under 1 at 1850 census; born same year as census.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275619",
+      "record_role": "child_10",
+      "fact_type": "relationship",
+      "value": "child of Daniel W Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/1:1:M4DN-TWB",
+      "record_persona_id": "p_180275619",
+      "record_role": "child_10",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Clark (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column. Inferred from household position and consistent surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1850 U.S. Census, Decatur, Green County, WI: Joseph Clark listed as head of household. Name matches persona p_180306026 materialized as I1. Single-source stub; confidence probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth year ~1780 (age 70) from 1850 census for Joseph Clark (I1). Consistent with being approx. 3 years older than Christiana Clark (b. 1783), supporting possible sibling hypothesis.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birthplace Pennsylvania stated for Joseph Clark (I1) in 1850 census. Matches Christiana Clark's known Pennsylvania birthplace \u2014 key FAN indicator.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Residence Decatur, Green County, Wisconsin 1850 for Joseph Clark (I1); enumerator-stated primary information.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "Spousal relationship to Elizabeth Clark inferred from household position. 41-year age gap (Joseph ~70, Elizabeth ~29) makes wife inference speculative \u2014 Elizabeth may be a daughter or other relative rather than a spouse.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "I3",
+      "confidence": "speculative",
+      "rationale": "Assertion a_005 also bears on Elizabeth Clark (I3) as the person inferred as Joseph's spouse. Same 41-year age gap caveat; confidence speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1850 U.S. Census, Decatur, Green County, WI: Elizabeth Clark listed in Joseph Clark's household. Name matches persona p_180306027 materialized as I3.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Birth year ~1821 (age 29) for Elizabeth Clark (I3) from 1850 census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Birthplace Pennsylvania for Elizabeth Clark (I3) in 1850 census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Residence Decatur, Green County, Wisconsin 1850 for Elizabeth Clark (I3); enumerator-stated.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "I3",
+      "confidence": "speculative",
+      "rationale": "Spousal relationship to Joseph Clark inferred from household position in 1850 census. No relationship column; 41-year age gap makes inference speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "Assertion a_010 also bears on Joseph Clark (I1) as the inferred spouse. Same speculative confidence due to age gap.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "1850 U.S. Census, Decatur, Green County, WI: John Clark listed in Joseph Clark's household. Materialized as I4.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Birth year ~1824 (age 26) for John Clark (I4) from 1850 census. Age consistent with being a child of Joseph Clark (b. ~1780).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Birthplace Pennsylvania for John Clark (I4) in 1850 census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Residence Decatur, Green County, Wisconsin 1850 for John Clark (I4).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "I4",
+      "confidence": "speculative",
+      "rationale": "Child-of-Joseph Clark relationship inferred from household position in 1850 census. No relationship column; confidence speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "Assertion a_015 also bears on Joseph Clark (I1) as the inferred parent of John Clark (I4). Confidence speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "1850 U.S. Census, Decatur, Green County, WI: Sarah Clark listed in Joseph Clark's household. Materialized as I5.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Birth year ~1827 (age 23) for Sarah Clark (I5) from 1850 census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Birthplace Pennsylvania for Sarah Clark (I5) in 1850 census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Residence Decatur, Green County, Wisconsin 1850 for Sarah Clark (I5).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "person_id": "I5",
+      "confidence": "speculative",
+      "rationale": "Child-of-Joseph Clark relationship inferred from household position in 1850 census. No relationship column; confidence speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "Assertion a_020 also bears on Joseph Clark (I1) as the inferred parent of Sarah Clark (I5). Confidence speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_021",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "1850 U.S. Census, Decatur, Green County, WI: Martha A Clark listed in Joseph Clark's household. Materialized as I6.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_022",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Birth year ~1828 (age 22) for Martha A Clark (I6) from 1850 census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_023",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Birthplace Pennsylvania for Martha A Clark (I6) in 1850 census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_024",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Residence Decatur, Green County, Wisconsin 1850 for Martha A Clark (I6).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_025",
+      "person_id": "I6",
+      "confidence": "speculative",
+      "rationale": "Child-of-Joseph Clark relationship inferred from household position in 1850 census. No relationship column; confidence speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "Assertion a_025 also bears on Joseph Clark (I1) as the inferred parent of Martha A Clark (I6). Confidence speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_026",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1850 U.S. Census, Monroe, Green County, WI: Daniel W Clark listed as head of household in the same township where Christiana Clark died Dec 1848. Materialized as I2. Born PA ~1805 \u2014 possible unrecorded son of Christiana (b. 1783). Single-source stub.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_027",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, Wisconsin 1850 for Daniel W Clark (I2); enumerator-stated primary information.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_028",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birthplace Pennsylvania for Daniel W Clark (I2) in 1850 census. Consistent with Clark family Pennsylvania origins.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_029",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birth year ~1805 (age 45) for Daniel W Clark (I2) from 1850 census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_030",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "1850 U.S. Census, Monroe, Green County, WI: Elizabeth Clark listed in Daniel W Clark's household. Materialized as I7.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_031",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, Wisconsin 1850 for Elizabeth Clark (I7).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_032",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Birthplace Pennsylvania for Elizabeth Clark (I7) in 1850 census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_033",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Birth year ~1809 (age 41) for Elizabeth Clark (I7) from 1850 census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_034",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Spousal relationship to Daniel W Clark inferred from household position. Age-compatible couple (Daniel ~45, Elizabeth ~41); confidence probable.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_034",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Assertion a_034 also bears on Daniel W Clark (I2) as the inferred spouse. Age-compatible pairing supports probable confidence.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_035",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Name of Daniel W Clark's child_1 stated in 1850 census; materialized as I8.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_036",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, WI 1850 for I8 (child_1 in Daniel W Clark household).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_037",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Birthplace (Ohio) stated in 1850 census for I8 (Daniel W Clark child_1). Children born in OH indicates family moved PA\u2192OH before arriving in WI.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_038",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Birth year estimated from 1850 census age for I8 (Daniel W Clark child_1).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_039",
+      "person_id": "I8",
+      "confidence": "speculative",
+      "rationale": "Child-of-Daniel W Clark (I2) inferred from 1850 census household position. No relationship column; speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_039",
+      "person_id": "I2",
+      "confidence": "speculative",
+      "rationale": "Assertion a_039 also bears on Daniel W Clark (I2) as the inferred parent of I8. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_040",
+      "person_id": "I8",
+      "confidence": "speculative",
+      "rationale": "Child-of-Elizabeth Clark (I7) inferred from 1850 census household position. No relationship column; speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_040",
+      "person_id": "I7",
+      "confidence": "speculative",
+      "rationale": "Assertion a_040 also bears on Elizabeth Clark (I7) as the inferred mother of I8. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_041",
+      "person_id": "I9",
+      "confidence": "probable",
+      "rationale": "Name of Daniel W Clark's child_2 stated in 1850 census; materialized as I9.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_042",
+      "person_id": "I9",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, WI 1850 for I9 (Daniel W Clark child_2).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_043",
+      "person_id": "I9",
+      "confidence": "probable",
+      "rationale": "Birthplace stated in 1850 census for I9 (Daniel W Clark child_2).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_044",
+      "person_id": "I9",
+      "confidence": "probable",
+      "rationale": "Birth year estimated from 1850 census age for I9 (Daniel W Clark child_2).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_045",
+      "person_id": "I9",
+      "confidence": "speculative",
+      "rationale": "Child-of-Daniel W Clark (I2) inferred from 1850 census household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_045",
+      "person_id": "I2",
+      "confidence": "speculative",
+      "rationale": "Assertion a_045 also bears on Daniel W Clark (I2) as the inferred parent of I9. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_046",
+      "person_id": "I9",
+      "confidence": "speculative",
+      "rationale": "Child-of-Elizabeth Clark (I7) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_046",
+      "person_id": "I7",
+      "confidence": "speculative",
+      "rationale": "Assertion a_046 also bears on Elizabeth Clark (I7) as inferred mother of I9. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_047",
+      "person_id": "I10",
+      "confidence": "probable",
+      "rationale": "Name of Daniel W Clark's child_3 stated in 1850 census; materialized as I10.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_048",
+      "person_id": "I10",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, WI 1850 for I10 (Daniel W Clark child_3).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_049",
+      "person_id": "I10",
+      "confidence": "probable",
+      "rationale": "Birthplace stated in 1850 census for I10 (Daniel W Clark child_3).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_050",
+      "person_id": "I10",
+      "confidence": "probable",
+      "rationale": "Birth year estimated from 1850 census age for I10 (Daniel W Clark child_3).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_051",
+      "person_id": "I10",
+      "confidence": "speculative",
+      "rationale": "Child-of-Daniel W Clark (I2) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_051",
+      "person_id": "I2",
+      "confidence": "speculative",
+      "rationale": "Assertion a_051 also bears on Daniel W Clark (I2) as inferred parent of I10. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_052",
+      "person_id": "I10",
+      "confidence": "speculative",
+      "rationale": "Child-of-Elizabeth Clark (I7) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_052",
+      "person_id": "I7",
+      "confidence": "speculative",
+      "rationale": "Assertion a_052 also bears on Elizabeth Clark (I7) as inferred mother of I10. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_053",
+      "person_id": "I11",
+      "confidence": "probable",
+      "rationale": "Name of Daniel W Clark's child_4 stated in 1850 census; materialized as I11.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_054",
+      "person_id": "I11",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, WI 1850 for I11 (Daniel W Clark child_4).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_055",
+      "person_id": "I11",
+      "confidence": "probable",
+      "rationale": "Birthplace stated in 1850 census for I11 (Daniel W Clark child_4).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_056",
+      "person_id": "I11",
+      "confidence": "probable",
+      "rationale": "Birth year estimated from 1850 census age for I11 (Daniel W Clark child_4).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_057",
+      "person_id": "I11",
+      "confidence": "speculative",
+      "rationale": "Child-of-Daniel W Clark (I2) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_057",
+      "person_id": "I2",
+      "confidence": "speculative",
+      "rationale": "Assertion a_057 also bears on Daniel W Clark (I2) as inferred parent of I11. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_058",
+      "person_id": "I11",
+      "confidence": "speculative",
+      "rationale": "Child-of-Elizabeth Clark (I7) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_058",
+      "person_id": "I7",
+      "confidence": "speculative",
+      "rationale": "Assertion a_058 also bears on Elizabeth Clark (I7) as inferred mother of I11. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_059",
+      "person_id": "I12",
+      "confidence": "probable",
+      "rationale": "Name of Daniel W Clark's child_5 stated in 1850 census; materialized as I12.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_060",
+      "person_id": "I12",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, WI 1850 for I12 (Daniel W Clark child_5).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_061",
+      "person_id": "I12",
+      "confidence": "probable",
+      "rationale": "Birthplace stated in 1850 census for I12 (Daniel W Clark child_5).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_062",
+      "person_id": "I12",
+      "confidence": "probable",
+      "rationale": "Birth year estimated from 1850 census age for I12 (Daniel W Clark child_5).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_063",
+      "person_id": "I12",
+      "confidence": "speculative",
+      "rationale": "Child-of-Daniel W Clark (I2) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_063",
+      "person_id": "I2",
+      "confidence": "speculative",
+      "rationale": "Assertion a_063 also bears on Daniel W Clark (I2) as inferred parent of I12. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_064",
+      "person_id": "I12",
+      "confidence": "speculative",
+      "rationale": "Child-of-Elizabeth Clark (I7) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_064",
+      "person_id": "I7",
+      "confidence": "speculative",
+      "rationale": "Assertion a_064 also bears on Elizabeth Clark (I7) as inferred mother of I12. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_065",
+      "person_id": "I13",
+      "confidence": "probable",
+      "rationale": "Name of Daniel W Clark's child_6 stated in 1850 census; materialized as I13.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_066",
+      "person_id": "I13",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, WI 1850 for I13 (Daniel W Clark child_6).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_083",
+      "assertion_id": "a_067",
+      "person_id": "I13",
+      "confidence": "probable",
+      "rationale": "Birthplace stated in 1850 census for I13 (Daniel W Clark child_6).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_084",
+      "assertion_id": "a_068",
+      "person_id": "I13",
+      "confidence": "probable",
+      "rationale": "Birth year estimated from 1850 census age for I13 (Daniel W Clark child_6).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_085",
+      "assertion_id": "a_069",
+      "person_id": "I13",
+      "confidence": "speculative",
+      "rationale": "Child-of-Daniel W Clark (I2) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_086",
+      "assertion_id": "a_069",
+      "person_id": "I2",
+      "confidence": "speculative",
+      "rationale": "Assertion a_069 also bears on Daniel W Clark (I2) as inferred parent of I13. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_087",
+      "assertion_id": "a_070",
+      "person_id": "I13",
+      "confidence": "speculative",
+      "rationale": "Child-of-Elizabeth Clark (I7) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_088",
+      "assertion_id": "a_070",
+      "person_id": "I7",
+      "confidence": "speculative",
+      "rationale": "Assertion a_070 also bears on Elizabeth Clark (I7) as inferred mother of I13. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_089",
+      "assertion_id": "a_071",
+      "person_id": "I14",
+      "confidence": "probable",
+      "rationale": "Name of Daniel W Clark's child_7 stated in 1850 census; materialized as I14.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_090",
+      "assertion_id": "a_072",
+      "person_id": "I14",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, WI 1850 for I14 (Daniel W Clark child_7).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_091",
+      "assertion_id": "a_073",
+      "person_id": "I14",
+      "confidence": "probable",
+      "rationale": "Birthplace stated in 1850 census for I14 (Daniel W Clark child_7).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_092",
+      "assertion_id": "a_074",
+      "person_id": "I14",
+      "confidence": "probable",
+      "rationale": "Birth year estimated from 1850 census age for I14 (Daniel W Clark child_7).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_093",
+      "assertion_id": "a_075",
+      "person_id": "I14",
+      "confidence": "speculative",
+      "rationale": "Child-of-Daniel W Clark (I2) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_094",
+      "assertion_id": "a_075",
+      "person_id": "I2",
+      "confidence": "speculative",
+      "rationale": "Assertion a_075 also bears on Daniel W Clark (I2) as inferred parent of I14. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_095",
+      "assertion_id": "a_076",
+      "person_id": "I14",
+      "confidence": "speculative",
+      "rationale": "Child-of-Elizabeth Clark (I7) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_096",
+      "assertion_id": "a_076",
+      "person_id": "I7",
+      "confidence": "speculative",
+      "rationale": "Assertion a_076 also bears on Elizabeth Clark (I7) as inferred mother of I14. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_097",
+      "assertion_id": "a_077",
+      "person_id": "I15",
+      "confidence": "probable",
+      "rationale": "Name of Daniel W Clark's child_8 stated in 1850 census; materialized as I15.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_098",
+      "assertion_id": "a_078",
+      "person_id": "I15",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, WI 1850 for I15 (Daniel W Clark child_8).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_099",
+      "assertion_id": "a_079",
+      "person_id": "I15",
+      "confidence": "probable",
+      "rationale": "Birthplace stated in 1850 census for I15 (Daniel W Clark child_8).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_100",
+      "assertion_id": "a_080",
+      "person_id": "I15",
+      "confidence": "probable",
+      "rationale": "Birth year estimated from 1850 census age for I15 (Daniel W Clark child_8).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_101",
+      "assertion_id": "a_081",
+      "person_id": "I15",
+      "confidence": "speculative",
+      "rationale": "Child-of-Daniel W Clark (I2) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_102",
+      "assertion_id": "a_081",
+      "person_id": "I2",
+      "confidence": "speculative",
+      "rationale": "Assertion a_081 also bears on Daniel W Clark (I2) as inferred parent of I15. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_103",
+      "assertion_id": "a_082",
+      "person_id": "I15",
+      "confidence": "speculative",
+      "rationale": "Child-of-Elizabeth Clark (I7) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_104",
+      "assertion_id": "a_082",
+      "person_id": "I7",
+      "confidence": "speculative",
+      "rationale": "Assertion a_082 also bears on Elizabeth Clark (I7) as inferred mother of I15. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_105",
+      "assertion_id": "a_083",
+      "person_id": "I16",
+      "confidence": "probable",
+      "rationale": "Name of Daniel W Clark's child_9 stated in 1850 census; materialized as I16.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_106",
+      "assertion_id": "a_084",
+      "person_id": "I16",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, WI 1850 for I16 (Daniel W Clark child_9).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_107",
+      "assertion_id": "a_085",
+      "person_id": "I16",
+      "confidence": "probable",
+      "rationale": "Birthplace stated in 1850 census for I16 (Daniel W Clark child_9).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_108",
+      "assertion_id": "a_086",
+      "person_id": "I16",
+      "confidence": "probable",
+      "rationale": "Birth year estimated from 1850 census age for I16 (Daniel W Clark child_9).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_109",
+      "assertion_id": "a_087",
+      "person_id": "I16",
+      "confidence": "speculative",
+      "rationale": "Child-of-Daniel W Clark (I2) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_110",
+      "assertion_id": "a_087",
+      "person_id": "I2",
+      "confidence": "speculative",
+      "rationale": "Assertion a_087 also bears on Daniel W Clark (I2) as inferred parent of I16. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_111",
+      "assertion_id": "a_088",
+      "person_id": "I16",
+      "confidence": "speculative",
+      "rationale": "Child-of-Elizabeth Clark (I7) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_112",
+      "assertion_id": "a_088",
+      "person_id": "I7",
+      "confidence": "speculative",
+      "rationale": "Assertion a_088 also bears on Elizabeth Clark (I7) as inferred mother of I16. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_113",
+      "assertion_id": "a_089",
+      "person_id": "I17",
+      "confidence": "probable",
+      "rationale": "Name of Daniel W Clark's child_10 stated in 1850 census; materialized as I17.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_114",
+      "assertion_id": "a_090",
+      "person_id": "I17",
+      "confidence": "probable",
+      "rationale": "Residence Monroe, Green County, WI 1850 for I17 (Daniel W Clark child_10).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_115",
+      "assertion_id": "a_091",
+      "person_id": "I17",
+      "confidence": "probable",
+      "rationale": "Birthplace stated in 1850 census for I17 (Daniel W Clark child_10).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_116",
+      "assertion_id": "a_092",
+      "person_id": "I17",
+      "confidence": "probable",
+      "rationale": "Birth year estimated from 1850 census age for I17 (Daniel W Clark child_10).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_117",
+      "assertion_id": "a_093",
+      "person_id": "I17",
+      "confidence": "speculative",
+      "rationale": "Child-of-Daniel W Clark (I2) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_118",
+      "assertion_id": "a_093",
+      "person_id": "I2",
+      "confidence": "speculative",
+      "rationale": "Assertion a_093 also bears on Daniel W Clark (I2) as inferred parent of I17. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_119",
+      "assertion_id": "a_094",
+      "person_id": "I17",
+      "confidence": "speculative",
+      "rationale": "Child-of-Elizabeth Clark (I7) inferred from household position. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_120",
+      "assertion_id": "a_094",
+      "person_id": "I7",
+      "confidence": "speculative",
+      "rationale": "Assertion a_094 also bears on Elizabeth Clark (I7) as inferred mother of I17. Speculative.",
+      "match_score": null,
+      "created": "2026-07-22"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

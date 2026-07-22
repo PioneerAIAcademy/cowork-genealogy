@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "notes": {
+    "f1": "Not recovered — no Adam Schreck person exists in the final tree, and the subject Christina Clark (GP3R-215) has no parents linked. The run timed out (120 min) before concluding.",
+    "f2": "Not recovered — no Margreth Weber person exists in the final tree; mother not established. No proof summary was written (timeout before proof-conclusion)."
+  },
+  "annotator": "ernest"
+}

@@ -1,0 +1,2286 @@
+{
+  "persons": [
+    {
+      "id": "GP3R-215",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Christina",
+          "surname": "Clark",
+          "id": "GP3R-215-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d1738e1f-4a38-424f-96c7-cab0262660c4",
+          "type": "Birth",
+          "date": "29 January 1783",
+          "standard_date": "29 Jan 1783",
+          "place": "Pennsylvania, United States",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "67b65b39-cdf0-43cb-a77a-68b8f1ce292a",
+          "type": "Death",
+          "date": "27 December 1848",
+          "standard_date": "27 Dec 1848",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States"
+        },
+        {
+          "id": "e5bd3c53-2fdc-493e-bb54-cf96bce73a44",
+          "type": "Baptism",
+          "date": "2 March 1783",
+          "standard_date": "2 Mar 1783",
+          "place": "Rehrersburg, Tulpehocken Township, Berks, Pennsylvania, United States",
+          "standard_place": "Rehrersburg, Tulpehocken Township, Berks, Pennsylvania, United States"
+        },
+        {
+          "id": "928605aa-b95b-42ec-887d-9d24a9dc13fe",
+          "type": "Christening",
+          "date": "2 March 1783",
+          "standard_date": "2 Mar 1783",
+          "place": "Rehrersburg, Tulpehocken Township, Berks, Pennsylvania, United States",
+          "standard_place": "Rehrersburg, Tulpehocken Township, Berks, Pennsylvania, United States"
+        },
+        {
+          "id": "3a0d040e-7b2c-48ab-afda-c3dfe07035ec",
+          "type": "Residence",
+          "date": "1820",
+          "standard_date": "1820",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "9b021c0d-39c5-4df3-932d-3f74c1ebb489",
+          "type": "Residence",
+          "date": "1830",
+          "standard_date": "1830",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "409fa53d-410c-4de9-aa56-1a3b3e4fffe9",
+          "type": "Tax+Assessment",
+          "date": "1831",
+          "standard_date": "1831",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "cd3f85a5-4e7f-464a-b83a-9dc07b449159",
+          "type": "Tax Assessment",
+          "date": "1833",
+          "standard_date": "1833",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "d8c01064-5f1f-4636-bb20-473fc9787942",
+          "type": "Residence",
+          "date": "1840",
+          "standard_date": "1840",
+          "place": "Fallsbury Township, Licking, Ohio, United States",
+          "standard_place": "Fallsbury Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "0f35021c-740a-4798-b7da-4c121e17d0b6",
+          "type": "Burial",
+          "date": "1849",
+          "standard_date": "1849",
+          "place": "West Carlisle Cemetery, West Carlisle, Coshocton, Ohio, United States",
+          "standard_place": "West Carlisle Cemetery, West Carlisle, Coshocton, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "LHVD-BKT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Hugh",
+          "surname": "Clark",
+          "id": "LHVD-BKT-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1809",
+          "standard_date": "1809",
+          "place": "Coshocton, Ohio, United States",
+          "standard_place": "Coshocton, Ohio, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LHVD-1MC",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Samuel",
+          "surname": "Clark",
+          "id": "LHVD-1MC-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "20 January 1820",
+          "standard_date": "20 Jan 1820",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "dd44da74-ffac-4637-b32d-4c3cafefeafc",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Winneshiek, Iowa, United States",
+          "standard_place": "Winneshiek, Iowa, United States"
+        },
+        {
+          "id": "c0fd9de0-85b8-4437-8b55-6cbef080c4e3",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Freeborn, Minnesota, United States",
+          "standard_place": "Freeborn, Minnesota, United States"
+        },
+        {
+          "id": "f76a7c9d-3e4b-4c87-9f75-e13e33a574b7",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Elm Creek Township, Martin, Minnesota, United States",
+          "standard_place": "Elm Creek Township, Martin, Minnesota, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Cedar, Martin, Minnesota, United States",
+          "standard_place": "Cedar Township, Martin, Minnesota, United States"
+        },
+        {
+          "id": "6ce6ac86-ad1a-42c0-a597-2c46f5d454f6",
+          "type": "Residence",
+          "date": "1885",
+          "standard_date": "1885",
+          "place": ", Humbug, Stanton, Nebraska, United States",
+          "standard_place": "Pilger Election Precinct, Stanton, Nebraska, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "8 June 1904",
+          "standard_date": "8 Jun 1904",
+          "place": "Galena Township, Martin, Minnesota, United States",
+          "standard_place": "Galena Township, Martin, Minnesota, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "place": "Cedar Lake Cemetery, Trimont, Martin, Minnesota, United States",
+          "standard_place": "Cedar Lake Cemetery, Trimont, Martin, Minnesota, United States"
+        },
+        {
+          "id": "54756bf2-0eab-4615-8497-70f560c6a99e",
+          "type": "LifeSketch",
+          "value": "Mr. and Mrs. Samuel Clark were among the first settlers in Martin County, Minnesota. Samuel was born in Coshocton County, Ohio, January 20, 1821, of Irish-German descent, lived and grew to manhood in his home county. He married Meloina Hall on April 25, 1841. She was born May 31, 1825 in Licking County, Ohio of German-American parentage.\n   in 1842 they moved to Illinois and remained until 1844 when they moved back to Ohio. in 1846 they moved to Wisconsin living in Greene County for three years. they moved to Winneshiek County, Iowa in 1849. from there they moved to Freeborn County, Minnesota in 1857. In the fall of 1867, they came to Cedar Lake, Martin County, Minnesota.\n   Mr. Clark carried the mail from Albert Lea to Blue Earth when they lived in Freeborn County. He was a member of the 10th Minnesota Infantry, General Bull\u2019s campaign in the Dakotas and the pioneer mail carrier of southern Minnesota, thus worthy of mention in our county history.\n   They farmed and later owned and operated a hotel in Cedarville, and later in Mountain Lake until 1881.\n   Samuel and Meloina had 14 children. Daughter Martha married James K Mason of Winnebago, Minnesota.\nMeloina Clark died August 3, 1900. Samuel died June 8th, 1904. Two of their children had died while yet children in 1861. Daughter Seena Stevens had also died prior to the elder Clark\u2019s deaths."
+        },
+        {
+          "id": "58e98974-e869-4fce-9427-f849dbc1139f",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "LZLH-PPW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Joseph",
+          "surname": "Clark",
+          "id": "LZLH-PPW-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "14 June 1814",
+          "standard_date": "14 Jun 1814",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "faaeaed0-5c0e-4813-9419-13348453207f",
+          "type": "Residence",
+          "date": "1820",
+          "standard_date": "1820",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "cb642ccb-b144-44f8-b5d4-4d95980412a0",
+          "type": "Residence",
+          "date": "1830",
+          "standard_date": "1830",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "a2b0fca8-86fb-4485-88dd-d34ab0bb6d18",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States"
+        },
+        {
+          "id": "c99b8dc5-9318-45ad-bc75-1e686cbca3fa",
+          "type": "Residence",
+          "date": "1856",
+          "standard_date": "1856",
+          "place": "Bloomfield Township, Winneshiek, Iowa, United States",
+          "standard_place": "Bloomfield Township, Winneshiek, Iowa, United States",
+          "value": "Iowa State Census"
+        },
+        {
+          "id": "ed47a16b-6cc4-4c1d-bf86-7f5999825902",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Bloomfield Township, Winneshiek, Iowa, United States",
+          "standard_place": "Bloomfield Township, Winneshiek, Iowa, United States"
+        },
+        {
+          "id": "a2e2f5da-3013-4493-8765-e7118cef0464",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Iowa, United States",
+          "standard_place": "Iowa, United States"
+        },
+        {
+          "id": "59e9cb17-7420-43ad-bc63-88b4d53b14cb",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Township 101 Range 47, Minnehaha, Dakota Territory, United States",
+          "standard_place": "Minnehaha, Dakota Territory, United States"
+        },
+        {
+          "id": "14d0c9cd-9b24-4f84-bb75-bddad4473b54",
+          "type": "Death",
+          "date": "26 October 1893",
+          "standard_date": "26 Oct 1893",
+          "place": "Sioux Falls, Minnehaha, South Dakota, United States",
+          "standard_place": "Sioux Falls, Minnehaha, South Dakota, United States"
+        },
+        {
+          "id": "861e9773-a0d9-4f41-9246-6825269d99be",
+          "type": "Burial",
+          "place": "Mount Pleasant Cemetery, Sioux Falls, Minnehaha, South Dakota, United States",
+          "standard_place": "Mount Pleasant Cemetery, Sioux Falls, Minnehaha, South Dakota, United States"
+        }
+      ]
+    },
+    {
+      "id": "LHVD-B5S",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "William W",
+          "surname": "Clark",
+          "id": "LHVD-B5S-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "18 April 1813",
+          "standard_date": "18 Apr 1813",
+          "place": "Franklin Township, Coshocton, Ohio, United States",
+          "standard_place": "Franklin Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "a240031d-d129-416e-80e7-c54e1bc02f0e",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Linton Township, Coshocton, Ohio, United States",
+          "standard_place": "Linton Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "9e3dca5f-6205-48ce-890b-e6081ede4954",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Franklin Township, Coshocton, Ohio, United States",
+          "standard_place": "Franklin Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "26 February 1890",
+          "standard_date": "26 Feb 1890",
+          "place": "Franklin, Ohio, United States",
+          "standard_place": "Franklin, Ohio, United States"
+        },
+        {
+          "id": "8224f58b-379d-431d-bf81-c69123c49a53",
+          "type": "Residence",
+          "date": "1890",
+          "standard_date": "1890",
+          "place": "Wills Creek, Coshocton, Ohio, United States",
+          "standard_place": "Wills Creek, Coshocton, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "LHVD-BV1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Margaret",
+          "surname": "Clark",
+          "id": "LHVD-BV1-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1807",
+          "standard_date": "1807",
+          "place": "Coshocton, Ohio, United States",
+          "standard_place": "Coshocton, Ohio, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "ML82-DNJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "James A",
+          "surname": "Clark",
+          "id": "ML82-DNJ-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4dd8d6aa-2114-445b-8354-0342bf56610f",
+          "type": "Birth",
+          "date": "about 1809",
+          "standard_date": "Abt 1809",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "f68b68cc-0021-4ca5-bbba-169a945dd8af",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Union Township, Auglaize, Ohio, United States",
+          "standard_place": "Union Township, Auglaize, Ohio, United States"
+        },
+        {
+          "id": "1322f82b-4cb7-412f-8dd0-51e64582bf54",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Union Township, Auglaize, Ohio, United States",
+          "standard_place": "Union Township, Auglaize, Ohio, United States"
+        },
+        {
+          "id": "08a9c451-bf53-4de0-824f-a79c4ca87813",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Union Township, Auglaize, Ohio, United States",
+          "standard_place": "Union Township, Auglaize, Ohio, United States"
+        },
+        {
+          "id": "8591a8d5-ab16-411f-b6a1-ec7abb435c03",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Union Township, Auglaize, Ohio, United States",
+          "standard_place": "Union Township, Auglaize, Ohio, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GTP4-6L3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "William",
+          "surname": "Clark",
+          "id": "GTP4-6L3-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f383e570-f7dd-416a-8bff-6649fecf4bc4",
+          "type": "Birth",
+          "date": "24 February 1825",
+          "standard_date": "24 Feb 1825",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "352bd95d-d1c9-43c8-a711-7e303b6e206f",
+          "type": "Residence",
+          "date": "1830",
+          "standard_date": "1830",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "dacba4c1-3917-4940-9281-4b43c480d521",
+          "type": "Tax+Assessment",
+          "date": "1830",
+          "standard_date": "1830",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "e9077218-67b4-45a2-b255-d9fade2b8e2a",
+          "type": "Tax+Assessment",
+          "date": "1831",
+          "standard_date": "1831",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "a239d35a-7e68-47d5-b512-3a78b3643600",
+          "type": "Tax Assessment",
+          "date": "1832",
+          "standard_date": "1832",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "0cd831df-2c9e-468e-b781-6f326558ecc3",
+          "type": "Tax+Assessment",
+          "date": "1833",
+          "standard_date": "1833",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "0a553096-2f0c-4d6f-bace-e7bc40f0051c",
+          "type": "Tax+Assessment",
+          "date": "1834",
+          "standard_date": "1834",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "d3d790d4-db6c-4f44-b29d-cf79c1c19e4d",
+          "type": "Tax+Assessment",
+          "date": "1835",
+          "standard_date": "1835",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "696d6a25-83f9-407d-af9e-0701ef02c596",
+          "type": "Tax+Assessment",
+          "date": "1836",
+          "standard_date": "1836",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "e6df50a6-100f-4ca7-bc79-1436d6abde31",
+          "type": "Tax+Assessment",
+          "date": "1837",
+          "standard_date": "1837",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "26d602b4-0481-4953-bd48-85ad43dc3112",
+          "type": "Tax+Assessment",
+          "date": "1838",
+          "standard_date": "1838",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "95cdf8d6-4bfe-4c27-89e8-9680b7e6b3b8",
+          "type": "Residence",
+          "date": "1849",
+          "standard_date": "1849",
+          "place": "Green County, Wisconsin, United States",
+          "standard_place": "Green, Wisconsin, United States"
+        },
+        {
+          "id": "38753b3c-4421-4466-9b2e-0c67a84e77a0",
+          "type": "Residence",
+          "date": "1856",
+          "standard_date": "1856",
+          "place": "Bloomfield Township, Winneshiek, Iowa, United States",
+          "standard_place": "Bloomfield Township, Winneshiek, Iowa, United States"
+        },
+        {
+          "id": "a9ed56ac-fb16-4888-bf18-4b085f75e2e2",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Perry Township, Coshocton, Ohio, United States",
+          "standard_place": "Perry Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "f1fd126f-d5ee-4b54-b75f-f4fc36899507",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "LaSalle Township, LaSalle, Illinois, United States",
+          "standard_place": "LaSalle Township, LaSalle, Illinois, United States"
+        },
+        {
+          "id": "60833454-f518-44d9-aab5-f45304147275",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Iroquis, Newton, Indiana, United States",
+          "standard_place": "Newton, Indiana, United States"
+        },
+        {
+          "id": "21e5260c-65f5-4316-af51-e4656f849fd5",
+          "type": "Death",
+          "date": "24 April 1881",
+          "standard_date": "24 Apr 1881"
+        },
+        {
+          "id": "342a7948-aa87-4b45-a554-9b305abf6410",
+          "type": "Burial",
+          "place": "Brook, Newton, Indiana, United States",
+          "standard_place": "Brook, Newton, Indiana, United States"
+        },
+        {
+          "id": "737e407b-a26f-4877-a013-a0b88da0a553",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "GXPK-S6N",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Mary J",
+          "surname": "Clark",
+          "id": "GXPK-S6N-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a50125b6-bf7d-4d91-9d58-55f80d1740f9",
+          "type": "Birth",
+          "date": "8 April 1809",
+          "standard_date": "8 Apr 1809",
+          "place": "Virginia, United States",
+          "standard_place": "Virginia, United States"
+        },
+        {
+          "id": "160ba436-7232-4895-813c-14034744dc2c",
+          "type": "Residence",
+          "date": "1820",
+          "standard_date": "1820",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "08a1140e-6135-4b19-807e-48641cf96cbc",
+          "type": "Residence",
+          "date": "1830",
+          "standard_date": "1830",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "94a028ba-7102-459e-961c-21fec67286c5",
+          "type": "Residence",
+          "date": "1840",
+          "standard_date": "1840",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "68e2a4d9-a3ef-4525-9e0c-ea2eedcbcc6b",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "167075bb-69fe-407c-99d5-115806113bca",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "f0667c24-a346-4d2c-8565-4a3905005b2b",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "a5b93206-26a4-486c-a8c2-1578458f52dd",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "b8080d84-5c6e-41b0-8845-25b00ba8ccab",
+          "type": "Death",
+          "date": "2 April 1888",
+          "standard_date": "2 Apr 1888",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "159268dd-371c-438b-825e-b2dd06756bab",
+          "type": "Ethnicity",
+          "value": "w"
+        },
+        {
+          "id": "6394d9ff-3d56-4d96-b301-2b710eec81d3",
+          "type": "Burial",
+          "place": "West Carlisle Cemetery, Coshocton, Coshocton, Ohio, United States",
+          "standard_place": "Coshocton, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "c3981b06-65e6-40b9-96af-a8516b10e99b",
+          "type": "Marital+Status",
+          "value": "Widowed"
+        },
+        {
+          "id": "1cf2f20a-1018-4bbf-b6c3-01cc3208e771",
+          "type": "Residence",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "6e9f1a10-fbd7-45f3-92d6-568be0b269f4",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "eb7c0344-1972-4278-b4d8-12c2fee9db5b",
+          "type": "Occupation",
+          "value": "House Keeping"
+        },
+        {
+          "id": "395b15cf-44f4-4705-9d75-62ddb6f0b159",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "GDSY-XBT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Hugh",
+          "surname": "Clark",
+          "id": "GDSY-XBT-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "bb29de35-9190-46ea-a12f-4c2f2f34afee",
+          "type": "Birth",
+          "date": "1798",
+          "standard_date": "1798",
+          "place": "Linton Township, Coshocton, Ohio, United States",
+          "standard_place": "Linton Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "0a10ba4f-96e9-45e5-b959-bb1db615f42f",
+          "type": "Death",
+          "date": "February 1860",
+          "standard_date": "Feb 1860",
+          "place": "Coshocton, Ohio, United States",
+          "standard_place": "Coshocton, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "LHVD-BY1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "John Allen",
+          "surname": "Clark",
+          "id": "LHVD-BY1-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1817",
+          "standard_date": "1817",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "21a7b5f0-ba59-41df-87a9-a90eae7fc214",
+          "type": "Residence",
+          "date": "1840",
+          "standard_date": "1840",
+          "place": "Grand Township, Marion, Ohio, United States",
+          "standard_place": "Grand Township, Marion, Ohio, United States"
+        },
+        {
+          "id": "93beaffc-b3a2-400e-80eb-c6ed9b8c97d0",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Elizabeth, Jo Daviess, Illinois, United States",
+          "standard_place": "Elizabeth, Jo Daviess, Illinois, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "August 1857",
+          "standard_date": "Aug 1857",
+          "place": "Henderson, Sibley, Minnesota, United States",
+          "standard_place": "Henderson, Sibley, Minnesota, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "18 August 1857",
+          "standard_date": "18 Aug 1857",
+          "place": "Henderson, Sibley, Minnesota, United States",
+          "standard_place": "Henderson, Sibley, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KGCJ-XPW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "William",
+          "surname": "Clark",
+          "id": "KGCJ-XPW-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4469731c-6eea-415b-bb9d-32ee05fa060f",
+          "type": "Birth",
+          "date": "11 December 1783",
+          "standard_date": "11 Dec 1783",
+          "place": "Philadelphia, Philadelphia, Pennsylvania, United States",
+          "standard_place": "Philadelphia, Philadelphia, Pennsylvania, United States"
+        },
+        {
+          "id": "255d347e-64e1-454d-a6fb-e363a46621a5",
+          "type": "Baptism",
+          "date": "1 February 1784",
+          "standard_date": "1 Feb 1784",
+          "place": "Middlesex, England",
+          "standard_place": "Middlesex, England"
+        },
+        {
+          "id": "3ff152b1-e45d-4966-ab0b-09b696f00454",
+          "type": "Baptism",
+          "date": "1 February 1784",
+          "standard_date": "1 Feb 1784",
+          "place": "Marylebone, Middlesex, England, United Kingdom",
+          "standard_place": "Marylebone, Middlesex, England, United Kingdom"
+        },
+        {
+          "id": "ab6cbf18-ccab-41de-9b7b-9423ba876bcf",
+          "type": "Residence",
+          "date": "1820",
+          "standard_date": "1820",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "7dc6c82d-a02e-4908-b6c7-4d0c33faffca",
+          "type": "Tax Assessment",
+          "date": "1827",
+          "standard_date": "1827",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "d9f03a1e-6e7a-4dcf-a37d-7f9ab9d2142d",
+          "type": "Tax Assessment",
+          "date": "1828",
+          "standard_date": "1828",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "3076685b-ebcf-4e01-9c80-33b74cdbee6c",
+          "type": "Tax Assessment",
+          "date": "1829",
+          "standard_date": "1829",
+          "place": "Pike Township, Coshocton, Ohio, United States",
+          "standard_place": "Pike Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "702257fc-32b2-4793-96ad-efb5eebc8b04",
+          "type": "Burial",
+          "date": "1829",
+          "standard_date": "1829",
+          "place": "West Carlisle Cemetery, West Carlisle, Coshocton, Ohio, United States",
+          "standard_place": "West Carlisle Cemetery, West Carlisle, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "4 September 1829",
+          "standard_date": "4 Sep 1829",
+          "place": "Coshocton, Coshocton, Ohio, United States",
+          "standard_place": "Coshocton, Coshocton, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "LC3W-WBX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Elizabeth",
+          "surname": "Clark",
+          "id": "LC3W-WBX-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1817",
+          "standard_date": "1817",
+          "place": "Washington, Virginia, United States",
+          "standard_place": "Washington, Virginia, United States"
+        },
+        {
+          "id": "e414572f-b436-4633-a932-69dc5c2aafee",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Jackson Township, Coshocton, Ohio, United States",
+          "standard_place": "Jackson Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "4d5ab381-b9fb-4cfd-9709-038ea46717cc",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Jackson Township, Coshocton, Ohio, United States",
+          "standard_place": "Jackson Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "bdd9061b-3b49-494c-97ec-92c74bf23450",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Jackson Township, Coshocton, Ohio, United States",
+          "standard_place": "Jackson Township, Coshocton, Ohio, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "12 March 1892",
+          "standard_date": "12 Mar 1892",
+          "place": "Coshocton, Ohio, United States",
+          "standard_place": "Coshocton, Ohio, United States"
+        },
+        {
+          "id": "d67bd25a-51f2-4e76-84ba-7927faed0c32",
+          "type": "Burial",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Coshocton, Coshocton, Ohio, United States",
+          "standard_place": "Coshocton, Coshocton, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "LHVD-B5K",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Nancy",
+          "surname": "Clark",
+          "id": "LHVD-B5K-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1815",
+          "standard_date": "1815",
+          "place": "Coshocton, Ohio, United States",
+          "standard_place": "Coshocton, Ohio, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N1",
+          "type": "BirthName",
+          "given": "Joseph",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "~1780",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ],
+          "place": "Pennsylvania",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Decatur, Green, Wisconsin, United States",
+          "standard_place": "Decatur, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N2",
+          "type": "BirthName",
+          "given": "Daniel W",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Birth",
+          "place": "Pennsylvania",
+          "standard_place": "Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1805"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N3",
+          "type": "BirthName",
+          "given": "Elizabeth",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Birth",
+          "date": "~1821",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ],
+          "place": "Pennsylvania",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "F6",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Decatur, Green, Wisconsin, United States",
+          "standard_place": "Decatur, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N4",
+          "type": "BirthName",
+          "given": "John",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F7",
+          "type": "Birth",
+          "date": "~1824",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ],
+          "place": "Pennsylvania",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "F8",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Decatur, Green, Wisconsin, United States",
+          "standard_place": "Decatur, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N5",
+          "type": "BirthName",
+          "given": "Sarah",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F9",
+          "type": "Birth",
+          "date": "~1827",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ],
+          "place": "Pennsylvania",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "F10",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Decatur, Green, Wisconsin, United States",
+          "standard_place": "Decatur, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N6",
+          "type": "BirthName",
+          "given": "Martha A",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F11",
+          "type": "Birth",
+          "date": "~1828",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ],
+          "place": "Pennsylvania",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "F12",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Decatur, Green, Wisconsin, United States",
+          "standard_place": "Decatur, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N7",
+          "type": "BirthName",
+          "given": "Elizabeth",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F13",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Birth",
+          "place": "Pennsylvania",
+          "standard_place": "Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1809"
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N8",
+          "type": "BirthName",
+          "given": "Daniel",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F15",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Birth",
+          "place": "Ohio",
+          "standard_place": "Ohio, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1829"
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N9",
+          "type": "BirthName",
+          "given": "Hannah",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F17",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F18",
+          "type": "Birth",
+          "place": "Ohio",
+          "standard_place": "Ohio, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1830"
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N10",
+          "type": "BirthName",
+          "given": "Samuel",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F19",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F20",
+          "type": "Birth",
+          "place": "Ohio",
+          "standard_place": "Ohio, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1831"
+        }
+      ]
+    },
+    {
+      "id": "I11",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N11",
+          "type": "BirthName",
+          "given": "Atlys",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F21",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F22",
+          "type": "Birth",
+          "place": "Ohio",
+          "standard_place": "Ohio, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1835"
+        }
+      ]
+    },
+    {
+      "id": "I12",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N12",
+          "type": "BirthName",
+          "given": "Mary E",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F23",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F24",
+          "type": "Birth",
+          "place": "Ohio",
+          "standard_place": "Ohio, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1836"
+        }
+      ]
+    },
+    {
+      "id": "I13",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N13",
+          "type": "BirthName",
+          "given": "John W",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F25",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F26",
+          "type": "Birth",
+          "place": "Illinois",
+          "standard_place": "Illinois, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1837"
+        }
+      ]
+    },
+    {
+      "id": "I14",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N14",
+          "type": "BirthName",
+          "given": "Cynthia A",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F27",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F28",
+          "type": "Birth",
+          "place": "Illinois",
+          "standard_place": "Illinois, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1840"
+        }
+      ]
+    },
+    {
+      "id": "I15",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N15",
+          "type": "BirthName",
+          "given": "Wm H",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F29",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F30",
+          "type": "Birth",
+          "place": "Illinois",
+          "standard_place": "Illinois, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1842"
+        }
+      ]
+    },
+    {
+      "id": "I16",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N16",
+          "type": "BirthName",
+          "given": "George W",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F31",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F32",
+          "type": "Birth",
+          "place": "Wisconsin",
+          "standard_place": "Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1845"
+        }
+      ]
+    },
+    {
+      "id": "I17",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N17",
+          "type": "BirthName",
+          "given": "Sarah E",
+          "surname": "Clark",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F33",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Monroe, Green, Wisconsin, United States",
+          "standard_place": "Monroe, Green, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F34",
+          "type": "Birth",
+          "place": "Wisconsin",
+          "standard_place": "Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "~1850"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "KGCJ-XPW",
+      "person2": "GP3R-215",
+      "facts": [
+        {
+          "id": "1319cbff-46d7-4ac1-8358-df8faa9905cd",
+          "type": "Marriage",
+          "date": "1805",
+          "standard_date": "1805"
+        }
+      ],
+      "id": "rel-1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "GDSY-XBT",
+      "id": "rel-2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "GDSY-XBT",
+      "id": "rel-3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "LHVD-BV1",
+      "subtype": "Biological",
+      "id": "rel-4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "LHVD-BV1",
+      "id": "rel-5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "GXPK-S6N",
+      "id": "rel-6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "GXPK-S6N",
+      "id": "rel-7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "LHVD-BKT",
+      "subtype": "Biological",
+      "id": "rel-8"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "LHVD-BKT",
+      "id": "rel-9"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "ML82-DNJ",
+      "id": "rel-10"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "ML82-DNJ",
+      "id": "rel-11"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "LHVD-B5S",
+      "subtype": "Biological",
+      "id": "rel-12"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "LHVD-B5S",
+      "id": "rel-13"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "LZLH-PPW",
+      "id": "rel-14"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "LZLH-PPW",
+      "id": "rel-15"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "LHVD-B5K",
+      "subtype": "Biological",
+      "id": "rel-16"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "LHVD-B5K",
+      "id": "rel-17"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "LHVD-BY1",
+      "subtype": "Biological",
+      "id": "rel-18"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "LHVD-BY1",
+      "id": "rel-19"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "LC3W-WBX",
+      "subtype": "Biological",
+      "id": "rel-20"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "LC3W-WBX",
+      "id": "rel-21"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "LHVD-1MC",
+      "subtype": "Biological",
+      "id": "rel-22"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "LHVD-1MC",
+      "id": "rel-23"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KGCJ-XPW",
+      "child": "GTP4-6L3",
+      "id": "rel-24"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GP3R-215",
+      "child": "GTP4-6L3",
+      "id": "rel-25"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I3",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I6",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R4"
+    },
+    {
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I7",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R8"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R9"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R10"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R11"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I11",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R12"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I11",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R13"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I12",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R14"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I12",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R15"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I13",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R16"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I13",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R17"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I14",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R18"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I14",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R19"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I15",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R20"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I15",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R21"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I16",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R22"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I16",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R23"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I17",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R24"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I17",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R25"
+    }
+  ],
+  "sources": [
+    {
+      "id": "79ZX-HQD",
+      "title": "Chris.a Clarke, \"Ohio Tax Records, 1800-1850\"",
+      "citation": "\"Ohio, Tax Records, 1800-1887\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7QDQ-TS2M : Fri Mar 13 22:06:25 UTC 2026), Entry for Chris A Clarke, 1831.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7QDQ-TS2M"
+    },
+    {
+      "id": "79HZ-XW8",
+      "title": "Copy of William Clark, \"United States Census, 1820\"",
+      "citation": "\"United States, Census, 1820\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHGS-RHH : Sat Mar 09 05:18:56 UTC 2024), Entry for William Clark, 1820.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XHGS-RHH"
+    },
+    {
+      "id": "79HC-QMK",
+      "title": "A Shrake, Administrator of C Clark, decd. Estate to Joseph Clark Land records; ark:/61903/3:1:3Q9M-C3Q8-9T84",
+      "url": "https://familysearch.org/ark:/61903/3:1:3Q9M-C3Q8-9T84"
+    },
+    {
+      "id": "794C-PL2",
+      "title": "William Clark, Deceased Estate, Ohio Probate Records, 1789-1996; https://familysearch.org/ark:/61903/3:1:3QS7-89MT-9X16?cc=1992421&wc=S2CM-6TL%3A266274301%2C266453501",
+      "citation": "\"Ohio, Probate Records, 1789-1996,\" database with images, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/3:1:3QS7-89MT-9X16?cc=1992421&wc=S2CM-6TL%3A266274301%2C266453501 : 1 July 2014), Coshocton > Wills 1811-1837 vol 1, 2B, C > image 466 of 817; county courthouses, Ohio.",
+      "url": "https://familysearch.org/ark:/61903/3:1:3QS7-89MT-9X16"
+    },
+    {
+      "id": "794C-V3D",
+      "title": "William and Christiana Clark to William Henderson, Jr. Deed records, 1800-1881; index, 1800-1907; ark:/61903/3:1:3Q9M-CS4Y-LZ4F",
+      "url": "https://familysearch.org/ark:/61903/3:1:3Q9M-CS4Y-LZ4F"
+    },
+    {
+      "id": "793C-XPT",
+      "title": "Christina Clarke, \"United States, Census, 1830\"",
+      "citation": "\"United States, Census, 1830\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH5D-22M : Fri Mar 08 11:20:47 UTC 2024), Entry for Christina Clarke, 1830.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XH5D-22M"
+    },
+    {
+      "id": "7MYK-Q6Z",
+      "title": "Christiana Clark Deed to William Clark",
+      "url": "https://familysearch.org/ark:/61903/3:1:3Q9M-C3Q8-S3ZZ-T"
+    },
+    {
+      "id": "7MTB-G7K",
+      "title": "C Clarke, \"Ohio, Tax Records, 1800-1887\"",
+      "citation": "\"Ohio, Tax Records, 1800-1887\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7Q6X-Z2PZ : Fri Mar 13 22:07:18 UTC 2026), Entry for C Clarke, 1833.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7Q6X-Z2PZ"
+    },
+    {
+      "id": "7M2H-N9K",
+      "title": "Christena Clark, \"United States, Census, 1840\"",
+      "citation": "\"United States, Census, 1840\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XHTC-MJ6 : Sun Mar 10 00:11:23 UTC 2024), Entry for Christena Clark, 1840.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XHTC-MJ6"
+    },
+    {
+      "id": "7MCQ-XD7",
+      "title": "Christena [Christina] Clark (head of household) in the 1840 United States Federal Census",
+      "citation": "Source Citation\nYear: 1840; Census Place: Fallsbury Township, Licking, Ohio; Roll: 408; Page: 253; Family History Library Film: 0020170",
+      "url": "https://www.ancestry.com/discoveryui-content/view/3319516:8057"
+    },
+    {
+      "id": "Q11N-1DW",
+      "title": "1830 United States Federal Census",
+      "citation": "Year: 1830; Census Place: Pike, Coshocton, Ohio; Series: M19; Roll: 129; Page: 5; Family History Library Film: 0337940",
+      "url": "https://search.ancestry.com/collections/8058/records/282855"
+    },
+    {
+      "id": "3VYM-S2X",
+      "title": "Christina Clark in entry for Joseph Clark, \"Wisconsin, Marriages, 1836-1930\"",
+      "citation": "\"Wisconsin, Marriages, 1836-1930\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XRP8-7XG : 29 February 2024), Christina Clark in entry for Joseph Clark, 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XRP8-7XG"
+    },
+    {
+      "id": "S1",
+      "title": "Joseph Clark household, 1850 U.S. Census, Decatur, Green County, Wisconsin",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4DV-MMT"
+    },
+    {
+      "id": "S2",
+      "title": "Daniel W Clark household, 1850 U.S. Census, Monroe, Green County, Wisconsin",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4DN-TWB"
+    }
+  ]
+}
