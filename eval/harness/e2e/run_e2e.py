@@ -3,22 +3,25 @@
 Usage (run from eval/harness/):
 
   uv run python -m e2e.run_e2e --test <fixture-id>
-  uv run python -m e2e.run_e2e --tag <tag>
 
 Or from the repo root with PYTHONPATH set:
 
   PYTHONPATH=eval/harness python -m e2e.run_e2e --test <fixture-id>
+
+**One fixture per invocation, by design.** There is deliberately no
+full-suite flag and no tag sweep: a run costs 20-60 minutes and $3-10, so a
+10-fixture sweep is 4-10 hours and $30-100. Anyone who genuinely needs a
+batch drives it with a shell loop and budgets for it explicitly, rather than
+having a one-word flag make that spend easy to trigger by accident.
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
-import json
 import os
 import sys
 from pathlib import Path
-from typing import Iterable
 
 from e2e.orchestrator import (
     DEFAULT_FIXTURES_ROOT,
@@ -38,24 +41,6 @@ from e2e.result import E2eResult, is_committable_run
 # own auth and is unaffected, which is why the symptom of a missing key is
 # "agent ran, judge skipped".
 _ENV_FILE = ENV_FILE  # back-compat alias
-
-
-def _list_fixture_dirs(fixtures_root: Path) -> list[Path]:
-    return sorted(
-        p for p in fixtures_root.iterdir()
-        if p.is_dir() and (p / "fixture.json").exists()
-    )
-
-
-def _filter_by_tag(fixture_dirs: Iterable[Path], tag: str) -> list[Path]:
-    """Keep fixtures whose tags contain the given tag value (any dimension)."""
-    matched = []
-    for d in fixture_dirs:
-        meta = json.loads((d / "fixture.json").read_text(encoding="utf-8"))
-        tag_values = set((meta.get("tags") or {}).values())
-        if tag in tag_values:
-            matched.append(d)
-    return matched
 
 
 def _print_proof_quality(result: E2eResult) -> None:
@@ -108,11 +93,14 @@ def main(argv: list[str] | None = None) -> int:
     stage_openrouter_key()  # bridge OPENROUTER_API_KEY -> ~/.familysearch-mcp/config.json for the MCP subprocess (spec §6.5)
     parser = argparse.ArgumentParser(
         prog="e2e.run_e2e",
-        description="Run one or more e2e tests against the GPS research flow.",
+        description="Run one e2e test against the GPS research flow.",
     )
-    target = parser.add_mutually_exclusive_group(required=True)
-    target.add_argument("--test", help="Fixture id (slug) under eval/tests/e2e/")
-    target.add_argument("--tag", help="Run fixtures with this tag value (any dimension)")
+    parser.add_argument(
+        "--test",
+        required=True,
+        help="Fixture id (slug) under eval/tests/e2e/. One fixture per run — "
+             "there is no suite or tag sweep (see the module docstring).",
+    )
     parser.add_argument(
         "--fixtures-root",
         type=Path,
@@ -199,16 +187,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Fixtures root does not exist: {fixtures_root}", file=sys.stderr)
         return 2
 
-    if args.test:
-        fixture_dirs = [fixtures_root / args.test]
-        if not fixture_dirs[0].exists():
-            print(f"Fixture not found: {fixture_dirs[0]}", file=sys.stderr)
-            return 2
-    else:  # --tag
-        fixture_dirs = _filter_by_tag(_list_fixture_dirs(fixtures_root), args.tag)
-
-    if not fixture_dirs:
-        print("No fixtures matched.", file=sys.stderr)
+    fixture_dir = fixtures_root / args.test
+    if not fixture_dir.exists():
+        print(f"Fixture not found: {fixture_dir}", file=sys.stderr)
         return 2
 
     kwargs = {
@@ -223,19 +204,18 @@ def main(argv: list[str] | None = None) -> int:
     }
 
     results: list[E2eResult] = []
-    for fixture_dir in fixture_dirs:
-        try:
-            result = asyncio.run(_run_one(fixture_dir, **kwargs))
-            results.append(result)
-        except KeyboardInterrupt:
-            print("\nInterrupted.", file=sys.stderr)
-            return 130
-        except Exception as e:  # noqa: BLE001 — keep the suite running
-            print(f"  ERROR: {type(e).__name__}: {e}", file=sys.stderr)
+    try:
+        results.append(asyncio.run(_run_one(fixture_dir, **kwargs)))
+    except KeyboardInterrupt:
+        print("\nInterrupted.", file=sys.stderr)
+        return 130
+    except Exception as e:  # noqa: BLE001 — report, then fall through to a nonzero exit
+        print(f"  ERROR: {type(e).__name__}: {e}", file=sys.stderr)
+        return 1
 
     print()
     print_rollup(results)
-    # Exit nonzero if any test failed or aborted.
+    # Exit nonzero if the test failed or aborted.
     failed = sum(1 for r in results if r.verdict in {"fail", "skipped"})
     return 1 if failed else 0
 

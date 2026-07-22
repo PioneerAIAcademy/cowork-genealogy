@@ -141,7 +141,7 @@ beyond Read / Bash / Glob for file inspection. Use Claude Sonnet 4.6
 
 | Situation | Action |
 |---|---|
-| `_feedback/feedback.json` is missing | Abort with "Not a feedback-case directory. Run `scripts/setup-feedback-case.sh <zip>` first; see docs/specs/feedback-case-spec.md §3.1." |
+| `_feedback/feedback.json` is missing | Abort with "Not a feedback-case directory. Run `scripts/setup-feedback-case.sh <zip>` first; see docs/specs/feedback-case-spec.md §3." |
 | `_feedback/feedback.json` exists but the target field is empty | Abort with "feedback.json has empty `<field>`. Per `apps/electron/docs/feedback-json-spec.md` §3, this field is required and must be non-empty. Have the submitter resubmit." |
 | `--against` flag missing or invalid | Print usage (`--against=what-went-wrong` or `--against=desired`) and abort. |
 | The case directory has no git baseline (no `.git/`) | Warn but continue — the user may be running this outside the standard setup. State-diff falls back to reading the canonical files only. |

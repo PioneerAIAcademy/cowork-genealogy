@@ -212,5 +212,5 @@ write a regression test so it can't come back silently. That test is the durable
 result of your report — which is why "what it should have done" matters so much.
 
 If you're curious what happens on our side, one report is followed end to end
-in [`alpha-feedback-example.md`](alpha-feedback-example.md) — written for our
+in [`alpha-feedback-guide.md`](alpha-feedback-guide.md) — written for our
 developers, but readable, and the case it follows is a genealogical one.
