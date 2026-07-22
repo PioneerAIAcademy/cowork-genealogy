@@ -69,6 +69,10 @@
     "evaluations": {
       "type": "array",
       "items": { "$ref": "#/$defs/evaluation_entry" }
+    },
+    "localities": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/locality" }
     }
   },
   "$defs": {
@@ -724,6 +728,66 @@
             { "type": "null" }
           ]
         }
+      }
+    },
+    "locality": {
+      "type": "object",
+      "required": ["id", "place", "pages_read", "source", "created"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^loc_" },
+        "place": { "type": "string" },
+        "for_place": { "type": ["string", "null"] },
+        "time_period": { "type": ["string", "null"] },
+        "jurisdictions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "date_range": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "collections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "title"],
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "date_range": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "quirks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "guide_markdown": { "type": ["string", "null"] },
+        "pages_read": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["section", "found"],
+            "properties": {
+              "section": {
+                "type": "string",
+                "enum": ["home", "getting_started", "online_records", "research_tips"]
+              },
+              "url": { "type": ["string", "null"] },
+              "found": { "type": "boolean" }
+            }
+          }
+        },
+        "source": { "type": "string" },
+        "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "updated": { "$ref": "enums.schema.json#/$defs/iso_date" }
       }
     }
   }

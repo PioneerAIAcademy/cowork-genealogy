@@ -41,7 +41,8 @@ A project often starts with a question about a person who does not yet exist in 
   "hypotheses": [ ],
   "timelines": [ ],
   "proof_summaries": [ ],
-  "evaluations": [ ]
+  "evaluations": [ ],
+  "localities": [ ]
 }
 ```
 
@@ -116,6 +117,7 @@ All IDs are strings with a prefix indicating the section. IDs are immutable once
 | `t_` | timelines | `t_001` |
 | `ps_` | proof_summaries | `ps_001` |
 | `ev_` | evaluations | `ev_001` |
+| `loc_` | localities | `loc_001` |
 
 GedcomX IDs (person IDs like `I1`, source description IDs like `S1`) use their own conventions from `tree.gedcomx.json` and are referenced as foreign keys.
 
@@ -139,6 +141,7 @@ Each skill writes to its own section and reads from others. Skills must never wr
 | `hypotheses` | hypothesis-tracking | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
 | `timelines` | timeline | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated |
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
+| `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; supersede-not-delete. Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
 
 **General rule:** Append-only sections (`log`) are never rewritten. All other sections allow field updates but skills must preserve IDs and never delete entries — supersede with a status field instead. This lets you reconstruct project history from the file alone.
 
@@ -564,6 +567,38 @@ Array of evaluation pointer records — a lightweight index of mentor reviews pe
 **Append-only ownership.** The `gps-mentor` agent is the sole writer of this array. Entries are never deleted. When a re-evaluation runs for the same `focus` + `target_id`, the prior entry's `superseded_by` field is updated to point at the new entry's `id`, and the new entry is appended with `superseded_by: null`. This preserves the full audit trail without overwriting history. No other skill should mutate `evaluations`, and `gps-mentor` itself never modifies any other section of `research.json`.
 
 **Filename convention.** The agent writes verdict files to `evaluations/<focus>-<target_id>-<short_iso>.json` where `<short_iso>` is the UTC timestamp in `YYYY-MM-DDTHH-MM-SS` format (colons replaced with hyphens for filesystem safety).
+
+### 5.13 `localities`
+
+Array of place/locale research records — the durable knowledge base for "how to find
+records in a place." Written exclusively by the `locality-guide` skill (which reads
+the FamilySearch Research Wiki place pages plus `place_search_all` /
+`collections_search`), and read by `research-plan` (to stage searches) and the
+Research Viewer. `search-records` does **not** read this section — `research-plan`
+pre-translates the one relevant fact into the plan item's `rationale` (see §4).
+
+**Optional section** (not in `required`): absent on projects that predate it; new
+projects seed `localities: []`. One entry per place-jurisdiction the project
+researches; it accumulates across the project's questions (reused, not per-question).
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | yes | `loc_` prefix |
+| `place` | string | yes | Standardized jurisdiction the guide covers (usually country or US-state / Canadian-province — the wiki corpus granularity) |
+| `for_place` | string \| null | no | The specific place of interest that prompted it, when narrower than `place` |
+| `time_period` | string \| null | no | Era the guide was scoped to |
+| `jurisdictions` | array | no | Border/name succession from `place_search_all`: `{ name, date_range? }` |
+| `collections` | array | no | Record sets covering the place from `collections_search`: `{ id, title, date_range? }` |
+| `quirks` | string[] | no | Short, actionable gotchas (e.g. "indexed only at county level") |
+| `guide_markdown` | string \| null | no | The distilled research guide (from the wiki place pages) — what the viewer renders |
+| `pages_read` | array | yes | Provenance: which wiki sections were fetched — `{ section, url?, found }`, `section` ∈ `home` / `getting_started` / `online_records` / `research_tips`. Makes read-coverage checkable |
+| `source` | string | yes | Always `"locality-guide"` |
+| `created` / `updated` | date | `created` yes | Tool-stamped `YYYY-MM-DD` |
+
+**Applied facts live in `plan_item.rationale`.** `localities` is the knowledge base;
+the per-search decision (e.g. "search Oppland, not Ringebu — see `loc_001`") is
+written as free text in the plan item that uses it. Full design:
+`docs/plan/localities-section-plan.md`.
 
 ---
 

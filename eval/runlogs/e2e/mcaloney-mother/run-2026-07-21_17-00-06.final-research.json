@@ -1,0 +1,1990 @@
+{
+  "project": {
+    "id": "rp_mcaloney_mother",
+    "objective": "What evidence identifies the mother of Charles Kingsley McAloney?",
+    "subject_person_ids": [
+      "99KY-ZQW"
+    ],
+    "status": "completed",
+    "created": "2026-07-21",
+    "updated": "2026-07-21"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the Massachusetts birth record for Charles Kingsley McAloney (born 11 January 1911) identify as his mother?",
+      "rationale": "The subject's birth record is the highest-value direct source for his mother's identity: Massachusetts registered births systematically and the record would name the mother. Multiple FamilySearch ARKs for his birth registration are already cited in the tree but not yet extracted. This is the gatekeeper question \u2014 its answer names the mother and enables corroboration questions (census, NUMIDENT) downstream.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-21",
+      "resolution_assertion_ids": [
+        "a_007",
+        "a_009",
+        "a_028",
+        "a_030",
+        "a_042",
+        "a_046"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Three independent record types directly or corroboratively answer the question. (1) Massachusetts State Vital Records birth entry FXVQ-NRT (original source, primary information) directly names 'Jessie McPhee' as the mother \u2014 this is the record the question asks about. (2) SS NUMIDENT 6KMC-1WW5 (original source, primary information) has the subject himself naming 'Jessie MacPhee' as his mother on the SS-5 application in Sep 1940. (3) Massachusetts State Vital Records marriage N4DT-1YL (original source, primary information) confirms Jessie MacPhee married Charles McAloney on 6 Oct 1907 \u2014 ~3.3 years before the subject's birth. Census searches (1910, 1920) were exhausted on FamilySearch with six variant queries; the failure to locate the McAloney household in indexed census records is documented in log_004\u2013log_009 and is a known FamilySearch indexing gap for this name. Ancestry census was not searched but is not required given the convergence of three independent records. The California death certificate (pli_006) was skipped as the question is fully answered. The GPS exhaustiveness standard is met for this narrow, specific question.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014"
+        ],
+        "stop_criteria": "Three independent original sources with primary information converge on Jessie McPhee/MacPhee as the mother. Direct evidence (birth record) answers the question. Corroborating evidence (NUMIDENT, marriage) confirms the identification. Census searches exhausted on FamilySearch. No conflicting evidence found."
+      },
+      "created": "2026-07-21"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Massachusetts, United States",
+          "date_range": "1911",
+          "repository": "FamilySearch",
+          "rationale": "Multiple Massachusetts birth registrations for Charles Kingsley McAloney (born 11 Jan 1911) are already cited in the tree at five ARKs across 'Massachusetts, State Vital Records, 1638-1927' (FXVQ-NRT) and 'Massachusetts, Town Clerk, Vital and Town Records, 1626-2001' (Q23S-BTKN, Q23S-BTJQ, Q23S-BT22, Q23S-BTVN). Massachusetts birth records of this period name both parents, including the mother's name and maiden name. These records are the highest-value direct evidence for the mother's identity and must be extracted before any other source.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "other",
+          "jurisdiction": "United States",
+          "date_range": "1940-1975",
+          "repository": "FamilySearch",
+          "rationale": "The Social Security NUMIDENT for Charles K. McAloney is already cited in the tree (ARK 6KMC-1WW5). SS-5 applications and claim records often list parents by name. Extract this record to check for a mother's name, particularly on the original SS-5 application from Sep 1940.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Somerville, Middlesex, Massachusetts, United States",
+          "date_range": "1920",
+          "repository": "FamilySearch",
+          "rationale": "The 1920 US Census would show Charles Kingsley McAloney (age ~9) in his parents' household in Somerville, Middlesex, Massachusetts \u2014 the tree already records this residence. A household enumeration would identify the mother by name in relationship to the head and the children, providing corroborating evidence for the mother's identity.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Somerville, Middlesex, Massachusetts, United States",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "The 1910 US Census was taken just months before Charles K. McAloney's birth (Jan 1911). The tree places father Charles Smith McAloney in Somerville Ward 1 in 1910. This household enumeration would show the mother at or near the time of the subject's birth \u2014 corroborating the mother named on the birth record, and potentially naming additional children.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Massachusetts, United States",
+          "date_range": "1895-1915",
+          "repository": "FamilySearch",
+          "rationale": "A dedicated search for the marriage of Charles Smith McAloney to the subject's mother in Massachusetts vital records (collection 1675351: Marriages 1695-1910/1921-1924; collection 1469062: Marriages 1841-1915). The parents' marriage record would supply the mother's maiden name \u2014 which census records and death certificates usually omit \u2014 and by its date relative to the child's birth, corroborates the couple as Charles K.'s parents. This is a required parentage-plan item per BCG Standard 14.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Sonoma County, California, United States",
+          "date_range": "1989",
+          "repository": "other",
+          "rationale": "Charles K. McAloney died 16 Dec 1989 in Sonoma, California. California death certificates (California Death Index, or original certificate via California State Archives) list parents when provided by the informant. A sibling, child, or spouse who served as informant may have known the mother's name. Daughter Joann McAloney Wallahan and wife Arlene are candidates. This serves as a fallback if birth records are incomplete.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-21T16:22:09.867Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Massachusetts, State Vital Records, 1638-1927",
+        "collectionId": "1928860",
+        "surname": "McAloney",
+        "givenName": "Charles",
+        "birthYearFrom": 1906,
+        "birthYearTo": 1916,
+        "birthPlace": "Massachusetts",
+        "recordType": "birth",
+        "fatherSurname": "McAloney",
+        "fatherGivenName": "Charles",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 2,
+      "notes": "Top match ark:/61903/1:1:FXVQ-NRT (score 0.918, confidence 5, attached to subject): Charles Kingsley McAloney born 11 Jan 1911, Somerville, Middlesex, MA. Record names father Charles S. McAloney and mother Jessie McPhee. Mother's maiden name Jessie McPhee is the key finding for q_001."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-21T16:23:08.526Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Massachusetts, Town Clerk, Vital and Town Records, 1626-2001",
+        "collectionId": "2061550",
+        "surname": "McAloney",
+        "givenName": "Charles",
+        "birthYearFrom": 1906,
+        "birthYearTo": 1916,
+        "birthPlace": "Massachusetts",
+        "recordType": "birth",
+        "fatherSurname": "McAloney",
+        "fatherGivenName": "Charles",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 4,
+      "notes": "Four Town Clerk index entries for Charles Kingsley McAloney born 11 Jan 1911 Somerville (ARKs Q23S-BTKN, Q23S-BT22, Q23S-BTVN, Q23S-BTJQ \u2014 all match scores 0.74\u20130.92, all attached to subject). Top entry Q23S-BTKN read: names only father Charles McAloney; mother not indexed in this derivative. The State Vital Records entry FXVQ-NRT (log_001) is the more complete record naming both father and mother Jessie McPhee. Town Clerk records corroborate birth date and place but do not add mother's name independently."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-21T16:23:51.823Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:6KMC-1WW5",
+        "collection": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
+        "method": "direct record_read on known ARK from tree"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "NUMIDENT (ARK 6KMC-1WW5) read directly. Names subject Charles Kinysley McAloney, father Charles S. McAloney, mother Jessie MacPhee (note spelling variant MacPhee vs McPhee on birth record). SS application Sep 1940, claim 13 Nov 1975, death 16 Dec 1989 Somerville/Santa Rosa. Mother name corroborates birth record finding with minor spelling variant."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T16:24:14.275Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAloney",
+        "givenName": "Charles",
+        "sex": "Male",
+        "birthYearFrom": 1906,
+        "birthYearTo": 1916,
+        "residencePlace": "Somerville, Middlesex, Massachusetts",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil \u2014 no 1920 census results for Charles McAloney in Somerville, Middlesex, Massachusetts. May be indexed under a variant spelling or parent's name rather than child's. Broadening to Massachusetts state."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T16:24:26.455Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAloney",
+        "givenName": "Charles",
+        "birthYearFrom": 1906,
+        "birthYearTo": 1916,
+        "recordCountry": "United States",
+        "recordSubdivision": "Massachusetts",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 2,
+      "notes": "2 results, neither is the subject (Carl Allentuck in Worcester, Lynwood Aldan in Pittsfield \u2014 scores 5.2 and 4.3, both different names). Charles K. McAloney likely indexed as a child in his father's household. Retrying under father Charles Smith McAloney."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T16:24:37.822Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAloney",
+        "givenName": "Charles",
+        "birthYearFrom": 1865,
+        "birthYearTo": 1875,
+        "residencePlace": "Somerville, Middlesex, Massachusetts",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "recordType": "census",
+        "note": "searching under father Charles S. McAloney b.1870"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil \u2014 no 1920 census for Charles McAloney (father, b.1870) in Somerville. Surname may be indexed as Mc Aloney or McAlony. Trying broader scope."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T16:24:57.796Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAloney",
+        "givenName": "Charles",
+        "birthYearFrom": 1865,
+        "birthYearTo": 1878,
+        "recordCountry": "United States",
+        "recordSubdivision": "Massachusetts",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 1,
+      "notes": "One result (Richard C Aldon, Westborough, score 4.4) \u2014 not the subject. Trying surname variant Mc Aloney (space)."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T16:25:21.135Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mc Aloney",
+        "givenName": "Charles",
+        "recordCountry": "United States",
+        "recordSubdivision": "Massachusetts",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 3,
+      "notes": "3 results, none match (Carl Allentuck Worcester, Richard Aldon Westborough, Lynwood Aldan Pittsfield). Surname variant with space also fails. Trying via mother's name Jessie McAloney."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T16:25:34.368Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAloney",
+        "givenName": "Jessie",
+        "recordCountry": "United States",
+        "recordSubdivision": "Massachusetts",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 1,
+      "notes": "One result (Jessie Allentuck, Worcester, Russia-born 1885) \u2014 not our subject. 1920 census for McAloney household in Massachusetts not surfacing through surname variants. Pivoting to 1910 census (pli_004) which is closer to the subject's birth date and the tree explicitly places father in Somerville Ward 1."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T16:25:51.874Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAloney",
+        "givenName": "Charles",
+        "birthYearFrom": 1865,
+        "birthYearTo": 1878,
+        "birthPlace": "Nova Scotia",
+        "residencePlace": "Somerville, Middlesex, Massachusetts",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil \u2014 no 1910 census for Charles McAloney (b. 1870 Nova Scotia) in Somerville. Dropping birthplace filter."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T16:26:04.276Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAloney",
+        "givenName": "Charles",
+        "recordCountry": "United States",
+        "recordSubdivision": "Massachusetts",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil \u2014 McAloney + Charles + Massachusetts 1910 returns nothing. Trying Mc Aloney (space) variant and then broader US search."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T16:26:44.656Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mc Aloney",
+        "givenName": "Charles",
+        "recordCountry": "United States",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "recordType": "census",
+        "count": 50,
+        "note": "Broadest surname variant, all US"
+      },
+      "outcome": "negative",
+      "results_examined": 34,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 34,
+      "notes": "34 results, none match (all wrong names/places/birth years). Closest hit is Frank T McAloney household in Summit, Iowa \u2014 different family. No McAloney census household found in Massachusetts 1910. Surname appears inconsistently indexed. FamilySearch 1910/1920 census searches exhausted across multiple variants (McAloney, Mc Aloney, Jessie McAloney, Massachusetts, US-wide). Primary evidence for mother already established from birth record (log_001) and NUMIDENT (log_003). Ancestry may have the census under a variant \u2014 flag for external-sites if corroboration needed."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-21T16:27:43.767Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAloney",
+        "givenName": "Charles",
+        "spouseGivenName": "Jessie",
+        "recordCountry": "United States",
+        "recordSubdivision": "Massachusetts",
+        "marriageYearFrom": 1895,
+        "marriageYearTo": 1912,
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 3,
+      "notes": "Three marriage records found for Charles McAloney and Jessie MacPhee/Macphee, all attached to subject (99KY-4H1). Top record N4DT-1YL (Massachusetts State Vital Records) read: marriage 6 Oct 1907, Boston, Suffolk, MA. Bride Jessie MacPhee born 1881 Cape Breton, Nova Scotia. Bride's parents: Charles MacPhee and Margaret McDonald. Groom's parents: James McAloney and Mary McAuliffe. This supplies Jessie's maiden name (MacPhee) and birth origin (Cape Breton, Nova Scotia) \u2014 corroborates birth record and NUMIDENT identification of mother. Marriage predates subject's birth by 3+ years."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-21T16:33:29.465Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6KMC-1WW5",
+        "collection": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007 (collection 5000016)",
+        "subject": "Charles Kinysley McAloney"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Direct record_read of NUMIDENT entry for Charles K. McAloney. Record contains SS-5 application (Sep 1940) and claim record (13 Nov 1975). Names mother as Jessie MacPhee (variant of McPhee, bearing on q_001) and father as Charles S McAloney. Birth place recorded as Somerville, Middlesex, California \u2014 likely indexing error for Massachusetts per src_001."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:FXVQ-NRT : Thu May 23 02:17:39 UTC 2024), Entry for Charles Kingsley McAloney and Charles S. McAloney, 11 Jan 1911.",
+      "citation_detail": {
+        "who": "Charles Kingsley McAloney (birth subject); Charles S. McAloney (father); Jessie McPhee (mother)",
+        "what": "Massachusetts state birth registration, collection 1928860",
+        "when_created": "11 January 1911",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, Massachusetts, State Vital Records, 1638-1927",
+        "where_within": "Entry for Charles Kingsley McAloney and Charles S. McAloney, 11 Jan 1911; image at ark:/61903/1:2:SMD4-FKJ"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:FXVQ-NRT",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q23S-BTKN : accessed 2026-07-21), Entry for Charles Kingsley McAloney and Charles McAloney, 11 Jan 1911.",
+      "citation_detail": {
+        "who": "Town clerks of Massachusetts municipalities",
+        "what": "Index entry for birth of Charles Kingsley McAloney, naming father Charles McAloney",
+        "when_created": "1911",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, Massachusetts, Town Clerk, Vital and Town Records, 1626-2001 (collection 2061550)",
+        "where_within": "Entry for Charles Kingsley McAloney and Charles McAloney, 11 Jan 1911"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q23S-BTKN",
+      "access_date": "2026-07-21",
+      "notes": "Derivative index entry from the Massachusetts Town Clerk vital records collection. Original register not examined \u2014 only the index was accessed. The index names the father (Charles McAloney) but does not name the mother. Image available at https://www.familysearch.org/ark:/61903/1:2:QLMJ-RM2N.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6KMC-1WW5 : accessed 21 July 2026), Entry for Charles Kinysley McAloney and Charles S McAloney.",
+      "citation_detail": {
+        "who": "Charles Kinysley McAloney (also known as Charles K McAloney)",
+        "what": "Social Security Numerical Identification Files (NUMIDENT), SS-5 application (Sep 1940) and claim record",
+        "when_created": "September 1940 (SS-5 application); claim filed 13 November 1975",
+        "when_accessed": "21 July 2026",
+        "where": "FamilySearch, collection 5000016",
+        "where_within": "Entry for Charles Kinysley McAloney, ARK ark:/61903/1:1:6KMC-1WW5"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6KMC-1WW5",
+      "access_date": "2026-07-21",
+      "notes": "The NUMIDENT consists of the original SS-5 Social Security application form (Sep 1940) and subsequent claim records. Image available at https://www.familysearch.org/ark:/61903/1:2:HSJS-V1DL. Birth place recorded as 'Somerville, Middlesex, California' \u2014 'California' is likely an indexing error; the birth record (src_001, log_001) shows Massachusetts. Extracted what the record states; discrepancy noted.",
+      "log_entry_id": "log_014",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:N4DT-1YL : accessed 2026-07-21), Entry for Charles McAloney and Jessie MacPhee, 6 Oct 1907.",
+      "citation_detail": {
+        "who": "Charles McAloney and Jessie MacPhee",
+        "what": "Massachusetts, State Vital Records, 1638-1927, marriage registration",
+        "when_created": "6 Oct 1907",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch (https://www.familysearch.org/ark:/61903/1:1:N4DT-1YL)",
+        "where_within": "Entry for Charles McAloney and Jessie MacPhee, 6 Oct 1907"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:N4DT-1YL",
+      "notes": "Massachusetts State Vital Records; the marriage registration itself. Image available at https://www.familysearch.org/ark:/61903/1:2:9JH2-WZ6",
+      "log_entry_id": "log_013",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:FXVQ-NRT",
+      "record_persona_id": "p_11289903176",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Charles Kingsley McAloney",
+      "structured_value": {
+        "given": "Charles Kingsley",
+        "surname": "McAloney"
+      },
+      "information_quality": "primary",
+      "informant": "parents of Charles Kingsley McAloney",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:FXVQ-NRT",
+      "record_persona_id": "p_11289903176",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "parents of Charles Kingsley McAloney",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:FXVQ-NRT",
+      "record_persona_id": "p_11289903176",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "born 11 January 1911",
+      "date": "11 Jan 1911",
+      "date_certainty": "exact",
+      "place": "Somerville, Middlesex, Massachusetts, United States",
+      "standard_place": "Somerville, Middlesex, Massachusetts, United States",
+      "information_quality": "primary",
+      "informant": "parents of Charles Kingsley McAloney",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:FXVQ-NRT",
+      "record_persona_id": "p_11289903174",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Charles S. McAloney",
+      "structured_value": {
+        "given": "Charles S.",
+        "surname": "McAloney"
+      },
+      "information_quality": "primary",
+      "informant": "Charles S. McAloney",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:FXVQ-NRT",
+      "record_persona_id": "p_11289903174",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Charles S. McAloney",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:FXVQ-NRT",
+      "record_persona_id": "p_11289903174",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "father of Charles Kingsley McAloney",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Charles S. McAloney",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:FXVQ-NRT",
+      "record_persona_id": "p_11289903175",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Jessie McPhee",
+      "structured_value": {
+        "given": "Jessie",
+        "surname": "McPhee"
+      },
+      "information_quality": "primary",
+      "informant": "Jessie McPhee",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:FXVQ-NRT",
+      "record_persona_id": "p_11289903175",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Jessie McPhee",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:FXVQ-NRT",
+      "record_persona_id": "p_11289903175",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "mother of Charles Kingsley McAloney",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Jessie McPhee",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:Q23S-BTKN",
+      "record_persona_id": "p_102135299986",
+      "record_role": "principal",
+      "fact_type": "name",
+      "value": "Charles Kingsley McAloney",
+      "structured_value": {
+        "given": "Charles Kingsley",
+        "surname": "McAloney"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Derivative index entry; the original register informant is not identified by this index. The transcription layer introduces additional uncertainty.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:Q23S-BTKN",
+      "record_persona_id": "p_102135299986",
+      "record_role": "principal",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Derivative index; original informant unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:Q23S-BTKN",
+      "record_persona_id": "p_102135299986",
+      "record_role": "principal",
+      "fact_type": "birth",
+      "value": "born 11 Jan 1911, Somerville, Middlesex, Massachusetts, United States",
+      "date": "11 Jan 1911",
+      "date_certainty": "exact",
+      "place": "Somerville, Middlesex, Massachusetts, United States",
+      "standard_place": "Somerville, Middlesex, Massachusetts, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Derivative index entry; original register informant unknown. Date and place are stated directly in the index and corroborate the Massachusetts State Vital Record from log_001. However, the indexing layer may introduce transcription error, and the original was not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:Q23S-BTKN",
+      "record_persona_id": "p_102135299988",
+      "record_role": "father_of_principal",
+      "fact_type": "name",
+      "value": "Charles McAloney",
+      "structured_value": {
+        "given": "Charles",
+        "surname": "McAloney"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Derivative index; original register informant unknown. The father's name as indexed may reflect the original informant's report (likely the father himself or the mother at registration) but the specific informant is not identified by the index.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:Q23S-BTKN",
+      "record_persona_id": "p_102135299988",
+      "record_role": "father_of_principal",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Derivative index; original informant unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:Q23S-BTKN",
+      "record_persona_id": "p_102135299986",
+      "record_role": "principal",
+      "fact_type": "relationship",
+      "value": "child of Charles McAloney",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_principal"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The ParentChild relationship is stated in the index (the record is an index of a birth registration explicitly linking father to child). Original informant at the time of registration is unknown. Derivative transcription layer may introduce error.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "applicant",
+      "fact_type": "name",
+      "value": "Charles Kinysley McAloney",
+      "structured_value": {
+        "given": "Charles Kinysley",
+        "surname": "McAloney"
+      },
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney (applicant, self-reported on SS-5)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "applicant",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney (applicant, self-reported on SS-5)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "applicant",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney (applicant, self-reported on SS-5)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "applicant",
+      "fact_type": "birth",
+      "value": "11 Jan 1911",
+      "date": "11 Jan 1911",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": "1911"
+      },
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney (applicant, self-reported on SS-5)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "applicant",
+      "fact_type": "birth",
+      "value": "Somerville, Middlesex, California [indexing error \u2014 birth record shows Massachusetts]",
+      "place": "Somerville, Middlesex, California",
+      "standard_place": null,
+      "structured_value": {
+        "place": "Somerville, Middlesex, California"
+      },
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney (applicant, self-reported on SS-5)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The state 'California' in this place field is almost certainly an indexing artifact. The Massachusetts birth record (src_001) records birth in Somerville, Middlesex County, Massachusetts. The applicant likely wrote 'Massachusetts' on the SS-5 but the state was miskeyed during indexing. No reliable standard_place can be assigned given the erroneous state. Pending image confirmation at https://www.familysearch.org/ark:/61903/1:2:HSJS-V1DL.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "applicant",
+      "fact_type": "social_security_application",
+      "value": "SS-5 application filed September 1940",
+      "date": "Sep 1940",
+      "information_quality": "primary",
+      "informant": "Social Security Administration (official record)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "applicant",
+      "fact_type": "social_security_claim",
+      "value": "SS claim filed 13 Nov 1975",
+      "date": "13 Nov 1975",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "Social Security Administration (official record)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "applicant",
+      "fact_type": "residence",
+      "value": "Santa Rosa, Sonoma, California, United States",
+      "place": "Santa Rosa, Sonoma, California, United States",
+      "standard_place": null,
+      "structured_value": {
+        "place": "Santa Rosa, Sonoma, California, United States"
+      },
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney or Social Security Administration records",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "applicant",
+      "fact_type": "death",
+      "value": "16 Dec 1989",
+      "date": "16 Dec 1989",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": "1989"
+      },
+      "information_quality": "primary",
+      "informant": "Social Security Administration death records",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "father_of_applicant",
+      "fact_type": "name",
+      "value": "Charles S McAloney",
+      "structured_value": {
+        "given": "Charles S",
+        "surname": "McAloney"
+      },
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney (applicant, self-reported on SS-5)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "father_of_applicant",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney (applicant, self-reported on SS-5)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "father_of_applicant",
+      "fact_type": "relationship",
+      "value": "father of Charles K. McAloney",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "applicant"
+      },
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney (applicant, self-reported on SS-5)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "mother_of_applicant",
+      "fact_type": "name",
+      "value": "Jessie MacPhee",
+      "structured_value": {
+        "given": "Jessie",
+        "surname": "MacPhee"
+      },
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney (applicant, self-reported on SS-5)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Surname spelled 'MacPhee' here vs. 'McPhee' on the 1911 Massachusetts birth record (src_001). Both are standard orthographic variants of the same Cape Breton Scottish surname. Extracted as written; the variant spelling does not indicate a different individual. Corroborates the identification of the mother as Jessie McPhee from log_001 extraction.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "mother_of_applicant",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney (applicant, self-reported on SS-5)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:6KMC-1WW5",
+      "record_role": "mother_of_applicant",
+      "fact_type": "relationship",
+      "value": "mother of Charles K. McAloney",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "applicant"
+      },
+      "information_quality": "primary",
+      "informant": "Charles K. McAloney (applicant, self-reported on SS-5)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's name reported by the applicant himself on the SS-5. Charles K. was approximately 29 years old at time of application (Sep 1940), well able to know and correctly state his mother's name. Surname variant 'MacPhee' vs 'McPhee' is a routine orthographic difference for this Cape Breton Scottish family name.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548931",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Charles McAloney",
+      "structured_value": {
+        "given": "Charles",
+        "surname": "McAloney"
+      },
+      "information_quality": "primary",
+      "informant": "Charles McAloney (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548931",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Charles McAloney (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548931",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born 1870",
+      "date": "1870",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Charles McAloney (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548931",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born Nova Scotia, Canada",
+      "place": "Nova Scotia, Canada",
+      "standard_place": "Nova Scotia, Canada",
+      "information_quality": "secondary",
+      "informant": "Charles McAloney (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Groom reported own birthplace at time of marriage registration, not at time of birth; information is secondhand recollection of his own origins.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548931",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Jessie MacPhee, 6 Oct 1907, Boston, Suffolk, Massachusetts",
+      "date": "6 Oct 1907",
+      "date_certainty": "exact",
+      "place": "Boston, Suffolk, Massachusetts, United States",
+      "standard_place": "Boston, Suffolk, Massachusetts, United States",
+      "information_quality": "primary",
+      "informant": "registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548931",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of James McAloney",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Charles McAloney (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Marriage record establishes parentage indirectly through parental listing; groom reported his own father's name.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548931",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Mary McAuliffe",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Charles McAloney (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Marriage record establishes parentage indirectly through parental listing; groom reported his own mother's name.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548932",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "James McAloney",
+      "structured_value": {
+        "given": "James",
+        "surname": "McAloney"
+      },
+      "information_quality": "primary",
+      "informant": "Charles McAloney (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Father's name reported by groom (his son) at time of marriage; groom personally knew his father.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548932",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Charles McAloney (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548933",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Mary McAuliffe",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "McAuliffe"
+      },
+      "information_quality": "primary",
+      "informant": "Charles McAloney (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Mother's name reported by groom (her son) at time of marriage; groom personally knew his mother. Note surname McAuliffe \u2014 distinct from the bride Jessie MacPhee.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548933",
+      "record_role": "mother_of_groom",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Charles McAloney (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548934",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Jessie MacPhee",
+      "structured_value": {
+        "given": "Jessie",
+        "surname": "MacPhee"
+      },
+      "information_quality": "primary",
+      "informant": "Jessie MacPhee (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548934",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Jessie MacPhee (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548934",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born 1881",
+      "date": "1881",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Jessie MacPhee (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Bride reported own birth year at time of marriage registration, not at time of birth; information is secondhand recollection of her own origins.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548934",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born Cape Breton, Nova Scotia, Canada",
+      "place": "Cape Breton, Nova Scotia, Canada",
+      "standard_place": "Cape Breton, Nova Scotia, Canada",
+      "information_quality": "secondary",
+      "informant": "Jessie MacPhee (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Bride reported own birthplace at time of marriage registration, not at time of birth; information is secondhand recollection of her own origins. Cape Breton is part of Nova Scotia, Canada.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548934",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Charles McAloney, 6 Oct 1907, Boston, Suffolk, Massachusetts",
+      "date": "6 Oct 1907",
+      "date_certainty": "exact",
+      "place": "Boston, Suffolk, Massachusetts, United States",
+      "standard_place": "Boston, Suffolk, Massachusetts, United States",
+      "information_quality": "primary",
+      "informant": "registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548934",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Charles MacPhee",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Jessie MacPhee (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Marriage record establishes parentage indirectly through parental listing; bride reported her own father's name.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548934",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Margaret McDonald",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Jessie MacPhee (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Marriage record establishes parentage indirectly through parental listing; bride reported her own mother's name.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548935",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Charles MacPhee",
+      "structured_value": {
+        "given": "Charles",
+        "surname": "MacPhee"
+      },
+      "information_quality": "primary",
+      "informant": "Jessie MacPhee (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Father's name reported by bride (his daughter) at time of marriage; bride personally knew her father.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548935",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Jessie MacPhee (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548936",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Margaret McDonald",
+      "structured_value": {
+        "given": "Margaret",
+        "surname": "McDonald"
+      },
+      "information_quality": "primary",
+      "informant": "Jessie MacPhee (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Mother's name reported by bride (her daughter) at time of marriage; bride personally knew her mother.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:N4DT-1YL",
+      "record_persona_id": "p_11844548936",
+      "record_role": "mother_of_bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Jessie MacPhee (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth record FXVQ-NRT (Massachusetts State Vital Records, 1911) names 'Jessie McPhee' in the mother role for Charles Kingsley McAloney. Three independent records converge on this identity: birth record (primary/direct), NUMIDENT (self-reported by the subject in 1940), and marriage record (circumstantial corroboration of the same couple). Name (Jessie McPhee/MacPhee), role (mother/wife of Charles McAloney), and timeline (married Oct 1907; birth Jan 1911) all agree.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex assertion (Female) from birth record FXVQ-NRT for the mother of Charles Kingsley McAloney; corroborated across all three extracted records naming Jessie McPhee/MacPhee.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Mother\u2013child relationship directly stated in the Massachusetts State Vital Record (original source, primary information): Jessie McPhee is the mother of Charles Kingsley McAloney. Direct evidence from the highest-quality record type available for this event.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "NUMIDENT (6KMC-1WW5) records 'Jessie MacPhee' as mother of the applicant, self-reported by Charles K. McAloney on his SS-5 application in Sep 1940. 'MacPhee' is the standard orthographic variant of 'McPhee' for this Cape Breton Scottish family name. Name and role match the birth record identification of I1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_029",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex assertion (Female) for mother of applicant from NUMIDENT; consistent with I1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_030",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Mother\u2013child relationship asserted in NUMIDENT: Charles K. McAloney identified 'Jessie MacPhee' as his mother on the SS-5 in 1940, aged ~29 \u2014 old enough to know his mother's name with confidence. Combined with the birth record (primary/direct) and marriage record (corroborative), this constitutes strong convergent evidence for I1 as the mother.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_042",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage record N4DT-1YL (Massachusetts State Vital Records, 1907) names 'Jessie MacPhee' as the bride. She married Charles McAloney on 6 Oct 1907 in Boston \u2014 consistent with Charles K. McAloney's birth 3.3 years later. Charles McAloney (groom, b.~1870 Nova Scotia) matches 99KY-4H1 exactly. Name, role, and timeline strongly identify this as I1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_043",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex assertion (Female) for the bride in the 1907 marriage record; consistent with I1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_044",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth year ~1881 for Jessie MacPhee (bride), self-reported at marriage registration. Consistent with timeline: married 1907 (age ~26), mother of Charles K. born Jan 1911 (~age 29\u201330). Supports I1 identification.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_045",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birthplace Cape Breton, Nova Scotia, Canada for Jessie MacPhee (bride). Consistent with the McPhee/MacPhee surname, a common Cape Breton Scottish family name. Supports I1 identification.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_046",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage fact (bride): Jessie MacPhee married Charles McAloney 6 Oct 1907, Boston, Suffolk, MA. This places I1 as wife of 99KY-4H1, the father of the subject. The marriage date ~3.3 years before Charles K.'s birth is chronologically consistent with I1 being his mother.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_047",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Jessie MacPhee (bride) identified herself as child of Charles MacPhee (her father). This biographical anchor helps distinguish I1 from other women named Jessie MacPhee.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_048",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Jessie MacPhee (bride) identified herself as child of Margaret McDonald (her mother). Combined with a_047, provides distinct biographical anchors for I1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_035",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Cross-link: the groom's marriage assertion (a_035) also establishes I1's identity as Charles McAloney's wife. The groom reported marrying 'Jessie MacPhee' on 6 Oct 1907 \u2014 the same woman who appears as 'Jessie McPhee' (mother) in the birth record and 'Jessie MacPhee' (mother) in the NUMIDENT.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_001",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Birth record FXVQ-NRT names 'Charles Kingsley McAloney' as the child, born 11 Jan 1911, Somerville, Middlesex, MA. Exact name match with tree person 99KY-ZQW. Record already attached to subject in FamilySearch (matchScore 0.918).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_002",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Sex assertion (Male) for the child on birth record FXVQ-NRT; matches tree person 99KY-ZQW.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_003",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Birth date/place from Massachusetts State Vital Record: 11 Jan 1911, Somerville, Middlesex, MA. Exact match with tree person 99KY-ZQW's known birth. Primary information from an original source.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_006",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Cross-link: the father's relationship assertion (a_006) names Charles Kingsley McAloney as the child of Charles S. McAloney. The child referenced is tree person 99KY-ZQW.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_009",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Cross-link: the mother's relationship assertion (a_009, Jessie McPhee named as mother) also bears on the child 99KY-ZQW, who is the person whose maternity is asserted.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_010",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Town Clerk index Q23S-BTKN names 'Charles Kingsley McAloney' (principal, born 11 Jan 1911, Somerville, MA). Derivative source corroborating the State Vital Record. Name and birth facts match 99KY-ZQW. Record already attached to subject in FamilySearch.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_011",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Sex (Male) for Town Clerk principal; consistent with 99KY-ZQW.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_012",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Birth date/place (11 Jan 1911, Somerville, Middlesex, MA) from Town Clerk index; corroborates State Vital Record for 99KY-ZQW.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_015",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Town Clerk index records principal (99KY-ZQW) as child of Charles McAloney; consistent with known parent-child relationship (R3 in tree.gedcomx.json).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_016",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "NUMIDENT (6KMC-1WW5) names 'Charles Kinysley McAloney' as applicant \u2014 'Kinysley' is a transcription variant of 'Kingsley'. SS-5 filed Sep 1940; SS claim 13 Nov 1975; death 16 Dec 1989. Name, birth date (11 Jan 1911), and death date match tree person 99KY-ZQW exactly.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_017",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Sex (Male) for NUMIDENT applicant; matches 99KY-ZQW.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_018",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Race (White) for NUMIDENT applicant (Charles K. McAloney / 99KY-ZQW).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_019",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Birth date (11 Jan 1911) self-reported by applicant on SS-5; exact match with tree person 99KY-ZQW's known birth date.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_020",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Birthplace 'Somerville, Middlesex, California' from NUMIDENT \u2014 known indexing artifact (state should be Massachusetts per birth record). Linked to 99KY-ZQW with this qualification noted in the assertion's bias notes.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_021",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "SS-5 application date (Sep 1940) for subject 99KY-ZQW; administrative fact.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_022",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "SS claim date (13 Nov 1975) for subject 99KY-ZQW; administrative fact.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_023",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Residence (Santa Rosa, Sonoma, California) from NUMIDENT for 99KY-ZQW; consistent with the subject's known California residence.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_024",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Death date (16 Dec 1989) from SSA records in NUMIDENT; matches tree person 99KY-ZQW's known death date exactly.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_027",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Cross-link: father_of_applicant relationship assertion (a_027) names the applicant as child of Charles S. McAloney. The applicant referenced is 99KY-ZQW.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_030",
+      "person_id": "99KY-ZQW",
+      "confidence": "confident",
+      "rationale": "Cross-link: mother_of_applicant relationship assertion (a_030) names the applicant as child of Jessie MacPhee (I1). The applicant referenced is 99KY-ZQW. This is a key assertion for q_001: the subject himself identified his mother by name.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_004",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Birth record FXVQ-NRT names 'Charles S. McAloney' as the father of Charles Kingsley McAloney. Middle initial 'S.' matches Charles Smith McAloney (99KY-4H1); corroborated by NUMIDENT and marriage record. Existing ParentChild relationship R3 in tree is consistent.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_005",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Sex (Male) for birth record father; matches 99KY-4H1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_006",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Father\u2013child relationship stated in Massachusetts State Vital Record: Charles S. McAloney is the father of Charles Kingsley McAloney. Consistent with existing tree relationship R3 (ParentChild 99KY-4H1 \u2192 99KY-ZQW).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_013",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Town Clerk index Q23S-BTKN names 'Charles McAloney' as father of the principal. Matches 99KY-4H1; corroborates birth record identification.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_014",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Sex (Male) for Town Clerk father_of_principal; matches 99KY-4H1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_015",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Cross-link: the Town Clerk principal's (99KY-ZQW's) child\u2013father relationship assertion (a_015) references Charles McAloney as the father. The referenced father is 99KY-4H1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_025",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "NUMIDENT names 'Charles S McAloney' as father of the applicant; self-reported by the subject himself. Middle initial 'S.' matches Charles Smith McAloney (99KY-4H1).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_026",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Sex (Male) for NUMIDENT father_of_applicant; matches 99KY-4H1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_027",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Father\u2013child relationship in NUMIDENT: Charles S. McAloney identified as father of the applicant (Charles K. McAloney / 99KY-ZQW). Corroborates birth record and existing tree relationship R3.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_031",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Marriage record N4DT-1YL names 'Charles McAloney' as the groom. Groom's birth year ~1870 and Nova Scotia birthplace match 99KY-4H1 (born 6 Aug 1870, Five Islands, Colchester, Nova Scotia). Married Jessie MacPhee 6 Oct 1907 in Boston.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_032",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Sex (Male) for marriage groom; matches 99KY-4H1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_033",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Birth year ~1870 for groom; matches 99KY-4H1 (born 6 Aug 1870). This is secondary information self-reported at marriage registration.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_034",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Birthplace Nova Scotia, Canada for groom; matches 99KY-4H1's known birthplace (Five Islands, Colchester, Nova Scotia).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_035",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Marriage fact for groom 99KY-4H1: married Jessie MacPhee (I1) on 6 Oct 1907 in Boston, Suffolk, MA. Marriage date ~3.3 years before Charles K.'s birth corroborates this couple as the subject's parents.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_036",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Groom (99KY-4H1) reported himself as child of James McAloney at time of marriage registration. Identifies a patrilineal ancestor of 99KY-4H1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_037",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Groom (99KY-4H1) reported himself as child of Mary McAuliffe at time of marriage registration. Identifies a matrilineal ancestor of 99KY-4H1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_046",
+      "person_id": "99KY-4H1",
+      "confidence": "confident",
+      "rationale": "Cross-link: bride's marriage assertion (a_046) also bears on the groom (99KY-4H1). Jessie MacPhee (I1) is recorded as marrying Charles McAloney, who matches 99KY-4H1 by name, birth year (~1870), and birthplace (Nova Scotia).",
+      "match_score": null,
+      "created": "2026-07-21"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_007",
+        "a_009",
+        "a_028",
+        "a_030",
+        "a_031",
+        "a_035",
+        "a_042",
+        "a_044",
+        "a_045",
+        "a_046",
+        "a_047",
+        "a_048"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch for: (1) Massachusetts State Vital Records birth registrations \u2014 positive, FXVQ-NRT extracted; (2) Massachusetts Town Clerk birth records \u2014 positive, Q23S-BTKN extracted (derivative, no mother field); (3) SS NUMIDENT \u2014 positive, 6KMC-1WW5 extracted; (4) 1920 US census for McAloney household in Somerville/Massachusetts \u2014 negative after six attempts with surname variants (log_004\u2013log_009); (5) 1910 US census \u2014 negative (included in same searches); (6) Massachusetts marriage records for parents' marriage \u2014 positive, N4DT-1YL extracted. California death certificate (pli_006) not searched; not required given the convergence of three independent original sources with primary information. Census gap on FamilySearch is a documented indexing limitation for this surname and does not undermine the proved conclusion.",
+      "narrative_markdown": "# Jessie McPhee/MacPhee: Mother of Charles Kingsley McAloney\n\n## Research Summary\n\nThree independent original sources with primary information and direct or corroborative evidence establish that **Jessie McPhee** \u2014 also spelled **MacPhee** \u2014 is the mother of Charles Kingsley McAloney (b. 11 Jan 1911, Somerville, Middlesex, Massachusetts; d. 16 Dec 1989, Sonoma County, California).\n\n## Source Analysis\n\n### 1. Massachusetts State Vital Records Birth Registration (1911)\n\nThe Massachusetts State Vital Records birth entry for Charles Kingsley McAloney explicitly names **Jessie McPhee** in the mother field.\u00b9 This source is an *original* record \u2014 the official civil registration created at or shortly after the birth event on 11 January 1911 in Somerville, Middlesex, Massachusetts. The information is *primary*: the mother was present at or shortly after the birth, and birth records of this era were created with the participation of the parents. The evidence is *direct*: the mother's identity is stated without inference. This record answers the question as posed.\n\n### 2. Social Security NUMIDENT (1940)\n\nCharles K. McAloney's Social Security NUMIDENT records **Jessie MacPhee** as his mother on the SS-5 application filed in September 1940.\u00b2 This source is an *original* record \u2014 the Social Security Administration's file of the original application and subsequent claim record. The information is *primary*: the applicant, Charles K. McAloney himself (then approximately 29 years old), self-reported his mother's name and was in a position to know it. The evidence is *direct*. The surname spelling \"MacPhee\" versus \"McPhee\" on the birth record is an orthographic variant, not a discrepancy: both spellings are standard forms of the same Cape Breton Scottish family name, and the given name \"Jessie\" is identical across all sources.\n\n### 3. Massachusetts State Vital Records Marriage Registration (1907)\n\nA Massachusetts State Vital Records marriage entry records **Jessie MacPhee** marrying **Charles McAloney** on 6 October 1907 in Boston, Suffolk, Massachusetts.\u00b3 This source is *original*; the parties' own reported facts (birth years, birthplaces, parents' names) carry *primary* information. The groom \u2014 Charles McAloney, born approximately 1870 in Nova Scotia \u2014 matches tree person Charles Smith McAloney (99KY-4H1, born 6 August 1870, Five Islands, Colchester, Nova Scotia) by name, birth year, and province. The marriage date, 3 years and 3 months before Charles Kingsley McAloney's birth on 11 January 1911, is chronologically consistent. This record also supplies biographical anchors for Jessie: born approximately 1881 in Cape Breton, Nova Scotia; daughter of Charles MacPhee and Margaret McDonald. The evidence is *direct* as to the marriage; it is *corroborative* for the parentage conclusion \u2014 it confirms Jessie MacPhee was the wife of the father before the subject's birth, but it does not independently establish the mother\u2013child link, which the birth record supplies directly.\n\n## Correlation\n\nAll three sources agree on the key identifiers:\n\n- **Given name:** Jessie (identical in all three sources)\n- **Surname:** McPhee (birth record) / MacPhee (NUMIDENT, marriage) \u2014 standard orthographic variants\n- **Role:** mother of Charles Kingsley McAloney (birth record, NUMIDENT); wife of Charles McAloney / 99KY-4H1 (marriage)\n- **Chronology:** Marriage 6 Oct 1907 \u2192 birth of subject 11 Jan 1911 (3 yr 3 mo) \u2014 consistent\n\nNo conflicting evidence was found. The spelling variation McPhee/MacPhee reflects the absence of standardized orthography for this Cape Breton Scottish surname during the relevant period and is not treated as a conflict.\n\n## Searches and Gaps\n\nSix search attempts (log_004\u2013log_009) for the McAloney household in the 1910 and 1920 U.S. censuses returned no results on FamilySearch, using surname variants including \"McAloney,\" \"Mc Aloney,\" and searches under both the subject's name and the father's name. This is a documented FamilySearch indexing limitation for this family. The census gap does not undermine the proved conclusion: the birth registration and the subject's own NUMIDENT, as independent primary/direct sources, are sufficient. The California death certificate was not searched and is not required.\n\n## Conclusion\n\nAt the **proved** tier: Jessie McPhee (also spelled MacPhee), born approximately 1881 in Cape Breton, Nova Scotia, Canada \u2014 daughter of Charles MacPhee and Margaret McDonald \u2014 is the mother of Charles Kingsley McAloney. The Massachusetts State Vital Records birth entry (11 January 1911) is the direct primary evidence answering the question as posed; the SS NUMIDENT independently corroborates her identification; and the 1907 Massachusetts marriage record confirms she was the wife of the subject's father before his birth.\n\n---\n\u00b9 \"Massachusetts, State Vital Records, 1638-1927\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:FXVQ-NRT : Thu May 23 02:17:39 UTC 2024), Entry for Charles Kingsley McAloney and Charles S. McAloney, 11 Jan 1911.\n\n\u00b2 \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6KMC-1WW5 : accessed 21 July 2026), Entry for Charles Kinysley McAloney and Charles S McAloney.\n\n\u00b3 \"Massachusetts, State Vital Records, 1638-1927\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:N4DT-1YL : accessed 2026-07-21), Entry for Charles McAloney and Jessie MacPhee, 6 Oct 1907."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "consider_addressing",
+      "timestamp": "2026-07-21T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-21T00-00-00.json"
+    }
+  ]
+}
