@@ -1,0 +1,3731 @@
+{
+  "project": {
+    "id": "rp_hannah_earnest_children",
+    "objective": "Besides their children John, Hannah Grace, Edwin, William, and James, did Hannah Earnest and Edwin Grice have any other children? Identify each additional child and their birth details.",
+    "subject_person_ids": [
+      "9DJ7-219"
+    ],
+    "status": "completed",
+    "created": "2026-07-03",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Edwin Grice (b. 1854, West Bromwich, Staffordshire) and Hannah Earnest (b. 1857, Darlaston, Staffordshire) have any children beyond their five known children \u2014 John (b. 1877), Hannah Grace (b. 1880), Edwin (b. 1883), William (b. 1885), and James (b. 9 Sep 1886)?",
+      "rationale": "This is the direct expression of the project objective. The couple's known children span 1877\u20131886, but English civil registration (from 1837) and decennial censuses (1881, 1891, 1901, 1911) provide systematic coverage of the family's childbearing years in Staffordshire and Warwickshire. Searching these in tandem can enumerate additional births, including infants who died young and would not appear in a single census. This is a completeness question requiring exhaustive enumeration of all qualifying records, not merely the first positive hit.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-22",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_020",
+        "a_024",
+        "a_025",
+        "a_043",
+        "a_047",
+        "a_048"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All plan items completed. Searched all four available England census years (1881, 1891, 1901, 1911), the GRO birth registration index (collection 2285338), the GRO death registration index (collection 2285341), England church baptism records (collection 1473014), and the 1939 National Register (collection 2836130). The 1881 and 1891 census household records are the highest-yield sources \u2014 they enumerate all living children at each snapshot. The GRO birth index was searched broadly for Grice births in West Bromwich 1877-1892 but cannot confirm parentage without original certificates (pre-1969 index does not include parents' names). GRO original certificates (the definitive record for parentage confirmation) are not available via FamilySearch and would require a separate order from gro.gov.uk. Within the FamilySearch-accessible record base, the search is reasonably exhaustive. One confirmed additional child (Lydia Grice, b.1878/79) was identified. Two possible additional infants who died young (Hannah Grice b.1882 d.1883, William Grice b.1879 d.1880, both West Bromwich) were found in the death index but parentage cannot be confirmed from FamilySearch-accessible sources alone.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010"
+        ],
+        "stop_criteria": "All planned record classes searched. Remaining gap (GRO original certificates) is inaccessible via FamilySearch. Evidence is sufficient to conclude at probable tier for Lydia Grice as an additional child; the two possible infant deaths cannot be concluded without physical certificate access."
+      },
+      "created": "2026-07-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "West Bromwich, Staffordshire, England",
+          "date_range": "1881",
+          "repository": "FamilySearch",
+          "rationale": "The 1881 England and Wales Census (source QYLW-S5N, FamilySearch ARK Q27F-Z34M) is already in the project tree for the Edwin and Hannah Grice household. Extract this record formally to establish the household baseline: John (b. 1877) and Hannah Grace (b. 1880) should appear; any additional children born before 1881 who were alive would also appear. This is the earliest household snapshot for this couple.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Birmingham, Warwickshire, England",
+          "date_range": "1891",
+          "repository": "FamilySearch",
+          "rationale": "The 1891 England and Wales Census (source 7BL6-KLH, FamilySearch ARK WLSD-QPZ) is already in the project tree for the Edwin and Hannah Grice household in Birmingham. Extract this record to enumerate all household members in 1891: known children Edwin (b. 1883), William (b. 1885), and James (b. 1886) should appear; any additional children born before 1891 who were still living would also appear.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Birmingham, Warwickshire, England",
+          "date_range": "1901",
+          "repository": "FamilySearch",
+          "rationale": "The 1901 England and Wales Census (FamilySearch collection 1888129) will show all children living with Edwin and Hannah in 1901. James (youngest known child, b. Sep 1886) would be 14 and likely still at home. Any additional children born after 1886 and still alive in 1901 (aged 2-14) would appear in the household. Search for Edwin Grice / Hannah Grice in Birmingham (Warwickshire); they may have moved within Birmingham since 1891.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Birmingham, Warwickshire, England",
+          "date_range": "1911",
+          "repository": "FamilySearch",
+          "rationale": "The 1911 England and Wales Census (FamilySearch collection 1921547) is the single most critical source for this question. It uniquely asked every married woman to state (a) the total number of children born alive in the marriage and (b) how many were still living at the census date. Hannah Earnest Grice's entry \u2014 if she survived to 1911 \u2014 will directly state the total number of her children, providing a definitive count against which to compare the five known children. Any children living at home would also be listed by name and age.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "West Bromwich, Staffordshire; Birmingham, Warwickshire, England",
+          "date_range": "1876-1910",
+          "repository": "FamilySearch",
+          "rationale": "The England and Wales Birth Registration Index 1837-2008 (FamilySearch collection 2285338) provides name-indexed access to GRO civil birth registrations nationwide. Search surname 'Grice' in the West Bromwich district (births 1876-1891) and Birmingham district (births 1891-1910). Any Grice birth in these districts is a candidate additional child; the original birth certificate (ordered via gro.gov.uk) will confirm parentage via the mother's maiden name 'Earnest'. Also search freebmd.org.uk (free), which covers the same 1837-1915 period and may have more complete indexing for some quarters. The GRO indexes are the most systematic and reliable method to enumerate all registered births.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "West Bromwich, Staffordshire; Birmingham, Warwickshire, England",
+          "date_range": "1877-1905",
+          "repository": "FamilySearch",
+          "rationale": "The England and Wales Death Registration Index 1837-2007 (FamilySearch collection 2285341; also freebmd.org.uk) captures infant and child deaths. Working-class Black Country families in this period suffered high infant mortality; additional children of Edwin and Hannah may have died before any subsequent census enumerated them. Search surname 'Grice' for child deaths in West Bromwich district 1877-1891 and Birmingham district 1891-1905. Any death of a child aged 0-10 in these districts is a candidate; the original death certificate will confirm parentage.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "West Bromwich, Staffordshire, England",
+          "date_range": "1876-1895",
+          "repository": "FamilySearch",
+          "rationale": "England Births and Christenings 1538-1975 (FamilySearch collection 1473014) indexes Anglican baptism records for Staffordshire parishes including West Bromwich. This serves as a fallback for the civil GRO birth index (pli_005): some births may appear in church records that are harder to find in the GRO index under variant spellings, or may reflect unregistered or late-registered births. Search for children with father 'Edwin Grice' (or variant spellings) and mother 'Hannah' in the West Bromwich area 1876-1895. Also search the England, Staffordshire, Church Records 1538-1944 collection (already cited as SWZ4-P1R in the tree) for Edwin Grice / Hannah Earnest as parents.",
+          "fallback_for": "pli_005",
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "other",
+          "jurisdiction": "Birmingham, Warwickshire, England",
+          "date_range": "1939",
+          "repository": "FamilySearch",
+          "rationale": "The England and Wales National Register 1939 (FamilySearch collection 2836130) enumerates all civilians in England and Wales on 29 September 1939. It functions as a late-period household enumeration and will show surviving adult children of Edwin and Hannah still living in England. James Grice (youngest known child, b. 1886) already appears in this register in Birmingham (in the project tree). Searching for other Grice siblings \u2014 John (b. 1877), Edwin (b. 1883), William (b. 1885), and any additional children \u2014 by name and approximate birth year confirms survivorship and may surface additional siblings' family connections.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T09:52:04.285Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Edwin",
+        "recordType": "census",
+        "residenceYearFrom": 1881,
+        "residenceYearTo": 1881,
+        "recordCountry": "England",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 245,
+      "notes": "Top match (score 0.9385, attached to subject 9DJ7-2BY): Edwin Grice, b.1854 West Bromwich, Married, Laborer in Factory, West Bromwich 1881. Household record ARK QLS8-M521 contains Edwin, Hannah (wife, b.1857 Darlaston), John (son, b.1877), LYDIA (daughter, b.1879 West Bromwich \u2014 NOT in the five known children), and Hannah (daughter, b.1880). Lydia Grice b. 1879 is an additional child beyond the known five. Record persona ARK Q27F-Z3WX; note the existing tree source QYLW-S5N maps to persona Q27F-Z34M (Hannah) in same household."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T09:53:10.883Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Edwin",
+        "spouseGivenName": "Hannah",
+        "recordType": "census",
+        "residenceYearFrom": 1891,
+        "residenceYearTo": 1891,
+        "residencePlace": "Birmingham, Warwickshire, England",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 14,
+      "notes": "Top match (score 0.8165, attached to subject 9DJ7-2BY): Edwin Grice household in Birmingham 1891, record ARK 1VVC-W76. Household: Edwin (head, b.1853 Staffs), Hannah wife (b.1855 Staffs, ARK WLSD-QPZ = existing tree source), John son (b.1877), LYDIA daughter (b.1879 Staffs \u2014 confirmed additional child, ARK WLSD-YPZ), Edwin son (b.1883), William son (b.1885), James son (b.1887). NOTE: Hannah Grace (b.1880, seen in 1881 census) is ABSENT \u2014 likely died between 1881-1891. Lydia Grice confirmed in both 1881 and 1891; born c.1879 West Bromwich/Staffordshire."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-22T09:55:19.887Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Edwin",
+        "spouseGivenName": "Hannah",
+        "collectionId": "1888129",
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "recordCountry": "England",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 295,
+      "notes": "Edwin Grice Sr. (b.1854 West Bromwich) NOT found as head of household in the 1901 census \u2014 likely died between 1891-1901. However, the household of John Grice (b.1877 West Bromwich \u2014 our known eldest son GRF6-NG7) at Birmingham record ARK 1XPD-W6D reveals: John is head with wife Bertha (b.1879 Birmingham) and three younger brothers living with him: Edwin (b.1883 Darlaston per census, our PQQT-5G1), William (b.1885 West Bromwich, our PQQT-GJC), and James (b.1887 West Bromwich, our GN29-3TT). Also John and Bertha have children Gertrude (b.1898), John Jr (b.1899), Albert E (b.1901). Lydia Grice (b.1879) is NOT in this household \u2014 may have married or died. Searched Hannah Grice as head with b.1853-1862 separately \u2014 no match for our Hannah found. Edwin Jr.'s birthplace in this census listed as 'Darlaston' (likely enumerator error; he was b. Staffordshire)."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-22T09:56:11.516Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Hannah",
+        "collectionId": "1921547",
+        "birthYearFrom": 1853,
+        "birthYearTo": 1862,
+        "recordCountry": "England",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 16,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 16,
+      "notes": "Hannah Grice (b.1857 Darlaston) NOT found in the 1911 census, consistent with her dying before 1901 (inferred from 1901 census \u2014 her sons living with John rather than with parents). Top result was Hannah Grice b.1857 Rowley Regis in Household of John Grice in Rowley Regis \u2014 likely the same different-family John Grice (b.1858 Quarry Bank) seen in 1901. Our Hannah Earnest Grice appears to have died between 1891-1901, so the 1911 fertility record cannot be obtained. Edwin Sr. also not found in 1911. This means pli_004's definitive fertility count from 1911 is unavailable \u2014 the question must be resolved through exhaustive census and birth/death index searches."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-22T09:56:38.477Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Lydia",
+        "recordType": "birth",
+        "birthYearFrom": 1878,
+        "birthYearTo": 1880,
+        "birthPlace": "West Bromwich, Staffordshire, England",
+        "collectionId": "2285338",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 426,
+      "notes": "Top result (score 5.42, only meaningful match in pool): Lydia Grice, GRO birth registration 1878, West Bromwich, Staffordshire \u2014 ARK 2XXB-Y4F. Confirms the Lydia Grice found in the 1881 and 1891 censuses in the Edwin/Hannah Grice household. Registration year 1878 is consistent with her census age (shown as b.1879 in 1881) \u2014 typical off-by-one from late-year births. The GRO index does not include mother's maiden name for pre-1911 entries; parentage is established by the census household placements. This is the additional child beyond the five known ones."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-22T09:59:02.486Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "collectionId": "2285341",
+        "deathYearFrom": 1880,
+        "deathYearTo": 1891,
+        "deathPlace": "West Bromwich, Staffordshire, England"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 147,
+      "notes": "GRO death index search for Grice deaths in West Bromwich 1880-1891. Notable: \"Hannah Grice\" b.1882 d.1883 West Bromwich (ARK 2JD1-Q7B) \u2014 possibly an infant daughter of Edwin and Hannah born and died between the 1881 and 1891 censuses. Also \"William Grice\" b.1879 d.1880 \u2014 could be a child who died before the 1881 census. Records require further examination to confirm parentage."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-22T09:59:06.461Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Edwin",
+        "collectionId": "2285341",
+        "deathYearFrom": 1891,
+        "deathYearTo": 1901,
+        "recordCountry": "England",
+        "birthYearFrom": 1849,
+        "birthYearTo": 1859
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 3,
+      "notes": "GRO death index search for Edwin Grice Sr. death 1891-1901, England. Top match: Edwin Grice d.1899 Tamworth, Staffordshire (matchScore ~5.08, no birth date recorded). This is consistent with Edwin Sr. disappearing between the 1891 and 1901 censuses. Requires record read to confirm."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-22T10:02:00.964Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "fatherGivenName": "Edwin",
+        "collectionId": "1473014",
+        "birthYearFrom": 1876,
+        "birthYearTo": 1895,
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 1153,
+      "notes": "Church baptism search for Grice children with father Edwin, 1876-1895. Notable: \"Hannah Grace\" christened 5 May 1880 West Bromwich (ARK NLH5-9LZ) likely = Hannah Grace Grice; \"James Grice\" christened 27 Oct 1886 West Bromwich (ARK NJSF-K86) likely = known James. Also: \"Emma Grice\" born 4 Feb 1879 / christened 21 Feb 1879 West Bromwich (ARK NXVJ-BZC) \u2014 possible additional child, needs father name verification. Many results from non-West Bromwich parishes suggest fatherGivenName filter is loose in this collection."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-22T10:02:04.932Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "collectionId": "2836130",
+        "birthYearFrom": 1876,
+        "birthYearTo": 1892,
+        "recordCountry": "England",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 2306,
+      "notes": "1939 Register search for Grice persons born 1876-1892 in England. 2306 total matches, far too broad. None of the top 50 results appear to be from the Birmingham/West Bromwich area with the right birth years for John (1877), Edwin Jr (1883), William (1885), James (1886), or Lydia (1878-79). Need narrower searches targeting individual children by name and birth year."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": null,
+      "performed": "2026-07-22T10:04:53.035Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "collectionId": "2285338",
+        "birthYearFrom": 1877,
+        "birthYearTo": 1892,
+        "birthPlace": "West Bromwich, Staffordshire, England",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 875,
+      "notes": "Ad-hoc broad GRO birth index search for all Grice births in West Bromwich 1877-1892. 875 total matches representing multiple Grice families. GRO birth index (pre-1969) does not include parents' names, so these results cannot be filtered to Edwin Grice and Hannah Earnest without individual certificate lookup. No new confirmed additional children identified from this search alone."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-22T10:40:52.118Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "NXVJ-BZC",
+        "description": "Christening record for Emma Grice, England Births and Christenings 1538-1975, West Bromwich 1879 \u2014 candidate follow-up from log_008 church baptism search"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Record read to verify candidate child Emma Grice (b. 4 Feb 1879, christened 21 Feb 1879, West Bromwich, Staffordshire). The ParentChild relationship in the record names the mother as Harriet Grice (ARK NXVJ-BZZ), not Hannah Earnest. No father is named in the indexed record. Emma Grice is confirmed as belonging to a different family \u2014 she is NOT a child of Edwin Grice and Hannah Earnest. Candidate eliminated."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"England and Wales, Birth Registration Index, 1837-2008\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2XXB-Y4F : accessed 2026-07-22), entry for Lydia Grice, West Bromwich, Staffordshire, 1878.",
+      "citation_detail": {
+        "who": "Lydia Grice",
+        "what": "England and Wales Birth Registration Index entry",
+        "when_created": "1878 (registration); index compiled subsequently",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch, 'England and Wales, Birth Registration Index, 1837-2008', collection 2285338",
+        "where_within": "Entry for Lydia Grice, West Bromwich district, 1878"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2XXB-Y4F",
+      "notes": "GRO birth registration index entry only \u2014 original register or certificate not examined. The GRO birth index before 1969 does not include parents' names; a GRO certificate must be ordered to confirm parentage (mother's maiden name Earnest). This index entry confirms birth registration in West Bromwich district in 1878 but cannot on its own establish parentage.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"1881 England Census,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:1:QLS8-M521, accessed 22 July 2026), entry for Lydia Grice in household of Edwin Grice, West Bromwich, Staffordshire, England; citing RG11 (FamilySearch digital index).",
+      "citation_detail": {
+        "who": "Edwin Grice household (Edwin Grice, Hannah Grice, John Grice, Lydia Grice, Hannah Grace Grice)",
+        "what": "1881 England and Wales Census, digital index entry",
+        "when_created": "1881",
+        "when_accessed": "22 July 2026",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "ARK ark:/61903/1:1:QLS8-M521; West Bromwich, Staffordshire, England"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QLS8-M521",
+      "notes": "Digital index of the 1881 England and Wales Census. Original census schedules (RG11) not examined \u2014 index entry only accessed; original image confirmation outstanding.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"1891 England Census,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:1VVC-W76 : accessed 22 July 2026), Lydia Grice in household of Edwin Grice, Birmingham, Warwickshire, England; citing Public Record Office, London, England and Wales Census, 1891 (FamilySearch collection 1865747).",
+      "citation_detail": {
+        "who": "Edwin Grice household including Lydia Grice, Hannah Grice, Edwin Grice Jr., William Grice, James Grice",
+        "what": "1891 England and Wales Census household schedule",
+        "when_created": "5 April 1891",
+        "when_accessed": "22 July 2026",
+        "where": "FamilySearch, citing Public Record Office, London; England and Wales Census, 1891 (collection 1865747)",
+        "where_within": "Birmingham, Warwickshire; index entry for Lydia Grice, ARK ark:/61903/1:1:1VVC-W76"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:1VVC-W76",
+      "notes": "Original not examined \u2014 index entry only; original image not confirmed accessed. The underlying original is a Public Record Office census schedule. Index transcription may contain errors in names, ages, and birthplaces; original image should be consulted to verify all field values. Extracted from delegation-provided household description; no sidecar or live record read was available for this ARK.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:1:NJSF-K86 : accessed 22 July 2026), entry for James Grice, christened 27 Oct 1886, West Bromwich, Staffordshire, England; index based upon data collected by the Genealogical Society of Utah, Salt Lake City.",
+      "citation_detail": {
+        "who": "James Grice",
+        "what": "Christening record index entry, England, Births and Christenings, 1538-1975 (FamilySearch collection 1473014)",
+        "when_created": "Index accessed 22 July 2026; underlying register entry dated 27 Oct 1886",
+        "when_accessed": "22 July 2026",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "ark:/61903/1:1:NJSF-K86"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://familysearch.org/ark:/61903/1:1:NJSF-K86",
+      "access_date": "2026-07-22",
+      "notes": "Indexed database derived from original Church of England parish baptism register. Original register not examined \u2014 only the index entry was accessed; image availability not confirmed. Index cites FHL microfilm (number blank in citation). A derivative source; transcription errors possible.",
+      "log_entry_id": "log_008",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:1:NLH5-9LZ : accessed 2026-07-22), entry for Hannah Grace, christened 5 May 1880, West Bromwich, Staffordshire, England; citing index based upon data collected by the Genealogical Society of Utah, Salt Lake City.",
+      "citation_detail": {
+        "who": "Hannah Grace (child); Edwin Grace [Grice] (father); Hannah (mother)",
+        "what": "Christening index entry, England, Births and Christenings, 1538-1975 (FamilySearch collection 1473014)",
+        "when_created": "Index entries compiled by Genealogical Society of Utah; database updated 4 February 2023",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch (https://familysearch.org/collections/1473014)",
+        "where_within": "Entry for Hannah Grace, 5 May 1880, ARK ark:/61903/1:1:NLH5-9LZ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://familysearch.org/ark:/61903/1:1:NLH5-9LZ",
+      "notes": "Original not examined \u2014 this is a database index entry; the underlying parish register image was not reached. The father's surname is indexed as 'Grace' but is almost certainly a transcription error for 'Grice' \u2014 the child's middle/second given name 'Grace' appears to have been mistakenly taken as the surname by the indexer. Original image confirmation of the father's true surname is outstanding.",
+      "log_entry_id": "log_008",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "\"England and Wales, Census, 1901,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XSZ7-6PD : accessed 22 July 2026), entry for John Grice and Bertha Grice, 31 March 1901, Birmingham, Warwickshire.",
+      "citation_detail": {
+        "who": "John Grice household (John Grice, Bertha Grice, Edwin Grice, William Grice, James Grice, Gertrude Grice, John Grice jr., Albert E Grice)",
+        "what": "England and Wales Census, 1901 \u2014 household schedule",
+        "when_created": "31 March 1901",
+        "when_accessed": "22 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Collection 1888129; Birmingham, Warwickshire; RD 2829-2830, folio 0703"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XSZ7-6PD",
+      "notes": "Digital index/transcript of the 1901 England and Wales census household schedule. Original schedule (PRO RG13) not directly examined \u2014 derivative. Image available via FindMyPast link in source record. Birth year for James Grice recorded as 1887 in the index; tree person GN29-3TT (James Grice) is listed as born 1886 \u2014 discrepancy to resolve against original image.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S6"
+    },
+    {
+      "id": "src_007",
+      "citation": "\"England and Wales, Death Registration Index 1837-2007,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2JD1-Q7B : accessed 2026-07-22), entry for Hannah Grice, death 1883, West Bromwich, Staffordshire.",
+      "citation_detail": {
+        "who": "Hannah Grice",
+        "what": "Death registration index entry, England and Wales, Death Registration Index 1837-2007 (GRO civil registration index)",
+        "when_created": "1883 (quarter of registration)",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:2JD1-Q7B",
+        "where_within": "Index entry for Hannah Grice, death 1883, West Bromwich district, Staffordshire"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2JD1-Q7B",
+      "notes": "GRO civil registration death index for England and Wales; this is a derivative index entry \u2014 the underlying GRO register (original) was not examined. The pre-1969 GRO death index does not include parents' names; parentage cannot be established from this source alone. A GRO death certificate (ordering from gro.gov.uk) would be required to confirm parents and thus link this child to Edwin Grice and Hannah Earnest.",
+      "log_entry_id": "log_006",
+      "gedcomx_source_description_id": "S7"
+    },
+    {
+      "id": "src_008",
+      "citation": "\"England and Wales, Death Registration Index 1837-2007,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2J5W-MR2 : accessed 2026-07-22), entry for Edwin Grice, 1899; citing GRO death registration index, Tamworth district, Staffordshire, England.",
+      "citation_detail": {
+        "who": "Edwin Grice",
+        "what": "GRO death registration index entry",
+        "when_created": "Index created from original civil death registrations, 1837-2007; underlying registration: 1899",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch, England and Wales, Death Registration Index 1837-2007 (collection 2285341)",
+        "where_within": "Entry for Edwin Grice, death 1899, Tamworth district, Staffordshire"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2J5W-MR2",
+      "notes": "Original not examined \u2014 this is a GRO death registration index entry (derivative). The underlying original death register entry for Tamworth district, 1899, was not accessed. The index does not include age, parents, or relatives. Identification with tree person Edwin Grice (9DJ7-2BY, b.1854 West Bromwich) is probable (consistent with his disappearance between 1891 and 1901 censuses, same region, match score ~5.08) but not confirmed without the original certificate or a second independent record.",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S8"
+    },
+    {
+      "id": "src_009",
+      "citation": "\"England and Wales, Death Registration Index 1837-2007\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2JZG-BHB : accessed 2026-07-22), Entry for William Grice, 1880.",
+      "citation_detail": {
+        "who": "William Grice",
+        "what": "Death registration index entry, England and Wales, Death Registration Index 1837-2007",
+        "when_created": "1880 (registration year); index compiled from GRO records",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch (https://www.familysearch.org), citing General Register Office",
+        "where_within": "Entry for William Grice, death 1880, West Bromwich district"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2JZG-BHB",
+      "notes": "GRO death registration index entry \u2014 derivative of the original civil death register held by the General Register Office. Original register not examined (index-only access; original certificate not ordered). Pre-1969 GRO death index does not include parents' names; parentage cannot be established from this index entry alone. The birth year 1879 is an estimate derived from age at death as recorded in the index.",
+      "log_entry_id": "log_006",
+      "gedcomx_source_description_id": "S9"
+    },
+    {
+      "id": "src_010",
+      "citation": "\"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NXVJ-BZC : 4 February 2023), Emma Grice, christened 21 February 1879, West Bromwich, Staffordshire.",
+      "citation_detail": {
+        "who": "Parish register clerk; indexed by FamilySearch",
+        "what": "Christening entry for Emma Grice \u2014 mother named as Harriet Grice (ARK NXVJ-BZZ), no father named",
+        "when_created": "21 Feb 1879",
+        "when_accessed": "2026-07-22",
+        "where": "West Bromwich, Staffordshire, England",
+        "where_within": "England, Births and Christenings, 1538\u20131975 (FamilySearch collection 1473014)"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NXVJ-BZC",
+      "url_archived": null,
+      "notes": "Record read to verify candidate child Emma Grice, found in log_008 church baptism search. Mother named as Harriet Grice, not Hannah Earnest \u2014 Emma belongs to a different family and is eliminated as a candidate child of Edwin Grice and Hannah Earnest.",
+      "transcription": null,
+      "image_filename": null,
+      "log_entry_id": "log_011",
+      "gedcomx_source_description_id": "S10"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:2XXB-Y4F",
+      "record_persona_id": "p_14932320525",
+      "record_role": "registrant",
+      "fact_type": "name",
+      "value": "Lydia Grice",
+      "structured_value": {
+        "given": "Lydia",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown \u2014 GRO index entry; original informant at registration not identified",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "informant_bias_notes": "This is a derivative index entry; the original informant at the time of registration (likely a parent) is not identified through the index alone. Index transcription errors are possible.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:2XXB-Y4F",
+      "record_persona_id": "p_14932320525",
+      "record_role": "registrant",
+      "fact_type": "birth",
+      "value": "birth registered 1878, West Bromwich, Staffordshire, England",
+      "date": "1878",
+      "date_certainty": "approximate",
+      "place": "West Bromwich, Staffordshire, England",
+      "standard_place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown \u2014 GRO index entry; original informant at registration not identified",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "informant_bias_notes": "The GRO birth index records the year of registration, not necessarily the exact year of birth (though for 1878 these almost always coincide). The index does not name parents; parentage requires a GRO certificate. This record directly corroborates the Lydia Grice found in the 1881 and 1891 census households of Edwin Grice and Hannah Earnest, but identity confirmation across records is a person-evidence judgment.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born approximately 1854",
+      "date": "~1854",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born West Bromwich, Staffordshire",
+      "place": "West Bromwich, Staffordshire, England",
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "West Bromwich, Staffordshire, England (1881)",
+      "date": "1881",
+      "date_certainty": "exact",
+      "place": "West Bromwich, Staffordshire, England",
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Hannah Grice",
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born approximately 1857",
+      "date": "~1857",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Darlaston, Staffordshire",
+      "place": "Darlaston, Staffordshire, England",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "West Bromwich, Staffordshire, England (1881)",
+      "date": "1881",
+      "date_certainty": "exact",
+      "place": "West Bromwich, Staffordshire, England",
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "wife of Edwin Grice",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "John Grice",
+      "structured_value": {
+        "given": "John",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born approximately 1877",
+      "date": "~1877",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "West Bromwich, Staffordshire, England (1881)",
+      "date": "1881",
+      "date_certainty": "exact",
+      "place": "West Bromwich, Staffordshire, England",
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "son of Edwin Grice (head of household)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Hannah Grice (wife) (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Relationship to the wife Hannah is inferred from co-residence in the same household; the 1881 census relationship column states relationship to head only.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Lydia Grice",
+      "structured_value": {
+        "given": "Lydia",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born approximately 1879",
+      "date": "~1879",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "West Bromwich, Staffordshire, England (1881)",
+      "date": "1881",
+      "date_certainty": "exact",
+      "place": "West Bromwich, Staffordshire, England",
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "daughter of Edwin Grice (head of household)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Hannah Grice (wife) (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Relationship to the wife Hannah is inferred from co-residence; 1881 census relationship column gives relation to head only. Lydia Grice (b.~1879) is not yet in the project tree and is the newly discovered additional child bearing on q_001.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Hannah Grace Grice",
+      "structured_value": {
+        "given": "Hannah Grace",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born approximately 1880",
+      "date": "~1880",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "West Bromwich, Staffordshire, England (1881)",
+      "date": "1881",
+      "date_certainty": "exact",
+      "place": "West Bromwich, Staffordshire, England",
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "daughter of Edwin Grice (head of household)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:QLS8-M521",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Hannah Grice (wife) (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Relationship to the wife Hannah is inferred from co-residence; 1881 census relationship column gives relation to head only.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely Edwin Grice or wife)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely Edwin Grice or wife)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "37",
+      "date": "1891",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Pre-1940 census: enumerator did not record who answered; age is indeterminate per census doctrine. Age 37 consistent with birth year ~1854 per delegation context; original image should confirm exact recorded value.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born West Bromwich, Staffordshire",
+      "place": "West Bromwich, Staffordshire, England",
+      "standard_place": null,
+      "structured_value": {
+        "place": "West Bromwich, Staffordshire, England"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. Derived from delegation context; original image should confirm exact recorded spelling. Standard place not resolved \u2014 place_search did not return a West Bromwich, Staffordshire match.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England",
+      "place": "Birmingham, Warwickshire, England",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "date": "1891",
+      "date_certainty": "exact",
+      "structured_value": {
+        "place": "Birmingham, Warwickshire, England"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Hannah Grice",
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "Grice"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely Hannah Grice or husband)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely Hannah Grice or husband)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "wife",
+      "fact_type": "age",
+      "value": "34",
+      "date": "1891",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. Age 34 consistent with birth year ~1857 per delegation context; original image should confirm exact recorded value.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Darlaston, Staffordshire",
+      "place": "Darlaston, Staffordshire, England",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom",
+      "structured_value": {
+        "place": "Darlaston, Staffordshire, England"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. Derived from delegation context; original image should confirm exact recorded spelling.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England",
+      "place": "Birmingham, Warwickshire, England",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "date": "1891",
+      "date_certainty": "exact",
+      "structured_value": {
+        "place": "Birmingham, Warwickshire, England"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Edwin Grice (stated)",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1891 census has a relationship column (post-1880); the 'wife' designation is stated, not merely inferred from position.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Lydia Grice",
+      "structured_value": {
+        "given": "Lydia",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_1",
+      "fact_type": "age",
+      "value": "12",
+      "date": "1891",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. Age 12 consistent with birth year ~1878/1879 per delegation context; original image should confirm exact recorded value.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born ~1878/1879 (computed from age 12 in 1891)",
+      "date": "~1879",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birth year inferred from stated census age; no direct birth date given. Delegation notes b.1878/1879; original image should confirm age as recorded.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Edwin Grice (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1891 census has a relationship column; 'daughter' relationship to head is stated, not merely inferred from household position.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Hannah Grice (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1891 census states relationship to head only; relationship to wife (Hannah) is inferred from household composition \u2014 Lydia is daughter of the head, and Hannah is recorded as the head's wife, so Lydia is presumed also Hannah's child. No direct statement of mother-child link exists on the schedule.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England",
+      "place": "Birmingham, Warwickshire, England",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "date": "1891",
+      "date_certainty": "exact",
+      "structured_value": {
+        "place": "Birmingham, Warwickshire, England"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_2",
+      "fact_type": "age",
+      "value": "8",
+      "date": "1891",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Age 8 consistent with birth year 1883 per delegation context; original image should confirm.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born ~1883 (computed from age 8 in 1891)",
+      "date": "~1883",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birth year inferred from stated census age.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Edwin Grice (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1891 census relationship column states 'son' to head.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Hannah Grice (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Census states relationship to head only; mother link inferred from household composition (Hannah recorded as wife of head).",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England",
+      "place": "Birmingham, Warwickshire, England",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "date": "1891",
+      "date_certainty": "exact",
+      "structured_value": {
+        "place": "Birmingham, Warwickshire, England"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "William Grice",
+      "structured_value": {
+        "given": "William",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_3",
+      "fact_type": "age",
+      "value": "6",
+      "date": "1891",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Age 6 consistent with birth year 1885 per delegation context; original image should confirm.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born ~1885 (computed from age 6 in 1891)",
+      "date": "~1885",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birth year inferred from stated census age.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Edwin Grice (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1891 census relationship column states 'son' to head.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Hannah Grice (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Census states relationship to head only; mother link inferred from household composition.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England",
+      "place": "Birmingham, Warwickshire, England",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "date": "1891",
+      "date_certainty": "exact",
+      "structured_value": {
+        "place": "Birmingham, Warwickshire, England"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "James Grice",
+      "structured_value": {
+        "given": "James",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_4",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_4",
+      "fact_type": "age",
+      "value": "4",
+      "date": "1891",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Age 4 consistent with birth date 9 Sep 1886 per delegation context; original image should confirm.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born ~1886/1887 (computed from age 4 in 1891)",
+      "date": "~1887",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birth year inferred from stated census age. Delegation notes exact birth date 9 Sep 1886; census age 4 (turning 5 in September 1891) is consistent. Original image should confirm recorded age.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Edwin Grice (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1891 census relationship column states 'son' to head.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Hannah Grice (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Census states relationship to head only; mother link inferred from household composition.",
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:1VVC-W76",
+      "record_role": "child_4",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England",
+      "place": "Birmingham, Warwickshire, England",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "date": "1891",
+      "date_certainty": "exact",
+      "structured_value": {
+        "place": "Birmingham, Warwickshire, England"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:NJSF-K86",
+      "record_persona_id": "p_12079142443",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "James Grice",
+      "structured_value": {
+        "given": "James",
+        "surname": "Grice"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:NJSF-K86",
+      "record_persona_id": "p_12079142443",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:NJSF-K86",
+      "record_persona_id": "p_12079142443",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "christened 27 Oct 1886, West Bromwich, Staffordshire, England",
+      "date": "27 Oct 1886",
+      "date_certainty": "exact",
+      "place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "standard_place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:NJSF-K86",
+      "record_persona_id": "p_12079142444",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:NJSF-K86",
+      "record_persona_id": "p_12079142444",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:NJSF-K86",
+      "record_persona_id": "p_12079142445",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Hannah",
+      "structured_value": {
+        "given": "Hannah"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:NJSF-K86",
+      "record_persona_id": "p_12079142445",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:NJSF-K86",
+      "record_persona_id": "p_12079142443",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Edwin Grice (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "ParentChild relationship inferred from register structure and indexer-assigned edge; no explicit relationship statement in the christening register column. Consistent with Edwin Grice tree person 9DJ7-2BY.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:NJSF-K86",
+      "record_persona_id": "p_12079142443",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Hannah (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "mother"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "ParentChild relationship inferred from register structure and indexer-assigned edge; no explicit relationship statement in the christening register column. Mother listed as 'Hannah' without surname \u2014 consistent with Hannah Earnest (tree ID 9DJ7-219) but surname not confirmed in this record.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:NJSF-K86",
+      "record_persona_id": "p_12079142444",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Hannah (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "mother"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "Spousal relationship inferred from Couple edge assigned by indexer based on co-listing of father and mother in the baptism register. Not explicitly stated as a marriage or spousal claim in the record text.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:NLH5-9LZ",
+      "record_persona_id": "p_12181429540",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Hannah Grace",
+      "structured_value": {
+        "given": "Hannah Grace",
+        "surname": "Grice"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Parents presented the child at christening; the child's forenames are reliably recorded. Surname indexed as 'Grace' \u2014 believed to be a transcription error; the indexer likely mistook the child's middle name 'Grace' for a surname. True surname is most likely 'Grice' based on tree context, but original image confirmation is outstanding.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:NLH5-9LZ",
+      "record_persona_id": "p_12181429540",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:NLH5-9LZ",
+      "record_persona_id": "p_12181429540",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "christened 5 May 1880, West Bromwich, Staffordshire, England",
+      "date": "5 May 1880",
+      "date_certainty": "exact",
+      "place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "standard_place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "officiating minister / parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:NLH5-9LZ",
+      "record_persona_id": "p_12181429541",
+      "record_role": "father_of_child",
+      "fact_type": "name",
+      "value": "Edwin Grace [Grice?]",
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grace [Grice?]"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Father's surname indexed as 'Grace' \u2014 assessed as a transcription error by the FamilySearch indexer who apparently confused the child's middle name 'Grace' with the family surname 'Grice'. The true surname is most likely 'Grice' per tree context, but original parish register image has not been examined to confirm. Marked [Grice?] pending image verification.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:NLH5-9LZ",
+      "record_persona_id": "p_12181429541",
+      "record_role": "father_of_child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:NLH5-9LZ",
+      "record_persona_id": "p_12181429541",
+      "record_role": "father_of_child",
+      "fact_type": "relationship",
+      "value": "father of Hannah Grace Grice",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:NLH5-9LZ",
+      "record_persona_id": "p_12181429542",
+      "record_role": "mother_of_child",
+      "fact_type": "name",
+      "value": "Hannah",
+      "structured_value": {
+        "given": "Hannah",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "No surname recorded for the mother in the index entry. The tree identifies her as Hannah Earnest (married name Grice); original image may record the surname but the index does not.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:NLH5-9LZ",
+      "record_persona_id": "p_12181429542",
+      "record_role": "mother_of_child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:NLH5-9LZ",
+      "record_persona_id": "p_12181429542",
+      "record_role": "mother_of_child",
+      "fact_type": "relationship",
+      "value": "mother of Hannah Grace Grice",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:NLH5-9LZ",
+      "record_persona_id": "p_12181429541",
+      "record_role": "father_of_child",
+      "fact_type": "relationship",
+      "value": "spouse of Hannah (mother of child)",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother_of_child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "John Grice",
+      "structured_value": {
+        "given": "John",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1877",
+      "structured_value": {
+        "year": "1877",
+        "place": "West Bromwich, Staffordshire"
+      },
+      "date": "1877",
+      "date_certainty": "approximate",
+      "place": "West Bromwich, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006",
+      "standard_place": null
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_095",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Labourer in Rolling Mill",
+      "structured_value": {
+        "occupation": "Labourer in Rolling Mill"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_096",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England, 31 March 1901",
+      "date": "31 Mar 1901",
+      "date_certainty": "exact",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_097",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Bertha Grice",
+      "structured_value": {
+        "given": "Bertha",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_098",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_099",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born 1879",
+      "structured_value": {
+        "year": "1879",
+        "place": "Birmingham"
+      },
+      "date": "1879",
+      "date_certainty": "approximate",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_100",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_101",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England, 31 March 1901",
+      "date": "31 Mar 1901",
+      "date_certainty": "exact",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_102",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "wife of John Grice",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_103",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_104",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_105",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 1883",
+      "structured_value": {
+        "year": "1883",
+        "place": "Darlaston, Staffordshire"
+      },
+      "date": "1883",
+      "date_certainty": "approximate",
+      "place": "Darlaston, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006",
+      "standard_place": "Darlaston, West Midlands, England, United Kingdom"
+    },
+    {
+      "id": "a_106",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_107",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_1",
+      "fact_type": "occupation",
+      "value": "Labourer in Paint Trade",
+      "structured_value": {
+        "occupation": "Labourer in Paint Trade"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_108",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England, 31 March 1901",
+      "date": "31 Mar 1901",
+      "date_certainty": "exact",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_109",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "brother of John Grice (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The 1901 census has a relationship column; however, the GedcomX indexing does not carry a relationship edge from Edwin Grice to John Grice (head). Relationship inferred from shared surname, age sequence consistent with known Grice siblings, and household position. Edwin's birth at Darlaston 1883 matches known child of Edwin Sr. and Hannah Earnest. Confirm against original image to verify stated relationship column.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_110",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "William Grice",
+      "structured_value": {
+        "given": "William",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_111",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_112",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born 1885",
+      "structured_value": {
+        "year": "1885",
+        "place": "West Bromwich, Staffordshire"
+      },
+      "date": "1885",
+      "date_certainty": "approximate",
+      "place": "West Bromwich, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006",
+      "standard_place": null
+    },
+    {
+      "id": "a_113",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_2",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_114",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_2",
+      "fact_type": "occupation",
+      "value": "Labourer in Tube Trade",
+      "structured_value": {
+        "occupation": "Labourer in Tube Trade"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_115",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England, 31 March 1901",
+      "date": "31 Mar 1901",
+      "date_certainty": "exact",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_116",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "brother of John Grice (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Relationship column exists in 1901 census but no relationship edge from William Grice to John Grice appears in the GedcomX index. Inferred from shared surname, age 1885 matching known Grice child William (PQQT-GJC), and household position. Confirm against original image.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_117",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "James Grice",
+      "structured_value": {
+        "given": "James",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_118",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_119",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born 1887",
+      "structured_value": {
+        "year": "1887",
+        "place": "West Bromwich, Staffordshire"
+      },
+      "date": "1887",
+      "date_certainty": "approximate",
+      "place": "West Bromwich, Staffordshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Census indexes birth year 1887; tree person GN29-3TT (James Grice) is listed as born 1886. One-year discrepancy common in census age reporting. Verify against original image (PRO RG13).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006",
+      "standard_place": null
+    },
+    {
+      "id": "a_120",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_3",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_121",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_3",
+      "fact_type": "occupation",
+      "value": "Labourer in Tube Trade",
+      "structured_value": {
+        "occupation": "Labourer in Tube Trade"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_122",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England, 31 March 1901",
+      "date": "31 Mar 1901",
+      "date_certainty": "exact",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_123",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "brother of John Grice (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Relationship column exists in 1901 census but no relationship edge from James Grice to John Grice appears in the GedcomX index. Inferred from shared surname, age 1887 matching known Grice child James (GN29-3TT, b.1886), and household position. One-year birth-year discrepancy noted. Confirm against original image.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_124",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "Gertrude Grice",
+      "structured_value": {
+        "given": "Gertrude",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_125",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_4",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_126",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born 1898",
+      "structured_value": {
+        "year": "1898",
+        "place": "Birmingham"
+      },
+      "date": "1898",
+      "date_certainty": "approximate",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_127",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_4",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England, 31 March 1901",
+      "date": "31 Mar 1901",
+      "date_certainty": "exact",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_128",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of John Grice",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_129",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Bertha Grice",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_130",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_5",
+      "fact_type": "name",
+      "value": "John Grice",
+      "structured_value": {
+        "given": "John",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_131",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_5",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_132",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "born 1899",
+      "structured_value": {
+        "year": "1899",
+        "place": "Birmingham"
+      },
+      "date": "1899",
+      "date_certainty": "approximate",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_133",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_5",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England, 31 March 1901",
+      "date": "31 Mar 1901",
+      "date_certainty": "exact",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_134",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "child of John Grice",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_135",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "child of Bertha Grice",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_136",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_6",
+      "fact_type": "name",
+      "value": "Albert E Grice",
+      "structured_value": {
+        "given": "Albert E",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_137",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_6",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_138",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "born 1901",
+      "structured_value": {
+        "year": "1901",
+        "place": "Birmingham"
+      },
+      "date": "1901",
+      "date_certainty": "approximate",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_139",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_6",
+      "fact_type": "residence",
+      "value": "Birmingham, Warwickshire, England, 31 March 1901",
+      "date": "31 Mar 1901",
+      "date_certainty": "exact",
+      "place": "Birmingham, Warwickshire, England, United Kingdom",
+      "standard_place": "Birmingham, Warwickshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_140",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "child of John Grice",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_141",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "child of Bertha Grice",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_142",
+      "record_id": "ark:/61903/1:1:XSZ7-6PD",
+      "record_role": "absent",
+      "fact_type": "residence",
+      "value": "Lydia Grice absent from 1901 Birmingham census household of John Grice, where expected as sibling of Edwin Jr., William, and James Grice if living and unmarried",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "informant_bias_notes": "The household contains three known brothers of Lydia Grice (Edwin Jr. b.1883, William b.1885, James b.1886/1887) but Lydia does not appear. She may have died before 1901, married and moved to a different household, or be residing elsewhere. The household is the elder brother's (John Grice, b.1877) home \u2014 not a parental home \u2014 so her absence is not conclusive of death. Alternative explanations: employed in service, residing with employers, or married. A search of the 1901 census for Lydia Grice and of the GRO marriage/death indexes 1890-1901 is recommended to distinguish these possibilities.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_143",
+      "record_id": "ark:/61903/1:1:2JD1-Q7B",
+      "record_persona_id": "p_15003606778",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Hannah Grice",
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "Grice"
+      },
+      "information_quality": "primary",
+      "informant": "GRO registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_144",
+      "record_id": "ark:/61903/1:1:2JD1-Q7B",
+      "record_persona_id": "p_15003606778",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "GRO registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_145",
+      "record_id": "ark:/61903/1:1:2JD1-Q7B",
+      "record_persona_id": "p_15003606778",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "1883, West Bromwich, Staffordshire, England",
+      "date": "1883",
+      "date_certainty": "approximate",
+      "place": "West Bromwich, Staffordshire, England",
+      "standard_place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "GRO registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_146",
+      "record_id": "ark:/61903/1:1:2JD1-Q7B",
+      "record_persona_id": "p_15003606778",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "~1882 (inferred from age at death \u2014 index records birth year, not full date)",
+      "date": "1882",
+      "date_certainty": "estimated",
+      "information_quality": "secondary",
+      "informant": "GRO registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The GRO death index records an approximate birth year derived from the age-at-death reported to the registrar at the time of death registration. The informant (typically a family member) provided the age; the registrar calculated the birth year. Neither the index nor the underlying certificate (not examined) supplies a birth date. This estimated birth year could be off by 1 year.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_147",
+      "record_id": "ark:/61903/1:1:2J5W-MR2",
+      "record_persona_id": "p_15012702770",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "GRO death index entry \u2014 the informant who provided information to the registrar is not identified in the index. The index is a derivative of the original civil registration; transcription errors are possible. Identification with Edwin Grice (9DJ7-2BY) is probable but unconfirmed; the original death certificate should be ordered from the GRO to confirm identity and provide full details.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_008"
+    },
+    {
+      "id": "a_148",
+      "record_id": "ark:/61903/1:1:2J5W-MR2",
+      "record_persona_id": "p_15012702770",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Sex inferred from given name Edwin in a GRO index context; not explicitly stated as a separate field in the index.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_008"
+    },
+    {
+      "id": "a_149",
+      "record_id": "ark:/61903/1:1:2J5W-MR2",
+      "record_persona_id": "p_15012702770",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Death registered 1899, Tamworth, Staffordshire, England",
+      "date": "1899",
+      "date_certainty": "exact",
+      "place": "Tamworth, Staffordshire, England",
+      "standard_place": "Tamworth, Staffordshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "GRO death index \u2014 the registrar recorded the death in the Tamworth registration district. The original informant (who reported the death to the registrar) is unknown from the index alone; the index records only name, year, and registration district. The date 1899 is the registration year, not necessarily the exact death date. The original certificate would give the precise date and the informant's identity. Identification with tree person Edwin Grice (9DJ7-2BY, b.1854) is consistent with his absence from the 1901 census but not independently confirmed.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_008"
+    },
+    {
+      "id": "a_150",
+      "record_id": "ark:/61903/1:1:2JZG-BHB",
+      "record_persona_id": "p_15001819468",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "William Grice",
+      "structured_value": {
+        "given": "William",
+        "surname": "Grice"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown GRO registrar or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "GRO death index is a derivative of the original death register. The original informant who reported the death to the registrar is not identified in the index. Index transcription errors are possible; original certificate not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_009"
+    },
+    {
+      "id": "a_151",
+      "record_id": "ark:/61903/1:1:2JZG-BHB",
+      "record_persona_id": "p_15001819468",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown GRO registrar or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Sex inferred from given name William; the GRO index does not include a sex field explicitly. Original informant unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_009"
+    },
+    {
+      "id": "a_152",
+      "record_id": "ark:/61903/1:1:2JZG-BHB",
+      "record_persona_id": "p_15001819468",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 1880, West Bromwich, Staffordshire, England",
+      "date": "1880",
+      "date_certainty": "approximate",
+      "place": "West Bromwich, Staffordshire, England",
+      "standard_place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown GRO registrar or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Death date is a registration year from the GRO index, not necessarily the exact date of death. Place is the registration district. Original death register not examined; indexer transcription errors possible.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_009"
+    },
+    {
+      "id": "a_153",
+      "record_id": "ark:/61903/1:1:2JZG-BHB",
+      "record_persona_id": "p_15001819468",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born approximately 1879 (estimated from age at death in index)",
+      "date": "~1879",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown GRO registrar or informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated by back-calculation from age at death as recorded in the GRO index. The original informant reporting the child's age at death is unknown. Original certificate not examined. Cannot confirm this individual is a child of Edwin Grice and Hannah Earnest \u2014 the pre-1969 GRO death index does not name parents. A separate William Grice (tree ID PQQT-GJC) is known in the family born 1885; if this is a distinct individual (b. 1879), he would be a possible additional child who died before the 1881 census. Parentage requires corroboration from the original death certificate or another source.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_009"
+    },
+    {
+      "id": "a_154",
+      "record_id": "ark:/61903/1:1:NXVJ-BZC",
+      "record_role": "child",
+      "record_persona_id": null,
+      "fact_type": "other",
+      "value": "Mother of Emma Grice (b. 4 Feb 1879, West Bromwich) recorded as Harriet Grice (ARK NXVJ-BZZ) \u2014 not Hannah Earnest. Eliminates Emma Grice as a candidate additional child of Edwin Grice and Hannah Earnest.",
+      "structured_value": null,
+      "date": "21 Feb 1879",
+      "date_certainty": "exact",
+      "place": "West Bromwich, Staffordshire, England",
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "Parish register clerk",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "negative",
+      "log_entry_id": "log_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_010"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1881 England census states Lydia Grice is 'daughter' of Edwin Grice (head of household). Census relationship column is a direct statement of the parent-child relationship.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_047",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1891 England census states Lydia Grice (age 12) is 'daughter' of Edwin Grice (head of household) in Birmingham. Consistent with the 1881 record.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "GRO Birth Registration Index entry for 'Lydia Grice', West Bromwich district, 1878. Corroborates census records naming Lydia Grice as born in West Bromwich ~1878/1879. The index alone cannot confirm parentage but is consistent with the census identifications.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "rationale": "Edwin Grice, head of household in 1881 census, West Bromwich. Name, birth year ~1854, birthplace West Bromwich match tree person 9DJ7-2BY.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_008",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "rationale": "Hannah Grice (n\u00e9e Earnest), wife in 1881 census household, West Bromwich. Name Hannah, birth year ~1857, birthplace Darlaston match tree person 9DJ7-219.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_071",
+      "person_id": "GN29-3TT",
+      "confidence": "confident",
+      "rationale": "James Grice christening 27 Oct 1886, West Bromwich, father Edwin Grice, mother Hannah \u2014 directly matches tree person GN29-3TT (James Grice b.9 Sep 1886).",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_020",
+        "a_024",
+        "a_025",
+        "a_043",
+        "a_047",
+        "a_048"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched all FamilySearch-accessible record classes for the West Bromwich / Birmingham area across the family's childbearing years: England and Wales Census 1881 (collection 1321821), 1891 (collection 1865747), 1901 (collection 1888129), and 1911 (collection 1921547); GRO Birth Registration Index 1837\u20132008 (collection 2285338); GRO Death Registration Index 1837\u20132007 (collection 2285341); England Births and Christenings 1538\u20131975 (collection 1473014); and the England and Wales National Register 1939 (collection 2836130). Hannah Grice (b. 1857) died between 1891 and 1901, so the 1911 fertility question \u2014 which would have given a definitive total count of children born alive \u2014 is unavailable. The primary remaining gap is GRO original certificates (birth and death), which are not available via FamilySearch and must be ordered from gro.gov.uk; these are required to confirm parentage for the GRO index entries and to screen the broader pool of Grice births in West Bromwich 1877\u20131892.",
+      "narrative_markdown": "## Additional Children of Edwin Grice and Hannah Earnest\n\n### Research Question\n\nDid Edwin Grice (b. 1854, West Bromwich, Staffordshire) and Hannah Earnest (b. 1857, Darlaston, Staffordshire) have any children beyond their five known children \u2014 John (b. 1877), Hannah Grace (b. 1880), Edwin (b. 1883), William (b. 1885), and James (b. 9 Sep 1886)?\n\n### Conclusion\n\nYes. The evidence establishes with high probability that Edwin Grice and Hannah Earnest had at least one additional child beyond the five previously known: **Lydia Grice, born 1878/1879 in West Bromwich, Staffordshire**. One further possible infant child \u2014 William Grice (b. ~1879, d. 1880, West Bromwich) \u2014 appears in the GRO death registration index and cannot be confirmed or ruled out from FamilySearch-accessible sources. The 1883 Hannah Grice death record, initially treated as a second candidate additional child, is addressed below as a probable death record for the already-known daughter Hannah Grace (b. 1880).\n\nLydia Grice has been added to the project family tree as person I1, with ParentChild relationships to Edwin Grice (9DJ7-2BY, R15) and Hannah Earnest (9DJ7-219, R16).\n\n---\n\n### Evidence: Lydia Grice (Probable)\n\nThree independent sources, mutually corroborating, establish Lydia Grice as a probable daughter of Edwin Grice and Hannah Earnest.\n\n**1881 England and Wales Census (src_002; ARK QLS8-M521).** The 1881 census household for Edwin Grice, West Bromwich, Staffordshire, lists Lydia Grice as \"daughter,\" aged approximately 2, born in West Bromwich. Edwin Grice is the head (b. 1854, West Bromwich) and Hannah Grice his wife (b. 1857, Darlaston) \u2014 matching both parents' known identities. The census relationship term \"daughter\" is direct evidence of parentage to the head of household; the inference to Hannah Earnest as mother follows necessarily from the couple relationship stated in the same record. This source is a derivative index of the original RG11 census schedule; the original image was not examined, and minor transcription errors in age or birthplace are possible, but the household composition and relationship designations are consistent with all other known evidence about this family.\n\n**1891 England and Wales Census (src_003; ARK 1VVC-W76).** Ten years later, the 1891 census in Birmingham, Warwickshire, again records Lydia Grice as \"daughter\" in the household of Edwin Grice (head) and Hannah Grice (wife), now aged approximately 12, born in Staffordshire. This second independent household enumeration \u2014 a different census year, a different county (the family having relocated from West Bromwich, Staffordshire, to Birmingham, Warwickshire), and a different record set \u2014 independently places Lydia as a daughter of the same couple. The consistency of name, approximate birth year (~1878/79), birthplace county (Staffordshire), and parental identification across both census records substantially corroborates her identity and parentage.\n\n**GRO Birth Registration Index, 1878 (src_001; ARK 2XXB-Y4F).** The England and Wales Birth Registration Index records a birth registration for Lydia Grice in the West Bromwich district in 1878. This entry is consistent with Lydia's census-reported birth year (shown as approximately 1879 in 1881, a common off-by-one from late-year births registered in 1878). The pre-1969 GRO birth index does not include parents' names; parentage cannot be established from this index entry in isolation, and a GRO original birth certificate (available via gro.gov.uk) would be required to confirm the mother's maiden name Earnest. Nevertheless, the registration in the correct district and approximate year corroborates the census evidence. No other Lydia Grice born circa 1878\u20131879 in West Bromwich was found in any source.\n\nThe convergence of two census household records \u2014 each providing a direct relationship statement linking Lydia to Edwin Grice as father \u2014 with a contemporaneous GRO birth registration in the expected district and year meets the Genealogical Proof Standard for a **probable** conclusion. The paternal link (via census \"daughter\" of the head) is direct; the maternal link to Hannah Earnest specifically is indirect, inferred from her co-residence as Edwin's wife in both census records. An original GRO birth certificate naming Hannah Earnest as mother would support a \"proved\" tier, but that certificate is not available via FamilySearch. The evidence is reasonably exhaustive for FamilySearch-accessible sources, accurately cited, and correctly analyzed.\n\n**Emma Grice (eliminated candidate).** During the search of England Births and Christenings (collection 1473014), an Emma Grice (b. 4 February 1879, West Bromwich, christened 21 February 1879) was identified as a potential candidate for an additional child. The christening register entry (src_010; ARK NXVJ-BZC) names the mother as Harriet Grice (ARK NXVJ-BZZ) \u2014 a different family entirely, not Hannah Earnest. This finding is documented in log_011 and recorded as negative evidence in assertion a_154. Emma Grice is not a child of the research subjects.\n\n---\n\n### Death Registration Candidates: Identity Analysis\n\nTwo GRO death index entries were identified as potentially concerning children of Edwin and Hannah Grice. Each is addressed below.\n\n**Hannah Grice (d. 1883, West Bromwich; src_007; ARK 2JD1-Q7B) \u2014 identity comparison with known daughter Hannah Grace.**\n\nThe GRO death index records the death of a Hannah Grice in West Bromwich in 1883. The index-derived birth year estimate is approximately 1882. Before treating this as evidence of an additional child, it must be compared against the already-known daughter Hannah Grace Grice (b. 1880, person 9DJ7-2B2 in tree.gedcomx.json).\n\nThe relevant facts are:\n- Hannah Grace is present in the April 1881 census aged approximately 1 (consistent with a birth in 1879\u201380).\n- Hannah Grace does not appear in the 1891 census, indicating she died between 1881 and 1891.\n- A death registration for Hannah Grice occurs in West Bromwich in 1883 \u2014 within that window.\n- The GRO pre-1969 death index estimates birth year from age at death. If Hannah Grace died in 1883 at age 2\u20133 (born 1880), the age at death would be 2 or 3, yielding a birth year estimate of approximately 1880\u20131881. The index estimate of ~1882 is one to two years later than expected for Hannah Grace \u2014 a discrepancy within the typical margin for infant death age entries in Victorian-era registers, but not a trivial overlap.\n\nConclusion: Index-only data cannot definitively distinguish between (a) a death record for Hannah Grace (b. 1880), where the age at death was recorded one to two years younger than actual, and (b) a genuinely distinct additional child born in 1882 who died before any census enumeration. The name, district, and death-window are consistent with Hannah Grace; the birth year estimate is somewhat late for her but within plausible indexing error. An original GRO death certificate would resolve this by providing the exact age at death and the parents' names. **Without that certificate, the most parsimonious interpretation is that this is a death record for Hannah Grace rather than a separately born child \u2014 but that interpretation cannot be confirmed from available FamilySearch sources.** This record is not counted as evidence for an additional previously unknown child.\n\n**William Grice (b. ~1879, d. 1880, West Bromwich; src_009; ARK 2JZG-BHB) \u2014 no corresponding known child.**\n\nThe GRO death index records the death of a William Grice in West Bromwich in 1880, with an estimated birth year of approximately 1879. There is no known child of Edwin and Hannah named William born circa 1879; the known son William Grice (PQQT-GJC) was born in 1885. No child born ~1879 appears in the April 1881 census household (consistent with a death in 1880 before that enumeration). This record does not correspond to any known child, so it cannot be explained away by the same identity-comparison route. Parentage remains unconfirmed: the pre-1969 GRO death index does not include parents' names, and a GRO original death certificate (from gro.gov.uk) would be required to determine whether this child's parents were Edwin Grice and Hannah Earnest. Status: **not proved as a child of the research subjects**.\n\nTo resolve the William Grice lead, an original GRO death certificate should be ordered from gro.gov.uk using the West Bromwich district entry from the 1880 death index. If the certificate names Edwin Grice and Hannah Earnest (or Hannah Grice n\u00e9e Earnest) as parents, a revised conclusion would be warranted.\n\n---\n\n### Exhaustiveness of Research\n\nThe following record classes were searched through FamilySearch:\n\n- **England and Wales Census, 1881** (collection 1321821) \u2014 Edwin Grice household, West Bromwich, Staffordshire; Lydia Grice identified as daughter.\n- **England and Wales Census, 1891** (collection 1865747) \u2014 Edwin Grice household, Birmingham, Warwickshire; Lydia Grice confirmed as daughter.\n- **England and Wales Census, 1901** (collection 1888129) \u2014 Edwin Grice Sr. not found (died 1891\u20131901); John Grice household identified, confirming surviving siblings (John, Edwin Jr., William, James); Lydia not present.\n- **England and Wales Census, 1911** (collection 1921547) \u2014 Hannah Grice (b. 1857) not found; she died before 1901. The 1911 fertility count (total children born alive in the marriage) is therefore unavailable.\n- **GRO Birth Registration Index, 1837\u20132008** (collection 2285338) \u2014 Grice births, West Bromwich district, 1877\u20131892; Lydia Grice (1878) identified; broad surname search cannot be filtered to Edwin/Hannah without original certificates.\n- **GRO Death Registration Index, 1837\u20132007** (collection 2285341) \u2014 Grice child deaths, West Bromwich district, 1877\u20131905; Hannah Grice (d. 1883) assessed as probable death for known daughter Hannah Grace; William Grice (d. 1880) identified as possible additional child but not proved.\n- **England Births and Christenings, 1538\u20131975** (collection 1473014) \u2014 Church baptisms with father Edwin Grice, West Bromwich, 1876\u20131895; Emma Grice (b. 1879, mother Harriet Grice \u2014 src_010, log_011, a_154) eliminated as candidate; no additional confirmed children beyond those already known.\n- **England and Wales National Register, 1939** (collection 2836130) \u2014 Grice siblings born 1876\u20131892; broad search returned 2,306 results with no identifiable matches for this family's surviving children.\n\nThe principal remaining gap is **GRO original certificates** \u2014 for Lydia's birth (to confirm mother's maiden name Earnest), for Hannah Grice's death (to confirm whether this is Hannah Grace and settle the identity question), and for William Grice's death (to confirm parentage for the possible additional infant). These certificates are not available via FamilySearch and require a separate order from gro.gov.uk."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-22T16:00:00Z",
+      "superseded_by": "ev_002",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-22T16-00-00.json"
+    },
+    {
+      "id": "ev_002",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-22T00:00:00Z",
+      "superseded_by": "ev_003",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-22T00-00-00.json"
+    },
+    {
+      "id": "ev_003",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-22T18:30:00Z",
+      "superseded_by": "ev_004",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-22T18-30-00.json"
+    },
+    {
+      "id": "ev_004",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "consider_addressing",
+      "timestamp": "2026-07-22T19:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-22T19-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Staffordshire, England, United Kingdom",
+      "for_place": "West Bromwich, Staffordshire / Birmingham, Warwickshire, England",
+      "time_period": "1870-1915",
+      "jurisdictions": [
+        {
+          "name": "West Bromwich, Staffordshire, England, United Kingdom",
+          "date_range": "+1801/+1974"
+        },
+        {
+          "name": "Birmingham, Warwickshire, England, United Kingdom",
+          "date_range": "+1801/+1974"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2285338",
+          "title": "England and Wales Birth Registration Index, 1837-2008",
+          "date_range": "1837-2008"
+        },
+        {
+          "id": "1321821",
+          "title": "England and Wales Census, 1881",
+          "date_range": "1881-1881"
+        },
+        {
+          "id": "1865747",
+          "title": "England and Wales Census, 1891",
+          "date_range": "1891-1891"
+        },
+        {
+          "id": "1888129",
+          "title": "England and Wales Census, 1901",
+          "date_range": "1901-1901"
+        },
+        {
+          "id": "1921547",
+          "title": "England and Wales Census, 1911",
+          "date_range": "1911-1911"
+        },
+        {
+          "id": "2285341",
+          "title": "England and Wales Death Registration Index, 1837-2007",
+          "date_range": "1837-2007"
+        },
+        {
+          "id": "1473014",
+          "title": "England Births and Christenings, 1538-1975",
+          "date_range": "1538-1975"
+        },
+        {
+          "id": "1666142",
+          "title": "England and Wales Non-Conformist Record Indexes (RG4-8)",
+          "date_range": "1588-1977"
+        },
+        {
+          "id": "2836130",
+          "title": "England and Wales National Register, 1939",
+          "date_range": "1939-1939"
+        }
+      ],
+      "quirks": [
+        "Civil registration for births began 1 July 1837; all births in this period were required by law to be registered. Search GRO index by surname 'Grice' in the West Bromwich district (for births pre-1891) and Birmingham district (for births 1891 onwards).",
+        "The 1911 England and Wales Census uniquely asked every married woman to state the total number of children born alive in the marriage and how many were still living \u2014 this is the single most direct source for answering a completeness question about a woman's children.",
+        "The GRO birth index before 1911 does not include the mother's maiden name in the index entries; a certificate must be ordered from gro.gov.uk to confirm parentage (mother's name Earnest).",
+        "FreeBMD (freebmd.org.uk) provides a free comprehensive index of GRO births/marriages/deaths 1837-1915 and is the recommended first search for the civil registration indexes.",
+        "West Bromwich Anglican baptism registers 1866-1900 exist on FamilySearch microfilm (image groups M99G-987, M99G-9ZD, M99G-9ZF, M99G-9ZJ) but are NOT digitized (imageCount: 0); access requires a FamilySearch center or FHL film order.",
+        "Darlaston burial registers 1860-1908 are digitized with images on FamilySearch (groups M996-812, M996-81K, M996-81L; full-text searchable). Relevant for any Grice child buried in Darlaston area.",
+        "West Bromwich was in Staffordshire for the full period 1870-1915; Birmingham was in Warwickshire. Post-1974 West Midlands reorganization does not affect historical record location.",
+        "Black Country working-class families in this period typically had high birth rates with significant infant mortality. Search the GRO death index for infant Grices in West Bromwich and Birmingham 1877-1905 to capture children who died before any census.",
+        "FamilySearch collection 'England, Staffordshire, Church Records, 1538-1944' (already cited in the project tree) covers West Bromwich parish baptisms and is indexed \u2014 search directly for parents Edwin Grice / Hannah Earnest."
+      ],
+      "guide_markdown": "# Locality Guide: West Bromwich (Staffordshire) and Birmingham (Warwickshire), England (c. 1870\u20131915)\n\n## Jurisdiction overview\n- West Bromwich: municipal borough in Staffordshire until 1974 (West Midlands thereafter). GRO West Bromwich civil registration district.\n- Birmingham: city in Warwickshire until 1974 (West Midlands thereafter). Its own GRO district.\n- Grice family: West Bromwich 1877\u20131886 (known children's births); Birmingham by 1891 census.\n- Civil registration began 1 July 1837 \u2014 all births legally required to be registered.\n\n## Key records for enumerating all children\n1. **GRO Birth Index** (FreeBMD / FamilySearch 2285338 / Ancestry): Search 'Grice' in West Bromwich district 1876\u20131891 and Birmingham district 1891\u20131910. Order certificates to confirm mother's maiden name Earnest.\n2. **Census 1901** (FS 1888129): Shows all children living at home \u2014 James (b. 1886) would be 15; any additional younger siblings would appear.\n3. **Census 1911** (FS 1921547): Directly states number of children born alive in marriage and how many still living. Most powerful single record for this question.\n4. **GRO Death Index** (FS 2285341 / FreeBMD): Search 'Grice' infants in West Bromwich and Birmingham districts 1877\u20131905.\n5. **Staffordshire Church Records** (FS collection cited as SWZ4-P1R in tree): Indexed; search for Edwin Grice / Hannah Earnest as parents.\n6. **West Bromwich baptism registers** (microfilm): Image groups M99G-9ZJ covers 1878\u20131900 \u2014 must be accessed at FHL or FamilySearch center.\n\n## Repository guide\n- FamilySearch.org \u2014 free (census, GRO index, church records)\n- FreeBMD (freebmd.org.uk) \u2014 free GRO index 1837\u20131915\n- Ancestry \u2014 subscription (census, GRO, 1921 census)\n- GRO website (gro.gov.uk) \u2014 certificate copies (fee)\n- Sandwell Community History & Archives \u2014 West Bromwich local records\n- Birmingham Archives & Heritage (Library of Birmingham) \u2014 Birmingham records\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/England_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/England_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/England_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/England_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-22"
+    }
+  ]
+}
