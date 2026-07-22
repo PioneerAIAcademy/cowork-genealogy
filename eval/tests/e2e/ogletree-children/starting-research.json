@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_ogletree_children",
+    "objective": "Who were the children of Lewis Washington Ogletree, born 1882 in Georgia, who married Mattie Pearcy in 1905 in Spalding County, Georgia and later moved to Chicago, Illinois?",
+    "subject_person_ids": [
+      "GW4W-DTG"
+    ],
+    "status": "active",
+    "created": "2026-07-20",
+    "updated": "2026-07-20"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

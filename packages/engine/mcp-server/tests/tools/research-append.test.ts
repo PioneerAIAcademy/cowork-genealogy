@@ -281,6 +281,32 @@ describe("research_append (Phase 1)", () => {
     expect(pe.created.length).toBeGreaterThanOrEqual(10);
   });
 
+  it("appends a locality → loc_001, initializes the optional section, stamps created", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "localities",
+      op: "append",
+      entry: {
+        place: "Norway",
+        for_place: "Ringebu, Oppland, Norway",
+        jurisdictions: [{ name: "Ringebu, Oppland, Norway", date_range: "1838-" }],
+        collections: [{ id: "4237104", title: "Norway, Church Books", date_range: "1797-1958" }],
+        quirks: ["Indexed only at county level."],
+        pages_read: [{ section: "home", url: "u1", found: true }],
+        source: "locality-guide",
+      },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.entryId).toBe("loc_001");
+    const loc = (await readResearch()).localities[0];
+    expect(loc.place).toBe("Norway");
+    expect(loc.source).toBe("locality-guide");
+    expect(typeof loc.created).toBe("string"); // tool-stamped
+    expect(loc.created.length).toBeGreaterThanOrEqual(10);
+  });
+
   it("assigns max + 1, not count + 1", async () => {
     const research = baseResearch();
     research.sources = [validSource("src_001"), validSource("src_003")];

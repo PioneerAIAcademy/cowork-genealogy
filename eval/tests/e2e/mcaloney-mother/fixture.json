@@ -1,0 +1,19 @@
+{
+  "id": "mcaloney-mother",
+  "name": "Charles Kingsley McAloney",
+  "genre": "strip",
+  "source_pid": "99KY-ZQW",
+  "captured": "2026-07-21",
+  "researcher_question": "What evidence identifies the mother of Charles Kingsley McAloney?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1920s",
+    "geography": "US-MA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Stripped the mother, Jessie MacPhee (99KY-CB2), her 1907 marriage to the father, and the 4 sources whose titles name 'Jessie'/'McPhee' (1920/1930/1940 US Census + California Death Index). Recoverable by re-searching those censuses (she is enumerated as wife Jessie in Charles's household), the California Death Index (mother's maiden name 'Mcphee'), the 1911 Massachusetts birth record, or the NUMIDENT. Father Charles Smith McAloney (99KY-4H1, b.1870 Nova Scotia) retained as the search anchor. Subject b.1911 MA, d.1989 CA -- deceased."
+}

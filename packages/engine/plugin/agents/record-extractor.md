@@ -335,6 +335,25 @@ parent-child links are always inferred: `relationship_type:
 "spouse_inferred"`, `"child_inferred"`, `"parent_inferred"`, never the
 bare `"spouse"`/`"child"`.
 
+**Sex is a non-fact assertion — emit one for EVERY persona whose sex the
+record states.** A persona's sex (the census **Sex** column, a birth or
+death certificate's sex field) is an identity attribute, not an event
+fact: emit it as `fact_type: "sex"`, `value` the stated term
+(`"Male"`/`"Female"`; a bare `"M"`/`"F"` is fine), with no `date`,
+`place`, or `structured_value`. Emit it for the record subject **and
+every co-resident / household member** — one per person, exactly as you
+emit each persona's `name` assertion — never only for the head or
+searched persona and then dropped for the rest (setting it on the first
+persona alone is the known failure mode, the same trap called out for
+`record_persona_id`). It matters because `materialize_facts` reads a
+persona's `sex`/`gender` assertions to set the gender of any tree person
+it mints — omit it and every household member, spouse, or relative that
+person-evidence later mints from this record is silently created
+`gender: "Unknown"`, even when the record states the sex plainly.
+Classify it with the same three layers as that persona's `name` assertion
+on this record (same informant and proximity; `direct` where the record
+states it outright).
+
 **`standard_place`** — leave it out: `extraction_append` resolves it at
 persist time (sidecar copy first, else geocoding) and echoes every
 resolution in `resolvedPlaces` — sanity-check those. Supply a value only

@@ -1,0 +1,541 @@
+{
+  "persons": [
+    {
+      "id": "99KY-ZQW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Charles  Kingsley",
+          "surname": "McAloney"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "11 Jan 1911",
+          "standard_date": "11 Jan 1911",
+          "place": "Massachusettes,USA",
+          "standard_place": "Massachusetts, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "16 Dec 1989",
+          "standard_date": "16 Dec 1989",
+          "place": "Sonoma, California, United States",
+          "standard_place": "Sonoma, California, United States"
+        },
+        {
+          "id": "97d36bce-2308-4c59-aac6-1fbfb25a3a70",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Somerville, Middlesex, Massachusetts, United States",
+          "standard_place": "Somerville, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "c03bb8d6-23ab-45a5-9616-bd07de6d2bd3",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Easton, Bristol, Massachusetts, United States",
+          "standard_place": "Easton, Bristol, Massachusetts, United States"
+        },
+        {
+          "id": "0b3ba161-13e3-480c-b265-0dee813be671",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Somerville, Middlesex, Massachusetts, United States",
+          "standard_place": "Somerville, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "ef3ac477-f5db-40db-952d-33beacde8d43",
+          "type": "Social Program Application",
+          "date": "Sep 1940",
+          "standard_date": "Sep 1940"
+        },
+        {
+          "id": "901bfe87-27d2-472f-8cf3-74c7716ce59c",
+          "type": "Social Program Claim",
+          "date": "13 Nov 1975",
+          "standard_date": "13 Nov 1975"
+        },
+        {
+          "id": "cbe398a7-763e-4b15-94e8-b72294bf774b",
+          "type": "Previous Residence",
+          "place": "Santa Rosa, Sonoma, California, United States",
+          "standard_place": "Santa Rosa, Sonoma, California, United States"
+        }
+      ]
+    },
+    {
+      "id": "99KY-4H1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Charles Smith",
+          "surname": "McAloney"
+        }
+      ],
+      "facts": [
+        {
+          "id": "20e27ab0-faff-4677-a31d-a932867d33ee",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Nova Scotia, Canada",
+          "standard_place": "Nova Scotia, Canada"
+        },
+        {
+          "id": "24006a92-5ea6-4589-913f-6b79b5c97a23",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Colchester, Nova Scotia, Canada",
+          "standard_place": "Colchester, Nova Scotia, Canada"
+        },
+        {
+          "id": "8da481ce-9534-4a5d-953d-af07e445e427",
+          "type": "Birth",
+          "date": "6 Aug 1870",
+          "standard_date": "6 Aug 1870",
+          "place": "Five Islands, Colchester, Nova Scotia",
+          "standard_place": "Five Islands, Colchester, Nova Scotia, Canada"
+        },
+        {
+          "id": "01845b3a-4501-4511-9ada-7264c16b9944",
+          "type": "Birth Registration",
+          "date": "6 August 1870",
+          "standard_date": "6 Aug 1870",
+          "place": "Colchester, Nova Scotia, Canada",
+          "standard_place": "Colchester, Nova Scotia, Canada"
+        },
+        {
+          "id": "3b087029-5faa-4678-8596-6b69c4b4d7e4",
+          "type": "Birth Registration",
+          "date": "6 August 1870",
+          "standard_date": "6 Aug 1870",
+          "place": "Fire Islands, Suffolk, New York, United States",
+          "standard_place": "Fire Islands, Suffolk, New York, United States"
+        },
+        {
+          "id": "9cc158ad-ddfc-4f66-b626-1c82dcb63f23",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Five Islands, Colchester, Nova Scotia, Canada",
+          "standard_place": "Five Islands, Colchester, Nova Scotia, Canada"
+        },
+        {
+          "id": "20396a4c-50f8-404f-a570-71451d9d0d2b",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Five Islands, Colchester, Nova Scotia, Canada",
+          "standard_place": "Five Islands, Colchester, Nova Scotia, Canada"
+        },
+        {
+          "id": "666b54e8-2c72-4222-9d91-63b0fab534a4",
+          "type": "Immigration",
+          "date": "1888",
+          "standard_date": "1888"
+        },
+        {
+          "id": "ee7d4976-937a-4b46-b9fa-a6abcc98421d",
+          "type": "Immigration",
+          "date": "1890",
+          "standard_date": "1890"
+        },
+        {
+          "id": "663d603e-275c-4d6a-afb7-9b955dbff5d2",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Somerville Ward 1, Middlesex, Massachusetts, United States",
+          "standard_place": "Somerville, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "22c78d07-1e3c-4730-ab34-5d0371ddcb58",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Somerville, Middlesex, Massachusetts, United States",
+          "standard_place": "Somerville, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "5aff8100-b7b2-42bb-ba37-204723681111",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Easton, Bristol, Massachusetts, United States",
+          "standard_place": "Easton, Bristol, Massachusetts, United States"
+        },
+        {
+          "id": "222c4cfe-4df8-417c-b191-982f6757ef4b",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "02b80f11-4ade-4388-a6fc-dde3dad485a7",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Somerville, Middlesex, Massachusetts, United States",
+          "standard_place": "Somerville, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "7 March 1942",
+          "standard_date": "7 Mar 1942",
+          "place": "Somerville, Middlesex, Massachusetts, United States",
+          "standard_place": "Somerville, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "c3178ae7-756f-48bb-88f0-538532047f77",
+          "type": "Event Registration",
+          "place": "Boston, , Massachusetts",
+          "standard_place": "Boston, Suffolk, Massachusetts, United States"
+        },
+        {
+          "id": "98b3b62d-88f6-4211-afb1-dc1d66394055",
+          "type": "Event Registration",
+          "place": "Brookline, , Massachusetts",
+          "standard_place": "Brookline, Norfolk, Massachusetts, United States"
+        },
+        {
+          "id": "36eb16cc-b168-4b84-8248-b7573de16cae",
+          "type": "Burial",
+          "place": "Woodlawn Cemetery, Everett, Middlesex, Massachusetts, United States",
+          "standard_place": "Woodlawn Cemetery, Everett, Middlesex, Massachusetts, United States"
+        }
+      ]
+    },
+    {
+      "id": "99KY-CB2",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Jessie",
+          "surname": "MacPhee"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "7 Apr 1882",
+          "standard_date": "7 Apr 1882",
+          "place": "Hants Co.,Nova Scotia,Canada",
+          "standard_place": "Hants, Nova Scotia, Canada"
+        },
+        {
+          "id": "e0701328-7eed-4175-ab0e-e33283c58830",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Somerville Ward 1, Middlesex, Massachusetts, United States",
+          "standard_place": "Somerville, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "646da124-6109-4ced-96b2-eef6b0b9039c",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Somerville, Middlesex, Massachusetts, United States",
+          "standard_place": "Somerville, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "873a9962-1c64-4894-bfa3-426633eb263a",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Easton, Bristol, Massachusetts, United States",
+          "standard_place": "Easton, Bristol, Massachusetts, United States"
+        },
+        {
+          "id": "2e0c2c1b-d9b0-43fe-a0ab-4e41a797c024",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Somerville, Middlesex, Massachusetts, United States",
+          "standard_place": "Somerville, Middlesex, Massachusetts, United States"
+        },
+        {
+          "id": "ee526b81-ecab-42fa-8367-083e3460acb9",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "Duxbury, Duxbury, Plymouth, Massachusetts, United States",
+          "standard_place": "Duxbury, Duxbury, Plymouth, Massachusetts, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "October 1977",
+          "standard_date": "Oct 1977",
+          "place": "California, United States",
+          "standard_place": "California, United States"
+        }
+      ]
+    },
+    {
+      "id": "99KY-Z9T",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Arlene Seekell",
+          "surname": "Horton"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "21 Dec 1909",
+          "standard_date": "21 Dec 1909",
+          "place": "Massachusettes,USA",
+          "standard_place": "Massachusetts, United States"
+        },
+        {
+          "id": "4c678597-c230-4327-9bda-2921a3abb45e",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Weymouth Ward 2, Norfolk, Massachusetts, United States",
+          "standard_place": "Weymouth, Weymouth, Norfolk, Massachusetts, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Easton, Bristol, Massachusetts, United States",
+          "standard_place": "Easton, Bristol, Massachusetts, United States"
+        },
+        {
+          "id": "7cc89dc4-3dc5-4da1-9a76-544f8566553a",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Easton, Bristol, Massachusetts, United States",
+          "standard_place": "Easton, Bristol, Massachusetts, United States"
+        },
+        {
+          "id": "58fc78e2-698a-434a-842b-a66542df216b",
+          "type": "Social Program Claim",
+          "date": "10 Nov 1975",
+          "standard_date": "10 Nov 1975"
+        },
+        {
+          "id": "cbc9ad01-1e2a-4bc6-b9f5-188759db4fc5",
+          "type": "Social Program Application",
+          "date": "9 Feb 1977",
+          "standard_date": "9 Feb 1977"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "21 Mar 1996",
+          "standard_date": "21 Mar 1996",
+          "place": "Santa Rosa, Sonoma, California, United States",
+          "standard_place": "Santa Rosa, Sonoma, California, United States"
+        },
+        {
+          "id": "a8f82e46-a512-4822-bb9d-6b7ae7888c22",
+          "type": "Previous Residence",
+          "place": "Santa Rosa, Sonoma, California, United States",
+          "standard_place": "Santa Rosa, Sonoma, California, United States"
+        }
+      ]
+    },
+    {
+      "id": "GWXW-PZN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Joann",
+          "surname": "McAloney"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e73bd54b-339b-423c-b628-f1e23147db5e",
+          "type": "Birth",
+          "date": "21 November 1941",
+          "standard_date": "21 Nov 1941"
+        },
+        {
+          "id": "781b9cac-6494-4115-ae0e-b082f67c166f",
+          "type": "Residence",
+          "date": "29 Aug 2006",
+          "standard_date": "29 Aug 2006",
+          "place": "Rohnert Park, California",
+          "standard_place": "Rohnert Park, Sonoma, California, United States"
+        },
+        {
+          "id": "f48f895a-dda5-4ce9-a04e-ecde9dc2426a",
+          "type": "Death",
+          "date": "26 January 2013",
+          "standard_date": "26 Jan 2013",
+          "place": "Santa Rosa, Sonoma, California, United States",
+          "standard_place": "Santa Rosa, Sonoma, California, United States"
+        },
+        {
+          "id": "415cb96b-b952-40d4-9ff2-d890de4e7107",
+          "type": "Residence",
+          "date": "26 Jan 2013",
+          "standard_date": "26 Jan 2013",
+          "place": "Wallahan"
+        },
+        {
+          "id": "9739dc30-dbdc-4a81-9c16-a021a121d5fe",
+          "type": "Obituary",
+          "date": "03 Feb 2013",
+          "standard_date": "3 Feb 2013",
+          "place": "Santa Rosa, California, United States",
+          "standard_place": "Santa Rosa, Riverside, California, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "99KY-ZQW",
+      "person2": "99KY-Z9T"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "99KY-4H1",
+      "person2": "99KY-CB2",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "6 Oct 1907",
+          "standard_date": "6 Oct 1907",
+          "place": "Massachusetts, United States",
+          "standard_place": "Massachusetts, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "99KY-4H1",
+      "child": "99KY-ZQW",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "99KY-CB2",
+      "child": "99KY-ZQW",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "99KY-ZQW",
+      "child": "GWXW-PZN"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "99KY-Z9T",
+      "child": "GWXW-PZN"
+    }
+  ],
+  "sources": [
+    {
+      "id": "Q6SD-3BR",
+      "title": "Charles K Mcaloney, \"United States, Social Security Death Index\"",
+      "citation": "\"United States, Social Security Death Index,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:J51S-L48 : 7 January 2021), Charles K Mcaloney, 16 Dec 1989; citing U.S. Social Security Administration, <i>Death Master File</i>, database (Alexandria, Virginia: National Technical Information Service, ongoing).",
+      "url": "https://familysearch.org/ark:/61903/1:1:J51S-L48"
+    },
+    {
+      "id": "Q6S8-D9C",
+      "title": "Charles, \"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\"",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKL3-R9QV : Mon Jun 03 21:47:09 UTC 2024), Entry for Joann Or Mema Wallahan and Gary Wallahan, 03 Feb 2013.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKL3-R9QT"
+    },
+    {
+      "id": "Q6S8-WH9",
+      "title": "Charles K McAloney, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KMC-1WW5 : Sun Jul 05 00:06:26 UTC 2026), Entry for Charles Kinysley McAloney and Charles S McAloney.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KMC-1WW5"
+    },
+    {
+      "id": "3L4S-DPJ",
+      "title": "Kingsley McAloney, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MX1X-LGY : Mon Oct 13 01:43:28 UTC 2025), Entry for Charles McCloney and Jessie McCloney, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MX1X-LPM"
+    },
+    {
+      "id": "3L4S-8YX",
+      "title": "Charles Kingsley Mcaloney, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VPX2-DJW : Tue Feb 25 19:13:42 UTC 2025), Entry for Charles Kingsley Mcaloney and Mcphee, 16 Dec 1989.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VPX2-DJW"
+    },
+    {
+      "id": "3QHW-W23",
+      "title": "Charles Kingsley McAloney, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q23S-BTKN : Sat Jan 11 01:04:26 UTC 2025), Entry for Charles Kingsley McAloney and Charles McAloney, 11 Jan 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q23S-BTKN"
+    },
+    {
+      "id": "3QHW-WMT",
+      "title": "Kingsley McAloney, \"United States, Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K4K4-K6R : Fri Jul 12 09:08:01 UTC 2024), Entry for Charles McAloney and Jessie McAloney, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K4K4-K6B"
+    },
+    {
+      "id": "SWDM-SN2",
+      "title": "C Kingsley Mc Aloney, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XQ2B-NMQ : Mon Jul 08 10:18:48 UTC 2024), Entry for Charles S Mc Aloney and Jessie Mc Aloney, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XQ2B-NMW"
+    },
+    {
+      "id": "SWDM-9S8",
+      "title": "Charles Kingsley Mc Aloney, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q23S-BTJQ : Sat Jul 13 23:57:39 UTC 2024), Entry for Charles Kingsley Mc Aloney and Charles Mc Aloney, 11 Jan 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q23S-BTJQ"
+    },
+    {
+      "id": "SW81-1YS",
+      "title": "Charles Kingsley McAloney, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FXVQ-NRT : Thu May 23 02:17:39 UTC 2024), Entry for Charles Kingsley McAloney and Charles S. McAloney, 11 Jan 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXVQ-NRT"
+    },
+    {
+      "id": "SW81-1J7",
+      "title": "Charles Kingsley Mcaloney, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q23S-BT22 : Sat Jul 06 02:22:45 UTC 2024), Entry for Charles Kingsley Mcaloney and Charles S Mcaloney, 11 Jan 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q23S-BT22"
+    },
+    {
+      "id": "SW81-1W4",
+      "title": "Charles Kingsley Mcaloney, \"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\"",
+      "citation": "\"Massachusetts, Town Clerk, Vital and Town Records, 1626-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q23S-BTVN : Sat Jan 18 05:53:31 UTC 2025), Entry for Charles Kingsley Mcaloney and Chas S Mcaloney, 11 Jan 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q23S-BTVN"
+    }
+  ]
+}
