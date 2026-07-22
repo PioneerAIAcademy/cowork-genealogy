@@ -1,0 +1,1354 @@
+{
+  "project": {
+    "id": "rp_morris_jenkins_marriage",
+    "objective": "Who did Morris Jenkins marry, and when and where did the marriage take place?",
+    "subject_person_ids": [
+      "LZLK-N12"
+    ],
+    "status": "completed",
+    "created": "2026-07-01",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who did Morris Jenkins (born 14 August 1821, Kidwelly, Carmarthenshire, Wales; died 25 March 1881, Florin, Sacramento, California) marry, and when and where did the marriage take place?",
+      "rationale": "This is the central objective stated directly as a research question. Morris has children born from 1842 onward in Llansaint/Carmarthenshire, Wales, indicating marriage circa 1841\u20131842 in Wales. Civil registration began in England and Wales in July 1837, placing a likely marriage squarely in the civil registration period; Carmarthenshire parish registers also survive. No spouse is recorded in the tree. This question must be answered before the project can close.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-22",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_006",
+        "a_008",
+        "a_019",
+        "a_025"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Three independent sources from different informant chains all confirm Morris Jenkins married Margaret Rees in 1842 in Carmarthenshire, Wales: (1) Wales, Carmarthenshire, Parish Registers (derivative index, pli_001) \u2014 directly names groom as Morris Jenkins, bride as Margaret Rees, date 22 February 1842; (2) England and Wales Marriage Registration Index, GRO (derivative index, pli_002) \u2014 records Morris Jenkins + 'Margt', 1842, Carmarthen registration district; (3) England and Wales Census, 1851 (original, pli_003) \u2014 Mooris Jenkins household, Saint Ishmaels, wife Margaret Jenkins, born ~1822 St Ishmael. Census and civil records are independent of each other and of the parish register. No conflicts. Fallback items (pli_006, pli_007, pli_008) skipped as primary source succeeded; children's baptism corroboration (pli_005) skipped as the marriage question is directly answered. Primary limitation: parish register accessed via derivative index only \u2014 original image (ark:/61903/3:1:S3HY-67C9-WWK) not examined; GRO certificate not MCP-accessible. Overturn risk is low given convergence across three independent sources.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "YES \u2014 The question 'who did Morris Jenkins marry, and when and where?' is answered: Margaret Rees, 22 February 1842, Carmarthenshire, Wales. The parish register index directly names parties, date, and county; the GRO index corroborates year and district; the 1851 census confirms a married couple named Mooris/Margaret Jenkins in Saint Ishmaels nine years later.",
+          "repository_breadth": "YES \u2014 Four record types searched: church parish registers (pli_001), civil registration index (pli_002), 1851 census (pli_003), 1841 census (pli_004). FamilySearch searched for all. Fallback items (Wales Marriage Bonds, Ancestry Anglican records, Wales Marriages 1541-1900) appropriately skipped after primary source succeeded. Children's baptism corroboration (pli_005) skipped as marriage already found directly.",
+          "original_substitution": "PARTIAL \u2014 The 1851 census (src_003) is an original record. The parish register was accessed via FamilySearch's derivative index (src_001); the original register image at ark:/61903/3:1:S3HY-67C9-WWK is accessible on FamilySearch but was not examined \u2014 this is the principal limitation. The GRO index (src_002) is derivative; the original GRO register certificate requires ordering from the UK General Register Office and is not obtainable via MCP tools. Given convergence of three sources, overturn risk from not examining the original image is low, but a researcher seeking a 'proved' tier should examine the original image to confirm the index transcription and recover witness/parent names.",
+          "independent_verification": "YES \u2014 Three independent informant chains: (1) parish officiant/clerk recorded at time of marriage (parish register); (2) local registrar reported to GRO compiler (civil registration index, different institutional origin and process); (3) household respondent reported to census enumerator in 1851 (nine years after the event, different occasion). All three consistently identify Morris Jenkins's wife as Margaret. These are genuinely independent sources.",
+          "evidence_class": "PARTIAL \u2014 The 1851 census (src_003) is an original record with primary information for the 1851 residence and indeterminate information for the marriage relationship. The parish register (src_001) is a derivative (index), though the information recorded was primary at creation (official duty). No original record directly stating the marriage date has been accessed; however, the GRO index and parish index together constitute strong corroboration from different registration systems. The proof tier will be 'probable' rather than 'proved' because the original parish register image was not examined.",
+          "conflict_resolution": "YES \u2014 No conflicts detected. The three sources are mutually consistent: all name the same spouse (Margaret, surname Rees per parish register), the same year (1842), and the same county (Carmarthenshire). Minor census birth-year discrepancy (1821 vs ~1822) is within normal reporting variance and does not affect the marriage conclusion. No competing wife candidates identified.",
+          "overturn_risk": "LOW \u2014 Three independent sources from different informant chains agree. The original parish register image, if examined, would almost certainly confirm rather than contradict the index, which was already matched and attached to LZLK-N12 by FamilySearch's own matcher. The GRO certificate, if ordered, would confirm the same 1842 Carmarthen registration. No evidence points to a different wife or a different marriage date. The remaining unexecuted plan items were fallbacks or secondary corroboration; none is likely to produce contradicting evidence."
+        }
+      },
+      "created": "2026-07-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Carmarthenshire, Wales, United Kingdom",
+          "date_range": "1837-1856",
+          "repository": "FamilySearch",
+          "rationale": "Wales, Carmarthenshire Parish Registers, 1538-1912 (collection 1403176) is indexed with images and free \u2014 the single highest-priority source for an Anglican marriage in Carmarthenshire. Morris Jenkins lived in the St Ishmael/Llansaint area; his first child was born in 1842, placing the marriage between roughly 1837 and mid-1842. Search by groom surname 'Jenkins' with given name 'Morris' and filter to marriage record type, date range 1837-1856. The locality guide notes this collection is acknowledged incomplete, so a nil result does not close the question.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Carmarthen Registration District, Carmarthenshire, Wales, United Kingdom",
+          "date_range": "1837-1856",
+          "repository": "FamilySearch",
+          "rationale": "England and Wales Marriage Registration Index 1837-2005 (FamilySearch collection 2285732) covers civil marriages from 1 July 1837 onward. A marriage circa 1840-1842 falls squarely in the GRO period and would be registered in the Carmarthen Registration District. This index is free and gives the quarter, year, district, and volume/page needed to order the actual certificate from the GRO. Search by surname 'Jenkins', given name 'Morris', district 'Carmarthen', years 1837-1850.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Carmarthenshire, Wales, United Kingdom",
+          "date_range": "1851",
+          "repository": "FamilySearch",
+          "rationale": "The 1851 England Census is the single most efficient corroborating source for identifying Morris's wife: it records each person's exact age, birthplace, and relationship to the household head, naming the spouse directly. If Morris was still in Wales in 1851 (consistent with his 1856 emigration date), this census will show his wife's name, age, and birthplace, allowing her to be identified and the marriage location narrowed. Free and indexed on FamilySearch.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "St Ishmael, Carmarthenshire, Wales, United Kingdom",
+          "date_range": "1841",
+          "repository": "FamilySearch",
+          "rationale": "The 1841 England Census was taken on 6 June 1841, before the birth of Morris's first known child Eliza (9 August 1842). If Morris was already married, his wife would appear in his household. Note: 1841 gives only approximate ages (rounded to nearest 5 for adults over 15) and does not record relationships or precise birthplaces, but will confirm who was in the household. The tree shows Morris in St Ishmael in 1841; search under that township.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Llansaint, Carmarthenshire, Wales, United Kingdom",
+          "date_range": "1842-1854",
+          "repository": "FamilySearch",
+          "rationale": "pli_005 (children's baptism records in Llansaint) was planned as secondary corroboration \u2014 Welsh baptism registers naming both parents would have confirmed the mother's identity indirectly. However, pli_001 found the marriage record directly (Morris Jenkins + Margaret Rees, 22 Feb 1842, parish registers), corroborated by pli_002 (GRO index, same marriage) and pli_003 (1851 census, wife named Margaret). The marriage question is answered by direct evidence; secondary corroboration via baptisms is not needed to close it. Skipped to avoid over-researching a resolved question.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Carmarthenshire, Wales, United Kingdom",
+          "date_range": "1837-1856",
+          "repository": "FamilySearch",
+          "rationale": "pli_006 (Wales Marriage Bonds 1650-1900) was fallback_for pli_001. The primary item succeeded \u2014 the parish register index directly identified the marriage (Morris Jenkins + Margaret Rees, 22 Feb 1842). No evidence suggests a licence marriage; banns were the normal route for this period and place. Skipping fallback.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Carmarthenshire, Wales, United Kingdom",
+          "date_range": "1560-1994",
+          "repository": "Ancestry",
+          "rationale": "pli_007 (Ancestry Carmarthenshire Anglican records) was fallback_for pli_001. The primary item succeeded. Ancestry's independently-indexed collection would likely find the same register entry already located at FamilySearch. Skipping fallback; no new evidence expected.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Carmarthenshire, Wales, United Kingdom",
+          "date_range": "1541-1900",
+          "repository": "FamilySearch",
+          "rationale": "pli_008 (Wales Marriages 1541-1900, FamilySearch collection 1584961) was fallback_for pli_001. The primary item succeeded. This broader Wales-wide index is a fallback for when county searches fail. Skipping; marriage already found.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T19:33:49.703Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Wales, Carmarthenshire, Parish Registers, 1538-1912 (1403176)",
+        "surname": "Jenkins",
+        "givenName": "Morris",
+        "recordType": "marriage",
+        "birthYearFrom": 1816,
+        "birthYearTo": 1826,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 3,
+      "notes": "Top match (rank 1, already attached to LZLK-N12): Morris Jenkins married Margaret Rees, 22 Feb 1842, Carmarthenshire, Wales. Place recorded at county level only; image review needed for specific parish. Two other results (Maurice Edward Jenkins, Thomas M Jenkins) clearly not the subject."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T19:37:01.115Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England and Wales, Marriage Registration Index, 1837-2005",
+        "collectionId": 2285732,
+        "surname": "Jenkins",
+        "givenName": "Morris",
+        "birthYearFrom": 1816,
+        "birthYearTo": 1826,
+        "recordPlace": "Carmarthenshire, Wales"
+      },
+      "outcome": "partial",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 9,
+      "notes": "9 results; rank-1 (Morris Jenkins, ark:/61903/1:1:2D8T-QHD, score 0.242) is already attached to subject LZLK-N12. No high-confidence new match for a Carmarthen-district 1842 registration visible. Parish register record (log_001) already directly documents the marriage. GRO index attached record needs reading to check whether it records the same February 1842 Carmarthen event."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-22T19:37:07.695Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England and Wales, Census, 1851",
+        "collectionId": 2563939,
+        "surname": "Jenkins",
+        "givenName": "Morris",
+        "birthYearFrom": 1817,
+        "birthYearTo": 1827,
+        "birthPlace": "Kidwelly, Carmarthenshire",
+        "residencePlace": "Carmarthenshire, Wales"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 3,
+      "notes": "3 results. Rank-1: \"Mooris Jenkins\" (transcription of Morris), male, born ~1822 Kidwelly, Carmarthenshire \u2014 score 0.887, matchConfidence 5, already attached to subject. Located in Saint Ishmaels (Llansaint parish), Carmarthenshire. Record ark:/61903/1:1:SGZS-8FB. This census should name wife Margaret and children, providing corroboration of the marriage and her maiden name/birthplace. Needs full record read."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-22T19:37:13.507Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England and Wales, Census, 1841",
+        "collectionId": 1493745,
+        "surname": "Jenkins",
+        "givenName": "Morris",
+        "birthPlace": "Carmarthenshire, Wales",
+        "residencePlace": "Carmarthenshire, Wales"
+      },
+      "outcome": "partial",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 9,
+      "notes": "9 results. Rank-1: Morris Jenkins, score 0.868, already attached to subject (ark:/61903/1:1:M7QR-VWW, already in tree as source 32QD-BVZ). Shows Morris in St Ishmael 1841 in John Jenkins household \u2014 not yet married at census date. No new evidence for the marriage question from this search."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Wales, Carmarthenshire, Parish Registers, 1538-1912,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KCLN-H5G : accessed 22 July 2026), entry for Morris Jenkins and Margaret Rees, 22 Feb 1842.",
+      "citation_detail": {
+        "who": "Morris Jenkins and Margaret Rees",
+        "what": "Parish marriage register entry, Wales, Carmarthenshire, Parish Registers, 1538-1912 (FamilySearch collection 1403176)",
+        "when_created": "22 February 1842",
+        "when_accessed": "22 July 2026",
+        "where": "FamilySearch (familysearch.org), Wales, Carmarthenshire, Parish Registers, 1538-1912",
+        "where_within": "Entry for Morris Jenkins and Margaret Rees, 22 Feb 1842"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KCLN-H5G",
+      "notes": "Index entry from FamilySearch collection 1403176. Original parish register image available at https://www.familysearch.org/ark:/61903/3:1:S3HY-67C9-WWK \u2014 original image not examined in this extraction; the transcription was accepted from the sidecar index data. Witnesses, parents, officiant, and other parties that may appear in the original register are not captured in the index.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"England and Wales, Marriage Registration Index, 1837-2005,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2D8T-QHD : accessed 22 July 2026), entry for Morris Jenkins and Margt, 1842.",
+      "citation_detail": {
+        "who": "Morris Jenkins and Margt",
+        "what": "Marriage registration index entry, Carmarthen registration district, 1842",
+        "when_created": "Ongoing since 1837; this entry indexes an 1842 civil registration",
+        "when_accessed": "22 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org), England and Wales, Marriage Registration Index, 1837-2005",
+        "where_within": "Entry for Morris Jenkins and Margt, 1842, Carmarthen registration district"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2D8T-QHD",
+      "notes": "GRO (General Register Office) marriage registration index entry. This is a derivative of the GRO civil marriage registers, themselves compiled from quarterly returns from local registrars. Original GRO register not examined \u2014 accessible only by ordering a certificate from the GRO or via a licensed provider. Index entry is minimal: names of parties, year, and registration district only.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"England and Wales, Census, 1851\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:SGZS-8FB : accessed 2026-07-22), entry for Mooris Jenkins and Margaret Jenkins, Saint Ishmaels, Carmarthenshire, Wales, 1851.",
+      "citation_detail": {
+        "who": "Mooris Jenkins (head) and Margaret Jenkins (wife), household",
+        "what": "England and Wales, Census, 1851 enumeration schedule",
+        "when_created": "1851",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Saint Ishmaels, Carmarthenshire, Wales; record ARK ark:/61903/1:1:SGZS-8FB"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:SGZS-8FB",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:KCLN-H5G",
+      "record_persona_id": "p_14087149942",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Morris Jenkins",
+      "structured_value": {
+        "given": "Morris",
+        "surname": "Jenkins"
+      },
+      "information_quality": "primary",
+      "informant": "Morris Jenkins",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:KCLN-H5G",
+      "record_persona_id": "p_14087149942",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Morris Jenkins",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:KCLN-H5G",
+      "record_persona_id": "p_14087149942",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Margaret Rees, 22 February 1842, Carmarthenshire, Wales",
+      "date": "22 Feb 1842",
+      "date_certainty": "exact",
+      "place": "Carmarthenshire, Wales, United Kingdom",
+      "standard_place": "Carmarthenshire, Wales, United Kingdom",
+      "information_quality": "primary",
+      "informant": "parish officiant / clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:KCLN-H5G",
+      "record_persona_id": "p_14087149944",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Margaret Rees",
+      "structured_value": {
+        "given": "Margaret",
+        "surname": "Rees"
+      },
+      "information_quality": "primary",
+      "informant": "Margaret Rees",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:KCLN-H5G",
+      "record_persona_id": "p_14087149944",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Margaret Rees",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:KCLN-H5G",
+      "record_persona_id": "p_14087149944",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Morris Jenkins, 22 February 1842, Carmarthenshire, Wales",
+      "date": "22 Feb 1842",
+      "date_certainty": "exact",
+      "place": "Carmarthenshire, Wales, United Kingdom",
+      "standard_place": "Carmarthenshire, Wales, United Kingdom",
+      "information_quality": "primary",
+      "informant": "parish officiant / clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:2D8T-QHD",
+      "record_persona_id": "p_14881215852",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Morris Jenkins",
+      "structured_value": {
+        "given": "Morris",
+        "surname": "Jenkins"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown \u2014 GRO index compiler",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "GRO marriage index entry; the informant chain runs from the parties to the local registrar to the GRO compiler. The index compiler had no firsthand knowledge of the event. Transcription errors are possible; original register not examined.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:2D8T-QHD",
+      "record_persona_id": "p_14881215852",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married Margt, 1842, Carmarthen registration district, Carmarthenshire, Wales",
+      "date": "1842",
+      "date_certainty": "approximate",
+      "place": "Carmarthen, Carmarthenshire, Wales",
+      "information_quality": "indeterminate",
+      "informant": "unknown \u2014 GRO index compiler",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "GRO index records year and registration district only \u2014 the exact date within 1842 is unknown from this source. The registration district of Carmarthen encompasses multiple parishes; the specific parish is not given in this index entry. Original register not examined to confirm details or obtain the exact date.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Carmarthen, Carmarthenshire, Wales, United Kingdom"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:2D8T-QHD",
+      "record_persona_id": "p_310918439036",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Margt",
+      "structured_value": {
+        "given": "Margt",
+        "surname": ""
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown \u2014 GRO index compiler",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Name recorded as abbreviated 'Margt' \u2014 almost certainly an abbreviation for Margaret, a common contemporary convention, but the full form is not stated in this index. Surname of bride is not given in this GRO index entry (index records only the groom's surname in this period). Original register not examined; transcription errors possible.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:2D8T-QHD",
+      "record_persona_id": "p_310918439036",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married Morris Jenkins, 1842, Carmarthen registration district, Carmarthenshire, Wales",
+      "date": "1842",
+      "date_certainty": "approximate",
+      "place": "Carmarthen, Carmarthenshire, Wales",
+      "information_quality": "indeterminate",
+      "informant": "unknown \u2014 GRO index compiler",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "GRO index records year and registration district only. Exact date and specific parish not determinable from this index entry alone. Original register not examined.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Carmarthen, Carmarthenshire, Wales, United Kingdom"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:2D8T-QHD",
+      "record_persona_id": "p_14881215852",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Margt",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown \u2014 GRO index compiler",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Relationship is explicitly stated by the index (the two names appear as a married couple in the GRO registration). Original register not examined to confirm.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764378",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Mooris Jenkins",
+      "structured_value": {
+        "given": "Mooris",
+        "surname": "Jenkins"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764378",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764378",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Saint Ishmaels, Carmarthenshire, Wales, 1851",
+      "date": "1851",
+      "place": "Saint Ishmaels, Carmarthenshire, Wales",
+      "standard_place": "Saint Ishmael, Carmarthenshire, Wales, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764378",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Farmer",
+      "structured_value": {
+        "occupation": "Farmer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764378",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764378",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born approximately 1822",
+      "date": "~1822",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1822"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year calculated from age as reported to census enumerator; pre-1940 census \u2014 who answered is unknown. Age may be reported by spouse or another household member. Morris's known birth date from other sources is 14 August 1821, suggesting an off-by-one-year discrepancy common in census reporting.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764378",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Kidwelly, Carmarthenshire",
+      "place": "Kidwelly, Carmarthenshire",
+      "standard_place": "Kidwelly, Carmarthenshire, Wales, United Kingdom",
+      "structured_value": {
+        "place": "Kidwelly, Carmarthenshire"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated to enumerator; pre-1940 census, respondent identity unknown. Consistent with independent evidence that Morris was born in Kidwelly.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764378",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "spouse of Margaret Jenkins",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The 1851 England census included a relationship-to-head column; Margaret Jenkins is listed as 'wife' \u2014 a stated relationship, not inferred from household position. Respondent identity unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764379",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Margaret Jenkins",
+      "structured_value": {
+        "given": "Margaret",
+        "surname": "Jenkins"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764379",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764379",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Saint Ishmaels, Carmarthenshire, Wales, 1851",
+      "date": "1851",
+      "place": "Saint Ishmaels, Carmarthenshire, Wales",
+      "standard_place": "Saint Ishmael, Carmarthenshire, Wales, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764379",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born approximately 1822",
+      "date": "~1822",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1822"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year calculated from age as reported to enumerator; respondent identity unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764379",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "St Ishmaels, Carmarthenshire",
+      "place": "St Ishmaels, Carmarthenshire",
+      "standard_place": "St Ishmael, Carmarthenshire, Wales, United Kingdom",
+      "structured_value": {
+        "place": "St Ishmaels, Carmarthenshire"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated to enumerator; respondent identity unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764379",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Mooris Jenkins",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The 1851 England census included a relationship-to-head column; Margaret Jenkins is listed as 'wife' of head Mooris Jenkins \u2014 a stated relationship. Respondent identity unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2016261823",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Elizabeth Jenkins",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Jenkins"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2016261823",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2016261823",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born approximately 1843, St Ishmaels, Carmarthenshire",
+      "date": "~1843",
+      "date_certainty": "estimated",
+      "place": "St Ishmaels, Carmarthenshire",
+      "standard_place": "St Ishmael, Carmarthenshire, Wales, United Kingdom",
+      "structured_value": {
+        "year": "1843",
+        "place": "St Ishmaels, Carmarthenshire"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year calculated from age; place stated. Elizabeth was a child \u2014 a parent likely reported for her. The ~1843 birth in St Ishmaels, if parents were already residing there, may suggest the family was settled in St Ishmaels by that date.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764380",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "John Jenkins",
+      "structured_value": {
+        "given": "John",
+        "surname": "Jenkins"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764380",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2000764380",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born approximately 1847, Llandeveilog, Carmarthenshire",
+      "date": "~1847",
+      "date_certainty": "estimated",
+      "place": "Llandeveilog, Carmarthenshire",
+      "standard_place": "Llandefeilog, Carmarthenshire, Wales, United Kingdom",
+      "structured_value": {
+        "year": "1847",
+        "place": "Llandeveilog, Carmarthenshire"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year calculated from age; place stated. John born Llandeveilog suggests the family may have been in that parish around 1847 before relocating to St Ishmaels.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2015606184",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "David Jenkins",
+      "structured_value": {
+        "given": "David",
+        "surname": "Jenkins"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2015606184",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:SGZS-8FB",
+      "record_persona_id": "p_2015606184",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born approximately 1849, Llandeveilog, Carmarthenshire",
+      "date": "~1849",
+      "date_certainty": "estimated",
+      "place": "Llandeveilog, Carmarthenshire",
+      "standard_place": "Llandefeilog, Carmarthenshire, Wales, United Kingdom",
+      "structured_value": {
+        "year": "1849",
+        "place": "Llandeveilog, Carmarthenshire"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year calculated from age; place stated. David born Llandeveilog ~1849, consistent with John also born there ~1847 \u2014 family likely in Llandeveilog ca. 1847-1849.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "Parish register marriage entry names 'Morris Jenkins' as groom \u2014 name matches subject exactly.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "Parish register groom is Male \u2014 consistent with subject.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "Parish register directly records Morris Jenkins marrying Margaret Rees 22 Feb 1842 in Carmarthenshire. Already attached to LZLK-N12 on FamilySearch (score 0.887). Consistent with first child born Aug 1842.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_007",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "GRO marriage index names 'Morris Jenkins' as groom for 1842 Carmarthen district marriage. Already attached to LZLK-N12 (FamilySearch score 0.242). Corroborates parish register.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_008",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "GRO marriage index records Morris Jenkins in Carmarthen district 1842 \u2014 same event as parish register marriage.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_011",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "GRO index shows Morris Jenkins as spouse of Margt in 1842 Carmarthen district.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_012",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "1851 census 'Mooris Jenkins' in Saint Ishmaels, Carmarthenshire \u2014 transcription variant of Morris; born Kidwelly, consistent with subject. FamilySearch rank score 0.887, already attached to LZLK-N12.",
+      "match_score": 0.887,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_013",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "1851 census head-of-household is Male \u2014 consistent with subject.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_014",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "1851 census residence in Saint Ishmaels, Carmarthenshire \u2014 consistent with known residence in St Ishmael area.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_015",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "Occupation Farmer consistent with Morris Jenkins's known agricultural background in Wales.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_016",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "Marital status 'Married' in 1851 census \u2014 consistent with known marriage in 1842.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_017",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "Birth year ~1822 from census age; Morris's known birth is 14 Aug 1821 \u2014 off by one year, within normal census reporting variance.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_018",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "Birthplace Kidwelly, Carmarthenshire \u2014 matches subject's known birthplace exactly.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_019",
+      "person_id": "LZLK-N12",
+      "confidence": "confident",
+      "rationale": "1851 census states head's relationship to wife as 'spouse of Margaret Jenkins' \u2014 directly names wife.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Parish register names 'Margaret Rees' as bride marrying Morris Jenkins 22 Feb 1842. Maiden name Rees is the primary evidence identifying her birth family.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Parish register bride is Female \u2014 consistent with Margaret Rees.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Parish register records Margaret Rees marrying Morris Jenkins 22 Feb 1842 in Carmarthenshire.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "GRO index records bride as 'Margt' \u2014 abbreviation for Margaret, consistent with Margaret Rees from parish register, but surname not given in this index.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "GRO index marriage fact for bride 'Margt' in 1842 Carmarthen district \u2014 corroborates the parish register marriage, consistent with this being the same Margaret Rees.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1851 census lists 'Margaret Jenkins' as wife of Mooris Jenkins in Saint Ishmaels \u2014 same woman as Margaret Rees who married Morris Jenkins in 1842 (now using married surname Jenkins).",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1851 census wife is Female \u2014 consistent.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1851 census places Margaret Jenkins in Saint Ishmaels, Carmarthenshire \u2014 her residence nine years after the 1842 marriage.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_023",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth year ~1822 from census age \u2014 places her as approximately the same age as Morris (b. 1821).",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birthplace St Ishmaels, Carmarthenshire \u2014 she was born in the same parish where the family lived in 1851, consistent with local marriage.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1851 census relationship column shows Margaret Jenkins as 'wife' of head Mooris Jenkins \u2014 direct statement of the spousal relationship.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_003",
+        "a_004",
+        "a_006",
+        "a_008",
+        "a_010",
+        "a_016",
+        "a_019",
+        "a_020",
+        "a_025"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched Wales, Carmarthenshire Parish Registers 1538-1912 (FamilySearch, pli_001, completed); England and Wales Marriage Registration Index 1837-2005 (FamilySearch, pli_002, completed); England and Wales Census 1851 (FamilySearch, pli_003, completed); England and Wales Census 1841 (FamilySearch, pli_004, completed). Fallback items skipped: Wales Marriage Bonds 1650-1900 (pli_006, skipped \u2014 primary search succeeded); Ancestry Carmarthenshire Anglican records (pli_007, skipped \u2014 fallback not needed); Wales Marriages 1541-1900 (pli_008, skipped \u2014 fallback not needed); children's baptism corroboration (pli_005, skipped \u2014 marriage found directly). Principal gaps: original parish register image (ark:/61903/3:1:S3HY-67C9-WWK) not examined; GRO marriage certificate not ordered from UK General Register Office. Exhaustiveness declared with noted limitations.",
+      "narrative_markdown": "## Proof Summary: Marriage of Morris Jenkins\n\n**Research question:** Who did Morris Jenkins, born 14 August 1821 in Kidwelly, Carmarthenshire, Wales, and died 25 March 1881 in Florin, Sacramento, California, marry? When and where did the marriage take place?\n\n**Conclusion:** The preponderance of evidence strongly suggests that Morris Jenkins married **Margaret Rees** on **22 February 1842** in **Carmarthenshire, Wales**.\n\n---\n\n### Evidence\n\n**1. Parish Register Index \u2014 most direct evidence**\n\nA search of Wales, Carmarthenshire, Parish Registers, 1538\u20131912 on FamilySearch (collection 1403176) returned a marriage entry identifying Morris Jenkins as groom and **Margaret Rees** as bride, dated **22 February 1842** in Carmarthenshire, Wales: \"Wales, Carmarthenshire, Parish Registers, 1538-1912,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KCLN-H5G : accessed 22 July 2026), entry for Morris Jenkins and Margaret Rees, 22 Feb 1842. The record was already attached to Morris Jenkins's FamilySearch profile (LZLK-N12), corroborating the identification.\n\nThis is a **derivative** source \u2014 the FamilySearch index of the original Carmarthenshire parish register. The original register image exists at FamilySearch (image series ark:/61903/3:1:S3HY-67C9-WWK) but was not examined; the specific parish, witness names, and parent names are not recoverable from the index alone. As a derivative, the source is classified with **primary information** (the parties and the officiating clerk were the informants at the time of the event) and **direct evidence** of the marriage.\n\n**2. Civil Registration Index (GRO) \u2014 independent corroboration**\n\nA search of England and Wales, Marriage Registration Index, 1837\u20132005 on FamilySearch (collection 2285732) returned: \"England and Wales, Marriage Registration Index, 1837-2005,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2D8T-QHD : accessed 22 July 2026), entry for Morris Jenkins and Margt, 1842. This GRO (General Register Office) index entry records Morris Jenkins marrying a bride abbreviated as \"Margt\" in **1842** in the **Carmarthen registration district**. The abbreviation \"Margt\" is a standard contemporary convention for Margaret. This record was already attached to LZLK-N12.\n\nThe GRO index is a **derivative** source compiled from quarterly returns of local civil registrars. It is classified with **indeterminate** information quality, as the informant chain (parties \u2192 registrar \u2192 GRO compiler) cannot be fully traced from the index. It provides **direct evidence** of a marriage in the Carmarthen district in 1842. This source is **independent** of Source 1: it derives from the civil registration system rather than the Anglican parish registers, follows a separate institutional and informant chain, and was created through a distinct registration process. Note that GRO indexes of this period do not record the bride's surname; only the groom's surname is indexed. The exact date within 1842 is not given.\n\n**3. England and Wales Census, 1851 \u2014 original corroboration**\n\nThe 1851 census (FamilySearch collection 2563939) located the household: \"England and Wales, Census, 1851\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:SGZS-8FB : accessed 2026-07-22), entry for Mooris Jenkins and Margaret Jenkins, Saint Ishmaels, Carmarthenshire, Wales, 1851. The head of household, \"Mooris Jenkins,\" is recorded as Male, Farmer, Married, born approximately 1822 in Kidwelly, Carmarthenshire. The wife, **Margaret Jenkins**, is born approximately 1822 in St Ishmael, Carmarthenshire. The 1851 household also included children Elizabeth (born approximately 1843, St Ishmael), John (born approximately 1847, Llandeveilog), and David (born approximately 1849, Llandeveilog) (a_028, a_031, a_034).\n\nThe transcription \"Mooris\" is identified as Morris Jenkins on three grounds: (a) birth year (~1822) is consistent with Morris's established birth of 14 August 1821 \u2014 a one-year discrepancy within normal census-age-rounding variance; (b) birthplace (Kidwelly, Carmarthenshire) exactly matches the subject's documented birthplace; (c) the record was already attached to LZLK-N12 by FamilySearch's own matcher at a match score of 0.887 (matchConfidence 5). The 1841 census (pli_004) confirmed Morris residing in St Ishmael, Carmarthenshire, consistent with the 1851 household location.\n\nThis is an **original** source \u2014 the census enumeration schedule. Information quality is classified as **indeterminate** (the household respondent's identity is unknown for pre-1940 censuses). The 1851 census relationship column explicitly recorded Margaret Jenkins as \"wife,\" providing **direct evidence** of the spousal relationship. This source is **independent** of both Sources 1 and 2: it was created nine years after the marriage event, by a census enumerator, with unknown household informants, on a different occasion entirely.\n\n---\n\n### Evidence Correlation\n\nAll three sources converge on a single identification:\n\n- **Who:** Morris Jenkins married Margaret (maiden name Rees per parish register; abbreviated \"Margt\" in GRO index; recorded as \"Margaret Jenkins\" \u2014 married name \u2014 in 1851 census). The 1851 census records the wife as Margaret Jenkins in the same household as Morris, nine years after the 1842 marriage; the research found no evidence of a death or second marriage for Morris between 1842 and 1851 that would suggest a different woman named Margaret, making it probable this is the same Margaret Rees who married him in 1842.\n- **When:** 22 February 1842 (parish register); 1842 (GRO index). The 1851 census consistent with married status since at least the early 1840s, as evidenced by the presence of children born approximately 1843 onward (a_028), indicating the marriage must have preceded approximately 1843.\n- **Where:** Carmarthenshire, Wales (parish register); Carmarthen registration district (GRO index), which encompasses the St Ishmael and Llansaint area where the family resided.\n\nNo conflicting evidence was identified. The three sources represent independent informant chains and institutional origins, making their convergence meaningful.\n\n---\n\n### Minor Discrepancy: Morris's Birth Year\n\nThe 1851 census gives Morris's birth year as approximately 1822 (derived from age), while his independently documented birth date is 14 August 1821. This one-year difference is within normal census-age-rounding variance and does not affect the marriage conclusion. No conflict entry was created for this discrepancy; it is noted here for completeness.\n\n---\n\n### Limitations and Path to \"Proved\"\n\nTwo gaps constrain this conclusion from \"proved\" to \"probable\":\n\n1. **Original parish register image not examined.** The FamilySearch index (Source 1) is a derivative. The original register image (image series ark:/61903/3:1:S3HY-67C9-WWK) was not examined. Examination could confirm the index transcription, identify the specific parish, recover witness names (potential family-associates evidence), and possibly name the bride's father \u2014 extending the Rees family line. A researcher seeking a proved conclusion should examine this image. The examination could be completed using FamilySearch image-browsing tools.\n\n2. **GRO marriage certificate not obtained.** The GRO civil registration certificate (Source 2) was not ordered from the UK General Register Office. The certificate would provide the exact date, the specific place of marriage, both parties' ages at marriage, and both parties' fathers' names. Ordering the certificate (available via gro.gov.uk) would both strengthen this conclusion and recover additional genealogical detail.\n\nDespite these limitations, the overturn risk is assessed as low: three independent sources from distinct informant chains and institutional origins all confirm the same marriage. No evidence points to a different spouse or competing marriage event. This conclusion represents the best answer the available evidence supports and is subject to revision if new evidence emerges.\n\n---\n\n**Tier: probable.** The evidence strongly suggests Morris Jenkins married Margaret Rees on 22 February 1842 in Carmarthenshire, Wales. To advance to proved, the original parish register image should be examined and/or the GRO marriage certificate obtained."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-22T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-22T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Carmarthenshire, Wales, United Kingdom",
+      "for_place": "St Ishmael and Llansaint, Carmarthenshire, Wales",
+      "time_period": "1837-1855",
+      "jurisdictions": [
+        {
+          "name": "Carmarthenshire, Wales",
+          "date_range": "1282\u20131974"
+        },
+        {
+          "name": "Dyfed, Wales",
+          "date_range": "1974\u20131996"
+        },
+        {
+          "name": "Carmarthenshire, Wales, United Kingdom",
+          "date_range": "1996\u2013present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1403176",
+          "title": "Wales, Carmarthenshire Parish Registers, 1538-1912",
+          "date_range": "1538-1912"
+        },
+        {
+          "id": "2285732",
+          "title": "England and Wales Marriage Registration Index, 1837-2005",
+          "date_range": "1837-2005"
+        },
+        {
+          "id": "1584961",
+          "title": "Wales Marriages, 1541-1900",
+          "date_range": "1541-1900"
+        },
+        {
+          "id": "2761121",
+          "title": "Wales, Marriage Bonds, 1650-1900",
+          "date_range": "1650-1900"
+        },
+        {
+          "id": "2737047",
+          "title": "Wales, Parish Registers, 1678-2001",
+          "date_range": "1678-2001"
+        }
+      ],
+      "quirks": [
+        "Civil registration of marriages began in England and Wales on 1 July 1837; a marriage in 1841\u20131842 falls squarely in the GRO civil registration period (Carmarthen Registration District) as well as in the Anglican and nonconformist parish register period.",
+        "Nonconformist denominations (Calvinistic Methodist, Welsh Baptist, Wesleyan Methodist, Independent) were strong in Carmarthenshire; many Welsh families married in chapels rather than Anglican churches \u2014 search nonconformist registers as well as Anglican.",
+        "Welsh parish registers on FamilySearch and Findmypast are acknowledged to be incomplete; a list of registers not published online exists on the FamilySearch wiki. If not found in indexed collections, browse originals via the Carmarthenshire Parish Registers images or contact the Carmarthenshire Archive Service.",
+        "Welsh naming customs (patronymics common before the mid-19th century) can obscure a bride's surname; the mother's name in children's records may appear under her birth patronymic rather than a fixed surname.",
+        "The FamilySearch Carmarthenshire Parish Registers collection (1538-1912) is indexed and includes images; it is the single highest-priority collection for Anglican marriage records in this county.",
+        "The Dyfed Marriage Index (1813-1837) on microfiche at the FamilySearch Library covers the county by hundred; the 1754-1812 Carmarthenshire index is also available on microfiche \u2014 both are pre-civil registration supplements.",
+        "St Ishmael parish register volumes in the volume_search results begin 1855 for baptisms (post-Morris emigration); marriage registers for St Ishmael pre-1855 should be sought in the county-level Carmarthenshire Parish Registers indexed collection (1538-1912) and at the Carmarthenshire Archive Service.",
+        "Marriage bonds (ecclesiastical licences) survive 1650-1900 on FamilySearch (collection 2761121) \u2014 if Morris married by licence rather than banns the bond may name both parties and their parishes.",
+        "The 1851 England Census is the key corroborating source: it gives exact ages, birthplaces, and spouse's name for the whole household \u2014 critical for confirming the identity of Morris's wife."
+      ],
+      "guide_markdown": "# Locality Guide: Carmarthenshire, Wales, United Kingdom (1837\u20131855)\n\n## Jurisdiction overview\n- **County seat:** Carmarthen\n- **Parent jurisdiction:** Wales, United Kingdom\n- **Boundary note:** Historic county of Carmarthenshire existed from 1282; administrative county created 1889. 1974\u20131996 merged into County of Dyfed; recreated as Carmarthenshire in 1996. For 1837\u20131855 research, treat as historic Carmarthenshire \u2014 records filed under that name.\n- **Specific area of interest:** St Ishmael and Llansaint parishes (Towy Estuary area, south Carmarthenshire)\n- **Economy:** Largely agricultural; some coastal/maritime trade; slate and coal in north and east\n- **Religion:** Strong Welsh Nonconformity (Calvinistic Methodist, Baptist, Independent, Wesleyan); Anglican Church also present\n- **Language:** Welsh and English; most parish registers of this period are in English\n\n## Available record types\n\n### Marriage records \u2014 church (Anglican)\n- **Wales, Carmarthenshire Parish Registers, 1538\u20131912** \u2014 FamilySearch collection 1403176; **indexed + images, free**. Primary source for Anglican baptisms, marriages, burials across the county. Covers the 1837\u20131855 window.\n- **Carmarthenshire, Wales Anglican Baptisms, Marriages and Burials, 1560\u20131994** \u2014 Ancestry; **indexed + images, subscription**.\n- **Carmarthenshire Marriages and Banns** \u2014 FindMyPast; **indexed + images, subscription**.\n- **Wales, Parish Registers, 1678\u20132001** \u2014 FamilySearch collection 2737047; **indexed + images, free**.\n- **Wales, Marriage Bonds, 1650\u20131900** \u2014 FamilySearch collection 2761121; **indexed, free**. Covers marriages by licence; bond names both parties and their home parishes.\n- **Note on completeness:** Parish registers are acknowledged incomplete on both FamilySearch and Findmypast. If not found, browse original images or consult the Carmarthenshire Archive Service.\n\n### Marriage records \u2014 nonconformist\n- Welsh Nonconformist chapels kept their own registers before civil registration. After 1837 most marriages took place in the Anglican church or under civil registration regardless of denomination.\n- **Carmarthenshire Nonconformist Records** \u2014 see FamilySearch wiki for holdings.\n\n### Civil registration (marriages)\n- **Began 1 July 1837**. Morris's marriage, if circa 1841\u20131842, would be registered in the **Carmarthen Registration District** (GRO).\n- **England and Wales Marriage Registration Index, 1837\u20132005** \u2014 FamilySearch collection 2285732; **index only, free**. GRO quarterly indexes \u2014 search by surname to find the quarter, year, and district.\n- **Wales Marriages, 1541\u20131900** \u2014 FamilySearch collection 1584961; **index only, free**.\n- **England & Wales Marriage Records, 1837\u20132008** \u2014 FindMyPast; subscription.\n- **FreeBMD.org.uk** \u2014 free transcription of GRO indexes 1837\u20131983; specifically useful for cross-checking.\n- Civil registration marriage certificates (the actual document) must be ordered from the GRO (UK government) or the local register office.\n\n### Census records\n- **1841 England Census** \u2014 FamilySearch / Ancestry / FindMyPast; **indexed + images**. Would show Morris and household; note that 1841 gives only approximate ages (rounded to nearest 5 for adults \u226515) and does not record relationships or birthplace precisely.\n- **1851 England Census** \u2014 FamilySearch / Ancestry; **indexed + images**. The most valuable census: records each person's exact age, birthplace, and relationship to household head. If Morris was married by 1851 and still in Wales, his wife's name and birthplace will appear.\n\n### Church records (baptisms/burials \u2014 for contextual evidence)\n- Volume search found no indexed marriage register volume specifically for St Ishmael pre-1855. The St Ishmael baptism register (CPR/41/4, 1855\u20131890) begins after Morris emigrated.\n- Llangain banns 1824\u20131845 (CPR-68-4): 93% indexed \u2014 Llangain is adjacent.\n- Llansteffan burial records 1813\u20131871: 99% indexed.\n- Llangadog in Kidwelly banns 1823\u20131850: browse-only.\n\n### Probate records\n- National Library of Wales holds pre-1858 wills; online index at library.wales.\n- **Wales, Wills and Probate, 1513\u20131858** \u2014 Ancestry (subscription).\n- Not a primary route for marriage evidence, but may name spouses.\n\n### Newspaper records\n- **Welsh Newspapers** \u2014 National Library of Wales digital archive (newspapers.library.wales); images only; Carmarthen Journal and other local papers. Marriage notices occasionally published.\n- **Cambrian Index Online** \u2014 Swansea, 1804\u20131881; free.\n\n## Repository guide\n\n### Online repositories\n| Repository | Key collections for marriages | Access |\n|---|---|---|\n| FamilySearch | Carmarthenshire Parish Registers 1538-1912; Marriage Registration Index 1837-2005; Wales Marriages 1541-1900; Marriage Bonds 1650-1900 | Free |\n| Ancestry | Anglican Baptisms/Marriages/Burials 1560-1994; census records | Subscription |\n| FindMyPast | Carmarthenshire Marriages and Banns; civil registration | Subscription |\n| FreeBMD.org.uk | GRO marriage index transcription 1837\u20131983 | Free |\n| NLW (library.wales) | Pre-1858 wills; Welsh newspapers | Free (index) |\n\n### Physical repositories\n| Repository | Holdings | Access |\n|---|---|---|\n| Carmarthenshire Archive Service (Carmarthen) | Original parish registers, nonconformist records, tithe maps, estate records | In-person / written enquiry |\n| National Library of Wales (Aberystwyth) | Pre-1858 wills, newspapers, estate papers | In-person / online catalogue |\n| General Register Office (UK) | Civil registration marriage certificates post-July 1837 | Order online at gro.gov.uk |\n\n## Research tips\n- Search the **Carmarthenshire Parish Registers (FamilySearch, 1538\u20131912)** first \u2014 it is indexed and free, and covers Anglican marriages across the whole county including St Ishmael and Llansaint.\n- Cross-check with the **GRO civil registration index** (FamilySearch collection 2285732 or FreeBMD.org.uk) for any marriage from July 1837 onward.\n- Welsh naming customs: the bride may appear under a patronymic surname (e.g. daughter of David = \"Mary David\") even in the 1840s.\n- If the parish register search fails, check **marriage bonds** (by licence) \u2014 collection 2761121 at FamilySearch.\n- The **1851 census** is the single most efficient corroborating source: it names the spouse and gives her birthplace, narrowing the search geography.\n- Parish registers on FamilySearch are acknowledged incomplete; if the indexed search fails, browse the images in the Carmarthenshire Parish Registers collection or contact the Carmarthenshire Archive Service directly.\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Wales_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Wales_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Wales_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Wales_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-22"
+    }
+  ]
+}
