@@ -1,0 +1,10 @@
+{
+  "annotator": "promise",
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Subject 2BLL-3JS birth recovered as 1865, Forfarshire (=Angus), Scotland from census corroboration (S1 1881, S2 1871); exact date (17 Mar) and town (Dundee) not recovered because the primary Scotland birth register was deferred. Marked true because the correct person, birth year, and region are established AND the same-named mother was correctly disambiguated: LQY1-14T (primary name 'Susan Kidd', married form 'Susan Miller', b.~1831 Kirriemuir) is kept as a separate OID and linked as parent of the subject via rel-pc-LQY1-14T-2BLL-3JS, with John Miller as father. Proof quality 2 — birth-year corroborated across two independent censuses but primary birth record not retrieved, leaving the search partial."
+  }
+}

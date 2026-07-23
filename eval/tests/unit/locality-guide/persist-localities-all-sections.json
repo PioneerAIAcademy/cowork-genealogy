@@ -1,0 +1,43 @@
+{
+  "test": {
+    "id": "ut_locality_guide_024",
+    "skill": "locality-guide",
+    "name": "Reads all four wiki place-page sections and persists a localities entry",
+    "type": "positive",
+    "description": "Inside a research project (flynn-first-plan has a research.json), locality-guide surveys Schuylkill County, Pennsylvania (1840-1880). It must call wiki_place_page for ALL FOUR sections (home / getting_started / online_records / research_tips) — guarding the '1-of-4 under-read' — and PERSIST one localities entry via research_append, with pages_read recording each section's outcome. Guards the localities-persistence + read-coverage behavior added in the localities PR.",
+    "tags": [
+      "locality-guide",
+      "localities",
+      "localities-persist",
+      "wiki-place-page",
+      "persist"
+    ]
+  },
+  "input": {
+    "user_message": "We're researching in Schuylkill County, Pennsylvania (1840-1880). Produce the locality research guide and save it to the project.",
+    "scenario": "flynn-first-plan"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-any",
+    "place-population-any",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "volume-search-schuylkill",
+    "external-links-search-schuylkill",
+    "wiki-search-any",
+    "wiki-read-any",
+    "wiki-place-page-any"
+  ],
+  "judge_context": [
+    "Read-coverage is enforced deterministically by the validator (`test_localities_persisted_with_full_page_coverage` checks a localities[] entry was persisted with `pages_read` covering all four wiki sections). Do NOT independently re-count wiki_place_page calls or fail Completeness/Tool Arguments solely on how many sections were re-read — grade the guide's substance instead.",
+    "The guide should incorporate the place's wiki research pages (overview / getting-started / online-records / research-tips) and name concrete records/repositories for Schuylkill County / Pennsylvania grounded in the tool results (collections, volumes) — not invented specifics.",
+    "Persistence check (context for Completeness): the skill should present the guide AND persist one localities[] entry via research_append. A run that produces a solid guide and persists the entry is complete.",
+    "The skill must NOT write to any research.json section other than `localities`, and must not touch tree.gedcomx.json."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

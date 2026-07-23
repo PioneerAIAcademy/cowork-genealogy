@@ -1,0 +1,1836 @@
+{
+  "persons": [
+    {
+      "id": "LVF8-NQJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Lewis Joseph",
+          "surname": "Reese"
+        },
+        {
+          "id": "N13",
+          "type": "BirthName",
+          "given": "Louis",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "N31",
+          "type": "BirthName",
+          "given": "Joseph L",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N33",
+          "type": "BirthName",
+          "given": "Lewis",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "N34",
+          "type": "BirthName",
+          "given": "Louis",
+          "surname": "Reese [?]",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1847 ",
+          "standard_date": "1847",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "27 October 1912 ",
+          "standard_date": "27 Oct 1912",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ab29fab8-47dd-4348-9fc6-b4e21f04ed6c",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "2nd District 14th Ward Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "8b569e9a-fb92-4ae1-94e7-c3c396165993",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "New York, New York, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "b25e45f9-25fe-4fc4-8529-e5757decb604",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "44653e1b-4d1e-4b25-9771-1fed694572f3",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c32f4b3b-55bb-44aa-acb7-6007e9dfe658",
+          "type": "Event Type",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "693046f5-19e7-4dcd-9b53-de6c39bb1a6f",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Brooklyn Ward 16, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "87d8d5b1-c71e-4dc3-8f96-cd6ef27c9ed5",
+          "type": "Residence",
+          "date": "1912",
+          "standard_date": "1912",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c129d667-9e9f-4101-a0c9-b3eb171954e5",
+          "type": "Occupation",
+          "date": "1912",
+          "standard_date": "1912",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "value": "Reverend "
+        },
+        {
+          "id": "cc74c8b6-75d6-4070-a1b6-fa682bd699ec",
+          "type": "Burial",
+          "date": "30 October 1912",
+          "standard_date": "30 Oct 1912",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "F2",
+          "type": "MaritalStatus",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Occupation",
+          "value": "Shoemaker",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F22",
+          "type": "Birth",
+          "date": "~1848",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            },
+            {
+              "ref": "S6",
+              "quality": 2
+            }
+          ],
+          "place": "U.S.A."
+        },
+        {
+          "id": "F23",
+          "type": "MaritalStatus",
+          "value": "single",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F24",
+          "type": "Occupation",
+          "value": "Shoe Maker",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F46",
+          "type": "Census",
+          "date": "1910",
+          "place": "Brooklyn Ward 16, Kings, New York, United States",
+          "standard_place": "Brooklyn, New York City, New York, United States",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F47",
+          "type": "MaritalStatus",
+          "value": "Widowed",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F48",
+          "type": "Race",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F50",
+          "type": "Birth",
+          "place": "Pennsylvania",
+          "standard_place": "Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L15S-ZZ1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Elizabeth Jane",
+          "surname": "Ritchie"
+        },
+        {
+          "id": "N17",
+          "type": "BirthName",
+          "given": "Eliza J.",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "af0f0840-468b-49f8-8bfd-0a1a84bdf525",
+          "type": "Birth",
+          "date": "May 1824",
+          "standard_date": "May 1824",
+          "place": "Manhattan, New York City, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "71b2c0f5-1c87-4cfc-a654-01a721a6c967",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "New York City, ward 8, New York, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States"
+        },
+        {
+          "id": "b1b62da5-44f5-4987-9abb-35c2c316f9f2",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "2nd District 14th Ward Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c9d0b5f9-b57a-40f9-a8df-b3a6175943da",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "53fc20d2-627a-4bac-a895-71d858c31c55",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "7da091a8-99f1-4375-8ee3-bdeda72423b6",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Borough of Brooklyn, Election District 7 New York City Ward 16, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "16d298be-323e-455b-914b-386902eedd89",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ced1c3c1-a09e-4b80-b9f6-7ff2a94e674f",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, A.D. 15, E.D. 10, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "246c76ce-068d-4101-9493-e8e20dca87ee",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Brooklyn Ward 16, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "9c947edb-ed53-4858-847a-84f820354bab",
+          "type": "Death",
+          "date": "11 Feb 1920",
+          "standard_date": "11 Feb 1920",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "6bd19eb4-f9b5-4f7d-8529-39f1c799b3ac",
+          "type": "Burial",
+          "date": "14 Feb 1920",
+          "standard_date": "14 Feb 1920",
+          "place": "NY",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "6a6c4d12-db1f-4362-8196-9b554b72b698",
+          "type": "Residence",
+          "place": "245 Kosciosko St."
+        },
+        {
+          "id": "F9",
+          "type": "Birth",
+          "date": "~1827",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L6JB-YHG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Laura Amelia",
+          "surname": "Scott"
+        },
+        {
+          "id": "N14",
+          "type": "BirthName",
+          "given": "Laura",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N32",
+          "type": "BirthName",
+          "given": "Laura",
+          "surname": "Scott",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 2
+            },
+            {
+              "ref": "S6",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ed80a414-cfca-4f65-88c2-6e2987904c72",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Bushwick, Kings, New York, United States",
+          "standard_place": "Bushwick, Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100-dup1",
+          "type": "Birth",
+          "date": "October 1850",
+          "standard_date": "Oct 1850",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "c910cb5e-07d5-40d7-9d19-1ba1ed7e1f2f",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "1st District 14th Ward Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "value": "Census"
+        },
+        {
+          "id": "e83eb25a-f217-453f-b7e2-ed75010a7418",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "New York City, New York County, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States",
+          "value": "Census"
+        },
+        {
+          "id": "b1ae5b71-1cbe-43d2-87e7-4a8346bb3cc2",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "New York, New York, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "d9643794-6a9e-4505-95a6-b4ac8c6f1cad",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0-dup2",
+          "type": "Death"
+        },
+        {
+          "id": "F4",
+          "type": "MaritalStatus",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Occupation",
+          "value": "Keeping House",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F49",
+          "type": "Birth",
+          "place": "U.S.A.",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "F51",
+          "type": "Birth",
+          "place": "England",
+          "standard_place": "England, United Kingdom",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L15S-NBF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Lewis Moses",
+          "surname": "Reese"
+        },
+        {
+          "id": "N16",
+          "type": "BirthName",
+          "given": "Louis",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "1f0cc24d-54ff-4999-97cd-b237a5a84c7d",
+          "type": "Birth",
+          "date": "1826",
+          "standard_date": "1826",
+          "place": "Pennsylvania, United States",
+          "standard_place": "Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "0e35775d-26c4-486a-9bb3-88db31b0b88d",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "2nd District 14th Ward Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c5ed3466-4bce-4d63-9a7d-a280e7bcd8e5",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ce841fb2-3175-4622-bdba-dbac15ac0bc6",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "c6eb20ce-a4b0-4e89-8b77-a8fff9b1750c",
+          "type": "Death",
+          "date": "18 Dec 1890",
+          "standard_date": "18 Dec 1890",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "0017b3ca-7359-4049-ac36-abbd6ef19a98",
+          "type": "Burial",
+          "date": "21 Dec 1890",
+          "standard_date": "21 Dec 1890"
+        },
+        {
+          "id": "2ea337f5-ed52-401d-b4a5-df0a07010060",
+          "type": "Residence",
+          "place": "Brooklyn, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "F8",
+          "type": "Birth",
+          "date": "~1825",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "G9VJ-1WS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "Mary",
+          "surname": "Reese"
+        },
+        {
+          "id": "N15",
+          "type": "BirthName",
+          "given": "May",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N29",
+          "type": "BirthName",
+          "given": "Mary",
+          "surname": "Brooks",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "7c266c96-0366-4659-a3a6-fdefdb8ab2a9",
+          "type": "Birth",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "U.S.",
+          "standard_place": "United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "36bfcec1-69e0-4dc4-887c-9bb0b79f6ec2",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "New York, New York, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "b3f6e45d-3d03-41c1-affa-26632ca2d203",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "75cb72e4-11f0-41d3-8b97-abd36dbe8d53",
+          "type": "Event Type",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ca519c0f-8f30-44ae-b77e-264dd6e04aab",
+          "type": "Marriage",
+          "date": "14 Oct 1898",
+          "standard_date": "14 Oct 1898",
+          "place": "Queens, New York, United States",
+          "standard_place": "Queens, New York, United States"
+        },
+        {
+          "id": "bbc16193-c1ef-4184-a09b-f5f42c915734",
+          "type": "Death",
+          "date": "22 Jun 1933",
+          "standard_date": "22 Jun 1933",
+          "place": "New York City, Queens, New York, United States",
+          "standard_place": "Queens, New York City, New York, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "792889ed-881f-41c8-abba-e0e6071a43a8",
+          "type": "Burial",
+          "date": "26 Jun 1933",
+          "standard_date": "26 Jun 1933",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "77235f30-e84e-4b7d-844d-c9626cc427c2",
+          "type": "Residence",
+          "place": "58-08 58th Ave."
+        },
+        {
+          "id": "F6",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Occupation",
+          "value": "At Home",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F37",
+          "type": "Race",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F38",
+          "type": "Occupation",
+          "value": "Housework",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F39",
+          "type": "MaritalStatus",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N18",
+          "type": "BirthName",
+          "given": "Clarence",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F10",
+          "type": "Birth",
+          "place": "New York, United States",
+          "standard_place": "New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "date": "~1869"
+        },
+        {
+          "id": "F11",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "type": "Occupation",
+          "value": "Juvenile Asylm",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F13",
+          "type": "Residence",
+          "place": "New York City, New York County, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N19",
+          "type": "BirthName",
+          "given": "Lizzie",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F14",
+          "type": "Birth",
+          "place": "New York, United States",
+          "standard_place": "New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "date": "~1876"
+        },
+        {
+          "id": "F15",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Occupation",
+          "value": "At Home",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F17",
+          "type": "Residence",
+          "place": "New York City, New York County, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N20",
+          "type": "BirthName",
+          "given": "Louis",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N30",
+          "type": "BirthName",
+          "given": "Lewis",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F18",
+          "type": "Birth",
+          "place": "New York, United States",
+          "standard_place": "New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S6",
+              "quality": 2
+            }
+          ],
+          "date": "~1878"
+        },
+        {
+          "id": "F19",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F20",
+          "type": "Occupation",
+          "value": "At Home",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "Residence",
+          "place": "New York City, New York County, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F40",
+          "type": "Death",
+          "date": "22 Dec 1939",
+          "place": "Queens, New York City, New York, United States",
+          "standard_place": "Queens, New York City, New York, United States",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F41",
+          "type": "Birth",
+          "place": "U.S.A.",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "F42",
+          "type": "MaritalStatus",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F43",
+          "type": "Occupation",
+          "value": "Truck driver",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F44",
+          "type": "Burial",
+          "date": "26 Dec 1939",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F45",
+          "type": "Residence",
+          "place": "Queens, New York City, New York, United States",
+          "standard_place": "Queens, New York City, New York, United States",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N21",
+          "type": "BirthName",
+          "given": "Mary",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F25",
+          "type": "Birth",
+          "date": "~1852",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ],
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "F26",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N22",
+          "type": "BirthName",
+          "given": "Sarah",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F27",
+          "type": "Birth",
+          "date": "~1854",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ],
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "F28",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N23",
+          "type": "BirthName",
+          "given": "Edward",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F29",
+          "type": "Birth",
+          "date": "~1855",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ],
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "F30",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N24",
+          "type": "BirthName",
+          "given": "William",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F31",
+          "type": "Birth",
+          "date": "~1856",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ],
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "F32",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N25",
+          "type": "BirthName",
+          "given": "Carrie",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F33",
+          "type": "Birth",
+          "date": "~1863",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ],
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "F34",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N26",
+          "type": "BirthName",
+          "given": "Alexander",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F35",
+          "type": "Birth",
+          "date": "~1865",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ],
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "F36",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N27",
+          "type": "BirthName",
+          "given": "Charles",
+          "surname": "Brooks",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I11",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N28",
+          "type": "BirthName",
+          "given": "Susan Alice",
+          "surname": "Reese",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LVF8-NQJ",
+      "person2": "L6JB-YHG"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "L15S-NBF",
+      "person2": "L15S-ZZ1",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "3 AUG 1846",
+          "standard_date": "3 Aug 1846",
+          "place": "New York City,,NY",
+          "standard_place": "New York City, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "L15S-NBF",
+      "child": "LVF8-NQJ"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L15S-ZZ1",
+      "child": "LVF8-NQJ"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "G9VJ-1WS"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "G9VJ-1WS"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R13"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R14"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "I2",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R15"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "I2",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R16"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R17"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R18"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-NBF",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R19"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-ZZ1",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R20"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-NBF",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R21"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-ZZ1",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R22"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-NBF",
+      "child": "I6",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R23"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-ZZ1",
+      "child": "I6",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R24"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-NBF",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R25"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-ZZ1",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R26"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-NBF",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R27"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-ZZ1",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R28"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-NBF",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R29"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L15S-ZZ1",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R30"
+    },
+    {
+      "type": "Couple",
+      "person1": "G9VJ-1WS",
+      "person2": "I10",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R31"
+    },
+    {
+      "type": "Couple",
+      "person1": "I3",
+      "person2": "I11",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R32"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S4XD-TGJ",
+      "title": "Lewis Reise, \"New York, State Census, 1892\"",
+      "citation": "\"New York, State Census, 1892\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MQSM-LXC : Tue Dec 17 02:38:15 UTC 2024), Entry for Lewis Reise, 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MQSM-LXC"
+    },
+    {
+      "id": "S4XZ-434",
+      "title": "Joseph L Reese, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M53W-HCH : Wed Aug 13 18:08:33 UTC 2025), Entry for Joseph L Reese, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M53W-HCH"
+    },
+    {
+      "id": "S4XC-Y68",
+      "title": "Lewis Reese, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CX-S23P : Sun Mar 10 17:48:17 UTC 2024), Entry for Joseph Whelan and May Reese, 14 October 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CX-S2Q6"
+    },
+    {
+      "id": "S4XC-LB7",
+      "title": "Lewis Reese, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CX-SKJL : Sat Mar 09 11:59:00 UTC 2024), Entry for Joseph Whelan and May Reese, 14 October 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CX-SKVH"
+    },
+    {
+      "id": "S9WW-HM9",
+      "title": "Lewis J Reese, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC7G-PG2 : Mon Jul 08 14:01:21 UTC 2024), Entry for Lewis M Reese and Eliza J Reese, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC7G-PGG"
+    },
+    {
+      "id": "S9WW-MHV",
+      "title": "Louis Reese, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZDM-ZHZ : Tue Jan 21 11:17:09 UTC 2025), Entry for Louis Reese and Eliza J. Reese, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZDM-ZHD"
+    },
+    {
+      "id": "S9W7-G9M",
+      "title": "Louis Reese, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ6Q-1XV : Mon Jan 20 10:01:11 UTC 2025), Entry for Louis Reese and Laura Reese, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZ6Q-1XV"
+    },
+    {
+      "id": "S9W7-VWP",
+      "title": "Louis Reese, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2W2W-NTL : Wed Mar 26 20:29:44 UTC 2025), Entry for Mary Brooks and Louis Reese, 22 Jun 1933.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2W2W-NTG"
+    },
+    {
+      "id": "S1",
+      "title": "Household of Louis Reese, 'United States, Census, 1880'",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MZ6Q-1XV"
+    },
+    {
+      "id": "S2",
+      "title": "Household of Louis Reese, 'United States, Census, 1880'",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MZDM-ZHD"
+    },
+    {
+      "id": "S3",
+      "title": "Household of Joseph L Reese, \"United States, Census, 1910\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M53W-HCH"
+    },
+    {
+      "id": "S4",
+      "title": "Entry for Mary Brooks, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2W2W-NTL"
+    },
+    {
+      "id": "S5",
+      "title": "Entry for Emily Reese, \"New York, New York City Births, 1846-1909\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:997M-N57N"
+    },
+    {
+      "id": "S6",
+      "title": "Entry for Lewis Reese, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9977-B3WG"
+    },
+    {
+      "id": "S7",
+      "title": "1880 U.S. Census, New York County, New York, ED 206, Family 326, Louis Reese household \u2014 enumerator schedule image",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB6-9HZH"
+    },
+    {
+      "id": "S8",
+      "title": "Entry for Joseph Reese, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2WN4-LL4"
+    }
+  ]
+}

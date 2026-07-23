@@ -1,0 +1,1008 @@
+{
+  "persons": [
+    {
+      "id": "GW4W-DTG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Lewis Washington",
+          "surname": "Ogletree"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8e33fbb3-5cd7-40dc-a0c1-8f233bb204dc",
+          "type": "Birth",
+          "date": "8 August 1882",
+          "standard_date": "8 Aug 1882",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "707cb23a-d647-44c7-8086-8faad5011918",
+          "type": "Death",
+          "date": "28 March 1955",
+          "standard_date": "28 Mar 1955",
+          "place": "Riverdale, Cook, Illinois, United States",
+          "standard_place": "Riverdale, Cook, Illinois, United States"
+        },
+        {
+          "id": "2d33794d-a7ea-4885-9120-b3be43c4209a",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States"
+        },
+        {
+          "id": "94130094-8f6f-423e-8218-c5e1f7dc0338",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States"
+        },
+        {
+          "id": "2e431271-0a82-4957-9599-781b46b2e954",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "53445e43-24ca-419b-ac7e-c85af9e5dac7",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "64f0c8ad-1f03-4133-985f-4e6bc9e886d4",
+          "type": "Military Draft Registration",
+          "date": "1942",
+          "standard_date": "1942",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "ee4042ef-c79a-40d4-b4b8-6dc07a65ce24",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "7ececaae-9088-49d1-9a68-37d0988fde90",
+          "type": "Burial",
+          "date": "2 April 1955",
+          "standard_date": "2 Apr 1955",
+          "place": "Worth, Cook, Illinois, United States",
+          "standard_place": "Worth, Cook, Illinois, United States"
+        },
+        {
+          "id": "0c270163-76e8-429f-b537-a7fbf965f6b3",
+          "type": "Ethnicity",
+          "value": "Black or African American"
+        },
+        {
+          "id": "700ebd2c-2924-48e1-8924-fc0324249c90",
+          "type": "Residence",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "372ecfcf-d9a9-4ab7-b261-388904eb7a57",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        }
+      ]
+    },
+    {
+      "id": "GJZH-9TW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Lewis Washington",
+          "surname": "Ogletree"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ccc15a95-05ab-43d0-83fa-b4b7c36384ca",
+          "type": "Birth",
+          "date": "16 April 1914",
+          "standard_date": "16 Apr 1914",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "62e14bab-1824-4c8e-b264-2ea023c2e328",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "650a4671-c196-4aa3-aac3-9837e35a7d9e",
+          "type": "Social Program Application",
+          "date": "Apr 1938",
+          "standard_date": "Apr 1938"
+        },
+        {
+          "id": "fb4e956d-9ae5-4a8b-8a2a-cb13343e254a",
+          "type": "Military Draft Registration",
+          "date": "16 October 1940",
+          "standard_date": "16 Oct 1940",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "5e655bb9-a62d-40db-b4de-91e4cff5d05d",
+          "type": "Residence",
+          "date": "15 April 1950",
+          "standard_date": "15 Apr 1950",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "d7e0dcab-95fb-4b27-8032-40e54b9d0347",
+          "type": "Death",
+          "date": "3 July 2003",
+          "standard_date": "3 Jul 2003",
+          "place": "Cook, Illinois, United States",
+          "standard_place": "Cook, Illinois, United States"
+        },
+        {
+          "id": "46a4ab63-95d7-446e-a35a-2cfd82c88466",
+          "type": "Previous Residence",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "7aba50a9-3250-44f5-81d2-268d26a782d5",
+          "type": "Residence",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        }
+      ]
+    },
+    {
+      "id": "GCPS-6MB",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Girard W",
+          "surname": "Ogletree"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4be69b6e-fe9e-4017-81ad-9e20bbb3d9ee",
+          "type": "Birth",
+          "date": "30 June 1909",
+          "standard_date": "30 Jun 1909",
+          "place": "Griffith, Taylor, Georgia, United States",
+          "standard_place": "Griffith, Taylor, Georgia, United States"
+        },
+        {
+          "id": "81bd5247-738e-403f-a62a-544d9f53838a",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States"
+        },
+        {
+          "id": "ac58156c-3410-4b9b-a650-cc251d44f69d",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "bf771b5d-3b9c-467a-b9b3-6106ce5f47fd",
+          "type": "MilitaryService",
+          "date": "3 March 1941",
+          "standard_date": "3 Mar 1941",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "8238e37e-c453-42ca-8fcb-dbb890390a99",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "6ba3009a-3486-42f7-8086-e841048b328d",
+          "type": "Death",
+          "date": "3 May 1986",
+          "standard_date": "3 May 1986",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "a3a04755-cda0-4f55-8f9d-b585eea4178c",
+          "type": "Burial",
+          "date": "9 May 1986",
+          "standard_date": "9 May 1986",
+          "place": "Burr Oak Cemetery, Alsip, Township of Worth, Cook, Illinois, United States",
+          "standard_place": "Burr Oak Cemetery, Alsip, Cook, Illinois, United States"
+        },
+        {
+          "id": "948e39a0-a1a6-41ba-860b-5e5934229589",
+          "type": "Military Draft Registration",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "ee6caf86-d55d-4a6d-8691-2b1e81264ec7",
+          "type": "Ethnicity",
+          "value": "Negro"
+        },
+        {
+          "id": "227b818a-b07c-425c-9975-2754302ca35d",
+          "type": "Residence",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "15d5b972-149b-4336-ae07-9b54dafd237f",
+          "type": "LifeSketch",
+          "value": "Illinois, Cook County Marriages, 1871-1968\n\nName Girard W Ogletree\nSex Male\nAge 22\nBirth Year (Estimated) 1909\n.\nSpouse's Name Autherine Pirtle\nSpouse's Sex Female\nSpouse's Age 19\nSpouse's Birth Year (Estimated) 1912\n.\nMarriage Date 07 Feb 1931\nMarriage Place Cook, Illinois, United States\nEvent Type Marriage\n-------------------------\nIllinois, Cook County Deaths, 1871-1998\n\nName Girard Ogletree\nSex Male\nAge 76\nAddress 1933 S CHRISTIANA\n.\nDeath Date 03 May 1986\nDeath Place Chicago, Cook, Illinois, United States\n.\nBirth Date 30 Jun 1909\nBirthplace , , GEORGIA\n.\nMarital Status Married\nOccupation LABORER\nRace Black\n.\nFather's Name Lewis Ogletree\nMother's Name Mattie\nSpouse's Name Myrtle Jones\n.\nInformant's Name BLANCA E PALACIOS\nEvent Type Death\nEntry Number 609276\nCemetery BURR OAK\nFuneral Home HOUSE OF BRANCH"
+        }
+      ]
+    },
+    {
+      "id": "GJZW-W62",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Louise C",
+          "surname": "Ogletree"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a2175b2e-4405-4a53-9418-6a21b7b5f7e6",
+          "type": "Birth",
+          "date": "8 November 1910",
+          "standard_date": "8 Nov 1910",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "d4520d8a-1a77-4b86-a427-792a88ae677d",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "b8c55bc8-efa8-45eb-9060-5890f96fd291",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "f520ed5f-1f7b-4b8f-b323-a65f82c27140",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "4f10c21b-d02d-4c78-ba23-6f7e663c6058",
+          "type": "Residence",
+          "date": "11 April 1950",
+          "standard_date": "11 Apr 1950",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "b46fe9ec-ca53-41c1-bbaa-f0e419d4b8f9",
+          "type": "Death",
+          "date": "18 April 1975",
+          "standard_date": "18 Apr 1975",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "69106f7d-e1dc-4f1e-a776-d576acd333c0",
+          "type": "Burial",
+          "date": "1975",
+          "standard_date": "1975",
+          "place": "Worth, Cook, Illinois, United States",
+          "standard_place": "Worth, Cook, Illinois, United States"
+        },
+        {
+          "id": "af06e9dc-1d1d-4cc6-8fec-8467e9a3d60d",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "16176a4e-f3a3-4034-9017-57e35c2059a3",
+          "type": "Occupation",
+          "value": "Seamstress"
+        },
+        {
+          "id": "23a1db52-db25-402d-93f1-e3b1e3cb01c1",
+          "type": "Ethnicity",
+          "value": "Neg"
+        }
+      ]
+    },
+    {
+      "id": "GCPS-W6D",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Annie B",
+          "surname": "Ogletree"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fb8d6a06-6e22-4fa1-afa1-dae2b316968e",
+          "type": "Birth",
+          "date": "5 July 1908",
+          "standard_date": "5 Jul 1908",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "c507d53b-f1df-47fa-ac3d-e3fac5702ca5",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States"
+        },
+        {
+          "id": "cd6c8d60-07d3-4223-a3b8-24b82e298ddc",
+          "type": "Residence",
+          "date": "1945",
+          "standard_date": "1945",
+          "place": ", Dade, Florida",
+          "standard_place": "Dade, Florida, United States"
+        },
+        {
+          "id": "07e1c8f8-c3d2-42a4-ab7b-248fb9ab5ffe",
+          "type": "Residence",
+          "date": "16 May 1950",
+          "standard_date": "16 May 1950",
+          "place": "Hollywood, Broward, Florida, United States",
+          "standard_place": "Hollywood, Broward, Florida, United States"
+        },
+        {
+          "id": "7579daf6-6b88-4630-91ad-f5e38568d974",
+          "type": "Social Program Claim",
+          "date": "14 Sep 1971",
+          "standard_date": "14 Sep 1971"
+        },
+        {
+          "id": "b94d3653-b5d1-4be5-9629-e306ec41b239",
+          "type": "Death",
+          "date": "13 November 1995",
+          "standard_date": "13 Nov 1995",
+          "place": "Graceville, Jackson, Florida, United States",
+          "standard_place": "Graceville, Jackson, Florida, United States"
+        },
+        {
+          "id": "8f3238c1-9f4f-45a9-a001-dab65b7c7bd4",
+          "type": "Previous Residence",
+          "place": "Graceville, Jackson, Florida, United States",
+          "standard_place": "Graceville, Jackson, Florida, United States"
+        },
+        {
+          "id": "8c54f17f-264a-490d-bdb1-bade5da81b03",
+          "type": "Unknown",
+          "place": "Broward",
+          "standard_place": "Broward, Florida, United States"
+        },
+        {
+          "id": "f34cc005-fb13-4087-a7d8-8219c30c2a0c",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "fefffd2c-228e-4f47-b0ea-d25d194bc539",
+          "type": "Ethnicity",
+          "value": "Neg"
+        }
+      ]
+    },
+    {
+      "id": "GWXS-RXR",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Mattie",
+          "surname": "Pearcy"
+        }
+      ],
+      "facts": [
+        {
+          "id": "bd27261b-bfe3-4a03-988e-8c17261ec291",
+          "type": "Birth",
+          "date": "November 1886",
+          "standard_date": "Nov 1886",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "3a75f134-e941-4047-8731-5f54e1a74cd8",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Militia District 1066, Akins, Spalding, Georgia, United States",
+          "standard_place": "District 1066, Spalding, Georgia, United States"
+        },
+        {
+          "id": "dc957d0f-baf1-47e3-8443-aa8f12049691",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Orrs, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States"
+        },
+        {
+          "id": "42a6682f-e9c6-4ca8-82b9-d8d7f3abbdb2",
+          "type": "Death"
+        },
+        {
+          "id": "d0e373fc-03b0-4602-be01-fb3074d7faa4",
+          "type": "Ethnicity",
+          "value": "Black or African American"
+        }
+      ]
+    },
+    {
+      "id": "GJZY-622",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Nellie Mae",
+          "surname": "Ogletree"
+        }
+      ],
+      "facts": [
+        {
+          "id": "db9b0fa2-285f-44c5-a834-d5156fc7018f",
+          "type": "Birth",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "fee36b0a-23e0-4e53-b63f-0151f41d2377",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "857d3d13-4264-424d-b9e4-f0452354363c",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "e29b9f84-6690-49bc-a769-0d9e0d9aedc6",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K45Y-CC5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Harriett",
+          "surname": "Haygood"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "May 1856",
+          "standard_date": "May 1856",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "911176aa-bd73-43fc-aa76-e2a288dd84e8",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Monroe, Georgia, United States",
+          "standard_place": "Monroe, Georgia, United States"
+        },
+        {
+          "id": "aa2b8b8e-70e9-4011-8c0b-0cc49022b27d",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "District 1066, Spalding, Georgia, United States",
+          "standard_place": "District 1066, Spalding, Georgia, United States"
+        },
+        {
+          "id": "60c135b6-baa2-4db8-8850-0bbc609aa0ca",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "26 August 1929",
+          "standard_date": "26 Aug 1929",
+          "place": "Griffin, Spalding, Georgia, United States",
+          "standard_place": "Griffin, Spalding, Georgia, United States"
+        },
+        {
+          "id": "dd431b78-1428-44ca-8ef4-0d21b466b3da",
+          "type": "Ethnicity",
+          "value": "Black or African American"
+        },
+        {
+          "id": "adbf6e48-6436-4ba0-af46-3f1c7d1209cd",
+          "type": "Burial",
+          "place": "Griffin, Spalding, Georgia, United States",
+          "standard_place": "Griffin, Spalding, Georgia, United States"
+        },
+        {
+          "id": "e82149e4-0664-49be-ac82-1c94d80fb1a2",
+          "type": "Residence",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "4c35b660-a35c-4f22-9316-248e2f8e7ab4",
+          "type": "Residence",
+          "place": "Griffin, Georgia",
+          "standard_place": "Griffin, Spalding, Georgia, United States"
+        },
+        {
+          "id": "1f4cac09-df79-4533-ab00-a9ff9fa8e979",
+          "type": "Ethnicity",
+          "value": "American"
+        },
+        {
+          "id": "2471eb9d-db49-47c0-8d8f-5afda5aa1d62",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "0a5641ed-76e3-454d-8f80-1b6ac9ed2386",
+          "type": "Ethnicity",
+          "value": "Black"
+        }
+      ]
+    },
+    {
+      "id": "L5D9-KXT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Lewis",
+          "surname": "Ogletree"
+        }
+      ],
+      "facts": [
+        {
+          "id": "49fa974b-181c-4448-bb6c-e611049e6d81",
+          "type": "Birth",
+          "date": "August 1856",
+          "standard_date": "Aug 1856",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "e1bdd6b9-bf80-4398-aca4-a1f11a1b6bfb",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "District 595, Monroe, Georgia, United States",
+          "standard_place": "District 595, Monroe, Georgia, United States"
+        },
+        {
+          "id": "75b895b3-03a5-433e-9dba-206c5b208787",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "District 1066, Spalding, Georgia, United States",
+          "standard_place": "District 1066, Spalding, Georgia, United States"
+        },
+        {
+          "id": "2f468b3a-f1bc-47e0-bbf5-fb1e00f4732e",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Militia District 1065, Orr, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States"
+        },
+        {
+          "id": "5d23dedc-3324-4e09-9edf-40d8cf4974c8",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States"
+        },
+        {
+          "id": "81244b0d-a894-437e-a394-982fd98aeded",
+          "type": "Burial",
+          "date": "September 1937",
+          "standard_date": "Sep 1937",
+          "place": "Orchard Hill Baptist Church Cemetery, Orchard Hill, Spalding, Georgia, United States",
+          "standard_place": "Orchard Hill Baptist Church Cemetery, Orchard Hill, Spalding, Georgia, United States"
+        },
+        {
+          "id": "9c37e26a-35d9-4bbd-bb69-b01bd36c47c9",
+          "type": "Death",
+          "date": "19 September 1937",
+          "standard_date": "19 Sep 1937",
+          "place": "Griffin, Spalding, Georgia, United States",
+          "standard_place": "Griffin, Spalding, Georgia, United States"
+        },
+        {
+          "id": "4a83bd91-7677-41e4-864d-57243062eabe",
+          "type": "Ethnicity",
+          "value": "Black or African American"
+        },
+        {
+          "id": "2c95d378-acee-4156-a396-244728093a83",
+          "type": "Slave"
+        }
+      ]
+    },
+    {
+      "id": "GJZW-6S3",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Willa Mae",
+          "surname": "Ogletree"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f02db789-5ccb-4f42-842d-c267785aba49",
+          "type": "Birth",
+          "date": "30 April 1912",
+          "standard_date": "30 Apr 1912",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "3e3145ae-78e3-4855-8db4-5ec19a5e3c5b",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "98fba704-8f18-45cb-8963-365584af5048",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "c8b9b517-9778-46a6-a771-5bc9d8ad85cf",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "b84fb46e-f8cd-44a4-bfe2-eff6af6e6a7f",
+          "type": "Death",
+          "date": "11 August 1984",
+          "standard_date": "11 Aug 1984",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "a244732a-758c-4aee-b7f2-8a812c56594c",
+          "type": "Burial",
+          "date": "18 August 1984",
+          "standard_date": "18 Aug 1984",
+          "place": "Burr Oak Cemetery, Alsip, Worth Township, Cook, Illinois, United States",
+          "standard_place": "Burr Oak Cemetery, Alsip, Cook, Illinois, United States"
+        },
+        {
+          "id": "082948d1-32fa-468b-93d3-67a0df04c4bc",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "2cfd2d70-530a-4c84-99d1-a8f089dce3b2",
+          "type": "Ethnicity",
+          "value": "Negro"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GW4W-DTG",
+      "person2": "GWXS-RXR",
+      "facts": [
+        {
+          "id": "675cdc07-0708-4bda-af93-e4dad87420b8",
+          "type": "Marriage",
+          "date": "1 November 1905",
+          "standard_date": "1 Nov 1905",
+          "place": "Spalding, Georgia, United States",
+          "standard_place": "Spalding, Georgia, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GW4W-DTG",
+      "person2": "GJZY-622",
+      "facts": [
+        {
+          "id": "1ae2cf8a-61c1-443c-8fa2-9a0b0a4a506f",
+          "type": "Marriage",
+          "date": "16 June 1924",
+          "standard_date": "16 Jun 1924",
+          "place": "Cook, Illinois, United States",
+          "standard_place": "Cook, Illinois, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "L5D9-KXT",
+      "person2": "K45Y-CC5",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "23 Dec 1876",
+          "standard_date": "23 Dec 1876",
+          "place": "Monroe, Georgia, United States",
+          "standard_place": "Monroe, Georgia, United States"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L5D9-KXT",
+      "child": "GW4W-DTG"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K45Y-CC5",
+      "child": "GW4W-DTG"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GW4W-DTG",
+      "child": "GCPS-W6D"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GWXS-RXR",
+      "child": "GCPS-W6D"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GW4W-DTG",
+      "child": "GCPS-6MB"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GWXS-RXR",
+      "child": "GCPS-6MB"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "GW4W-DTG",
+      "child": "GJZW-W62"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "GWXS-RXR",
+      "child": "GJZW-W62"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "GW4W-DTG",
+      "child": "GJZW-6S3"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "GWXS-RXR",
+      "child": "GJZW-6S3"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "GW4W-DTG",
+      "child": "GJZH-9TW"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "GWXS-RXR",
+      "child": "GJZH-9TW"
+    }
+  ],
+  "sources": [
+    {
+      "id": "9FVY-KHT",
+      "title": "Lucas Ogletree, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M3V7-51P : Tue Oct 21 18:28:27 UTC 2025), Entry for L W Ogletree and Mattie Ogletree, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M3V7-51R"
+    },
+    {
+      "id": "SP5G-G8W",
+      "title": "Lewis W Ogletree, \"Illinois, Cook County Deaths, 1871-1998\"",
+      "citation": "\"Illinois, Cook County Deaths, 1871-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2MH-RQXZ : Sat Aug 23 01:57:25 UTC 2025), Entry for Lewis W Ogletree and Lewis W Ogletree, 28 Mar 1955.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2MH-RQXZ"
+    },
+    {
+      "id": "QM6D-97R",
+      "title": "Lewis W Ogletree, \"Illinois, Cook County Marriages, 1871-1969\"",
+      "citation": "\"Illinois, Cook County Marriages, 1871-1969\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q21J-C1FN : Sat Mar 09 13:26:04 UTC 2024), Entry for Lewis W Ogletree and Nellie May Chapman, 16 Jun 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q21J-C1FN"
+    },
+    {
+      "id": "QM82-58Q",
+      "title": "Lewis Ogletree, \"Illinois, Cook County Deaths, 1871-1998\"",
+      "citation": "\"Illinois, Cook County Deaths, 1871-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2MN-N4YP : Sat Aug 23 02:18:03 UTC 2025), Entry for Louise C Barrett and Lewis Ogletree, 18 Apr 1975.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2MN-N4YB"
+    },
+    {
+      "id": "QM6D-MZ8",
+      "title": "Lewis W Ogletree, \"United States, Census, 1950\"",
+      "citation": "\"United States, Census, 1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6X1Z-DPBR : Tue Mar 18 02:11:35 UTC 2025), Entry for Lewis W Ogletree and Nellie M Ogletree, 10 April 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6X1Z-DPBR"
+    },
+    {
+      "id": "QM6D-921",
+      "title": "Louis Ogletree, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XST7-D3D : Fri Mar 27 02:08:54 UTC 2026), Entry for Howard D Chapman and Alberta Chapman, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XST7-D3X"
+    },
+    {
+      "id": "QWT8-KWY",
+      "title": "Louis Ogletree, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KQM-JTSR : Mon Jul 06 13:54:20 UTC 2026), Entry for Lewis Ogletree, Jr and Louis Ogletree.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KQM-JT39"
+    },
+    {
+      "id": "QM68-B5D",
+      "title": "Lewis W Ogletree, \"United States, World War II Draft Registration Cards, 1942\"",
+      "citation": "\"United States, World War II Draft Registration Cards, 1942\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1K8-W4X : Sun Mar 29 19:02:07 UTC 2026), Entry for Lewis W Ogletree, 1942.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1K8-W4X"
+    },
+    {
+      "id": "QM82-GBK",
+      "title": "Lewis Ogletree, \"Illinois, Cook County Deaths, 1871-1998\"",
+      "citation": "\"Illinois, Cook County Deaths, 1871-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9K-6916 : Thu Oct 16 11:37:25 UTC 2025), Entry for Girard Ogletree and Lewis Ogletree, 03 May 1986.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9K-691X"
+    },
+    {
+      "id": "QM82-RQN",
+      "title": "Louis Ogletree, \"Illinois, Cook County Deaths, 1871-1998\"",
+      "citation": "\"Illinois, Cook County Deaths, 1871-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGNX-V12S : Sat Aug 23 12:04:19 UTC 2025), Entry for Willa Mae McClerkin and Louis Ogletree, 11 Aug 1984.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGNX-V1LZ"
+    },
+    {
+      "id": "QM82-RYF",
+      "title": "Louis Ogletree, \"Illinois, Cook County Deaths, 1871-1998\"",
+      "citation": "\"Illinois, Cook County Deaths, 1871-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9K-9BH1 : Fri Oct 17 15:59:36 UTC 2025), Entry for Willa Mae McClerkin and Louis Ogletree, 11 Aug 1984.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9K-9BCM"
+    },
+    {
+      "id": "QM8T-WLN",
+      "title": "Lewis W Ogletree, \"North Carolina, County Marriages, 1762-2011 \"",
+      "citation": "\"North Carolina, County Marriages, 1762-2011 \", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS9-2ZSV : Sat Mar 09 17:54:41 UTC 2024), Entry for Girard W Ogletree and Lewis W Ogletree, 2 October 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPS9-2ZST"
+    },
+    {
+      "id": "QM68-1WS",
+      "title": "Lewis Washington Ogletree, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K686-3N7 : Thu Nov 20 09:46:03 UTC 2025), Entry for Lewis Washington Ogletree, from 1917 to 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K686-3N7"
+    },
+    {
+      "id": "QM68-18D",
+      "title": "Lewis Washington Ogletree, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QRP3-T2N2 : Thu Nov 20 09:46:03 UTC 2025), Entry for Lewis Washington Ogletree and Hattie Ogletree, from 1917 to 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QRP3-T2N2"
+    },
+    {
+      "id": "37GS-162",
+      "title": "L W Ogletree, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MLLW-J7F : Wed Mar 25 03:18:27 UTC 2026), Entry for L W Ogletree and Mattie Ogletree, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MLLW-J7F"
+    },
+    {
+      "id": "3KZ7-S78",
+      "title": "L W Ogletree, \"Georgia, County Marriages, 1785-1950\"",
+      "citation": "\"Georgia, County Marriages, 1785-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q28M-XKFV : Fri Oct 17 01:39:11 UTC 2025), Entry for L W Ogletree and Mattie Pearcy, 1 Nov 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q28M-XKFV"
+    },
+    {
+      "id": "QM82-LSG",
+      "title": "Lewis Ogletree, \"Illinois, Cook County Deaths, 1871-1998\"",
+      "citation": "\"Illinois, Cook County Deaths, 1871-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGNX-H467 : Sat Aug 23 02:13:16 UTC 2025), Entry for Girard Ogletree and Lewis Ogletree, 3 May 1986.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGNX-H464"
+    },
+    {
+      "id": "QM8T-439",
+      "title": "Lewis W Ogletree, \"North Carolina, County Marriages, 1762-2011 \"",
+      "citation": "\"North Carolina, County Marriages, 1762-2011 \", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP95-68J4 : Sun Mar 10 20:41:23 UTC 2024), Entry for Girard W Ogletree and Lewis W Ogletree, 2 October 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP95-68J6"
+    },
+    {
+      "id": "QWT8-VY6",
+      "title": "Lewis W. Ogletree, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V7H-JY4M : Sat Jul 18 02:20:16 UTC 2026), Entry for Lewis W. Ogletree.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V7H-JY4M"
+    }
+  ]
+}

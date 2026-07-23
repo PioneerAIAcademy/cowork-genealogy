@@ -1,0 +1,57 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "John Perry Witbeck was born on 10 March 1775 in Albany, Albany County, New York.",
+      "details": {
+        "target_person": {
+          "name": "John Perry Witbeck",
+          "pid": "MGRB-VP2"
+        },
+        "fact_type": "Birth",
+        "date": "10 Mar 1775",
+        "place": "Albany, Albany, New York, United States"
+      },
+      "supporting_sources": [
+        "\"New York, Births and Christenings, 1640-1962\" — entry for John Perry Witbeek, 1775"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "John Perry Witbeck died on 28 February 1819 in Niskayuna, Schenectady County, New York.",
+      "details": {
+        "target_person": {
+          "name": "John Perry Witbeck",
+          "pid": "MGRB-VP2"
+        },
+        "fact_type": "Death",
+        "date": "28 Feb 1819",
+        "place": "Niskayuna, Schenectady, New York, United States"
+      },
+      "supporting_sources": [
+        "\"Find a Grave Index\" — entry for John Perry Witbeck"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "John Perry Witbeck was buried at Niskayuna Reformed Church Cemetery, Schenectady County, New York.",
+      "details": {
+        "target_person": {
+          "name": "John Perry Witbeck",
+          "pid": "MGRB-VP2"
+        },
+        "fact_type": "Burial",
+        "place": "Niskayuna Reformed Church Cemetery, Schenectady County, New York, United States"
+      },
+      "supporting_sources": [
+        "\"Find a Grave Index\" — entry for John Perry Witbeck"
+      ],
+      "required": true
+    }
+  ]
+}

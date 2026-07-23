@@ -1,0 +1,14 @@
+{
+  "annotator": "francis",
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "true",
+    "f5": "true"
+  },
+  "notes": {
+    "f4": "Recovered under married surname (Willa Mae McClerkin), b. 30 Apr 1912 GA, linked to both Lewis and Mattie — correct.",
+    "f5": "Bonus/conflation-risk child recovered and correctly distinguished from his identically-named father: Lewis Ogletree b. 16 Apr 1914 Griffin GA, linked to both parents."
+  }
+}

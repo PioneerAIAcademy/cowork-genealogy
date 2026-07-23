@@ -362,6 +362,7 @@ OWNERSHIP_TABLE: dict[str, set[str]] = {
     "hypotheses": {"hypothesis-tracking"},
     "timelines": {"timeline"},
     "proof_summaries": {"proof-conclusion"},
+    "localities": {"locality-guide"},
 }
 
 

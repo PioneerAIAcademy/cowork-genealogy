@@ -1,639 +1,419 @@
-# The GPS research flow — what each skill does and when it runs
+# How the research works
 
-This is the orientation doc for someone about to change a skill: it walks
-the Genealogical Proof Standard workflow in the order `/research` actually
-invokes things, one paragraph per skill, naming the MCP tools each calls
-and the `research.json` / `tree.gedcomx.json` sections each owns. It
-describes the flow **as the SKILL.md files implement it**, which in two
-places differs from `README.md` (see "Where README drifts" at the end).
+This describes the research method the system follows — the order it works
+in, the judgments it makes at each stage, and the standards it holds itself
+to. It is written for two purposes: so genealogists can judge whether the
+method is sound, and so anyone starting a project knows what to expect.
 
-For the user-facing catalog — what to say to trigger a skill — read
-`README.md`. For how a skill gets authored, tested, and improved, read
-[`docs/skill-lifecycle.md`](skill-lifecycle.md). For what a given MCP tool
-must do, read `docs/specs/<tool>-tool-spec.md`.
+The method is the Genealogical Proof Standard. Nothing here is meant to be
+novel; where the system takes an opinionated position, it says so.
 
-## The shape of it
+---
+
+## The research cycle
 
 ```
-init-project ─▶ question-selection ─▶ research-plan ─▶ [search-*]
-                     ▲                     ▲                │
-                     │                     │                ▼
-                     │                     │        record-extraction
-                     │                     │                │
-                     │                     │                ▼
-                     │                     │         person-evidence
-                     │                     │                │
-                     │                     │      ┌─────────┴─────────┐
-                     │                     │      ▼                   ▼
-                     │                     │  conflict-        hypothesis-
-                     │                     │  resolution        tracking
-                     │                     │      └─────────┬─────────┘
-                     │                     │                ▼
-                     └──── FAN pivot ──────┴──── gaps ── research-exhaustiveness
-                                                             │ declared
-                                                             ▼
-                                                      proof-conclusion
-                                                             │ ps_id
-                                                             ▼
-                                                   gps-mentor (proof-critique)
+        Define the problem, survey what's known
+                        │
+                        ▼
+             Choose the next question  ◀──────────────┐
+                        │                             │
+                        ▼                             │
+                  Plan the search                     │
+                        │                             │
+                        ▼                             │
+                     Search                           │
+                        │                             │
+                        ▼                             │
+        Extract the evidence from each record         │
+                        │                             │
+                        ▼                             │
+            Decide who the record is about            │
+                        │                             │
+              ┌─────────┴─────────┐                   │
+              ▼                   ▼                   │
+        Resolve conflicts    Track hypotheses         │
+              └─────────┬─────────┘                   │
+                        ▼                             │
+          Is the research exhaustive? ── not yet ─────┘
+                        │ yes
+                        ▼
+              Write the conclusion
+                        │
+                        ▼
+            Critique the conclusion
 ```
 
-Three structural facts govern everything below.
+The plan is not a checklist to be drained. As soon as the evidence in hand
+*plausibly* answers the question, the system moves to the exhaustiveness
+test. If that test finds a gap, it returns to planning.
 
-**Section ownership is strictly partitioned.** `question-selection` owns
-`questions`; `research-plan` owns `plans`/`plan_items`; the four search
-skills own `log[]` and plan-item `status` and nothing else;
-`record-extraction` (through its agent) owns `sources` + `assertions` +
-all evidence classifications; `person-evidence` owns `person_evidence`
-and the tree's household skeleton; `conflict-resolution` owns `conflicts`;
-`proof-conclusion` owns `proof_summaries` and the concluded tree write.
-A skill writing outside its lane is a bug, and most SKILL.md bodies say so
-explicitly.
-
-**Every write goes through a writer tool that validates the whole project
-before persisting** (`research_append`, `research_log_append`,
-`extraction_append`, `materialize_facts`, `tree_edit`, `tree_correct`) and
-writes nothing on `{ ok: false, errors }`. This is why `/research` §4
-tells the agent *not* to insert defensive `validate_research_schema`
-passes between steps, and why skills are told not to re-read state
-defensively mid-run. `init-project` is the single exception — it writes
-both files directly, because it is creating them.
-
-**The staging/sidecar chain is the spine of the search→extraction
-handoff.** `projectPath` on a search → `staged.resultsRef` →
-`research_log_append` writes `results/<log_id>.json` → `results_ref` on
-the log entry → `record_persona_id` auto-fill at extraction → assertions
-append accepted → `same_person` scoring in `person-evidence`. A
-sidecar-less search breaks every downstream link, and a hand-written
-sidecar is flagged as an orphan that blocks all subsequent writes.
-
-Every skill except `forget-and-rederive` is pinned `model:
-claude-sonnet-4-6` in frontmatter; `gps-mentor` is the lone
-`claude-sonnet-5`. Note that a **skill** `model:` pin is inert in
-production — only the eval harness reads it. Agent pins are honored.
+You can work through this two ways: step by step, with the system pausing
+for your judgment at each decision, or continuously, where it works the
+cycle on its own and stops when the objective is answered, when you halt
+it, or when it hits something it can't resolve.
 
 ---
 
-## Part 1 — the `/research` routing loop
+## Stage by stage
 
-### research
+### Defining the problem and surveying what's known
 
-The orchestrator, and deliberately a thin one: it introduces no GPS logic
-of its own, writes nothing directly, and only reads `research.json` to
-decide which sub-skill fires next. Its core is a routing table keyed on
-project state — objective but no questions → `question-selection`; a
-question with no plan → `research-plan`; a positive/partial log entry with
-no assertion referencing it → `record-extraction`; and so on. Two rules in
-it carry disproportionate weight. First, it builds the log-vs-assertion
-cross-reference **explicitly rather than by eye**, because the
-characteristic failure is an early search that got set aside when a later,
-more interesting one pulled focus, leaving a positive log entry that never
-got extracted. Second, **inline extraction is forbidden** — no matter how
-small the record, extraction routes through the skill, which delegates to
-the `record-extractor` agent, and classification is final at extraction
-with no downstream refinement pass. Under `--autonomous` it must keep
-working in a single continuous turn; writing "Next: research-plan" and
-yielding is an explicit failure mode, and the only stop conditions are
-`project.status == "completed"`, a user halt, or a logged blocker. The one
-place it is told to stop rather than continue is an `address_first` mentor
-verdict in interactive mode.
+The session opens with a short interview: your experience level, which sets
+how much the system explains as it goes, and which subscription sites you
+hold, used later to break ties between equivalent sources — never as a gate
+on what gets searched. It then records your objective and what you already
+hold: family papers, prior research, certificates.
 
-### init-project
+If the project starts from an existing online tree, every fact imported
+from it is marked as *questionable* compiled data. Nothing arrives trusted
+because someone else entered it.
 
-Creates the two project files and runs GPS Steps 1–2 (define the problem,
-survey known information). A guard clause fires before any file read or
-tool call: if `research.json` already exists it emits a one-sentence
-refusal and stops. Otherwise it runs a deliberately **non-blocking**
-two-question researcher interview (experience level → `narration_guidance`
-that every downstream SKILL.md reads; paid subscriptions → the tie-breaker
-`search-external-sites` uses), surveys known holdings, takes the
-objective, and resolves the subject — `person_search` with a
-surname-plus-one rule when there's no FamilySearch PID, then
-`person_read`. It writes `tree.gedcomx.json` by converting full GedcomX to
-the simplified snake_case form, giving *every* person a local `I` id even
-when FamilySearch-seeded and stamping each FS-sourced fact with
-`quality: 1` (compiled tree data is questionable). `research.json` gets
-`project`, `researcher_profile`, and `known_holdings`; every other section
-stays an empty array. Asking the interview questions and then stopping is
-called out as a failure — defaults exist precisely so the files get
-written.
+### Choosing the next question
 
-### question-selection
+One question at a time, chosen against a stated priority order: an
+unresolved conflict first, then an open hypothesis to test, then a
+high-severity gap in the timeline, then decomposing the objective into its
+parts, then a pedigree gap, then a FAN pivot, then following up new
+evidence. The reason for the choice is recorded, so you can disagree with
+it.
 
-Picks the next research question and appends it to `questions[]` via
-`research_append` (one question per invocation, id assigned by the tool).
-Before selecting anything it runs two gates. **Finish what's open**: if
-any question has an `in_progress` plan item, don't create a new one —
-recommend completing the in-flight item by `pli_` id, unless an unresolved
-conflict names that question in `blocks_question_ids`. **The autonomous
-stop point**: once every independent part of the objective is `resolved`
-with a proof summary at `probable` or better, it returns "no further
-questions — objective answered" so `/research` can write
-`project.status = "completed"`. That gate is on *answered*, not *proved* —
-it must not spawn corroboration questions to upgrade `probable` to
-`proved`. Selection itself walks a seven-rung priority ladder recorded in
-`selection_basis`: unresolved conflict, hypothesis test, high-severity
-timeline gap, objective decomposition, pedigree gap, FAN pivot, new
-evidence. FAN pivot fires only when all planned direct searches are done,
-never on a single nil.
+Two rules govern the loop:
 
-### research-plan
+- **Finish what's open.** If a planned search is already underway, the
+  system recommends completing it rather than opening a new question —
+  unless an unresolved conflict blocks that question.
+- **Stop when the objective is answered, not when everything is proved.**
+  Once each independent part of the objective carries a conclusion at
+  *probable* or better, research stops. The system does not invent
+  corroboration questions to push a *probable* up to *proved*.
 
-Turns a question into a sequenced list of record sets with repositories,
-rationale, and fallbacks, writing `plans` + nested `plan_items` in **one
-batched `research_append` call** — plan shell first, items referencing its
-*predicted* id (ids are highest-existing + 1, so hard-coding `pl_001`
-silently attaches items to another question's plan). The most
-consequential thing in this skill is its **Step 1a mode gate**, read
-before anything else: an active plan with unfinished items defaults to
-*review* (recap the next item, create nothing); a fully drained plan means
-*add-new*; only genuinely invalidated assumptions justify *supersede*, and
-the old plan must be marked `superseded` first because the tool rejects a
-second active plan per question. Planning is preceded by a locality survey
-— `locality-guide` if no guide exists, otherwise `place_search`,
-`collections_search`, `external_links_search`, `volume_search`,
-`wiki_search`, `wiki_place_page` directly. Selection enforces topical
-breadth (BCG 14) plus two hard-coded requirements: a parentage question
-always gets a dedicated item for the candidate parents' **marriage to each
-other**, and a male subject in a conscription country (Denmark/Norway from
-1789) gets the **military levy rolls** (*lægdsruller*) as a first-class
-parentage item, not a fallback. Plans run 4–10 items; fewer than three
-isn't exhaustive, more than twelve means split the question.
+A FAN pivot — moving to associates, neighbors, and witnesses — fires only
+after the planned direct searches are done, never after a single negative
+result.
 
-### locality-guide
+### Planning the search
 
-Not a routing row — `research-plan` calls it when a question needs
-jurisdiction context first, and users invoke it directly. It produces a
-records-availability guide for a place and period and **writes nothing**;
-the output goes straight to the user. Its defining mechanic is a **single
-turn of parallel tool calls** — `place_population`, `collections_search`,
-`volume_search`, `external_links_search`, `wiki_search`, and all four
-`wiki_place_page` sections issued together, with a matching narration
-exception so preambles don't serialize the batch. It then classifies each
-record type by access level, and the distinction it must not collapse is
-low/null `recordSearchablePercent` with `fulltextSearchable: true` —
-full-text searchable but not name-indexed, which routes to
-`search-full-text` rather than `search-records`. A hard grounding rule
-governs the whole skill: name only collections, counts, and repositories
-that appear in tool output; zero or truncated results are digitization
-gaps to report, never gaps to fill with plausible invention.
+A question becomes a sequenced list of record sets, each with its
+repository, the reason it's expected to help, and a fallback if it fails.
+Plans run four to ten items. Fewer than three isn't an exhaustive plan; more
+than twelve means the question should be split.
 
-### search-records
+Before planning, the system surveys the locality: what records survive for
+that place and period, who holds them, and what is digitized, indexed, or
+neither.
 
-Executes FamilySearch **indexed** searches against the next `planned` plan
-item. A route check runs before any tool call — external site, "what
-should I search next?", or a record already in hand all redirect
-immediately — on the EXECUTE-vs-DECIDE test. Queries go broad-to-narrow
-with no wildcards (explicit spelling variants instead), always anchored on
-`surname` or `recordCountry`, and never by dropping `givenName`. Every
-call passes `projectPath` and `count: 50`; if no `staged.resultsRef` comes
-back the identical query is re-run **with** `projectPath`, because a
-sidecar-less entry cannot feed extraction and there is no manual
-workaround. Triage is `rank_search_matches` on every search returning ≥1
-result — never hand-scoring — which re-orders by FamilySearch's own
-matcher and reports `attachedToSubject`. The ranked list is a review
-surface, not auto-accept: the **namesake trap** gets extended treatment,
-and a precise record conflicting with the tree's approximate estimate is
-*more* disqualifying, not less. It logs every search including nils via
-`research_log_append`, sets the plan item to `in_progress` — never
-`completed`, which is `record-extraction`'s to set — and on a nil iterates
-at least three strategy levers before **mandatorily and immediately**
-escalating to `search-external-sites` in the same turn. Its closing
-accuracy rule: never say "logged with sources" or "saved to the project"
-unless extraction actually ran and returned `src_`/`a_` ids.
+The list is checked for breadth across record categories, plus two
+requirements that are always enforced:
 
-### search-full-text
+- A parentage question always gets a dedicated search for the **candidate
+  parents' marriage to each other**.
+- A male subject in a conscription country (Denmark and Norway from 1789)
+  always gets the **military levy rolls** (*lægdsruller*) as a first-class
+  parentage source, not a fallback.
 
-Searches FamilySearch's AI-transcribed document images — the only way to
-find someone as witness, executor, appraiser, heir, or neighbor rather
-than as a record principal. `search-records` delegates here for
-newspapers, pre-1850 US, notarial records, narrative documents, and
-parish registers where the target is unindexed. It is a genuinely
-different engine: no fuzzy matching, no Soundex, no abbreviation expansion
-(Wm and William are separate searches), default OR, and Lucene-style
-operators — so `+` on every term is mandatory. Three query rules carry
-real failure history: search by **name only** and filter place
-afterward (place in the query matches collection metadata and produces
-false positives); **never scope to a record `collectionId`** (a Cantabrian
-baptism found by unscoped `+Naveda +Somarriba` returned zero when scoped);
-and decompose compound surnames into **co-occurrence, never an adjacent
-phrase**, because in the parents' own records the father carries the
-paternal surname and the mother the maternal one. Results are derivative —
-original → image → AI transcript, ~10% error — so they are always verified
-against the image. Queries cap at five per plan item, negative-entry notes
-must state collection class, filters, and variants tried, and diagnostic
-"is the index working" queries are forbidden.
+If a plan already exists with unfinished items, the default is to recap the
+next item rather than write a new plan. A plan is replaced only when its
+assumptions have genuinely been invalidated.
 
-### search-images
+### Searching
 
-Browses digitized-but-unsearchable volumes page by page: `volume_search`
-→ `image_search` → one `@plugin:image-reader` invocation per page. Routing
-runs before everything, including narration and file reads, with five
-redirect cases — and the one that needs care is the last: "browse and
-transcribe what you find" is an in-scope browse even when an image ID is
-named, so the word "transcribe" alone doesn't route away. Two API shapes
-account for most mistakes here: `image_search` takes an
-`imageGroupNumber`, never an `imageId`, and it returns the whole group in
-one call with no pagination. The skill **must not call `image_read`
-itself** — it doesn't have the tool — because accumulated base64
-overflows the transport's ~1 MiB buffer and crashes the run; the subagent
-exists to keep the bytes out of context. Its most-cited failure is
-procedural rather than technical: **listing a volume's images is a
-completed browse and must be logged before anything is presented**, and
-"no volumes returned" is normal data that gets logged as a nil, not a tool
-error that justifies suggesting another repository first.
+Four modes, chosen by what the records actually are.
 
-### search-external-sites
+**Indexed search** is the default. Queries go broad to narrow, with no
+wildcards — explicit spelling variants instead — always anchored on surname
+or country, and never narrowed by dropping the given name. Every search is
+logged, including the ones that find nothing: a negative result is a
+finding, and the query behind it is recorded so it isn't repeated blindly.
 
-Covers Ancestry, MyHeritage, FindMyPast, FindAGrave, and Newspapers.com,
-which have no public APIs and prohibit automated access — so the skill
-**never loads a page**. The loop is generate URL → user clicks in their
-authenticated browser → user captures as PDF → agent analyzes; the agent
-supplies genealogical expertise and the user's browser supplies access,
-which makes getting the search *parameters* right the whole job. It
-resolves the place, pulls FamilySearch-curated links via
-`external_links_search`, and either appends parameters to a curated base
-whose record type actually matches the plan item, or says plainly that
-it's falling back to site-wide search. **Two log entries per search**, and
-the site-search entry is written *before* the URL is handed over —
-"if you present the URL and stop, `research.json` shows nothing
-happened." Under `--autonomous` there is no one to capture, so it takes a
-distinct branch: prefer a FamilySearch equivalent, otherwise build the URL
-as a genuine lead and log it as deferred with
-`externalSite.captureReceived: false`, mark the item terminal, and keep
-going — a stalled wait would end the run. `researcher_profile.subscriptions`
-is a tie-breaker, never a gate.
+Results are ranked and presented for review, never auto-accepted. The
+**namesake trap** carries particular weight here: a record more precise than
+your tree's estimate but contradicting it is *more* disqualifying, not less.
+Same-name individuals in the same county are treated as different people
+until shown otherwise.
 
-### record-extraction
+After a negative result, the system tries at least three changes of strategy
+— spelling, place, date range, record type — before turning to subscription
+sites.
 
-A **thin router**, and the enforcement point for the workflow's sharpest
-rule: it holds none of the persistence tools, so inline extraction isn't
-merely discouraged, it's impossible. It acquires and triages a record by
-one of four paths (search result already staged in a sidecar, ARK or
-entity id, uploaded PDF, or page image), writes the router-side log entry
-if no search skill already logged the search, and then delegates
-**one `@plugin:record-extractor` agent per record**. Delegation framing is
-load-bearing: never "fix" or "correct" the tree (corrective framing has
-induced destructive edits), and never instruct the agent to create
-`person_evidence` links or assign identity confidence (a delegation that
-did produced a fabricated link carrying a match score no tool had
-computed). Images go to `@plugin:image-reader`, one per invocation, with
-`looking_for` phrased as a search key — who or what to locate — never as
-the expected answer. A suspect identity-keying name (an out-of-place
-patronymic, an uncorroborated spelling) must be routed to the original
-register image before being recorded as established, or recorded tentative
-with `[?]`; this is how an index OCR slip becomes a wrong father in the
-tree. Classification-refinement requests route the same way — find the
-record, delegate, never re-classify inline.
+**Full-text search** covers documents transcribed by machine but never
+name-indexed. This is the only way to find someone as a witness, executor,
+appraiser, bondsman, heir, or neighbor rather than as the principal of a
+record. It behaves nothing like an indexed search: no fuzzy matching, no
+Soundex, no abbreviation expansion — *Wm* and *William* are separate
+searches. Three rules come from repeated failures:
 
-### record-extractor (agent)
+- Search by **name only**, then filter for place. Putting the place in the
+  query matches the collection's description, not the document.
+- **Don't scope to a single collection.** A Cantabrian baptism found by an
+  unscoped name search returned nothing when scoped to its own collection.
+- **Decompose compound surnames into co-occurrence, not an exact phrase.**
+  In the parents' own records the father carries the paternal surname and
+  the mother the maternal one, so the two never appear adjacent.
 
-Extracts **all** assertions from **one** record and persists them in a
-single `extraction_append` call. It has no file-read tool at all: one
-`project_context` call gives it open questions, persons, and sources, and
-every mechanical lookup lives inside the writer tools, which return every
-id they assign. Its central doctrine is that the three GPS layers are
-**independent and per-assertion, never per-source** — a contemporaneous
-death certificate is an *original* source even though the informant's
-knowledge is secondhand, and that secondhand-ness is captured at the
-information and evidence layers instead. It writes first-and-final
-classifications, because **no downstream classification pass exists**;
-everything after it — conflict-resolution, proof-conclusion, the mentor's
-precondition check — trusts what it recorded. It is assertion-only: it
-writes `sources` + `assertions` and the tree's `S` source description, but
-no persons and no edges. `research_append` is denied both by omission and
-**explicitly in `disallowedTools`**, under both server spellings, because
-a deny binds even under `bypassPermissions` (the hosted path) and a deny
-naming one spelling silently fails to bind under the other.
+Full-text hits are derivative — an original, photographed, then read by
+machine, with meaningful error — so a hit is always confirmed against the
+image before it is used.
 
-### image-reader (agent)
+**Image browsing** handles volumes that are digitized but neither indexed
+nor transcribed: register by register, page by page. Listing a volume's
+pages counts as a completed browse and is recorded as such. "No volumes
+available" is ordinary evidence about what survives, logged as a negative
+result rather than treated as a malfunction.
 
-Reads exactly one image scan and returns only a transcription. Its single
-tool is `image_transcribe`, and the entire point is that the bytes never
-enter any agent's context. It returns a faithful transcription of every
-genealogically relevant entry on the page — not just the one asked about —
-preserving original spelling, language, marginalia, and `[illegible]`
-marks, with the FOUND/NOT FOUND pointer appended *after* the transcription
-so it never shortens it. Its failure contract matters as much as its
-success path: when `image_transcribe` errors it must emit
-`NOT READ: <imageId>` with the quoted error and a pivot recommendation,
-and must never fabricate page contents, never retry through a browser or
-`web_fetch`, and never let a caller's asserted answer override what the
-page says. Agents can't nest agents, so `record-extractor` never calls it —
-`record-extraction` and `search-images` do.
+**Subscription sites** (Ancestry, MyHeritage, FindMyPast, FindAGrave,
+Newspapers.com) prohibit automated access, so the system never loads their
+pages. It constructs the search — resolving the place, choosing the right
+record set, getting the parameters right — and you run it in your own
+browser and bring back what you find. The genealogical judgment is the
+system's; the access is yours. Both the constructed search and its outcome
+are logged, and the search is logged *before* the link is handed over, so an
+abandoned search still leaves a trace.
 
-### person-evidence
+### Extracting evidence from a record
 
-Identity resolution: does this record's persona correspond to a person in
-the tree? It exists as a separate step because extraction attaches
-assertions to `record_id` + `record_role` (the persona), and this skill
-creates the **revisable** link between persona and person — mirroring
-GedcomX's own distinction, so that a later merge doesn't corrupt data and
-so identity isn't decided prematurely at extraction time. Correlation
-analysis sets confidence, and the threshold policy is called
-non-negotiable: weak (name only, or a core identifier conflicts) →
-`speculative` and a pause for user confirmation; moderate → `probable`;
-strong → `confident`. `same_person` is an input to that judgment, never a
-substitute — a qualitative conflict caps confidence regardless of score,
-and a **patronymic mismatch or unaccounted-for name element is a
-core-identifier conflict, not a spelling variant**, because a differing
-patronymic names a different father. Scoring requires assembling the tree
-side as a record-sized subset — the candidate plus its matching mob
-(parents, spouses, children, siblings), capped at 40 people — not the
-whole tree. It also owns the **household skeleton**: tolerantly match the
-parents, dry-run `merge_warnings` as a coherence gate before any write
-(error tier blocks), then `materialize_facts` every member per persona and
-write the edges with source refs, giving a pre-1880 census parent-child
-edge a lower ref quality because it's an inference from co-residence.
-Linking only the focus person and then asking whether to link the parent
-is incomplete work.
+Each record is worked once, thoroughly, and everything in it is captured —
+not just the fact that prompted the search. Extraction is always a
+deliberate pass over the record; the system will not extract in passing,
+however small the record looks.
 
-### conflict-resolution
+The three GPS layers are classified **independently and per claim, never per
+record**:
 
-Identifies and resolves both fact-level conflicts (three different
-birthplaces) and identity-level ones (two same-named people in one
-county), writing `conflicts[]` and nothing else. It **trusts existing
-classifications** and must not re-classify inline. What counts as a
-conflict is narrower than it looks: same person, same `fact_type`, **same
-attribute**, compared on `place`/`standard_place`/`date`/`structured_value`
-and never on free-text `value` — a birth-place claim and a birth-date claim
-are explicitly not a conflict, and `materialize_facts` surfaces conflicts
-only for single-valued vitals, so multi-valued types like Occupation and
-Residence must never be manufactured into conflicts. Resolution requires
-real source-independence analysis (GPS Standard 46 — related information
-items get no more credibility than their strongest single member), the two
-or three decisive weighing factors rather than mechanical scoring of all
-seven, and a `resolution_rationale` in a mandatory four-part structure
-whose last part explains *why the less reliable evidence exists*, using a
-named historical pattern tied to the informant's position. The tool
-enforces the completeness invariant: `status: "resolved"` requires all four
-analysis fields on the same write. Deferral is a persisted finding, not a
-chat reply. Same-name disambiguation treats individuals as distinct until
-proven otherwise, and co-enumeration on one census page is definitive
-evidence of two people.
+- **Source** — original, derivative, or authored
+- **Information** — primary, secondary, or undetermined
+- **Evidence** — direct, indirect, or negative
 
-### hypothesis-tracking
+A contemporaneous death certificate is an *original* source even when the
+informant's knowledge of the deceased's birthplace is secondhand; that
+secondhand-ness is captured at the information layer, on that claim, rather
+than by downgrading the whole document. Different claims within one record
+routinely carry different classifications.
 
-Tracks competing candidates through `active → supported → ruled_out` in
-`hypotheses[]`. It opens with a **mandatory scope gate before any file
-read**: a routing table classifies the request, and if it belongs to
-conflict-resolution, timeline, or proof-conclusion, the skill emits one
-routing sentence and produces no other output — no reads, no tool calls,
-no analysis. New hypotheses always start `active` even when evidence
-already favors them; promotion is a separate evaluation. `supported`
-requires a supporting `direct` assertion, no unresolved contradictions, and
-no timeline impossibilities, and there's an explicit anti-downgrade rule:
-don't drop `supported → active` over census age rounding or five-year
-birth-year drift. `ruled_out` requires a `ruled_out_reason` — the
-validator rejects it otherwise. It acts on genuine impossibilities
-immediately rather than deferring them, except in read-only review mode,
-and it touches only the hypothesis the user named.
+These classifications are first and final. There is no later refinement
+pass, and everything downstream — conflict analysis, the exhaustiveness
+test, the conclusion — trusts what was recorded here. The weight of the
+whole method rests on this stage, which is why it is deliberately slow.
 
-### research-exhaustiveness
+A name doing identity work but looking suspect — an out-of-place patronymic,
+an uncorroborated spelling — is taken back to the original register image
+before being recorded as established, or else recorded as tentative. This is
+the path by which a transcription slip becomes a wrong father in the tree.
 
-The gate before proof, and `/research` routes here as soon as analyzed
-evidence *plausibly* answers the question — a front-loaded plan is a
-prioritized list, not a checklist to drain. It runs two hard blocks
-first: every assertion tied to the question must carry real reasoned
-classifications, and every person the judgment depends on must be
-identity-linked. Then the GPS five threshold questions, then seven stop
-criteria each answered in a sentence or two, written into
-`exhaustive_declaration` alongside `status: "exhaustive_declared"` in one
-`research_append` update. Its default when in doubt is to route back to
-`research-plan`, on the principle that a gap is unsearched rather than
-unobtainable — and that round-trip is exactly what lets a simple-recall
-question stop early without weakening a completeness question ("did they
-have *any other* children?"), which needs enumerating sources before it
-can conclude. The narrow exception is a source *pursued and verifiably
-unavailable* — over the transport cap, sealed by privacy law, or nil
-across every search path — which is not an unsearched gap. Early
-termination writes `declared: false` and leaves `status: "in_progress"`,
-because an honest non-exhaustive stop must not be labeled exhaustive.
+Where language or script blocks reading, the record goes to translation and
+paleography first. It is not guessed at.
 
-### proof-conclusion
+### Deciding who the record is about
 
-Writes the GPS conclusion: tier (proved/probable/possible/not_proved/
-disproved), vehicle (statement/summary/argument), and a self-contained
-`narrative_markdown` that is the **authoritative** conclusion with the
-structured fields following it. Its preconditions gate is mechanical and
-shown as work, and it runs regardless of how the skill was invoked — a
-user saying "write the conclusion" names a destination, not permission to
-skip stops. Unresolved conflicts hard-block `proved`, and a conflict
-disputing the concluded fact itself **caps the tier at `possible`**, which
-sits below the tree-write threshold, so a disputed conclusion never
-reaches the tree. Then §6, which the skill itself calls the place where
-the conclusion actually lands: at tier ≥ probable it writes the concluded
-relationship **first** in a batched `tree_edit` (with a non-null source
-ref, or the all-or-nothing batch fails), then the concluded fact — usually
-by setting `primary: true` on the evidence fact `person-evidence` already
-materialized, via a separate `tree_correct` call, rather than adding a
-second fact. `/research` backs this with a hard **tree-encoding gate**: it
-reads the tree, confirms the edge exists, and re-invokes this skill if it
-doesn't, because a proof summary whose relationship never reached the tree
-is a found-but-lost result. It must not touch `questions` at all.
+Extraction records what a document says about a person *in that document*.
+Deciding that this person is the same individual as one in your tree is a
+separate, later, revisable judgment. Keeping the two apart is deliberate:
+the identity decision is what carries a record's facts onto a person in your
+tree, so it is made once, explicitly, with its reasoning recorded — never
+assumed in the first minute of reading the record. It stays revisable, and
+when later evidence shows a record was attached to the wrong person the
+correction is added rather than the original link quietly erased.
 
-### gps-mentor (agent)
+Correlation across name, dates, places, relationships, and associates sets
+one of three confidence levels:
 
-The single mentor checkpoint: an advisory `proof-critique` after a proof
-summary is written, pinned to `claude-sonnet-5`. It is the only check that
-reads `narrative_markdown` as a self-contained document, which is what it
-exists to catch — a summary sentence contradicting the list below it, a
-tier the cited assertions don't support, hedging language inconsistent
-with a "Proved" claim. It has **no search tools**: it evaluates gathered
-evidence and never gathers more. It persists a structured verdict in one
-`research_append` call — the body as the top-level `verdict` argument, the
-pointer as `entry` — and the tool writes the `evaluations/` file, stamps
-`file_path`, and assigns the id; the agent must never write the file
-itself. It is append-only to `evaluations[]` and never touches
-`tree.gedcomx.json`. The gate is **mandatory to run and advisory to
-act on**: it fires after the answer is already persisted, so an
-`address_first` verdict is surfaced and recorded but never blocks, forces
-rework, or re-opens a resolved question. The one exception is interactive
-mode, where `/research` must print the question and **actually yield the
-turn** — quietly applying the mentor's fix and presenting the result is
-auto-routing past the gate in substance. Two earlier pre-gates
-(`pre-exhaustiveness`, `conclusion-readiness`) were removed from the loop
-because they duplicated existing checks and their forced rework starved
-the proof step; both focuses survive on-demand.
+- **Weak** — name alone, or a core identifier conflicts → recorded as
+  speculative, and you are asked to confirm before it proceeds
+- **Moderate** → probable
+- **Strong** → confident
+
+A computed match score is an input to that judgment, never a substitute for
+it: a qualitative conflict caps confidence however well the numbers agree.
+In particular, **a patronymic mismatch or an unexplained name element is a
+conflict in a core identifier, not a spelling variant** — a different
+patronymic names a different father.
+
+When a record establishes a household, the whole household is linked, not
+just the person you were looking for. A parent-child link inferred from
+co-residence in a pre-1880 census is recorded as the weaker inference it is.
+
+### Resolving conflicts
+
+A conflict is narrower than it first appears: the same person, the same kind
+of fact, and the same attribute — three different birthplaces, or three
+different birth dates, but not a birthplace against a birth date. Facts that
+legitimately take multiple values over a lifetime, such as occupation and
+residence, are not conflicts and are not manufactured into them.
+
+Resolution requires real analysis of source independence: information items
+tracing back to a common origin get no more credibility than their strongest
+single member, however many of them there are. The written resolution names
+the two or three factors that actually decided it rather than scoring all
+seven mechanically, and its final part explains **why the less reliable
+evidence exists** — naming the historical pattern and the informant's
+position that produced the error. A resolution missing that reasoning is not
+recorded as resolved.
+
+A conflict that can't be resolved yet is written down as a finding, with
+what would resolve it — not left as a remark in conversation.
+
+### Tracking hypotheses
+
+Competing candidates are tracked explicitly through *active*, *supported*,
+and *ruled out*. A new hypothesis starts active even when the evidence
+already leans toward it; promotion is a separate judgment against stated
+criteria — a supporting direct-evidence claim, no unresolved contradictions,
+no chronological impossibility.
+
+There is an explicit rule against demoting a supported hypothesis over
+ordinary noise: census age rounding and a few years' drift in a reported
+birth year are not grounds for reopening it. Ruling a hypothesis out
+requires a stated reason.
+
+### Testing whether the research is exhaustive
+
+Two things are checked before anything else: every claim bearing on the
+question carries real, reasoned classifications, and every person the
+judgment depends on has had their identity resolved. Then the GPS threshold
+questions, then seven stop criteria, each answered in a sentence or two and
+recorded.
+
+The default when in doubt is to go back and search more, on the principle
+that a gap is usually unsearched rather than unobtainable. The exception is
+a source actually pursued and verifiably unavailable — destroyed, sealed by
+privacy law, or negative across every path tried. That is not an unsearched
+gap.
+
+Question type matters here. A simple recall question can stop early. A
+completeness question — "did they have *any other* children?" — cannot
+conclude without enumerating the sources that would show them.
+
+Stopping early is allowed, but it is recorded as a non-exhaustive stop.
+Research that stopped short is never labeled exhaustive.
+
+### Writing the conclusion
+
+The conclusion states a tier — proved, probable, possible, not proved, or
+disproved — and takes the form the evidence warrants: a proof statement for
+a directly-evidenced fact, a proof summary for accumulated direct evidence,
+a proof argument where the case rests on indirect or negative evidence.
+
+The written narrative *is* the conclusion, and it stands on its own: the
+question, the evidence, the reasoning connecting them, the treatment of
+contrary evidence, and the resulting claim — readable without the underlying
+data.
+
+Two hard limits:
+
+- An unresolved conflict blocks a *proved* conclusion outright.
+- A conflict disputing the concluded fact itself **caps the conclusion at
+  *possible***, which sits below the threshold for concluding it in the tree.
+
+The tree already holds the evidence by this point: each record's facts were
+written onto the people it names when that record was linked to them,
+carrying their source citations, with no value yet marked as the right one.
+Writing the conclusion is what settles that. At *probable* or better, the
+concluded relationship is added and the concluded value is marked preferred
+over the competing ones — not piled on as another alternative. Below that
+threshold the evidence stays in the tree unranked, and nothing is uploaded
+to FamilySearch: only concluded facts leave the working tree. A conclusion
+that never reaches the tree is a result found and then lost, so the system
+verifies the write happened.
+
+### Critique of the conclusion
+
+Finished conclusions go to a reviewer that reads the written narrative as a
+standalone document. It is the one check that asks whether the prose holds
+together: whether the summary sentence contradicts the evidence listed under
+it, whether the cited evidence supports the tier claimed, whether hedging
+language sits uneasily against a confident claim.
+
+The reviewer has no search tools. It evaluates what was gathered; it cannot
+gather more.
+
+The critique is **mandatory to run and advisory to act on**. It happens
+after the conclusion is recorded, so a finding never silently rewrites the
+answer or reopens a settled question. When it raises something substantive
+in an interactive session, the system puts the question to you and waits
+rather than quietly applying its own fix.
 
 ---
 
-## Part 2 — invoked by loop skills, not by the routing table
+## What you can ask for along the way
 
-These have no row in `/research`'s routing table. Under `/research` they
-fire only when another skill hands off, or when the user asks directly.
+These sit outside the loop. Ask for them in plain language at any point; the
+system also reaches for them on its own when the research needs them.
 
-### timeline
+**A locality guide.** What records exist for a place and period, who holds
+them, and what is digitized, indexed, or only browsable. It reports what the
+catalogs actually show — including the gaps — and does not fill silence with
+plausible-sounding holdings.
 
-Builds chronological timelines into `timelines[]`, keyed by a `t_` id and
-label rather than by person id — precisely so a candidate timeline can
-aggregate persons from two tree entries that might be the same individual.
-Its enrichment phase is a batching discipline: collect every unique place
-string and issue all `place_search` calls in one turn, then determine every
-needed distance and issue all `place_distance` calls in one turn, caching
-by unordered pair. Gap boundaries are copied verbatim from the bounding
-event and never padded to January 1st or December 31st. Impossibilities
-are for **chronological contradictions only** — events before birth or
-after death, distances that outrun era travel speeds, one person
-enumerated in two states in a census year; identity uncertainty and source
-disagreement belong in `conflicts[]`. The Mode B identity verdict must
-name its specific signals, because no field persists it — the chat reply
-is its only record. Regeneration replaces `events`/`gaps`/`impossibilities`
-wholesale.
+**A timeline.** Every known event for a person in order, with gaps and
+chronological impossibilities marked: events before birth or after death, a
+person in two places too far apart for the era's travel, one person
+enumerated twice in a census year. Gap boundaries are the dates of the
+bounding events, never rounded out to January 1st. A timeline can span two
+tree entries that may be the same person — which is often how you find out
+whether they are.
 
-### citation
+**A citation.** Existing sources refined to *Evidence Explained* standards.
+The test is replication: could another researcher find this exact record
+from this citation alone? A missing locator is written into the citation as
+an explicit unknown and flagged for you to check against the image, rather
+than quietly omitted. A URL is never a citation.
 
-Refines `citation` and `citation_detail` on **existing** source entries to
-Evidence Explained standards; it never creates a source entry, which is
-`record-extraction`'s job, and it opens with a routing block that sends
-any "I found this record" request there before reading a file. The
-governing test is replication: could another researcher find this exact
-record from this citation alone? Nine source-fidelity rules constrain
-every write, and the one that changes behavior most is the
-unknown-marker rule: a missing locator gets `[LOCATOR NOT RECORDED]`
-written into the field *and then* the user is asked to check the image —
-asking without writing the marker is not an acceptable output. URLs are
-never citations, everything after the first `?` is stripped as the user's
-own search input, and ARKs are opaque — nothing may be inferred from them.
-A nil search is formatted from the log entry's `query` field and
-**presented without persisting**.
+**Translation and paleography.** German, French, Spanish, Italian, Dutch,
+Latin, and Portuguese, including Kurrentschrift, Sütterlin, and Latin
+parish-register abbreviations. The original is always preserved and always
+governs: extraction cites the record, not the translation. Formulaic record
+structure is used to constrain what an illegible word can be.
 
-### check-warnings
+**Historical context.** Boundary changes, naming conventions, migration
+patterns, period vocabulary. It presents possibilities rather than
+conclusions, and keeps what the sources say distinct from what it merely
+believes — if a lookup returns nothing, it says so instead of smoothing over
+the gap.
 
-The genealogical-impossibility guardrail — impossible lifespans, events
-after death, a child born after a parent died — via `person_warnings`
-(offline and deterministic) plus `person_quality` when the id is a real
-FamilySearch ID, silently skipped for synthetic `I` ids. Its pre-step
-routing guard matters: a *disagreement between two sources* is a conflict,
-not a warning, and gets handed to `conflict-resolution` silently as the
-first and only action — no preamble, no analysis, no tool calls of its
-own. It counts before it reports: two or more `error`-severity warnings
-on one person opens with a cluster verdict — that this is "a strong
-signal that records from two different individuals have been merged into
-one profile" — with the individual warnings listed *under* it rather than
-above it. `person-evidence`,
-`record-extraction`, and `tree-edit` all hand off here after writing.
+**Calendar conversion.** Julian and Gregorian, Old Style and New Style year
+starts, Quaker numbered months, double dating. One heuristic travels well: a
+discrepancy of exactly 10–13 days, or exactly one year on a January–March
+date, is almost certainly a calendar difference rather than a genuine
+conflict.
 
-### tree-edit
+**A data-quality check.** Impossible lifespans, events after death, a child
+born after a parent's death. Several serious warnings on one person is
+reported as a single finding — a strong signal that two individuals have
+been merged into one profile — rather than as a list of unrelated problems.
+A disagreement *between two sources* is not a warning; it is a conflict, and
+goes to conflict resolution.
 
-Ad-hoc tree corrections and confirmed person merges, split by op
-authority: **additions** (`add_fact`, `add_person`, `add_relationship`,
-`add_source`) go through `tree_edit`, **corrections and removals**
-(`update_*`, `remove`) through `tree_correct`. It should be rare — the
-normal path for tree state is record-extraction → person-evidence →
-proof-conclusion, and this skill exists for genuine corrections, not for
-bypassing GPS. Two shape rules cause most errors: couple-event facts
-(Marriage, Divorce) belong on the `Couple` relationship's `facts` array,
-not as a person fact; and `remove` never removes a person. Merges happen
-only after `proof-conclusion` confirms identity at `probable` or higher,
-and `merge_tree_persons` repoints every `research.json` reference **off
-the collapsed id onto the survivor** — `project.subject_person_ids`,
-`person_evidence[].person_id`, and `timelines[].person_ids`. An
-anti-fabrication rule runs throughout: actually call the tool, and narrate
-only from the returned `ok: true` summary.
+**A correction to the tree.** For genuine corrections and confirmed merges
+outside the normal research flow. Merges happen only after a conclusion has
+established identity at *probable* or better.
 
-### translation
+**Where am I?** A resume-a-project summary: what's been done, what's open,
+what to do next — in plain language first, then in GPS terms. It assumes you
+don't remember where you left off.
 
-Genealogy-specific translation and paleography for German, French,
-Spanish, Italian, Dutch, Latin, and Portuguese — Kurrentschrift and
-Sütterlin, Latin parish-register abbreviations, period record structures.
-`record-extraction` hands off here when script or language blocks parsing.
-Its governing principle is that **a translation is a derivative source**:
-the original is always preserved, and where they conflict the original
-governs — so extraction cites the record, not the translation. It works on
-text or an image already in the conversation and cannot open URLs. Record
-structure is used as a decipherment constraint, since formulaic language
-narrows what an illegible word can be.
+**A research-wiki lookup.** Any "how do I find [record type]" question is
+answered from the FamilySearch Research Wiki rather than from memory, even
+when the answer seems obvious.
 
-### historical-context
-
-Explains boundary changes, naming conventions, migration patterns, and
-period vocabulary; writes nothing. Its routing check runs before any file
-read or tool call, and the sharpest line is that even a one-word gloss of
-a non-English term ("getauft = baptized") is *translation* and must not be
-answered here — only English historical vocabulary (relict, yeoman)
-belongs to it. It calls `wiki_search`/`wiki_read`, `wikipedia_search`,
-`place_search_all` when jurisdictions changed across the period, and
-`place_population` when community size bears on record-keeping. It must
-keep tool-verified facts distinct in register from training knowledge: if
-a call returns nothing, narrow the answer or flag the gap rather than
-smoothly filling it in. It presents possibilities, not conclusions, and
-hands formal resolution to `conflict-resolution`.
-
-### convert-dates
-
-Calendar conversion — Julian/Gregorian, Old Style/New Style year starts,
-Quaker numbered months, double-dated years. The model owns the judgment
-(which calendar regime was in force in which jurisdiction and era) and
-`convert_calendar` does only the arithmetic; on `{ ok: false }` it surfaces
-the error and never falls back to hand arithmetic. Its useful heuristic
-travels: a discrepancy of exactly 10–13 days, or exactly one year for a
-January–March date, is almost certainly a calendar difference rather than
-a true conflict. `historical-context` applies that test and suggests this
-skill for the actual conversion; `conflict-resolution` carries
-`convert_calendar` in its own allowed-tools and applies the correction
-inline rather than routing here. The handoff runs the other way — when a
-gap matches *no* expected offset, or both records share a jurisdiction and
-calendar, this skill hands off to `conflict-resolution`.
+**Practice mode.** Strips known information out of your tree so it has to be
+re-derived from records. Both halves are required: the answer is removed
+locally, *and* the system is barred from looking it back up in the online
+tree for the rest of the project. Reading records *about* those people is the
+whole point; reading someone else's compiled conclusions about them is the
+one forbidden move.
 
 ---
 
-## Part 3 — standalone utilities
+## What the system will not do
 
-### project-status
-
-The resume-a-project front door and the cross-session continuity layer:
-it reads both files, checks foreign-key integrity and stale plans,
-computes a sixteen-row metric table, assesses exhaustiveness and
-conclusion readiness, and walks a ten-branch decision tree to recommend
-the next step. It writes nothing and calls no MCP tools. It always
-produces **two** summaries — plain-language first, then the detailed GPS
-state — and it must not assume the user remembers the last session.
-
-### validate-schema
-
-A read-only relay over `validate_research_schema`: it surfaces each error
-with the object, field, and value, explains it plainly, and proposes a
-concrete fix that won't create a new error — but it never applies the fix
-and doesn't offer to. It sits explicitly **outside** the `/research` loop:
-because every writer tool validates the whole project before persisting,
-`/research` §4 forbids defensive validate passes between steps. Reach for
-it only when a hand-edit or an external change touched the files outside
-the writer tools.
-
-### search-familysearch-wiki
-
-Searches the FamilySearch Research Wiki and saves a markdown file in the
-working folder. Its trigger is broader than its name: **any** "how do I
-find [record type]" question routes here even when FamilySearch isn't
-named, and it must never answer such a question from training knowledge —
-always call `wiki_search` first, even when the answer feels obvious.
-Synthesis is constrained to the returned `chunk_text`: every sentence
-traceable to a chunk, no added dates or repositories, no invented
-navigation paths. Empty results mean tell the user and write no file.
-
-### search-wikipedia
-
-The canonical minimal example of the full plugin pipeline — call one MCP
-tool, populate a template, write a file — and the structure to copy when
-wiring a new skill. It fills `{{title}}`, `{{extract}}`, `{{url}}`
-verbatim, with no paraphrasing or truncation of the extract. Don't mutate
-it; create a new skill folder instead.
-
-### forget-and-rederive
-
-Sets up a practice run by stripping known information from the tree so it
-must be re-derived from records — the only skill without a `model:` pin,
-and the only one that writes `tree.gedcomx.json` through a Python script
-(`scripts/forget.py`) rather than a writer tool. Both halves are required:
-strip locally, **and don't look it back up** — live FamilySearch still
-holds the answer, so `person_read`, `person_search`, `person_ancestors`,
-and the person-match tools are off-limits for the affected people for the
-rest of the project. Reading *records about* those people is the entire
-point; reading the FS *tree* is the one forbidden move. Always dry-run
-first, because removing a person cascades to every relationship touching
-them, and report only the script's redacted counts — never the removed
-values. Two cautions for repeat use: forgetting is **additive**, and the
-`.tree-before-forget.gedcomx.json` restore file is **overwritten on every
-non-dry-run invocation**, so a second forget destroys the pristine restore
-point.
+- **Assert anything a source didn't say.** Collections, record counts,
+  repositories, and page contents come from what was actually retrieved. An
+  empty result is reported as an empty result.
+- **Skip stops because you named a destination.** Asking for the conclusion
+  is not permission to skip the exhaustiveness test.
+- **Treat a match score as an identity decision.** Scores inform judgment;
+  they don't replace it, and they never override a qualitative conflict.
+- **Claim work it didn't do.** It doesn't report a record as saved unless the
+  evidence was actually extracted and recorded.
+- **Reclassify evidence to fit a conclusion.** Classification happens once,
+  when the record is read, before anyone knows which way the answer runs.
