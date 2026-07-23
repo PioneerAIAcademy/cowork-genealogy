@@ -1,0 +1,647 @@
+{
+  "persons": [
+    {
+      "id": "GW8N-X1W",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "GW8N-X1W-name-1",
+          "given": "Lewis",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "f04219a8-8b1d-48e9-a771-c40b70247803",
+          "type": "Birth",
+          "date": "March 1897",
+          "standard_date": "Mar 1897",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "d58a6ef3-c88d-480f-8a98-615ff755bb2c",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "West Point, Troup, Georgia, United States",
+          "standard_place": "West Point, Troup, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "55cba3be-c41c-47ca-95a6-d7ebb8ea7cb3",
+          "type": "Ethnicity",
+          "value": "Black or African American"
+        },
+        {
+          "id": "F1",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 701, Troup, Georgia, United States",
+          "standard_place": "District Township, Berks, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N1",
+          "type": "BirthName",
+          "given": "Frank",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Birth",
+          "date": "1869",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "place": "Georgia",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1910",
+          "place": "West Point, Troup, Georgia, United States",
+          "standard_place": "West Point, Troup, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F13",
+          "type": "Birth",
+          "date": "December 1870",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 701, Troup, Georgia, United States",
+          "standard_place": "District Township, Berks, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F15",
+          "type": "MaritalStatus",
+          "standard_place": "Troup, Georgia, United States",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N2",
+          "type": "BirthName",
+          "given": "Susie",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N7",
+          "type": "BirthName",
+          "given": "Susan",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "date": "1893",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "place": "Georgia",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1910",
+          "place": "West Point, Troup, Georgia, United States",
+          "standard_place": "West Point, Troup, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F20",
+          "type": "Birth",
+          "date": "September 1892",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 701, Troup, Georgia, United States",
+          "standard_place": "District Township, Berks, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N3",
+          "type": "BirthName",
+          "given": "John",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F6",
+          "type": "Birth",
+          "date": "1901",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ],
+          "place": "Georgia",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "F7",
+          "type": "Residence",
+          "date": "1910",
+          "place": "West Point, Troup, Georgia, United States",
+          "standard_place": "West Point, Troup, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N4",
+          "type": "BirthName",
+          "given": "Otis",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F8",
+          "type": "Birth",
+          "date": "1903",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ],
+          "place": "Georgia",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "F9",
+          "type": "Residence",
+          "date": "1910",
+          "place": "West Point, Troup, Georgia, United States",
+          "standard_place": "West Point, Troup, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N5",
+          "type": "BirthName",
+          "given": "Hattie",
+          "surname": "Oneal",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F10",
+          "type": "Birth",
+          "date": "1892",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ],
+          "place": "Georgia",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "F11",
+          "type": "Residence",
+          "date": "1910",
+          "place": "West Point, Troup, Georgia, United States",
+          "standard_place": "West Point, Troup, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N6",
+          "type": "BirthName",
+          "given": "Carrie",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F16",
+          "type": "Birth",
+          "date": "March 1877",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "place": "Georgia",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "F17",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 701, Troup, Georgia, United States",
+          "standard_place": "District Township, Berks, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F18",
+          "type": "MaritalStatus",
+          "standard_place": "Troup, Georgia, United States",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F19",
+          "type": "Marriage",
+          "date": "1895",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N8",
+          "type": "BirthName",
+          "given": "William",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F22",
+          "type": "Birth",
+          "date": "September 1898",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "place": "Georgia",
+          "standard_place": "Troup, Georgia, United States"
+        },
+        {
+          "id": "F23",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 701, Troup, Georgia, United States",
+          "standard_place": "District Township, Berks, Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "GW8N-X1W",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I2",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R4"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I6",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R5",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "1895",
+          "standard_date": "1895",
+          "sources": [
+            {
+              "ref": "S2"
+            }
+          ],
+          "id": "F24"
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "GW8N-X1W",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I2",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R8"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R9"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Household of Frank Ogletree, \"United States, Census, 1910\", West Point, Troup, Georgia",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9FHP-PMD",
+      "citation": "\"United States, Census, 1910,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9FHP-PMD : accessed 2026-07-22), Household of Frank Ogletree, West Point, Troup, Georgia, United States; citing NARA microfilm publication T624, FHL microfilm."
+    },
+    {
+      "id": "S2",
+      "title": "Household of Frank Ogletree, \"United States, Census, 1900\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:1TTZ-JB9",
+      "citation": "\"United States, Census, 1900,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:1TTZ-JB9 : accessed 22 July 2026), entry for Frank Ogletree household, District 701, Troup County, Georgia; citing NARA microfilm publication T623."
+    }
+  ]
+}

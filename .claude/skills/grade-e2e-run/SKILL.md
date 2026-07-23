@@ -116,7 +116,7 @@ Then tell the user to commit the `.ann.json`. **Do not run `calibrate_judge` —
 even `--dry-run`.** It classifies *every* annotation in the tree, not just this one.
 The developer and genealogist teams never run it; all `calibrate_judge` use
 (`--dry-run` classification and the full sweep) is the maintainer's step, run
-periodically — documented in `docs/e2e-testing-guide.md` under "Judge calibration."
+periodically — documented in `docs/e2e-testing-guide.md` under "Step 8 — Grade the run."
 
 ## What you do not do
 

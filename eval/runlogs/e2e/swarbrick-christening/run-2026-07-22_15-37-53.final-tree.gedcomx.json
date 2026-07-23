@@ -1,0 +1,1100 @@
+{
+  "persons": [
+    {
+      "id": "MM4W-19N",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Robert",
+          "surname": "Swarbrick",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "1365cf01-dcde-4c49-80df-8bd67e2543eb",
+          "type": "Death",
+          "date": "about 20 November 1839",
+          "standard_date": "Abt 20 Nov 1839",
+          "place": "Hambleton, Lancashire, England",
+          "standard_place": "Hambleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "0a2e382c-a53a-4c0b-9dd6-7c15b586a794",
+          "type": "Burial",
+          "date": "22 November 1839",
+          "standard_date": "22 Nov 1839",
+          "place": "St. Chad, Poulton-le-Fylde, Lancashire, England",
+          "standard_place": "Poulton le Fylde, Lancashire, England"
+        },
+        {
+          "id": "F2",
+          "type": "Christening",
+          "date": "20 Dec 1797",
+          "place": "Poulton le Fylde, Lancashire, England",
+          "standard_place": "Poulton le Fylde, Lancashire, England",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F3",
+          "type": "Birth",
+          "date": "19 Dec 1797",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "P6MH-1N8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Grace",
+          "surname": "Collinson"
+        },
+        {
+          "id": "N12",
+          "type": "BirthName",
+          "given": "Grace",
+          "surname": "",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "cf078145-f972-46a7-8070-dc59e64b2052",
+          "type": "Christening",
+          "date": "17 July 1768",
+          "standard_date": "17 Jul 1768",
+          "place": "St. Chad, Poulton-le-Fylde, Lancashire, England",
+          "standard_place": "Poulton le Fylde, Lancashire, England"
+        },
+        {
+          "id": "ea584960-db59-495c-a691-4c8a882a7898",
+          "type": "Birth",
+          "date": "about 1769",
+          "standard_date": "Abt 1769",
+          "place": "Carleton, Lancashire, England",
+          "standard_place": "Carleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "6cd63247-b842-4426-bef1-76155df9195e",
+          "type": "Death",
+          "date": "about 23 April 1825",
+          "standard_date": "Abt 23 Apr 1825",
+          "place": "Carleton, Lancashire, England",
+          "standard_place": "Carleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "04fdbd99-e389-4bc0-909f-7e25c268f5e8",
+          "type": "Burial",
+          "date": "25 April 1825",
+          "standard_date": "25 Apr 1825",
+          "place": "St. Chad, Poulton-le-Fylde, Lancashire, England",
+          "standard_place": "Poulton le Fylde, Lancashire, England"
+        }
+      ]
+    },
+    {
+      "id": "MM43-ZMK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Ellen",
+          "surname": "Gardner"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "7 May 1798",
+          "standard_date": "7 May 1798",
+          "place": "St. Chad, Poulton-le-Fylde, Lancashire, England",
+          "standard_place": "Poulton le Fylde, Lancashire, England"
+        },
+        {
+          "id": "7b67460c-14ec-47bd-8806-6d6adebff86d",
+          "type": "Birth",
+          "date": "7 May 1798",
+          "standard_date": "7 May 1798",
+          "place": "Hardhorn with Newton, Lancashire, England",
+          "standard_place": "Hardhorn with Newton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "587b2e14-16ef-4a94-a7f7-2bd65e63bd77",
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Kirkham, Lancashire, England, United Kingdom",
+          "standard_place": "Kirkham, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "e117aa34-4b07-4eeb-ac47-6d14bc0f691c",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Stalmine With Staynal, Lancashire, England",
+          "standard_place": "Stalmine, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "444622b8-da61-4833-b413-af27a00928ea",
+          "type": "Death",
+          "date": "about February 1874",
+          "standard_date": "Abt Feb 1874",
+          "place": "Stalmine, Lancashire, England",
+          "standard_place": "Stalmine, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "9a70a4a0-4353-49f7-a11f-6dca147e54b6",
+          "type": "Residence",
+          "place": "Hambleton",
+          "standard_place": "Hambleton, North Yorkshire, England, United Kingdom"
+        }
+      ]
+    },
+    {
+      "id": "LW25-SP7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Edward",
+          "surname": "Swarbrick"
+        }
+      ],
+      "facts": [
+        {
+          "id": "05efd440-d752-4e8b-9b16-043c51003b3b",
+          "type": "Birth",
+          "date": "1838",
+          "standard_date": "1838",
+          "place": "Hambleton, Lancashire, England, United Kingdom",
+          "standard_place": "Hambleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "1d73f580-5dc9-414e-899c-f63eb75e971d",
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Kirkham, Lancashire, England, United Kingdom",
+          "standard_place": "Kirkham, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "09cd9143-2bed-4a6d-8371-f8493c322950",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Thornton, Lancashire, England, United Kingdom",
+          "standard_place": "Thornton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "ad3b2dd9-210f-43b6-a1fe-36e31c6e0dd5",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Fleetwood, Lancashire, England, United Kingdom",
+          "standard_place": "Fleetwood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "0cee98a8-6aad-408e-a246-65d4f5d821dd",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Fleetwood, Lancashire, England, United Kingdom",
+          "standard_place": "Fleetwood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "14 October 1921",
+          "standard_date": "14 Oct 1921",
+          "place": "Fleetwood, Lancashire, England, United Kingdom",
+          "standard_place": "Fleetwood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "0b457c8e-1d29-4f9c-b5f1-f9f86ae5f323",
+          "type": "Probate",
+          "date": "10 February 1922",
+          "standard_date": "10 Feb 1922",
+          "place": "Lancashire, England, United Kingdom",
+          "standard_place": "Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "2a223926-9638-46ab-a573-b4f5adf15899",
+          "type": "Residence",
+          "place": "Hambleton",
+          "standard_place": "Hambleton, North Yorkshire, England, United Kingdom"
+        }
+      ]
+    },
+    {
+      "id": "KGL3-45M",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Nancy",
+          "surname": "Swarbrick"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "18 Aug 1824",
+          "standard_date": "18 Aug 1824",
+          "place": "Hambleton, Lancashire, England",
+          "standard_place": "Hambleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "c0290d25-6e5f-4b4d-8194-ac0991166e07",
+          "type": "Birth",
+          "date": "1825",
+          "standard_date": "1825",
+          "place": "Lancashire, England, United Kingdom",
+          "standard_place": "Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "03040ae6-5610-40e8-a95c-acc69ea13bab",
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Out Rawcliffe, Lancashire, England, United Kingdom",
+          "standard_place": "Out Rawcliffe, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death",
+          "date": "about February 1853",
+          "standard_date": "Abt Feb 1853",
+          "place": "Stalmine, Lancashire, England",
+          "standard_place": "Stalmine, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "cef2e03b-c2fa-4ba3-b817-559fc0467415",
+          "type": "Alternate+name+on+census"
+        },
+        {
+          "id": "b91e4fdc-c6f2-4ddf-9dec-92f3ecc4a94f",
+          "type": "LifeSketch",
+          "value": "See husband's notes.  Alternate surname is Riley."
+        },
+        {
+          "id": "d13198af-f580-44f6-8671-2bf5d57a18e9",
+          "type": "Residence",
+          "place": "Boggart House"
+        }
+      ]
+    },
+    {
+      "id": "MG3V-ZQP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "John",
+          "surname": "Swarbrick"
+        }
+      ],
+      "facts": [
+        {
+          "id": "bbc819b8-f970-4b1d-9f75-2da1f2011f19",
+          "type": "Birth",
+          "date": "1831",
+          "standard_date": "1831",
+          "place": "Hambleton, Lancashire, England, United Kingdom",
+          "standard_place": "Hambleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "2 November 1831",
+          "standard_date": "2 Nov 1831",
+          "place": "Hambleton, Lancashire, England, United Kingdom",
+          "standard_place": "Hambleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "e4e04d23-e45a-4ce1-8ece-3d02096175b4",
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Kirkham, Lancashire, England, United Kingdom",
+          "standard_place": "Kirkham, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Thornton, Lancashire, England, United Kingdom",
+          "standard_place": "Thornton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "47d89c60-2fcc-4d33-848c-48bb08ac26d8",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Thornton, Lancashire, England, United Kingdom",
+          "standard_place": "Thornton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "3663d6e2-272a-404b-a366-d430f40eddc6",
+          "type": "Death",
+          "date": "30 May 1896",
+          "standard_date": "30 May 1896",
+          "place": "Fleetwood, Lancashire, England, United Kingdom",
+          "standard_place": "Fleetwood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "6935537a-45c7-4fda-83f3-b0ce477a6bc3",
+          "type": "Residence",
+          "place": "Hambleton, North Yorkshire, England, United Kingdom",
+          "standard_place": "Hambleton, North Yorkshire, England, United Kingdom"
+        }
+      ]
+    },
+    {
+      "id": "M8H7-H5V",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Grace",
+          "surname": "Swarbrick"
+        }
+      ],
+      "facts": [
+        {
+          "id": "060a5ffe-0116-4120-8537-742efce88577",
+          "type": "Christening",
+          "date": "23 July 1821",
+          "standard_date": "23 Jul 1821",
+          "place": "Poulton le Fylde, Lancashire, England",
+          "standard_place": "Poulton le Fylde, Lancashire, England"
+        },
+        {
+          "id": "5e3450cc-6e71-4b37-b192-31b8d5d447a1",
+          "type": "Birth",
+          "date": "1822",
+          "standard_date": "1822",
+          "place": "Carlton, Lancashire",
+          "standard_place": "Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "598f7591-88ea-47f2-87af-bd38f8ef3db4",
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Great & Little Singleton, Kirkham, Lancashire, England, United Kingdom",
+          "standard_place": "Singleton, Lancashire, England, United Kingdom",
+          "value": "Occupation - Female Servant"
+        },
+        {
+          "id": "30dcc6b1-a67f-47fc-971a-5fd104e46b78",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Hambleton, Lancashire, England, United Kingdom",
+          "standard_place": "Hambleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "d44bc8eb-b6b8-4d0b-a63f-c844d19a7d0b",
+          "type": "Residence",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Little Carleton, Lancashire, England, United Kingdom",
+          "standard_place": "Little Carleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "ac09a283-348b-4443-9154-0fc5e8b37dec",
+          "type": "Burial",
+          "date": "14 January 1869",
+          "standard_date": "14 Jan 1869",
+          "place": "Poulton le Fylde, Lancashire, England",
+          "standard_place": "Poulton le Fylde, Lancashire, England"
+        },
+        {
+          "id": "444622b8-da61-4833-b413-af27a00928ea-2",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KGL7-YBH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Mary",
+          "surname": "Swarbrick"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b-2",
+          "type": "Christening",
+          "date": "19 March 1827",
+          "standard_date": "19 Mar 1827",
+          "place": "Hambleton, Lancashire, England",
+          "standard_place": "Hambleton, Lancashire, England"
+        },
+        {
+          "id": "6e59fcbf-71c5-4aed-bb98-7b247cc057ad",
+          "type": "Birth",
+          "date": "1827",
+          "standard_date": "1827",
+          "place": "Hambleton, Lancashire",
+          "standard_place": "Hambleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "b3c8ce71-72c7-4cc6-a9fc-3e0c0113dc33",
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Kirkham, Lancashire, England, United Kingdom",
+          "standard_place": "Kirkham, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "e67af298-410c-44eb-8a99-00da5418e4cb",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Stalmine With Staynal, Lancashire, England",
+          "standard_place": "Stalmine, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "b982633a-f40d-4d35-993e-0a0cdf2064dc",
+          "type": "Residence",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Stalmine, Lancashire, England",
+          "standard_place": "Stalmine, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "95ef5459-5e24-4967-b870-3735dbbf212a",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Stalmine With Staynall, Lancashire, England",
+          "standard_place": "Stalmine, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "06791da1-f008-47db-868a-39c2eaaf4ad7",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Stalmine With Stainall, Lancashire, England",
+          "standard_place": "Stalmine, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "af27bdb3-0190-4145-8100-880432d43893",
+          "type": "Death",
+          "date": "26 January 1882",
+          "standard_date": "26 Jan 1882",
+          "place": "Stalmine, Lancashire, England",
+          "standard_place": "Stalmine, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "cef2e03b-c2fa-4ba3-b817-559fc0467415-2",
+          "type": "Census"
+        },
+        {
+          "id": "3471b68e-19d8-44d3-9ca9-cd3cecae847b",
+          "type": "Residence",
+          "place": "Hambleton",
+          "standard_place": "Hambleton, North Yorkshire, England, United Kingdom"
+        }
+      ]
+    },
+    {
+      "id": "L8DZ-M74",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Gaskell",
+          "surname": "Swarbrick"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1835",
+          "standard_date": "1835",
+          "place": "Hambleton, Lancashire, England",
+          "standard_place": "Hambleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "edf7b280-96e7-4ac9-8102-4052b8be1fa5",
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Kirkham, Lancashire, England, United Kingdom",
+          "standard_place": "Kirkham, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "ad063fa2-5e7a-4e50-8ade-660c9bf541fe",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Little Eccleston W Larbrick, Lancashire, England",
+          "standard_place": "Eccleston, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "36c96430-d67c-4b51-a227-951f21726f66",
+          "type": "Residence",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Thornton, Lancashire, England, United Kingdom",
+          "standard_place": "Thornton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "94445e38-a618-4fc4-8db1-7166cfd432a2",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Thornton, Lancashire, England, United Kingdom",
+          "standard_place": "Thornton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "4550ac38-9c79-4003-83c2-1184013a18b7",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Thornton, Lancashire, England",
+          "standard_place": "Thornton, Natal, South Africa"
+        },
+        {
+          "id": "d6128957-4d88-4f6e-8628-8cb1d149c213",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Thornton, Lancashire, England, United Kingdom",
+          "standard_place": "Thornton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "546d4d6d-bf0b-4c6b-9578-1ea300511aad",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Fleetwood, Lancashire, England, United Kingdom",
+          "standard_place": "Fleetwood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "4 June 1911",
+          "standard_date": "4 Jun 1911",
+          "place": "Lancashire, England",
+          "standard_place": "Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "99d8c87e-28ab-4124-9187-b5227cf66db6",
+          "type": "Census"
+        },
+        {
+          "id": "9c275256-a5ab-463a-99e1-39cb2c3d6e8e",
+          "type": "Custom",
+          "value": "3 children unaccounted for"
+        },
+        {
+          "id": "c0a3eb82-99e7-470e-a259-0af69d90f1e0",
+          "type": "Residence",
+          "place": "Hambleton",
+          "standard_place": "Hambleton, North Yorkshire, England, United Kingdom"
+        },
+        {
+          "id": "956811b4-50c1-4d57-b40a-05e47da7418e",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "6429a661-62f3-4655-90a7-1bc52a60b9e2",
+          "type": "Residence",
+          "place": "Cop Lane",
+          "standard_place": "Lane, V\u00e4stra G\u00f6taland, Sweden"
+        },
+        {
+          "id": "189910b8-cb21-48ca-ab98-7f1aa42930c3",
+          "type": "Marital Status",
+          "value": "Unmarried"
+        },
+        {
+          "id": "2f6305ed-d161-4d6e-998e-f6cce2b8a1e9",
+          "type": "Occupation",
+          "value": "House Servant"
+        }
+      ]
+    },
+    {
+      "id": "L88T-VT4",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "John",
+          "surname": "Swarbrick",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100-2",
+          "type": "Birth",
+          "date": "About 1764",
+          "standard_date": "Abt 1764",
+          "place": "of Carleton, Poulton le Fylde, Lancashire, England",
+          "standard_place": "Carleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "f56cdc5d-e099-464a-bec8-6442b35f5bb9",
+          "type": "Death",
+          "date": "about 5 August 1830",
+          "standard_date": "Abt 5 Aug 1830",
+          "place": "Carleton, Lancashire, England",
+          "standard_place": "Carleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "8414fcb5-2cbc-442f-8d61-4a3680b77f7b",
+          "type": "Burial",
+          "date": "7 August 1830",
+          "standard_date": "7 Aug 1830",
+          "place": "St. Chad, Poulton-le-Fylde, Lancashire, England",
+          "standard_place": "Poulton le Fylde, Lancashire, England"
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "place": "Carleton, Lancashire, England",
+          "standard_place": "Carleton, Lancashire, England",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Occupation",
+          "value": "Husbandman",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "KL9M-BNZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Margaret",
+          "surname": "Swarbrick"
+        }
+      ],
+      "facts": [
+        {
+          "id": "800e9f2b-24de-4bac-82c5-35a1688ea1db",
+          "type": "Birth",
+          "date": "1829",
+          "standard_date": "1829",
+          "place": "Hambleton, Lancashire, England, United Kingdom",
+          "standard_place": "Hambleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "17e680bc-14a6-4227-b45a-c040eb6201c1",
+          "type": "Christening",
+          "date": "19 July 1829",
+          "standard_date": "19 Jul 1829",
+          "place": "Hambleton, Lancashire, England, United Kingdom",
+          "standard_place": "Hambleton, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "a7360f6d-682c-49d5-81bd-9f56c9a8eea7",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Heaton With Oxcliffe, Lancashire, England, United Kingdom",
+          "standard_place": "Heaton, Lancashire, England, United Kingdom",
+          "value": "Occupation - House Servant"
+        },
+        {
+          "id": "1bcca0bb-13ff-44df-a657-47248339c134",
+          "type": "Residence",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Stalmine, Lancashire, England, United Kingdom",
+          "standard_place": "Stalmine, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "d8d2c37b-8b74-4641-ac5d-e8c44d07a11a",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Stalmine With Staynall, Lancashire, England, United Kingdom",
+          "standard_place": "Stalmine, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "3067f618-9526-44dd-a5ed-0ca03b5aafaf",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Stalmine With Staynall, Lancashire, England, United Kingdom",
+          "standard_place": "Stalmine, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "3663d6e2-272a-404b-a366-d430f40eddc6-2",
+          "type": "Death"
+        },
+        {
+          "id": "dfeb5214-e983-4be9-8593-3d5454feaacc",
+          "type": "LifeSketch",
+          "value": "See husband's notes.  Alternate surname is Riley."
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N13",
+          "type": "BirthName",
+          "given": "Robert",
+          "surname": "Swarbrick",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F6",
+          "type": "Christening",
+          "date": "11 Jun 1797",
+          "place": "Hambleton, Lancashire, England",
+          "standard_place": "Hambleton, Lancashire, England, United Kingdom",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N14",
+          "type": "BirthName",
+          "given": "William",
+          "surname": "Swarbrick",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N15",
+          "type": "BirthName",
+          "given": "Ann",
+          "surname": "",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "MM4W-19N",
+      "person2": "MM43-ZMK",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "20 Feb 1821",
+          "standard_date": "20 Feb 1821",
+          "place": "Poulton-le-Fylde, Lancashire, England",
+          "standard_place": "Poulton le Fylde, Lancashire, England, United Kingdom"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "L88T-VT4",
+      "person2": "P6MH-1N8",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "28 October 1788",
+          "standard_date": "28 Oct 1788",
+          "place": "St. Chad, Poulton-le-Fylde, Lancashire, England",
+          "standard_place": "Poulton le Fylde, Lancashire, England"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "MM4W-19N",
+      "child": "M8H7-H5V",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "MM43-ZMK",
+      "child": "M8H7-H5V",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "MM4W-19N",
+      "child": "KGL3-45M",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "MM43-ZMK",
+      "child": "KGL3-45M",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "MM4W-19N",
+      "child": "KGL7-YBH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "MM43-ZMK",
+      "child": "KGL7-YBH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "MM4W-19N",
+      "child": "KL9M-BNZ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "MM43-ZMK",
+      "child": "KL9M-BNZ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "MM4W-19N",
+      "child": "MG3V-ZQP"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "MM43-ZMK",
+      "child": "MG3V-ZQP"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "MM4W-19N",
+      "child": "L8DZ-M74"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "MM43-ZMK",
+      "child": "L8DZ-M74"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "MM4W-19N",
+      "child": "LW25-SP7"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "MM43-ZMK",
+      "child": "LW25-SP7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L88T-VT4",
+      "child": "MM4W-19N",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ],
+      "id": "R19"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "P6MH-1N8",
+      "child": "MM4W-19N",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ],
+      "id": "R20"
+    }
+  ],
+  "sources": [
+    {
+      "id": "78FP-SRY",
+      "title": "Robert Swarbrick, \"England Marriages, 1538\u20131973\"",
+      "citation": "\"England Marriages, 1538\u20131973\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NXG7-TVP : Sun Apr 26 15:55:14 UTC 2026), Entry for John Swarbrick and Robert Swarbrick, 30 March 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NXG7-TV5"
+    },
+    {
+      "id": "749X-2QQ",
+      "title": "Robert Swarbrick, \"England Marriages, 1538\u20131973\"",
+      "citation": "\"England Marriages, 1538\u20131973\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NXGW-32B : Sun Apr 26 15:54:45 UTC 2026), Entry for John Bradshaw and Nancy Swarbrick, 5 March 1845.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NXGW-32Y"
+    },
+    {
+      "id": "Q1HN-C2M",
+      "title": "Robert Swarbrick, \"England Marriages, 1538\u20131973\"",
+      "citation": "\"England Marriages, 1538\u20131973\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NXDX-24R : Sun Apr 26 15:49:07 UTC 2026), Entry for John Swarbrick and Ellen Bond, 24 December 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NXDX-24T"
+    },
+    {
+      "id": "Q5X3-71R",
+      "title": "Robert Swarbrick, \"England Marriages, 1538\u20131973\"",
+      "citation": "\"England Marriages, 1538\u20131973\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NX1Z-4QD : Sun Apr 26 12:44:07 UTC 2026), Entry for Robert Swarbrick and Ellen Gardner, 20 February 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NX1Z-4QD"
+    },
+    {
+      "id": "QSPB-B4S",
+      "title": "Robert Swarbrick in entry for Margaret Swarbrick, \"England, Births and Christenings, 1538-1975\"",
+      "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JSY5-8H3 : 10 April 2021), Robert Swarbrick in entry for Margaret Swarbrick, 1829.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JSY5-8H3"
+    },
+    {
+      "id": "QMJ4-HYB",
+      "title": "Robert Swarbrick in entry for Margaret Swarbrick, \"England, Births and Christenings, 1538-1975\"",
+      "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NXHW-29D : 4 February 2023), Robert Swarbrick in entry for Margaret Swarbrick, 1829.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NXHW-29D"
+    },
+    {
+      "id": "QMJW-PRX",
+      "title": "Robert Swarbrick in entry for Nancy Swarbrick, \"England, Births and Christenings, 1538-1975\"",
+      "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NXHW-VSC : 4 February 2023), Robert Swarbrick in entry for Nancy Swarbrick, 1824.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NXHW-VSC"
+    },
+    {
+      "id": "3RZ7-PVF",
+      "title": "Robert Swarbrick, \"England Marriages, 1538\u20131973\"",
+      "citation": "\"England Marriages, 1538\u20131973\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NXG7-TJ9 : Sun Apr 26 15:54:38 UTC 2026), Entry for Edward Swarbrick and Robert Swarbrick, 21 July 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NXG7-TJS"
+    },
+    {
+      "id": "3JVM-2MN",
+      "title": "Robert Swarbrick, \"England Marriages, 1538\u20131973\"",
+      "citation": "\"England Marriages, 1538\u20131973\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NXGS-2WY : Sun Apr 26 15:54:20 UTC 2026), Entry for James Ibbison and Edmund Ibbison, 2 February 1846.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NXGS-2WT"
+    },
+    {
+      "id": "9H5V-FQ7",
+      "title": "Robert Swarbrick, \"England Marriages, 1538\u20131973\"",
+      "citation": "\"England Marriages, 1538\u20131973\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NVHW-CPG : 12 March 2020), Robert Swarbrick, 1821.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NVHW-CPG"
+    },
+    {
+      "id": "MST6-5G4",
+      "title": "Robert Swarbrick - Parish Register Burial Record",
+      "url": "http://www.lan-opc.org.uk/Search"
+    },
+    {
+      "id": "S1",
+      "title": "England, Births and Christenings, 1538-1975 \u2014 Robert Swarbrick christening, 11 Jun 1797, Hambleton, Lancashire",
+      "url": "https://familysearch.org/ark:/61903/1:2:9MHY-8S3G"
+    },
+    {
+      "id": "S2",
+      "title": "England, Births and Christenings, 1538-1975 \u2014 Robert Swarbrick, 20 Dec 1797 (index entry NX2H-W9B, corroborated by original St. Chad Poulton-le-Fylde register image 3:1:S3HT-D49Q-373)",
+      "url": "https://familysearch.org/ark:/61903/1:2:9WMS-KWK"
+    }
+  ]
+}
