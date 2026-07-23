@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_016",
+    "skill": "proof-conclusion",
+    "name": "Narrative certainty must match a sub-Proved tier when research is not exhaustive",
+    "type": "positive",
+    "description": "The richardson-parentage-not-exhaustive scenario has strong direct parentage evidence but research is NOT declared exhaustive (exhaustive_declaration.declared is false) and planned searches remain unexecuted, at least one of which could corroborate or contradict the parentage. The skill should select a tier no higher than `probable` AND write a narrative whose certainty matches that tier — it must NOT declare the case 'proved', claim 'all five GPS components are satisfied', or assert the research is 'reasonably exhaustive'. Captures a run that tiered `probable` but wrote Proved-level narrative language contradicting its own exhaustiveness state.",
+    "tags": ["proof", "parentage", "probable", "GPS-step-5", "from-cowork", "narrative-tier-consistency", "re-invoke-safe"]
+  },
+  "input": {
+    "user_message": "Write the proof conclusion for the parentage question.",
+    "scenario": "richardson-parentage-not-exhaustive"
+  },
+  "judge_context": [
+    "Should select a tier no higher than `probable`: research is not declared exhaustive (`exhaustive_declaration.declared` is false) and planned searches remain unexecuted, at least one of which could corroborate OR contradict the parentage — so `proved` is not available regardless of how strong the gathered evidence looks.",
+    "The narrative_markdown must NOT assert the conclusion is 'proved', that 'all five GPS components are satisfied', or that the research is 'reasonably exhaustive', while the recorded exhaustiveness state (declared: false) and the open plan items say otherwise. Narrative certainty must match the assigned tier — definitive proof language at a sub-Proved tier is the failure.",
+    "Should justify the chosen tier against the adjacent tiers, naming the specific outstanding searches that would be required to advance toward `proved` rather than presenting the search as complete.",
+    "narrative_markdown should read as a self-contained conclusion with inline citations, and use conditional phrasing consistent with `probable` (e.g. 'the preponderance of evidence indicates') rather than declarations of proof."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

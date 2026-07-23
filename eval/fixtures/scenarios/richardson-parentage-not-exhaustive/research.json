@@ -1,0 +1,800 @@
+{
+  "project": {
+    "id": "rp_john_richardson_parents",
+    "objective": "Who were the parents of John Richardson, born 24 July 1833 in Preston, Lancashire, England, an LDS pioneer who emigrated via Nauvoo to Utah and died 10 March 1906 in Richmond, Cache County, Utah?",
+    "subject_person_ids": [
+      "LR9N-VGQ"
+    ],
+    "status": "active",
+    "created": "2026-07-22",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the Ashton-under-Lyne, Lancashire parish christening register record for John Richardson, baptised 25 September 1833, reveal about his parentage?",
+      "rationale": "The project objective is to identify John Richardson's parents. His tree entry shows a christening at Ashton-under-Lyne, Lancashire on 25 September 1833 — Anglican and nonconformist christening registers for this period typically name the father (and often the mother), making this the most direct primary source for parentage. Lancashire parish registers are heavily indexed on FamilySearch and Ancestry, so the record is likely accessible. This question also probes the discrepancy between the stated birth place (Preston) and christening place (Ashton-under-Lyne, ~35 miles away), which may indicate the birth-place claim in the tree is from a compiled source and worth verifying. Answering this question should name at least the father and thereby anchor all subsequent research.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Ashton-under-Lyne, Lancashire, England",
+          "date_range": "1833",
+          "repository": "FamilySearch",
+          "rationale": "The tree records John Richardson's christening on 25 September 1833 at Ashton-under-Lyne, Lancashire. FamilySearch collection 1465701 (England, Lancashire, Parish Registers 1538-1910) indexes Lancashire parish registers including Ashton-under-Lyne's St. Michael and All Angels. An Anglican christening register entry for this period names the father's full name, father's occupation, and mother's Christian name — the most direct path to naming John's parents. This collection is free and the highest-probability first search.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Ashton-under-Lyne, Lancashire, England",
+          "date_range": "1833",
+          "repository": "Ancestry",
+          "rationale": "Cross-check of the same christening event using Ancestry collection 2575 (Lancashire, England, Church of England Births & Baptisms, 1813-1911, index & images). Ancestry's indexing is independent of FamilySearch's and may surface the record if the FamilySearch index has a name transcription error or if the record is in the images but not the FamilySearch index.",
+          "fallback_for": "pli_001",
+          "status": "planned"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Ashton-under-Lyne, Lancashire, England",
+          "date_range": "1833",
+          "repository": "other",
+          "rationale": "Lancashire Online Parish Clerks (lan-opc.org.uk) provides free transcription abstracts from many Ashton-area registers — 9.5 million Lancashire records as of 2018. This free index may yield the christening entry and its parent names without a paid subscription, and its transcriptions derive from original registers independently of FamilySearch/Ancestry.",
+          "fallback_for": "pli_001",
+          "status": "planned"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Lancashire, England",
+          "date_range": "1820-1833",
+          "repository": "FamilySearch",
+          "rationale": "Once the christening names a father, the parents' marriage record is required to establish the mother's maiden name and corroborate the parentage identification. Lancashire parish registers (FS collection 1465701) cover marriages from 1538-1910. The parents married by approximately 1832 at the latest; searching for a Richardson marriage in Lancashire in the years before 1833 would name both parents. Per planning standards, a dedicated parents-marriage item is required for parentage questions.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Lancashire, England",
+          "date_range": "1833",
+          "repository": "FamilySearch",
+          "rationale": "If the Anglican christening yields nothing, search FamilySearch collection 3656808 (England, Lancashire Non-Conformist Church Records, 1647-1996, index & images, free). Ashton-under-Lyne had a significant Nonconformist community; if the Richardson family were Methodists or other Dissenters (consistent with their receptiveness to LDS missionaries in 1837-1839), the christening would appear in a nonconformist register instead of the Anglican register.",
+          "fallback_for": "pli_001",
+          "status": "planned"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Lancashire, England",
+          "date_range": "1837-1839",
+          "repository": "other",
+          "rationale": "The Richardson family converted to the LDS church in Lancashire approximately 1837-1839 (the family is documented in Nauvoo by 1839; LDS missionaries arrived in Lancashire in July 1837). LDS membership records and mission journals from this period, held at the Church History Library (Salt Lake City, Utah), may record the entire family unit — including parents' names, ages, and place of residence — at the time of conversion. This is an LDS-specific FAN avenue with high potential given the family's documented LDS affiliation.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "census",
+          "jurisdiction": "Ashton-under-Lyne, Lancashire, England",
+          "date_range": "1841",
+          "repository": "FamilySearch",
+          "rationale": "John Richardson was in Nauvoo by 1839 and will not appear in the 1841 England census. However, his parents may still be in England in 1841 and appear as a Richardson household in Ashton-under-Lyne. If the christening has already named the father, this search can confirm identity and potentially name other children. FamilySearch indexes the 1841 England census free of charge.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T15:13:27.978Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "1465701",
+        "surname": "Richardson",
+        "givenName": "John",
+        "birthYearFrom": 1833,
+        "birthYearTo": 1833,
+        "birthPlace": "Lancashire, England",
+        "recordType": "birth",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 50,
+      "notes": "50 results returned but stubs have empty events fields. Top-ranked match score 0.41 (QJDD-RRWK, 'Entry for Gertrude Rebecca Richardson') — John Richardson likely appears as father, not as christened child. One candidate (QJDD-2VKS, 'Entry for John Richardson') may be his own christening — requires record_read to verify date and place. No confident match identified yet."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T15:17:40.814Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Richardson",
+        "givenName": "John",
+        "birthPlace": "Ashton-under-Lyne, Lancashire, England",
+        "anyYearFrom": 1830,
+        "anyYearTo": 1836,
+        "collectionId": "1465701",
+        "count": 50,
+        "strategy": "Refined retry: specific Ashton-under-Lyne place, anyYear range instead of birthYear"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "notes": "273 total results in collection 1465701 for John Richardson with Ashton-under-Lyne birthPlace and anyYear 1830-1836. Top ranked match score 0.578 (birthDate 1831, attached to other person — not our subject). No christening entry for Ashton-under-Lyne c.1833 found in any of the 50 results. Records are scattered across Warton, Upholland, Caton, Blackburn, Burnley, Sefton, Parr — none in Ashton-under-Lyne. Conclusion: the 1833 christening is not indexed in collection 1465701 under these parameters. Must try full-text search to reach unindexed page-image transcripts."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T15:22:59.249Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Richardson",
+        "givenName": "John",
+        "birthYearFrom": 1830,
+        "birthYearTo": 1836,
+        "birthPlace": "Ashton-under-Lyne, Lancashire, England",
+        "collectionId": "1473014",
+        "count": 50,
+        "collection": "England, Births and Christenings, 1538-1975"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "notes": "Two top results are duplicate IGI-derived index entries for John Richardson christened 25 Sep 1832 at Ashton-under-Lyne. Best record: ark:/61903/1:1:JMF4-CL9 (collection 1473014), Church of St. Michael and All Angels — Father: Thomas Richardson, Mother: Mary (maiden name unknown). Second entry ark:/61903/1:1:NFCY-7VM (same collection) shows same christening with only Mother Mary listed. Both rank 1-2 after match scoring (0.454 and 0.384). CAUTION: indexed date is 1832 but tree records 1833 — 1-year discrepancy, same day (25 Sep) and place. Requires image verification to determine correct year. Both records are in collection 1473014, derivative of IGI microfilm. Parents identified as Thomas Richardson (father) and Mary (maiden name unknown, mother)."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-22T15:42:05.528Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Richardson",
+        "givenName": "Thomas",
+        "spouseGivenName": "Mary",
+        "marriageYearFrom": 1815,
+        "marriageYearTo": 1832,
+        "birthPlace": "Lancashire, England",
+        "collectionId": "1465701",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "notes": "Top search result (score 6.62): ark:/61903/1:1:QJDD-R1CZ, 'Entry for Thomas Richardson and Mary Mallalieu, England, Lancashire, Parish Registers 1538-1910'. Record read confirms: Thomas Richardson married Mary Mallalieu, 12 Nov 1826, St Leonard, Walton le Dale, Lancashire. Both parties Single. CRITICAL FINDING: Mary's maiden name is Mallalieu. Walton le Dale is immediately adjacent to Preston, consistent with John Richardson's stated birth place of Preston. Marriage 6 years before John's 1832/1833 christening. Geographic and temporal fit is strong. This corroborates the identification of Thomas Richardson and Mary Mallalieu as parents of John Richardson."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-22T15:54:51.815Z",
+      "tool": "image_transcribe",
+      "query": {
+        "ark": "ark:/61903/3:1:S3HY-6PR3-4VC",
+        "lookingFor": "Marriage entry for Thomas Richardson and Mary Mallalieu, 12 November 1826, St Leonard, Walton le Dale, Lancashire"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Successfully transcribed original marriage register image. Page 228, entry no. 684: Thos Richardson (Bachelor) and Mary Mallalieu (Spinster), both of this chapelry, married by banns, 12 November 1826, at unidentified chapel (St Leonard, Walton le Dale). Officiant: Henry Fielden, Sub Curate. Both parties signed by mark. Witnesses: John Quarmen and James Townson. CONFIRMS derivative index (src_002) was accurate. Upgrades marriage evidence from derivative/secondary to original/primary."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T16:16:12.933Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageId": "004421674_00164",
+        "volume": "004421674",
+        "description": "Browse FamilySearch DGS volume 004421674_001 (images 00001-00346) sampling images to locate original baptism register entry for John Richardson, 25 Sep 1832, St Michael and All Angels, Ashton-under-Lyne"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Sampled images 00001, 00100, 00120, 00135, 00143, 00145-00147, 00150, 00157, 00160, 00163, 00164 to navigate to September 1832. Found entry no. 2040 on page 254-255: John, son of Thomas Richardson (spinner, made mark X) and Mary, baptized 25 September 1832, Ashton-under-Lyne. Officiating curate: J. Hardman. Thomas's mark (X) matches the marriage register at Walton-le-Dale."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9H1K-BYQ : 4 February 2023, Entry for John Richardson, 25 Sep 1832); citing index based upon data collected by the Genealogical Society of Utah, Salt Lake City; FHL microfilm.",
+      "citation_detail": {
+        "who": "GSU/FamilySearch indexers",
+        "what": "Index entry for christening of John Richardson, derived from FHL microfilm of St. Michael and All Angels parish register, Ashton-under-Lyne",
+        "when_created": "1832 (original event); indexed 2023",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch.org",
+        "where_within": "England, Births and Christenings, 1538-1975 (collection 1473014)"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://familysearch.org/ark:/61903/1:2:9H1K-BYQ",
+      "url_archived": null,
+      "notes": "IGI-derived index (collection 1473014). Indexed date is 25 Sep 1832, conflicting by 1 year with tree-recorded christening of 25 Sep 1833. Same day, month, church, and surname — likely a 1-year transcription error. Corroborated by second IGI entry ark:/61903/1:1:NFCY-7VM. Image verification needed.",
+      "transcription": null,
+      "image_filename": null,
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"England, Lancashire, Parish Registers 1538-1910\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QJDD-R1CZ : 9 March 2024), Entry for Thomas Richardson and Mary Mallalieu, 12 Nov 1826; St Leonard, Walton le Dale, Lancashire, England; citing FHL microfilm of original parish register.",
+      "citation_detail": {
+        "who": "FamilySearch indexers",
+        "what": "Marriage register entry for Thomas Richardson and Mary Mallalieu, 12 Nov 1826, St Leonard, Walton le Dale, Lancashire; indexed from FHL microfilm of original Anglican parish register",
+        "when_created": "12 Nov 1826 (original event)",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch.org",
+        "where_within": "England, Lancashire, Parish Registers 1538-1910 (collection 1465701)"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QKSF-2QNZ",
+      "url_archived": null,
+      "notes": "Marriage of Thomas Richardson (Single) and Mary Mallalieu (Single), 12 Nov 1826, St Leonard, Walton le Dale, Lancashire. Walton le Dale is immediately adjacent to Preston, consistent with John Richardson's stated birth place of Preston. Marriage image ARK: ark:/61903/3:1:S3HY-6PR3-4VC (not yet read). Provides Mary's maiden name (Mallalieu) and corroborates Thomas Richardson as John's father.",
+      "transcription": null,
+      "image_filename": null,
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"England, Lancashire, Parish Registers 1538-1910,\" digital image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-6PR3-4VC : accessed 22 July 2026), St Leonard, Walton le Dale, marriage register, p. 228, entry no. 684, Thos Richardson and Mary Mallalieu, 12 November 1826; citing original register held at Lancashire Record Office, Preston; FHL microfilm.",
+      "citation_detail": {
+        "who": "Rev. Henry Fielden, Sub Curate of St Leonard, Walton le Dale",
+        "what": "Marriage register entry no. 684: Thos Richardson (Bachelor) and Mary Mallalieu (Spinster), both of this chapelry, married by banns 12 Nov 1826; both signed by mark; witnesses John Quarmen and James Townson",
+        "when_created": "12 November 1826",
+        "when_accessed": "2026-07-22",
+        "where": "Lancashire Record Office, Preston (original); FamilySearch digitized image",
+        "where_within": "St Leonard, Walton le Dale marriage register, p. 228, entry no. 684"
+      },
+      "source_classification": "original",
+      "repository": "Lancashire Record Office / FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6PR3-4VC",
+      "url_archived": null,
+      "notes": "Original register image transcribed via image_transcribe. Both parties signed by mark (illiterate). Same officiant Rev. Henry Fielden and witness James Townson appear across multiple entries on this page, confirming authenticity.",
+      "transcription": "Thos Richardson, Bachelor of this Parish Chapelry and Mary Mallalieu, Spinster of this Parish Chapelry were married in this Chapel by Banns this Twelfth Day of November in the Year One thousand eight hundred and twenty six By me Henry Fielden Sub Curate. Thomas Richardson his mark / Mary Mallalieu her mark. In the Presence of John Quarmen / James Townson. No. 684.",
+      "image_filename": "images/ark_61903_3_1_S3HY-6PR3-4VC.jpg",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"England, Lancashire, Parish Registers 1538-1910,\" digital image, FamilySearch (https://www.familysearch.org : accessed 22 July 2026), St Michael and All Angels, Ashton-under-Lyne, baptism register, pp. 254–255, entry no. 2040, John, son of Thomas Richardson and Mary, 25 September 1832; citing original register held at Lancashire Record Office, Preston; FHL microfilm 4421674.",
+      "citation_detail": {
+        "who": "John Richardson (child), Thomas Richardson (father), Mary Richardson née Mallalieu (mother)",
+        "what": "Original parish baptism register, entry no. 2040",
+        "when_created": "25 September 1832",
+        "when_accessed": "22 July 2026",
+        "where": "FamilySearch digital image, FHL microfilm 4421674",
+        "where_within": "St Michael and All Angels, Ashton-under-Lyne, baptism register, pp. 254–255, entry no. 2040"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch / Lancashire Record Office",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org",
+      "url_archived": null,
+      "notes": "Entry no. 2040: 25 September 1832, John, son of Thomas X (mark) Richardson, Spinner, and Mary, Town (Ashton-under-Lyne). Officiating curate: J. Hardman. Thomas made his mark (X), consistent with the marriage register at Walton-le-Dale (src_003) where he also signed with a mark. Image accessed by sampling DGS volume 004421674_001, image 004421674_00164, pages 254–255.",
+      "transcription": "No. 2040: September 25 — John [child] — Thomas X Richardson [father], Mary [mother] — Town — Spinner — J. Hardman",
+      "image_filename": "004421674_00164.jpg",
+      "log_entry_id": "log_006",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:JMF4-CL9",
+      "record_role": "child",
+      "record_persona_id": "p_12405347731",
+      "fact_type": "christening",
+      "value": "John Richardson christened 25 Sep 1832, Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England [indexed year 1832 conflicts with tree year 1833 — same day/month/place; likely 1-year indexing error; image verification required]",
+      "structured_value": null,
+      "date": "25 Sep 1832",
+      "date_certainty": "exact",
+      "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England",
+      "standard_place": "St Michael And All Angels' Church, Ashton-under-Lyne, Lancashire, England, United Kingdom",
+      "information_quality": "secondary",
+      "informant": "GSU/FamilySearch indexer from FHL microfilm of original register",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "Indexed from original microfilm; transcription error in year is possible (1832 vs. 1833)",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:JMF4-CL9",
+      "record_role": "father",
+      "record_persona_id": "p_12405347732",
+      "fact_type": "name",
+      "value": "Thomas",
+      "structured_value": null,
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "GSU/FamilySearch indexer from FHL microfilm of original register",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:JMF4-CL9",
+      "record_role": "father",
+      "record_persona_id": "p_12405347732",
+      "fact_type": "Surname",
+      "value": "Richardson",
+      "structured_value": null,
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "GSU/FamilySearch indexer from FHL microfilm of original register",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:JMF4-CL9",
+      "record_role": "mother",
+      "record_persona_id": "p_12405347733",
+      "fact_type": "name",
+      "value": "Mary",
+      "structured_value": null,
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "GSU/FamilySearch indexer from FHL microfilm of original register",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "Maiden surname not recorded in this index entry",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:JMF4-CL9",
+      "record_role": "child",
+      "record_persona_id": "p_12405347731",
+      "fact_type": "relationship",
+      "value": "Father: Thomas Richardson; Mother: Mary (maiden surname unknown). Both named as parents of John Richardson in christening register entry.",
+      "structured_value": null,
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "GSU/FamilySearch indexer from FHL microfilm of original register",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QJDD-R1CZ",
+      "record_role": "groom",
+      "record_persona_id": "p_100175021380",
+      "fact_type": "marriage",
+      "value": "Thomas Richardson married Mary Mallalieu, 12 Nov 1826, St Leonard, Walton le Dale, Lancashire, England",
+      "structured_value": null,
+      "date": "12 Nov 1826",
+      "date_certainty": "exact",
+      "place": "St Leonard, Walton le Dale, Lancashire, England",
+      "standard_place": "St Leonard's Church, Walton-le-Dale, Lancashire, England, United Kingdom",
+      "information_quality": "secondary",
+      "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QJDD-R1CZ",
+      "record_role": "groom",
+      "record_persona_id": "p_100175021380",
+      "fact_type": "name",
+      "value": "Thomas",
+      "structured_value": null,
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QJDD-R1CZ",
+      "record_role": "groom",
+      "record_persona_id": "p_100175021380",
+      "fact_type": "Surname",
+      "value": "Richardson",
+      "structured_value": null,
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QJDD-R1CZ",
+      "record_role": "bride",
+      "record_persona_id": "p_100175021381",
+      "fact_type": "marriage",
+      "value": "Mary Mallalieu married Thomas Richardson, 12 Nov 1826, St Leonard, Walton le Dale, Lancashire, England",
+      "structured_value": null,
+      "date": "12 Nov 1826",
+      "date_certainty": "exact",
+      "place": "St Leonard, Walton le Dale, Lancashire, England",
+      "standard_place": "St Leonard's Church, Walton-le-Dale, Lancashire, England, United Kingdom",
+      "information_quality": "secondary",
+      "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:QJDD-R1CZ",
+      "record_role": "bride",
+      "record_persona_id": "p_100175021381",
+      "fact_type": "name",
+      "value": "Mary",
+      "structured_value": null,
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:QJDD-R1CZ",
+      "record_role": "bride",
+      "record_persona_id": "p_100175021381",
+      "fact_type": "Surname",
+      "value": "Mallalieu",
+      "structured_value": null,
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "FamilySearch indexer from FHL microfilm of original Anglican parish register",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "Maiden surname recorded in marriage register",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/3:1:S3HY-6PR3-4VC",
+      "record_role": "groom",
+      "record_persona_id": null,
+      "fact_type": "marriage",
+      "value": "Thos Richardson (Bachelor) married Mary Mallalieu (Spinster) by banns, 12 November 1826, St Leonard, Walton le Dale, Lancashire; entry no. 684; both signed by mark; witnesses John Quarmen and James Townson; officiant Rev. Henry Fielden, Sub Curate",
+      "structured_value": null,
+      "date": "12 Nov 1826",
+      "date_certainty": "exact",
+      "place": "St Leonard, Walton le Dale, Lancashire, England",
+      "standard_place": "St Leonard's Church, Walton-le-Dale, Lancashire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "Rev. Henry Fielden, Sub Curate, who recorded the entry at the time of the marriage",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/3:1:S3HY-6PR3-4VC",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "marriage",
+      "value": "Mary Mallalieu (Spinster) married Thos Richardson (Bachelor) by banns, 12 November 1826, St Leonard, Walton le Dale, Lancashire; entry no. 684; signed by mark",
+      "structured_value": null,
+      "date": "12 Nov 1826",
+      "date_certainty": "exact",
+      "place": "St Leonard, Walton le Dale, Lancashire, England",
+      "standard_place": "St Leonard's Church, Walton-le-Dale, Lancashire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "Rev. Henry Fielden, Sub Curate, who recorded the entry at the time of the marriage",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_014",
+      "record_id": "dgs:004421674_00164",
+      "record_role": "child",
+      "record_persona_id": null,
+      "fact_type": "christening",
+      "value": "25 September 1832, Ashton-under-Lyne, Lancashire, England",
+      "structured_value": null,
+      "date": "25 Sep 1832",
+      "date_certainty": "exact",
+      "place": "Ashton-under-Lyne, Lancashire, England",
+      "standard_place": "Ashton-under-Lyne, Lancashire, England",
+      "information_quality": "primary",
+      "informant": "J. Hardman, officiating curate",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_015",
+      "record_id": "dgs:004421674_00164",
+      "record_role": "father",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Thomas Richardson (spinner, mark X), father of John baptized 25 Sep 1832, Ashton-under-Lyne",
+      "structured_value": null,
+      "date": "25 Sep 1832",
+      "date_certainty": "exact",
+      "place": "Ashton-under-Lyne, Lancashire, England",
+      "standard_place": "Ashton-under-Lyne, Lancashire, England",
+      "information_quality": "primary",
+      "informant": "J. Hardman, officiating curate",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_016",
+      "record_id": "dgs:004421674_00164",
+      "record_role": "mother",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Mary Richardson (née Mallalieu), mother of John baptized 25 Sep 1832, Ashton-under-Lyne",
+      "structured_value": null,
+      "date": "25 Sep 1832",
+      "date_certainty": "exact",
+      "place": "Ashton-under-Lyne, Lancashire, England",
+      "standard_place": "Ashton-under-Lyne, Lancashire, England",
+      "information_quality": "primary",
+      "informant": "J. Hardman, officiating curate",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_004"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "LR9N-VGQ",
+      "confidence": "probable",
+      "rationale": "Record names child 'John Richardson' christened 25 Sep 1832, Church of St. Michael and All Angels, Ashton-under-Lyne — matches tree subject LR9N-VGQ christened 25 Sep 1833 at same church. 1-year discrepancy (same day, month, place) is consistent with IGI transcription error. Identity probable pending original image verification.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_005",
+      "person_id": "LR9N-VGQ",
+      "confidence": "probable",
+      "rationale": "Parentage assertion drawn from same christening entry — names Thomas Richardson (father) and Mary (mother) for child John Richardson. Corroborates identity link between record child persona and tree person LR9N-VGQ.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Christening register names 'Thomas Richardson' as father of John Richardson. Linked to stub person I1 in tree. No independent record yet corroborates this identity; confidence probable until parents' marriage record or other source confirms.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Christening register names 'Mary' as mother of John Richardson. Maiden surname not recorded. Linked to stub person I2 in tree. Confidence probable until marriage record identifies maiden name and corroborates identity.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Marriage record names Thomas Richardson (Single) marrying Mary Mallalieu, 12 Nov 1826, Walton le Dale — same surname and given name as John's father; marriage location adjacent to Preston (John's stated birth place) and ~6 years before John's 1832/1833 christening. No conflicting record found.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Marriage record names Mary Mallalieu (Single) marrying Thomas Richardson, 12 Nov 1826, Walton le Dale. Maiden surname Mallalieu identified. Consistent with christening record mother 'Mary'. No conflicting record found.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_014",
+      "person_id": "LR9N-VGQ",
+      "confidence": "confident",
+      "rationale": "Entry no. 2040 in the original Ashton-under-Lyne baptism register records John baptized 25 September 1832, son of Thomas Richardson and Mary — matching the subject exactly by name, date, and parents corroborated by three prior sources.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Entry no. 2040 names Thomas Richardson (mark X, spinner) as father of John, 25 Sep 1832. Consistent with I1 (Thomas Richardson) who married Mary Mallalieu 12 Nov 1826 at Walton-le-Dale, also signing with a mark in that register.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Entry no. 2040 names Mary as mother of John, wife of Thomas Richardson, 25 Sep 1832. Identified as Mary Mallalieu (I2) from the original marriage register (src_003), which names her as bride at Walton-le-Dale, 12 Nov 1826.",
+      "match_score": null,
+      "created": "2026-07-22",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
