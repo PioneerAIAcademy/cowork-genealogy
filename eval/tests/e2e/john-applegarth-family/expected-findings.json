@@ -1,0 +1,172 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "John Edward Applegarth's father was Henry William Applegarth, born 19 April 1837 in Ontario, Canada, who died 17 August 1894 in Orlando, Deuel County, Nebraska.",
+      "details": {
+        "subject_person": {
+          "name": "John Edward Applegarth",
+          "pid": "KZJT-4PT"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Henry William Applegarth",
+          "birth": "19 April 1837, Ontario, Canada"
+        }
+      },
+      "supporting_sources": [
+        "Minnesota, State Census, 1885 — Pine Island, Goodhue County, household of Henry Applegarth including son Edward (John)",
+        "Nebraska, Marriages, 1855-1995 — 1861 Wabasha County, Minnesota marriage of Henry W. Applegarth and Nancy Jane Clark"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "John Edward Applegarth's mother was Nancy Jane Clark, born about 1841 in New York, who died 20 April 1895 in Orlando, Deuel County, Nebraska.",
+      "details": {
+        "subject_person": {
+          "name": "John Edward Applegarth",
+          "pid": "KZJT-4PT"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Nancy Jane Clark",
+          "birth": "about 1841, New York"
+        }
+      },
+      "supporting_sources": [
+        "Minnesota, State Census, 1885 — Pine Island, Goodhue County, household including wife Nancy and son Edward (John)",
+        "Nebraska, Marriages, 1855-1995 — 1861 Wabasha County, Minnesota marriage of Henry W. Applegarth and Nancy Jane Clark"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Andrew Joseph Applegarth was a sibling of John Edward Applegarth — a son of Henry William Applegarth and Nancy Jane Clark, born 8 July 1881 in Grand Meadow, Mower County, Minnesota, who died 19 January 1957 in Alliance, Box Butte County, Nebraska.",
+      "details": {
+        "subject_person": {
+          "name": "John Edward Applegarth",
+          "pid": "KZJT-4PT"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "Andrew Joseph Applegarth",
+          "birth": "8 July 1881, Grand Meadow, Mower County, Minnesota"
+        }
+      },
+      "supporting_sources": [
+        "Minnesota, State Census, 1885 — Pine Island, Goodhue County, household of Henry Applegarth including son Andrew",
+        "Nebraska, Marriages, 1855-1995 — Andrew Joseph Applegarth's 1905 Box Butte County marriage, naming father H. W. Applegarth"
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "Mary Jane Applegarth was a sibling of John Edward Applegarth — a daughter of Henry William Applegarth and Nancy Jane Clark, born 1 August 1875 in Pine Island, Goodhue County, Minnesota, who died 15 August 1970 in Long Beach, Los Angeles County, California.",
+      "details": {
+        "subject_person": {
+          "name": "John Edward Applegarth",
+          "pid": "KZJT-4PT"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "Mary Jane Applegarth",
+          "birth": "1 August 1875, Pine Island, Goodhue County, Minnesota"
+        }
+      },
+      "supporting_sources": [
+        "Minnesota, State Census, 1885 — Pine Island, Goodhue County, household of Henry Applegarth including daughter Mary",
+        "Nebraska, Marriages, 1855-1995 — Mary Jane Applegarth's 1896 Box Butte County marriage, naming father H. W. Applegarth"
+      ],
+      "required": true
+    },
+    {
+      "id": "f5",
+      "type": "relationship",
+      "description": "Lewis Henry Applegarth was a sibling of John Edward Applegarth — a son of Henry William Applegarth and Nancy Jane Clark, born 30 July 1873 in West Albany Township, Wabasha County, Minnesota, who died in 1954.",
+      "details": {
+        "subject_person": {
+          "name": "John Edward Applegarth",
+          "pid": "KZJT-4PT"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "Lewis Henry Applegarth",
+          "birth": "30 July 1873, West Albany Township, Wabasha County, Minnesota"
+        }
+      },
+      "supporting_sources": [
+        "Minnesota, State Census, 1885 — Pine Island, Goodhue County, household of Henry Applegarth including son Lewis",
+        "Nebraska, Marriages, 1855-1995 — Lewis H. Applegarth's 1906 Deuel County marriage, naming father H. W. Applegarth"
+      ],
+      "required": true
+    },
+    {
+      "id": "f6",
+      "type": "relationship",
+      "description": "William Charles Applegarth was a sibling of John Edward Applegarth — a son of Henry William Applegarth and Nancy Jane Clark, born about May 1863 in Minnesota, who died 8 November 1934 in Tillamook, Oregon. (Bonus — do not fail the run if he is not recovered.)",
+      "details": {
+        "subject_person": {
+          "name": "John Edward Applegarth",
+          "pid": "KZJT-4PT"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "William Charles Applegarth",
+          "birth": "about May 1863, Minnesota"
+        }
+      },
+      "supporting_sources": [
+        "Minnesota, State Census, 1870 & 1875 — Applegarth household including son William",
+        "Nebraska, Marriages, 1855-1995 — William Charles Applegarth's 1898 Deuel County marriage"
+      ],
+      "required": false
+    },
+    {
+      "id": "f7",
+      "type": "relationship",
+      "description": "Abzina Applegarth was a sibling of John Edward Applegarth — a daughter of Henry William Applegarth and Nancy Jane Clark, born 14 December 1869 in Pine Island, Goodhue County, Minnesota, who died 20 February 1929 in Rock Island, Illinois. (Bonus — do not fail the run if she is not recovered.)",
+      "details": {
+        "subject_person": {
+          "name": "John Edward Applegarth",
+          "pid": "KZJT-4PT"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "Abzina Applegarth",
+          "birth": "14 December 1869, Pine Island, Goodhue County, Minnesota"
+        }
+      },
+      "supporting_sources": [
+        "Minnesota, State Census, 1875 & 1885 — Applegarth household including daughter Abzina",
+        "1900 U.S. Census, Rural Township, Rock Island County, Illinois"
+      ],
+      "required": false
+    },
+    {
+      "id": "f8",
+      "type": "relationship",
+      "description": "Elmer Thomas Applegarth was a sibling of John Edward Applegarth — a son of Henry William Applegarth and Nancy Jane Clark, born 9 September 1886 in Grand Meadow, Mower County, Minnesota, who died 7 November 1955 in Brandon, Buchanan County, Iowa. (Bonus — do not fail the run if he is not recovered.)",
+      "details": {
+        "subject_person": {
+          "name": "John Edward Applegarth",
+          "pid": "KZJT-4PT"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "Elmer Thomas Applegarth",
+          "birth": "9 September 1886, Grand Meadow, Mower County, Minnesota"
+        }
+      },
+      "supporting_sources": [
+        "1900 U.S. Census, Rural Township, Rock Island County, Illinois — household including son Elmer",
+        "Minnesota, Births and Christenings, 1840-1980 — birth entry naming father Henry"
+      ],
+      "required": false
+    }
+  ]
+}

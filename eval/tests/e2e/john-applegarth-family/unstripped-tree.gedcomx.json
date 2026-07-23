@@ -1,0 +1,2329 @@
+{
+  "persons": [
+    {
+      "id": "KZJT-4PT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "John Edward",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "16 December 1878",
+          "standard_date": "16 Dec 1878",
+          "place": "Pine Island, Goodhue, Minnesota, United States",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "5 November 1949",
+          "standard_date": "5 Nov 1949",
+          "place": "Los Angeles, California, United States",
+          "standard_place": "Los Angeles, California, United States"
+        },
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pine Island, Goodhue, Minnesota, United States",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "e7608cb2-b077-4798-bf7d-a39ed222d96e",
+          "type": "Residence",
+          "date": "1885",
+          "standard_date": "1885",
+          "place": "Pine Island, Goodhue, Minnesota",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "239c71f0-ea3e-44df-b405-6d2c46577458",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Lisco, Lost Creek & Pioneer Precincts, Deuel, Nebraska, United States",
+          "standard_place": "Deuel, Nebraska, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Lost Creek, Garden, Nebraska, United States",
+          "standard_place": "Garden, Nebraska, United States"
+        },
+        {
+          "id": "5ce70067-1aef-42ab-aaa1-0d2d4f4e77f3",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Farmington, Davis, Utah, United States",
+          "standard_place": "Farmington, Davis, Utah, United States"
+        },
+        {
+          "id": "1ad04ee9-1864-4327-946e-e846beb4b8b2",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Carbon County, Davis County, Utah, United States",
+          "standard_place": "Carbon, Utah, United States"
+        },
+        {
+          "id": "187c999f-21bf-4a73-b343-dd7b6b6241db",
+          "type": "Occupation",
+          "date": "December 1918",
+          "standard_date": "Dec 1918",
+          "place": "Farmington, Davis, Utah, United States",
+          "standard_place": "Farmington, Davis, Utah, United States",
+          "value": "Section Hand"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Farmington, Davis, Utah, United States",
+          "standard_place": "Farmington, Davis, Utah, United States"
+        },
+        {
+          "id": "1a27c26e-9107-4b9a-a041-271552b6806e",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place, , ",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "0bde5200-167a-47c6-b7ee-1eba5f4a512a",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Long Beach Judicial Township, Long Beach, Councilmanic District 5, Los Angeles, California",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "5a65f862-85d8-4e6f-9838-c1f9d9a3b80c",
+          "type": "Military Draft Registration",
+          "date": "1942",
+          "standard_date": "1942",
+          "place": "Long Beach, Los Angeles, California, United States",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "8940b3af-ce78-4cec-b5ec-1231a662cac2",
+          "type": "Social Program Claim",
+          "date": "10 Jun 1946",
+          "standard_date": "10 Jun 1946"
+        },
+        {
+          "id": "59a51b74-7a61-4a77-955a-3a2101083b06",
+          "type": "Residence",
+          "place": "Long Beach, Los Angeles, California",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "e22a481f-18ce-41a1-b4be-9d536d418b16",
+          "type": "PhysicalDescription",
+          "value": "Medium Height, Medium Build, Brown Hair, Brown Eyes"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "place": "Long Beach, Los Angeles, California, United States",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        }
+      ]
+    },
+    {
+      "id": "K4ZT-C4Q",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Delbert Edward",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "3 May 1900",
+          "standard_date": "3 May 1900",
+          "place": "Oshkosh, Garden, Nbrs.",
+          "standard_place": "Oshkosh, Garden, Nebraska, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Lost Creek, Garden, Nebraska, United States",
+          "standard_place": "Garden, Nebraska, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Farmington, Davis, Utah, United States",
+          "standard_place": "Farmington, Davis, Utah, United States"
+        },
+        {
+          "id": "4f0aa2d4-89c3-442a-8341-a55265ad3cdb",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Farmington, Davis, Utah, United States",
+          "standard_place": "Farmington, Davis, Utah, United States"
+        },
+        {
+          "id": "8f781874-41ed-4189-9705-3566a2190c1b",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "e1b8bdb6-826a-4d00-883b-bfcba412ebed",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Bloomfield Township, Polk, Iowa, United States",
+          "standard_place": "Bloomfield Township, Polk, Iowa, United States"
+        },
+        {
+          "id": "c183fe64-b11d-4b39-9174-e35e91e37f4c",
+          "type": "Military Draft Registration",
+          "date": "16 February 1942",
+          "standard_date": "16 Feb 1942",
+          "place": "Des Moines, Polk, Iowa, United States",
+          "standard_place": "Des Moines, Polk, Iowa, United States"
+        },
+        {
+          "id": "2444db10-f102-4f43-8b0a-8be3febd43b6",
+          "type": "Residence",
+          "date": "1949",
+          "standard_date": "1949",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "a79442b7-9788-4826-b52a-1f658768d9ad",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "Bloomfield Township, Polk, Iowa, United States",
+          "standard_place": "Bloomfield Township, Polk, Iowa, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "3 January 1997",
+          "standard_date": "3 Jan 1997",
+          "place": "Albuquerque, Bernalillo, New Mexico, United States",
+          "standard_place": "Albuquerque, Bernalillo, New Mexico, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "7 January 1997",
+          "standard_date": "7 Jan 1997",
+          "place": "Rio Rancho, Sandoval, New Mexico, United States",
+          "standard_place": "Rio Rancho, Sandoval, New Mexico, United States"
+        },
+        {
+          "id": "d1f26918-ca5d-484c-bef2-5a54c15198be",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "7ec082b4-4770-4456-ae56-176d9aa71f7b",
+          "type": "Residence",
+          "place": "Des Moines, Polk, Iowa, United States",
+          "standard_place": "Des Moines, Polk, Iowa, United States"
+        }
+      ]
+    },
+    {
+      "id": "K8YS-C9D",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Gene",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "22 Jan 1922",
+          "standard_date": "22 Jan 1922",
+          "place": "Farmington, Utah",
+          "standard_place": "Farmington, Davis, Utah, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place, , ",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "6c674d3b-e370-45fd-a316-2ca817a7e1f0",
+          "type": "Social Program Application",
+          "date": "Oct 1939",
+          "standard_date": "Oct 1939"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Long Beach Judicial Township, Long Beach, Councilmanic District 5, Los Angeles, California",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "853775dc-d19a-40de-a633-db418e31b042",
+          "type": "Military Draft Registration",
+          "date": "31 Aug 1942",
+          "standard_date": "31 Aug 1942",
+          "place": "Long Beach, Los Angeles, California, United States",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "d6961f39-9b48-4d42-bee2-7364c96dd012",
+          "type": "MilitaryService",
+          "date": "22 Sep 1942",
+          "standard_date": "22 Sep 1942",
+          "place": "Los Angeles, California, United States",
+          "standard_place": "Los Angeles, California, United States"
+        },
+        {
+          "id": "c88a1cf8-893f-4b87-9056-8148b96b1730",
+          "type": "Residence",
+          "date": "1949",
+          "standard_date": "1949",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "5fcbd616-347d-4cae-8763-36e55cc8a3ac",
+          "type": "Residence",
+          "date": "7 April 1950",
+          "standard_date": "7 Apr 1950",
+          "place": "Long Beach, Los Angeles, California, United States",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "31 July 1990",
+          "standard_date": "31 Jul 1990",
+          "place": "Las Vegas, Clark, Nevada, United States",
+          "standard_place": "Las Vegas, Clark, Nevada, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "3 August 1990",
+          "standard_date": "3 Aug 1990",
+          "place": "Ogden City Cementary, Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden Utah Temple, Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "6ddff18c-c958-4747-aff1-10807e7ae958",
+          "type": "Residence",
+          "place": "Los Angeles, California, Long Beach",
+          "standard_place": "Los Angeles, Los Angeles, California, United States"
+        }
+      ]
+    },
+    {
+      "id": "KWCH-VCZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "John Obrien",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "7 October 1905",
+          "standard_date": "7 Oct 1905",
+          "place": "Oshkosh, Garden, Nebraska, United States",
+          "standard_place": "Oshkosh, Garden, Nebraska, United States"
+        },
+        {
+          "id": "ad4d8c97-486e-4411-8d60-d7f1e41f2d98",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Lost Creek, Garden, Nebraska, United States",
+          "standard_place": "Garden, Nebraska, United States"
+        },
+        {
+          "id": "d868b4a4-c625-4c75-aa74-43d2929e1299",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Farmington, Davis, Utah, United States",
+          "standard_place": "Farmington, Davis, Utah, United States"
+        },
+        {
+          "id": "e91362a2-3d50-4409-ad4e-02ece0716fb1",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Blackfoot, Bannock, Idaho, United States",
+          "standard_place": "Bannock, Idaho, United States"
+        },
+        {
+          "id": "70b33fab-ab40-4e6f-8e9e-71e3d0c05da7",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "South Boise Election Precinct, Ada, Idaho, United States",
+          "standard_place": "South Boise Election Precinct, Ada, Idaho, United States"
+        },
+        {
+          "id": "31a4d296-c0ab-4127-a765-6abe70643a0e",
+          "type": "Military Draft Registration",
+          "date": "16 Oct 1940",
+          "standard_date": "16 Oct 1940",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "bef9eaa1-8165-4dc8-8644-49967ddbf48c",
+          "type": "Residence",
+          "date": "1 April 1950",
+          "standard_date": "1 Apr 1950",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "4cffde79-5f60-46fa-834f-16a9787943d9",
+          "type": "Social Program Claim",
+          "date": "20 Jul 1967",
+          "standard_date": "20 Jul 1967"
+        },
+        {
+          "id": "4a25d8ab-9854-478c-9090-a9004769dce4",
+          "type": "Residence",
+          "date": "from 1 September 1985 to 1 January 2004",
+          "standard_date": "Bet 1 Sep 1985 and 1 Jan 2004",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "1 April 1998",
+          "standard_date": "1 Apr 1998",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "4 April 1998",
+          "standard_date": "4 Apr 1998",
+          "place": "Ogden City Cemetery, Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden City Cemetery, Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "d4033ebc-7b1d-4eba-a934-c6687189e324",
+          "type": "Residence",
+          "place": "Ogden, Weber, Utah",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "43a4f5af-65fd-4b12-aeb9-f1f32512c658",
+          "type": "Previous Residence",
+          "place": "Providence, Cache, Utah, United States",
+          "standard_place": "Providence, Cache, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "KFN1-81P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "LeRoy Mc.",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "4 August 1910",
+          "standard_date": "4 Aug 1910",
+          "place": "Oshkosh, Garden, Nebraska, United States",
+          "standard_place": "Oshkosh, Garden, Nebraska, United States"
+        },
+        {
+          "id": "1a27c26e-9107-4b9a-a041-271552b6806e",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Farmington, Davis, Utah, United States",
+          "standard_place": "Farmington, Davis, Utah, United States"
+        },
+        {
+          "id": "0ade847f-9152-48b8-a1a5-bee145dce863",
+          "type": "Residence",
+          "date": "1949",
+          "standard_date": "1949",
+          "place": "South Berwick, York, Maine, United States",
+          "standard_place": "South Berwick, York, Maine, United States"
+        },
+        {
+          "id": "4e66f89f-f765-434d-b9d8-0f7347853afc",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "South Berwick, York, Maine, United States",
+          "standard_place": "South Berwick, York, Maine, United States"
+        },
+        {
+          "id": "9fe26d06-121d-415e-9ab7-968fea012cd3",
+          "type": "Social Program Claim",
+          "date": "28 Jan 1974",
+          "standard_date": "28 Jan 1974"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "28 October 2000",
+          "standard_date": "28 Oct 2000",
+          "place": "Dover, Strafford, New Hampshire, United States",
+          "standard_place": "Dover, Strafford, New Hampshire, United States"
+        },
+        {
+          "id": "227e8ee6-811d-499a-9408-9e10a5e59fe8",
+          "type": "Cemetery",
+          "value": "New Town Cemetery, Rollinsford, Strafford, New Hampshire, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "place": "New Town Cemetery, Rollinsford, Strafford, New Hampshire, United States",
+          "standard_place": "New Town Cemetery, Rollinsford, Strafford, New Hampshire, United States"
+        },
+        {
+          "id": "074a3a4b-2c00-4475-8c22-13d48a2804b5",
+          "type": "Previous Residence",
+          "place": "South Berwick, York, Maine, United States",
+          "standard_place": "South Berwick, York, Maine, United States"
+        }
+      ]
+    },
+    {
+      "id": "KFNB-VZ8",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Henry William",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "19 April 1837",
+          "standard_date": "19 Apr 1837",
+          "place": "Ontario, Canada",
+          "standard_place": "Ontario, Canada"
+        },
+        {
+          "id": "a1a954e4-b88a-4daf-ac63-7c629ec80291",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Caradoc, Middlesex, Ontario, Canada",
+          "standard_place": "Caradoc, Middlesex, Ontario, Canada"
+        },
+        {
+          "id": "4bb84f89-99b6-4644-9e54-4eb8aca8f7ab",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "West Albany, Wabasha, Minnesota, United States",
+          "standard_place": "West Albany Township, Wabasha, Minnesota, United States"
+        },
+        {
+          "id": "c035e17a-7e69-4178-a464-554553e091b7",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Minnesota, United States",
+          "standard_place": "Minnesota, United States"
+        },
+        {
+          "id": "8355e7c1-8189-4b4f-85a8-a7ab67fb0724",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Grand Meadow, Mower, Minnesota",
+          "standard_place": "Grand Meadow, Mower, Minnesota, United States"
+        },
+        {
+          "id": "a43bbab3-cedc-4b88-a88f-88d065568277",
+          "type": "Pension",
+          "date": "1876",
+          "standard_date": "1876"
+        },
+        {
+          "id": "cfb06dcd-bf3a-45f4-a716-51282abb7059",
+          "type": "Residence",
+          "date": "1885",
+          "standard_date": "1885",
+          "place": "Pine Island, Goodhue, Minnesota",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "b78725fc-ab07-469f-a9f1-8261659590da",
+          "type": "Residence",
+          "date": "1890",
+          "standard_date": "1890",
+          "place": "Lisco, Deuel, Nebraska, United States",
+          "standard_place": "Deuel, Nebraska, United States"
+        },
+        {
+          "id": "e99faf39-4876-430b-9828-d5d864abb334",
+          "type": "Naturalization",
+          "date": "10 October 1893",
+          "standard_date": "10 Oct 1893",
+          "place": "Box Butte, Nebraska, United States",
+          "standard_place": "Box Butte, Nebraska, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "17 August 1894",
+          "standard_date": "17 Aug 1894",
+          "place": "Orlando, Deuel, Nebraska, United States",
+          "standard_place": "Orlando, Deuel, Nebraska, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "place": "Alliance, Box Butte, Nebraska, United States",
+          "standard_place": "Alliance, Box Butte, Nebraska, United States"
+        }
+      ]
+    },
+    {
+      "id": "GXJZ-G1W",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Glenn Elmer",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f6d7d5ab-265a-45a4-a024-2e450734b001",
+          "type": "Birth",
+          "date": "27 June 1903",
+          "standard_date": "27 Jun 1903",
+          "place": "Oshkosh, Garden, Nebraska, United States",
+          "standard_place": "Oshkosh, Garden, Nebraska, United States"
+        },
+        {
+          "id": "a90b45ee-3346-4590-aef9-6c334e956fc4",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Lost Creek, Garden, Nebraska, United States",
+          "standard_place": "Garden, Nebraska, United States"
+        },
+        {
+          "id": "30c7e8d1-e691-43cc-b421-a26a0dd51660",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Farmington, Davis, Utah, United States",
+          "standard_place": "Farmington, Davis, Utah, United States"
+        },
+        {
+          "id": "e7078b5f-159b-4b26-bce4-4e77cbf85714",
+          "type": "Residence",
+          "date": "15 May 1934",
+          "standard_date": "15 May 1934",
+          "place": "San Diego., California",
+          "standard_place": "San Diego, San Diego, California, United States"
+        },
+        {
+          "id": "6b3e4d58-f5cf-4124-b5d9-c38ccec5a491",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Los Angeles, Los Angeles, California",
+          "standard_place": "Los Angeles, Los Angeles, California, United States"
+        },
+        {
+          "id": "c710cc97-7278-4b30-8d28-faee77109520",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "San Bernardino Judicial Township, San Bernardino, California, United States",
+          "standard_place": "San Bernardino Judicial Township, San Bernardino, California, United States"
+        },
+        {
+          "id": "163708d5-e0e1-4345-b2ca-ab46ef608dc0",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "San Bernardino Judicial Township, San Bernardino, Ward 4, San Bernardino, California",
+          "standard_place": "San Bernardino Judicial Township, San Bernardino, California, United States"
+        },
+        {
+          "id": "b4eecfe8-35c5-403d-af4c-826eccea9eae",
+          "type": "Residence",
+          "date": "1949",
+          "standard_date": "1949",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "a25f5005-7f8a-4695-9fc6-c513c95e55b1",
+          "type": "Residence",
+          "date": "5 April 1950",
+          "standard_date": "5 Apr 1950",
+          "place": "Long Beach, Los Angeles, California, United States",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "81ce6356-8fa9-45dc-b92e-668d62e3bee8",
+          "type": "Death",
+          "date": "11 May 1987",
+          "standard_date": "11 May 1987",
+          "place": "Fresno, Fresno, California, United States",
+          "standard_place": "Fresno, Fresno, California, United States"
+        },
+        {
+          "id": "b3dc7d12-f9a0-4eea-837d-d46e5f3b845b",
+          "type": "Obituary",
+          "date": "11 May 1987",
+          "standard_date": "11 May 1987",
+          "place": "Clovis, , , United States",
+          "standard_place": "Clovis, Fresno, California, United States"
+        },
+        {
+          "id": "d9d159d4-bf84-4ce1-bf76-d7c71a28ab12",
+          "type": "Burial",
+          "date": "15 May 1987",
+          "standard_date": "15 May 1987",
+          "place": "Fresno, Fresno, California, United States",
+          "standard_place": "Fresno, Fresno, California, United States"
+        }
+      ]
+    },
+    {
+      "id": "KC5M-FYD",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Thomas Henry",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "7 March 1908 ",
+          "standard_date": "7 Mar 1908",
+          "place": "Oshkosh, Garden, Nebraska, United States",
+          "standard_place": "Oshkosh, Garden, Nebraska, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Lost Creek, Garden, Nebraska, United States",
+          "standard_place": "Garden, Nebraska, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Farmington, Davis, Utah, United States",
+          "standard_place": "Farmington, Davis, Utah, United States"
+        },
+        {
+          "id": "d7c7faaa-d6e8-437f-8f2c-096721abbcd5",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Long Beach, Los Angeles, California",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "726fb324-ef8a-41d1-869b-d221890d2a1b",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Ward 3, San Bernardino, San Bernardino Judicial Township, San Bernardino, California, United States",
+          "standard_place": "San Bernardino Judicial Township, San Bernardino, California, United States"
+        },
+        {
+          "id": "f023d339-a098-41a7-bfd7-e545de56ed71",
+          "type": "Military Draft Registration",
+          "date": "16 Oct 1940",
+          "standard_date": "16 Oct 1940",
+          "place": "San Bernardino, San Bernardino, California, United States",
+          "standard_place": "San Bernardino, San Bernardino, California, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "18 March 1984",
+          "standard_date": "18 Mar 1984",
+          "place": "San Bernardino, California, United States",
+          "standard_place": "San Bernardino, California, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "28 March 1984",
+          "standard_date": "28 Mar 1984",
+          "place": "Victor Valley Memorial Park, Victorville, San Bernardino, California, United States",
+          "standard_place": "Victor Valley Memorial Park, Victorville, San Bernardino, California, United States"
+        },
+        {
+          "id": "32404e31-4d20-45bf-9fb7-05200ab7fd48",
+          "type": "Residence",
+          "place": "San Bernardino, California",
+          "standard_place": "San Bernardino, California, United States"
+        }
+      ]
+    },
+    {
+      "id": "LZLN-PCF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Georgian Francis",
+          "surname": "Pebley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "26 November 1882",
+          "standard_date": "26 Nov 1882",
+          "place": "Rock Port, Atchison, Missouri, United States",
+          "standard_place": "Rock Port, Atchison, Missouri, United States"
+        },
+        {
+          "id": "15319512-9544-4f68-ab87-50b986a4a848",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Precincts 1-7 Julesburg town, Sedgwick, Colorado, United States",
+          "standard_place": "Julesburg, Sedgwick, Colorado, United States"
+        },
+        {
+          "id": "d76b69f4-06b2-4e5f-a104-5b468486c3a4",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Lost Creek, Garden, Nebraska, United States",
+          "standard_place": "Garden, Nebraska, United States"
+        },
+        {
+          "id": "7dcf1c68-b04b-408c-8377-a3db9587a6a5",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Farmington, Davis, Utah, United States",
+          "standard_place": "Farmington, Davis, Utah, United States"
+        },
+        {
+          "id": "4de7f377-bb57-4a4a-8ecb-1081c106c2e2",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Davis, Utah, United States",
+          "standard_place": "Davis, Utah, United States"
+        },
+        {
+          "id": "3f5d9f24-885c-4dda-808b-44e81c0dfc1d",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Long Beach Judicial Township, Long Beach, Councilmanic District 5, Los Angeles, California",
+          "standard_place": "Long Beach Judicial Township, Los Angeles, California, United States"
+        },
+        {
+          "id": "96d7f5f8-5762-4977-9bf6-59d82a1ecfc5",
+          "type": "Residence",
+          "date": "1949",
+          "standard_date": "1949",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "83a0a817-51d3-49e0-af54-ac61bbe4fbd8",
+          "type": "Residence",
+          "date": "7 April 1950",
+          "standard_date": "7 Apr 1950",
+          "place": "Long Beach, Los Angeles, California, United States",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "4 July 1959",
+          "standard_date": "4 Jul 1959",
+          "place": "Fresno, Fresno, California, United States",
+          "standard_place": "Fresno, Fresno, California, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "place": "Long Beach, Los Angeles, California, United States",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        }
+      ]
+    },
+    {
+      "id": "L489-94J",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Nancy Jane",
+          "surname": "Clark"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "bd8f58cd-da84-45d0-ba33-50433bbde4b6",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Prattsburgh, Steuben, New York, United States",
+          "standard_place": "Prattsburgh, Steuben, New York, United States"
+        },
+        {
+          "id": "66418b38-77d0-4367-a31c-5bce35fa83c1",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Township 110 Range 12, Wabasha, Minnesota, United States",
+          "standard_place": "West Albany Township, Wabasha, Minnesota, United States"
+        },
+        {
+          "id": "fbaa1fe8-aac1-487a-8dde-66f3cdcdd43d",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "West Albany, Wabasha, Minnesota, United States",
+          "standard_place": "West Albany Township, Wabasha, Minnesota, United States"
+        },
+        {
+          "id": "f38cae88-9650-4678-87f0-872925c379a8",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Dodge, Minnesota, United States",
+          "standard_place": "Dodge, Minnesota, United States"
+        },
+        {
+          "id": "a8905b12-c5d8-415f-8bb7-2dd578f46285",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Grand Meadow, Mower, Minnesota, United States",
+          "standard_place": "Grand Meadow, Mower, Minnesota, United States"
+        },
+        {
+          "id": "07260ddc-27d1-43d2-bb32-6a744bd12d97",
+          "type": "Residence",
+          "date": "1885",
+          "standard_date": "1885",
+          "place": "Pine Island, Goodhue, Minnesota, United States",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "abb86bd3-1c57-453c-ac47-fc9137c40378",
+          "type": "Land Assessment",
+          "date": "22 August 1894",
+          "standard_date": "22 Aug 1894",
+          "place": "Nebraska, United States",
+          "standard_place": "Nebraska, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "20 April 1895",
+          "standard_date": "20 Apr 1895",
+          "place": "Orlando, Deuel, Nebraska, United States",
+          "standard_place": "Orlando, Deuel, Nebraska, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "place": "Alliance, Box Butte, Nebraska, United States",
+          "standard_place": "Alliance, Box Butte, Nebraska, United States"
+        }
+      ]
+    },
+    {
+      "id": "KFJM-K3K",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Andrew Joseph",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "8 July 1881",
+          "standard_date": "8 Jul 1881",
+          "place": "Grand Meadow, Mower, Minnesota, United States",
+          "standard_place": "Grand Meadow, Mower, Minnesota, United States"
+        },
+        {
+          "id": "6ed9ed11-b360-42d1-aa37-6c4ae09fa70b",
+          "type": "Residence",
+          "date": "1885",
+          "standard_date": "1885",
+          "place": "Pine Island, Goodhue, Minnesota, United States",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "87e1623d-1ee5-48dd-8bff-17cbf3a837f6",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Bingham, Sheridan, Nebraska, United States",
+          "standard_place": "Bingham, Sheridan, Nebraska, United States"
+        },
+        {
+          "id": "8c9a623e-d5d9-456d-9f7e-1c4f3ef7e169",
+          "type": "Land Assessment",
+          "date": "17 August 1910",
+          "standard_date": "17 Aug 1910",
+          "place": "Nebraska, United States",
+          "standard_place": "Nebraska, United States"
+        },
+        {
+          "id": "f4dced06-7eda-4d3d-9c68-e4d38f1052de",
+          "type": "Land Assessment",
+          "date": "11 June 1915",
+          "standard_date": "11 Jun 1915",
+          "place": "Nebraska, United States",
+          "standard_place": "Nebraska, United States"
+        },
+        {
+          "id": "69579525-ff87-4141-8064-7ac53c89c85c",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Sheridan, Nebraska, United States",
+          "standard_place": "Sheridan, Nebraska, United States"
+        },
+        {
+          "id": "10950c21-2aeb-468a-9366-c2715d3c6f7b",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Bingham, Sheridan, Nebraska, United States",
+          "standard_place": "Bingham, Sheridan, Nebraska, United States"
+        },
+        {
+          "id": "aafd3d18-eec0-4b36-b789-345e1ddb3af5",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Lakeside, Sheridan, Nebraska, United States",
+          "standard_place": "Lakeside, Sheridan, Nebraska, United States"
+        },
+        {
+          "id": "a2c75d6f-91f9-4b36-a11e-cdf519e4f35a",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Ashby Election Precinct, Grant, Nebraska, United States",
+          "standard_place": "Ashby Election Precinct, Grant, Nebraska, United States"
+        },
+        {
+          "id": "a0586731-b313-4f31-b885-f38159350539",
+          "type": "Military+Draft+Registration",
+          "date": "27 April 1942",
+          "standard_date": "27 Apr 1942",
+          "place": "Ashby, Grant, Nebraska, United States",
+          "standard_place": "Ashby, Grant, Nebraska, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "19 January 1957",
+          "standard_date": "19 Jan 1957",
+          "place": "Alliance, Box Butte, Nebraska, United States",
+          "standard_place": "Alliance, Box Butte, Nebraska, United States"
+        },
+        {
+          "id": "89f88ddb-9ed1-49d7-a54e-e287f4724599",
+          "type": "Burial",
+          "place": "Alliance, Box Butte, Nebraska, United States",
+          "standard_place": "Alliance, Box Butte, Nebraska, United States"
+        },
+        {
+          "id": "b09ea0b1-a202-457f-8aef-636e6fab22b5",
+          "type": "Residence",
+          "place": "Bingham, Sheridan, Nebraska",
+          "standard_place": "Bingham, Sheridan, Nebraska, United States"
+        }
+      ]
+    },
+    {
+      "id": "KZ65-PLD",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "William Charles",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "about May 1863",
+          "standard_date": "Abt May 1863",
+          "place": "Minnesota, United States",
+          "standard_place": "Minnesota, United States"
+        },
+        {
+          "id": "5811f427-e181-4b91-bbf6-e07f2c7b7373",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "West Albany, Wabasha, Minnesota, United States",
+          "standard_place": "West Albany Township, Wabasha, Minnesota, United States",
+          "value": "Census"
+        },
+        {
+          "id": "518483f3-c8be-45e5-99a6-c942362f7356",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Milton Township, Dodge, Minnesota, United States",
+          "standard_place": "Milton Township, Dodge, Minnesota, United States",
+          "value": "Census"
+        },
+        {
+          "id": "283c5748-aa61-4b8d-8992-7bc6b51f69b6",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Mower, Minnesota, United States",
+          "standard_place": "Mower, Minnesota, United States",
+          "value": "Census"
+        },
+        {
+          "id": "f98e8da7-5be8-42b1-946a-e2690f1a4c76",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Grand Meadow, Mower, Minnesota",
+          "standard_place": "Grand Meadow, Mower, Minnesota, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pine Island, Goodhue, Minnesota, United States",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "d4978ae2-b426-4708-8da1-52a76f50cd9e",
+          "type": "Residence",
+          "date": "9 February 1893",
+          "standard_date": "9 Feb 1893",
+          "place": "Alliance, Box Butte, Nebraska, United States",
+          "standard_place": "Alliance, Box Butte, Nebraska, United States",
+          "value": "Land Record"
+        },
+        {
+          "id": "aa274500-d255-4a97-8cb9-68a88222860c",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Lisco, Lost Creek & Pioneer Precincts, Deuel, Nebraska, United States",
+          "standard_place": "Deuel, Nebraska, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "8 November 1934",
+          "standard_date": "8 Nov 1934",
+          "place": "Tillamook, Oregon, United States",
+          "standard_place": "Tillamook, Oregon, United States"
+        }
+      ]
+    },
+    {
+      "id": "K2SF-JWG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N13",
+          "given": "Elmer Thomas",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "09 Sep 1886",
+          "standard_date": "9 Sep 1886",
+          "place": "of Grand Meadow, Mower, MN",
+          "standard_place": "Grand Meadow, Mower, Minnesota, United States"
+        },
+        {
+          "id": "40797c5a-ef55-42bb-8ecb-0b49e3d269f4",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Rural Township, Rock Island, Illinois, United States",
+          "standard_place": "Rural Township, Rock Island, Illinois, United States"
+        },
+        {
+          "id": "7c4a3d9f-072d-4f1d-9f19-9fb901e3616b",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Rural, Rock Island, Illinois, United States",
+          "standard_place": "Rural Township, Rock Island, Illinois, United States"
+        },
+        {
+          "id": "7342f2b5-f4d8-43ac-a566-dc15ce01b6c1",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Rock Island County no 1, Illinois, United States",
+          "standard_place": "Stephenson, Rock Island, Illinois, United States"
+        },
+        {
+          "id": "b4d9912c-ffe6-46fc-ba9b-57b110c05a93",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Rock Island, Illinois, United States",
+          "standard_place": "Rock Island, Illinois, United States"
+        },
+        {
+          "id": "1e6da331-41d8-4e9b-becb-6a34d35d1624",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Jefferson, Buchanan, Iowa, United States",
+          "standard_place": "Jefferson Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "54427db6-3890-4367-8c40-ae7dcd6e3405",
+          "type": "Residence",
+          "date": "1925",
+          "standard_date": "1925",
+          "place": "Fremont Township, Buchanan, Iowa, United States",
+          "standard_place": "Fremont Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "df58ae84-6e40-4553-96f3-30ce7a38a4dc",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "value": "Same Place"
+        },
+        {
+          "id": "b1708431-7442-4237-9301-0b8a418f96b3",
+          "type": "Pension",
+          "date": "1934-1946",
+          "standard_date": "Bet 1934 and 1946",
+          "place": "Iowa, United States",
+          "standard_place": "Iowa, United States"
+        },
+        {
+          "id": "e50c4aed-6180-46cb-a7fe-eb5b5aa5b6ec",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Jefferson Township, Buchanan, Iowa, United States",
+          "standard_place": "Jefferson Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "16fa0bca-64ab-4d2d-a91b-b04675a46419",
+          "type": "Military Draft Registration",
+          "date": "27 Apr 1942",
+          "standard_date": "27 Apr 1942",
+          "place": "Brandon, Buchanan, Iowa, United States",
+          "standard_place": "Brandon, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "3e3892eb-e053-496e-8ce2-e44f978b3700",
+          "type": "Residence",
+          "date": "11 April 1950",
+          "standard_date": "11 Apr 1950",
+          "place": "Jefferson Township, Buchanan, Iowa, United States",
+          "standard_place": "Jefferson Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "1d39971a-61d6-4d90-ac43-75742f9db61d",
+          "type": "Social Program Application",
+          "date": "Sep 1955",
+          "standard_date": "Sep 1955"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": " 7 NOV 1955",
+          "standard_date": "7 Nov 1955",
+          "place": "Brandon, Buchanan, Iowa",
+          "standard_place": "Brandon, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "fa3e84fc-a70e-4c50-9983-24a456619ab6",
+          "type": "Burial",
+          "date": "10 November 1955",
+          "standard_date": "10 Nov 1955",
+          "place": "Brandon Cemetery, Brandon, Buchanan, Iowa, United States",
+          "standard_place": "Brandon Cemetery, Brandon, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "f39ff241-0049-462a-88ac-871a5821d37e",
+          "type": "Residence",
+          "place": "Brandon, Buchanan, Iowa",
+          "standard_place": "Brandon, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "c2115950-442b-436e-a824-94dc3ece2653",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "b1dc3318-7ced-4bd8-9941-99d5797e3374",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "3869594a-7192-4b0a-ace8-f3e96d26533e",
+          "type": "Occupation",
+          "value": "Farming"
+        },
+        {
+          "id": "8f9fb9f2-e0e8-49c8-a111-0927461267f1",
+          "type": "Ethnicity",
+          "value": "W"
+        },
+        {
+          "id": "7cc8370d-16e1-4670-9661-1f5fb1bc62f8",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "KZ1W-41D",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N14",
+          "given": "Lewis Henry",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "30 July 1873",
+          "standard_date": "30 Jul 1873",
+          "place": "West Albany Township, Wabasha, Minnesota, United States",
+          "standard_place": "West Albany Township, Wabasha, Minnesota, United States"
+        },
+        {
+          "id": "0942f479-34f0-4d63-a63e-394c0bed83be",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Grand Meadow, Mower, Minnesota",
+          "standard_place": "Grand Meadow, Mower, Minnesota, United States"
+        },
+        {
+          "id": "b3d5400a-7a85-4f2f-b760-d6bfc04a3f97",
+          "type": "Pension",
+          "date": "1876",
+          "standard_date": "1876"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pine Island, Goodhue, Minnesota, United States",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "13d5a599-2e4d-49a5-a11d-9f5601504456",
+          "type": "Residence",
+          "date": "1885",
+          "standard_date": "1885",
+          "place": "Pine Island, Goodhue, Minnesota",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "9d0b6793-358e-472b-b667-6039d8833c1c",
+          "type": "Residence",
+          "date": "1885",
+          "standard_date": "1885",
+          "place": "Princeton, Mille Lacs, Minnesota",
+          "standard_place": "Princeton, Mille Lacs, Minnesota, United States"
+        },
+        {
+          "id": "e3b3744a-6e82-4460-9211-1f91cd6ae46e",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Lisco, Garden, Nebraska, United States",
+          "standard_place": "Lisco, Garden, Nebraska, United States"
+        },
+        {
+          "id": "d9de9f26-bf5c-4f15-af8b-9981d4fa9332",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Gage County, Garden County, Garfield County, Gosper County, Nebraska, United States",
+          "standard_place": "Gage, Sisak-Moslavina, Croatia"
+        },
+        {
+          "id": "23ded5e5-deb8-402e-a27e-500d76d02255",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Garden, Nebraska, United States",
+          "standard_place": "Garden, Nebraska, United States"
+        },
+        {
+          "id": "dbdafbf2-006d-4505-951a-85c974097422",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Lisco, Garden, Nebraska, United States",
+          "standard_place": "Lisco, Garden, Nebraska, United States"
+        },
+        {
+          "id": "25e17e54-c0c6-4e27-9bb1-f7ca4df04640",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Clayton, Woodford, Illinois, United States",
+          "standard_place": "Clayton Township, Woodford, Illinois, United States"
+        },
+        {
+          "id": "6ecdc082-565c-4386-91bb-14f193b80b03",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Benson, Woodford, Illinois",
+          "standard_place": "Benson, Woodford, Illinois, United States"
+        },
+        {
+          "id": "56b7b8b0-dd52-4cbc-9bc0-cf0a87fe5df4",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Limestone Township, Peoria, Illinois, United States",
+          "standard_place": "Limestone Township, Peoria, Illinois, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "1954",
+          "standard_date": "1954"
+        },
+        {
+          "id": "2ced4ca6-0a0c-4b6b-a9e3-46010876ffbb",
+          "type": "Occupation",
+          "date": "1978",
+          "standard_date": "1978",
+          "place": "Liso, Garden, Nebraska, United States",
+          "standard_place": "Garden, Nebraska, United States",
+          "value": "Farmer"
+        },
+        {
+          "id": "04655899-646b-4546-a12c-617956602ec3",
+          "type": "PhysicalDescription",
+          "value": "Short, Medium Build, Blue Eyes, Brown Hair."
+        },
+        {
+          "id": "4cf232ae-a253-45de-a5db-acab1dcb9087",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "26f917e6-f77a-46d6-9b9a-327fca9fc742",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        }
+      ]
+    },
+    {
+      "id": "KFNB-VZB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N15",
+          "given": "Mary Jane",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "01 Aug 1875",
+          "standard_date": "1 Aug 1875",
+          "place": "Pine Island, Goodhue, MN, USA",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pine Island, Goodhue, Minnesota, United States",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "2b63e535-1b6b-41e3-a571-ab75f114c4c5",
+          "type": "Residence",
+          "date": "1885",
+          "standard_date": "1885",
+          "place": "Pine Island, Goodhue, Minnesota",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "67c9ed4b-eefd-4e21-9a60-98896d8222a5",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Deuel, Nebraska, United States",
+          "standard_place": "Deuel, Nebraska, United States"
+        },
+        {
+          "id": "b8306182-6963-47d6-a45e-cca22cc70778",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Chappell, Deuel, Nebraska, United States",
+          "standard_place": "Chappell, Deuel, Nebraska, United States"
+        },
+        {
+          "id": "5af053fc-9273-497c-b4b5-7e8fab01aebc",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Long Beach, Los Angeles, California, United States",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "b8e62b4d-acd7-413b-91c4-b55cf35f74b9",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Long Beach, Los Angeles, California, United States",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "efb06630-d3bf-4236-b035-2d99271b72df",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "4167e52c-8c98-4511-a4aa-5e0b9e3bff3f",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Councilmanic District 3, Long Beach, Long Beach Judicial Township, Los Angeles, California, United States",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "15 AUG 1970",
+          "standard_date": "15 Aug 1970",
+          "place": "Long Beach, Los Angeles Co., CA USA",
+          "standard_place": "Long Beach, Los Angeles, California, United States"
+        }
+      ]
+    },
+    {
+      "id": "K2SF-X4L",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N16",
+          "given": "Abzina",
+          "surname": "Applegarth"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "14 December 1869",
+          "standard_date": "14 Dec 1869",
+          "place": "Pine Island, Goodhue, Minnesota, United States",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "bca6c6e9-491e-4ecb-83ae-5e1237f0fe82",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Minnesota, United States",
+          "standard_place": "Minnesota, United States"
+        },
+        {
+          "id": "bd3ed48f-97b0-436c-ae11-ab7e18f25468",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Grand Meadow, Mower, Minnesota",
+          "standard_place": "Grand Meadow, Mower, Minnesota, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pine Island, Goodhue, Minnesota, United States",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "ee1277d7-524d-4c01-9d0c-763b027636a8",
+          "type": "Residence",
+          "date": "1885",
+          "standard_date": "1885",
+          "place": "Pine Island, Goodhue, Minnesota",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "facc321e-2ea3-4a2b-b7ac-24dc20b816af",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Rural Township, Rock Island, Illinois, United States",
+          "standard_place": "Rural Township, Rock Island, Illinois, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Rural, Rock Island, Illinois, United States",
+          "standard_place": "Rural Township, Rock Island, Illinois, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Rural, Rock Island, Illinois, United States",
+          "standard_place": "Rural Township, Rock Island, Illinois, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "20 February 1929",
+          "standard_date": "20 Feb 1929",
+          "place": "Rock Island, Rock Island, Illinois, United States",
+          "standard_place": "Rock Island, Rock Island, Illinois, United States"
+        },
+        {
+          "id": "50c6f9a7-7b97-4a4d-b2ab-cbf77320ee59",
+          "type": "Residence",
+          "date": "25 Feb 1929",
+          "standard_date": "25 Feb 1929",
+          "place": "Rock Island, Ill.",
+          "standard_place": "Rock Island, Illinois, United States"
+        },
+        {
+          "id": "dca7c86c-f1e0-435f-9411-7a97ff8c4624",
+          "type": "Burial",
+          "date": "28 Feb 1929",
+          "standard_date": "28 Feb 1929",
+          "place": "Rural, Rock Island Co., Illinois",
+          "standard_place": "Rural Township, Rock Island, Illinois, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KZJT-4PT",
+      "person2": "LZLN-PCF",
+      "facts": [
+        {
+          "id": "b479ad84-1f14-4cb1-937f-aacf5b38ecd4",
+          "type": "Marriage",
+          "date": "5 August 1900",
+          "standard_date": "5 Aug 1900",
+          "place": "Deuel, Nebraska, United States",
+          "standard_place": "Deuel, Nebraska, United States"
+        },
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "5 August 1900",
+          "standard_date": "5 Aug 1900",
+          "place": "Deuel, Nebraska, United States",
+          "standard_place": "Deuel, Nebraska, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KFNB-VZ8",
+      "person2": "L489-94J",
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Marriage",
+          "date": "01 JUL 1861",
+          "standard_date": "1 Jul 1861",
+          "place": "West Albany Twp,Wabasha,Minnesota",
+          "standard_place": "West Albany Township, Wabasha, Minnesota, United States"
+        },
+        {
+          "id": "e573dec0-658e-4a44-8778-6a5b97f18910",
+          "type": "Marriage",
+          "date": "01 JUL 1861",
+          "standard_date": "1 Jul 1861",
+          "place": "West Albany Twp,Wabasha,Minnesota",
+          "standard_place": "West Albany Township, Wabasha, Minnesota, United States"
+        },
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "1 July 1861",
+          "standard_date": "1 Jul 1861",
+          "place": "West Albany, Wabasha, Minnesota, United States",
+          "standard_place": "West Albany Township, Wabasha, Minnesota, United States"
+        },
+        {
+          "id": "c2548be5-44c9-49c5-ae5a-d0a959a813e6",
+          "type": "Marriage",
+          "date": "about 1861",
+          "standard_date": "Abt 1861",
+          "place": "Pine Island, Goodhue, Minnesota, United States",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        },
+        {
+          "id": "a9214f47-7cfb-49e5-9560-5e91652b8442",
+          "type": "Marriage",
+          "date": "   Jul 1861",
+          "standard_date": "Jul 1861",
+          "place": "West Albany, Wasbasha, Minnesota, USA",
+          "standard_place": "West Albany Township, Wabasha, Minnesota, United States"
+        },
+        {
+          "id": "b479ad84-1f14-4cb1-937f-aacf5b38ecd4",
+          "type": "Marriage",
+          "date": "Abt 1874",
+          "standard_date": "Abt 1874",
+          "place": "of Pine Island, Goodhue, MN, USA",
+          "standard_place": "Pine Island, Goodhue, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KFNB-VZ8",
+      "child": "KZJT-4PT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L489-94J",
+      "child": "KZJT-4PT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KZJT-4PT",
+      "child": "K4ZT-C4Q",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "LZLN-PCF",
+      "child": "K4ZT-C4Q",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KZJT-4PT",
+      "child": "GXJZ-G1W",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LZLN-PCF",
+      "child": "GXJZ-G1W",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KZJT-4PT",
+      "child": "KWCH-VCZ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LZLN-PCF",
+      "child": "KWCH-VCZ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "KZJT-4PT",
+      "child": "KC5M-FYD",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "LZLN-PCF",
+      "child": "KC5M-FYD",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "KZJT-4PT",
+      "child": "KFN1-81P",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "LZLN-PCF",
+      "child": "KFN1-81P",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "KZJT-4PT",
+      "child": "K8YS-C9D",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "LZLN-PCF",
+      "child": "K8YS-C9D",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "KFNB-VZ8",
+      "child": "K2SF-X4L"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "L489-94J",
+      "child": "K2SF-X4L"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "KFNB-VZ8",
+      "child": "K2SF-JWG"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "L489-94J",
+      "child": "K2SF-JWG"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "KFNB-VZ8",
+      "child": "KZ65-PLD"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "L489-94J",
+      "child": "KZ65-PLD"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "KFNB-VZ8",
+      "child": "KFJM-K3K"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "L489-94J",
+      "child": "KFJM-K3K"
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "KFNB-VZ8",
+      "child": "KFNB-VZB"
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "L489-94J",
+      "child": "KFNB-VZB"
+    },
+    {
+      "id": "R27",
+      "type": "ParentChild",
+      "parent": "KFNB-VZ8",
+      "child": "KZ1W-41D"
+    },
+    {
+      "id": "R28",
+      "type": "ParentChild",
+      "parent": "L489-94J",
+      "child": "KZ1W-41D"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7K1G-F6R",
+      "title": "John Edward Applegarth, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K4H-M9P5 : Tue Jun 30 13:04:48 UTC 2026), Entry for John Edward Applegarth.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K4H-M9P5"
+    },
+    {
+      "id": "QX2G-RDP",
+      "title": "John E Applegarth, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K4Q-Y6C4 : Sun Jul 05 06:20:08 UTC 2026), Entry for Gene Applegarth and John E Applegarth.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K4Q-Y6CH"
+    },
+    {
+      "id": "QQ2Y-V8J",
+      "title": "J E Applegarth, \"California, World War II Draft Registration Cards, 1940-1947\"",
+      "citation": "\"California, World War II Draft Registration Cards, 1940-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGXB-NWTZ : Fri Apr 04 01:06:21 UTC 2025), Entry for Gene Applegarth and J E Applegarth, 31 Aug 1942.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGXB-FD68"
+    },
+    {
+      "id": "S8G4-14J",
+      "title": "John Edward Applegarth, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", database with images, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:29NB-B1F : 30 June 2024), John Edward Applegarth, 1917-1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:29NB-B1F"
+    },
+    {
+      "id": "S8G4-BW7",
+      "title": "John Edward Applegarth, \"Utah, World War I County Draft Board Registers, Name Index, 1917-1918\"",
+      "citation": "\"Utah, World War I County Draft Board Registers, Name Index, 1917-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPBZ-2B3W : Fri Jan 17 11:33:26 UTC 2025), Entry for John Edward Applegarth, 1917-1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPBZ-2B3W"
+    },
+    {
+      "id": "S8G4-YXS",
+      "title": "Edward Applegarth, \"Minnesota, State Census, 1885\"",
+      "citation": "\"Minnesota, State Census, 1885\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MQFQ-8RR : Sun Mar 10 01:26:49 UTC 2024), Entry for H W Applegarth and Nancy J Applegarth, 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MQFQ-8TM"
+    },
+    {
+      "id": "S8XS-LQC",
+      "title": "John Edward Applegarth, \"California, County Birth and Death Records, 1800-1994\"",
+      "citation": "\"California, County Birth and Death Records, 1800-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLBP-KYY8 : Tue Feb 18 20:18:55 UTC 2025), Entry for John Edward Applegarth and Henry Applegarth, 5 November 1949.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLBP-KYY8"
+    },
+    {
+      "id": "SHHX-SLT",
+      "title": "J E Applegarth, \"Utah, County Marriages, 1871-1941\"",
+      "citation": "\"Utah, County Marriages, 1871-1941\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VRLX-MLC : Thu Sep 19 19:18:12 UTC 2024), Entry for Jack Applegarth and J E Applegarth, 18 Oct 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VRLX-ML4"
+    },
+    {
+      "id": "SHHD-X88",
+      "title": "John E Applegarth, \"Nebraska, Marriages, 1855-1995\"",
+      "citation": "\"Nebraska, Marriages, 1855-1995,\" , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:Q21S-1L8C : 28 November 2018), John E Applegarth and George F Pebley, 05 Aug 1900; citing Marriage, Deuel, Nebraska, United States, Nebraska State Historical Society, Lincoln; FHL microfilm 2,079,056.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q21S-1L8C"
+    },
+    {
+      "id": "S9H6-PBH",
+      "title": "J E Applegarth, \"Utah, Weber County Marriages, 1887-1941\"",
+      "citation": "\"Utah, Weber County Marriages, 1887-1941\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK6K-DDKD : Sun Mar 10 21:10:00 UTC 2024), Entry for Jack Applegarth and J E Applegarth, 18 Oct 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK6K-DDK6"
+    },
+    {
+      "id": "S9H6-24B",
+      "title": "John Edward Applegarth, \"United States, World War II Draft Registration Cards, 1942\"",
+      "citation": "\"United States, World War II Draft Registration Cards, 1942\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V4DD-JNH : Mon Mar 30 01:06:14 UTC 2026), Entry for John Edward Applegarth, 1942.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V4DD-JNH"
+    },
+    {
+      "id": "SM5M-98T",
+      "title": "J E Applegarth, \"Utah, Weber County Marriages, 1887-1941\"",
+      "citation": "\"Utah, Weber County Marriages, 1887-1941\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK6K-DR2M : Sun Mar 10 15:56:13 UTC 2024), Entry for Jack Applegarth and J E Applegarth, 18 Oct 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK6K-DR29"
+    },
+    {
+      "id": "9RV5-NSB",
+      "title": "John E Applgarth, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M3YG-QHB : Sat Oct 11 14:59:15 UTC 2025), Entry for William Applgarth and Nora A Applgarth, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M3YG-QC9"
+    },
+    {
+      "id": "928C-MRC",
+      "title": "John E Applegarth in entry for Delbert E Applegarth and Minnie Hedin, \"Utah, Weber County Marriages, 1887-1941\"",
+      "citation": "\"Utah, Weber County Marriages, 1887-1941\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK6K-6R41 : Sun Mar 10 08:40:02 UTC 2024), Entry for Delbert E Applegarth and John E Applegarth, 07 Mar 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK6K-6RHM"
+    },
+    {
+      "id": "92HT-LJK",
+      "title": "John E Applegarth in entry for Roy M Applegarth and Eunice M Roberts, \"California, County Marriages, 1850-1952\"",
+      "citation": "\"California, County Marriages, 1849-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K8V9-4WJ : Wed Jul 10 00:37:21 UTC 2024), Entry for Roy M Applegarth and John E Applegarth, 28 Apr 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K8V9-4WV"
+    },
+    {
+      "id": "9K68-ZSY",
+      "title": "Applegarth Family Website",
+      "url": "http://sites.rootsmagic.com/Applegarth"
+    },
+    {
+      "id": "9JQC-2GZ",
+      "title": "Social Security Application",
+      "citation": "Social Security Application and Claims Index, 1936-2007, (www.ancestry.com: accessed 27 October 2016), John Edward Appplegarth.",
+      "url": "http://search.ancestry.com/cgi-bin/sse.dll?_phsrc=kUS165&_phstart=successSource&usePUBJs=true&gss=angs-g&new=1&rank=1&msT=1&gsfn=John%20Edward&gsfn_x=0&gsln=Applegarth&gsln_x=0&MSAV=1&cp=0&catbucket=rstp&uidh=qxb&pcat=ROOT_CATEGORY&h=8050775&db=Numident&indiv=1&ml_rpos=10"
+    },
+    {
+      "id": "9JQC-2HG",
+      "title": "World War II Registration Draft Card",
+      "citation": "“U.S World War II Draft Registration Cards 1942” database, Ancestry.com (www.ancestry.com: accessed 26 October 2016) entry for John Edward Applegarth, enlisted 1942, Nebraska; citing; “Ancestry.com. U.S. World War II Draft Registration Cards, 1942 [database on-line]. Provo, UT, USA: Ancestry.com Operations, Inc., 2010.\nOriginal data: United States, Selective Service System. Selective Service Registration Cards, World War II: Fourth Registration. Records of the Selective Service System, Record Group Number 147. National Archives and Records Administration. Full Source Citation.”",
+      "url": "http://interactive.ancestry.com/1002/004670113_00696?pid=13819093&backurl=//search.ancestry.com//cgi-bin/sse.dll?_phsrc%3DkUS161%26_phstart%3DsuccessSource%26usePUBJs%3Dtrue%26gss%3Dangs-c%26new%3D1%26msT%3D1%26gsfn%3DJohn%2520Edward%26gsfn_x%3D0%26gsln%3DApplegarth%26gsln_x%3D0%26MSAV%3D1%26uidh%3Dqxb%26rank%3D1%26pcat%3D39%26h%3D13819093%26recoff%3D5%25206%25207%26db%3DWWIIdraft%26indiv%3D1%26ml_rpos%3D3&treeid=&personid=&hintid=&usePUB=true&_phsrc=kUS161&_phstart=successSource&usePUBJs=true"
+    },
+    {
+      "id": "9JQC-KTN",
+      "title": "World War I Registration Draft Card",
+      "citation": "“U.S World War I Draft Registration Cards, 1917-1918” database, Ancestry.com (www.ancestry.com: accessed 26 October 2016) entry for John Edward Applegarth enlisted 12 September 1918, Utah; citing “United States, Selective Service System. World War I Selective Service System Draft Registration Cards, 1917-1918. Washington, D.C.: National Archives and Records Administration. M1509, 4,582 rolls. Imaged from Family History Library microfilm.”",
+      "url": "http://interactive.ancestry.com/6482/005243486_03802?pid=26898204&backurl=//search.ancestry.com//cgi-bin/sse.dll?_phsrc%3DkUS161%26_phstart%3DsuccessSource%26usePUBJs%3Dtrue%26indiv%3D1%26db%3DWW1draft%26gss%3Dangs-d%26new%3D1%26rank%3D1%26msT%3D1%26gsfn%3DJohn%2520Edward%26gsfn_x%3D0%26gsln%3DApplegarth%26gsln_x%3D0%26MSAV%3D1%26uidh%3Dqxb%26pcat%3D39%26fh%3D0%26h%3D26898204%26recoff%3D%26ml_rpos%3D1&treeid=&personid=&hintid=&usePUB=true&_phsrc=kUS161&_phstart=successSource&usePUBJs=true"
+    },
+    {
+      "id": "9FTZ-SHK",
+      "title": "John E Applegarth, \"Utah, County Marriages, 1871-1941\"",
+      "citation": "\"Utah, County Marriages, 1871-1941\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VRLX-D84 : Thu Sep 19 20:22:59 UTC 2024), Entry for Delbert E Applegarth and John E Applegarth, 07 Mar 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VRLX-D87"
+    },
+    {
+      "id": "9ZFC-NJT",
+      "title": "John Edward Applegarth, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VG5P-82T : Tue Feb 25 15:34:57 UTC 2025), Entry for John Edward Applegarth and Applegarth, 05 Nov 1949.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VG5P-82T"
+    },
+    {
+      "id": "9ZFC-NJK",
+      "title": "John Applegarth, \"United States, Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K96B-RNQ : Mon Jul 15 12:12:33 UTC 2024), Entry for John Applegarth and Frances Applegarth, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K96B-RNQ"
+    },
+    {
+      "id": "9ZFC-NJD",
+      "title": "John Edward Applegarth, \"California, County Marriages, 1849-1957\"",
+      "citation": "\"California, County Marriages, 1849-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K82C-1YF : Sun Mar 10 05:07:36 UTC 2024), Entry for Gene Applegarth and Ella Virginia Osborne, 2 September 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K82C-1YN"
+    },
+    {
+      "id": "9ZFC-NJH",
+      "title": "Eddie Applegarth, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ94-X2V : Wed Jan 15 08:49:00 UTC 2025), Entry for Henry Applegarth and Nancy Applegarth, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZ94-X25"
+    },
+    {
+      "id": "9ZFC-NXC",
+      "title": "John E Applegarth, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8PX-1D6 : Wed Oct 22 14:35:39 UTC 2025), Entry for John E Applegarth and Francis Applegarth, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8PX-1D6"
+    },
+    {
+      "id": "9ZFC-NDG",
+      "title": "John E Applegarth, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ML46-VSL : Wed Aug 13 16:35:17 UTC 2025), Entry for John E Applegarth and Georgia A F Applegarth, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ML46-VSL"
+    },
+    {
+      "id": "9ZFC-N43",
+      "title": "John E Applegarth, \"California, County Marriages, 1849-1957\"",
+      "citation": "\"California, County Marriages, 1849-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K8N1-HR9 : Wed Jul 10 00:32:06 UTC 2024), Entry for Glenn Elmer Applegarth and John E Applegarth, 25 Jun 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K8N1-HRS"
+    },
+    {
+      "id": "MMB1-PF2",
+      "title": "United States Census, 1910; pal:/MM9.3.1/TH-267-12064-73069-36",
+      "url": "https://familysearch.org/ark:/61903/3:1:S3HY-6DQS-L7K"
+    },
+    {
+      "id": "72MX-1MJ",
+      "title": "Henry W Applegarth in entry for William E Roudebush, \"Nebraska, Marriages, 1855-1995\"",
+      "citation": "\"Nebraska, Marriages, 1855-1995,\" , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:Q571-2DLZ : 21 April 2025), Henry W Applegarth in entry for William E Roudebush, 12 Mar 1896; citing Marriage, Box Butte, Nebraska, United States, Nebraska State Historical Society, Lincoln; FHL microfilm .",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q571-2DLZ"
+    },
+    {
+      "id": "7VNS-RQ4",
+      "title": "H W Applegarth in entry for Andrew Joseph Applegarth, \"Nebraska, Marriages, 1855-1995\"",
+      "citation": "\"Nebraska, Marriages, 1855-1995,\" , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:Q5WM-JNFL : 21 April 2025), H W Applegarth in entry for Andrew Joseph Applegarth, 29 Nov 1905; citing Marriage, Box Butte, Nebraska, United States, Nebraska State Historical Society, Lincoln; FHL microfilm .",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q5WM-JNFL"
+    },
+    {
+      "id": "7J9D-Q9R",
+      "title": "Henry Applegarth, \"Iowa, Death Records, 1904-1951\"",
+      "citation": "\"Iowa, Death Records, 1904-1951\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:61KX-R37W : Fri Dec 06 21:53:27 UTC 2024), Entry for Elmer Thomas Applegarth and Henry Applegarth, 7 Nov 1955.",
+      "url": "https://familysearch.org/ark:/61903/1:1:61KX-R37H"
+    },
+    {
+      "id": "7DQS-1GQ",
+      "title": "Henry Applegarth, \"Iowa, Marriage Records, 1941-1951\"",
+      "citation": "\"Iowa, Marriage Records, 1941-1951\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6CZD-JS3Z : Mon Jan 20 21:57:41 UTC 2025), Entry for Henry Applegarth and Henry Applegarth, 8 Feb 1941.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6CZD-JSW2"
+    },
+    {
+      "id": "7DQS-XYM",
+      "title": "William Applegarth, \"Canada, Census, 1851\"",
+      "citation": "\"Canada, Census, 1851\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWTC-D61 : Tue Jan 28 16:04:38 UTC 2025), Entry for William Applegarth, 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MWTC-D61"
+    },
+    {
+      "id": "7DQS-DXJ",
+      "title": "Henry William Applegarth, \"Nebraska, Naturalization Records, 1855-1989\"",
+      "citation": "\"Nebraska, Naturalization Records, 1855-1989\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:C3S6-N6MM : Fri Apr 11 17:10:15 UTC 2025), Entry for Henry William Applegarth, 10 Oct 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:C3S6-N6MM"
+    },
+    {
+      "id": "QTZK-JBS",
+      "title": "Henry Applegarth, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K7B-81J7 : Wed Jul 01 09:05:33 UTC 2026), Entry for Elmer T Applegarth and Henry Applegarth.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K7B-81JH"
+    },
+    {
+      "id": "3CFM-KV7",
+      "title": "Henry W Applegarth, \"United States, General Index to Pension Files, 1861-1934\"",
+      "citation": "\"United States, General Index to Pension Files, 1861-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KDP5-STT : Wed Jul 08 19:46:37 UTC 2026), Entry for Henry W Applegarth and Nancy J Applegarth, 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KDP5-STT"
+    },
+    {
+      "id": "3CFM-NPS",
+      "title": "Henry W Applegarth, \"United States, Census of Union Veterans and Widows of the Civil War, 1890\"",
+      "citation": "\"United States, Census of Union Veterans and Widows of the Civil War, 1890\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K83Q-XHF : Wed Jul 10 03:28:29 UTC 2024), Entry for Henry W Applegarth, 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K83Q-XHF"
+    },
+    {
+      "id": "3CFM-F9M",
+      "title": "H W Applegarth, \"Minnesota, State Census, 1875\"",
+      "citation": "\"Minnesota, State Census, 1875\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MKN2-R2T : Sat Mar 09 01:38:32 UTC 2024), Entry for H W Applegarth and Nancy Applegarth, 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MKN2-R2T"
+    },
+    {
+      "id": "3CFM-6LW",
+      "title": "H W Applegarth, \"Minnesota, State Census, 1885\"",
+      "citation": "\"Minnesota, State Census, 1885\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MQFQ-8RR : Sun Mar 10 01:26:49 UTC 2024), Entry for H W Applegarth and Nancy J Applegarth, 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MQFQ-8RR"
+    },
+    {
+      "id": "3CFM-WYL",
+      "title": "Henry Applegarth in entry for Lewis H. Applegarth, \"Nebraska, Marriages, 1855-1995\"",
+      "citation": "\"Nebraska, Marriages, 1855-1995\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q298-J3NS : 8 June 2021), Henry Applegarth in entry for Lewis H. Applegarth, 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q298-J3NS"
+    },
+    {
+      "id": "MC4F-B6L",
+      "title": "Henry in entry for Elmer Applegaard, \"Minnesota, Births and Christenings, 1840-1980\"",
+      "citation": "\"Minnesota, Births and Christenings, 1840-1980\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FDZ5-3TR : 5 February 2020), Henry in entry for Elmer Applegaard, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDZ5-3TR"
+    },
+    {
+      "id": "S2BB-M1M",
+      "title": "William Applegarth, \"Minnesota, State Census, 1865 \"",
+      "citation": "\"Minnesota, State Census, 1865 \", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:SPSH-3GH : Sat Jul 06 04:15:39 UTC 2024), Entry for William C Applegarth and Nancy J Applegarth, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:SPSH-3GZ"
+    },
+    {
+      "id": "S8G4-VJQ",
+      "title": "H W Applegarth in entry for Lewis H Applegarth and Annie E Hollands, \"Nebraska, Marriages, 1855-1995\"",
+      "citation": "\"Nebraska, Marriages, 1855-1995,\" , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:Q213-SB3C : 28 November 2018), H W Applegarth in entry for Lewis H Applegarth and Annie E Hollands, 26 Mar 1906; citing Marriage, Deuel, Nebraska, United States, Nebraska State Historical Society, Lincoln; FHL microfilm 2,079,056.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q213-SB3C"
+    },
+    {
+      "id": "S8XS-LCW",
+      "title": "Henry Applegarth, \"California, County Birth and Death Records, 1800-1994\"",
+      "citation": "\"California, County Birth and Death Records, 1800-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLBP-KYY8 : Tue Feb 18 20:18:55 UTC 2025), Entry for John Edward Applegarth and Henry Applegarth, 5 November 1949.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLBP-KYYD"
+    },
+    {
+      "id": "S8XS-2NC",
+      "title": "Henry Applegarth, \"Illinois, Deaths and Stillbirths, 1916-1948\"",
+      "citation": "\"Illinois, Deaths and Stillbirths, 1916-1948\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQT9-RKH : Mon Jan 27 21:49:50 UTC 2025), Entry for Alzina E. Morgan and Henry Applegarth, 25 Feb 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQT9-RKC"
+    },
+    {
+      "id": "S8XS-ND1",
+      "title": "H W Applegarth in entry for William Applegarth and Nora A Crosser, \"Nebraska, Marriages, 1855-1995\"",
+      "citation": "\"Nebraska, Marriages, 1855-1995,\" , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:Q213-9JJQ : 28 November 2018), H W Applegarth in entry for William Applegarth and Nora A Crosser, 10 Oct 1898; citing Marriage, Deuel, Nebraska, United States, Nebraska State Historical Society, Lincoln; FHL microfilm 2,079,056.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q213-9JJQ"
+    },
+    {
+      "id": "SHHD-FQ3",
+      "title": "Henry Applegarth in entry for John E Applegarth and George F Pebley, \"Nebraska, Marriages, 1855-1995\"",
+      "citation": "\"Nebraska, Marriages, 1855-1995,\" , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:Q21S-1L86 : 28 November 2018), Henry Applegarth in entry for John E Applegarth and George F Pebley, 05 Aug 1900; citing Marriage, Deuel, Nebraska, United States, Nebraska State Historical Society, Lincoln; FHL microfilm 2,079,056.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q21S-1L86"
+    },
+    {
+      "id": "S9CR-S65",
+      "title": "H Applegarth, \"Iowa, Old Age Tax Assistance Records, 1934-1958\"",
+      "citation": "\"Iowa, Old Age Tax Assistance Records, 1934-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL2N-ZWHS : Mon Dec 15 20:58:25 UTC 2025), Entry for Elmer Thomas Applegarth and H Applegarth, 1934-1946.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL2N-ZWH3"
+    },
+    {
+      "id": "S9CR-SC8",
+      "title": "Henry W Applegarth, \"Nebraska, Grand Army of the Republic, Burial Records, 1861-1948\"",
+      "citation": "\"Nebraska, Grand Army of the Republic, Burial Records, 1861-1948\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL3C-CH88 : Tue Dec 16 03:47:56 UTC 2025), Entry for Henry W Applegarth.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL3C-CH88"
+    },
+    {
+      "id": "9RVT-9JR",
+      "title": "H W Applegarth, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDHM-D3Y : Sat Oct 18 09:43:20 UTC 2025), Entry for H W Applegarth and Nancy Applegarth, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDHM-D3Y"
+    },
+    {
+      "id": "9RVP-8T8",
+      "title": "Henry W. Applegarth, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVK1-B8R4 : Sat Jul 04 14:04:48 UTC 2026), Entry for Henry W. Applegarth.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVK1-B8R4"
+    },
+    {
+      "id": "9RVP-8XR",
+      "title": "Henry W Applegarth, \"United States, Records of Headstones of Deceased Union Veterans, 1879-1903\"",
+      "citation": "\"United States, Records of Headstones of Deceased Union Veterans, 1879-1903\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V6H3-Z6C : Thu May 14 18:20:44 UTC 2026), Entry for Henry W Applegarth.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V6H3-Z6C"
+    },
+    {
+      "id": "9K6C-C8T",
+      "title": "Applegarth Family Website",
+      "url": "http://sites.rootsmagic.com/Applegarth/index.php"
+    },
+    {
+      "id": "9ZFC-NKQ",
+      "title": "Applegarth, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VG5P-82T : Tue Feb 25 15:34:57 UTC 2025), Entry for John Edward Applegarth and Applegarth, 05 Nov 1949.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VG5P-82Y"
+    },
+    {
+      "id": "M39X-3SY",
+      "title": "Henry W Appligath, \"Canada Census, 1851\"",
+      "citation": "\"Canada, Census, 1851\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWTC-89W : Tue Jan 28 16:05:29 UTC 2025), Entry for Henry W Appligath, 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MWTC-89W"
+    },
+    {
+      "id": "M39X-SKF",
+      "title": "Henry Applegarth, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ94-X2V : Wed Jan 15 08:49:00 UTC 2025), Entry for Henry Applegarth and Nancy Applegarth, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZ94-X2V"
+    },
+    {
+      "id": "MMVL-CZ7",
+      "title": "Legacy NFS Source: Henry William Applegarth - Published information: death: 17 August 1895; Orlando, Deuel, Nebraska, United States"
+    },
+    {
+      "id": "MM8N-M7L",
+      "title": "Henry W. Applegarth (1837 - 1894) - Find A Grave Memorial",
+      "citation": "\"Henry W. Applegarth (1837 - 1894) - Find A Grave Memorial.\" Henry W. Applegarth (1837 - 1894) - Find A Grave Memorial. N.p., n.d. Web. 10 Nov. 2013..",
+      "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GSln=Applegarth&GSfn=Henry&GSbyrel=all&GSdyrel=all&GSob=n&GRid=57419382&df=all&"
+    }
+  ]
+}

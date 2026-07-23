@@ -1,0 +1,19 @@
+{
+  "id": "john-applegarth-family",
+  "name": "John Edward Applegarth",
+  "genre": "strip",
+  "source_pid": "KZJT-4PT",
+  "captured": "2026-07-20",
+  "researcher_question": "Who were John Edward Applegarth's parents, and who were (at least three of) his siblings?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1860s-1880s",
+    "geography": "US-MN"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Parents and siblings are all well-documented via Minnesota state/federal censuses and Nebraska marriage/death records; the 1861 Wabasha County, MN marriage record directly names both parents."
+}

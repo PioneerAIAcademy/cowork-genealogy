@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_john_applegarth_family",
+    "objective": "Who were John Edward Applegarth's parents, and who were (at least three of) his siblings?",
+    "subject_person_ids": [
+      "KZJT-4PT"
+    ],
+    "status": "active",
+    "created": "2026-07-20",
+    "updated": "2026-07-20"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
