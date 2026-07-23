@@ -39,8 +39,11 @@ For skill `<X>` (paths relative to repo root):
 - **The current skill:** `packages/engine/plugin/skills/<X>/SKILL.md`
   (+ its `references/`, `templates/`, `scripts/`).
 - **Read-only context, never propose edits to:**
-  `eval/tests/unit/<X>/rubric.md` (what the judge scores against,
-  senior-owned) and `eval/harness/judge/prompt.md` (project-global).
+  `eval/tests/unit/<X>/rubric.md` (what the judge scores against) and
+  `eval/harness/judge/prompt.md` (project-global, maintainer-owned). The
+  rubric belongs to the loop-runner, not to you — when a finding's cause is
+  the rubric, say so and route it rather than editing; your output is
+  SKILL.md edits only.
 
 ## Process
 
@@ -112,7 +115,11 @@ For skill `<X>` (paths relative to repo root):
      or different `expected_args` than the test loads) → a test/spec
      decision for the genealogist (may need a new `allowed-tools` entry +
      fixture first); not a body fix from this run.
-   - **Rubric / judge** → route to the judge-prompt review.
+   - **Skill rubric or this test's `judge_context`** → the loop-runner's own
+     to fix directly (`eval/tests/unit/<skill>/rubric.md` / the test JSON);
+     both sit in the run-log snapshot, so the skill's suite must be re-run
+     after. **Base rubric or the global judge prompt** → the maintainer's
+     alone; escalate rather than edit.
    - **Body** — the skill's prose actually steered the model wrong → the
      *only* cause that becomes a SKILL.md edit. Proceed.
 
@@ -223,5 +230,6 @@ gate to apply>
   question → say so, report what the judge scores suggest at lower
   confidence, and do not propose edits on thin evidence.
 - The evidence points at the rubric or judge, not the skill → name it and
-  route it to the senior's judge-prompt review. Don't "fix" a grading
-  problem in the skill body.
+  route it: the skill's own `rubric.md` and the test's `judge_context` are
+  the loop-runner's to fix; the base rubric and global judge prompt go to the
+  maintainer. Don't "fix" a grading problem in the skill body.
