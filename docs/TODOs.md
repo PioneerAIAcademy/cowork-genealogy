@@ -652,6 +652,33 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   not half-built: a cap that silently fires late is worse than a documented
   reporting threshold. The spec (`e2e-test-spec.md` §5) now says so explicitly.
 
+- **A specialized `places-guidance.md` copy is unlinted for drift** — the drift
+  lint (`tests/packaging/skill-guidance.test.ts`) holds 8 skills byte-identical
+  to `plugin/references/places-guidance.md`, but `research-plan`'s copy is
+  deliberately specialized (8bf43be2 split place work by function, so its copy
+  reframes four tools it no longer has as locality-guide's). It now gets only an
+  exists-and-non-empty check, so a genuine regression *inside* that copy — or a
+  canonical edit that should have been mirrored into its shared paragraphs —
+  passes silently. Two ways out: factor the guidance into a shared core plus a
+  per-skill "who calls what" section and lint the core, or derive each skill's
+  copy from the canonical at plugin-build time using its `allowed-tools`. The
+  second kills the duplication problem outright but is a build-step change.
+
+- **`login.test.ts` "returns immediately with the authorization URL" failed once,
+  unreproducibly** — observed 2026-07-23 in a full-suite run; it has not
+  recurred in 24 subsequent full-suite runs or 10 isolated runs of the file, so
+  it is filed rather than fixed. Ruled out: port contention (the test mocks
+  `node:http` wholesale — nothing binds a real port) and the obvious
+  order-dependency, where the module-level `pendingAuthUrl` in `login.ts` leaks
+  into the next test because `afterEach`'s cleanup reads
+  `mockedOpen.mock.calls[0]` before the fire-and-forget `open()` has landed. An
+  instrumented probe never fired: `performLogin` calls `void open(authUrl)`
+  synchronously before returning, so `mock.calls` is always populated by the
+  time the test's `await` resolves. The remaining suspects are cross-file (the
+  suite runs 69 files in parallel workers) or timer-related — `afterEach` calls
+  `vi.useRealTimers()`, implying some test installs fake ones. Next step is to
+  capture a failing run's full assertion output; a bare "it failed once" is not
+  enough to tell a real leak from an environment hiccup.
 - **Nothing checks that `forget-and-rederive` honors its own redaction rule** —
   the skill stays permanently exempt from the runlog gate (a setup utility has no
   genealogical output for a judge to grade; confirmed 2026-07-18), and as of
