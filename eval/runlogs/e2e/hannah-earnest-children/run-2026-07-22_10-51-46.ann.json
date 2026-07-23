@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Recovered via a different evidentiary path than the baseline run: two independent census household listings (1881 West Bromwich, 1891 Birmingham) plus a GRO Birth Registration Index 1878 entry, rather than the christening record. Same year-only birth-date restraint as baseline (no unattested exact day asserted)."
+  }
+}

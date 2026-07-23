@@ -1,0 +1,19 @@
+{
+  "id": "broyles-siblings",
+  "name": "Charles Robinson Broyles",
+  "genre": "strip",
+  "source_pid": "LCPC-PZK",
+  "captured": "2026-07-22",
+  "researcher_question": "Who were the siblings of Charles Robinson Broyles (MJ7L-SL9), born 9 December 1878 and died 18 March 1966, and what evidence supports their relationship to him?",
+  "tags": {
+    "question_type": "siblings",
+    "era": "1880s",
+    "geography": "US-MO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Strips all 6 of Charles's siblings, keeping Charles + both parents (father George Broyles LCPC-PZK, mother Mary Elizabeth Davis LCPC-PDH) and the father's first wife Liddy (KP3V-5CY) as the lead to the half-siblings. FULL siblings (George + Mary E, m.1867): Judith A. (1869), Minnie Belle (1877), Myrtle Leana (1886) -- recoverable from the 1880 census of the George Broyles household (Marshall, Saline, MO; kept on the father) + a 1900 census search for Myrtle. HALF siblings (George + first wife Liddy, m.1856): William Harrison (1857), Milton M. (1859), Geo. W. (1861) -- via the 1860/1870 censuses of the first-marriage household. No sibling-specific sources were in the snapshot to strip; the father's household census records are the recovery path. Subject b.1878 d.1966; all siblings are 19th-century births -- deceased."
+}
