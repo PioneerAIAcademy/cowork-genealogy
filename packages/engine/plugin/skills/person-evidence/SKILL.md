@@ -602,12 +602,20 @@ When multiple candidates share the same name in the same area:
   the `pe_` entries, not a tree relationship.** Create a `pe_` link for
   each party a relationship assertion names (a marriage record → one `pe_`
   for each spouse; a will naming an heir → one for the testator and one for
-  the heir). Do **not** create the `Couple`/`ParentChild` relationship
-  itself, and do **not** write the couple-event fact (Marriage, Divorce)
-  here — person-evidence owns stub `persons` and `pe_` links only. The
-  relationship and its facts are written later by proof-conclusion →
+  the heir; a baptism or death record naming a parent → one for the child
+  and one for that named parent). Do **not** create the `Couple`/`ParentChild`
+  relationship itself, and do **not** write the couple-event fact (Marriage,
+  Divorce) here — person-evidence owns stub `persons` and `pe_` links only.
+  The relationship and its facts are written later by proof-conclusion →
   tree-edit, which own the `relationships` section (see also "proof-conclusion
-  populates them later" under stub creation).
+  populates them later" under stub creation). **The one exception is the
+  household skeleton above:** when you materialize a co-resident household
+  from a household record (census), you write that household's
+  parent-child/spouse edges at link time. A single, non-household record
+  that merely *states* a parentage — e.g. a baptism naming an existing
+  child's mother — is not a household skeleton: create the `pe_` links and
+  defer its `ParentChild` edge to proof-conclusion, like any other
+  relationship assertion.
 
 ## Re-invocation behavior
 
