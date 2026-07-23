@@ -96,6 +96,13 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Filter by tag. May be repeated; all tags must match (AND).",
     )
     parser.add_argument(
+        "--allow-missing-judge",
+        action="store_true",
+        help="Run even without ANTHROPIC_API_KEY. Positive tests will all "
+        "fail (no judge dimensions); use only to exercise skills or "
+        "validators without grading.",
+    )
+    parser.add_argument(
         "--list-skills",
         action="store_true",
         help="List every skill directory that has at least one runnable "
@@ -512,14 +519,39 @@ def main(argv: list[str] | None = None) -> int:
     from harness.skill_runner import _check_sdk_version
     if (sdk_warning := _check_sdk_version()):
         print(f"  WARNING: {sdk_warning}", file=sys.stderr)
-    if auth.skill_runner_mode == "subscription" and not auth.api_key:
+    # Judge preflight. A missing key does not stop the skills from running —
+    # it fails every *positive* test at the very end, after the suite has been
+    # paid for in full, because a positive test cannot score pass without judge
+    # dimensions. This used to be a warning printed here and then scrolled past
+    # by the run itself; a whole two-skill re-run was lost to it. Fail before
+    # spending anything instead.
+    #
+    # Negative tests are graded on routing and survive a dead judge, so a
+    # negative-only selection still gets the old warning rather than an abort.
+    if not auth.api_key:
+        needs_judge = [s for s in specs if s.type == "positive"]
+        if needs_judge and not args.allow_missing_judge:
+            print(
+                f"Judge preflight failed: no ANTHROPIC_API_KEY is set, but "
+                f"{len(needs_judge)} of {len(specs)} selected test(s) are "
+                f"positive.\n"
+                f"A positive test cannot pass without judge dimensions, so "
+                f"this run would fail every one of them\n"
+                f"after paying for the whole suite.\n"
+                f"\n"
+                f"  Fix: set ANTHROPIC_API_KEY in eval/.env or in your shell.\n"
+                f"  In a git worktree, eval/.env is gitignored and has to be "
+                f"linked in: make worktree-link\n"
+                f"\n"
+                f"Re-run with --allow-missing-judge to proceed anyway "
+                f"(validators and routing only).",
+                file=sys.stderr,
+            )
+            return 2
         print(
-            "  WARNING: subscription mode is selected for skill execution, "
-            "but the judge layer needs ANTHROPIC_API_KEY to run.\n"
-            "  Set ANTHROPIC_API_KEY in your environment or in "
-            "eval/.env before the suite finishes — otherwise every test\n"
-            "  will end with the judge skipped and outcomes only reflect "
-            "validators.",
+            "  WARNING: no ANTHROPIC_API_KEY — the judge layer cannot run, so "
+            "outcomes will reflect validators\n"
+            "  and routing only.",
             file=sys.stderr,
         )
     # Large-suite variance warning: the judge is temperature-pinned, but the
