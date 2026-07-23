@@ -41,6 +41,7 @@
     "wikipedia-search-any",
     "volume-search-schuylkill",
     "volume-search-pennsylvania",
+    "volume-search-any",
     "collection-read-by-id"
   ],
   "judge_context": [
