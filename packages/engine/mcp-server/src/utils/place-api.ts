@@ -64,7 +64,13 @@ export function extractPrimaryId(
 }
 
 export async function searchPlace(name: string): Promise<SearchPlaceResult[]> {
-  const url = `${FS_API_BASE}/search?q=name:${encodeURIComponent(name)}`;
+  // Phrase-quote the value: an unquoted multi-word `name:` query is parsed by
+  // FamilySearch's search as an OR of tokens, so a place literally named just
+  // one token (e.g. "West" in Cameroon) can outscore the real multi-word
+  // place entirely — verified live: unquoted "West Bromwich" returns no
+  // West-Bromwich-shaped result at all; quoted, the correct England/UK
+  // entries rank first. See tests/utils/place-api.test.ts.
+  const url = `${FS_API_BASE}/search?q=name:${encodeURIComponent(`"${name}"`)}`;
 
   const response = await fetch(url, {
     headers: {

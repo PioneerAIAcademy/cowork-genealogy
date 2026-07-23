@@ -102,6 +102,41 @@ describe('tests — listTests', () => {
     await handle2.cleanup();
   });
 
+  it('surfaces expected_outcome + xfail_reason on the list entry', async () => {
+    const handle2 = await makeFixtureTree({
+      tests: [
+        { skill: 'locality-guide', filename: 'plain.json', body: makeTest({ id: 'ut_locality_guide_001', skill: 'locality-guide' }) },
+        {
+          skill: 'locality-guide',
+          filename: 'known-broken.json',
+          body: makeTest({
+            id: 'ut_locality_guide_002',
+            skill: 'locality-guide',
+            test: {
+              id: 'ut_locality_guide_002',
+              skill: 'locality-guide',
+              name: 'known broken',
+              type: 'positive',
+              description: 'd',
+              tags: [],
+              expected_outcome: 'xfail',
+              xfail_reason: 'drops the citation on multi-page records — #712',
+            },
+          }),
+        },
+      ],
+    });
+    process.env.EVAL_DIR = handle2.root;
+    const { tests } = await listTests();
+    const plain = tests.find((t) => t.id === 'ut_locality_guide_001');
+    const broken = tests.find((t) => t.id === 'ut_locality_guide_002');
+    expect(plain?.expectedOutcome).toBe('pass');
+    expect(plain?.xfailReason).toBeNull();
+    expect(broken?.expectedOutcome).toBe('xfail');
+    expect(broken?.xfailReason).toBe('drops the citation on multi-page records — #712');
+    await handle2.cleanup();
+  });
+
   it('flags blocked when scenario_notes present', async () => {
     const handle2 = await makeFixtureTree({
       tests: [
@@ -145,15 +180,65 @@ describe('tests — read/write/delete/nextId', () => {
     expect(onDisk.test.id).toBe('ut_search_wiki_005');
   });
 
+  it('writes an edit back to the original filename (no duplicate id)', async () => {
+    const existing = await readTest('ut_search_wiki_001');
+    const edited = JSON.parse(JSON.stringify(existing!.test)) as UnitTestFile;
+    edited.test.name = 'renamed in the UI';
+    const written = await writeTest(edited);
+
+    expect(path.basename(written)).toBe('a.json');
+    const skillDir = path.join(handle.root, 'tests', 'unit', 'search-familysearch-wiki');
+    const files = (await fs.readdir(skillDir)).sort();
+    expect(files).toEqual(['a.json']);
+    const onDisk = JSON.parse(await fs.readFile(written, 'utf8'));
+    expect(onDisk.test.name).toBe('renamed in the UI');
+  });
+
+  it('moves the file when the skill changes, leaving no copy behind', async () => {
+    const existing = await readTest('ut_search_wiki_001');
+    const edited = JSON.parse(JSON.stringify(existing!.test)) as UnitTestFile;
+    edited.test.skill = 'locality-guide';
+    const written = await writeTest(edited);
+
+    expect(written).toBe(path.join(handle.root, 'tests', 'unit', 'locality-guide', 'a.json'));
+    await expect(fs.access(existing!.filePath)).rejects.toThrow();
+    // Exactly one file carries the id afterwards.
+    const { tests } = await listTests();
+    expect(tests.filter((t) => t.id === 'ut_search_wiki_001')).toHaveLength(1);
+  });
+
   it('deletes by id', async () => {
     const deleted = await deleteTest('ut_search_wiki_001');
     expect(deleted).toBe(true);
     expect(await readTest('ut_search_wiki_001')).toBeNull();
   });
 
-  it('nextTestId returns the next sequence number', async () => {
-    expect(await nextTestId('search-familysearch-wiki')).toBe('ut_search_wiki_002');
-    expect(await nextTestId('locality-guide')).toBe('ut_locality_guide_001');
+  it('nextTestId keeps the corpus prefix and appends a random suffix', async () => {
+    // Existing id is ut_search_wiki_001, so the prefix carries over even
+    // though the skill dir is named search-familysearch-wiki.
+    expect(await nextTestId('search-familysearch-wiki')).toMatch(
+      /^ut_search_wiki_[a-z2-9]{3}$/,
+    );
+    // A skill with no tests yet derives its prefix from the directory name.
+    expect(await nextTestId('locality-guide')).toMatch(/^ut_locality_guide_[a-z2-9]{3}$/);
+  });
+
+  it('nextTestId never returns an id already in the corpus', async () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 40; i += 1) {
+      const id = await nextTestId('search-familysearch-wiki');
+      expect(id).not.toBe('ut_search_wiki_001');
+      seen.add(id);
+    }
+    // Random, so successive calls should not all collapse to one value.
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
+  it('nextTestId suffixes avoid the characters that misread as each other', async () => {
+    for (let i = 0; i < 40; i += 1) {
+      const suffix = (await nextTestId('locality-guide')).split('_').pop()!;
+      expect(suffix).not.toMatch(/[01ol]/);
+    }
   });
 });
 
@@ -209,6 +294,30 @@ describe('tests — hasGradingRelevantChange', () => {
     const a = makeTest({});
     const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
     b.test.holdout = false;
+    expect(hasGradingRelevantChange(a, b)).toBe(false);
+  });
+
+  it('detects expected_outcome toggle (it relabels the run outcome)', () => {
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    b.test.expected_outcome = 'xfail';
+    b.test.xfail_reason = 'known broken — #712';
+    expect(hasGradingRelevantChange(a, b)).toBe(true);
+  });
+
+  it('detects an xfail_reason edit on an already-xfail test', () => {
+    const a = makeTest({});
+    a.test.expected_outcome = 'xfail';
+    a.test.xfail_reason = 'known broken — #712';
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    b.test.xfail_reason = 'known broken — #712, blocked on the tool fix';
+    expect(hasGradingRelevantChange(a, b)).toBe(true);
+  });
+
+  it('treats absent expected_outcome and explicit pass as equivalent', () => {
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    b.test.expected_outcome = 'pass';
     expect(hasGradingRelevantChange(a, b)).toBe(false);
   });
 });

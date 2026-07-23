@@ -42,6 +42,18 @@ export const DEFAULT_WIKI_API_URL = "https://malachi.taild68f1b.ts.net/wiki";
 // rebuild). The LLM does not choose the model — it is not a tool parameter.
 export const DEFAULT_OPENROUTER_MODEL = "qwen/qwen3-vl-235b-a22b-instruct";
 
+// What to tell the LLM when FamilySearch auth is unusable in the HOSTED runtime.
+// The `login` tool's loopback flow cannot complete there: the callback listener
+// binds the sandbox's 127.0.0.1:1837, while the registered redirect resolves on
+// the user's own laptop. Sending the user to the app's Reconnect button is the
+// only path that actually re-authenticates them, so the error must say that and
+// must NOT mention the login tool.
+export const HOSTED_REAUTH_INSTRUCTION =
+  "Your FamilySearch session has expired — FamilySearch sign-ins last at most " +
+  "24 hours. Click \"Reconnect FamilySearch\" at the top of the app to sign in " +
+  "again, then ask me to continue. (Do not call the login tool: it cannot open " +
+  "a sign-in page from here.)";
+
 export const OPENROUTER_API_KEY_MISSING_MESSAGE =
   "No OpenRouter API key is configured. Ask the user for their OpenRouter " +
   "API key (from https://openrouter.ai/keys) and call configure_openrouter " +
@@ -92,6 +104,14 @@ export async function getClientId(): Promise<string> {
     throw new Error(CLIENT_ID_PACKAGING_ERROR);
   }
   return clientId.trim();
+}
+
+// True inside a hosted sandbox (the control plane writes `hosted: true` into
+// config.json when it provisions one). Defaults to false, so the desktop .mcpb
+// — where interactive loopback login IS the right answer — is unaffected.
+export async function isHostedMode(): Promise<boolean> {
+  const config = await loadConfig();
+  return config.hosted === true;
 }
 
 export async function getWikiApiUrl(): Promise<string> {

@@ -1,0 +1,106 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Judith A. Broyles (b. 1869) is a full sister of Charles Robinson Broyles — both children of George Broyles and Mary Elizabeth Davis. She appears in the George Broyles household in the 1880 U.S. Census (Marshall, Saline, Missouri).",
+      "details": {
+        "subject_person": "Charles Robinson Broyles (MJ7L-SL9)",
+        "relation": "sibling",
+        "target_person": {
+          "name": "Judith A. Broyles",
+          "birth": "1869, Missouri"
+        }
+      },
+      "supporting_sources": [
+        "1880 U.S. Census — George Broyles household, Marshall, Saline, Missouri (Judith enumerated as a child alongside Charles)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Minnie Belle Broyles (b. 28 Feb 1877) is a full sister of Charles Robinson Broyles — both children of George Broyles and Mary Elizabeth Davis. She appears in the George Broyles household in the 1880 U.S. Census (Marshall, Saline, Missouri).",
+      "details": {
+        "subject_person": "Charles Robinson Broyles (MJ7L-SL9)",
+        "relation": "sibling",
+        "target_person": {
+          "name": "Minnie Belle Broyles",
+          "birth": "28 February 1877, Missouri"
+        }
+      },
+      "supporting_sources": [
+        "1880 U.S. Census — George Broyles household, Marshall, Saline, Missouri (Minnie enumerated as a child alongside Charles)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Myrtle Leana Broyles (b. 17 May 1886) is a full sister of Charles Robinson Broyles — both children of George Broyles and Mary Elizabeth Davis. Born after the 1880 census, she is recoverable from a later (e.g. 1900) census of the household or Missouri birth records.",
+      "details": {
+        "subject_person": "Charles Robinson Broyles (MJ7L-SL9)",
+        "relation": "sibling",
+        "target_person": {
+          "name": "Myrtle Leana Broyles",
+          "birth": "17 May 1886, Marshall, Saline, Missouri"
+        }
+      },
+      "supporting_sources": [
+        "1900 U.S. Census of the George/Mary Broyles household; Missouri birth records naming the same parents"
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "William Harrison Broyles (b. 4 Sep 1857) is a half-brother of Charles Robinson Broyles — a son of George Broyles by his first wife (Liddy, m. 1856), so they share a father. Recoverable via the 1860 census of the first-marriage household.",
+      "details": {
+        "subject_person": "Charles Robinson Broyles (MJ7L-SL9)",
+        "relation": "half-sibling",
+        "target_person": {
+          "name": "William Harrison Broyles",
+          "birth": "4 September 1857, Cooper, Missouri"
+        }
+      },
+      "supporting_sources": [
+        "1860 U.S. Census — George Broyles household, Palestine Township, Cooper, Missouri (George's first marriage)"
+      ],
+      "required": false
+    },
+    {
+      "id": "f5",
+      "type": "relationship",
+      "description": "Milton M. Broyles (b. 1859) is a half-brother of Charles Robinson Broyles — a son of George Broyles by his first wife (Liddy), sharing a father. Recoverable via the 1860 census of the first-marriage household.",
+      "details": {
+        "subject_person": "Charles Robinson Broyles (MJ7L-SL9)",
+        "relation": "half-sibling",
+        "target_person": {
+          "name": "Milton M. Broyles",
+          "birth": "1859, Cooper, Missouri"
+        }
+      },
+      "supporting_sources": [
+        "1860 U.S. Census — George Broyles household, Palestine Township, Cooper, Missouri (George's first marriage)"
+      ],
+      "required": false
+    },
+    {
+      "id": "f6",
+      "type": "relationship",
+      "description": "Geo. W. Broyles (b. 1861) is a half-brother of Charles Robinson Broyles — a son of George Broyles by his first wife (Liddy), sharing a father. Recoverable via the 1870 census of the first-marriage household.",
+      "details": {
+        "subject_person": "Charles Robinson Broyles (MJ7L-SL9)",
+        "relation": "half-sibling",
+        "target_person": {
+          "name": "Geo. W. Broyles",
+          "birth": "1861, Missouri"
+        }
+      },
+      "supporting_sources": [
+        "1870 U.S. Census — George Broyles household, Missouri (George's first marriage)"
+      ],
+      "required": false
+    }
+  ]
+}

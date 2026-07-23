@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Death 11 Mar 1903, Cincinnati, Hamilton, Ohio materialized on William (G7JB-YH6) in the final tree; probable-tier proof cites the physician-certified Ohio county death registration plus a corroborating source.",
+    "f2": "Spring Grove surfaced only as a hypothesis (other Ferbers buried there) and the FindAGrave/cemetery lookup was deferred (needs off-FamilySearch browser access the blocked run cannot do). No burial fact or confirming source recovered. Bonus finding; defensible as 'partial' since the likely cemetery was named, graded false because it was not confirmed."
+  },
+  "annotator": "kofiatinka12"
+}

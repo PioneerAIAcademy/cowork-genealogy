@@ -124,12 +124,10 @@ time, regardless of how directly the request named the destination.
    | Analyzed evidence now plausibly answers the active question — **even with plan items still `planned`** | `research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `question-selection` (FAN pivot) |
-   | `proof-conclusion` just wrote `<ps_id>` | **Mentor gate** (`proof-critique` on `<ps_id>`) — **mandatory, not optional.** This is the last of the three mentor checkpoints and the only one that reads the proof's `narrative_markdown` as a self-contained document — it is specifically designed to catch things like a summary sentence that contradicts the list two paragraphs below it, a tier claim the cited assertions don't support, or hedging language inconsistent with a "Proved" tier. None of the earlier checkpoints check for this; skipping this one means nothing does. |
-   | All questions are `resolved` and `project.status` still `active` | **First verify:** does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and `target_id` equal to that `ps_id`? If any resolved question's proof summary has no proof-critique evaluation on record, that question is not actually done — go back and run the mentor gate on it before writing `project.status = "completed"`. Marking a question `resolved` is not, by itself, evidence this check happened. Once verified: write `project.status = "completed"` via `research_append`, then stop. |
-   | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `proof-conclusion` |
-   | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included) | `proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
-   | `proof-conclusion` wrote `<ps_id>` (and, at tier ≥ probable, its concluded relationship or fact is now in `tree.gedcomx.json`) | **`proof-critique` mentor review** on `<ps_id>` (advisory — see Mentor checkpoints), then continue |
-   | All questions are `resolved`, **every tier-≥-probable conclusion is encoded in `tree.gedcomx.json`** (see **Tree-encoding gate**), and `project.status` still `active` | Write `project.status = "completed"` via `research_append`, then stop |
+    | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included) | `proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
+    | `proof-conclusion` wrote `<ps_id>`, and (tier < probable, or its concluded relationship or fact is now in `tree.gedcomx.json`) | **Mentor gate** (`proof-critique` on `<ps_id>`) — **mandatory to invoke and record, not optional.** This is the last of the three mentor checkpoints and the only one that reads the proof's `narrative_markdown` as a self-contained document — it is specifically designed to catch things like a summary sentence that contradicts the list two paragraphs below it, a tier claim the cited assertions don't support, or hedging language inconsistent with a "Proved" tier. None of the earlier checkpoints check for this; skipping this one means nothing does. "Mandatory" means the gate must run and its verdict must land in `evaluations[]` before the question can be considered done — it does NOT mean you must apply its suggested fix; see **Mentor checkpoints** for that distinction. |
+    | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `proof-conclusion` |
+    | All questions are `resolved` and `project.status` still `active` | **First verify BOTH gates, in order — do not write `completed` until both hold:** (1) **Tree-encoding** — every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**); if not, re-invoke `proof-conclusion` for that question. (2) **Mentor verdict on record** — does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and matching `target_id`? If not, run the mentor gate on it first. Marking a question `resolved` is not, by itself, evidence either check happened. Once both are verified: write `project.status = "completed"` via `research_append`, then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
    **Record-extraction contract — enforced, not advisory.** Inline
@@ -143,6 +141,18 @@ time, regardless of how directly the request named the destination.
    pass, so never re-derive or "refine" `evidence_type` /
    `information_quality` yourself — conflict-resolution and
    proof-conclusion trust what is recorded.
+
+   **Conflict/hypothesis contract — enforced, not advisory.** Inline
+   elimination of a namesake or other candidate, or inline comparison of
+   two records for possible shared identity, is **forbidden** outside
+   `conflict-resolution` / `hypothesis-tracking` — including mid-critique,
+   when you are revising a proof narrative in response to a mentor
+   verdict. Persist the reasoning first (a `hypotheses` entry for a
+   competing/ruled-out candidate, a `conflicts` entry for two records
+   compared), then cite the resulting `h_`/`c_` id in the narrative — never
+   the reverse. A proof narrative that names an elimination or an identity
+   comparison with no backing `hypotheses`/`conflicts` entry is incomplete,
+   whatever tier it claims.
 
    **Hard rules held in this context** (for any residual inline
    judgment — reading state, weighing routes — never for writing):
@@ -240,13 +250,16 @@ After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
    the fact's `date` (e.g. `"between 1879 and 1885"`) rather than leaving the
    fact off because no exact date was proved.
 2. **If it is missing, re-invoke `proof-conclusion` for the same question** (its
-   §6 writes the relationship or fact). Do this *before* the `proof-critique`
-   mentor review and before anything marks the question resolved.
-3. **This is a hard gate.** Unlike the advisory mentor, it blocks: never let
-   `question-selection` mark the question resolved, and never write
-   `project.status = "completed"`, while any tier-≥-probable conclusion is
-   unencoded in the tree. A run does not finish with a conclusion that never
-   reached the tree.
+    §6 writes the relationship or fact). Do this *before* the `proof-critique` mentor
+    review and before anything marks the question resolved.
+ 3. **This is a hard gate — and so, separately, is the proof-critique mentor
+    gate on that `<ps_id>`** (see **Mentor checkpoints** and the routing
+    table): never let `question-selection` mark the question resolved, and
+    never write `project.status = "completed"`, while either check fails —
+    any tier-≥-probable conclusion unencoded in the tree, or any resolved
+    question's `ps_id` with no `proof-critique` verdict on record. A run does
+    not finish with a conclusion that never reached the tree, or that never
+    went through its mandatory review.
 
 At tier `possible` / `not_proved` / `disproved` no tree write is expected (the
 conclusion is a documented lead, not a tree assertion), so the gate is satisfied
@@ -261,14 +274,22 @@ evaluates the written conclusion against a focused rubric, and records
 a structured verdict. It is **read-only** — it never modifies project
 files; it writes only to `evaluations/`.
 
-**One gate, at the end, advisory — identical in interactive and
-`--autonomous` mode.** It runs *after* the answer is already persisted,
-so its verdict informs later review; it never blocks the flow, forces
-rework, or re-opens a resolved question. (The former `pre-exhaustiveness`
-and `conclusion-readiness` pre-gates were removed: they duplicated
-`research-exhaustiveness`'s own 7-point check and `proof-conclusion`'s
-tier analysis, the read-only mentor cannot verify exhaustiveness without
-search tools, and their forced rework starved the proof step. The mentor
+**One gate, at the end — mandatory to invoke and record; advisory only in
+what it recommends — identical in interactive and `--autonomous` mode.**
+It runs *after* the answer is already persisted, so its verdict cannot force
+a rewrite of a conclusion the researcher already reached, and it never
+re-opens a resolved question by itself. But per the routing table's final
+completion check, a question is not actually done — and `project.status`
+may not go to `completed` — until this gate has run and a matching
+`proof-critique` verdict is on record in `evaluations[]` for every `ps_id`
+a resolved question references. Marking a question `resolved` is not, by
+itself, evidence this happened. (The former `pre-exhaustiveness` and
+`conclusion-readiness` pre-gates were removed for a *different* reason: they
+duplicated `research-exhaustiveness`'s own 7-point check and
+`proof-conclusion`'s tier analysis, the read-only mentor cannot verify
+exhaustiveness without search tools, and their forced rework starved the
+proof step. That history doesn't apply to this final gate, which only
+requires a verdict on record, not that the researcher act on it. The mentor
 still *supports* those focuses **on-demand** — see below.)
 
 ### When to invoke
@@ -283,7 +304,7 @@ For the `proof-critique` gate, first check `evaluations/` for an existing
 summary; if a current verdict exists, act on it rather than re-invoking.
 Otherwise invoke `@plugin:gps-mentor` naming the focus and target_id.
 
-### Verdict handling — advisory, identical in both modes
+### Verdict handling — the recommendation is advisory; invoking the gate isn't
 
 For each gated transition, check `evaluations/` for an existing
 verdict file matching `<focus>-<target_id>-*.json` that is newer

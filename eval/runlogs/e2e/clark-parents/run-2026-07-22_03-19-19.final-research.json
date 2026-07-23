@@ -1,0 +1,566 @@
+{
+  "project": {
+    "id": "rp_clark_parents",
+    "objective": "Who were the parents of Christiana Clark, born 29 January 1783 in Pennsylvania, who married William Clark, lived in Coshocton County, Ohio, and died 27 December 1848 in Monroe, Green County, Wisconsin?",
+    "subject_person_ids": [
+      "GP3R-215"
+    ],
+    "status": "completed",
+    "created": "2026-07-06",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who are named as the parents of Christiana Clark in her 2 March 1783 baptism record at Rehrersburg, Tulpehocken Township, Berks County, Pennsylvania?",
+      "rationale": "The tree already contains a baptism fact for Christiana (GP3R-215) dated 2 March 1783 at Rehrersburg, Tulpehocken Township, Berks County, PA. German Reformed and Lutheran church registers from this congregation routinely record the father's name and often the mother's at christening. This record, if located, would provide direct evidence of both parents and is therefore the highest-priority gatekeeper question \u2014 answering it would immediately unlock the project objective. Berks County church registers from this era are available on FamilySearch through the DAR/HSP microfilm and the Tulpehocken congregation's own records.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-22",
+      "resolution_assertion_ids": [
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "The baptism register of Altalaha Evangelical Lutheran Church (Rehrersburg, 2 March 1783) directly and explicitly names Adam Schreck as father and Margreth as mother of Christina Schreck. The question asks specifically what the baptism record names \u2014 that document was located, read (from typed transcription/image), and its evidence extracted. Indexed PA birth and marriage collections were searched (both negative). The parents' marriage record is inaccessible via indexed search (pre-1852 PA church records are unindexed; browse-only registers would require a future targeted search). The source is a typed transcription rather than the original handwritten German register, which is a stated limitation. No conflicts exist.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the baptism register entry for 2 March 1783 at Rehrersburg explicitly names Adam Schreck as father and Margreth (given name only) as mother of Christina [Schreck]. The question is directly answered.",
+          "repository_breadth": "FamilySearch indexed PA birth collection (negative), FamilySearch indexed PA marriage collections (negative \u2014 pre-1852 church marriages not indexed), and FamilySearch image browse of the Altalaha Lutheran Church baptism register (positive). For 18th-century Berks County Lutheran records, FamilySearch holds the primary digitized collection. The HSP supplemental collection and external repositories (Ancestry) were not searched but are unlikely to hold an indexed transcription of this unindexed 1783 Altalaha register entry.",
+          "original_substitution": "LIMITATION: src_001 is a typed transcription of the original German-language handwritten register (Lutheran Archives, RG-L031, Box 5, ff1). The original was not directly examined. The typed transcription is an official church copy, not a user-generated derivative, and the birth/baptism dates are internally consistent with the tree. Examining the original register at the Lutheran Archives is the recommended next step to verify the transcription reading of the parent names.",
+          "independent_verification": "Only one source locates the parents: the baptism record itself. The parents' marriage record would independently confirm them as a couple but is not accessible via indexed search for pre-1852 Berks County (church registers are browse-only). No second independent source corroborates the parentage. This is a limitation of the current evidence base \u2014 the conclusion rests on a single record.",
+          "evidence_class": "The baptism register is an official record; information about the child's parents was supplied by the presenting parent(s) at the baptism (primary information, direct evidence). The source classification is derivative (typed transcription). The evidence type is the strongest available for 18th-century German Lutheran parentage.",
+          "conflict_resolution": "No conflicts. The baptism dates (born 29 Jan 1783, baptized 2 Mar 1783) match the tree's existing facts for GP3R-215 exactly. No prior parent links existed to conflict with Adam Schreck and Margreth.",
+          "overturn_risk": "LOW for the narrow q_001 (what the record names). MODERATE for the broader parentage conclusion: (a) the typed transcription has not been verified against the original handwritten register \u2014 a mistranscription of the father's name is possible but unlikely given the internal consistency; (b) the mother's maiden name is unknown (recorded as 'Margreth' only); (c) no independent source corroborates the parentage. A future researcher should: (1) examine the original German handwritten register at Lutheran Archives RG-L031, Box 5, ff1; (2) search Berks County Lutheran church marriage registers (browse-only) for an Adam Schreck marriage ca. 1760\u20131782 that would supply the mother's maiden name and independently confirm the couple."
+        }
+      },
+      "created": "2026-07-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Pennsylvania (statewide)",
+          "date_range": "1780-1785",
+          "repository": "FamilySearch",
+          "rationale": "The indexed collection 'Pennsylvania, Births and Christenings, 1709-1950' (collection 1681005) aggregates baptism records from many PA German Reformed and Lutheran churches including Berks County congregations. Searching for Christiana Clark (variants: Christina, Christine, Kl\u00e4rk, Clarke, Clerck) with birth year 1783 and place Pennsylvania has the highest probability of returning a direct hit that names the parents \u2014 and it is free and immediately searchable before browsing unindexed images.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Rehrersburg, Tulpehocken Township, Berks County, Pennsylvania",
+          "date_range": "1757-1842",
+          "repository": "FamilySearch",
+          "rationale": "The Altalaha (Altamaha) Evangelical Lutheran Church at Rehrersburg is the exact congregation named in the tree for Christiana's 2 March 1783 baptism. Multiple unindexed image volumes exist on FamilySearch: image group 007767897_013 ('1757-1842 Births or Christenings', 150 images), 121085255 ('Altalaha Lutheran Church, Rehrersburg, Baptisms', 132 images), 121222516 ('Tulpehocken Church Records, 1730-1800, Altalaha Church', 172 images), and the 124254538 series. Browsing these registers directly for a March 1783 entry is the most targeted path to the parent names. Route through search-images skill (volume_search \u2192 image_search \u2192 image_read).",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Berks County, Pennsylvania",
+          "date_range": "1760-1785",
+          "repository": "FamilySearch",
+          "rationale": "Per the record-type guide, a parentage plan requires a dedicated search for the parents' own marriage record, kept separate from the child's baptism item. Christiana was born in 1783, so her parents married no later than ca. 1782. FamilySearch collections 1681011 ('Pennsylvania, Marriages, 1709-1940'), 2466360 ('Pennsylvania, Church Marriages, 1682-1976'), and 1589502 ('Pennsylvania, County Marriages, 1775-1991') are indexed and cover Berks County. The couple's marriage record: (a) establishes them as a unit; (b) supplies the mother's maiden name, which church baptism entries sometimes omit; and (c) corroborates any father's name derived only from the baptism entry. Note limit: the marriage proves the couple married \u2014 it does not by itself prove Christiana is their child.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Berks County, Pennsylvania",
+          "date_range": "1750-1800",
+          "repository": "FamilySearch",
+          "rationale": "The Historical Society of Pennsylvania (HSP) collection on FamilySearch \u2014 'Pennsylvania, Philadelphia, Historical Society of Pennsylvania, Births and Baptisms, 1520-1999' (collection 4138679, 1.29M indexed records) \u2014 holds extensive Berks County church records donated to HSP, some not covered by other indexes. If the Altalaha register transcription exists there, it may index the 1783 baptism with parent names. The companion 'HSP Congregational Records' (collection 4138685) and 'HSP Marriage Records' (4138689) may also cover Berks County German church records for the parents' marriage. Search as supplemental and cross-check against pli_001 results.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "probate",
+          "jurisdiction": "Berks County, Pennsylvania",
+          "date_range": "1783-1830",
+          "repository": "FamilySearch",
+          "rationale": "FAN item: if Christiana's father died in Berks County (either before or after she migrated to Ohio), his will or intestate administration might name Christiana (and her siblings) explicitly as children. 'Pennsylvania, Probate Records, 1683-1994' (collection 1999196, images-only, 3.2M images) covers Berks County wills and administrations from the 18th century forward. Search under surname Clark (variants: Clarke, Klerk) in Berks County, date range 1783-1830. This is indirect parentage evidence but critical if the baptism register is silent or lost.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Tulpehocken Township, Berks County, Pennsylvania",
+          "date_range": "1735-1888",
+          "repository": "FamilySearch",
+          "rationale": "Supplemental full-text search: several Tulpehocken church register volumes on FamilySearch are marked fulltextSearchable=true (image groups 115189619, 115247979, 007896011, 008139155). Running a full-text search for 'Clark' or 'Kl\u00e4rk' across these volumes (via the search-full-text skill) may surface the parents' names even where browse-only image examination would require reading every page. Treat as a parallel fallback to pli_002, not a replacement for the image browse.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T02:44:52.034Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Pennsylvania, Births and Christenings, 1709-1950 (1681005)",
+        "givenName": "Christina / Christiana / Clarke variants",
+        "surname": "Clark / Clarke",
+        "birthYear": "1778-1788",
+        "birthPlace": "Pennsylvania / Berks, Pennsylvania",
+        "recordType": "birth",
+        "variants_tried": [
+          "Christina Clark",
+          "Christiana Clark",
+          "Christina Clarke"
+        ],
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No indexed entry for Christiana/Christina Clark born ca. 1783 in PA/Berks County found in collection 1681005. The Altalaha Evangelical Lutheran Church at Rehrersburg is browse-only (0% indexed) and its 1783 christening records are not in this aggregated index. Broader birth-record search returned only 19th-20th century newspaper notices, not church registers. Proceed to pli_002 (browse Altalaha church image volumes directly)."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-22T02:45:30.690Z",
+      "tool": "record_search",
+      "query": {
+        "collections": "1681011, 2466360, 1589502 (Pennsylvania marriages)",
+        "surname": "Clark",
+        "marriagePlace": "Berks, Pennsylvania / Pennsylvania",
+        "marriageYearRange": "1758-1782"
+      },
+      "outcome": "negative",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 9,
+      "notes": "9 Clark/Clarke marriages in Berks County PA 1775-1782 returned (collection 1589502); none match a German Lutheran Clark who would have baptized a daughter at Altalaha/Rehrersburg. The parents' surname and first names are unknown at this stage \u2014 marriage search cannot be targeted until the baptism record (pli_002) names the parents. Collections 1681011 and 2466360 returned 0 results for Clark in PA/Berks 1758-1782. German Reformed/Lutheran marriages in this era were recorded in church registers (browse-only), not civil records. Re-execute pli_003 after pli_002 names the parents."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T02:55:44.158Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "007767897_013_M94S-YWF",
+        "title": "1757-1842 Births or Christenings, Altamaha Evangelical Lutheran Church, Rehrersburg, Berks, Pennsylvania",
+        "standardPlace": "Rehrersburg, Tulpehocken Township, Berks, Pennsylvania, United States",
+        "recordType": "Church Baptisms",
+        "imagesExamined": "00826-00827 (admin), 00850 (p.22, AU), 00858 (p.30, BORDNER), 00861 (p.33, CLAIR), 00862 (p.34, CLARK), 00863 (p.35, KRIECHBAUM), 00870 (p.42, DUNDORE)"
+      },
+      "outcome": "partial",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 150,
+      "notes": "Browsed alphabetical computer-printout index (Batch C51143-1) of Altalaha Evangelical Lutheran Church baptism register, Rehrersburg, Berks County, PA, 1757-1842. The CLARK section (page 34, image 00862) contains only ONE entry: CLARCK, Anna Maria, born 27 Nov 1798, chr. 9 Dec 1798, daughter of CHRISTOPH CLARCK and BARBARA (serial 01130-5). No Christiana/Christina Clark entry for 1783 found in this index. The index may be incomplete \u2014 original register images in volume 121222516 should be browsed for a 1783 Clark entry. CHRISTOPH CLARCK and BARBARA identified as a candidate parent pair: they were Altalaha Lutheran members with a daughter Anna Maria in 1798; a 1783 daughter Christiana from the same couple is chronologically plausible."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T03:00:49.466Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "121085255",
+        "title": "Altalaha Lutheran Church, Rehrersburg, Berks County, PA, Baptisms, 1757-1843",
+        "standardPlace": "Rehrersburg, Tulpehocken Township, Berks, Pennsylvania, United States",
+        "recordType": "Church Baptisms",
+        "imagesExamined": "00001 (cover), 00036 (Sep 1782-Mar 1783), 00037 (Jan-May 1783), 00040 (Dec 1783-Apr 1784)"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 132,
+      "notes": "FOUND: Image 121085255_00037, Entry 1 \u2014 Christina, born 29 Jan 1783, baptized 2 Mar 1783, father Adam Schreck, mother Margreth, sponsors Andreas Saltzgeber and Christina. Birth and baptism dates match exactly the tree facts for Christiana Clark (GP3R-215). Her maiden name was SCHRECK \u2014 she was born Christina Schreck, daughter of Adam Schreck and Margreth, and later married William Clark (KGCJ-XPW). Also noted: Adam Schreck appears as godparent on image 00040 (1784 baptism for Jacob Hageman), confirming he was a continuing member of the Altalaha Lutheran congregation. This baptism record is the primary evidence for the parentage question."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-22T03:09:38.029Z",
+      "tool": "record_search",
+      "query": {
+        "collections": "1681011, 2466357, 1589502 (Pennsylvania marriages)",
+        "surname": "Schreck / Shreck",
+        "givenName": "Adam",
+        "marriagePlace": "Pennsylvania",
+        "marriageYearRange": "1755-1782",
+        "recordType": "marriage",
+        "variants_tried": [
+          "Schreck",
+          "Shreck"
+        ],
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 0,
+      "notes": "Searched PA marriage collections (1681011, 2466357, 1589502) for Adam Schreck/Shreck marrying in Pennsylvania ca. 1755-1782. Zero results. Expected: Pennsylvania had no civil registration before 1852; pre-1852 marriages were recorded only in church registers (mostly browse-only images). The Altalaha Lutheran Church at Rehrersburg is the likely venue for Adam Schreck's marriage, but its register is unindexed and would require a targeted image browse of marriage entries. All indexed PA marriage results for Adam Schreck/Shreck are 19th-century or later (Monaghan ca. 1880s, Keller ca. 1900s, etc.). The parents' marriage record cannot be retrieved via indexed search for this era and place \u2014 a future browse of Berks County Lutheran church marriage registers would be required."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "Altalaha Evangelical Lutheran Church (Rehrersburg, Tulpehocken Township, Berks County, Pennsylvania), Baptisms 1757\u20131843, typed transcription of original German-language register; entry 1 (Christina Schreck, baptized 2 Mar 1783); image 121085255_00037, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3QS7-99WC-WQHP?i=36 : accessed 22 July 2026); original register: RG-L031, Box 5, ff1, Lutheran Archives.",
+      "citation_detail": {
+        "who": "Christina Schreck (child), Adam Schreck (father), Margreth [Schreck] (mother)",
+        "what": "Baptism register entry, typed transcription of original German-language register, image 121085255_00037",
+        "when_created": "Original register entries 1783; transcription date unknown",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch, image group 121085255; original at Lutheran Archives, RG-L031, Box 5, ff1",
+        "where_within": "Image 121085255_00037, entry 1 (first entry on page, Jan\u2013May 1783 baptisms)"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99WC-WQHP?i=36",
+      "notes": "This image is a typed transcription/index of the original German-language Altalaha Lutheran baptism register held at RG-L031, Box 5, ff1, Lutheran Archives. The original handwritten German register was not directly examined. Classification: derivative. Transcription introduces risk of misreading or mistranslation of German names and dates.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S1"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "capture:familysearch-image-121085255_00037-entry1",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Christina [Schreck]",
+      "structured_value": {
+        "given": "Christina",
+        "surname": "Schreck"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The child's name was supplied by the presenting parent(s) at the baptism. Surname Schreck is inferred from the father's name Adam Schreck; the register does not record the child's surname explicitly.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "capture:familysearch-image-121085255_00037-entry1",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 29 January 1783",
+      "date": "1783-01-29",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth date supplied by the presenting parent(s) who had firsthand knowledge. No birth place stated in the entry.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "capture:familysearch-image-121085255_00037-entry1",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "baptized 2 March 1783 at Altalaha Evangelical Lutheran Church, Rehrersburg, Tulpehocken Township, Berks County, Pennsylvania",
+      "date": "1783-03-02",
+      "date_certainty": "exact",
+      "place": "Rehrersburg, Tulpehocken Township, Berks County, Pennsylvania",
+      "information_quality": "primary",
+      "informant": "officiating minister",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The officiating minister recorded the baptism date and place in their official capacity. Date and place share the same informant and proximity, combined in one assertion.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Rehrersburg, Tulpehocken Township, Berks, Pennsylvania, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "capture:familysearch-image-121085255_00037-entry1",
+      "record_role": "father_of_child",
+      "fact_type": "name",
+      "value": "Adam Schreck",
+      "structured_value": {
+        "given": "Adam",
+        "surname": "Schreck"
+      },
+      "information_quality": "primary",
+      "informant": "Adam Schreck (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The father's name was recorded at the baptism; the father was likely present and supplied his own identity.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "capture:familysearch-image-121085255_00037-entry1",
+      "record_role": "mother_of_child",
+      "fact_type": "name",
+      "value": "Margreth [Schreck]",
+      "structured_value": {
+        "given": "Margreth",
+        "surname": "Schreck"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The mother's given name only is recorded; surname is not stated in the entry but is inferred as Schreck from the father's entry. The register's convention for this period does not record the wife's surname.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "capture:familysearch-image-121085255_00037-entry1",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Adam Schreck (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The baptism register explicitly names Adam Schreck as father of Christina. Relationship is directly stated, not inferred from household position.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "capture:familysearch-image-121085255_00037-entry1",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Margreth [Schreck] (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The baptism register explicitly names Margreth as mother of Christina. Relationship is directly stated. Mother's surname not given in register.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "capture:familysearch-image-121085255_00037-entry1",
+      "record_role": "godparent_1",
+      "fact_type": "name",
+      "value": "Andreas Saltzgeber",
+      "structured_value": {
+        "given": "Andreas",
+        "surname": "Saltzgeber"
+      },
+      "information_quality": "primary",
+      "informant": "Andreas Saltzgeber",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Sponsor/godparent recorded at the baptism; was present as a witness to the ceremony.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "capture:familysearch-image-121085255_00037-entry1",
+      "record_role": "godparent_2",
+      "fact_type": "name",
+      "value": "Christina [surname unknown]",
+      "structured_value": {
+        "given": "Christina",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "Christina [sponsor]",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Second sponsor recorded by given name only; surname not stated in the register entry. Possible FAN associate.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "GP3R-215",
+      "confidence": "confident",
+      "rationale": "Christina [Schreck] named as child in the 1783 baptism record exactly matches Christiana Clark (GP3R-215): baptism date 2 Mar 1783 and birth date 29 Jan 1783 are identical to tree facts. No score available (image-sourced assertion). Identity is strong \u2014 the same person is named in the same event record that already anchors the tree's christening fact.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "GP3R-215",
+      "confidence": "confident",
+      "rationale": "Birth date 29 January 1783 from the baptism record matches the tree's birth date for GP3R-215 exactly. Combined with the identical baptism date and church, this is the same person.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "GP3R-215",
+      "confidence": "confident",
+      "rationale": "Christening 2 March 1783 at Altalaha Evangelical Lutheran Church, Rehrersburg matches the tree's christening fact for GP3R-215 on date, place, and congregation. Direct match \u2014 this is the record the tree's christening fact was derived from.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Adam Schreck is named as the father of Christina in the 1783 baptism entry. He has been materialized as a new tree person (I1). Confidence is probable rather than confident because I1 rests on this single record with no independent corroboration yet. Name and role are unambiguous in the register.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Margreth [Schreck] is named as the mother of Christina in the 1783 baptism entry. She has been materialized as a new tree person (I2). Confidence is probable because I2 rests on this single record with no independent corroboration yet. The surname Schreck is inferred from the father's name; the register records the given name only.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "GP3R-215",
+      "confidence": "confident",
+      "rationale": "The baptism register explicitly states Adam Schreck as the father of Christina (GP3R-215). This relationship assertion bears on Christina as the child \u2014 directly answering the parentage question for q_001.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "The relationship assertion names Adam Schreck (I1) as father of Christina. Bears on I1 as the father party to the parent-child relationship. Probable because I1 is a new stub corroborated by one record only.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "GP3R-215",
+      "confidence": "confident",
+      "rationale": "The baptism register explicitly states Margreth as the mother of Christina (GP3R-215). This relationship assertion bears on Christina as the child \u2014 directly corroborating the parentage question for q_001.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "The relationship assertion names Margreth [Schreck] (I2) as mother of Christina. Bears on I2 as the mother party to the parent-child relationship. Probable because I2 is a new stub corroborated by one record only.",
+      "match_score": null,
+      "created": "2026-07-22"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched indexed Pennsylvania birth records (FamilySearch collection 1681005, negative). Image-browsed the Altalaha Evangelical Lutheran Church baptism register at Rehrersburg (FamilySearch image group 121085255, positive \u2014 entry 1 on image 00037 names Adam Schreck as father and Margreth as mother of Christina, born 29 Jan 1783, baptized 2 Mar 1783). Searched indexed Pennsylvania marriage collections (1681011, 2466357, 1589502) for Adam Schreck ca. 1755\u20131782 (negative \u2014 pre-1852 Pennsylvania marriages were recorded only in church registers, which are browse-only unindexed images; the parents' marriage record was not located). The source is a typed transcription of the original German handwritten register; the original (Lutheran Archives, RG-L031, Box 5, ff1) was not examined.",
+      "narrative_markdown": "## Parents of Christiana Clark: Adam Schreck and Margreth\n\n**Conclusion (Probable):** The 2 March 1783 baptism register of the Altalaha Evangelical Lutheran Church at Rehrersburg, Tulpehocken Township, Berks County, Pennsylvania names **Adam Schreck** as father and **Margreth** (given name only; surname not stated) as mother of Christina, born 29 January 1783.\n\n### Identity of the Child\n\nThe baptism register entry does not record a surname for the child \u2014 she is listed simply as \"Christina.\" The surname Schreck applied here is inferred from her father's name (Adam Schreck), following the naming conventions of German Lutheran families in this congregation. The link between this entry and Christiana Clark (GP3R-215) rests on the exact correspondence of birth date (29 January 1783), baptism date (2 March 1783), and baptism place (Rehrersburg, Tulpehocken Township, Berks County, Pennsylvania) to the tree's pre-existing facts for GP3R-215. No other baptism entry in the Altalaha register has been identified with these matching dates.\n\n### Evidence\n\nThe sole source for this conclusion is the Altalaha Lutheran Church baptism register, accessed as a typed transcription on FamilySearch (image 121085255_00037).[^1] The entry records:\n\n- **Child:** Christina, born 29 January 1783, baptized 2 March 1783\n- **Father:** Adam Schreck\n- **Mother:** Margreth\n- **Sponsors:** Andreas Saltzgeber; Christina [surname not given]\n\nThe parents' names were supplied by the presenting parent(s) \u2014 persons with firsthand knowledge of the child's identity and parentage \u2014 and the officiant recorded the baptism date and place in an official capacity. Both are classified as **primary information**; the entries directly and explicitly name the parents, qualifying as **direct evidence**.\n\n**Source classification:** derivative (typed transcription of the original German-language handwritten register). **Information quality:** primary. **Evidence type:** direct.\n\n### Alternative Candidate Considered and Eliminated\n\nThe alphabetical computer-printout index of Altalaha Lutheran baptisms 1757\u20131842 (FamilySearch image group 007767897_013, examined in log_003) was searched for any Clark-surnamed entry that might suggest a competing candidate for Christiana's parentage. The CLARK section of that index contains only one entry: CLARCK, Anna Maria, born 27 November 1798, daughter of CHRISTOPH CLARCK and BARBARA (serial 01130-5). No Christina or Christiana Clark entry for 1783 appears anywhere in the index.\n\nChristoph Clarck and Barbara are a Clark-surnamed couple in the same congregation whose timeline is chronologically plausible (a daughter in 1783 and another in 1798). However, the alphabetical index shows no 1783 Clark baptism \u2014 negative evidence against this couple as parents of the 1783 child. More decisively, the register entry found on image 121085255_00037 names the father as Adam **Schreck**, not Clark. There is no basis for associating that entry with the Christoph/Barbara Clark couple. The Schreck surname and the exact date match together identify Adam Schreck and Margreth as the parents; Christoph Clarck/Barbara are eliminated as a competing candidate.\n\n### Limitations\n\n1. **Derivative source.** The image (121085255_00037) is a typed transcription, not the original handwritten German register. The original is held at the Lutheran Archives (RG-L031, Box 5, ff1) and was not directly examined. A mistranscription of the parent names is possible but unlikely, given that the birth and baptism dates are internally consistent with the tree's pre-existing facts.\n\n2. **Single source.** No independent second source corroborates the parentage. Indexed Pennsylvania marriage collections (1681011, 2466357, 1589502) were searched for an Adam Schreck marriage ca. 1755\u20131782 and returned zero results \u2014 Pennsylvania had no civil marriage registration before 1852, and pre-1852 Lutheran church marriage registers are unindexed (browse-only). The parents' marriage record was not located.\n\n3. **Mother's maiden name unknown.** The register records the mother as 'Margreth' only; her surname before marriage is not stated.\n\n4. **Tier rationale.** Rated **Probable** \u2014 not Proved \u2014 because: (a) the source is a derivative typed transcription with the original unverified; (b) only one source was located; (c) no independent verification via the parents' marriage record was possible.\n\n### Recommended Next Steps (to advance to Proved)\n\n1. Examine the original German handwritten register at the Lutheran Archives (RG-L031, Box 5, ff1) to verify the typed transcription's reading of the parent names.\n2. Browse Berks County Lutheran church marriage registers (browse-only image series on FamilySearch) for an Adam Schreck marriage entry ca. 1760\u20131782, which would independently confirm the couple and supply the mother's maiden name.\n3. Search Berks County Pennsylvania probate records for an Adam Schreck will or intestate administration naming his children, including Christiana/Christina.\n\n[^1]: Altalaha Evangelical Lutheran Church (Rehrersburg, Tulpehocken Township, Berks County, Pennsylvania), Baptisms 1757\u20131843, typed transcription of original German-language register; entry 1 (Christina Schreck, baptized 2 Mar 1783); image 121085255_00037, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3QS7-99WC-WQHP?i=36 : accessed 22 July 2026); original register: RG-L031, Box 5, ff1, Lutheran Archives."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-22T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-22T00-00-00.json"
+    }
+  ]
+}

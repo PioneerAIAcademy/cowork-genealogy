@@ -63,6 +63,8 @@ the e2e benchmark; see
   ```
   Or set it in your shell. The **skill runner** prefers your Claude Code subscription (`~/.claude/`) when one is available, billing it rather than the metered key, and only falls back to the API key when no subscription session is found. The judge always uses the key regardless. See `eval/harness/harness/auth.py` for resolution rules.
 
+  **In a git worktree:** `eval/.env` is gitignored, so a fresh worktree does not have it and the judge cannot run there. `make install-hooks` (now part of `make install`) makes every *new* worktree link it automatically; for a worktree that already exists, run `make worktree-link` inside it. The harness refuses to start without a judge key when any selected test is positive, so a missing link fails in a second rather than after a paid-for suite — override with `--allow-missing-judge` if you deliberately want an ungraded run.
+
 ## Running manually (macOS / Linux)
 
 The Windows batch scripts wrap a few `uv` / `npm` commands. On macOS or Linux, run them directly:

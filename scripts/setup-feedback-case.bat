@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 REM Set up a feedback case directory from a submitted zip (Windows).
-REM Contract: docs/specs/feedback-case-spec.md section 11.
+REM Contract: docs/specs/feedback-case-spec.md section 3.
 REM Counterpart to setup-feedback-case.sh.
 
 set "FORCE=0"
@@ -155,5 +155,5 @@ echo   ^<dest-dir^>              Optional. Default: %%USERPROFILE%%\feedback\^<s
 echo                           where ^<slug^> is the zip basename without ".zip".
 echo   --force                 Overwrite an existing non-empty dest-dir.
 echo.
-echo See docs\specs\feedback-case-spec.md section 11 for the full contract.
+echo See docs\specs\feedback-case-spec.md section 3 for the full contract.
 exit /b 2

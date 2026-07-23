@@ -374,6 +374,37 @@ button {
   display: grid;
   /* --chat-w is set inline by SessionView (drag state, persisted per browser). */
   grid-template-columns: var(--chat-w, 380px) auto 1fr;
+  /* Row 1 (auto) is the FamilySearch-expired banner; it collapses to 0 when the
+     banner isn't rendered, so the panes keep filling the viewport as before.
+     The panes are pinned to row 2 so they never drift into the banner row. */
+  grid-template-rows: auto 1fr;
+}
+.sessionShell > .chatPane,
+.sessionShell > .paneDivider,
+.sessionShell > .viewerPane {
+  grid-row: 2;
+}
+/* Amber, from the viewer's badge palette so it tracks both themes. */
+.fsExpiredBanner {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  background: var(--badge-amber-bg);
+  color: var(--badge-amber-text);
+  border-bottom: 1px solid var(--accent-gold-strong);
+  font-size: 14px;
+  text-align: center;
+}
+.fsExpiredBanner .btnPrimary {
+  flex: none;
+  width: auto;
+  padding: 6px 14px;
+  font-size: 13px;
 }
 .chatPane {
   display: flex;

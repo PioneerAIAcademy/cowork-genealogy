@@ -34,7 +34,12 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
-import { resolveStandardPlace } from "../utils/place-resolver.js";
+import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
+
+// Re-exported for back-compat: tests and any other importer that reaches this
+// check via research-append.ts (its original home) keep working unchanged.
+// The implementation now lives in place-resolver.ts, shared with tree-edit.ts.
+export { countryConsistency };
 import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -709,87 +714,6 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
 }
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
-
-/** Country-token guard for the wrong-geocode theme. Small, conservative alias
- *  map: only when the assertion's own place TEXT ends in a recognized country
- *  can a contradiction be declared. */
-const COUNTRY_ALIASES: Record<string, string> = {
-  "united states": "united states",
-  "united states of america": "united states",
-  usa: "united states",
-  us: "united states",
-  america: "united states",
-  "united kingdom": "united kingdom",
-  uk: "united kingdom",
-  "great britain": "united kingdom",
-  england: "england",
-  scotland: "scotland",
-  wales: "wales",
-  "northern ireland": "northern ireland",
-  ireland: "ireland",
-  canada: "canada",
-  australia: "australia",
-  "new zealand": "new zealand",
-  germany: "germany",
-  france: "france",
-  norway: "norway",
-  sweden: "sweden",
-  denmark: "denmark",
-  netherlands: "netherlands",
-  holland: "netherlands",
-  belgium: "belgium",
-  italy: "italy",
-  spain: "spain",
-  portugal: "portugal",
-  poland: "poland",
-  russia: "russia",
-  austria: "austria",
-  hungary: "hungary",
-  switzerland: "switzerland",
-  mexico: "mexico",
-};
-
-const UK_CONSTITUENTS = new Set(["england", "scotland", "wales", "northern ireland"]);
-
-function canonicalCountry(segment: string): string | null {
-  const norm = segment.trim().toLowerCase().replace(/\./g, "");
-  return COUNTRY_ALIASES[norm] ?? null;
-}
-
-function placeSegments(place: string): string[] {
-  return place
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-}
-
-/**
- * Compare the country the place TEXT names (its trailing token, when that token
- * is a recognized country) against the standard_place's segments.
- * - "ok": the input names a country and the standard place is consistent.
- * - "contradiction": the input names a country the standard place plainly lacks.
- * - "unverifiable": the input text names no recognized country — cannot compare.
- */
-export function countryConsistency(place: string, standardPlace: string): "ok" | "contradiction" | "unverifiable" {
-  const inputSegs = placeSegments(place);
-  if (inputSegs.length === 0) return "unverifiable";
-  const inputCountry = canonicalCountry(inputSegs[inputSegs.length - 1]);
-  if (!inputCountry) return "unverifiable";
-
-  const stdCountries = placeSegments(standardPlace)
-    .map(canonicalCountry)
-    .filter((c): c is string => c !== null);
-  if (stdCountries.includes(inputCountry)) return "ok";
-  // UK constituents: "England" is consistent with a standard place that ends in
-  // "United Kingdom" — unless a DIFFERENT constituent is present.
-  if (UK_CONSTITUENTS.has(inputCountry)) {
-    if (stdCountries.some((c) => UK_CONSTITUENTS.has(c) && c !== inputCountry)) return "contradiction";
-    if (stdCountries.includes("united kingdom")) return "ok";
-  }
-  // Historic Irish records: "Ireland" is consistent with "Northern Ireland".
-  if (inputCountry === "ireland" && stdCountries.includes("northern ireland")) return "ok";
-  return "contradiction";
-}
 
 /** Find a converter-resolved standard_place inside a sidecar record's
  *  simplified gedcomx whose fact `place` matches `place` (trimmed,
