@@ -146,11 +146,20 @@ create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
 - [ ] **Encrypt FS tokens at rest** — `familysearch_tokens.access_token` /
   `refresh_token` are plaintext (`models.py` TODO). Encrypt before any real PII /
   wider alpha.
-- [ ] **Refresh-on-inject for long-lived sandboxes** — the token is injected at
-  sandbox-create and self-refreshed in-sandbox by `getValidToken()` on first use.
-  A sandbox created long before first use (or whose refresh token has since died)
-  keeps a stale token; re-login at the front door updates the DB row but not an
-  existing sandbox. Optionally refresh-on-inject / re-inject on resume.
+- [x] **Refresh-on-inject for long-lived sandboxes — DONE.** `POST /connect`
+  now calls `sessions.sync_fs_token`, which refreshes the user's grant via
+  `auth.fresh_fs_token` (when within 10 min of expiry) and re-injects it into the
+  sandbox on every reconnect — so a tab left open overnight recovers on its own
+  (`WsSessionConnection` re-mints credentials per attempt), and a fresh front-door
+  login reaches an existing sandbox. `/connect` returns `familysearch: ok|expired|none`;
+  the web `SessionView` shows a "Reconnect FamilySearch" banner on `expired`, and
+  the in-VM `login` tool + `getValidToken` route the user there instead of the
+  doomed loopback flow (`config.json` `hosted: true`, `isHostedMode()`). Surfaced
+  by an alpha user whose next-day tab showed a raw `person_read` auth error and a
+  `login` that claimed a browser tab opened on the headless VM. **Residual:** the
+  `/v1` public REST path still injects once at create and never re-syncs — a `/v1`
+  session that outlives its refresh token has no reconnect surface (bearer clients
+  have no front door). Acceptable for now; revisit if a `/v1` client hits it.
 - [ ] **Allowlist trusts an unverified email** — `/users/current` returns no
   `email_verified`, so the gate trusts the FS-account email as-is. Fine for a
   hand-curated alpha list; before open signup, pin `users[0].id` (trust-on-first-

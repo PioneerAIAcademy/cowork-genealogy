@@ -143,6 +143,17 @@ The core auth logic. **`getValidToken()` is the single entry point all authentic
   - Expired + refresh fails: `"FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate."`
   - Expired + no refresh token: `"FamilySearch access token has expired and no refresh token is available. Call the login tool to re-authenticate."`
 
+**Hosted-mode override.** When `config.json` carries `hosted: true` (the control
+plane sets it when it provisions a sandbox — see
+`apps/server/app/fs_oauth.py:hosted_config`), all three messages above are
+replaced by `HOSTED_REAUTH_INSTRUCTION`, which routes the user to the web app's
+"Reconnect FamilySearch" button rather than the `login` tool. The loopback
+`login` flow cannot complete in the VM (its callback binds the sandbox's
+`127.0.0.1:1837`, while the registered redirect resolves on the user's laptop),
+so `loginTool` likewise short-circuits to that instruction in hosted mode
+instead of starting a doomed flow. `isHostedMode()` gates both; the desktop
+`.mcpb` never sets the flag, so its behavior is unchanged.
+
 ---
 
 ## Step 6: Login Flow (`src/auth/login.ts`)

@@ -4,13 +4,22 @@ vi.mock("../../src/auth/login.js", () => ({
   performLogin: vi.fn(),
 }));
 
+vi.mock("../../src/auth/config.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/auth/config.js")>();
+  return { ...actual, isHostedMode: vi.fn().mockResolvedValue(false) };
+});
+
 import { loginTool, loginToolSchema } from "../../src/tools/login.js";
 import { performLogin } from "../../src/auth/login.js";
+import { isHostedMode, HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
 
 const mockedPerformLogin = vi.mocked(performLogin);
+const mockedIsHostedMode = vi.mocked(isHostedMode);
 
 beforeEach(() => {
   mockedPerformLogin.mockReset();
+  mockedIsHostedMode.mockReset();
+  mockedIsHostedMode.mockResolvedValue(false);
 });
 
 describe("loginTool", () => {
@@ -36,6 +45,19 @@ describe("loginTool", () => {
 
     expect(result.success).toBe(false);
     expect(result.message).toMatch(/timed out/);
+  });
+
+  it("in hosted mode refuses without starting the doomed loopback flow", async () => {
+    // The VM's loopback OAuth callback can never reach the user's browser, so
+    // starting it would return a confident but false "a browser tab opened".
+    mockedIsHostedMode.mockResolvedValue(true);
+
+    const result = await loginTool();
+
+    expect(result.success).toBe(false);
+    expect(result.message).toBe(HOSTED_REAUTH_INSTRUCTION);
+    expect(result.message).toMatch(/Reconnect FamilySearch/);
+    expect(mockedPerformLogin).not.toHaveBeenCalled();
   });
 });
 

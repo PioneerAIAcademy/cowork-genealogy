@@ -4,7 +4,7 @@ import {
   refreshAccessToken,
   getValidToken,
 } from "../../src/auth/refresh.js";
-import { REDIRECT_URI, TOKEN_URL } from "../../src/auth/config.js";
+import { REDIRECT_URI, TOKEN_URL, isHostedMode } from "../../src/auth/config.js";
 import { loadTokens, saveTokens, isExpired } from "../../src/auth/tokenManager.js";
 
 vi.mock("../../src/auth/config.js", async (importOriginal) => {
@@ -12,6 +12,9 @@ vi.mock("../../src/auth/config.js", async (importOriginal) => {
   return {
     ...actual,
     getClientId: vi.fn().mockResolvedValue("test-client-id"),
+    // Controllable per test; defaults to the desktop (non-hosted) path so the
+    // existing error-message assertions below keep exercising the login-tool wording.
+    isHostedMode: vi.fn().mockResolvedValue(false),
   };
 });
 
@@ -27,12 +30,15 @@ vi.stubGlobal("fetch", mockFetch);
 const mockedLoadTokens = vi.mocked(loadTokens);
 const mockedSaveTokens = vi.mocked(saveTokens);
 const mockedIsExpired = vi.mocked(isExpired);
+const mockedIsHostedMode = vi.mocked(isHostedMode);
 
 beforeEach(() => {
   mockFetch.mockReset();
   mockedLoadTokens.mockReset();
   mockedSaveTokens.mockReset();
   mockedIsExpired.mockReset();
+  mockedIsHostedMode.mockReset();
+  mockedIsHostedMode.mockResolvedValue(false);
 });
 
 describe("exchangeCodeForTokens", () => {
@@ -209,5 +215,33 @@ describe("getValidToken", () => {
     });
 
     await expect(getValidToken()).rejects.toThrow(/refresh failed/);
+  });
+
+  it("in hosted mode routes the user to the Reconnect button", async () => {
+    // The loopback login flow can't complete in the VM, so the "not logged in"
+    // error points at the app's Reconnect FamilySearch button instead of the
+    // login tool that the desktop path uses.
+    mockedIsHostedMode.mockResolvedValue(true);
+    mockedLoadTokens.mockResolvedValue(null);
+
+    await expect(getValidToken()).rejects.toThrow(/Reconnect FamilySearch/);
+  });
+
+  it("in hosted mode surfaces the Reconnect instruction when a refresh fails", async () => {
+    mockedIsHostedMode.mockResolvedValue(true);
+    mockedLoadTokens.mockResolvedValue({
+      accessToken: "old",
+      refreshToken: "rt",
+      expiresAt: Date.now() - 1000,
+    });
+    mockedIsExpired.mockReturnValue(true);
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: "Bad Request",
+      json: async () => ({ error: "invalid_grant" }),
+    });
+
+    await expect(getValidToken()).rejects.toThrow(/Reconnect FamilySearch/);
   });
 });

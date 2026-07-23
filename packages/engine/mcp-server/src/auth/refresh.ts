@@ -1,6 +1,20 @@
-import { TOKEN_URL, REDIRECT_URI, getClientId } from "./config.js";
+import {
+  TOKEN_URL,
+  REDIRECT_URI,
+  getClientId,
+  isHostedMode,
+  HOSTED_REAUTH_INSTRUCTION,
+} from "./config.js";
 import { loadTokens, saveTokens, isExpired } from "./tokenManager.js";
 import type { TokenStore, FSTokenResponse } from "../types/auth.js";
+
+// The instruction the LLM gets when there is no usable FamilySearch session.
+// In hosted mode the `login` tool is a dead end (its loopback callback can't
+// reach the user's browser), so point them at the app's Reconnect button; on
+// the desktop, `login` is exactly right.
+async function reauthInstruction(desktopMessage: string): Promise<string> {
+  return (await isHostedMode()) ? HOSTED_REAUTH_INSTRUCTION : desktopMessage;
+}
 
 async function postTokenEndpoint(
   body: URLSearchParams
@@ -81,7 +95,9 @@ export async function getValidToken(): Promise<string> {
   const tokens = await loadTokens();
   if (!tokens) {
     throw new Error(
-      "User is not logged in to FamilySearch. Call the login tool to authenticate."
+      await reauthInstruction(
+        "User is not logged in to FamilySearch. Call the login tool to authenticate."
+      )
     );
   }
   if (!isExpired(tokens)) {
@@ -89,7 +105,9 @@ export async function getValidToken(): Promise<string> {
   }
   if (!tokens.refreshToken) {
     throw new Error(
-      "FamilySearch access token has expired and no refresh token is available. Call the login tool to re-authenticate."
+      await reauthInstruction(
+        "FamilySearch access token has expired and no refresh token is available. Call the login tool to re-authenticate."
+      )
     );
   }
   try {
@@ -98,7 +116,9 @@ export async function getValidToken(): Promise<string> {
     return refreshed.accessToken;
   } catch {
     throw new Error(
-      "FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate."
+      await reauthInstruction(
+        "FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate."
+      )
     );
   }
 }
