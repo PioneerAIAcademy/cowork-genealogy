@@ -18,15 +18,14 @@ step, says which of three places you're working in.
 | **You** (junior genealogist or developer) | The whole loop: download the zip, reproduce the bug, capture the test, improve the skill, build + install the plugin, verify in Cowork, and open the PR. |
 | **Senior genealogist** | Reviews the PR — skill changes, rubric quality, the new unit test — and approves the merge. |
 
-If you get stuck mid-flow, ask for help. The spec is precise about which
-steps benefit from a second pair of eyes.
+If you get stuck mid-flow, ask for help.
 
 ## The three places
 
 | Icon | Place | What it is | Used for |
 |---|---|---|---|
 | 🌐 | **The workbench** | <https://genealogy-workbench.fly.dev> in a browser. Where alpha testers research. | *Noticing* the problem and *reporting* it. |
-| 🤖 | **Claude Code** | A `claude` session — sometimes in your repo checkout, sometimes in the unpacked case folder. See below. | *Reproducing*, *classifying*, *capturing the test*, *improving the skill*. |
+| 🤖 | **Claude Code** | The **Code tab** of the Claude desktop app, or `claude` in a terminal — opened sometimes on your repo checkout, sometimes on the unpacked case folder (see below). The Code tab is the usual Windows path. | *Reproducing*, *classifying*, *capturing the test*, *improving the skill*. |
 | ⌨️ | **Terminal** | A plain shell for `make …` (Windows: the matching `.bat`). | *Unpacking* the case, *running tests*, *gating*. One `make` target opens a 🌐 browser tab — the grading UI. |
 
 Alpha testers only ever touch the first one. Everything else is us.
@@ -274,8 +273,11 @@ responses — check:
   ignore him? → a **skill** problem. Continue. ✅ *(This is the case.)*
 - Did the search **never surface** him? → a **tool** problem. Different fix, an
   engineering ticket, not a prose edit.
-- Did the skill behave correctly and a stale rubric would mark it wrong? → a
-  **grading** fix.
+- Did the skill behave correctly and the grading mark it wrong anyway? → a
+  **grading** fix, and it's **yours to make**: this skill's `rubric.md` and this
+  test's `judge_context` are both yours to edit. Re-run the skill's suite
+  afterwards — both are part of the run-log snapshot. Only the base rubric and
+  the global judge prompt belong to the maintainer.
 
 Skipping this check is the classic trap: rewriting instructions for a bug that
 lives in a tool. The full four-lane version is
@@ -299,8 +301,9 @@ same-named candidates fit the evidence, don't assert one as a conclusion* — no
 "the Schuster case." A test that only recognises this one household is a fake
 win: it turns green without the skill getting better.
 
-It prints the new test's id (like `ut_person_evidence_022`). That's the `TEST=`
-value for the gate in Step 6.
+It prints the new test's id — the skill name plus a random three-character
+suffix, like `ut_person_evidence_k3f`. That's the `TEST=` value for the gate in
+Step 6.
 
 > **Capture the test *before* you fix the bug.** That's what lets Step 6's gate
 > prove the fix did something: it compares against a pre-edit baseline, so a
@@ -322,8 +325,10 @@ from, so it lives in one place:
 **→ [`skill-lifecycle.md`](skill-lifecycle.md), steps 4–6**
 
 It covers: setting hold-out tests (do this *before* the baseline run), running
-`make eval-skill SKILL=<skill>`, pasting Marta's Did/Should onto the failing
-dimension in the grading UI, `/audit-rubric`, `/improve-skill`, applying the
+`make eval-skill SKILL=<skill>`, commenting in the grading UI on **every
+non-passing dimension** — Marta's Did/Should goes on the one that caught this
+bug, and you correct a *score* only where you disagree but comment wherever a
+dimension isn't passing — then `/audit-rubric`, `/improve-skill`, applying the
 edits yourself, and `make gate-skill SKILL=<skill> TEST=<the mined test id>`.
 
 Two things there are easy to skip and will fail CI if you do — grading **every**
@@ -380,9 +385,12 @@ make mcpb                                # Windows: eval\BuildMcpb.bat
 ```
 
 Install the `.mcpb` in Claude Desktop → Settings → Extensions, remove the old
-plugin in Cowork → Customize, upload the new `.zip`, and **fully quit and reopen
-Desktop**. Cowork runs the uploaded `.zip`, not your working tree — skip this
-and the fix will look like it did nothing.
+plugin in Cowork → Customize, and upload the new `.zip` from the **Cowork** tab
+rather than the Code tab — they keep separate plugin lists. Then **fully quit
+and reopen Desktop**. Cowork runs the uploaded `.zip`, not your working tree —
+skip this and the fix will look like it did nothing. (Canonical version of these
+rules, including what does *not* need reinstalling:
+[`skill-lifecycle.md`](skill-lifecycle.md#rebuilding-and-reinstalling).)
 
 Then unzip the **original feedback zip** into a *fresh* folder, so Cowork sees
 the pristine user state rather than your iterated-on one:

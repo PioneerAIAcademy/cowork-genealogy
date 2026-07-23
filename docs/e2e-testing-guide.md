@@ -40,7 +40,7 @@ regression coverage is the unit tests in `eval/tests/unit/`.
 | Icon | Place | What it is | You use it to… |
 |---|---|---|---|
 | ⌨️ | **Terminal** | A plain shell where you type `make …` (Windows: double-click the matching `.bat` in `eval\`). | Set up, validate, seed, run, view. |
-| 🤖 | **Claude Code** | A `claude` session at your **repo root** — not Cowork. The `/`-commands below are repo-local dev skills under `.claude/skills/`, picked up automatically in this checkout. | Author the fixture, interpret the result, grade the run. |
+| 🤖 | **Claude Code** | The **Code tab** of the Claude desktop app opened on your **repo root**, or `claude` in a terminal there — either works, and the Code tab is the usual Windows path. **Not** Cowork. The `/`-commands below are repo-local dev skills under `.claude/skills/`, picked up automatically in this checkout. | Author the fixture, interpret the result, grade the run. |
 | 🖥️ | **Cowork** | The shipping product, with the plugin + MCP extension installed. | Watch `/research` work on the fixture live, before you spend money on a headless run. |
 
 A fourth surface matters throughout: the **Research Viewer** (Electron,
@@ -267,7 +267,9 @@ see, and save the headless run for the verdict.
    **Fully quit and reopen** Claude Desktop. Redo both after any MCP-server or
    skill change; without them `/research` says things like
    "validate_research_schema isn't available" and degrades to guessing, which
-   is a missing install, not a `/research` bug.
+   is a missing install, not a `/research` bug. (Canonical version of these
+   rules, including what does *not* need reinstalling:
+   [`skill-lifecycle.md`](skill-lifecycle.md#rebuilding-and-reinstalling).)
 
 2. Seed an editable project from the fixture's starting state:
 
@@ -451,6 +453,20 @@ report: spec §7.4.
 
 Commit the fixture directory, the run log, and its `.ann.json` together, push
 the Step-0 branch, and open the PR.
+
+**Terminal:**
+
+```bash
+git add eval/tests/e2e/<slug>/ eval/runlogs/e2e/<slug>/
+git commit -m "e2e: add the <slug> fixture"
+git push -u origin <your-branch>
+gh pr create                            # or open the PR from GitHub's web UI
+```
+
+**GitHub Desktop:** make sure the repository picker says **cowork-genealogy**,
+tick the fixture directory plus the run log **and** its `.ann.json`, type a
+summary, **Commit to `<your-branch>`**, then **Push origin** and **Create Pull
+Request** (it opens GitHub in your browser with the branch pre-filled).
 
 **Prove it's solvable.** Stripping proves the answer isn't *in* the starting
 tree; only a run proves it's *recoverable from live FS*. So run the fixture,
