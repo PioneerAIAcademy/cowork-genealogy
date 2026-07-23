@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_record_extraction_024",
+    "skill": "record-extraction",
+    "name": "Extract assertions from Louise Becker's 1941 Vine Street Hill burial index entry",
+    "type": "positive",
+    "description": "Vine Street Hill Cemetery (Cincinnati, Hamilton County, Ohio) burial index entry for Louise Becker, buried 4 Feb 1941 (ark:/61903/1:1:CRY7-D9T2). Real record from the Ferber/Becker research (#799). Names her parents John Becker and Mary Kramer - part of the Anna/Mary Kramer name conflict. Tests that a deceased person's parents named on a burial record are indirect.",
+    "tags": ["extraction", "burial", "cemetery", "ferber-becker", "named-parents"]
+  },
+  "input": {
+    "user_message": "Extract assertions from this cemetery burial index entry:\n\nOhio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986\nFamilySearch ark:/61903/1:1:CRY7-D9T2\n\nName: Louise Becker\nDeath date: 2 February 1941\nBurial date: 4 February 1941\nCemetery: Vine Street Hill Cemetery, Cincinnati, Hamilton County, Ohio\nFather: John Becker\nMother: Mary Kramer",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "Death date (2 Feb 1941) and burial date (4 Feb 1941) are DIRECT evidence - recorded at/near the burial event",
+    "Louise's parents (John Becker and Mary Kramer) are INDIRECT evidence: they are named on Louise's own burial record by an informant relaying secondhand knowledge, not witnessed - the same death-record doctrine used for a decedent's parents (see ut_record_extraction_009). Do NOT mark the parent names/relationships direct",
+    "Extract the mother's name exactly as stated ('Mary Kramer'); do NOT reconcile it with the 'Anna Kramer' on Frank's marriage or the 'Anna' on John's burial - that conflict is resolved downstream, not at extraction",
+    "Source classification is DERIVATIVE - an index of the cemetery's burial records",
+    "Informant is unknown on this index entry; information quality is indeterminate (secondary for the parentage facts)",
+    "Burial place is Vine Street Hill Cemetery, Cincinnati, Hamilton County, Ohio"
+  ],
+  "execution": { "max_turns": 40, "max_wall_clock_seconds": 600, "sdk_message_silence_seconds": 300 }
+}

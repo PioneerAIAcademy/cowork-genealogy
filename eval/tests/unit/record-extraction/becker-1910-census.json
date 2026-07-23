@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_record_extraction_027",
+    "skill": "record-extraction",
+    "name": "Extract assertions from the 1910 census — John Becker household (stated relationships)",
+    "type": "positive",
+    "description": "1910 U.S. Census household of John Becker, Cincinnati Ward 7, Hamilton County, Ohio (ark:/61903/1:1:MLFM-GC8). Real record from the Ferber/Becker research (#799). Post-1880: has a relationship-to-head column, so relationships are DIRECT; but records age (not birth date), so birth years are indirect.",
+    "tags": ["extraction", "census", "1910", "ferber-becker", "stated-relationship-direct"]
+  },
+  "input": {
+    "user_message": "Extract assertions from this 1910 U.S. Census household:\n\nUnited States, Census, 1910 - Household of John Becker\nCincinnati Ward 7, Hamilton, Ohio, United States\nark:/61903/1:1:MLFM-GC8\n\nRelationship - Name - Sex - Birth year - Birthplace - Marital status:\n- Head: John Becker, male, born about 1845, Kentucky, Widowed\n- Daughter: Louise Becker, female, born about 1873, Ohio, Single\n- Son: Edward Becker, male, born about 1877, Ohio, Single\n- Son: Frank Becker, male, born about 1889, Ohio, Single\n\n(1910 U.S. Census - includes a relationship-to-head-of-household column; records age, not a birth date.)",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The 1910 census HAS a relationship-to-head column, so John as father of Louise, Edward, and Frank is DIRECT evidence - stated, not inferred",
+    "The 1910 census records AGE, not a birth date, so birth years are derived from age and are therefore INDIRECT (unlike the 1900 census, which stated month/year and is direct)",
+    "Marital status (Widowed / Single) is DIRECT",
+    "Extract John's birthplace exactly as stated ('Kentucky'); the conflict with the 1870 household's 'Ohio' is downstream, not an extraction fix",
+    "Only extract the people enumerated here - do NOT add Clara (present in the 1900 household) or anyone not listed on this record",
+    "Atomic assertions per person; pre-1940 census informant is unknown so information quality is indeterminate; the enumerator is the recorder",
+    "Source classification is DERIVATIVE"
+  ],
+  "execution": { "max_turns": 60, "max_wall_clock_seconds": 1200, "sdk_message_silence_seconds": 300 }
+}

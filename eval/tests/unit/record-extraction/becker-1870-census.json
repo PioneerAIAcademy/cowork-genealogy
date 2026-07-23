@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_record_extraction_022",
+    "skill": "record-extraction",
+    "name": "Extract assertions from the 1870 census — John Baker/Becker Sr. household",
+    "type": "positive",
+    "description": "1870 U.S. Census household of John Baker (indexed variant of Becker), Cincinnati, Hamilton County, Ohio (ark:/61903/1:1:M62F-BST). Real record from the Ferber/Becker research (#799). Documents John (b. 1845) as a child in his parents' household. Pre-1880 census: no relationship column, so household relationships are inferred.",
+    "tags": ["extraction", "census", "1870", "ferber-becker", "surname-variant"]
+  },
+  "input": {
+    "user_message": "Extract assertions from this 1870 U.S. Census household:\n\nUnited States, Census, 1870 - Household of John Baker\nCincinnati, Hamilton, Ohio, United States\nFamilySearch ark:/61903/1:1:M62F-BST\n\n- John Baker - male, born about 1822, Bavaria\n- Barbara Baker - female, born about 1825, Bavaria\n- John Baker - male, born about 1845, Ohio\n- Edward Baker - male, born about 1848, Ohio\n- Rosa Baker - female, born about 1852, Ohio\n- Robert Baker - male, born about 1855, Ohio\n- Lena Baker - female, born about 1861, Ohio\n- Caroline Baker - female, born about 1867, Ohio\n\n(1870 U.S. Census - the household is enumerated with no relationship-to-head-of-household column.)",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The 1870 census has NO relationship-to-head column (that begins in 1880), so any family structure - John Sr. & Barbara as a couple, the younger people as their children - is INDIRECT evidence inferred from household position/age, not stated",
+    "Surname is indexed as 'Baker' - extract it as stated ('Baker'); flagging it as a likely variant of the German 'Becker' is good practice, but the assertion value must not be silently 'corrected' to Becker",
+    "Atomic assertions per person: separate entries for name, birth year, and birthplace",
+    "Birthplaces (Bavaria for the parents, Ohio for the children) are DIRECT (stated); birth years are derived from stated age, so they are INDIRECT",
+    "Pre-1940 census: the household informant is unknown, so information quality for names/ages/birthplaces is indeterminate; the enumerator is the recorder",
+    "Source classification is DERIVATIVE - the FamilySearch indexed transcription of the 1870 population schedule",
+    "Do NOT fabricate a relationship assertion tying these people to Emma Becker or to any Kramer household - this record only shows the John Baker household as enumerated"
+  ],
+  "execution": { "max_turns": 60, "max_wall_clock_seconds": 1200, "sdk_message_silence_seconds": 300 }
+}

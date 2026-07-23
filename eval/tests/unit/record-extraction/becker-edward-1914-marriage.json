@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_record_extraction_028",
+    "skill": "record-extraction",
+    "name": "Extract assertions from Edward Becker's 1914 Kentucky marriage",
+    "type": "positive",
+    "description": "1914 Kentucky marriage of Edward Becker and Ella May Horne ('Kentucky, Marriages, 1785-1979', ark:/61903/1:1:FWTT-8RH). Real record from the Ferber/Becker research (#799). Names both parties' parents; Edward's mother is recorded only as 'Anna' - part of the Anna/Mary Kramer name conflict. Edward's stated birth (~1887) differs from the census Edward (~1876/77).",
+    "tags": ["extraction", "marriage-record", "ferber-becker", "direct-vs-indirect"]
+  },
+  "input": {
+    "user_message": "Extract assertions from this marriage record:\n\nKentucky, Marriages, 1785-1979\nark:/61903/1:1:FWTT-8RH\n\nMarriage date: 30 June 1914\nMarriage place: Kentucky\n\nGroom: Edward Becker\n  Marital status: Single\n  Birth: about 1887, Cincinnati, Ohio\n  Father: John Becker\n  Mother: Anna (no surname stated)\n\nBride: Ella May Horne\n  Marital status: Single\n  Birth: about 1890, Lexington, Kentucky\n  Father: Harry Horne\n  Mother: Carrie (no surname stated)",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "Marriage date (30 Jun 1914) and place (Kentucky) are DIRECT evidence - explicitly stated",
+    "Extract assertions for BOTH parties - Edward Becker and Ella May Horne",
+    "Parents named by the parties follow the marriage-record doctrine (ut_record_extraction_010): DIRECT. Edward's parents = John Becker + Anna; Ella May's = Harry Horne + Carrie",
+    "Edward's mother is recorded only as 'Anna' with no surname - extract exactly as stated; do NOT supply 'Kramer' or reconcile with other records (that is downstream)",
+    "Edward's stated birth (~1887) differs from the census Edward (~1876/1877) - extract the birth as stated on THIS record; the discrepancy is a downstream identity/conflict question, not an extraction fix",
+    "Birth entries give a place and an approximate year - extract as stated; do NOT invent an exact date",
+    "Informant: each party is the informant for their own facts (proximity 'self'); the clerk is the recorder",
+    "Source classification is DERIVATIVE - a FamilySearch index of the Kentucky marriage record"
+  ],
+  "execution": { "max_turns": 40, "max_wall_clock_seconds": 600, "sdk_message_silence_seconds": 300 }
+}
