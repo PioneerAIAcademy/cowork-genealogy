@@ -288,6 +288,24 @@ Deferred during the #701 build.
   2026-07-18 while implementing Phase 3A.
 
 ## Eval framework
+- [ ] **Renumber 7 unit-test files that share a `test.id` with a sibling.** Three
+  groups, all pre-dating the rule-4 gate added with the CRUD UI's xfail support:
+  `ut_research_exhaustiveness_014` (3 files), `ut_research_exhaustiveness_013`
+  (2 files), `ut_proof_conclusion_014` (2 files). Cause is `nextTestId` in
+  `eval/app/lib/fs/tests.ts` — it picks `max(N)+1` per skill, so two parallel PRs
+  both draw the same number. Duplicates corrupt grading quietly: the harness
+  collects every file, so one run log carries two `tests[]` entries under one
+  `test_id`, and annotations key on `(test_id, dimension_source, dimension_name)`,
+  so one test's corrections silently become the other's — and rule 3 still passes,
+  because the lookup finds *a* correction for every dimension. They are
+  grandfathered in `GRANDFATHERED_DUPLICATE_IDS` (`check_runlogs.py`), which warns
+  instead of blocking; rule 4 blocks any *new* duplicate, including a new file
+  joining one of these groups. Fixing means reassigning ids, which changes those
+  tests' content hashes and so forces a re-run + re-annotate for
+  `research-exhaustiveness` and `proof-conclusion` — hence deferred to whenever
+  those skills are next re-run for another reason. Delete each entry from the
+  grandfather dict as its group is renumbered.
+
 - [ ] **Adopt a run-log retention rule — `eval/runlogs/` is 147MB tracked and ~85%
   of it is inert.** Measured 2026-07-18: 190 unit run logs (116MB) + 152 `.ann.json`
   (2.9MB) + 56 e2e runs (~27MB). **Nothing in the repo reads more than the latest 2

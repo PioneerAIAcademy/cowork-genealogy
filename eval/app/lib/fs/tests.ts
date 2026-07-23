@@ -57,6 +57,8 @@ function toListEntry(test: UnitTestFile, filePath: string, blocked: BlockedReaso
     description: test.test.description,
     tags: test.test.tags,
     holdout: test.test.holdout ?? false,
+    expectedOutcome: test.test.expected_outcome ?? 'pass',
+    xfailReason: test.test.xfail_reason ?? null,
     scenario: test.input.scenario ?? null,
     mcpFixtures: test.mcp_fixtures ?? [],
     filePath,
@@ -147,15 +149,46 @@ export async function readTest(id: string): Promise<{ test: UnitTestFile; filePa
 }
 
 /**
- * Write a unit test. The location is derived from `test.skill` — the
- * file lives under `eval/tests/unit/<skill>/<id>.json`. If a file with
- * the same id exists under a different skill (rare — typically only
- * possible after a manual rename), we don't try to relocate it; the
- * caller is responsible for deletes.
+ * Write a unit test.
+ *
+ * An edit writes back to the file it was read from, preserving the
+ * author's filename. Only a genuinely new test gets the derived
+ * `<skill>/<id>.json` name.
+ *
+ * This matters because most tests are hand-authored with descriptive
+ * names (`different-jurisdiction-ireland.json`), not `<id>.json`. Always
+ * deriving the path meant editing one in the UI left the original in
+ * place and wrote a *second* file carrying the same `test.id` — and
+ * duplicate ids corrupt grading downstream: the harness runs both files,
+ * so one run log carries two `tests[]` entries with the same `test_id`,
+ * and annotations key on `(test_id, dimension_source, dimension_name)`,
+ * so one test's corrections silently become the other's.
+ *
+ * When the form changes `test.skill`, the file moves to the new skill
+ * dir (keeping its basename) and the old one is removed — a move, not a
+ * copy, for the same reason.
  */
 export async function writeTest(test: UnitTestFile): Promise<string> {
-  const filePath = path.join(testsUnitDir(), test.test.skill, `${test.test.id}.json`);
+  const existing = await readTest(test.test.id);
+  let filePath: string;
+
+  if (!existing) {
+    filePath = path.join(testsUnitDir(), test.test.skill, `${test.test.id}.json`);
+  } else {
+    const targetDir = path.join(testsUnitDir(), test.test.skill);
+    filePath = path.join(targetDir, path.basename(existing.filePath));
+  }
+
   await atomicWriteJson(filePath, test);
+
+  if (existing && path.resolve(existing.filePath) !== path.resolve(filePath)) {
+    await fs.unlink(existing.filePath).catch(() => {
+      // The new file is already written; a failed cleanup of the old one
+      // leaves a duplicate id rather than losing the edit. The CI
+      // duplicate-id check (check_runlogs.py) is the backstop.
+    });
+  }
+
   return filePath;
 }
 
@@ -225,6 +258,14 @@ export async function nextTestId(skill: string): Promise<string> {
  * reason — it is a real (non-cosmetic) field that survives normalization,
  * and it genuinely changes what the judge sees, so flipping it must
  * invalidate the content hash.
+ *
+ * `test.expected_outcome` / `test.xfail_reason` are included on the same
+ * grounds: they survive normalization, and expected_outcome changes how
+ * the harness labels the result (`fail` → `xfail`, `pass` → `xpass`), so
+ * a run log recorded under the old marking no longer describes the test.
+ * Marking a test xfail therefore forces a re-run — that is correct, not a
+ * wrinkle to design around: the re-run is what produces a log that reads
+ * `xfail` instead of `fail`.
  */
 export const GRADING_RELEVANT_FIELDS = [
   'input.user_message',
@@ -233,6 +274,8 @@ export const GRADING_RELEVANT_FIELDS = [
   'judge_context',
   'negative',
   'test.holdout',
+  'test.expected_outcome',
+  'test.xfail_reason',
   'judge_reads_files',
 ] as const;
 
@@ -244,6 +287,8 @@ export function hasGradingRelevantChange(before: UnitTestFile, after: UnitTestFi
   if (JSON.stringify(before.judge_context) !== JSON.stringify(after.judge_context)) return true;
   if (JSON.stringify(before.negative ?? null) !== JSON.stringify(after.negative ?? null)) return true;
   if ((before.test.holdout ?? false) !== (after.test.holdout ?? false)) return true;
+  if ((before.test.expected_outcome ?? 'pass') !== (after.test.expected_outcome ?? 'pass')) return true;
+  if ((before.test.xfail_reason ?? '') !== (after.test.xfail_reason ?? '')) return true;
   if ((before.judge_reads_files ?? false) !== (after.judge_reads_files ?? false)) return true;
   return false;
 }
