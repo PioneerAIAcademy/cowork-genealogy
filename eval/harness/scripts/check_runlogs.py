@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GH Action: enforce the per-PR runlog contract.
 
-Three blocking rules + one warn-only rule per
+Four blocking rules + one warn-only rule per
 docs/plan/eval-runlog-versioning.md §C6:
 
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
@@ -11,6 +11,7 @@ docs/plan/eval-runlog-versioning.md §C6:
              eval/harness/judge/prompt.md.
     Rule 3   the same run log's .ann.json has corrections for every
              (test_id, dimension_source, dimension_name) triple.
+    Rule 4   no two unit-test files share a `test.id`.
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
 stdlib + the harness's own `snapshot.py` and `versioning.py` modules.
@@ -312,6 +313,57 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     return 1
 
 
+def _format_path(path: Path) -> str:
+    """Repo-relative when possible, absolute otherwise (tests point the scan
+    at a tmp dir outside REPO_ROOT)."""
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def rule4_unique_test_ids(tests_root: Path) -> int:
+    """Rule 4 (blocking): no two unit-test files share a `test.id`.
+
+    Duplicate ids corrupt grading rather than failing loudly. The harness
+    collects every file (`_collect_specs`), so one run log ends up with two
+    `tests[]` entries under the same `test_id`; annotations key on
+    `(test_id, dimension_source, dimension_name)`, so the second entry's
+    corrections silently overwrite the first's — and rule 3 then passes,
+    because the lookup finds *a* correction for every dimension. Selection by
+    id (`--test ut_x`, and the CRUD UI's readTest) takes the first scan hit,
+    so you can also run or edit the wrong one of a pair.
+    """
+    if not tests_root.is_dir():
+        return 0
+
+    by_id: dict[str, list[Path]] = {}
+    for path in sorted(tests_root.glob("*/*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            continue  # malformed files are the loader's problem, not this gate's
+        test_id = (data.get("test") or {}).get("id")
+        if test_id:
+            by_id.setdefault(test_id, []).append(path)
+
+    fails = 0
+    for test_id, paths in sorted(by_id.items()):
+        if len(paths) < 2:
+            continue
+        rel = ", ".join(_format_path(p) for p in paths)
+        gh_error(
+            f"test id `{test_id}` is used by {len(paths)} files: {rel}. "
+            f"Test ids must be unique — duplicates make the harness emit two "
+            f"run-log entries under one id, and annotations for one silently "
+            f"become the other's. Give the new test its own id "
+            f"(the CRUD UI's next-id helper picks one per skill).",
+            file=_format_path(paths[-1]),
+        )
+        fails += 1
+    return fails
+
+
 def main() -> int:
     changes = git_diff_changes()
 
@@ -374,6 +426,15 @@ def main() -> int:
     }
 
     fails = rule1_max_one_released(touched_releases)
+
+    # Rule 4 runs whenever the PR touches the test corpus at all, and then
+    # scans *every* test file rather than only the touched skills — a
+    # duplicate is a property of a pair, and the second file of the pair can
+    # live in a skill the PR never mentions. Skipping it entirely on PRs that
+    # touch no test file keeps the gate quiet on skill/fixture-only changes,
+    # which cannot introduce a duplicate id.
+    if any(p.startswith("eval/tests/unit/") for p in touched_paths):
+        fails += rule4_unique_test_ids(TESTS_UNIT_DIR)
 
     if not RUNLOGS_DIR.is_dir():
         print(f"No runlogs directory at {RUNLOGS_DIR}; skipping rules 2 + 3.")

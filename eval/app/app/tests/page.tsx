@@ -207,6 +207,18 @@ function TestsListInner() {
                           </Badge>
                         </Tooltip>
                       ) : null}
+                      {t.expectedOutcome === 'xfail' ? (
+                        <Tooltip
+                          label={t.xfailReason ?? 'Known failure — no reason recorded'}
+                          withArrow
+                          multiline
+                          w={320}
+                        >
+                          <Badge variant="outline" color="gray">
+                            xfail
+                          </Badge>
+                        </Tooltip>
+                      ) : null}
                     </Group>
                   </Table.Td>
                   <Table.Td>

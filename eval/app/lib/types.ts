@@ -297,6 +297,10 @@ export interface UnitTestListEntry {
   description: string;
   tags: string[];
   holdout: boolean;
+  /** Schema default `pass`; `xfail` marks a known-failing test. */
+  expectedOutcome: ExpectedOutcome;
+  /** Why the test is marked xfail. Null unless expectedOutcome is `xfail`. */
+  xfailReason: string | null;
   scenario: string | null;
   mcpFixtures: string[];
   filePath: string;

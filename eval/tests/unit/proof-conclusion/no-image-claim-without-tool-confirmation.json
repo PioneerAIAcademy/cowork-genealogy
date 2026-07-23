@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_proof_conclusion_014",
+    "id": "ut_proof_conclusion_016",
     "skill": "proof-conclusion",
     "name": "Don't claim a digital image is accessible without tool-confirmed evidence",
     "type": "positive",
