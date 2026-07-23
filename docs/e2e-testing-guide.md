@@ -94,13 +94,20 @@ own slug as you go.
 
 ## Step 0 — Branch ⌨️ Terminal
 
+One task, one branch, always cut from an up-to-date `main` — you open a PR from
+it at the end. Name it with a few hyphenated words describing the task — no
+slashes, no timestamps.
+
+**Developers — terminal:**
+
 ```bash
 git checkout main && git pull
 git checkout -b spriggs-parents-fixture
 ```
 
-**Windows (GitHub Desktop):** Current Branch dropdown → **New branch…** → base
-it on `main` → **Create branch**.
+**Genealogists — GitHub Desktop:** Current Branch dropdown → select **main** and
+**Fetch/Pull** → **New branch…** → name it `spriggs-parents-fixture` → base it
+on `main` → **Create branch**.
 
 Everything the rest of this produces — the fixture files, the run log, the
 grade — lands on this one branch.
@@ -460,7 +467,7 @@ confirm `pass`, and commit that run log under `eval/runlogs/e2e/<slug>/`.
 
 | Step | What you do | Where |
 |---|---|---|
-| 0 Branch | `git checkout -b <branch>` | ⌨️ Terminal |
+| 0 Branch | `git checkout -b <short-task-name>` | ⌨️ Terminal |
 | 1 Author | `/author-e2e-fixture` — pick a deceased, well-sourced person | 🤖 Claude Code |
 | 2 Scope | one question, 1–5 findings; keep the search anchors | 🤖 Claude Code |
 | 3 Validate | check the answer is findable; `make e2e-validate TEST=<slug>` | ⌨️ Terminal |
@@ -490,7 +497,7 @@ it from that folder; each prompts for what it needs instead of taking
 | `make e2e-view TEST=<slug>` | `eval\ViewE2E.bat` |
 | `make electron` | `eval\Viewer.bat` |
 | `make e2e-calibrate` *(maintainer)* | `eval\RunCalibration.bat` |
-| `git checkout -b <branch>` | GitHub Desktop → Current Branch → **New branch…** |
+| `git checkout -b <short-task-name>` | GitHub Desktop → Current Branch → **New branch…** |
 
 The `/`-commands (`/author-e2e-fixture`, `/interpret-e2e-result`,
 `/grade-e2e-run`, `/mine-unit-test`) are typed into Claude Code and are the same

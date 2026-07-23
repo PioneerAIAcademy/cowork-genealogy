@@ -129,14 +129,21 @@ below is mechanics.
 
 *(Step 0 happened days earlier, and by someone else. Sam's work starts here.)*
 
+One task, one branch, always cut from an up-to-date `main` — you open a PR from
+it at the end. Name it with a few hyphenated words describing the fix — no
+slashes, no timestamps.
+
+**Developers — terminal:**
+
 ```bash
 cd ~/cowork-genealogy
 git checkout main && git pull
-git checkout -b feedback/2026-07-21T09-14-22Z
+git checkout -b schuster-parent-fix
 ```
 
-**Windows (GitHub Desktop):** Current Branch dropdown → **New branch…** → base
-it on `main` → **Create branch**.
+**Genealogists — GitHub Desktop:** Current Branch dropdown → select **main** and
+**Fetch/Pull** → **New branch…** → name it `schuster-parent-fix` → base it on
+`main` → **Create branch**.
 
 Do this **before** Step 2, not after: the setup script stamps
 `.feedback-repo-root` with your checkout *as it is when you run it*, and the
@@ -431,7 +438,8 @@ git commit -m "fix: <one-line summary of the bug>"
 **cowork-genealogy** (not the case directory), tick **only** the paths above —
 the SKILL.md you edited, the new test JSON, the scenario directory, the MCP
 fixtures, and the run log **and** its `.ann.json` — type
-`fix: <one-line summary>` in the Summary box, and **Commit to feedback/…**.
+`fix: <one-line summary>` in the Summary box, and **Commit to
+`schuster-parent-fix`**.
 Commit only the test JSON and it can't run.
 
 The commit message *is* the lesson — explain what went wrong and what changed.
@@ -470,7 +478,7 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | Step | What you do | Where |
 |---|---|---|
 | 0 Notice | research; spot it; write Did/Should | 🌐 Workbench |
-| 1 Branch | `git checkout -b <branch>` | ⌨️ Terminal (repo) |
+| 1 Branch | `git checkout -b <short-task-name>` | ⌨️ Terminal (repo) |
 | 2 Unpack | `make feedback-case ZIP=<zip>`; copy the prompt it prints | ⌨️ Terminal (repo) |
 | 3 Reproduce | paste the user's prompt; viewer open; `/compare-state --against=what-went-wrong` | 🤖 Claude Code (case dir) + Viewer |
 | 4 Classify | skill, tool, or grading fault? | 🤖 Claude Code (case dir) |
@@ -501,7 +509,7 @@ arguments, and rebuilds the MCP server first where that matters.
 | `make e2e-login` | `eval\Login.bat` |
 | `make plugin` / `make mcpb` | `eval\BuildPlugin.bat` / `eval\BuildMcpb.bat` |
 | `make feedback-reset CASE=<dir>` | `scripts\reset-feedback-case.bat` |
-| `git checkout -b <branch>` | GitHub Desktop → Current Branch → **New branch…** |
+| `git checkout -b <short-task-name>` | GitHub Desktop → Current Branch → **New branch…** |
 
 The `/`-commands (`/compare-state`, `/mine-unit-test`, `/audit-rubric`,
 `/improve-skill`) are typed into Claude Code and are the same on every

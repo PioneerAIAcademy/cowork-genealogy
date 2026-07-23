@@ -89,16 +89,25 @@ ways.
 
 ### 0. Make a branch
 
-**Who:** whoever is driving. **Where:** ⌨️ terminal (or GitHub Desktop).
-**How:**
+**Who:** whoever is driving. **Where:** ⌨️ terminal (developers) or GitHub
+Desktop (genealogists). **How:**
+
+One task, one branch, always cut from an up-to-date `main` — you open a PR from
+it at the end.
+
+**Developers — terminal:**
 
 ```bash
 git checkout main && git pull
-git checkout -b <your-name>-<skill>        # e.g. dallan-citation
+git checkout -b <short-task-name>          # e.g. citation-locator
 ```
 
-**GitHub Desktop:** Current Branch dropdown → **New branch…** → name it
-`<your-name>-<skill>` → base it on `main` → **Create branch**.
+**Genealogists — GitHub Desktop:** Current Branch dropdown → select **main** and
+**Fetch/Pull** → **New branch…** → name it `<short-task-name>` (e.g.
+`citation-locator`) → base it on `main` → **Create branch**.
+
+Name the branch with a few hyphenated words describing the task — no slashes, no
+timestamps.
 
 Do this **first**, before you touch a file — and specifically before you seed a
 project or unpack a feedback case. Both setup paths stamp your checkout *as it
@@ -579,7 +588,7 @@ Every step has tooling in place. The whole loop, in one table:
 
 | Step | Where | macOS / Linux | Windows |
 |---|---|---|---|
-| 0 Branch | ⌨️ terminal | `git checkout -b <name>` | GitHub Desktop → New branch… |
+| 0 Branch | ⌨️ terminal | `git checkout -b <short-task-name>` | GitHub Desktop → New branch… |
 | 1 Author | 🤖 Claude Code / editor | the authoring guide + a blocking frontmatter lint in CI | same |
 | 2 Capture *(from a real failure)* | 🤖 Claude Code | `/mine-unit-test [--project \| --e2e-run <dir>]` | same |
 | 2 Test | ⌨️ terminal | `make eval-skill SKILL=<name>` | `eval\RunTests.bat` |
@@ -649,11 +658,13 @@ that, no one could ever open that exact record again.
 ### Step 0 — Branch ⌨️ Terminal
 
 ```
+git checkout main && git pull
 git checkout -b citation-locator
 ```
 
-**Windows (GitHub Desktop):** Current Branch dropdown → **New branch…** → name
-it `citation-locator`, base it on `main` → **Create branch**.
+**Windows (GitHub Desktop):** Current Branch dropdown → select **main** and
+**Fetch/Pull** → **New branch…** → name it `citation-locator`, base it on `main`
+→ **Create branch**.
 
 ### Step 1 — Notice it 🖥️ Cowork + Viewer
 
@@ -787,7 +798,7 @@ reads the corrected grades and, if it's a real improvement, releases it.
 
 | Step | What you do | Where |
 |---|---|---|
-| 0 Branch | `git checkout -b <branch>` | ⌨️ Terminal |
+| 0 Branch | `git checkout -b <short-task-name>` | ⌨️ Terminal |
 | 1 Notice | research; spot the problem; write Did/Should/Gap | 🖥️ Cowork + Viewer |
 | 2 Classify | skill's fault, or a tool/grading fault? | 🤖 Claude Code |
 | 3 Capture | `/mine-unit-test --project <dir>` | 🤖 Claude Code |
@@ -813,7 +824,7 @@ arguments, and rebuilds the MCP server first where that matters.
 | `make electron` | `eval\Viewer.bat` |
 | `make e2e-login` | `eval\Login.bat` |
 | `make plugin` / `make mcpb` | `eval\BuildPlugin.bat` / `eval\BuildMcpb.bat` |
-| `git checkout -b <branch>` | GitHub Desktop → Current Branch → **New branch…** |
+| `git checkout -b <short-task-name>` | GitHub Desktop → Current Branch → **New branch…** |
 
 The `/`-commands (`/mine-unit-test`, `/audit-rubric`, `/improve-skill`) are
 typed into Claude Code and are the same on every platform.
