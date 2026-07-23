@@ -1,0 +1,67 @@
+{
+  "tool": "record_search",
+  "description": "Norway, Marriages, 1660-1926 (collection 1468080) search that finds the real marriage entry ONLY once the bride's surname is also tried under its collection-specific abbreviation 'Halsteinsdr' (the index drops '-atter' the same way it substitutes the given-name vowel; see references/collection-quirks.md, Norway section). Fires on any call against this collection whose surname is exactly 'Halsteinsdr', regardless of given-name spelling -- proving the surname half of the 'vary both together' instruction was actually tried, not just the already-fixed given-name half (record-search-urna-variant-marriage-match.json). Must be listed before record-search-surname-not-abbreviated-zero-results.json in the test's mcp_fixtures array so it matches first.",
+  "args": {
+    "surname": "Halsteinsdr",
+    "collectionId": "1468080"
+  },
+  "response": {
+    "query": {
+      "surname": "Halsteinsdr",
+      "collectionId": "1468080",
+      "recordType": "marriage"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 4999,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "p_bride_11820171331",
+        "recordId": "ark:/61903/1:1:NW44-PM2",
+        "personName": "Urna Halsteinsdr",
+        "score": 0.632,
+        "sex": "Female",
+        "events": [
+          { "type": "Marriage", "date": "25 Jun 1786", "place": "Hamre, Hordaland, Norway" }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:NW44-PM2",
+        "collectionId": "1468080",
+        "collectionTitle": "Norway, Marriages, 1660-1926",
+        "recordTitle": "Entry for Anders Monsen and Urna Halsteinsdr, 25 Jun 1786",
+        "treeMatches": [
+          { "personId": "LKFW-9XH", "confidence": 5 }
+        ],
+        "primaryId": "p_groom_11820171332",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_groom_11820171332",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Anders", "surname": "Monsen", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Marriage", "date": "25 Jun 1786", "place": "Hamre, Hordaland, Norway" }
+              ]
+            },
+            {
+              "id": "p_bride_11820171331",
+              "gender": "Female",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "Urna", "surname": "Halsteinsdr", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F2", "type": "Marriage", "date": "25 Jun 1786", "place": "Hamre, Hordaland, Norway" }
+              ]
+            }
+          ],
+          "relationships": [
+            { "id": "R1", "type": "Couple", "person1": "p_groom_11820171332", "person2": "p_bride_11820171331" }
+          ]
+        }
+      }
+    ]
+  }
+}

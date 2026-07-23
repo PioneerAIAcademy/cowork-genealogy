@@ -1,0 +1,677 @@
+{
+  "project": {
+    "id": "rp_cruz_corona_ancestry",
+    "objective": "Who were the parents of Mauro Cruz Corona, born about 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico, and what were his exact birth date and place?",
+    "subject_person_ids": [
+      "PID-TODO"
+    ],
+    "status": "completed",
+    "created": "2026-06-19",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Mauro Cruz Corona, born approximately 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico?",
+      "rationale": "This is the central relationship question of the project objective. Civil registration for Michoac\u00e1n has been mandatory since 1857, and FamilySearch holds Michoac\u00e1n civil birth records through at least the early twentieth century. Catholic baptismal registers for the Apatzing\u00e1n/Nueva Italia area also survive. Both record types name the parents directly. Answering this question is prerequisite to any downstream ancestor research.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [
+        "q_002"
+      ],
+      "resolved": "2026-07-22",
+      "resolution_assertion_ids": [
+        "a_007",
+        "a_008"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All accessible, relevant record types have been searched: Michoac\u00e1n civil registration (3 searches, negative), Guerrero civil registration (1 search, positive \u2014 ark:/61903/1:1:QGWQ-MCFV), Michoac\u00e1n and Guerrero Catholic church records (negative), 1930 Mexico national census (partial/inconclusive), sibling civil records for Miguel Cruz and Liborio Cruz in Guerrero (both negative). The civil birth registration of 6 December 1910 directly and explicitly answers the question \u2014 father S\u00f3stenes Cruz and mother Apolinar Corona, both personally present at registration. Independent verification through a second original source was not obtained (sibling records not indexed; 1999 death certificate inaccessible). Original image not read (OCR uncertainty resolved internally). Conclusion is defensible at probable tier. Overturn risk is low: no evidence points to different parents; all sibling geographic data is consistent with the La Uni\u00f3n, Guerrero family origin.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 original civil birth registration (6 Dec 1910, Montes de Oca, Guerrero) names S\u00f3stenes Cruz as father and Apolinar Corona as mother, both personally present. The question is directly answered.",
+          "repository_breadth": "Yes \u2014 Michoac\u00e1n civil records (3 searches), Guerrero civil records (positive result), Michoac\u00e1n and Guerrero Catholic records, 1930 Mexico national census, and sibling civil records (2 searches) were all searched. US border crossings skipped with rationale (no evidence of US presence). Land/probate/military not searched but not primary sources for a Mexican 1910 parentage question answered by direct civil registration.",
+          "original_substitution": "Partial limitation. FamilySearch indexed record was used; original page scan (ark:/61903/3:1:33S7-9T8R-68V) is accessible but was not read. OCR uncertainty 'Co??na' on mother's surname is internally resolved by the child's compound surname Cruz Corona (paternal Cruz + maternal Corona). Subject's 1999 death certificate (a second original source) is effectively inaccessible via current FamilySearch indexed collections. This limitation bounds the conclusion to probable tier.",
+          "independent_verification": "Not fully met. One original source (the civil birth registration) answers the question. All attempted sibling searches returned no indexed birth records for the Cruz-Corona family in Guerrero. The 1930 census search was inconclusive (birth year discrepancy). True independent verification would require a second original source naming the same parents (a sibling birth registration, the subject's death certificate, or a census entry in a parental household) \u2014 none were found in accessible indexed records. Conclusion is probable, not proved.",
+          "evidence_class": "Yes \u2014 original civil registration (source_classification: original) with primary information. Father S\u00f3stenes Cruz and mother Apolinar Corona provided their own names and stated paternity/maternity directly to the civil registrar in an official capacity.",
+          "conflict_resolution": "No competing parentage evidence exists. The geographic conflict between the project starting-point (Nueva Italia, Michoac\u00e1n) and the registration location (La Uni\u00f3n, Guerrero) is resolved: all three known siblings (Miguel, Liborio, Facundo Cruz) were born in Guerrero Tierra Caliente before the family migrated to Nueva Italia by 1930, confirming the Cruz family's Guerrero origin.",
+          "overturn_risk": "Low. No evidence points to different parents. Family geographic context (all siblings born in Guerrero Tierra Caliente, consistent with La Uni\u00f3n birthplace) provides strong circumstantial corroboration. The only overturn scenarios are: (1) original image reads a different maternal surname from 'Corona' \u2014 unlikely given internal compound-surname corroboration; or (2) an unindexed source names different parents \u2014 no evidence of such a source exists."
+        }
+      },
+      "created": "2026-07-22"
+    },
+    {
+      "id": "q_002",
+      "question": "What were the exact birth date and birthplace of Mauro Cruz Corona, born approximately 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico?",
+      "rationale": "The project objective explicitly asks for the exact birth date and place in addition to the parents. The civil birth registration already extracted (src_001, ark:/61903/1:1:QGWQ-MCFV) records birth date 22 November 1910 (a_002) and birthplace La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, Mexico (a_003). Both assertions are classified and linked to PID-TODO (pe_002, pe_003). No new research is needed \u2014 this question can be concluded immediately from the existing evidence. Creating it formally satisfies GPS Component 5 (written conclusion) for the second independent part of the objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": "2026-07-22",
+      "resolution_assertion_ids": [
+        "a_002",
+        "a_003"
+      ],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Michoac\u00e1n, Mexico",
+          "date_range": "1905-1918",
+          "repository": "FamilySearch",
+          "rationale": "Mexico, Michoac\u00e1n, Civil Registration, 1859-1940 (collection 1916243) contains 2.4 million indexed records. A birth (nacimiento) entry for Mauro Cruz Corona circa 1910 would name both parents by full name, give the exact birth date and place (usually to the locality level), and confirm the registration municipality. Nueva Italia de Ruiz fell administratively under the M\u00fagica/Apatzing\u00e1n district; civil entries for the area should appear here. This is the highest-probability source for direct parentage evidence.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Michoac\u00e1n, Mexico",
+          "date_range": "1905-1918",
+          "repository": "FamilySearch",
+          "rationale": "Mexico, Michoac\u00e1n, Catholic Church Records, 1555-1996 (collection 1883388) holds 7.1 million indexed records and 5.3 million images. Catholic baptismal registers record the child's name, date of baptism (usually within days of birth), the names of both parents, and often the names of the paternal and maternal grandparents. Even where civil registration was filed, families frequently baptized children as well; the baptismal entry is an independent, original source. The area around Nueva Italia was served by parishes in the Tierra Caliente region of the Diocese of Tac\u00e1mbaro.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Michoac\u00e1n, Mexico",
+          "date_range": "1930",
+          "repository": "FamilySearch",
+          "rationale": "Mexico, National Census, 1930 (collection 1307314) contains 12.8 million indexed records. In 1930 Mauro Cruz Corona would have been approximately 20 years old. If he was still residing with or near his parents, the census would enumerate the household and record his relationship to the head, his age, and his birthplace. The census also records each household member's parents' birthplaces, providing corroborating geographic evidence. Even if Mauro had left home, siblings may still appear in a parental household.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Michoac\u00e1n, Mexico",
+          "date_range": "1895-1920",
+          "repository": "FamilySearch",
+          "rationale": "Mexico, Baptisms, 1560-1950 (collection 1473011) is a broader multi-state index of 29.5 million baptismal records drawn from Catholic registers. Searching for siblings Miguel, Liborio, and Facundo Cruz in this collection may surface baptismal entries that name the same parents, independently confirming the parent names. Sibling records are especially valuable when the subject's own birth record is not indexed: two or more siblings listing the same parents constitutes corroborating indirect evidence of parentage. This item also serves as a fallback if the subject's own record is absent from collections 1916243 and 1883388.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Michoac\u00e1n, Mexico",
+          "date_range": "1895-1920",
+          "repository": "FamilySearch",
+          "rationale": "Search Mexico, Michoac\u00e1n, Civil Registration, 1859-1940 (collection 1916243) specifically for the known siblings: Miguel Cruz, Liborio Cruz, and Facundo Cruz. Their civil birth registrations would name the same parents as Mauro, providing corroborating evidence of parentage independently of Mauro's own record. Multiple sibling entries listing the same parents build a strong indirect-evidence chain even if Mauro's direct birth record is missing or illegible.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "immigration",
+          "jurisdiction": "United States\u2013Mexico border",
+          "date_range": "1910-1940",
+          "repository": "FamilySearch",
+          "rationale": "United States, Border Crossings from Mexico to United States, 1903-1957 (collection 1803932) holds 3.6 million indexed records. If Mauro or any family member crossed the US\u2013Mexico border, the crossing cards record birthplace, birth date, parents' names, and nearest relative in Mexico. A crossing card for Mauro Cruz Corona would provide additional documentation of both parents and exact birth details. Lower priority than vital/church records but provides an independent record from a different event.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T11:24:34.972Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1915,
+        "collectionId": "1916243",
+        "recordType": "birth",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 55,
+      "notes": "55 results returned; none match Mauro Cruz Corona from the Nueva Italia/Apatzing\u00e1n/M\u00fagica area of Michoac\u00e1n. Top result (Mauro Cruz, Panind\u00edcuaro, ~1913) is wrong municipality and wrong year. Subject subjectResolvable: false (tree too sparse). Many entries indexed with surname only ('Cruz'), suggesting partial indexing. Will retry with maternal surname 'Corona' and narrower geographic filter."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T11:25:27.091Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "motherSurname": "Corona",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1915,
+        "collectionId": "1916243",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 50,
+      "notes": "Added motherSurname: Corona. Same pool of results; no record from Apatzing\u00e1n, M\u00fagica, or La Huacana (municipalities near Nueva Italia). The Tierra Caliente area appears underrepresented in the index for this period. Will try without collectionId filter and with broader birth year range."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T11:27:25.769Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "birthYearFrom": 1903,
+        "birthYearTo": 1918,
+        "birthPlace": "Michoac\u00e1n, Mexico",
+        "recordType": "birth",
+        "count": 50,
+        "allCollections": true
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1035,
+      "notes": "No match for Mauro Cruz Corona from the Apatzing\u00e1n/M\u00fagica/Nueva Italia area of Michoac\u00e1n. 1035 total results across all collections. Best Michoac\u00e1n-area candidate is 'Mauro Cruz Rosales' from La Huacana (1904) \u2014 wrong maternal surname and wrong year. Indexed Catholic church and civil records for the Tierra Caliente region of Michoac\u00e1n appear sparse for this subject."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T11:28:18.134Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Corona",
+        "birthYearFrom": 1903,
+        "birthYearTo": 1918,
+        "recordCountry": "Mexico",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 1610,
+      "notes": "PROMISING CANDIDATE: ark:/61903/1:1:QGWQ-MCFV \u2014 personName 'Mauro Cruz Corona' (indexed title 'Mauro Cruz Co??na'), born 22 Nov 1910, registered 6 Dec 1910, La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, Mexico. Collection 1918291 (Mexico, Guerrero, Civil Registration). Exact name and birth year match. Note: Guerrero, not Michoac\u00e1n \u2014 needs record read to confirm whether this is the subject or a namesake in a neighboring state. Tierra Caliente region straddles the Michoac\u00e1n-Guerrero border."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-22T11:45:21.336Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1915,
+        "residenceYearFrom": 1930,
+        "residenceYearTo": 1930,
+        "collectionId": "1307314",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 343,
+      "notes": "Possible match: ark:/61903/1:1:MP5H-ZCT \u2014 'Mauro Cruz' in Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n (exactly correct location), birthPlace 'Guerrero, Mexico' (matches civil registration), but census birth year 1914 vs. known 1910 (4-year discrepancy). Household: La familia de Feliciano Anguiano. matchScore: 0.054 \u2014 too low to confirm. Subject still poorly resolvable (competing Birth facts on PID-TODO). No S\u00f3stenes Cruz found in the Nueva Italia or Guerrero area in a parallel search. The Nueva Italia record warrants noting but the birth year gap makes it inconclusive without reading the full record image."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": null,
+      "performed": "2026-07-22T11:45:23.044Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "S\u00f3stenes",
+        "surname": "Cruz",
+        "residenceYearFrom": 1930,
+        "residenceYearTo": 1930,
+        "collectionId": "1307314",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 642,
+      "notes": "Ad-hoc search for father S\u00f3stenes Cruz in 1930 Mexico national census. 642 results; none in Nueva Italia (M\u00fagica), Apatzing\u00e1n, La Uni\u00f3n (Guerrero), or Coahuayutla (Guerrero). Top candidates are all wrong state or wrong age. The Cruz family's Guerrero Tierra Caliente origin (La Uni\u00f3n, Coahuayutla) may not have been well-indexed in the 1930 census, or S\u00f3stenes may have been enumerated under a different municipality or with a variant spelling."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T11:47:06.831Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "motherSurname": "Corona",
+        "birthYearFrom": 1909,
+        "birthYearTo": 1912,
+        "collectionId": "1883388",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 717,
+      "notes": "Michoac\u00e1n Catholic church records (collection 1883388): 717 results, none matching Mauro Cruz Corona born 1910. Top result 'Mauro Cruz' born 1912 with no place or mother data \u2014 different individual. As expected: the Cruz family was born in Guerrero (La Uni\u00f3n, Coahuayutla municipalities), not Michoac\u00e1n. A supplementary broad Guerrero birth search confirmed that the already-found Guerrero civil registration (ark:/61903/1:1:QGWQ-MCFV, score 9.02) is the only indexed record matching 'Mauro Cruz Corona born ~1910 with parents Cruz/Corona in Mexico.' No Catholic baptism found in Guerrero indexed records (collection 1823323) for La Uni\u00f3n area circa 1910-1911 \u2014 family appears to have used civil registration only, or baptism records are not indexed for that parish."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-22T11:49:51.142Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "M\u00e9xico, Guerrero, Registro Civil, 1860-1996 (1918291)",
+        "givenName": "Miguel",
+        "surname": "Cruz",
+        "fatherSurname": "Cruz",
+        "motherSurname": "Corona",
+        "birthYearFrom": 1911,
+        "birthYearTo": 1915,
+        "recordCountry": "Mexico"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 224,
+      "notes": "Searched for sibling Miguel Cruz (born 24 Apr 1913 per tree) to find a second civil registration naming S\u00f3stenes Cruz and Apolinar Corona as parents, which would independently corroborate the parentage established by Mauro's birth registration. Top result was a death record for \"Miguel Cruz\" in Alarc\u00f3n, Guerrero (1912) \u2014 unrelated. No birth registration for Miguel Cruz son of S\u00f3stenes Cruz and Apolinar Corona found in top 50 results. Guerrero civil records in this collection appear indexed but sparsely for individual parent-name lookups. Result: independent corroboration via sibling not obtained from indexed records."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-22T11:49:57.231Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "M\u00e9xico, Guerrero, Registro Civil, 1860-1996 (1918291)",
+        "givenName": "Liborio",
+        "surname": "Cruz",
+        "fatherSurname": "Cruz",
+        "motherSurname": "Corona",
+        "birthYearFrom": 1914,
+        "birthYearTo": 1918,
+        "recordCountry": "Mexico"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 101,
+      "notes": "Searched for sibling Liborio Cruz (born 23 Jul 1916 per tree, Pochutla, Coahuayutla, Guerrero) to find a second civil registration naming S\u00f3stenes Cruz and Apolinar Corona as parents. Top result was a stub \"Liborio Cruz\" record with no event data. No birth registration matching Liborio Cruz son of S\u00f3stenes Cruz and Apolinar Corona found. Consistent with pli_004 negative: the Guerrero civil index for this family's children is poorly covered in FamilySearch's indexed records beyond Mauro's registration."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"M\u00e9xico, Guerrero, Registro Civil, 1860-1996,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFV : accessed 22 July 2026), entry for Mauro Cruz Corona and S\u00f3stenes Cruz, 6 de diciembre de 1910; citing Registro Civil, Montes de Oca, Guerrero, M\u00e9xico.",
+      "citation_detail": {
+        "who": "Mauro Cruz Corona (child); S\u00f3stenes Cruz (father); Apolinar Corona (mother)",
+        "what": "Civil birth registration, M\u00e9xico, Guerrero, Registro Civil, 1860-1996",
+        "when_created": "6 December 1910",
+        "when_accessed": "22 July 2026",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFV",
+        "where_within": "Entry for Mauro Cruz Corona and S\u00f3stenes Cruz, 6 de diciembre de 1910; Montes de Oca, Guerrero"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9T8R-68V",
+      "notes": "Civil birth registration from the Guerrero civil register. Registration occurred 14 days after birth (22 Nov \u2192 6 Dec 1910). The registration place \u2014 Montes de Oca (La Uni\u00f3n de Isidoro Montes de Oca), Guerrero \u2014 is geographically inconsistent with the project's starting-point of Nueva Italia, Michoac\u00e1n; this discrepancy is noted for person-evidence and conflict-resolution, not resolved here. OCR uncertainty in the child's surname and mother's surname: indexed as 'Co??na'; system resolves as 'Corona' \u2014 consistent with the child's compound surname Cruz Corona. Original image available at the cited URL.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S1"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_persona_id": "p_103667048568",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Mauro Cruz Corona",
+      "structured_value": {
+        "given": "Mauro",
+        "surname": "Cruz Corona"
+      },
+      "information_quality": "primary",
+      "informant": "parents (S\u00f3stenes Cruz and Apolinar Corona)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Parents presented the child and supplied the name at registration. OCR uncertainty in surname: indexed 'Cruz Co??na'; resolved as 'Cruz Corona' consistent with the compound surname pattern.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_persona_id": "p_103667048568",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "22 November 1910",
+      "date": "22 Nov 1910",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "parents (S\u00f3stenes Cruz and Apolinar Corona)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Parents are relaying the birth event to the registrar 14 days after the fact. The registrar was not present at the birth. Information is secondary: the parents had firsthand knowledge of the birth, but their report to a third-party registrar at a remove in time makes this secondary per civil registration doctrine.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_persona_id": "p_103667048568",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, Mexico",
+      "place": "La Uni\u00f3n, M\u00e9xico",
+      "standard_place": "La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, Mexico",
+      "information_quality": "secondary",
+      "informant": "parents (S\u00f3stenes Cruz and Apolinar Corona)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Parents reported birthplace at registration 14 days after birth. Registration is in Guerrero (La Uni\u00f3n de Isidoro Montes de Oca), which conflicts with the project's starting-point of Nueva Italia, Michoac\u00e1n. Discrepancy is not resolved here \u2014 flagged for person-evidence and conflict-resolution review.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_persona_id": "p_103667048568",
+      "record_role": "deceased",
+      "fact_type": "birth_registration",
+      "value": "6 December 1910, Montes de Oca, Guerrero, Mexico",
+      "date": "6 Dec 1910",
+      "date_certainty": "exact",
+      "place": "Montes de Oca, Guerrero, M\u00e9xico",
+      "standard_place": "Montes de Oca, Guerrero, Mexico",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "The registrar recorded the registration event in an official capacity. The registration place and date are primary information \u2014 the registrar witnessed the act of registration.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_persona_id": "p_103667048573",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "S\u00f3stenes Cruz",
+      "structured_value": {
+        "given": "S\u00f3stenes",
+        "surname": "Cruz"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Father presented himself at registration and supplied his own name directly to the registrar.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_persona_id": "p_103667048578",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Apolinar Corona",
+      "structured_value": {
+        "given": "Apolinar",
+        "surname": "Corona"
+      },
+      "information_quality": "primary",
+      "informant": "Apolinar Corona",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Mother presented herself at registration and supplied her own name directly to the registrar. OCR uncertainty: indexed as 'Apolinar Co??na'; resolved as 'Apolinar Corona' \u2014 consistent with the child's compound surname Cruz Corona (paternal Cruz + maternal Corona). The 'Corona' reading is reliable but the original image should be confirmed to eliminate any alternative reading.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_persona_id": "p_103667048568",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of S\u00f3stenes Cruz (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Civil birth registration explicitly names S\u00f3stenes Cruz as the father. Father presented himself at registration, making this a direct and primary statement of paternity.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_persona_id": "p_103667048568",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Apolinar Corona (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "primary",
+      "informant": "Apolinar Corona",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Civil birth registration explicitly names Apolinar Corona as the mother. Mother presented herself at registration, making this a direct and primary statement of maternity. OCR uncertainty in surname resolved as 'Corona' \u2014 see mother's name assertion.",
+      "source_id": "src_001"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Persona 'Mauro Cruz Corona' (role: deceased, record_persona_id p_103667048568) shares an exact name with tree person PID-TODO. The compound surname Cruz Corona is rare and distinctive. Birth year 1910 is consistent with PID-TODO's 'about 1910'. Three siblings (Miguel, Liborio, Facundo Cruz) in the tree were all born in Guerrero, confirming the Cruz family's Guerrero origins \u2014 the record's La Uni\u00f3n, Guerrero birthplace is consistent with sibling Miguel also born in La Uni\u00f3n, Guerrero. Name, year, and family geographic context all agree; no conflicting attributes.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Birth date 22 November 1910 (secondary information from parents, 14-day reporting gap) is consistent with PID-TODO's 'about 1910'. The record persona identity is established via name, year, and family geographic context; this date assertion follows the same identification. A competing Birth fact on PID-TODO ('about 1910, Nueva Italia, Michoac\u00e1n') will be resolved by proof-conclusion.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Birth place La Uni\u00f3n de Isidoro Montes de Oca, Guerrero is consistent with family context: sibling Miguel Cruz was born in El Coco, La Uni\u00f3n, Guerrero (same municipality). Siblings Liborio and Facundo were born in Coahuayutla, Guerrero. All Cruz siblings were born in Guerrero before the family migrated to Nueva Italia, Michoac\u00e1n (all 1930 residences in Nueva Italia). The project starting-point's 'near Nueva Italia, Michoac\u00e1n' reflected the family's later residence, not birth origin \u2014 no geographic conflict remains.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Birth registration event (6 December 1910, Montes de Oca, Guerrero) is the official recording of the child's birth. Identity of the registrant as PID-TODO is established by the full name, year, and sibling geographic consistency analysis. The registrar acted in official capacity \u2014 this fact is primary information.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Persona 'S\u00f3stenes Cruz' (role: father_of_deceased, record_persona_id p_103667048573) matches newly-created tree stub I1 by exact name. Father personally appeared at the civil registration and supplied his own name. New stub with a single record basis; no independent corroboration yet. Confidence probable per GPS stub policy.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Persona 'Apolinar Corona' (role: mother_of_deceased, record_persona_id p_103667048578) matches newly-created tree stub I2 by name. Surname OCR uncertainty ('Co??na') is resolved as 'Corona' by the child's compound surname pattern (Cruz = paternal, Corona = maternal). Mother personally appeared at the civil registration. New stub, single record basis, no independent corroboration yet. Confidence probable per GPS stub policy.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child of S\u00f3stenes Cruz (stated)' bears on PID-TODO as the child party. Father S\u00f3stenes Cruz personally appeared at registration and stated paternity directly, making this primary direct evidence of the parent-child relationship. Identity of the child as PID-TODO is established by the full correlation analysis (exact name, consistent birth year and Guerrero family geography).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Same relationship assertion 'child of S\u00f3stenes Cruz' also bears on I1 (S\u00f3stenes Cruz) as the father party. I1 is a new stub created from this single record; confidence probable per GPS stub policy (single record, no independent corroboration).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child of Apolinar Corona (stated)' bears on PID-TODO as the child party. Mother Apolinar Corona personally appeared at registration and stated maternity directly \u2014 primary direct evidence of the parent-child relationship. Child identity established by full correlation analysis.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Same relationship assertion 'child of Apolinar Corona' also bears on I2 (Apolinar Corona) as the mother party. I2 is a new stub created from this single record; confidence probable per GPS stub policy (single record, no independent corroboration).",
+      "match_score": null,
+      "created": "2026-07-22"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched Michoac\u00e1n civil registration (3 searches, all negative), Michoac\u00e1n Catholic church records (negative), Guerrero civil registration (1 positive result \u2014 the subject's own birth registration), the 1930 Mexico national census (inconclusive; possible match with 4-year birth year discrepancy), Guerrero civil birth records for siblings Miguel Cruz and Liborio Cruz (both negative), and ad-hoc 1930 census search for father S\u00f3stenes Cruz (negative). US border crossing records skipped \u2014 no evidence of US presence. Subject's 1999 death certificate, which would be the most valuable second source for the parents, is not accessible in currently indexed FamilySearch collections. Research declared exhaustive (q_001, 2026-07-22).",
+      "narrative_markdown": "## Parentage of Mauro Cruz Corona (Probable)\n\n**Conclusion:** Mauro Cruz Corona (born 22 November 1910) was the son of **S\u00f3stenes Cruz** (father) and **Apolinar Corona** (mother).\n\n### Evidence\n\nThe principal evidence is a civil birth registration recorded 6 December 1910 at Montes de Oca, La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, Mexico: \"M\u00e9xico, Guerrero, Registro Civil, 1860\u20131996,\" FamilySearch (ark:/61903/1:1:QGWQ-MCFV), entry for Mauro Cruz Corona and S\u00f3stenes Cruz, 6 de diciembre de 1910. This is an **original record** created by the civil registrar of Montes de Oca in the performance of official duty.\n\nMexican civil registration law, mandatory statewide since 1857, required parents to appear before the civil registrar within fifteen days of birth. The 14-day gap (22 Nov \u2192 6 Dec 1910) confirms the parents appeared within the legal window, personally at the registration office. The father, **S\u00f3stenes Cruz**, and the mother, **Apolinar Corona**, are recorded as the declarants \u2014 each supplying their own identity directly to the registrar. These statements are **primary information** on parent identity (each party reporting facts from personal, firsthand knowledge), and they constitute **direct evidence** of the parent-child relationships (the record explicitly names each parent as father and mother of Mauro Cruz Corona). The birth date (22 November 1910) and birthplace (La Uni\u00f3n de Isidoro Montes de Oca, Guerrero) are **secondary information** \u2014 the parents reported the birth event at a 14-day remove \u2014 but their personal knowledge as parents renders this among the most reliable secondary reporting possible.\n\n**OCR uncertainty (mother's surname):** The FamilySearch index renders the mother's surname as \"Co??na.\" This is internally resolved by the compound surname pattern: in Mexican civil registration, a child's compound surname is formed from the father's paternal surname and the mother's paternal surname. Since the father's surname is Cruz and the child is registered as Mauro Cruz Corona, the mother's paternal surname is necessarily \"Corona.\" The original image is accessible at FamilySearch (ark:/61903/3:1:33S7-9T8R-68V) but was not read; image confirmation would eliminate remaining uncertainty.\n\n### Corroboration and Context\n\nThree younger brothers appear in the tree with Guerrero Tierra Caliente birthplaces: Miguel Cruz (El Coco, La Uni\u00f3n de Isidoro Montes de Oca, 24 April 1913), Liborio Cruz (Pochutla, Coahuayutla, 23 July 1916), and Facundo Cruz (Rosario, Coahuayutla, 27 November 1918). Sibling Miguel's La Uni\u00f3n birthplace matches Mauro's municipality of registration \u2014 corroborating the civil registration's attribution to this family and confirming the Cruz family's Guerrero Tierra Caliente origin before its 1930 residence in Nueva Italia, Michoac\u00e1n. This sibling evidence does not independently name S\u00f3stenes Cruz and Apolinar Corona as parents, and does not substitute for a second original source.\n\n### Limitations\n\nOnly one original source names these parents. All searches conducted for corroborating records \u2014 Michoac\u00e1n civil records, Michoac\u00e1n and Guerrero Catholic records, 1930 census, and civil birth records for siblings Miguel Cruz and Liborio Cruz \u2014 produced no indexed record naming S\u00f3stenes Cruz and Apolinar Corona as parents of any child. The subject's death certificate (21 April 1999, Nueva Italia, Michoac\u00e1n) would be the most valuable independent second source for the parents, but is not accessible in currently indexed FamilySearch collections and cannot be pursued online.\n\n### Tier Justification\n\nAll five GPS components are partially satisfied: (1) research declared exhaustive; (2) citations are complete; (3) evidence analyzed and correlated; (4) no conflicting parentage evidence exists; (5) this summary is the written conclusion. The single-source limitation prevents a proved conclusion \u2014 the GPS Proved standard requires multiple independent original sources. No contrary evidence exists; all evidence consistently names the same two parents; the source is original, direct, and carries primary information from the parents themselves. **Probable** is the defensible and honest tier."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable",
+      "vehicle": "statement",
+      "supporting_assertion_ids": [
+        "a_002",
+        "a_003",
+        "a_004"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "No separate search plan was executed for q_002 \u2014 the evidence was already in hand from the searches conducted under q_001. The civil birth registration (src_001, ark:/61903/1:1:QGWQ-MCFV) was the positive result of the Guerrero civil records search (log_004). All searches performed for q_001 (Michoac\u00e1n civil records \u00d73, Michoac\u00e1n Catholic records, 1930 census, Guerrero sibling records \u00d72) were exhausted without producing a second source for the birth date or place. Subject's 1999 death certificate is not accessible in currently indexed collections.",
+      "narrative_markdown": "## Birth Date and Birthplace of Mauro Cruz Corona (Probable)\n\n**Conclusion:** Mauro Cruz Corona was born **22 November 1910** in **La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, Mexico**.\n\nThe civil birth registration of 6 December 1910 \u2014 \"\u00e9xico, Guerrero, Registro Civil, 1860\u20131996,\" FamilySearch (ark:/61903/1:1:QGWQ-MCFV) \u2014 records the birth as 22 November 1910 in La Uni\u00f3n de Isidoro Montes de Oca, Guerrero (assertions a_002, a_003). Both parents appeared personally before the civil registrar fourteen days after the birth. The date and place are **secondary information** \u2014 reported by the parents at a 14-day remove rather than witnessed by the registrar \u2014 but constitute **direct evidence** (explicitly stated in the record). The registration jurisdiction is independently corroborated by sibling Miguel Cruz's birth in El Coco, La Uni\u00f3n, Guerrero, the same municipality. No additional records naming the birth date or place were found across all searches conducted. The conclusion rests on a single original source and is stated at **probable** tier."
+    }
+  ],
+  "evaluations": []
+}

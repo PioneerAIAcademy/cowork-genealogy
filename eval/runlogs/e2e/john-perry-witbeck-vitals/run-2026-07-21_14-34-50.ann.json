@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "false",
+    "f3": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Birth date recovered exactly (10 Mar 1775) but the birth fact carries no place; Albany appears only on the retained Christening fact, not the birth. Right date, incomplete place.",
+    "f2": "Missed. Agent bounded the death as 'bef 3 Apr 1819' in Albany County from probate/deed reasoning (25 image_transcribe calls on an 1813 deed + 1820 mortgage) instead of the direct Find A Grave record; expected 28 Feb 1819 Niskayuna, Schenectady. Wrong precise date and wrong county.",
+    "f3": "Missed on the subject. Timed out (120 min) before opening a burial question. The Niskayuna Reformed Church Cemetery burial exists in the tree but on the son Thomas (LCCV-YCQ), not on John Perry."
+  },
+  "annotator": "bolu"
+}
