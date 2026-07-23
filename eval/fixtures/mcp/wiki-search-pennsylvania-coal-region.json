@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "wiki_search — surfaces the dedicated 'Pennsylvania Coal Region Records' FamilySearch wiki page (the specialized anthracite-index page) as the top hit, returning its exact source_url so the skill can follow up with wiki_read on that page. Predicate matches a coal-region / anthracite query at the region level. This is the search->read discovery path for the wiki-read-via-server-signature fixture; order it BEFORE the broader wiki-search-pennsylvania-records (~Pennsylvania) and wiki-search-any catch-alls in a test's mcp_fixtures so a coal-region query resolves here rather than to the generic Pennsylvania page.",
+  "args": { "query": "~coal region" },
+  "response": {
+    "query": "Pennsylvania anthracite coal region genealogy records indexes",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.93,
+        "chunk_text": "The Pennsylvania Coal Region Records page gathers specialized indexes for the anthracite counties (Schuylkill, Luzerne, Lackawanna, Northumberland, Carbon) that sit alongside the standard civil records. It describes colliery employment indexes drawn from company payroll books, coal-region Catholic parish survival, and the triennial state tax assessments — sources unique to the anthracite field. See the full page for the specific index titles and their coverage years.",
+        "page_title": "Pennsylvania Coal Region Records",
+        "section_heading": "Overview",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Coal_Region_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.78,
+        "chunk_text": "Anthracite-region researchers should distinguish company payroll indexes (which name individual colliery workers) from mine-inspection and accident reports (which are organized by colliery, not by person). Payroll-derived indexes are the more direct genealogical finding aid for immigrant miners whose names were indexed inconsistently in census records.",
+        "page_title": "Pennsylvania Coal Region Records",
+        "section_heading": "Choosing an index",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Coal_Region_Records"
+      }
+    ],
+    "query_time_ms": 401,
+    "timing": { "embed_ms": 49, "search_ms": 219, "rerank_ms": 133 }
+  }
+}

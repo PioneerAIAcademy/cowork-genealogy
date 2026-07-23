@@ -2,7 +2,7 @@
   "tool": "wiki_read",
   "description": "Test fixture for verifying wiki_read fetches via the wiki-query-api server. Returns a wiki page whose content carries a distinctive phrase ('Lackawanna Valley Anthracite Index, 1855-1898') so the corresponding skill test can assert the skill used the server's response rather than guessing from prior knowledge.",
   "args": {
-    "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Coal_Region_Records"
+    "url": "~Pennsylvania_Coal_Region_Records"
   },
   "response": {
     "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Coal_Region_Records",
