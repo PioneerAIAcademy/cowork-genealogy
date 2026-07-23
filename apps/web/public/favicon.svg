@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Genealogy Workbench">
+  <!-- A pedigree fan: one person branching to two parents, the smallest glyph
+       that still reads as "genealogy" at 16px. Colors come from the viewer's
+       "Warm Scholarly" palette (packages/viewer-ui/src/styles/global.css): the
+       text-primary brown as the tile, and a lightened accent-gold for the mark
+       (the literal #b8860b only reaches ~4.7:1 on that brown, which muddies at
+       favicon size). Keep this comment free of doubled hyphens: XML forbids
+       them inside comments, and browsers parse image/svg+xml strictly. -->
+  <rect width="64" height="64" rx="13" fill="#2c2419" />
+  <g fill="none" stroke="#d4a24c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 32h10V17.5h8.5" />
+    <path d="M22 32h10V46.5h8.5" />
+  </g>
+  <g fill="#d4a24c">
+    <circle cx="17" cy="32" r="6" />
+    <circle cx="47" cy="17.5" r="6" />
+    <circle cx="47" cy="46.5" r="6" />
+  </g>
+</svg>
