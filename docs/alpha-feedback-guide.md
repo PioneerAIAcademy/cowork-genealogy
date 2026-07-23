@@ -15,12 +15,11 @@ step, says which of three places you're working in.
 
 | Role | What they do |
 |---|---|
-| **You** (junior genealogist or any contributor) | Everything from "download the zip" through "commit the fix on a feature branch." |
-| **Developer** | Pairs with you at PR time to build the plugin `.zip`, install it into Cowork, walk through the fresh Cowork verification (Step 8), and open the PR. |
+| **You** (junior genealogist or developer) | The whole loop: download the zip, reproduce the bug, capture the test, improve the skill, build + install the plugin, verify in Cowork, and open the PR. |
 | **Senior genealogist** | Reviews the PR — skill changes, rubric quality, the new unit test — and approves the merge. |
 
-If you get stuck mid-flow, ask a developer. The spec is precise about which
-steps benefit from pairing.
+If you get stuck mid-flow, ask for help. The spec is precise about which
+steps benefit from a second pair of eyes.
 
 ## The three places
 
@@ -85,10 +84,9 @@ Already done? Skip ahead.
 
 ## The story: a parent nobody proved
 
-> **The names and the case are invented for the story.** "Marta" (alpha tester)
-> and "Sam" (the genealogist + developer pair, collapsed into one person here)
-> make it concrete, but the split is illustrative — anyone can do any step, and
-> one person can run the whole loop.
+> **The names and the case are invented for the story.** "Marta" is the alpha
+> tester; you're the one running the fix. Anyone can do any step, and one person
+> runs the whole loop.
 
 Marta is working a brick wall — John Schuster, born about 1845 in Augusta
 County. The agent finds an 1850 census household headed by a Robert Schuster
@@ -127,13 +125,13 @@ below is mechanics.
 
 ## Step 1 — Branch before you touch anything ⌨️ Terminal
 
-*(Step 0 happened days earlier, and by someone else. Sam's work starts here.)*
+*(Step 0 happened days earlier, and by someone else. Your work starts here.)*
 
 One task, one branch, always cut from an up-to-date `main` — you open a PR from
 it at the end. Name it with a few hyphenated words describing the fix — no
 slashes, no timestamps.
 
-**Developers — terminal:**
+**Terminal:**
 
 ```bash
 cd ~/cowork-genealogy
@@ -141,7 +139,7 @@ git checkout main && git pull
 git checkout -b schuster-parent-fix
 ```
 
-**Genealogists — GitHub Desktop:** Current Branch dropdown → select **main** and
+**GitHub Desktop:** Current Branch dropdown → select **main** and
 **Fetch/Pull** → **New branch…** → name it `schuster-parent-fix` → base it on
 `main` → **Create branch**.
 
@@ -244,10 +242,10 @@ That reads the case folder's current `research.json`, `tree.gedcomx.json` and
   intermittent or already fixed on this branch. Note the date and stop.
 - **`does-not-match`**, but it's wrong in a *different* way → live APIs are
   noisy; reset (below) and run once more. Still wrong? That's a "user-reported
-  bug that doesn't reproduce locally" — escalate with a developer rather than
+  bug that doesn't reproduce locally" — escalate for help rather than
   guessing at a fix.
 - **`partial`** → either the reproduction is genuinely incomplete, or it's
-  live-MCP noise. Try once more; if it oscillates, get a developer's eye on it.
+  live-MCP noise. Try once more; if it oscillates, get a second pair of eyes on it.
 
 > **Resetting between attempts.** Every rerun — here and in Step 7 — needs
 > *both* halves reset, or you're testing contaminated state:
@@ -367,9 +365,9 @@ If it doesn't match, go back to Step 6. The edit landed on the mined test
 without solving the real case, which usually means the test carved too narrow a
 scenario.
 
-## Step 8 — Confirm it in Cowork, paired 🖥️ Cowork
+## Step 8 — Confirm it in Cowork 🖥️ Cowork
 
-**Do this with a developer, and treat it as blocking.** Steps 3 and 7 both run
+**Treat this as blocking.** Steps 3 and 7 both run
 in Claude Code against symlinked skills; this is the only step that exercises
 the fix the way a user gets it — through the built plugin bundle in the real
 product.
@@ -396,14 +394,14 @@ unzip -d ~/feedback/<slug>-cowork-check ~/Downloads/feedback-<timestamp>.zip
 
 No symlinks, no `.claude/skills/`, no reset machinery — Cowork loads from its
 installed plugin bundle, so the fresh unzip is all it needs. Open that folder in
-Cowork as a project, re-issue Marta's prompt verbatim, and both of you confirm
+Cowork as a project, re-issue Marta's prompt verbatim, and confirm
 the fix holds. (If Cowork's UI won't open an existing folder directly, follow
 its workspace-creation flow and copy `research.json`, `tree.gedcomx.json`,
 `results/` and the other top-level files across.)
 
 If the fix **doesn't** hold in Cowork, the bug may be Cowork-runtime-specific —
 plugin loader, viewer context injection, OS-specific file handling. Diagnose it
-with the developer; **do not ship the PR.**
+(get help if you need it); **do not ship the PR.**
 
 ## Step 9 — Release run, PR, and reply ⌨️ Terminal → 🌐 browser → GitHub
 
@@ -455,7 +453,7 @@ in the same PR — and run `make eval-skill` for **each** touched skill, since t
 runlog gate checks every skill the PR touches. What to avoid is bundling two
 *unrelated* fixes that happened to share a branch.
 
-A developer pushes and opens the PR with you; the senior genealogist reviews and
+You push and open the PR; the senior genealogist reviews and
 merges.
 
 **Then tell Marta what changed.** An alpha tester who never hears back stops
@@ -485,7 +483,7 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | 5 Capture | `/mine-unit-test --project <case-dir>`; scrub PII | 🤖 Claude Code (case dir) |
 | 6 Improve + gate | → [`skill-lifecycle.md`](skill-lifecycle.md) steps 3–6 | ⌨️ Terminal + 🤖 Claude Code (repo) |
 | 7 Verify the case | reset + `/clear` + re-paste; `/compare-state --against=desired` | 🤖 Claude Code (case dir) + Viewer |
-| 8 Confirm in Cowork | build + install; fresh unzip; re-issue the prompt, paired | 🖥️ Cowork |
+| 8 Confirm in Cowork | build + install; fresh unzip; re-issue the prompt | 🖥️ Cowork |
 | 9 Release run + PR | `make eval-skill`, grade **every** dimension, commit, PR, reply | ⌨️ Terminal → 🌐 browser → GitHub |
 | 10 Clean up | delete both case directories | ⌨️ Terminal / file manager |
 
@@ -533,14 +531,14 @@ Run it as `/mine-unit-test --skill <name>` and pick the skill you edited.
 
 **`run_tests.py` says `fixture_not_found`.**
 Your fix made the agent call a tool the failing transcript didn't. The harness
-has no fixture for that call. Ask a developer to add the fixture under
+has no fixture for that call. Ask a teammate to add the fixture under
 `eval/fixtures/mcp/`.
 
 **`/compare-state --against=desired` keeps saying `partial`.**
 Two possibilities: the fix really is incomplete — keep iterating; or live-MCP
 noise — the same query returns slightly different results run to run. Try once
 more. If it stabilizes you're good; if it oscillates, the rubric may be too
-tight and you'll want a developer's eye on it.
+tight and you'll want a second pair of eyes on it.
 
 **Setup script says the destination already exists.**
 You ran setup on the same zip before. Either delete the old case directory or

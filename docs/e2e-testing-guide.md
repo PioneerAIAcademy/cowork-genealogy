@@ -1,7 +1,7 @@
 # E2E Testing Guide — authoring and running a benchmark fixture
 
 How to author and run an end-to-end research benchmark test, walked through
-**one real fixture end to end**. Written for the genealogist + developer teams
+**one real fixture end to end**. Written for the team
 doing the work.
 
 This page covers **the e2e benchmark only** — the expensive, live-FamilySearch
@@ -98,14 +98,14 @@ One task, one branch, always cut from an up-to-date `main` — you open a PR fro
 it at the end. Name it with a few hyphenated words describing the task — no
 slashes, no timestamps.
 
-**Developers — terminal:**
+**Terminal:**
 
 ```bash
 git checkout main && git pull
 git checkout -b spriggs-parents-fixture
 ```
 
-**Genealogists — GitHub Desktop:** Current Branch dropdown → select **main** and
+**GitHub Desktop:** Current Branch dropdown → select **main** and
 **Fetch/Pull** → **New branch…** → name it `spriggs-parents-fixture` → base it
 on `main` → **Create branch**.
 

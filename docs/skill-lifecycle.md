@@ -6,11 +6,11 @@ continually-improved artifact. It is the **complete flow** end to end and the
 entry point; it points at the detailed docs for each step rather than
 restating them.
 
-The work is done by a **genealogist and a developer pairing.**
-Genealogists are learning to run tests; developers are learning
-genealogy. Neither role does the whole loop alone — the genealogist owns
-*what good looks like*, the developer owns *how the skill and harness
-work*, and they decide together at the points that matter.
+You drive the whole loop — write the tests, run the harness, correct the
+grades, improve the skill, and open the PR. No step belongs to someone else.
+When a step needs a genealogy judgment you're unsure of, or a bit of harness
+mechanics you haven't hit before, pull in a teammate for a second pair of
+eyes — but the loop is yours end to end.
 
 ```
   0 branch → 1 create → 2 test → 3 review+annotate → 4 audit rubric →
@@ -23,11 +23,6 @@ work*, and they decide together at the points that matter.
   Description loop (8) = the vendored run_loop. Rubric audit (4) keeps the
   signal honest so (5) doesn't optimize toward a weak rubric.
 ```
-
-| Role | Owns | Across the lifecycle |
-|---|---|---|
-| **Genealogist** | Correctness — does the skill do genealogy right? | Writes tests + rubric, runs the harness, annotates grades, judges whether a proposed edit is *genealogically* correct, blesses releases. |
-| **Developer** | Mechanics — skills, scripts, harness, the loop. | Pairs on skill prose and scripts, runs the improver and the optimizer, builds the plugin, opens PRs, keeps the harness honest. |
 
 If you're brand new, read the two walkthroughs first:
 [`eval/JUNIOR-WALKTHROUGH.md`](../eval/JUNIOR-WALKTHROUGH.md) (genealogist)
@@ -89,20 +84,19 @@ ways.
 
 ### 0. Make a branch
 
-**Who:** whoever is driving. **Where:** ⌨️ terminal (developers) or GitHub
-Desktop (genealogists). **How:**
+**Who:** you. **Where:** ⌨️ terminal, or GitHub Desktop. **How:**
 
 One task, one branch, always cut from an up-to-date `main` — you open a PR from
 it at the end.
 
-**Developers — terminal:**
+**Terminal:**
 
 ```bash
 git checkout main && git pull
 git checkout -b <short-task-name>          # e.g. citation-locator
 ```
 
-**Genealogists — GitHub Desktop:** Current Branch dropdown → select **main** and
+**GitHub Desktop:** Current Branch dropdown → select **main** and
 **Fetch/Pull** → **New branch…** → name it `<short-task-name>` (e.g.
 `citation-locator`) → base it on `main` → **Create branch**.
 
@@ -121,7 +115,7 @@ to `main` are blocked, so starting on `main` just means moving the work later.
 
 ### 1. Create / edit a skill
 
-**Who:** pair. **Where:** 🤖 Claude Code at the repo root (or any text editor —
+**Who:** you. **Where:** 🤖 Claude Code at the repo root (or any text editor —
 the skill is just `packages/engine/plugin/skills/<skill>/SKILL.md`).
 **How:** for a new tool-wrapping skill, ask Claude Code to scaffold it with
 the `cowork-skill-builder` agent; otherwise edit the file directly.
@@ -130,13 +124,13 @@ Write the SKILL.md to the prose standard in
 [`docs/skill-authoring-guide.md`](skill-authoring-guide.md). (The authoring
 guide's "What kind of skill are you writing?" section covers whether it
 should be a skill at all and which of the three kinds — workflow,
-reference, or guardrail — it is.) The genealogist drives the domain
-content; the developer drives shape, frontmatter limits, and any
-`scripts/` helper.
+reference, or guardrail — it is.) You drive the domain content, the shape,
+the frontmatter limits, and any `scripts/` helper — pulling in help when a
+piece is outside your comfort zone.
 
 ### 2. Test
 
-**Who:** pair, genealogist-led. **Where:** ⌨️ terminal at the repo root.
+**Who:** you. **Where:** ⌨️ terminal at the repo root.
 **How:**
 
 ```bash
@@ -188,7 +182,7 @@ single biggest lever on whether the rest of the loop works.
 
 ### 3. Review & annotate
 
-**Who:** genealogist. **Where:** 🌐 the CRUD UI in your browser
+**Who:** you. **Where:** 🌐 the CRUD UI in your browser
 (<http://localhost:3000>), started from a terminal. **How:**
 
 ```bash
@@ -248,7 +242,7 @@ engineer rather than grind.
 
 ### 4. Audit the rubric (periodic; before a body-optimization push)
 
-**Who:** pair. **Where:** 🤖 Claude Code at the repo root — not Cowork, not the
+**Who:** you. **Where:** 🤖 Claude Code at the repo root — not Cowork, not the
 terminal. **How:**
 
 ```
@@ -270,7 +264,7 @@ run this periodically and whenever a dimension looks off.
 
 ### 5. Improve the skill body
 
-**Who:** pair. **Where:** 🤖 Claude Code at the repo root. **How:**
+**Who:** you. **Where:** 🤖 Claude Code at the repo root. **How:**
 
 ```
 /improve-skill <skill>
@@ -321,7 +315,7 @@ Cluster the failures across the skill's tests and revise the
 SKILL.md prose to fix them — explaining the *why*, not bolting on
 another MUST (see the authoring guide). The **skill-improver** agent
 (report-only) assists by reading the latest annotated run-log,
-clustering, and proposing an evidence-cited diff for the pair to approve. It
+clustering, and proposing an evidence-cited diff for you to approve. It
 **routes by cause** — a correction that actually points at a test-data gap, a
 triggering miss, or a rubric problem goes to the test author / description
 optimizer (step 8) / rubric review (step 4), not into a body edit; only a
@@ -360,7 +354,7 @@ next run). Full walkthrough:
 
 ### 6. Verify the fix
 
-**Who:** pair. **Where:** ⌨️ terminal at the repo root. **How:**
+**Who:** you. **Where:** ⌨️ terminal at the repo root. **How:**
 
 ```bash
 make gate-skill SKILL=<skill> TEST=<test-id>
@@ -424,7 +418,7 @@ still has to happen.
 
 ### 7. Release
 
-**Who:** senior blesses, developer ships. **Where:** two places — ⌨️ a terminal
+**Who:** you ship; a senior blesses. **Where:** two places — ⌨️ a terminal
 for the release run and the push, 🌐 the CRUD UI for the Release click.
 **How:**
 
@@ -491,12 +485,12 @@ Extensions, then fully quit and reopen Desktop. Cowork runs the uploaded plugin
 `.zip`, not your working tree — skip the rebuild and the fix will look like it
 did nothing. Optional in general: the harness run, not the Cowork walkthrough, is
 what CI and the release gate check. The one place it is *not* optional is an
-alpha feedback case, where a paired Cowork verification is a specced pre-PR step
+alpha feedback case, where a Cowork verification is a specced pre-PR step
 — see [`alpha-feedback-guide.md`](alpha-feedback-guide.md).
 
 ### 8. Optimize the description (separate, automated loop)
 
-**Who:** developer. **Where:** ⌨️ terminal at the repo root. **How:**
+**Who:** you. **Where:** ⌨️ terminal at the repo root. **How:**
 
 ```bash
 make optimize-skill SKILL=<skill>
@@ -538,7 +532,7 @@ live API), and plain-English **criteria**. You can ship a useful test with
 just a message and a scenario — the skill's shared rubric does the heavy
 grading; your criteria only add what's unique to *this* case. (If no
 scenario fits, pick the closest and note the gap — the test saves but
-won't run until a developer builds the matching scenario.)
+won't run until the matching scenario is built.)
 
 Aim for **at least 8 tests per skill** — no upper bound; we don't yet know
 enough to set one. Spend them on **coverage, not repetition**: eight easy
@@ -624,18 +618,15 @@ at the repo root and warn when hold-outs or annotations are missing.
 ## Worked example: a citation nobody could find again
 
 The stages above are the reference. This is one run through them, start to
-finish, for a pair doing it the first time — with the place marked at every
-step.
+finish, doing it for the first time — with the place marked at every step.
 
-> **The roles and names are for the story.** "Ana" (genealogist) and "Ben"
-> (developer) split the work to make it concrete, but the split is only
-> illustrative — **anyone can do any step they're comfortable with**, and one
-> person can run the whole loop. The Schuster family and the `schuster-census`
-> slug are invented too; for a real run, use an existing fixture slug from
-> `eval/tests/e2e/`.
+> **The story follows one person — "you" — running the whole loop**, which is
+> the normal case; **pull in a teammate for any step you're not comfortable
+> with.** The Schuster family and the `schuster-census` slug are invented; for a
+> real run, use an existing fixture slug from `eval/tests/e2e/`.
 
-**The problem.** Ana is researching the Schuster family. She asks Claude to
-cite a 1900 U.S. census record she just used. The `citation` skill writes a
+**The problem.** You're researching the Schuster family. You ask Claude to
+cite a 1900 U.S. census record you just used. The `citation` skill writes a
 tidy-looking citation — but it **leaves out the page and line number**. Without
 that, no one could ever open that exact record again.
 
@@ -668,15 +659,14 @@ git checkout -b citation-locator
 
 ### Step 1 — Notice it 🖥️ Cowork + Viewer
 
-Ana is working in a practice project. Ben seeded it for her earlier from a
-terminal:
+You're working in a practice project you seeded earlier from a terminal:
 
 ```
 make e2e-project TEST=schuster-census        # Windows: eval\SeedProject.bat
 ```
 
-That writes an editable project into `eval/e2e-project/schuster-census/`. Ana
-opens that folder in **two** places: **Cowork**, to do the research, and the
+That writes an editable project into `eval/e2e-project/schuster-census/`. Open
+that folder in **two** places: **Cowork**, to do the research, and the
 **Research Viewer**, to watch what gets written — launched from a *second*
 terminal and left running:
 
@@ -689,18 +679,18 @@ Then **Open Project** in the viewer and pick the same
 Skip this and you're judging the research from the chat transcript alone, which
 is exactly how a bad citation slips past.
 
-Mid-research she spots it and writes down, in plain words, what's wrong:
+Mid-research you spot it and write down, in plain words, what's wrong:
 
 > **Did:** the citation gave the census year and county but no page or line.
 > **Should:** it must include the page/line so the record can be found again.
 > **Gap:** the citation skill never says a citation has to be *relocatable*.
 
-That three-part note is the single most valuable thing she produces all day.
+That three-part note is the single most valuable thing you produce all day.
 Keep it — it goes on the record in Step 4 and drives Step 5.
 
 ### Step 2 — Is it even the skill's fault? 🤖 Claude Code
 
-Ben opens **Claude Code** at the **repo root** on the branch, and they check the
+Open **Claude Code** at the **repo root** on the branch and check the
 project's `results/` files — the actual data the tools returned. The census tool
 **did** return the page/line and the skill dropped it → a **skill** problem.
 Continue. ✅
@@ -711,8 +701,8 @@ classic trap.
 
 ### Step 3 — Capture it as a test 🤖 Claude Code
 
-In the same session, Ben runs **`mine-unit-test`**, points it at Ana's project
-folder, and pastes her Did/Should/Gap note:
+In the same session, run **`mine-unit-test`**, point it at the project
+folder, and paste your Did/Should/Gap note:
 
 ```
 /mine-unit-test --project eval/e2e-project/schuster-census
@@ -720,8 +710,8 @@ folder, and pastes her Did/Should/Gap note:
 
 It writes a unit test that reproduces the bug — "given a census record that has
 a page/line, the citation must include it" — plus a scenario and mock fixtures,
-all marked *draft* under `eval/tests/unit/citation/` and `eval/fixtures/`. Ben
-skims it and checks that the **general** rule is what's stated, not "this one
+all marked *draft* under `eval/tests/unit/citation/` and `eval/fixtures/`. Skim
+it and check that the **general** rule is what's stated, not "this one
 Schuster record."
 
 It prints the new test's id — say `ut_citation_019`. That's the `TEST=` value
@@ -730,7 +720,7 @@ for Step 6.
 ### Step 4 — Run it, and mark what's wrong ⌨️ Terminal → 🌐 browser
 
 `citation` already has its hold-out tests set (`ut_citation_001` and
-`ut_citation_014`), so Ben goes straight to the run — a brand-new skill would
+`ut_citation_014`), so you go straight to the run — a brand-new skill would
 need them set in the UI first, *before* this run.
 
 ```
@@ -738,8 +728,8 @@ make eval-skill SKILL=citation               # Windows: eval\RunTests.bat
 make eval-ui                                 # Windows: eval\Start.bat
 ```
 
-He finds the new test in the grading UI, sees which quality dimension it failed,
-and pastes **Ana's Did/Should/Gap note** into that dimension's comment. The
+Find the new test in the grading UI, see which quality dimension it failed,
+and paste **your Did/Should/Gap note** into that dimension's comment. The
 improver in the next step will do nothing with a brand-new test *unless* it
 carries a human comment like this.
 
@@ -751,11 +741,11 @@ carries a human comment like this.
 ```
 
 The first is a health check on the grading itself — do it once per skill so
-you're not chasing a broken grade. The second reads the test + Ana's comment and
+you're not chasing a broken grade. The second reads the test + your comment and
 proposes **at most 3** small, plain-English edits — e.g. *"every citation must
 include a locator (page/line/entry) that lets a reader reopen the exact record;
 if the record has none, write a 'missing locator' marker instead."* The agent
-only **proposes**; Ben pastes the edits into `citation/SKILL.md` himself.
+only **proposes**; you paste the edits into `citation/SKILL.md` yourself.
 
 ### Step 6 — Check the fix helps and breaks nothing ⌨️ Terminal
 
@@ -773,7 +763,7 @@ Rebuild and re-upload the plugin first so Cowork runs the *edited* skill:
 `make plugin` (Windows: `eval\BuildPlugin.bat`), then remove the old plugin in
 Cowork → Customize and upload the new `.zip`.
 
-Then Ana redoes the same citation, with the **Research Viewer** open on the same
+Then redo the same citation, with the **Research Viewer** open on the same
 project folder. The viewer is the point here, not a nicety: the fix is a
 *citation string in the research log*, and reading it there is how you confirm
 the page/line is actually present rather than trusting the chat's summary of
@@ -789,7 +779,7 @@ make eval-skill SKILL=citation               # Windows: eval\RunTests.bat
 make eval-ui                                 # Windows: eval\Start.bat
 ```
 
-Grade every dimension (**Agree with all**, then correct the few he disagrees
+Grade every dimension (**Agree with all**, then correct the few you disagree
 with), then commit the skill edit + the new test *and its scenario folder and
 mock fixtures* + the run record + the grades, and open the PR. A senior reviewer
 reads the corrected grades and, if it's a real improvement, releases it.
