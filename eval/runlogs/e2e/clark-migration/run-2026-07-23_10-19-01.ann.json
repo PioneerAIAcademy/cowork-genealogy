@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Not recovered — concluded the opposite. Final tree has no Wisconsin fact on GP3R-215; death recorded as 1849 Coshocton County, Ohio, and the proof states 'She did not migrate from Ohio to Wisconsin.' The agent searched only the subject (an exhaustive 1850-census sweep) and never correlated the destination-kin evidence (sons Joseph/William in the 1849-1850 Green County WI census, son Joseph's 1854 WI marriage, the 1847 BLM land tract book) that establishes the migration. It also misread the retained Ohio burial confounder as death-in-Ohio.",
+    "f2": "Not recovered. Death placed at Coshocton County, Ohio (1849); the expected Monroe, Green County, Wisconsin locality is absent. Bonus finding whose exact place lives on the off-FamilySearch Find a Grave page (not bundled), so a blind run was unlikely to reach it; graded false. (Proof scored 1/unsound: a confident probable-tier 'did not migrate' conclusion drawn from absence-of-evidence — 1850-census non-appearance, though she died before 1850 regardless — with no destination-kin search.)"
+  },
+  "annotator": "francishappy"
+}
