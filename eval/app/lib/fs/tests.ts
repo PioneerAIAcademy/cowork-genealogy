@@ -5,6 +5,7 @@
  * scenario was renamed must still save so the junior can fix it. The
  * `blocked` indicator is computed separately from existence checks.
  */
+import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { testsUnitDir, scenariosDir, fixturesDir } from '../paths';
@@ -200,48 +201,85 @@ export async function deleteTest(id: string): Promise<boolean> {
 }
 
 /**
- * Returns the next free test id for a given skill, in the form
- * `ut_<skill_with_underscores>_<NNN>`. Looks at existing tests to
- * avoid collisions.
+ * Alphabet for the random id suffix. Lowercase alphanumerics minus the
+ * shapes that get misread when someone retypes an id from a run log into
+ * `run_tests.py --test ut_…`: `0`/`o`, `1`/`l`.
+ */
+const ID_ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
+const ID_SUFFIX_LENGTH = 3;
+
+function randomIdSuffix(): string {
+  let out = '';
+  for (let i = 0; i < ID_SUFFIX_LENGTH; i += 1) {
+    out += ID_ALPHABET[crypto.randomInt(ID_ALPHABET.length)];
+  }
+  return out;
+}
+
+/** Every `test.id` currently in the corpus, across all skills. */
+async function collectAllTestIds(): Promise<Set<string>> {
+  const { tests } = await listTests();
+  return new Set(tests.map((t) => t.id));
+}
+
+/**
+ * Returns a free test id for a given skill, in the form
+ * `ut_<skill_with_underscores>_<xyz>` — a random 3-character suffix, not a
+ * sequence number.
+ *
+ * Sequential numbering (`max(N)+1`) could only ever be unique *within one
+ * branch*. Two people adding a test to the same skill on parallel branches
+ * both drew the same number and the duplicate appeared at merge, which is
+ * how three duplicate-id groups accumulated in a month. A duplicate then
+ * corrupts grading silently (see `writeTest`), and neither author could
+ * have prevented it or fixed it: the id is assigned here, server-side, and
+ * the CRUD UI has no field to change it.
+ *
+ * A random suffix makes the cross-branch collision a coincidence rather
+ * than a certainty — 32^3 ≈ 33k per skill, against corpora of ~20 tests.
+ * Collisions *within* a branch are eliminated outright by checking the
+ * corpus below. CI rule 4 (`check_runlogs.py`) remains as the backstop for
+ * the residual case, where the reader is a developer rather than a
+ * genealogist.
  */
 export async function nextTestId(skill: string): Promise<string> {
-  // Default prefix derived from the skill directory name. Used only when the
-  // skill has no existing tests — otherwise we continue whatever prefix the
-  // corpus already uses, which can diverge from the directory name after a
-  // skill rename (e.g. dir `search-familysearch-wiki`, ids `ut_search_wiki_*`).
-  const fallbackPrefix = `ut_${skill.replace(/-/g, '_')}_`;
+  // Continue whatever prefix the skill's existing ids use — it can diverge
+  // from the directory name after a skill rename (dir
+  // `search-familysearch-wiki`, ids `ut_search_wiki_*`). Fall back to the
+  // dir-derived prefix when the skill has no tests yet. Taking the prefix as
+  // "everything up to the last underscore" reads both the legacy numeric ids
+  // and the random-suffix ones.
+  let prefix = `ut_${skill.replace(/-/g, '_')}_`;
 
-  const root = testsUnitDir();
-  const skillPath = path.join(root, skill);
+  const skillPath = path.join(testsUnitDir(), skill);
   let files: string[] = [];
   try {
     files = await fs.readdir(skillPath);
   } catch {
     files = [];
   }
-
-  // Continue the prefix the existing ids use (ids within a skill dir are
-  // homogeneous), tracking the highest sequence number. Fall back to the
-  // dir-derived prefix only when the skill has no tests yet.
-  let prefix = fallbackPrefix;
-  let max = 0;
   for (const file of files) {
     if (!file.endsWith('.json')) continue;
     try {
       const raw = await fs.readFile(path.join(skillPath, file), 'utf8');
       const parsed = JSON.parse(raw) as UnitTestFile;
-      const m = (parsed?.test?.id ?? '').match(/^(ut_.+_)(\d+)$/);
-      if (!m) continue;
-      prefix = m[1];
-      const n = parseInt(m[2], 10);
-      if (n > max) max = n;
+      const id = parsed?.test?.id ?? '';
+      const m = id.match(/^(ut_.+_)[^_]+$/);
+      if (m) prefix = m[1];
     } catch {
       continue;
     }
   }
 
-  const next = String(max + 1).padStart(3, '0');
-  return `${prefix}${next}`;
+  const taken = await collectAllTestIds();
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const candidate = `${prefix}${randomIdSuffix()}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  throw new Error(
+    `could not find a free test id for "${skill}" after 50 attempts — ` +
+      `the ${ID_SUFFIX_LENGTH}-character suffix space may be exhausted for prefix "${prefix}"`,
+  );
 }
 
 /**

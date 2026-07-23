@@ -213,9 +213,32 @@ describe('tests — read/write/delete/nextId', () => {
     expect(await readTest('ut_search_wiki_001')).toBeNull();
   });
 
-  it('nextTestId returns the next sequence number', async () => {
-    expect(await nextTestId('search-familysearch-wiki')).toBe('ut_search_wiki_002');
-    expect(await nextTestId('locality-guide')).toBe('ut_locality_guide_001');
+  it('nextTestId keeps the corpus prefix and appends a random suffix', async () => {
+    // Existing id is ut_search_wiki_001, so the prefix carries over even
+    // though the skill dir is named search-familysearch-wiki.
+    expect(await nextTestId('search-familysearch-wiki')).toMatch(
+      /^ut_search_wiki_[a-z2-9]{3}$/,
+    );
+    // A skill with no tests yet derives its prefix from the directory name.
+    expect(await nextTestId('locality-guide')).toMatch(/^ut_locality_guide_[a-z2-9]{3}$/);
+  });
+
+  it('nextTestId never returns an id already in the corpus', async () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 40; i += 1) {
+      const id = await nextTestId('search-familysearch-wiki');
+      expect(id).not.toBe('ut_search_wiki_001');
+      seen.add(id);
+    }
+    // Random, so successive calls should not all collapse to one value.
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
+  it('nextTestId suffixes avoid the characters that misread as each other', async () => {
+    for (let i = 0; i < 40; i += 1) {
+      const suffix = (await nextTestId('locality-guide')).split('_').pop()!;
+      expect(suffix).not.toMatch(/[01ol]/);
+    }
   });
 });
 

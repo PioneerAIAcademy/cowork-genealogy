@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_research_exhaustiveness_014",
+    "id": "ut_research_exhaustiveness_017",
     "skill": "research-exhaustiveness",
     "name": "A privacy-sealed record is not an exhaustiveness gap and must not be recommended",
     "type": "positive",

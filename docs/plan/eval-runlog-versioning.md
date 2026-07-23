@@ -499,8 +499,7 @@ skill the PR never mentions. This exists because rule 3 cannot see the
 failure it guards against: with two run-log entries under one
 `test_id`, the annotation lookup (keyed on the same triple as rule 3)
 returns one test's corrections for both, so an unreviewed test clears
-rule 3. Known pre-existing duplicates are grandfathered in
-`GRANDFATHERED_DUPLICATE_IDS` and warn instead of blocking.
+rule 3.
 
 Scratch runs (`scratch_*.json`) are gitignored and never reach the
 action. Implementation is a Python script that loads the latest run

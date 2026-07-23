@@ -344,44 +344,6 @@ def test_rule4_duplicate_id_blocks(tmp_path, capsys):
     assert "ut_locality_guide_002.json" in out
 
 
-def test_rule4_grandfathered_group_warns_only(tmp_path, capsys):
-    """The known pre-existing duplicates warn instead of blocking."""
-    root = tmp_path / "unit"
-    _write_test_file(
-        root / "proof-conclusion",
-        "no-unresolvability-without-testing.json",
-        "ut_proof_conclusion_014",
-    )
-    _write_test_file(
-        root / "proof-conclusion",
-        "no-image-claim-without-tool-confirmation.json",
-        "ut_proof_conclusion_014",
-    )
-    assert check_runlogs.rule4_unique_test_ids(root) == 0
-    out = capsys.readouterr().out
-    assert "::warning" in out
-    assert "::error" not in out
-
-
-def test_rule4_new_file_joining_grandfathered_group_blocks(tmp_path, capsys):
-    """The grandfather clause covers exactly the known filenames — a new file
-    taking the same id is still a blocking duplicate."""
-    root = tmp_path / "unit"
-    _write_test_file(
-        root / "proof-conclusion",
-        "no-unresolvability-without-testing.json",
-        "ut_proof_conclusion_014",
-    )
-    _write_test_file(
-        root / "proof-conclusion",
-        "no-image-claim-without-tool-confirmation.json",
-        "ut_proof_conclusion_014",
-    )
-    _write_test_file(root / "proof-conclusion", "brand-new-test.json", "ut_proof_conclusion_014")
-    assert check_runlogs.rule4_unique_test_ids(root) == 1
-    assert "::error" in capsys.readouterr().out
-
-
 def test_rule4_ignores_malformed_json(tmp_path):
     """A corrupt test file is the loader's problem; rule 4 skips it rather
     than crashing the whole gate."""

@@ -313,34 +313,6 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     return 1
 
 
-# Duplicate `test.id` groups that predate rule 4, keyed by id → the set of
-# basenames that legitimately(ish) carry it today. Grandfathered so the new
-# gate doesn't red every PR that touches eval/tests/unit/** for a mess it did
-# not create; rule 4 still blocks any *new* duplicate, including a new file
-# joining one of these groups.
-#
-# These came from `nextTestId` handing the same sequence number to two parallel
-# PRs — not from the CRUD UI. Fixing them means reassigning ids, which changes
-# those tests' content hashes and forces a re-run + re-annotate for
-# `research-exhaustiveness` and `proof-conclusion`. Tracked in docs/TODOs.md;
-# delete each entry here as its group is renumbered.
-GRANDFATHERED_DUPLICATE_IDS: dict[str, frozenset[str]] = {
-    "ut_research_exhaustiveness_014": frozenset({
-        "tentative-value-alternative-record-gate.json",
-        "sealed-record-not-a-gap.json",
-        "child-link-marriage-not-sufficient.json",
-    }),
-    "ut_research_exhaustiveness_013": frozenset({
-        "precondition-proceeds-corroborating-unlinked.json",
-        "exhaustiveness-decisive-record-gate.json",
-    }),
-    "ut_proof_conclusion_014": frozenset({
-        "no-unresolvability-without-testing.json",
-        "no-image-claim-without-tool-confirmation.json",
-    }),
-}
-
-
 def _format_path(path: Path) -> str:
     """Repo-relative when possible, absolute otherwise (tests point the scan
     at a tmp dir outside REPO_ROOT)."""
@@ -379,16 +351,7 @@ def rule4_unique_test_ids(tests_root: Path) -> int:
     for test_id, paths in sorted(by_id.items()):
         if len(paths) < 2:
             continue
-        names = {p.name for p in paths}
-        grandfathered = GRANDFATHERED_DUPLICATE_IDS.get(test_id)
         rel = ", ".join(_format_path(p) for p in paths)
-        if grandfathered is not None and names <= grandfathered:
-            gh_warning(
-                f"test id `{test_id}` is duplicated across {len(paths)} files "
-                f"({rel}) — known pre-existing duplicate, see docs/TODOs.md. "
-                f"Reassign ids when you next touch these tests.",
-            )
-            continue
         gh_error(
             f"test id `{test_id}` is used by {len(paths)} files: {rel}. "
             f"Test ids must be unique — duplicates make the harness emit two "
