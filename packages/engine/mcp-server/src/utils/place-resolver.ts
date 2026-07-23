@@ -181,6 +181,91 @@ async function getSearchEntries(
   return entries;
 }
 
+// ─── Place/standard_place country-consistency guard ─────────────────────────
+// Shared between research_append/extraction_append (assertions) and
+// tree_edit/tree_correct (tree facts) — moved here from research-append.ts so
+// both write paths use one check instead of two independently-maintained
+// copies. Small, conservative alias map: only when the place TEXT's own
+// trailing token names a recognized country can a contradiction be declared.
+
+const COUNTRY_ALIASES: Record<string, string> = {
+  "united states": "united states",
+  "united states of america": "united states",
+  usa: "united states",
+  us: "united states",
+  america: "united states",
+  "united kingdom": "united kingdom",
+  uk: "united kingdom",
+  "great britain": "united kingdom",
+  england: "england",
+  scotland: "scotland",
+  wales: "wales",
+  "northern ireland": "northern ireland",
+  ireland: "ireland",
+  canada: "canada",
+  australia: "australia",
+  "new zealand": "new zealand",
+  germany: "germany",
+  france: "france",
+  norway: "norway",
+  sweden: "sweden",
+  denmark: "denmark",
+  netherlands: "netherlands",
+  holland: "netherlands",
+  belgium: "belgium",
+  italy: "italy",
+  spain: "spain",
+  portugal: "portugal",
+  poland: "poland",
+  russia: "russia",
+  austria: "austria",
+  hungary: "hungary",
+  switzerland: "switzerland",
+  mexico: "mexico",
+};
+
+const UK_CONSTITUENTS = new Set(["england", "scotland", "wales", "northern ireland"]);
+
+function canonicalCountry(segment: string): string | null {
+  const norm = segment.trim().toLowerCase().replace(/\./g, "");
+  return COUNTRY_ALIASES[norm] ?? null;
+}
+
+function placeSegments(place: string): string[] {
+  return place
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
+/**
+ * Compare the country the place TEXT names (its trailing token, when that token
+ * is a recognized country) against the standard_place's segments.
+ * - "ok": the input names a country and the standard place is consistent.
+ * - "contradiction": the input names a country the standard place plainly lacks.
+ * - "unverifiable": the input text names no recognized country — cannot compare.
+ */
+export function countryConsistency(place: string, standardPlace: string): "ok" | "contradiction" | "unverifiable" {
+  const inputSegs = placeSegments(place);
+  if (inputSegs.length === 0) return "unverifiable";
+  const inputCountry = canonicalCountry(inputSegs[inputSegs.length - 1]);
+  if (!inputCountry) return "unverifiable";
+
+  const stdCountries = placeSegments(standardPlace)
+    .map(canonicalCountry)
+    .filter((c): c is string => c !== null);
+  if (stdCountries.includes(inputCountry)) return "ok";
+  // UK constituents: "England" is consistent with a standard place that ends in
+  // "United Kingdom" — unless a DIFFERENT constituent is present.
+  if (UK_CONSTITUENTS.has(inputCountry)) {
+    if (stdCountries.some((c) => UK_CONSTITUENTS.has(c) && c !== inputCountry)) return "contradiction";
+    if (stdCountries.includes("united kingdom")) return "ok";
+  }
+  // Historic Irish records: "Ireland" is consistent with "Northern Ireland".
+  if (inputCountry === "ireland" && stdCountries.includes("northern ireland")) return "ok";
+  return "contradiction";
+}
+
 /** Highest-scoring entry (FamilySearch ranks by relevance), else first. */
 function pickBest(entries: SearchEntry[]): SearchEntry | undefined {
   if (entries.length === 0) return undefined;
