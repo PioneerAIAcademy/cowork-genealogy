@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_clark_migration",
+    "objective": "Did Christiana Clark (nee Schreck, b.1783), widow of William Clark of Coshocton County, Ohio, migrate from Ohio to Wisconsin?",
+    "subject_person_ids": [
+      "GP3R-215"
+    ],
+    "status": "active",
+    "created": "2026-07-22",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
