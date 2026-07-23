@@ -1,7 +1,7 @@
 """Lint: every plugin SKILL.md must carry a `## Re-invocation behavior`
 section with a non-empty body.
 
-Per `docs/specs/feedback-case-spec.md` §5 + §9 step 7. The contract is
+Per `docs/specs/feedback-case-spec.md` §5. The contract is
 load-bearing for the feedback-case iteration loop, which re-runs skills
 against post-failure state.
 
