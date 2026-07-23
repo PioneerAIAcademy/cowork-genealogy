@@ -289,7 +289,7 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 
 .PHONY: gate-skill
 gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test + holdout (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
-	# Component A of the E->A->B loop (docs/plan/gated-skill-improvement-slice.md).
+	# The verify step of the skill-improvement loop (docs/skill-lifecycle.md §6).
 	# Runs the mined motivating test + the skill's holdout tests on your working-tree
 	# candidate (one side, mock-backed) and compares to the incumbent scores from the
 	# skill's most recent run-log — the pre-edit `make eval-skill` run you did at
@@ -420,11 +420,14 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,))
 
 .PHONY: e2e-scratch
-e2e-scratch: ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
+e2e-scratch: $(ENGINE_BUILD) ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
 	# Seeds the fixture's starting state + plugin skills into a sibling dir
 	# of the repo (reusing the harness's build_workspace, so it matches a
 	# real run byte-for-byte). Prints the /research command to paste in an
 	# interactive `claude` session — the way to debug WHY the agent stops.
+	# Builds the engine first: the scratch .mcp.json forks the COMPILED server,
+	# so without it /research loads with no genealogy tools and degrades to
+	# guessing ("validate_research_schema isn't available") instead of failing.
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-scratch TEST=kenneth-quass-death" >&2; exit 1; }
 	cd eval/harness && uv run python -m e2e.scratch --test $(TEST) --launch
 
@@ -439,12 +442,22 @@ eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 .PHONY: feedback-case
 feedback-case: ## Unpack a submitted alpha-feedback zip into a working project dir: make feedback-case ZIP=~/Downloads/feedback-….zip [DEST=~/feedback/<slug>] [FORCE=1]
 	# Wraps scripts/setup-feedback-case.sh (contract: docs/specs/feedback-case-spec.md
-	# §11). Unzips the bundle, git-inits it, writes .feedback-repo-root back to this
+	# §3). Unzips the bundle, git-inits it, writes .feedback-repo-root back to this
 	# checkout, and symlinks the plugin + repo skills in — so the result is a live
 	# research project you open in Claude Code and continue, not an archive.
 	# Windows: run scripts\setup-feedback-case.bat instead.
 	@test -n "$(ZIP)" || { echo "ERROR: set ZIP, e.g. make feedback-case ZIP=~/Downloads/feedback-2026-07-21T09-14-22Z.zip" >&2; exit 1; }
 	scripts/setup-feedback-case.sh $(ZIP) $(DEST) $(if $(FORCE),--force,)
+
+.PHONY: feedback-reset
+feedback-reset: ## Reset a feedback case dir to its imported state between attempts: make feedback-reset CASE=~/feedback/<slug>
+	# The agent mutates the case as it works, so every attempt after the first
+	# needs the data reset (and a fresh Claude Code session — /clear — for the
+	# conversation). This is the only restore command a triager needs; the git
+	# baseline underneath is setup-feedback-case.sh's business, not theirs.
+	# Windows: run scripts\reset-feedback-case.bat instead.
+	@test -n "$(CASE)" || { echo "ERROR: set CASE, e.g. make feedback-reset CASE=~/feedback/feedback-2026-07-21T09-14-22Z" >&2; exit 1; }
+	scripts/reset-feedback-case.sh $(CASE)
 
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
 # The build scripts are cross-platform Node (no bash / no `zip`, so the Windows

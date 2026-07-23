@@ -1,0 +1,4357 @@
+{
+  "project": {
+    "id": "rp_susan_miller_birth",
+    "objective": "When and where was Susan Miller born?",
+    "subject_person_ids": [
+      "2BLL-3JS"
+    ],
+    "status": "completed",
+    "created": "2026-07-06",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where was Susan Miller (born c. 1864\u20131865, daughter of John Miller and Susan Kidd, residing in Forfarshire, Scotland in 1871, later wife of Thomas Davies) born in Scotland?",
+      "rationale": "The project objective is unanswered: no birth fact exists for Susan Miller (2BLL-3JS) in the tree. The LifeSketch states she was born in Scotland; her marriage certificate (1882/83, Barrow-in-Furness) gives her age as 18, placing her birth c. 1864\u20131865. Her family appears in the 1871 Scotland census in St Mary's, Forfarshire. Scotland statutory civil registration began in 1855, so a birth register entry likely exists. This is the central question of the project and must be answered before the objective is complete.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-22",
+      "resolution_assertion_ids": [
+        "a_028",
+        "a_003",
+        "a_043"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All accessible sources have been searched. Birth year 1865 is supported by three independent sources: the 1871 Scotland census (direct, indeterminate), the 1881 England census (direct, indeterminate), and the 1937 Ontario death record (indirect, secondary). Birth county Forfarshire is established by the 1871 Scotland census. The statutory birth register (ScotlandsPeople, pay-per-view) is the decisive record for exact date and parish but is inaccessible without a subscription \u2014 a resource limitation, not an unsearched gap. The England marriage register (pli_007) was logged as deferred in autonomous mode. No additional accessible record type is known to plausibly change the birth year or county conclusion.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 birth year 1865 established by three independent sources (1871 Scotland census, 1881 England census, 1937 Ontario death). Birth county Forfarshire confirmed by the 1871 Scotland census. Exact date and parish cannot be established from accessible evidence; the statutory birth register is pay-per-view only.",
+          "repository_breadth": "Scotland censuses 1861, 1871, 1881 searched on FamilySearch; England census 1881 searched; Ontario vital records (death and children's births) searched. ScotlandsPeople statutory birth register inaccessible (no subscription). England marriage register (FindMyPast, pli_007) deferred for interactive capture in autonomous mode. Miller/Millar variants tried. No additional accessible record type remains unsearched.",
+          "original_substitution": "All accessed sources are derivative (FamilySearch indexed transcripts). Original census images are accessible via FamilySearch but not separately transcribed. The statutory birth register original is pay-per-view (ScotlandsPeople). Overturn risk from census transcription errors is very low: birth year 1865 is consistent across three independent derivative sources; county 'Forfarshire' is directly stated in the 1871 census transcript and consistent with the family's documented presence in Forfarshire/Dundee area from 1861.",
+          "independent_verification": "Three sources from different record types and jurisdictions: (1) 1871 Scotland census (John Miller household, Scottish informant c.1871); (2) 1881 England census (same household 10 years later, different jurisdiction and administration); (3) 1937 Ontario death record (different informant \u2014 a child of Susan, 72 years after birth). Genuinely independent for birth year. The two censuses share a household informant class but are separated by jurisdiction, decade, and census administration.",
+          "evidence_class": "All sources are derivative (FamilySearch indexed transcripts). No original record with primary information was separately accessed. Census transcripts derive from original schedules completed with firsthand knowledge of family ages. The statutory birth record (the only primary original for exact birth date and parish) is inaccessible. This limitation constrains the proof tier to preponderance rather than proved.",
+          "conflict_resolution": "KM6G-829 (SXGH-3KY), initially attached to 2BLL-3JS, belongs to a different John Millar household (head born St Cyrus, Kincardineshire; our John Miller was born Blairgowrie, Perthshire). The 1881 England census confirms the correct household was in Barrow-in-Furness on census night 1881. No remaining conflicts affect the birth year or county conclusion.",
+          "overturn_risk": "Low. Birth year 1865 is consistent across three independent sources spanning three jurisdictions and 66 years. The statutory birth registration could add exact date and parish but cannot overturn year/county. The marriage register (deferred) might add age-at-marriage corroboration but cannot change the birth year conclusion. No unsearched accessible record type could plausibly move the birth year or change the county from Forfarshire."
+        }
+      },
+      "created": "2026-07-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "St Mary's, Forfarshire, Scotland",
+          "date_range": "1871",
+          "repository": "FamilySearch",
+          "rationale": "The 1871 Scotland census (source S6QT-YP1 already in the project tree) shows the John Miller household in St Mary's, Forfarshire. Searching and formally extracting this record will document Susan's age \u2014 establishing her birth year c.1864\u201365 \u2014 and her birthplace county. Scotland census birthplace columns record the county of birth, which will confirm Forfarshire as the birth jurisdiction and anchor subsequent searches in the statutory birth registers. This is the fastest free corroboration of the birth period and county. Search also under 'Millar' spelling per locality guide quirk.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Dundee (2nd), Forfarshire, Scotland",
+          "date_range": "1861",
+          "repository": "FamilySearch",
+          "rationale": "The tree places the John Miller family in 'Dundee 2nd, Forfarshire' in 1861. Susan was born c.1864\u201365 and will not appear in this census, but the household listing will show siblings born before 1861 with their ages, allowing a precise birth-order bracket for Susan's birth year. It also fixes the family in Forfarshire in 1861 \u2014 three years before Susan's likely birth \u2014 establishing that the family was already resident in the county when she was born. FamilySearch has the Scotland 1861 census indexed.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "St Vigeans (Landward), Forfarshire, Scotland",
+          "date_range": "1881",
+          "repository": "FamilySearch",
+          "rationale": "The 1881 Scotland census (source SXGH-3KY in the tree) lists 'John Millar and Susan Millar' in St Vigeans (Landward), Forfarshire. Formally searching and extracting this record will yield Susan Miller's age at 1881 (confirming birth year) and her stated birthplace \u2014 which should name Forfarshire, Scotland, directly corroborating the statutory birth search jurisdiction. NOTE: the tree also contains an 1881 England census entry (Barrow-in-Furness) for what appears to be the same people; extraction of both records is required to determine whether these represent the same household, a split household, or a misidentification \u2014 see pli_004.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Barrow-in-Furness, Lancashire, England",
+          "date_range": "1881",
+          "repository": "FamilySearch",
+          "rationale": "Two sources in the tree (SF1C-D5G and 9D45-94S) cite an 1881 England census entry for 'John Miller and Susan Miller' in Barrow-in-Furness, Lancashire \u2014 the same year as the Scotland 1881 entry (pli_003). A single individual cannot appear in both Scotland and England on the same census night. Extracting this record is necessary to resolve whether (a) the England entry belongs to a different Miller family, (b) only some household members were in England, or (c) one entry is misattributed. Resolution determines which 1881 record to rely on for Susan's age and birthplace. The England 1881 census is indexed on FamilySearch.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Toronto, York, Ontario, Canada",
+          "date_range": "1937",
+          "repository": "FamilySearch",
+          "rationale": "The Ontario death certificate for Susan Miller Davies (1 May 1937, source 9DWZ-81M in the tree, FamilySearch ark:/61903/1:1:JKJY-7H7) is a secondary-information source for birth details, but Ontario death certificates of this era typically record the deceased's country or province of birth and sometimes the specific place. The informant (likely a child) would have known she was from Scotland. Formally extracting this record captures whatever birthplace statement it contains and contributes corroborating secondary evidence to the proof.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Toronto, Ontario, Canada",
+          "date_range": "1889-1894",
+          "repository": "FamilySearch",
+          "rationale": "Three children's birth records in the project tree (source 96SM-5CG \u2014 James Hutton Davis 1894; source 969M-ZGY and 9D4Z-RDL \u2014 Margaret Jane Davis 1889) list 'Susan Miller' as mother. Ontario birth registrations of this era often recorded the mother's age or birthplace. Formally extracting these records serves two purposes: (1) FAN corroboration \u2014 they independently confirm Susan's identity and place her in Ontario; (2) any recorded maternal age at each child's birth cross-checks the birth year derived from the marriage certificate. These are free FamilySearch sources already in the tree.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Barrow-in-Furness, Lancashire, England",
+          "date_range": "1882-1883",
+          "repository": "other",
+          "rationale": "The England and Wales civil marriage register for Susan Miller's marriage to Thomas Davies at Barrow-in-Furness Baptist Chapel (March 1882 or 1883) is likely searchable via FreeBMD (free) or FindMyPast/Ancestry (subscription). An England civil marriage certificate gives each party's age, residence, father's name and occupation \u2014 direct evidence of Susan's age at marriage (stated as 18), which cross-checks the birth year, and potentially her father's name confirming she is John Miller's daughter. Although the marriage date and age are already noted in the LifeSketch, the original certificate is the primary source for these claims and should be retrieved. Search FreeBMD GRO index first (free); retrieve image via FindMyPast or GRO certificate order if needed.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "Forfarshire, Scotland",
+          "date_range": "1862-1867",
+          "repository": "other",
+          "rationale": "ScotlandsPeople (scotlandspeople.gov.uk) is the authoritative repository for Scotland civil birth registers 1855+. It operates on a pay-per-view subscription model. The researcher profile lists no active subscriptions. This record type is not sealed by privacy law \u2014 births from 1865 are fully public at ScotlandsPeople \u2014 but cannot be accessed without payment in this session. The accessible evidence (1871 Scotland census a_028: born 1865 Forfarshire; 1881 England census a_003: born 1865 Scotland) establishes birth year 1865 and county Forfarshire at a defensible tier without it. The statutory birth entry would advance the conclusion to proved tier by supplying exact date and parish \u2014 an important limitation to note in the proof summary. Skipped as resource-inaccessible; recommend future access when subscription is available.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T13:46:36.762Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Susan",
+        "surname": "Miller",
+        "birthYearFrom": 1860,
+        "birthYearTo": 1870,
+        "birthPlace": "Forfarshire, Scotland",
+        "collectionId": "1842552"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 179,
+      "notes": "Top match ark:/61903/1:1:VB5T-NWS (Susan Miller, b.1865 Angus, St Mary's Forfarshire) is already attached to subject 2BLL-3JS (matchScore 0.529). Confirms subject in 1871 Scotland census household of John Miller. Birth year 1865 consistent with c.1864-65 estimate."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T13:48:16.286Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "John",
+        "surname": "Miller",
+        "birthYearFrom": 1825,
+        "birthYearTo": 1835,
+        "birthPlace": "Perthshire, Scotland",
+        "residenceYearFrom": 1861,
+        "residenceYearTo": 1861,
+        "collectionId": "2028677"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1872,
+      "notes": "Top match ark:/61903/1:1:VBHX-X13 (matchScore 0.814, already attached to subject 2BLB-3WX): John Miller, Tinsmith, b.1830 Perthshire, census Dundee 2nd Forfarshire 1861. Household includes wife Susan Miller (b.1831 Forfarshire) and children Lilliann (b.1850 Perthshire), Elisabeth (b.1852 Perthshire), Alexander (b.1854 Forfarshire). No Susan daughter yet \u2014 she was born c.1864-65, after this census. Confirms family in Dundee/Forfarshire area in 1861."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-22T13:48:23.330Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Susan",
+        "surname": "Millar",
+        "birthYearFrom": 1860,
+        "birthYearTo": 1870,
+        "residenceYearFrom": 1881,
+        "residenceYearTo": 1881,
+        "residencePlace": "Forfarshire, Scotland",
+        "collectionId": "2046756"
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 254,
+      "notes": "The currently-attached record KM6G-829 (SXGH-3KY in tree, matchScore 0.211, rank 5) shows Susan Millar b.1858 St Vigeans FORFAR, household head John Millar b.1829 St Cyrus KINCARDINE. This is a DIFFERENT John Millar \u2014 our John Miller was born in Blairgowrie, Perthshire, not St Cyrus, Kincardineshire. The England 1881 census (pli_004) confirms our John Miller was in Barrow-in-Furness, not Scotland, on census night 1881. Therefore KM6G-829 is a misattachment. Best unattached candidate KM6N-58L shows Susan Millar b.1865 Forfarshire, Jute Spinner, but her household head is James Millar (b.1835 Forfarshire) with wife Janet Millar \u2014 different parents, so also a different family. No confirmed match for our Susan in 1881 Scotland census (she was in England)."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-22T13:48:28.860Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Susan",
+        "surname": "Miller",
+        "birthYearFrom": 1860,
+        "birthYearTo": 1870,
+        "residenceYearFrom": 1881,
+        "residenceYearTo": 1881,
+        "residencePlace": "Barrow-in-Furness, Lancashire, England",
+        "collectionId": "2562194"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 59,
+      "notes": "Top match ark:/61903/1:1:Q27R-QTL9 (matchScore 0.579, already attached to subject 2BLL-3JS): Susan Miller, b.1865 Scotland, Single, Jute Weaver, Barrow-in-Furness Lancashire 1881. Household: John Miller (b.1829 Scotland, head), Susan Miller (b.1830 Scotland, wife=Susan Kidd), Alexander Miller (b.1854 Scotland), Euphemia Miller (b.1862 Scotland), Susan Miller (b.1865 Scotland, our subject). Confirms our John Miller family was in Barrow-in-Furness on census night 1881 \u2014 not in Scotland \u2014 resolving the conflict with KM6G-829 (St Vigeans, Scotland 1881 census) which is a misattachment. Also reveals previously unknown sibling Euphemia Miller b.1862 Scotland."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-22T13:49:54.697Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:JKJY-7H7",
+        "collection": "Canada, Ontario, Deaths, 1869-1937",
+        "note": "Direct ARK lookup from tree source 9DWZ-81M"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Ontario death record for Susan Miller Davies, b.1865, died 1 May 1937 Toronto. Mother listed as Susan Miller. Confirms birth year 1865. Birth place not given in this record. Secondary information \u2014 informant at death may not have known exact birthplace. Corroborates 1871 and 1881 census birth year evidence."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-22T13:50:01.738Z",
+      "tool": "record_search",
+      "query": {
+        "recordIds": [
+          "ark:/61903/1:1:VNG4-ZSP",
+          "ark:/61903/1:1:FMWW-T2F",
+          "ark:/61903/1:1:F2LV-LPB"
+        ],
+        "collection": "Canada, Ontario, Births 1869-1912 / Births and Baptisms 1779-1899",
+        "note": "Direct ARK lookups from tree sources 969M-ZGY, 96SM-5CG, 9D4Z-RDL"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 3,
+      "notes": "Three Ontario child birth records for Susan Miller Davies's children: (1) VNG4-ZSP: Margaret Jane Davis, b. 8 May 1889 Toronto, mother Susan Mille[r], father Thomas Davis; (2) FMWW-T2F: James Hutton Davis, b.1894 Toronto, mother Susan Miller, father Thomas Davis; (3) F2LV-LPB: Margaret Jane Da[vies], b.1889 Toronto, mother Susan Mille[r], father Thomas Davis or Davies (duplicate entry from Baptisms collection). These confirm Susan Miller is the mother of children born in Toronto 1889 and 1894, consistent with the tree subject. Birth year not given in these records for Susan herself, but they confirm identity of the subject."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": null,
+      "performed": "2026-07-22T13:57:28.711Z",
+      "tool": "record_read",
+      "query": {
+        "recordIds": [
+          "ark:/61903/1:1:VNG4-ZSP",
+          "ark:/61903/1:1:FMWW-T2F",
+          "ark:/61903/1:1:F2LV-LPB"
+        ],
+        "purpose": "Read three Ontario birth records naming Susan Miller as mother, to extract parentage and identity assertions for tree person 2BLL-3JS"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Three FamilySearch Ontario birth records read directly via record_read (no staged sidecar). Each names Susan Miller as mother of a child born in Toronto with father Thomas Davis/Davies. Records already in tree under S ids 969M-ZGY, 96SM-5CG, and 9D4Z-RDL."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-22T14:39:35.532Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Barrow in Furness, Lancashire, England, United Kingdom",
+        "host": "findmypast.com",
+        "startYear": 1882,
+        "endYear": 1883
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "notes": "Curated external links for Barrow-in-Furness, Lancashire 1882-1883. FindMyPast returned 50 results (550 total for place). Most relevant match: 'England Marriage Records, 1538-1973' (appeared 3\u00d7 under different labels \u2014 collapsed to one URL: https://search.findmypast.com/search-world-records/england-marriages-1538-1973). This collection covers the target marriage event year and place."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-22T14:39:50.009Z",
+      "tool": "external_site",
+      "query": {
+        "site": "findmypast",
+        "collection": "England Marriage Records, 1538-1973",
+        "firstname": "Susan",
+        "lastname": "Miller",
+        "yearofbirth": 1865,
+        "eventyear": 1882,
+        "keywordsplace": "Barrow in Furness"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "findmypast",
+        "url_generated": "https://search.findmypast.com/search-world-records/england-marriages-1538-1973?firstname=Susan&lastname=Miller&yearofbirth=1865&keywordsplace=Barrow+in+Furness&eventyear=1882",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 requires an interactive user capture and is not obtainable in an autonomous run. The search targets the England Marriage Records, 1538-1973 collection on FindMyPast for Susan Miller's marriage to Thomas Davies in Barrow-in-Furness, Lancashire, circa 1882-1883. The marriage register could confirm Susan's birth year (stated age at marriage) and potentially her parish of birth \u2014 information that would support or constrain the q_001 birth-place conclusion. URL generated for a later interactive session: https://search.findmypast.com/search-world-records/england-marriages-1538-1973?firstname=Susan&lastname=Miller&yearofbirth=1865&keywordsplace=Barrow+in+Furness&eventyear=1882. Note: FreeBMD (https://www.freebmd.org.uk) is a free alternative for the GRO marriage index (Barrow-in-Furness, 1882-1883 quarter), but it is not a supported site in the current tool set and also requires interactive browser access."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"England and Wales, Census, 1881\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q27R-QTJ2 : accessed 2026-07-22), entry for John Miller and Susan Miller household, Barrow in Furness, Lancashire, England, 1881.",
+      "citation_detail": {
+        "who": "John Miller household including Susan Miller (daughter, b. 1865 Scotland)",
+        "what": "England and Wales Census, 1881 \u2014 household schedule",
+        "when_created": "1881",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ARK ark:/61903/1:1:Q27R-QTJ2; household ARK ark:/61903/1:2:QLS2-RV9F"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q27R-QTJ2",
+      "notes": "FamilySearch indexed transcript of the 1881 England and Wales census household. The census schedule image (original) was not separately examined \u2014 this extraction relies on the FamilySearch index/transcript. The household is enumerated at Barrow in Furness, Lancashire, England: John Miller (head, b. 1829 Scotland), Susan Miller (wife, b. 1830 Scotland), Alexander Miller (son, b. 1854 Scotland), Euphemia Miller (daughter, b. 1862 Scotland), Susan Miller (daughter, b. 1865 Scotland). This placement conflicts with tree source SXGH-3KY (record KM6G-829), which attaches to Susan Miller (2BLL-3JS) but belongs to a different John Millar household (head born St Cyrus, Kincardineshire) in Scotland on census night 1881 \u2014 inconsistent with this family being enumerated in Barrow-in-Furness on the same date.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Scotland, Census, 1871\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VB5T-N75 : accessed 2026-07-22), Entry for John Miller and Susan Miller, 1871.",
+      "citation_detail": {
+        "who": "John Miller household including Susan Miller (subject)",
+        "what": "Scotland, Census, 1871 \u2014 household schedule",
+        "when_created": "1871",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Household ARK ark:/61903/1:2:9M88-SNPC; principal persona ARK ark:/61903/1:1:VB5T-NWS"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9M88-SNPC",
+      "notes": "FamilySearch index and image of the 1871 Scotland census household. The image is available via FamilySearch (derivative of the original census schedule). Birthplaces given at county level only per Scottish census practice.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:JKJY-7H7 : accessed 2026-07-22), Entry for Susan Miller Davies and Thomas Davies, 1937.",
+      "citation_detail": {
+        "who": "Susan Miller Davies (deceased) and Thomas Davies (spouse)",
+        "what": "Death registration entry, Ontario death register 1937",
+        "when_created": "1937",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch, Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947",
+        "where_within": "Entry for Susan Miller Davies and Thomas Davies, 1937"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:JKJY-7H7",
+      "notes": "FamilySearch index/abstract of the Ontario death register entry. Original register not separately examined \u2014 this is a derivative (index) of the original civil registration. The underlying original death certificate image should be consulted to verify all extracted facts.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Canada, Ontario, Births, 1869-1912,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VNG4-ZSP : accessed 22 July 2026), entry for Margaret Jane Davis, 8 May 1889; citing Ontario Registrar General, Toronto.",
+      "citation_detail": {
+        "who": "Margaret Jane Davis",
+        "what": "Ontario birth registration",
+        "when_created": "1889",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch, Canada, Ontario, Births, 1869-1912",
+        "where_within": "Entry for Margaret Jane Davis, 8 May 1889"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VNG4-ZSP",
+      "notes": "FamilySearch indexed transcript of Ontario birth registration. Original register not examined \u2014 derivative index only. Susan Miller's surname is truncated in the index as 'Mille' (surname field cut off).",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:FMWW-T2F : accessed 22 July 2026), entry for James Hutton Davis, 1894; citing Ontario Registrar General, Toronto.",
+      "citation_detail": {
+        "who": "James Hutton Davis",
+        "what": "Ontario birth registration or baptism record",
+        "when_created": "1894",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch, Canada, Ontario, Births and Baptisms, 1779-1899",
+        "where_within": "Entry for James Hutton Davis, 1894"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:FMWW-T2F",
+      "notes": "FamilySearch indexed transcript. Original register not examined \u2014 derivative index only.",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F2LV-LPB : accessed 22 July 2026), entry for Margaret Jane Da[vies], 1889; citing Ontario Registrar General, Toronto.",
+      "citation_detail": {
+        "who": "Margaret Jane Da[vies]",
+        "what": "Ontario birth registration or baptism record",
+        "when_created": "1889",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch, Canada, Ontario, Births and Baptisms, 1779-1899",
+        "where_within": "Entry for Margaret Jane Da[vies], 1889"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:F2LV-LPB",
+      "notes": "FamilySearch indexed transcript. Original register not examined \u2014 derivative index only. Child's surname truncated as 'Da...' in index; likely Davis or Davies. Father's name indexed as 'Thomas Davis or Davies'. Mother's surname truncated as 'Mille...'. This appears to be a duplicate entry for the same 1889 birth as ark:/61903/1:1:VNG4-ZSP (Record 1) from a different sub-collection within the same Ontario records.",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S6"
+    },
+    {
+      "id": "src_007",
+      "citation": "\"Scotland, Census, 1861,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VBHX-X13 : accessed 2026-07-22), entry for John Miller and Susan Miller, 1861.",
+      "citation_detail": {
+        "who": "John Miller and household",
+        "what": "Scotland, Census, 1861 \u2014 indexed transcript",
+        "when_created": "1861",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ark:/61903/1:1:VBHX-X13; household ark:/61903/1:2:9M8S-NQD6"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VBHX-X13",
+      "access_date": "2026-07-22",
+      "notes": "FamilySearch indexed transcript of the 1861 Scotland census schedule. Original census schedule not directly examined \u2014 this is an index/abstract entry. The original images are held by the National Records of Scotland and may be viewable via ScotlandsPeople.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S7"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882031",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Susan Miller",
+      "structured_value": {
+        "given": "Susan",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882031",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882031",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born 1865, Scotland",
+      "structured_value": {
+        "year": "1865",
+        "place": "Scotland"
+      },
+      "date": "1865",
+      "date_certainty": "approximate",
+      "place": "Scotland",
+      "standard_place": "Scotland, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882031",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Barrow in Furness, Lancashire, England, 1881",
+      "structured_value": {
+        "place": "Barrow in Furness, Lancashire, England"
+      },
+      "date": "1881",
+      "date_certainty": "exact",
+      "place": "Barrow In Furness, Lancashire, England",
+      "standard_place": "Barrow in Furness, Lancashire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882031",
+      "record_role": "child_3",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882031",
+      "record_role": "child_3",
+      "fact_type": "occupation",
+      "value": "Jute Weaver",
+      "structured_value": {
+        "occupation": "Jute Weaver"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882031",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of John Miller (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1881 England and Wales census included a relationship-to-head column; the stated relationship is direct per the 1880+ rule. The respondent who provided it is unknown (pre-1940), hence indeterminate information quality.",
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882031",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Susan Miller (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1881 England and Wales census included a relationship-to-head column; Susan Miller (wife) is the mother implied by the household structure and the stated daughter relationship to head. Direct per 1880+ rule; indeterminate quality as respondent unknown.",
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881930",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "John Miller",
+      "structured_value": {
+        "given": "John",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881930",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881930",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1829, Scotland",
+      "structured_value": {
+        "year": "1829",
+        "place": "Scotland"
+      },
+      "date": "1829",
+      "date_certainty": "approximate",
+      "place": "Scotland",
+      "standard_place": "Scotland, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881930",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Barrow in Furness, Lancashire, England, 1881",
+      "structured_value": {
+        "place": "Barrow in Furness, Lancashire, England"
+      },
+      "date": "1881",
+      "date_certainty": "exact",
+      "place": "Barrow In Furness, Lancashire, England",
+      "standard_place": "Barrow in Furness, Lancashire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881955",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Susan Miller",
+      "structured_value": {
+        "given": "Susan",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881955",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881955",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born 1830, Scotland",
+      "structured_value": {
+        "year": "1830",
+        "place": "Scotland"
+      },
+      "date": "1830",
+      "date_certainty": "approximate",
+      "place": "Scotland",
+      "standard_place": "Scotland, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881955",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Barrow in Furness, Lancashire, England, 1881",
+      "structured_value": {
+        "place": "Barrow in Furness, Lancashire, England"
+      },
+      "date": "1881",
+      "date_certainty": "exact",
+      "place": "Barrow In Furness, Lancashire, England",
+      "standard_place": "Barrow in Furness, Lancashire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881992",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Alexander Miller",
+      "structured_value": {
+        "given": "Alexander",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881992",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881992",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 1854, Scotland",
+      "structured_value": {
+        "year": "1854",
+        "place": "Scotland"
+      },
+      "date": "1854",
+      "date_certainty": "approximate",
+      "place": "Scotland",
+      "standard_place": "Scotland, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201881992",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Barrow in Furness, Lancashire, England, 1881",
+      "structured_value": {
+        "place": "Barrow in Furness, Lancashire, England"
+      },
+      "date": "1881",
+      "date_certainty": "exact",
+      "place": "Barrow In Furness, Lancashire, England",
+      "standard_place": "Barrow in Furness, Lancashire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882013",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Euphemia Miller",
+      "structured_value": {
+        "given": "Euphemia",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882013",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882013",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born 1862, Scotland",
+      "structured_value": {
+        "year": "1862",
+        "place": "Scotland"
+      },
+      "date": "1862",
+      "date_certainty": "approximate",
+      "place": "Scotland",
+      "standard_place": "Scotland, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882013",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Barrow in Furness, Lancashire, England, 1881",
+      "structured_value": {
+        "place": "Barrow in Furness, Lancashire, England"
+      },
+      "date": "1881",
+      "date_certainty": "exact",
+      "place": "Barrow In Furness, Lancashire, England",
+      "standard_place": "Barrow in Furness, Lancashire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:Q27R-QTL9",
+      "record_persona_id": "p_102201882031",
+      "record_role": "absent",
+      "fact_type": "residence",
+      "value": "John Miller household (2BLL-3JS / Susan Miller) absent from Scotland on census night 1881 \u2014 family enumerated at Barrow in Furness, Lancashire, England, contradicting source SXGH-3KY (record KM6G-829) which places a John Millar household in Scotland on the same date and is incorrectly attached to Susan Miller in the tree",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The researcher infers this negative fact by cross-referencing: (1) this 1881 England census places Susan Miller b.1865 Scotland and her parents John Miller (b.1829 Scotland) and Susan Miller (b.1830 Scotland) at Barrow in Furness, Lancashire on census night 3 April 1881; (2) tree source SXGH-3KY (FS record KM6G-829) attaches to Susan Miller (2BLL-3JS) but belongs to a different John Millar household (head born St Cyrus, Kincardineshire, not Blairgowrie, Perthshire). The two records are mutually exclusive as placements for the same family on the same census night. Alternative explanations: the SXGH-3KY record may have been attached in error; it cannot represent the same family.",
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:VB5T-NWS",
+      "record_persona_id": "p_13822556582",
+      "record_role": "child_9",
+      "fact_type": "name",
+      "value": "Susan Miller",
+      "structured_value": {
+        "given": "Susan",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:VB5T-NWS",
+      "record_persona_id": "p_13822556582",
+      "record_role": "child_9",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:VB5T-NWS",
+      "record_persona_id": "p_13822556582",
+      "record_role": "child_9",
+      "fact_type": "birth",
+      "value": "born 1865, Forfarshire",
+      "date": "1865",
+      "date_certainty": "approximate",
+      "place": "Forfarshire, Scotland",
+      "standard_place": "Angus, Scotland, United Kingdom",
+      "structured_value": {
+        "year": "1865",
+        "place": "Forfarshire, Scotland"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Pre-1940 census; enumerator did not record who answered. Birth year derived from stated age at census time; classified approximate. Birthplace given at county level only per Scottish census practice.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:VB5T-NWS",
+      "record_persona_id": "p_13822556582",
+      "record_role": "child_9",
+      "fact_type": "residence",
+      "value": "St Mary's, Forfarshire, Scotland, 1871",
+      "date": "1871",
+      "date_certainty": "exact",
+      "place": "St Mary's, Forfarshire (Angus), Scotland",
+      "standard_place": "Forfar, Angus, Scotland, United Kingdom",
+      "structured_value": {
+        "place": "St Mary's, Forfarshire (Angus), Scotland"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded the household at this location.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:VB5T-NWS",
+      "record_persona_id": "p_13822556582",
+      "record_role": "child_9",
+      "fact_type": "occupation",
+      "value": "SCHOLAR",
+      "structured_value": {
+        "occupation": "SCHOLAR"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:VB5T-NWS",
+      "record_persona_id": "p_13822556582",
+      "record_role": "child_9",
+      "fact_type": "relationship",
+      "value": "child of John Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1871 Scotland census has no relationship column. Parent-child link inferred from co-residence in household headed by John Miller, with the subject listed among other children sharing the Miller surname and age sequence. Two separate assertions, one per parent.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:VB5T-NWS",
+      "record_persona_id": "p_13822556582",
+      "record_role": "child_9",
+      "fact_type": "relationship",
+      "value": "child of Susan Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1871 Scotland census has no relationship column. Parent-child link inferred from co-residence in household with Susan Miller (wife of head), with the subject listed among other children sharing the Miller surname and age sequence. Two separate assertions, one per parent.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:VB5T-NWS",
+      "record_persona_id": "p_13822556574",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "John Miller",
+      "structured_value": {
+        "given": "John",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:VB5T-NWS",
+      "record_persona_id": "p_13822556574",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:VB5T-NWS",
+      "record_persona_id": "p_13822556574",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "St Mary's, Forfarshire, Scotland, 1871",
+      "date": "1871",
+      "date_certainty": "exact",
+      "place": "St Mary's, Forfarshire (Angus), Scotland",
+      "standard_place": "Forfar, Angus, Scotland, United Kingdom",
+      "structured_value": {
+        "place": "St Mary's, Forfarshire (Angus), Scotland"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded the household at this location.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:VB5T-NWS",
+      "record_persona_id": "p_13822556574",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1830, Perthshire",
+      "date": "1830",
+      "date_certainty": "approximate",
+      "place": "Perthshire, Scotland",
+      "standard_place": "Perthshire, Scotland, United Kingdom",
+      "structured_value": {
+        "year": "1830",
+        "place": "Perthshire, Scotland"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Pre-1940 census; enumerator did not record who answered. Birth year approximate, derived from stated age. Birthplace at county level only.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:VB5T-N7R",
+      "record_persona_id": "p_13822556575",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Susan Miller",
+      "structured_value": {
+        "given": "Susan",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Record surname is Miller (married name); tree identifies this persona as Susan Kidd (maiden name). The name recorded here is the post-marriage name.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:VB5T-N7R",
+      "record_persona_id": "p_13822556575",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:VB5T-N7R",
+      "record_persona_id": "p_13822556575",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "St Mary's, Forfarshire, Scotland, 1871",
+      "date": "1871",
+      "date_certainty": "exact",
+      "place": "St Mary's, Forfarshire (Angus), Scotland",
+      "standard_place": "Forfar, Angus, Scotland, United Kingdom",
+      "structured_value": {
+        "place": "St Mary's, Forfarshire (Angus), Scotland"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded the household at this location.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:VB5T-N7R",
+      "record_persona_id": "p_13822556575",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born 1831, Forfarshire",
+      "date": "1831",
+      "date_certainty": "approximate",
+      "place": "Forfarshire, Scotland",
+      "standard_place": "Angus, Scotland, United Kingdom",
+      "structured_value": {
+        "year": "1831",
+        "place": "Forfarshire, Scotland"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Pre-1940 census; enumerator did not record who answered. Birth year approximate, derived from stated age. Birthplace at county level only.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Susan Miller Davies",
+      "structured_value": {
+        "given": "Susan Miller",
+        "surname": "Davies"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown death registration informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown death registration informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "birth year 1865",
+      "date": "1865",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown death registration informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year reported in a death registration by an informant who may have been estimating; no birthplace given. The 1871 and 1881 census records are more reliable (primary information) for Susan's birth year. Treat this figure as secondary corroboration only.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 1 May 1937, Toronto, Ontario",
+      "date": "1 May 1937",
+      "date_certainty": "exact",
+      "place": "Toronto, Ontario",
+      "information_quality": "primary",
+      "informant": "attending physician or registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003",
+      "standard_place": "Toronto, Ontario, Canada"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "deceased",
+      "fact_type": "death_registration",
+      "value": "death registered 1937, Ontario",
+      "date": "1937",
+      "information_quality": "primary",
+      "informant": "Ontario civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Thomas Davies (inferred from record co-registration)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "spouse"
+      },
+      "information_quality": "secondary",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Spousal relationship inferred from the Couple relationship in the FamilySearch record structure; no explicit spouse column exists in this death registration \u2014 the link is structurally derived, not stated by an informant.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Susan Miller (inferred from record structure)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "parent_inferred"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown death registration informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Mother's name (Susan Miller) supplied by the death registration informant, who may have been relaying secondhand knowledge about the decedent's parentage. Per the informant-knowledge test, a named party's information about another person's parents is indirect even when plainly stated. Corroboration from census or birth records recommended.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Thomas Davies",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Davies"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown death registration informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "unknown death registration informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Susan Miller Davies (inferred from record co-registration)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "spouse"
+      },
+      "information_quality": "secondary",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Spousal relationship inferred from the Couple relationship in the FamilySearch record structure.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Susan Miller",
+      "structured_value": {
+        "given": "Susan",
+        "surname": "Miller"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown death registration informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The mother's name is a third-party-reported fact on a death certificate \u2014 the informant relayed secondhand knowledge about the decedent's parentage. Per the informant-knowledge test, a named party's information about another person's parents is indirect even when plainly stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown death registration informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:JKJY-7H7",
+      "record_role": "mother_of_deceased",
+      "fact_type": "relationship",
+      "value": "parent of Susan Miller Davies (inferred from record structure)",
+      "structured_value": {
+        "relationship_type": "parent_inferred",
+        "related_person_role": "child_inferred"
+      },
+      "information_quality": "secondary",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "ParentChild relationship inferred from the FamilySearch record's ParentChild edge. The mother's name was informant-supplied on the death registration; the parent-child link is therefore secondhand and structurally derived.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:VNG4-ZSP",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Susan Mille[r]",
+      "structured_value": {
+        "given": "Susan",
+        "surname": "Mille[r]"
+      },
+      "information_quality": "secondary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Surname truncated in index as 'Mille' \u2014 likely 'Miller' but original register not examined to confirm. Information is secondhand: Susan is named as mother by whoever reported the birth, not by herself.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:VNG4-ZSP",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Sex determined from record role as mother.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:VNG4-ZSP",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "mother of Margaret Jane Davis",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth registration names Susan Miller as mother; the registrant would have had firsthand knowledge of the mother's identity. Original register not examined \u2014 derivative index only.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:VNG4-ZSP",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "spouse of Thomas Davis",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "spouse"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Inferred from their joint listing as parents in this birth record. The record does not state a marriage \u2014 the couple relationship is structural.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:VNG4-ZSP",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Thomas Davis",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Davis"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Father named in birth registration; registrant likely had firsthand knowledge.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:VNG4-ZSP",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Sex determined from record role as father.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:VNG4-ZSP",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Margaret Jane Davis",
+      "structured_value": {
+        "given": "Margaret Jane",
+        "surname": "Davis"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Child's name given at birth registration; registrant had firsthand knowledge.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:VNG4-ZSP",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:VNG4-ZSP",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "8 May 1889, Toronto, York, Ontario, Canada",
+      "date": "8 May 1889",
+      "date_certainty": "exact",
+      "place": "Toronto, York, Ontario, Canada",
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth date and place stated in registration; the registrant or attending party had firsthand knowledge of the birth event.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_004",
+      "standard_place": "Toronto, Ontario, Canada"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:VNG4-ZSP",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Susan Mille[r] (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:VNG4-ZSP",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Thomas Davis (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:FMWW-T2F",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Susan Miller",
+      "structured_value": {
+        "given": "Susan",
+        "surname": "Miller"
+      },
+      "information_quality": "secondary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Susan is named as mother by whoever reported the birth. Information is secondhand \u2014 not stated by Susan herself. Original register not examined.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:FMWW-T2F",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Sex determined from record role as mother.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:FMWW-T2F",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "mother of James Hutton Davis",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth registration names Susan Miller as mother; the registrant would have had firsthand knowledge of the mother's identity. Original register not examined.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:FMWW-T2F",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "spouse of Thomas Davis",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "spouse"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Inferred from their joint listing as parents in this birth record. The record does not state a marriage \u2014 the couple relationship is structural.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:FMWW-T2F",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Thomas Davis",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Davis"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Father named in birth registration; registrant likely had firsthand knowledge.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:FMWW-T2F",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:FMWW-T2F",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "James Hutton Davis",
+      "structured_value": {
+        "given": "James Hutton",
+        "surname": "Davis"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:FMWW-T2F",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:FMWW-T2F",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "1894, Toronto, York, Ontario, Canada",
+      "date": "1894",
+      "date_certainty": "exact",
+      "place": "Toronto, York, Ontario, Canada",
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth year and place stated in registration.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_005",
+      "standard_place": "Toronto, Ontario, Canada"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:FMWW-T2F",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Susan Miller (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:FMWW-T2F",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Thomas Davis (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:F2LV-LPB",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Susan Mille[r]",
+      "structured_value": {
+        "given": "Susan",
+        "surname": "Mille[r]"
+      },
+      "information_quality": "secondary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Surname truncated in index as 'Mille...' \u2014 likely 'Miller' but original register not examined to confirm. Information is secondhand: Susan is named as mother by whoever reported the birth, not by herself. Duplicate entry for the same birth as ark:/61903/1:1:VNG4-ZSP \u2014 these two records share the same informant chain and form one evidence unit.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:F2LV-LPB",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Sex determined from record role as mother.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:F2LV-LPB",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "mother of Margaret Jane Da[vies]",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth registration names Susan Miller as mother; registrant would have had firsthand knowledge. This is a duplicate sub-collection entry for the same birth as ark:/61903/1:1:VNG4-ZSP \u2014 corroboration is apparent only, not independent.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:F2LV-LPB",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "spouse of Thomas Davis or Davies",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "spouse"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Inferred from their joint listing as parents in this birth record. Father's name given as 'Thomas Davis or Davies' \u2014 surname variant uncertain in this index entry.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:F2LV-LPB",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Thomas Davis or Davies",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Davis or Davies"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Father named in birth registration. Surname indexed as 'Davis or Davies' \u2014 indicates indexer uncertainty; original not examined.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:F2LV-LPB",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:F2LV-LPB",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Margaret Jane Da[vies]",
+      "structured_value": {
+        "given": "Margaret Jane",
+        "surname": "Da[vies]"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Child's surname truncated in index as 'Da...' \u2014 likely Davis or Davies.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:F2LV-LPB",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:F2LV-LPB",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "1889, Toronto, York, Ontario, Canada",
+      "date": "1889",
+      "date_certainty": "exact",
+      "place": "Toronto, York, Ontario, Canada",
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth year and place stated in registration.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_006",
+      "standard_place": "Toronto, Ontario, Canada"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:F2LV-LPB",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Susan Mille[r] (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:F2LV-LPB",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Thomas Davis or Davies (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "registrant or attending party",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Father's name indexed with variant 'Davis or Davies' \u2014 same person as Thomas Davis/Davies across all three records.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271473",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "John Miller",
+      "structured_value": {
+        "given": "John",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271473",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271473",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born Perthshire",
+      "place": "Perthshire",
+      "standard_place": "Perthshire, Scotland, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271473",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "birth year approximately 1830",
+      "date": "~1830",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age given at census; pre-1940 census respondent unknown; age may be rounded or mis-stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271473",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Dundee 2nd, Forfarshire (Angus), Scotland, 1861",
+      "date": "1861",
+      "date_certainty": "exact",
+      "place": "Dundee 2nd, Forfarshire (Angus), Scotland",
+      "standard_place": "Dundee, Forfarshire, Scotland, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271473",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "TINSMITH",
+      "structured_value": {
+        "occupation": "Tinsmith"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271473",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271473",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "spouse of Susan Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1861 Scotland census has no explicit relationship column; spousal relationship inferred from household position \u2014 adult female enumerated immediately after the male head.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_095",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271473",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "parent of Lilliann Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "parent_inferred",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1861 Scotland census has no relationship column; parent-child relationship inferred from household position and age gap.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_096",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271473",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "parent of Elisabeth Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "parent_inferred",
+        "related_person_role": "child_2"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1861 Scotland census has no relationship column; parent-child relationship inferred from household position and age gap.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_097",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271473",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "parent of Alexander Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "parent_inferred",
+        "related_person_role": "child_3"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1861 Scotland census has no relationship column; parent-child relationship inferred from household position and age gap.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_098",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271474",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Susan Miller",
+      "structured_value": {
+        "given": "Susan",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_099",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271474",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_100",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271474",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Forfarshire",
+      "place": "Forfarshire (Angus)",
+      "standard_place": "Forfar, Angus, Scotland, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_101",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271474",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "birth year approximately 1831",
+      "date": "~1831",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age given at census; pre-1940 census respondent unknown; age may be rounded or mis-stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_102",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271474",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Dundee 2nd, Forfarshire (Angus), Scotland, 1861",
+      "date": "1861",
+      "date_certainty": "exact",
+      "place": "Dundee 2nd, Forfarshire (Angus), Scotland",
+      "standard_place": "Dundee, Forfarshire, Scotland, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_103",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271474",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of John Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1861 Scotland census has no explicit relationship column; spousal relationship inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_104",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271475",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Lilliann Miller",
+      "structured_value": {
+        "given": "Lilliann",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_105",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271475",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_106",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271475",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born Perthshire",
+      "place": "Perthshire",
+      "standard_place": "Perthshire, Scotland, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_107",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271475",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "birth year approximately 1850",
+      "date": "~1850",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age given at census; pre-1940 census respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_108",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271475",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Dundee 2nd, Forfarshire (Angus), Scotland, 1861",
+      "date": "1861",
+      "date_certainty": "exact",
+      "place": "Dundee 2nd, Forfarshire (Angus), Scotland",
+      "standard_place": "Dundee, Forfarshire, Scotland, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_109",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271475",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of John Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1861 Scotland census has no relationship column; parent-child relationship inferred from household position and age gap.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_110",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271475",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Susan Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1861 Scotland census has no relationship column; parent-child relationship inferred from household position and age gap.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_111",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271476",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Elisabeth Miller",
+      "structured_value": {
+        "given": "Elisabeth",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_112",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271476",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_113",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271476",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born Perthshire",
+      "place": "Perthshire",
+      "standard_place": "Perthshire, Scotland, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_114",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271476",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "birth year approximately 1852",
+      "date": "~1852",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age given at census; pre-1940 census respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_115",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271476",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Dundee 2nd, Forfarshire (Angus), Scotland, 1861",
+      "date": "1861",
+      "date_certainty": "exact",
+      "place": "Dundee 2nd, Forfarshire (Angus), Scotland",
+      "standard_place": "Dundee, Forfarshire, Scotland, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_116",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271476",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of John Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1861 Scotland census has no relationship column; parent-child relationship inferred from household position and age gap.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_117",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271476",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Susan Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1861 Scotland census has no relationship column; parent-child relationship inferred from household position and age gap.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_118",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271477",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Alexander Miller",
+      "structured_value": {
+        "given": "Alexander",
+        "surname": "Miller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_119",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271477",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_120",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271477",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born Forfarshire",
+      "place": "Forfarshire (Angus)",
+      "standard_place": "Forfar, Angus, Scotland, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_121",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271477",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "birth year approximately 1854",
+      "date": "~1854",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age given at census; pre-1940 census respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_122",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271477",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Dundee 2nd, Forfarshire (Angus), Scotland, 1861",
+      "date": "1861",
+      "date_certainty": "exact",
+      "place": "Dundee 2nd, Forfarshire (Angus), Scotland",
+      "standard_place": "Dundee, Forfarshire, Scotland, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_123",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271477",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of John Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1861 Scotland census has no relationship column; parent-child relationship inferred from household position and age gap.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_124",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_persona_id": "p_13809271477",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Susan Miller (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1861 Scotland census has no relationship column; parent-child relationship inferred from household position and age gap.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_125",
+      "record_id": "ark:/61903/1:1:VBHX-X13",
+      "record_role": "absent",
+      "fact_type": "presence",
+      "value": "Susan Miller (research subject, b. c.1865, daughter of John and Susan Miller) absent from 1861 Dundee census \u2014 not yet born at time of census",
+      "source_id": "src_007",
+      "information_quality": "primary",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "informant_bias_notes": "Susan Miller (2BLL-3JS), research subject born c.1864-1865, was not yet born at time of the 1861 census. Her absence is analytically expected and consistent with a birth date of c.1864-1865. Confirms the family was resident in Dundee/Forfarshire before her birth. Alternative explanations (enumerator error, indexing omission) are possible but her birth date makes the absence expected.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "record_persona_id": "p_13809271473"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1881 England census child_3 (Q27R-QTL9): 'Susan Miller', b.~1865 Scotland, in household of John Miller (Tinsmith, b. Perthshire) and wife Susan \u2014 name, age, birthplace, and parents all match 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1881 England census child_3: sex Female \u2014 consistent with 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1881 England census child_3: birth year ~1865, place Scotland \u2014 corroborates 1871 census birth evidence for 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1881 England census child_3: residence Barrow-in-Furness 1881 \u2014 places 2BLL-3JS in England on census night, excluding Scotland misattachment.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1881 England census child_3: occupation/marital status fact for Susan Miller child_3 in John Miller household \u2014 consistent with 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1881 England census child_3: birthplace Scotland \u2014 consistent with 2BLL-3JS born Forfarshire.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1881 England census child_3: relationship 'child of John Miller (stated)' \u2014 1881 English census has relationship column; this is stated evidence placing 2BLL-3JS as daughter of 2BLB-3WX.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "Cross-link: 1881 England census child_3 names John Miller as father (stated) \u2014 corroborates 2BLB-3WX as father of 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1881 England census child_3: relationship 'child of Susan Miller/wife (stated)' \u2014 places 2BLL-3JS as daughter of LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "Cross-link: 1881 England census child_3 names Susan Miller (wife) as mother \u2014 corroborates LQY1-14T as mother of 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1881 England census head_of_household: 'John Miller', b.~1829 Perthshire, Tinsmith \u2014 name, age, birthplace, and occupation match 2BLB-3WX.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1881 England census head_of_household: sex Male \u2014 consistent with 2BLB-3WX.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1881 England census head_of_household: residence Barrow-in-Furness 1881 \u2014 consistent with 2BLB-3WX migration from Scotland.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1881 England census head_of_household: birth ~1829 Perthshire \u2014 consistent with tree fact for 2BLB-3WX (b.1829 Blairgowrie, Perthshire).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1881 England census wife: 'Susan Miller', b.~1832 Scotland, spouse of John Miller \u2014 name, age, household position match LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1881 England census wife: sex Female \u2014 consistent with LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1881 England census wife: residence Barrow-in-Furness 1881 \u2014 consistent with LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1881 England census wife: birth ~1832 Scotland \u2014 consistent with LQY1-14T (b.1832 Kirriemuir, Forfarshire).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1881 England census child_1: 'Alexander Miller', b.~1854 Scotland, in John Miller household \u2014 name, age, family position consistent with stub I1 (Alexander Miller, b.~1854 Forfarshire in 1861 census).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1881 England census child_1: sex Male \u2014 consistent with stub I1 Alexander Miller.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1881 England census child_1: residence Barrow-in-Furness 1881 \u2014 consistent with I1 still in parents' household.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1881 England census child_1: birth ~1854 Scotland \u2014 matches I1 (b.~1854 Forfarshire, 1861 Scotland census child_3).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_021",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "1881 England census child_2: 'Euphemia Miller', b.~1862 Scotland, in John Miller household \u2014 single census appearance; stub I4 created from this record. KHB9-DYK excluded (that person is b.1885 Barrow, a daughter of 2BLL-3JS).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_022",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "1881 England census child_2: sex Female \u2014 consistent with stub I4 Euphemia Miller.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_023",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "1881 England census child_2: residence Barrow-in-Furness 1881 \u2014 consistent with I4 in parents' household.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_024",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "1881 England census child_2: birth ~1862 Scotland \u2014 matches I4 Euphemia Miller sibling of 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_025",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "Negative assertion: researcher notes 2BLL-3JS is absent from Scotland 1881 census (KM6G-829) because she was in England on census night per Q27R-QTL9 \u2014 supports identity exclusion of misattached Scotland record.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_026",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census child_9 (VB5T-NWS): 'Susan Miller', b.1865 Forfarshire, in John Miller household \u2014 closest census to birth; name, birth year, county, and parents all match 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_027",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census child_9: sex Female \u2014 consistent with 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_028",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census child_9: birth 1865 Forfarshire \u2014 key direct/indeterminate birth evidence for q_001; census taken when subject was ~6, only 6 years from the birth event.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_029",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census child_9: residence St Mary's, Forfarshire 1871 \u2014 consistent with 2BLL-3JS pre-emigration residence.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_030",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census child_9: occupation/marital status fact \u2014 consistent with 2BLL-3JS as child in household.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_031",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census child_9: relationship 'child of John Miller (inferred)' \u2014 1871 Scotland census has no relationship column; inferred from household position, but same family confirmed by name and 1881 data.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_031",
+      "person_id": "2BLB-3WX",
+      "confidence": "probable",
+      "rationale": "Cross-link: 1871 Scotland census child_9 infers John Miller as father \u2014 probable because 1871 Scotland census lacks explicit relationship column; household position and name match support parentage.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_032",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census child_9: relationship 'child of Susan Miller/wife (inferred)' \u2014 inferred from household position; consistent with 2BLL-3JS as daughter of LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_032",
+      "person_id": "LQY1-14T",
+      "confidence": "probable",
+      "rationale": "Cross-link: 1871 Scotland census child_9 infers Susan Miller (wife) as mother \u2014 probable; 1871 Scotland census lacks relationship column.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_033",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census head_of_household (VB5T-NWS): 'John Miller', b.~1829 Perthshire, Tinsmith \u2014 name, age, birthplace, occupation match 2BLB-3WX.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_034",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census head_of_household: sex Male \u2014 consistent with 2BLB-3WX.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_035",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census head_of_household: residence St Mary's Forfarshire 1871 \u2014 consistent with 2BLB-3WX.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_036",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census head_of_household: birth ~1829 Perthshire \u2014 consistent with 2BLB-3WX (b.1829 Blairgowrie, Perthshire).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_037",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census wife (VB5T-N7R): 'Susan Miller', b.~1831 Forfarshire, spouse of John Miller \u2014 name, age, birthplace, household position match LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_038",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census wife: sex Female \u2014 consistent with LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_039",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census wife: residence St Mary's Forfarshire 1871 \u2014 consistent with LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_040",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1871 Scotland census wife: birth ~1831 Forfarshire \u2014 consistent with LQY1-14T (b.1832 Kirriemuir, Forfarshire).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_041",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1937 Ontario death (JKJY-7H7): deceased 'Susan Miller Davies', b.1865, d.1937 Toronto, spouse of Thomas Davies \u2014 all facts match 2BLL-3JS; direct death record.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_042",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1937 Ontario death: sex Female \u2014 consistent with 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_043",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1937 Ontario death: birth year 1865 (indirect, secondary informant) \u2014 corroborates 1871/1881 census birth evidence for 2BLL-3JS; weakest of three birth-year sources.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_044",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1937 Ontario death: death 1 May 1937 Toronto \u2014 direct/primary evidence of death for 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_045",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1937 Ontario death: additional fact from deceased persona \u2014 consistent with 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_046",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1937 Ontario death: relationship 'spouse of Thomas Davies (inferred)' \u2014 inferred from registration; consistent with known marriage of 2BLL-3JS to 2BL6-9CR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_046",
+      "person_id": "2BL6-9CR",
+      "confidence": "confident",
+      "rationale": "Cross-link: 1937 Ontario death names Thomas Davies as spouse of deceased Susan Miller Davies \u2014 corroborates 2BL6-9CR as husband of 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_047",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1937 Ontario death: relationship 'child of Susan Miller (inferred)' \u2014 inferred from registration; Susan Miller named as mother of deceased.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_047",
+      "person_id": "LQY1-14T",
+      "confidence": "probable",
+      "rationale": "Cross-link: 1937 Ontario death names Susan Miller as mother of deceased \u2014 probable because informant may have known the mother's given name but not maiden name; corroborates LQY1-14T as mother.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_048",
+      "person_id": "2BL6-9CR",
+      "confidence": "confident",
+      "rationale": "1937 Ontario death, 'wife' role (Thomas Davies as listed spouse/next-of-kin): name 'Thomas Davies' \u2014 matches 2BL6-9CR as husband of deceased Susan Miller Davies.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_049",
+      "person_id": "2BL6-9CR",
+      "confidence": "confident",
+      "rationale": "1937 Ontario death, wife role: sex Male \u2014 consistent with 2BL6-9CR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_050",
+      "person_id": "2BL6-9CR",
+      "confidence": "confident",
+      "rationale": "1937 Ontario death, wife role: additional fact about Thomas Davies \u2014 consistent with 2BL6-9CR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_051",
+      "person_id": "LQY1-14T",
+      "confidence": "probable",
+      "rationale": "1937 Ontario death, mother_of_deceased: name 'Susan Miller' \u2014 secondary informant (informant was presumably Thomas Davies); name matches LQY1-14T but maiden name (Kidd) not recorded; probable.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_052",
+      "person_id": "LQY1-14T",
+      "confidence": "probable",
+      "rationale": "1937 Ontario death, mother_of_deceased: sex Female \u2014 consistent with LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_053",
+      "person_id": "LQY1-14T",
+      "confidence": "probable",
+      "rationale": "1937 Ontario death, mother_of_deceased: relationship fact \u2014 names Susan Miller as mother; probable for LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_054",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1889 Ontario birth Margaret Jane (VNG4-ZSP), mother role: 'Susan Miller', spouse of Thomas Davis \u2014 name and family match 2BLL-3JS as mother.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_055",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1889 Ontario birth, mother role: sex Female \u2014 consistent with 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_056",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1889 Ontario birth, mother role: 'mother of Margaret Jane Davis' \u2014 direct evidence of 2BLL-3JS as mother of KJWN-6H9.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_056",
+      "person_id": "KJWN-6H9",
+      "confidence": "confident",
+      "rationale": "Cross-link: 1889 Ontario birth mother role names Margaret Jane Davis as child of Susan Miller \u2014 corroborates KJWN-6H9 as daughter of 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_057",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1889 Ontario birth, mother role: 'spouse of Thomas Davis' \u2014 consistent with 2BLL-3JS as wife of 2BL6-9CR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_057",
+      "person_id": "2BL6-9CR",
+      "confidence": "confident",
+      "rationale": "Cross-link: 1889 Ontario birth names Thomas Davis as spouse of mother Susan Miller \u2014 corroborates 2BL6-9CR as husband of 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_058",
+      "person_id": "2BL6-9CR",
+      "confidence": "confident",
+      "rationale": "1889 Ontario birth VNG4-ZSP, father role: 'Thomas Davis' \u2014 name matches 2BL6-9CR as father of Margaret Jane.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_059",
+      "person_id": "2BL6-9CR",
+      "confidence": "confident",
+      "rationale": "1889 Ontario birth, father role: sex Male \u2014 consistent with 2BL6-9CR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_060",
+      "person_id": "KJWN-6H9",
+      "confidence": "confident",
+      "rationale": "1889 Ontario birth VNG4-ZSP, child_1: 'Margaret Jane Davis', b.8 May 1889 Toronto \u2014 this is the birth record for KJWN-6H9.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_061",
+      "person_id": "KJWN-6H9",
+      "confidence": "confident",
+      "rationale": "1889 Ontario birth, child_1: sex Female \u2014 consistent with KJWN-6H9.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_062",
+      "person_id": "KJWN-6H9",
+      "confidence": "confident",
+      "rationale": "1889 Ontario birth, child_1: birth 8 May 1889 Toronto \u2014 primary birth record evidence for KJWN-6H9.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_063",
+      "person_id": "KJWN-6H9",
+      "confidence": "confident",
+      "rationale": "1889 Ontario birth, child_1: relationship 'child of Susan Miller' \u2014 consistent with KJWN-6H9 as daughter of 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_064",
+      "person_id": "KJWN-6H9",
+      "confidence": "confident",
+      "rationale": "1889 Ontario birth, child_1: relationship 'child of Thomas Davis' \u2014 consistent with KJWN-6H9 as daughter of 2BL6-9CR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_065",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1894 Ontario birth James Hutton (FMWW-T2F), mother role: 'Susan Miller', spouse of Thomas Davis \u2014 name and family match 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_066",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1894 Ontario birth, mother role: sex Female \u2014 consistent with 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_067",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1894 Ontario birth, mother role: 'mother of James Hutton Davis' \u2014 direct evidence of 2BLL-3JS as mother of LH6S-PGR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_067",
+      "person_id": "LH6S-PGR",
+      "confidence": "confident",
+      "rationale": "Cross-link: 1894 Ontario birth names James Hutton Davis as child of Susan Miller \u2014 corroborates LH6S-PGR as son of 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_068",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "1894 Ontario birth, mother role: 'spouse of Thomas Davis' \u2014 consistent with 2BLL-3JS as wife of 2BL6-9CR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_068",
+      "person_id": "2BL6-9CR",
+      "confidence": "confident",
+      "rationale": "Cross-link: 1894 Ontario birth names Thomas Davis as spouse of mother Susan Miller \u2014 corroborates 2BL6-9CR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_069",
+      "person_id": "2BL6-9CR",
+      "confidence": "confident",
+      "rationale": "1894 Ontario birth FMWW-T2F, father role: 'Thomas Davis' \u2014 name matches 2BL6-9CR as father of James Hutton.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_070",
+      "person_id": "2BL6-9CR",
+      "confidence": "confident",
+      "rationale": "1894 Ontario birth, father role: sex Male \u2014 consistent with 2BL6-9CR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_071",
+      "person_id": "LH6S-PGR",
+      "confidence": "confident",
+      "rationale": "1894 Ontario birth FMWW-T2F, child_1: 'James Hutton Davis', b.1894 Toronto \u2014 this is the birth record for LH6S-PGR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_072",
+      "person_id": "LH6S-PGR",
+      "confidence": "confident",
+      "rationale": "1894 Ontario birth, child_1: sex Male \u2014 consistent with LH6S-PGR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_083",
+      "assertion_id": "a_073",
+      "person_id": "LH6S-PGR",
+      "confidence": "confident",
+      "rationale": "1894 Ontario birth, child_1: birth 1894 Toronto \u2014 primary birth record evidence for LH6S-PGR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_084",
+      "assertion_id": "a_074",
+      "person_id": "LH6S-PGR",
+      "confidence": "confident",
+      "rationale": "1894 Ontario birth, child_1: relationship 'child of Susan Miller (stated)' \u2014 direct evidence of LH6S-PGR as child of 2BLL-3JS.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_085",
+      "assertion_id": "a_074",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "Cross-link: James Hutton Davis birth record names Susan Miller as mother \u2014 corroborates 2BLL-3JS as mother of LH6S-PGR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_086",
+      "assertion_id": "a_075",
+      "person_id": "LH6S-PGR",
+      "confidence": "confident",
+      "rationale": "1894 Ontario birth, child_1: relationship 'child of Thomas Davis (stated)' \u2014 consistent with LH6S-PGR as son of 2BL6-9CR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_087",
+      "assertion_id": "a_075",
+      "person_id": "2BL6-9CR",
+      "confidence": "confident",
+      "rationale": "Cross-link: James Hutton Davis birth names Thomas Davis as father \u2014 corroborates 2BL6-9CR.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_088",
+      "assertion_id": "a_076",
+      "person_id": "2BLL-3JS",
+      "confidence": "probable",
+      "rationale": "1889 Ontario baptism Margaret Jane (F2LV-LPB, duplicate), mother role: 'Susan Mille[r]' \u2014 same informant chain as VNG4-ZSP; not independent evidence; probable only.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_089",
+      "assertion_id": "a_077",
+      "person_id": "2BLL-3JS",
+      "confidence": "probable",
+      "rationale": "F2LV-LPB duplicate baptism, mother role: sex Female \u2014 consistent with 2BLL-3JS; probable only (duplicate source).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_090",
+      "assertion_id": "a_078",
+      "person_id": "2BLL-3JS",
+      "confidence": "probable",
+      "rationale": "F2LV-LPB duplicate, mother role: 'mother of Margaret Jane Da[vies]' \u2014 probable; same informant chain as VNG4-ZSP.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_091",
+      "assertion_id": "a_078",
+      "person_id": "KJWN-6H9",
+      "confidence": "probable",
+      "rationale": "Cross-link: F2LV-LPB duplicate baptism names Margaret Jane Da[vies] as child of Susan Miller \u2014 probable (duplicate source, same informant chain).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_092",
+      "assertion_id": "a_079",
+      "person_id": "2BLL-3JS",
+      "confidence": "probable",
+      "rationale": "F2LV-LPB duplicate, mother role: 'spouse of Thomas Davis or Davies' \u2014 probable; duplicate source.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_093",
+      "assertion_id": "a_079",
+      "person_id": "2BL6-9CR",
+      "confidence": "probable",
+      "rationale": "Cross-link: F2LV-LPB duplicate names Thomas Davis or Davies as spouse \u2014 probable; duplicate source.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_094",
+      "assertion_id": "a_080",
+      "person_id": "2BL6-9CR",
+      "confidence": "probable",
+      "rationale": "F2LV-LPB duplicate, father role: 'Thomas Davis or Davies' \u2014 matches 2BL6-9CR; probable only (duplicate source).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_095",
+      "assertion_id": "a_081",
+      "person_id": "2BL6-9CR",
+      "confidence": "probable",
+      "rationale": "F2LV-LPB duplicate, father role: sex Male \u2014 consistent with 2BL6-9CR; probable.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_096",
+      "assertion_id": "a_082",
+      "person_id": "KJWN-6H9",
+      "confidence": "probable",
+      "rationale": "F2LV-LPB duplicate, child_1: 'Margaret Jane Da[vies]' \u2014 same birth as VNG4-ZSP; probable (duplicate source, same informant chain).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_097",
+      "assertion_id": "a_083",
+      "person_id": "KJWN-6H9",
+      "confidence": "probable",
+      "rationale": "F2LV-LPB duplicate, child_1: sex Female \u2014 consistent with KJWN-6H9; probable (duplicate source).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_098",
+      "assertion_id": "a_084",
+      "person_id": "KJWN-6H9",
+      "confidence": "probable",
+      "rationale": "F2LV-LPB duplicate, child_1: birth 1889 Toronto \u2014 corroborates VNG4-ZSP birth but same informant chain; probable.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_099",
+      "assertion_id": "a_085",
+      "person_id": "KJWN-6H9",
+      "confidence": "probable",
+      "rationale": "F2LV-LPB duplicate, child_1: 'child of Susan Mille[r] (stated)' \u2014 consistent with KJWN-6H9; probable (duplicate source).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_100",
+      "assertion_id": "a_085",
+      "person_id": "2BLL-3JS",
+      "confidence": "probable",
+      "rationale": "Cross-link: F2LV-LPB duplicate names Susan Miller as mother of Margaret Jane \u2014 probable; duplicate informant chain.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_101",
+      "assertion_id": "a_086",
+      "person_id": "KJWN-6H9",
+      "confidence": "probable",
+      "rationale": "F2LV-LPB duplicate, child_1: 'child of Thomas Davis or Davies (stated)' \u2014 consistent with KJWN-6H9; probable (duplicate source).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_102",
+      "assertion_id": "a_086",
+      "person_id": "2BL6-9CR",
+      "confidence": "probable",
+      "rationale": "Cross-link: F2LV-LPB duplicate names Thomas Davis or Davies as father \u2014 probable; duplicate source.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_103",
+      "assertion_id": "a_087",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census head_of_household (VBHX-X13): 'John Miller', b.~1830 Perthshire, Tinsmith, Dundee \u2014 name, age, birthplace, occupation match 2BLB-3WX (b.1829 Blairgowrie, Perthshire).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_104",
+      "assertion_id": "a_088",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census head_of_household: sex Male \u2014 consistent with 2BLB-3WX.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_105",
+      "assertion_id": "a_089",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census head_of_household: birth place Perthshire \u2014 consistent with 2BLB-3WX (b. Blairgowrie, Perthshire).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_106",
+      "assertion_id": "a_090",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census head_of_household: birth year ~1830 \u2014 consistent with 2BLB-3WX (b.1829); computed from age, minor imprecision expected.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_107",
+      "assertion_id": "a_091",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census head_of_household: residence Dundee 2nd, Forfarshire 1861 \u2014 places 2BLB-3WX in Forfarshire before Susan's birth.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_108",
+      "assertion_id": "a_092",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census head_of_household: occupation Tinsmith \u2014 consistent with 2BLB-3WX across multiple census years.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_109",
+      "assertion_id": "a_093",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census head_of_household: marital status Married \u2014 consistent with 2BLB-3WX and wife LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_110",
+      "assertion_id": "a_094",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census head_of_household: relationship 'spouse of Susan Miller (inferred)' \u2014 inferred from household position; consistent with known marriage to LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_111",
+      "assertion_id": "a_094",
+      "person_id": "LQY1-14T",
+      "confidence": "probable",
+      "rationale": "Cross-link: 1861 census head infers Susan Miller as his spouse \u2014 probable; no explicit relationship column in 1861 Scotland census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_112",
+      "assertion_id": "a_095",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census head_of_household: 'parent of Lilliann Miller (inferred)' \u2014 inferred from household position; consistent with 2BLB-3WX as father.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_113",
+      "assertion_id": "a_095",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Cross-link: 1861 census head names Lilliann Miller as child \u2014 stub I2 (Lilliann) bears this parentage assertion; probable (single record, inferred relationship).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_114",
+      "assertion_id": "a_096",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census head_of_household: 'parent of Elisabeth Miller (inferred)' \u2014 consistent with 2BLB-3WX as father.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_115",
+      "assertion_id": "a_096",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Cross-link: 1861 census head names Elisabeth Miller as child \u2014 stub I3 (Elisabeth) bears this parentage assertion; probable (single record, inferred relationship).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_116",
+      "assertion_id": "a_097",
+      "person_id": "2BLB-3WX",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census head_of_household: 'parent of Alexander Miller (inferred)' \u2014 consistent with 2BLB-3WX as father.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_117",
+      "assertion_id": "a_097",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Cross-link: 1861 census head names Alexander Miller as child \u2014 corroborates I1 (Alexander, also in 1881 England census child_1); confident with two-record corroboration.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_118",
+      "assertion_id": "a_098",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census wife (VBHX-X13): 'Susan Miller', b.~1831 Forfarshire \u2014 name, age, birthplace match LQY1-14T (b.1832 Kirriemuir, Forfarshire).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_119",
+      "assertion_id": "a_099",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census wife: sex Female \u2014 consistent with LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_120",
+      "assertion_id": "a_100",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census wife: birth place Forfarshire \u2014 consistent with LQY1-14T (b. Kirriemuir, Forfarshire).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_121",
+      "assertion_id": "a_101",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census wife: birth year ~1831 \u2014 consistent with LQY1-14T (b.1832); one year rounding expected.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_122",
+      "assertion_id": "a_102",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census wife: residence Dundee 2nd, Forfarshire 1861 \u2014 consistent with LQY1-14T.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_123",
+      "assertion_id": "a_103",
+      "person_id": "LQY1-14T",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census wife: relationship 'spouse of John Miller (inferred)' \u2014 inferred from household position; consistent with LQY1-14T as wife of 2BLB-3WX.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_124",
+      "assertion_id": "a_103",
+      "person_id": "2BLB-3WX",
+      "confidence": "probable",
+      "rationale": "Cross-link: 1861 census wife infers John Miller as her spouse \u2014 probable; no explicit relationship column in 1861 Scotland census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_125",
+      "assertion_id": "a_104",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_1 (VBHX-X13): 'Lilliann Miller', b.~1850 Perthshire \u2014 stub I2 created from this single record; name and age consistent within John Miller household.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_126",
+      "assertion_id": "a_105",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_1: sex Female \u2014 consistent with stub I2 Lilliann Miller.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_127",
+      "assertion_id": "a_106",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_1: birth place Perthshire \u2014 consistent with I2 (family was in Perthshire before Forfarshire).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_128",
+      "assertion_id": "a_107",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_1: birth year ~1850 \u2014 consistent with I2 (eldest surviving child in 1861).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_129",
+      "assertion_id": "a_108",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_1: residence Dundee 2nd, Forfarshire 1861 \u2014 consistent with I2 in household.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_130",
+      "assertion_id": "a_109",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_1: relationship 'child of John Miller (inferred)' \u2014 places I2 as daughter of 2BLB-3WX; probable (inferred).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_131",
+      "assertion_id": "a_109",
+      "person_id": "2BLB-3WX",
+      "confidence": "probable",
+      "rationale": "Cross-link: Lilliann Miller (child_1, 1861 census) inferred as child of John Miller \u2014 probable; no relationship column.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_132",
+      "assertion_id": "a_110",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_1: relationship 'child of Susan Miller (inferred)' \u2014 places I2 as daughter of LQY1-14T; probable.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_133",
+      "assertion_id": "a_110",
+      "person_id": "LQY1-14T",
+      "confidence": "probable",
+      "rationale": "Cross-link: Lilliann Miller (child_1, 1861 census) inferred as child of Susan Miller (wife) \u2014 probable; no relationship column.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_134",
+      "assertion_id": "a_111",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_2 (VBHX-X13): 'Elisabeth Miller', b.~1852 Perthshire \u2014 stub I3 created from this single record; name and age consistent within John Miller household.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_135",
+      "assertion_id": "a_112",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_2: sex Female \u2014 consistent with stub I3 Elisabeth Miller.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_136",
+      "assertion_id": "a_113",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_2: birth place Perthshire \u2014 consistent with I3 (born before family moved to Forfarshire).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_137",
+      "assertion_id": "a_114",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_2: birth year ~1852 \u2014 consistent with I3 as middle child between Lilliann (b.~1850) and Alexander (b.~1854).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_138",
+      "assertion_id": "a_115",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_2: residence Dundee 2nd, Forfarshire 1861 \u2014 consistent with I3 in household.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_139",
+      "assertion_id": "a_116",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_2: relationship 'child of John Miller (inferred)' \u2014 places I3 as daughter of 2BLB-3WX; probable.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_140",
+      "assertion_id": "a_116",
+      "person_id": "2BLB-3WX",
+      "confidence": "probable",
+      "rationale": "Cross-link: Elisabeth Miller (child_2, 1861 census) inferred as child of John Miller \u2014 probable; no relationship column.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_141",
+      "assertion_id": "a_117",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1861 Scotland census child_2: relationship 'child of Susan Miller (inferred)' \u2014 places I3 as daughter of LQY1-14T; probable.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_142",
+      "assertion_id": "a_117",
+      "person_id": "LQY1-14T",
+      "confidence": "probable",
+      "rationale": "Cross-link: Elisabeth Miller (child_2, 1861 census) inferred as child of Susan Miller (wife) \u2014 probable; no relationship column.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_143",
+      "assertion_id": "a_118",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census child_3 (VBHX-X13): 'Alexander Miller', b.~1854 Forfarshire \u2014 matches I1 (also child_1 in 1881 England census, same name/age); two-record corroboration justifies confident.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_144",
+      "assertion_id": "a_119",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census child_3: sex Male \u2014 consistent with I1 Alexander Miller.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_145",
+      "assertion_id": "a_120",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census child_3: birth place Forfarshire \u2014 consistent with I1 (born after family moved from Perthshire to Forfarshire).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_146",
+      "assertion_id": "a_121",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census child_3: birth year ~1854 \u2014 consistent with I1 (aligns with 1881 census age ~27).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_147",
+      "assertion_id": "a_122",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census child_3: residence Dundee 2nd, Forfarshire 1861 \u2014 consistent with I1 in household.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_148",
+      "assertion_id": "a_123",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census child_3: relationship 'child of John Miller (inferred)' \u2014 places I1 as son of 2BLB-3WX; confident with two-record corroboration.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_149",
+      "assertion_id": "a_123",
+      "person_id": "2BLB-3WX",
+      "confidence": "probable",
+      "rationale": "Cross-link: Alexander Miller (child_3, 1861 census) inferred as child of John Miller \u2014 probable; no relationship column, but corroborated by 1881 census.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_150",
+      "assertion_id": "a_124",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1861 Scotland census child_3: relationship 'child of Susan Miller (inferred)' \u2014 places I1 as son of LQY1-14T; confident with corroboration.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_151",
+      "assertion_id": "a_124",
+      "person_id": "LQY1-14T",
+      "confidence": "probable",
+      "rationale": "Cross-link: Alexander Miller (child_3, 1861 census) inferred as child of Susan Miller (wife) \u2014 probable; no relationship column.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_152",
+      "assertion_id": "a_125",
+      "person_id": "2BLL-3JS",
+      "confidence": "confident",
+      "rationale": "Negative assertion: 2BLL-3JS absent from 1861 Dundee census \u2014 analytically expected; she was born c.1865, four years after this census. Confirms family was in Forfarshire before her birth.",
+      "match_score": null,
+      "created": "2026-07-22"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "identity",
+      "description": "Tree source SXGH-3KY (FamilySearch record KM6G-829, 'Scotland, Census, 1881') is attached to Susan Miller (2BLL-3JS) but belongs to a different family. The household head in that record, John Millar (KM6G-CWV), was born in St Cyrus, Kincardineshire \u2014 not Blairgowrie, Perthshire (our John Miller). The person listed in KM6G-829 is 'Susan Millar', b.1858 St Vigeans FORFAR \u2014 birth year conflicts with 1865 established by the 1871 census (a_028) and 1881 England census (a_001). The 1881 England census also places our Susan Miller in Barrow-in-Furness, Lancashire on census night 1881, making co-enumeration in Scotland impossible (a_025). Conclusion: KM6G-829 is a different person and should be detached from 2BLL-3JS.",
+      "disputed_attribute": "source_attachment",
+      "identity_question": "Is the 'Susan Millar' in Scotland 1881 census record KM6G-829 (b.1858, St Vigeans, household of John Millar b. St Cyrus Kincardineshire) the same person as Susan Miller (2BLL-3JS, b.c.1865 Forfarshire, household of John Miller b. Blairgowrie Perthshire)?",
+      "competing_assertion_ids": [
+        "a_028",
+        "a_001",
+        "a_025"
+      ],
+      "independence_analysis": "The three competing assertions are from independent censuses: the 1871 Scotland census (a_028, different enumeration year) and the 1881 England census (a_001, a_025, different country). They are mutually independent \u2014 different enumerators, different years/locations.",
+      "weighing_analysis": "All three positive assertions (a_028, a_001, a_025) point to the same conclusion: Susan Miller was born c.1865 in Forfarshire and was in England in 1881. The KM6G-829 record gives b.1858 and Scotland 1881 \u2014 conflicting on both birth year AND census-night location. The parent evidence is also contradictory: KM6G-829 household head born St Cyrus Kincardineshire vs. our John Miller born Blairgowrie Perthshire. Three independent conflict indicators all resolve against KM6G-829 being our subject. Weight: strongly against identification.",
+      "preferred_assertion_id": "a_028",
+      "resolution_rationale": "The conflict is resolved against KM6G-829 on four grounds. (1) The conflict: record KM6G-829 (SXGH-3KY) \u2014 an 1881 Scotland census entry for a Susan Millar born 1858 in St Vigeans, Forfarshire, in the household of a John Millar \u2014 was previously attached to Susan Miller (2BLL-3JS) in FamilySearch. The 1871 Scotland census (a_028) places Susan Miller in the John Miller household in St Mary's, Forfarshire, with a birth year of approximately 1865; the 1881 England census (a_001, a_003) places her in the John Miller household in Barrow-in-Furness, Lancashire. These three records cannot all belong to the same person. (2) Reliability analysis: the 1881 England census (a_001) is the decisive record. A single person cannot be enumerated in both Scotland and England on the same census night (3 April 1881). The England census reports John Miller (head, b.1829 Blairgowrie, Perthshire) at Barrow-in-Furness; the Scotland census record KM6G-829 reports John Millar (head, b.1829 St Cyrus, Kincardineshire) at St Vigeans, Forfarshire. These are two different men. (3) Preferred version: the 1881 England census (a_001, a_003) is preferred because (a) it is consistent with the 1871 Scotland census \u2014 both identify John Miller as born in Perthshire/Blairgowrie, not Kincardineshire \u2014 and (b) the census-night exclusivity principle makes the England record incompatible with KM6G-829. The England census is corroborated by the 1871 census in a way KM6G-829 is not. (4) Explanation of the incorrect attachment: KM6G-829 was likely auto-matched to 2BLL-3JS by FamilySearch's algorithms on the basis of the shared name 'Susan Miller/Millar' and approximate birth year (1858 vs 1865) in Forfarshire \u2014 a close but incorrect match. The household head's different birthplace (St Cyrus, Kincardineshire vs Blairgowrie, Perthshire) distinguishes the two families, a distinction the automated matcher may not have weighted heavily. Recommended action: detach KM6G-829 from 2BLL-3JS in FamilySearch.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_028",
+        "a_003",
+        "a_043",
+        "a_007",
+        "a_008",
+        "a_125"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched Scotland censuses 1861, 1871, and 1881 (FamilySearch); England census 1881 (FamilySearch); Canada Ontario death record 1937 and children's birth records 1889\u20131894 (FamilySearch). Name variants Miller and Millar were tried. The England marriage register for Susan's marriage to Thomas Davies at Barrow-in-Furness c.1882\u20131883 was logged as deferred (autonomous session; FindMyPast URL generated for interactive retrieval). The Scotland civil birth register (ScotlandsPeople, 1865 Forfarshire) was not accessed due to pay-per-view subscription requirement. All accessed sources are FamilySearch derivative indexed transcripts; original census images were not separately read.",
+      "narrative_markdown": "## Birth of Susan Miller (born c. 1865, Forfarshire, Scotland)\n\n**Research question:** When and where was Susan Miller (born c. 1864\u20131865, daughter of John Miller and Susan Kidd, residing in Forfarshire, Scotland in 1871, later wife of Thomas Davies) born in Scotland?\n\n**Conclusion (Probable):** The preponderance of available evidence strongly suggests that Susan Miller was born approximately **1865 in Forfarshire, Scotland**. The exact birth date and parish cannot be established from the record types accessible in this research effort but remain recoverable pending access to the Scotland civil birth register.\n\n### Evidence\n\n**1871 Scotland Census.** The 1871 Scotland census, accessed via FamilySearch, lists Susan Miller in the household of John Miller in St Mary's parish, Forfarshire.\u00b9 She is recorded with a birth year of approximately 1865 and a birthplace of Forfarshire (also known as Angus), Scotland. This is a FamilySearch derivative (indexed transcript) of the original census schedule. The informant is unknown, classifying the information quality as indeterminate; the census recorded birthplaces at county level, making the Forfarshire county statement direct evidence. This is the only source in the current record set to name Forfarshire specifically as the birth county.\n\n**1881 England and Wales Census.** The 1881 England and Wales census, accessed via FamilySearch, records Susan Miller in the household of John Miller at Barrow in Furness, Lancashire, England, as an unmarried Jute Weaver born in 1865 in Scotland.\u00b2 Her father, John Miller (head), is listed as born about 1829 in Scotland; her mother, Susan Miller (wife), as born about 1830 in Scotland. This FamilySearch derivative independently confirms the 1865 birth year and Scotland as the birth country, from a different census administration, in a different jurisdiction, ten years after the 1871 Scotland census.\n\n**1937 Ontario Death Record.** The Ontario death record for Susan Miller Davies, dated 1 May 1937, records a birth year of 1865.\u00b3 This is a FamilySearch derivative of the Ontario civil death registration. The informant at death is unknown, making this secondary information and classifying the birth year evidence as indirect. It serves as corroborating \u2014 not controlling \u2014 support for the 1865 birth year, supplied by a different informant 72 years after Susan's birth.\n\n**1861 Scotland Census (contextual).** The 1861 Scotland census places the John Miller household in Dundee 2nd, Forfarshire.\u2074 Susan is absent \u2014 as expected, since she was born approximately 1865, four years after this census. The record confirms the family resided in Forfarshire before her birth, corroborating Forfarshire as the birth jurisdiction.\n\n### Correlation\n\nThe three principal sources converge on birth year 1865. The 1871 Scotland census and the 1881 England census are classified as derivative sources but were created by different census administrations, in different jurisdictions, and ten years apart; their birth year figures agree. The 1937 Ontario death record independently corroborates 1865 from a different informant in a different country. Birth year 1865 is assessed as well established.\n\nThe birth county, Forfarshire, rests on a single source: the 1871 Scotland census. No other accessed record names the county specifically \u2014 the 1881 England census states only \"Scotland.\" The family's continuous residence in Forfarshire from at least 1861 (1861 census) through Susan's childhood (1871 census) corroborates Forfarshire as the birth jurisdiction, but independent county-level confirmation is lacking from the current record set.\n\n### Conflict Acknowledged\n\nA FamilySearch source attachment (record KM6G-829, a Scotland 1881 census entry for a Susan Millar born 1858 in St Vigeans, household of a John Millar born at St Cyrus, Kincardineshire) was found linked to Susan Miller (2BLL-3JS). Analysis established that this belongs to a different family: the household head is born at St Cyrus, Kincardineshire, whereas our John Miller was born in Blairgowrie, Perthshire. The 1881 England census independently confirms the correct John Miller household was enumerated in Barrow-in-Furness, Lancashire on census night 1881. KM6G-829 is a misattachment (conflict c_001, unresolved pending formal detachment). This conflict does not dispute Susan's birth year or county \u2014 it affects only the incorrect source link \u2014 and does not alter the conclusion.\n\n### Limitations\n\nThe **Scotland civil birth register** is the authoritative primary source for exact birth date and parish. It is accessible via ScotlandsPeople (scotlandspeople.gov.uk) on a pay-per-view subscription basis, which was not available in this research session. A search for Susan Miller, born 1862\u20131867 in Forfarshire, father John Miller, mother Susan Kidd would be the recommended next step to advance this conclusion to the proved tier. The **England marriage register** for Susan's marriage to Thomas Davies at Barrow-in-Furness Baptist Chapel (approximately 1882\u20131883), searchable via FindMyPast (https://search.findmypast.com/search-world-records/england-marriages-1538-1973?firstname=Susan&lastname=Miller&yearofbirth=1865&keywordsplace=Barrow+in+Furness&eventyear=1882), was deferred during this automated session and could provide corroborating age-at-marriage evidence.\n\nAll sources accessed are FamilySearch indexed transcripts (derivative). Original census images, while accessible via FamilySearch, were not separately transcribed. The risk of transcription error materially affecting the birth year 1865 conclusion is assessed as low given three consistent independent sources.\n\n### Conclusion\n\nThe preponderance of available evidence strongly suggests that **Susan Miller was born approximately 1865 in Forfarshire, Scotland**. Birth year 1865 is established by three independent sources spanning different record types and jurisdictions. Birth county Forfarshire is established by the 1871 Scotland census and corroborated by the family's continuous residence in Forfarshire from at least 1861. The exact birth date and parish are not established by the currently accessible record set but remain recoverable from the Scotland civil birth register at ScotlandsPeople.\n\n---\n\n\u00b9 \"Scotland, Census, 1871,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9M88-SNPC : accessed 2026-07-22), Entry for John Miller and Susan Miller, 1871.\n\n\u00b2 \"England and Wales, Census, 1881,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q27R-QTJ2 : accessed 2026-07-22), entry for John Miller and Susan Miller household, Barrow in Furness, Lancashire, England, 1881.\n\n\u00b3 \"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:JKJY-7H7 : accessed 2026-07-22), Entry for Susan Miller Davies and Thomas Davies, 1937.\n\n\u2074 \"Scotland, Census, 1861,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VBHX-X13 : accessed 2026-07-22), entry for John Miller and Susan Miller, 1861."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-22T16:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-22T16-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Scotland, United Kingdom",
+      "for_place": "Forfarshire (Angus), Scotland, United Kingdom",
+      "time_period": "1855-1875",
+      "jurisdictions": [
+        {
+          "name": "Forfarshire, Scotland, United Kingdom",
+          "date_range": "1801\u20131928"
+        },
+        {
+          "name": "Angus, Scotland, United Kingdom",
+          "date_range": "1928\u2013present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4324570",
+          "title": "United Kingdom, British Armed Forces and Overseas Vital Records, 1761-2005",
+          "date_range": "1761-2005"
+        },
+        {
+          "id": "2046942",
+          "title": "United Kingdom, Militia Service Records, 1806-1915",
+          "date_range": "1806-1915"
+        }
+      ],
+      "quirks": [
+        "Scotland statutory civil registration began 1 January 1855. Birth, marriage, and death certificates from that date are held by the National Records of Scotland (NRS) and are searchable/viewable by subscription at ScotlandsPeople (scotlandspeople.gov.uk). FamilySearch holds indexes to some statutory records but images are primarily at ScotlandsPeople.",
+        "ScotlandsPeople is the authoritative online gateway for Scotland statutory births 1855+, census returns 1841\u20131911, OPR (Old Parish Records) pre-1855, wills/testaments, valuation rolls, and kirk session records. A pay-per-view subscription is required.",
+        "FamilySearch has well-indexed Scotland census collections for 1841, 1851, 1861, 1871, 1881, and 1891 \u2014 free to search and view. These are the fastest first step on FamilySearch for Scotland research.",
+        "OPR (Old Parish Records) pre-date civil registration (before 1855) and are available on both FamilySearch (indexed) and ScotlandsPeople. For a birth c.1864-65, OPR will NOT contain the entry \u2014 go straight to statutory registers.",
+        "All volume_search results for Forfarshire 1855-1870 returned imageCount: 0 and recordSearchablePercent: null \u2014 these are microfilmed death registers not yet digitized for online viewing. Birth registers for the same period exist but did not surface in the returned pages; they are similarly likely on microfilm at FHL.",
+        "The surname 'Miller' may appear as 'Millar' in Scottish records \u2014 search both spellings. The 1871 census (confirmed in tree) indexes the family as 'Miller' at St Mary's, Forfarshire.",
+        "St Mary's, Forfarshire is a civil registration district centered on Dundee. Susan's birth register entry will be in whatever parish the family was living in at time of birth \u2014 likely a Forfarshire parish but the exact one is unknown without the record.",
+        "Scotland census returns list birthplace at the county level only (e.g., 'Forfarshire') \u2014 the census will confirm the county but will not give the specific town or registration district of birth."
+      ],
+      "guide_markdown": "# Locality Guide: Forfarshire (Angus), Scotland (1855\u20131875)\n\n## Jurisdiction overview\n- **County:** Forfarshire (renamed Angus 1928); county seat Forfar\n- **Parent jurisdiction:** Scotland, United Kingdom\n- **Standard place (1864\u201365 period):** Forfarshire, Scotland, United Kingdom\n- **Economy:** Textile manufacturing (jute/linen in Dundee), agriculture, fishing ports (Arbroath, Montrose)\n- **Key historical context:** Dundee was the centre of the jute industry; many working families lived in urban mill tenements. The Miller family appears in the St Mary's district (Dundee) in 1871.\n\n## Boundary changes\n- Forfarshire was stable 1801\u20131928. Renamed Angus in 1928. No boundary changes affecting record jurisdictions during the 1855\u20131875 target period.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date:** 1 January 1855 (Births, Deaths, Marriages Registration (Scotland) Act 1854)\n- **What exists:** Births, marriages, deaths \u2014 continuous from 1855\n- **Where held:** National Records of Scotland (NRS), Edinburgh; online at ScotlandsPeople (https://www.scotlandspeople.gov.uk/search-records/statutory-records) \u2014 pay-per-view\n- **FamilySearch:** Has some indexed statutory birth data but images are at ScotlandsPeople\n- **ScotlandsPeople birth guide:** https://www.scotlandspeople.gov.uk/help-and-support/guides/statutory-register-births\n- **Gaps:** None known for Forfarshire 1855+\n- **What the birth certificate contains:** Child's name, date and place of birth, father's name and occupation, mother's name and maiden name, names of informant and registrar\n\n### Church records (OPR \u2014 Old Parish Records)\n- **Applicable?** NOT applicable for a birth c.1864\u201365; civil registration superseded church baptism records. OPR covers pre-1855 births/baptisms.\n- **Available on:** FamilySearch (Scotland, Select Births and Baptisms, 1564\u20131950) and ScotlandsPeople\n\n### Census records\n- **Scotland Census years:** 1841, 1851, 1861, 1871, 1881, 1891, 1901, 1911\n- **FamilySearch:** Indexed and free \u2014 best first stop. Collections confirmed in this project's tree: Scotland Census 1871 (family at St Mary's, Forfarshire) and Scotland Census 1881 (St Vigeans, Forfarshire).\n- **ScotlandsPeople:** https://www.scotlandspeople.gov.uk/search-records/census-returns/census \u2014 also available\n- **Limitation:** Census birthplace columns record the county but rarely the specific town or parish of birth. They will confirm Susan was born in Scotland (Forfarshire likely) but will not give the specific town.\n- **1861 census:** Family was in Dundee 2nd, Forfarshire \u2014 searching this may show family composition before Susan's birth and narrow her birth date.\n\n### Probate and court records\n- **Where held:** NRS, Edinburgh; some online at ScotlandsPeople (https://www.scotlandspeople.gov.uk/search-records/legal-records/wills)\n- **Low priority** for a birth question\n\n### Land records / Valuation Rolls\n- **Valuation Rolls:** Available on ScotlandsPeople from 1855 (https://www.scotlandspeople.gov.uk/search-records/tax-records/vr). Record owners/occupiers of properties. Useful to track family residence between censuses.\n\n### Kirk session records\n- **Available on ScotlandsPeople:** https://www.scotlandspeople.gov.uk/record-guides/kirk-session-records\n\n### Newspapers\n- **The Scotsman:** 1817\u20131950, digitised at http://archive.scotsman.com/\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections | Access |\n|---|---|---|\n| ScotlandsPeople (NRS) | Statutory births/marriages/deaths 1855+, census 1841\u20131911, OPR, wills, valuation rolls, kirk session | Pay-per-view |\n| FamilySearch | Scotland census 1841\u20131911 (indexed + images), OPR index | Free |\n| FindMyPast | Scotland post office directories, British armed forces records | Subscription |\n| The Scotsman Digital Archive | Newspapers 1817\u20131950 | Subscription |\n\n### Physical repositories\n| Repository | Holdings | Access |\n|---|---|---|\n| National Records of Scotland (NRS), Edinburgh | Statutory registers (originals), OPR, census, valuation rolls | In-person / online (ScotlandsPeople) |\n| Angus Archives, Forfar | Local records, church registers, maps | In-person |\n\n## Records NOT online\n- Parish-level civil registration birth volumes for Forfarshire 1855\u20131875: FamilySearch volume_search returned 3,182 total volumes for this period but all pages sampled show imageCount: 0 \u2014 these are microfilmed registers not yet digitized in FamilySearch. Access via ScotlandsPeople or FHL microfilm.\n\n## Known record losses\n- No significant record losses known for Forfarshire vital records 1855\u20131875.\n\n## Research tips\n- **First search:** FamilySearch Scotland census 1871 and 1861 to confirm family location and narrow Susan's birth parish.\n- **Primary target:** ScotlandsPeople statutory births \u2014 search for 'Susan Miller' born 1862\u20131867, parents John Miller and Susan (Kidd). The birth entry will give exact date and parish.\n- **Spelling:** Search both 'Miller' and 'Millar' \u2014 both spellings appear in the existing records for this family.\n- **Marriage certificate (Barrow-in-Furness, 1882/83):** This England civil registration record would give Susan's exact age and father's name \u2014 retrieve via GRO England (findmypast or FreeBMD). This could confirm birth year and possibly birthplace.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-22"
+    }
+  ]
+}

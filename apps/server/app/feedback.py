@@ -92,6 +92,93 @@ async def _walk_project(sandbox) -> list[tuple[str, bytes]]:
     return out
 
 
+TREE_FILENAME = "tree.gedcomx.json"
+LIVING_GIVEN = "Living"
+LIVING_SURNAME_FALLBACK = "Unknown"
+
+
+def _is_living(person: dict) -> bool:
+    """Whether a tree person must be treated as living.
+
+    Same rule as the e2e fixture gate (eval/harness/e2e/author.py::living_gate):
+    **absent is not deceased.** `living` is optional in simplified GedcomX, and
+    defaulting a missing flag to "probably dead" is exactly the wrong bet for a
+    bundle that is about to leave the user's machine.
+    """
+    return person.get("living") is not False
+
+
+def _redact_person(person: dict) -> dict:
+    """Reduce a living person to structure: no given name, dates, places, or ark.
+
+    Keeps `id` (relationships reference it, so dropping the person would dangle
+    every edge) and `gender`; the schema requires `id`/`gender`/`names`, and a
+    name requires `id`/`given`/`surname` with `minItems: 1` on `names` — so the
+    placeholder has to carry a surname rather than omit it. Surname is retained
+    deliberately: it is already inferable from the deceased relatives around
+    them, and "Living Spriggs" is the convention FamilySearch itself displays,
+    so a triager reads it as redaction rather than as corrupt data.
+    """
+    names = person.get("names") or []
+    first = names[0] if names else {}
+    placeholder = {
+        "id": first.get("id") or f"{person.get('id', 'unknown')}-name-1",
+        "given": LIVING_GIVEN,
+        "surname": first.get("surname") or LIVING_SURNAME_FALLBACK,
+    }
+    out = {"id": person.get("id"), "living": True, "names": [placeholder], "facts": []}
+    if "gender" in person:
+        out["gender"] = person["gender"]
+    return out
+
+
+def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, bytes]], int]:
+    """Redact living persons out of the bundled tree before it leaves the sandbox.
+
+    FamilySearch's terms forbid sharing living people's details, and a feedback
+    bundle is a capture of a real family. Doing this at capture time (rather than
+    at triage) means the data never reaches the Drive folder at all.
+
+    Also clears `facts` on any Couple relationship touching a living person — a
+    marriage date/place is as identifying as a birth. Returns the files with the
+    tree rewritten, plus the number of persons redacted. Unparseable or
+    unexpectedly-shaped trees are passed through untouched: this is a privacy
+    filter, not a validator, and it must never be the reason a report fails to
+    send.
+    """
+    out: list[tuple[str, bytes]] = []
+    redacted = 0
+    for rel, data in files:
+        if rel != TREE_FILENAME:
+            out.append((rel, data))
+            continue
+        try:
+            tree = json.loads(data.decode("utf-8"))
+            persons = tree.get("persons")
+            if not isinstance(persons, list):
+                raise ValueError("no persons array")
+            living_ids = set()
+            new_persons = []
+            for person in persons:
+                if isinstance(person, dict) and _is_living(person):
+                    living_ids.add(person.get("id"))
+                    new_persons.append(_redact_person(person))
+                    redacted += 1
+                else:
+                    new_persons.append(person)
+            tree["persons"] = new_persons
+            for relationship in tree.get("relationships") or []:
+                if not isinstance(relationship, dict) or "facts" not in relationship:
+                    continue
+                if {relationship.get("person1"), relationship.get("person2")} & living_ids:
+                    relationship["facts"] = []
+            data = json.dumps(tree, indent=2).encode("utf-8")
+        except Exception:  # noqa: BLE001 — never block a submission on this
+            redacted = 0
+        out.append((rel, data))
+    return out, redacted
+
+
 def _select_files(
     files: list[tuple[str, bytes]], include_media: bool
 ) -> tuple[list[tuple[str, bytes]], list[str]]:
@@ -242,6 +329,7 @@ def _feedback_markdown(
     session_log: bool,
     viewer_version: str,
     dropped: list[str] | None = None,
+    redacted_living: int = 0,
 ) -> str:
     parts = [
         "# Feedback",
@@ -274,6 +362,17 @@ def _feedback_markdown(
             "",
             "See `_feedback/session-log.jsonl` — the full Claude Code conversation "
             "transcript (user turns, tool calls, results, and the agent's reasoning).",
+        ]
+    if redacted_living:
+        parts += [
+            "",
+            "## Living people redacted",
+            "",
+            f"{redacted_living} person(s) in `tree.gedcomx.json` are living or not "
+            "marked deceased, so their given names, dates and places were replaced "
+            f"with `{LIVING_GIVEN} <Surname>` before this bundle was created. Their "
+            "ids and relationships are intact, so the case still reproduces. This is "
+            "expected — not corrupt data.",
         ]
     if dropped:
         parts += [
@@ -332,7 +431,8 @@ async def submit_feedback(
         "notes": fields["notes"],
     }
 
-    project_files, dropped = _select_files(await _walk_project(sandbox), body.includeMedia)
+    redacted_files, redacted_living = _redact_living(await _walk_project(sandbox))
+    project_files, dropped = _select_files(redacted_files, body.includeMedia)
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -341,7 +441,13 @@ async def submit_feedback(
         zf.writestr(
             "FEEDBACK.md",
             _feedback_markdown(
-                fields, submitted_at, project.title, bool(session_log), viewer_version, dropped
+                fields,
+                submitted_at,
+                project.title,
+                bool(session_log),
+                viewer_version,
+                dropped,
+                redacted_living,
             ),
         )
         zf.writestr("_feedback/feedback.json", json.dumps(feedback_json, indent=2) + "\n")

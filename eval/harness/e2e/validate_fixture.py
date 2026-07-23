@@ -24,7 +24,7 @@ This is a *fixture* linter, not a skill validator. It operates on the
 two static files of a fixture directory and runs no skill. It is
 therefore standalone — NOT under `eval/harness/validators/` (those are
 unit-skill validators wired to `validator_runner.py` with
-before/after-state fixtures). See `docs/plan/e2e-skills.md`.
+before/after-state fixtures). See `docs/e2e-testing-guide.md`.
 
 The check is intentionally a **warn, don't block** name-token overlap:
 it can't know the author's intent perfectly (a subject person

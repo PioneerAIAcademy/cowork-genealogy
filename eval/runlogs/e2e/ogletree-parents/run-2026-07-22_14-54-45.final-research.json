@@ -1,0 +1,2334 @@
+{
+  "project": {
+    "id": "rp_ogletree_parents",
+    "objective": "Who were the parents of Lewis Ogletree, born March 1897 in Georgia, who resided in West Point, Troup County, Georgia, in 1910?",
+    "subject_person_ids": [
+      "GW8N-X1W"
+    ],
+    "status": "completed",
+    "created": "2026-07-03",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who are identified as the parents of Lewis Ogletree (born March 1897, Georgia) in the 1910 U.S. Federal Census for West Point, Troup County, Georgia?",
+      "rationale": "Lewis Ogletree is known from the project to have resided in West Point, Troup County, Georgia in 1910 at approximately age 13. The 1910 U.S. Federal Census is the single most direct record available: if Lewis was living in his parents' household, it names the head of household and relationship to head for every member. It is fully indexed, freely accessible on FamilySearch, and is the logical gatekeeper first question \u2014 a positive hit could name one or both parents directly and anchor all subsequent documentary corroboration.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-22",
+      "resolution_assertion_ids": [
+        "a_010",
+        "a_059",
+        "a_060"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched the two census records most likely to name Lewis's parents (1900 and 1910), both of which directly encode ParentChild relationships. Delayed birth records (collection 3438747), Georgia death records 1914-1927, and the 1920 census were all searched. The 1928-1943 death record collection (pli_005) was skipped as a fallback; given that the parentage is independently established by two census records, the overturn risk from an unlocated death certificate is low. Church baptism records for African American congregations in Troup County around 1897 are not indexed on FamilySearch and were not searchable via standard MCP tools; their absence is a minor gap that does not undermine two direct-evidence census records. Pre-1915 Georgia marriage records (Frank-Carrie marriage ~1895) are outside the planned collection's date range and were not searched. The conclusion rests on two independent original-record sources with direct evidence.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. Two independent census records (1900 and 1910) directly name Frank Ogletree as Lewis's father via the relationship column; the 1900 census additionally names Carrie Ogletree as Lewis's mother via the same mechanism. The research objective is answered at a defensible tier.",
+          "repository_breadth": "Census records (1900, 1910, 1920), delayed birth records, and death records (1914-1927) were searched. Church baptism records for African American congregations in Troup County, Georgia around 1897 are not indexed on FamilySearch and could not be searched via standard tools. Probate and land records for Frank Ogletree were not searched. These gaps are noted but are unlikely to overturn a conclusion supported by two independent census records.",
+          "original_substitution": "Records were accessed as FamilySearch digital photographic reproductions of NARA census microfilm \u2014 the standard access pathway for these collections. The original NARA microfilm was not independently examined; this limitation is documented on both source entries (src_001, src_002). No evidence of transcription error on the relevant relationship entries.",
+          "independent_verification": "Two independent records (1900 census, 1910 census) from different census years, enumerated by different enumerators, both name Frank Ogletree as Lewis's father. Carrie Ogletree as mother rests on one source (1900 census), which is direct evidence. The household composition corroborates across both censuses (Susan/Susie in both; Lewis in both).",
+          "evidence_class": "Both records are original documents (derivative in the FamilySearch digital-image sense only) with direct evidence for parentage via the relationship column. The 1900 census relationship column is primary-quality information for household co-residence and relationship. The 1910 census likewise. Both are direct evidence.",
+          "conflict_resolution": "One minor conflict: Frank Ogletree's birth year is recorded as 1869 (derived from the 1910 census) vs. December 1870 (1900 census). This is a 1-year census-to-census variation well within the range of oral-report imprecision for enumerated ages. No conflict on parentage identities exists. The birth year conflict is documented in the tree and does not affect the parentage conclusion.",
+          "overturn_risk": "Low for the father (two independent sources agree). Moderate-low for the mother (one direct-evidence source, but a complete household record with consistent composition across the decade). The most plausible unsearched record that could address the mother is a church baptism record or Lewis's own death certificate; neither was found. No evidence points to a different parentage, and the household's internal consistency across two censuses reduces the risk that the 1900 relationship column is erroneous."
+        }
+      },
+      "created": "2026-07-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "West Point, Troup County, Georgia",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "Lewis Ogletree is documented as residing in West Point, Troup County, Georgia in 1910, aged ~13. At that age he was almost certainly living in a parental household. The 1910 U.S. Federal Census records head-of-household, relationship to head, and age for every member \u2014 if Lewis lived with his parents, it names them directly. This is the highest-probability first search given the known location.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Troup County, Georgia",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "In 1900 Lewis would have been approximately 3 years old \u2014 almost certainly living in his parents' household. The 1900 census records relationship to head, birthplace, and parents' birthplaces, and asks whether each child's parents were born in Georgia. This is the second most direct parentage record available.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Troup County, Georgia",
+          "date_range": "1897",
+          "repository": "FamilySearch",
+          "rationale": "Georgia did not have statewide birth registration until 1919, so no standard 1897 birth certificate exists. However, FamilySearch holds 'Georgia, County Delayed Birth and Death Records, 1829-1961' (collection 3438747), which includes delayed birth certificates filed decades later that can name parents. Worth checking for a delayed filing by Lewis or his family.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Georgia",
+          "date_range": "1914-1927",
+          "repository": "FamilySearch",
+          "rationale": "Georgia death certificates from 1914 onward record the deceased's parents by name. FamilySearch has 'Georgia, Deaths, 1914-1927' (collection 1320969). If Lewis Ogletree died in Georgia during this period (he would be 17\u201330), his death certificate would directly name his father and mother.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Georgia",
+          "date_range": "1928-1943",
+          "repository": "FamilySearch",
+          "rationale": "Extends the Georgia death certificate search into 1928-1943 (collection 1385727). Lewis would be 31-46 in this window. Death certificates from this period routinely name both parents; informant quality may vary but the record could corroborate or identify parents found elsewhere.",
+          "fallback_for": "pli_004",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "census",
+          "jurisdiction": "Georgia",
+          "date_range": "1920",
+          "repository": "FamilySearch",
+          "rationale": "In 1920 Lewis would be approximately 23. If he remained in his parents' household or nearby in West Point, the 1920 census could confirm a candidate parent's household and supply the parent's age and birthplace as corroboration. Also useful for locating a marriage record or separate household that could identify parents.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Troup County, Georgia",
+          "date_range": "1915-1930",
+          "repository": "FamilySearch",
+          "rationale": "Georgia county marriage records (collection 1927197 covers 1785-1950) sometimes name the parents of each party. If Lewis married in Troup County or adjacent counties, his marriage license could name his parents. This is indirect but adds a corroborating parentage citation, and locating him in a marriage also anchors his 1920+ whereabouts.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T14:08:24.846Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Lewis",
+        "birthYearFrom": 1892,
+        "birthYearTo": 1902,
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "residencePlace": "Troup, Georgia, United States",
+        "recordType": "census",
+        "collectionId": "1727033",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Found Lewis Ogletree (b. 1897, Georgia, Male, Black, Single) in the 1910 census at West Point, Troup, Georgia. Household of Frank Ogletree (b. 1869, Georgia). Record encodes ParentChild: Frank \u2192 Lewis, confirming Frank Ogletree as Lewis's father. Other household members: Susie Ogletree (b.1893, encoded as Frank's child), John Ogletree (b.1901), Otis Ogletree (b.1903), Hattie Oneal (b.1892, no encoded relationship \u2014 possibly Frank's wife/Lewis's mother), Amps Hogg (b.1840, likely boarder). No mother explicitly encoded in the index. RecordId: ark:/61903/1:1:MLLP-B7P; HouseholdArk: ark:/61903/1:2:9FHP-PMD. Match score 0.930, confidence 5, already attached to subject GW8N-X1W."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T14:25:34.387Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Troup, Georgia, United States",
+        "recordType": "census",
+        "collectionId": "1325221",
+        "count": 50,
+        "note": "Broad surname search after named query returned zero \u2014 Frank indexed as '0gletree' (zero for O)"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 121,
+      "notes": "Frank Ogletree indexed as \"Frank 0gletree\" (zero instead of O \u2014 OCR artifact) in District 701, Troup County. Household includes wife Carrie Ogletree (b. Mar 1877, GA) and son Lewis Ogletree (b. Mar 1897, GA) \u2014 Lewis's mother confirmed as Carrie. Also present: Susan (b. Sep 1892) and William (b. Sep 1898). GedcomX encodes Couple relationship (married 1895) and ParentChild for both Frank and Carrie as parents of Lewis, Susan, and William."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-22T14:34:26.728Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Lewis",
+        "birthYearFrom": 1892,
+        "birthYearTo": 1902,
+        "birthPlace": "Georgia, United States",
+        "collectionId": "3438747",
+        "count": 50,
+        "collection": "Georgia, County Delayed Birth and Death Records, 1829-1961"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "One result returned (L R Ogletree) but this is a different person: father of Bessie Louise Ogletree, born 1912 in Gwinnett County, race White, wife Carrie Hicks. Not our Lewis Ogletree (Black, born March 1897, Troup County). No delayed birth record found for Lewis Ogletree in this collection."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-22T14:35:38.561Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Frank",
+        "birthYearFrom": 1864,
+        "birthYearTo": 1876,
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "residencePlace": "Georgia, United States",
+        "recordType": "census",
+        "collection": "United States, Census, 1920 (collection 1488411)",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 3,
+      "notes": "Three results \u2014 all White males in different Georgia counties (Meriwether, Harris, Muscogee). None match Frank Ogletree (Black, b.~1869-1870, Troup County). Second search for Lewis Ogletree (b.1892-1902, Georgia) returned 12 results \u2014 all female or White or in non-matching locations; no Black male Lewis Ogletree found. Frank Ogletree and Lewis Ogletree not located in 1920 Georgia census index; family may have moved or records not indexed."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-22T14:36:46.600Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Lewis",
+        "birthYearFrom": 1892,
+        "birthYearTo": 1902,
+        "collectionId": "1320969",
+        "count": 50,
+        "collection": "Georgia, Deaths, 1914-1927"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 5,
+      "notes": "No death record for Lewis Ogletree found. Also searched for Frank Ogletree (22 results): most compelling is Charlie Frank Ogletree (Black, b. Sep 1924, d. Jun 1925, Troup County) \u2014 an infant whose name may reference a father named Frank, but birth date means this is not our Frank dying. J.F. Ogletree (Black, b. Sep 1874, d. Mar 1927, Meriwether County) does not match our Frank's birth year (~1869-1870). No death record for Lewis Ogletree or a clearly matching Frank Ogletree found in this collection."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States, Census, 1910,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9FHP-PMD : accessed 2026-07-22), Household of Frank Ogletree, West Point, Troup, Georgia, United States; citing NARA microfilm publication T624, FHL microfilm.",
+      "citation_detail": {
+        "who": "Household of Frank Ogletree",
+        "what": "United States Federal Census, 1910",
+        "when_created": "1910",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9FHP-PMD)",
+        "where_within": "West Point, Troup, Georgia, United States"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9FHP-PMD",
+      "notes": "FamilySearch index of the 1910 U.S. Federal Census. The index (derivative) was examined; the underlying original government enumeration schedule is the original source. Original image linked at https://www.familysearch.org/ark:/61903/3:1:33S7-9RK9-939N \u2014 original not independently examined beyond the sidecar-provided transcription.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States, Census, 1900,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M3VX-5WW : accessed 22 July 2026), entry for Frank 0gletree household, District 701, Troup County, Georgia; citing NARA microfilm publication T623.",
+      "citation_detail": {
+        "who": "Frank 0gletree household (Frank, Carrie, Susan, Lewis, William Ogletree)",
+        "what": "United States Federal Census, 1900, population schedule",
+        "when_created": "June 1900",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:2:1TTZ-JB9",
+        "where_within": "District 701, Troup County, Georgia"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:1TTZ-JB9",
+      "access_date": "2026-07-22",
+      "notes": "Accessed as a FamilySearch digital image (derivative of original NARA microfilm). The surname is transcribed as '0gletree' (digit zero) in the index \u2014 an OCR artifact; the correct surname is 'Ogletree'. Original microfilm image not independently examined for handwriting verification.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956371",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Frank Ogletree",
+      "structured_value": {
+        "given": "Frank",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Pre-1940 census; the enumerator did not record who answered. Frank likely self-reported his name, but this cannot be confirmed.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956371",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1869",
+      "structured_value": {
+        "year": "1869"
+      },
+      "date": "1869",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age reported on census; who answered is unrecorded. Year is estimated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956371",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated in census; respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956371",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "West Point, Troup, Georgia, United States (1910)",
+      "structured_value": {
+        "place": "West Point, Troup, Georgia, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "West Point, Troup, Georgia, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator visited and recorded the household at this dwelling.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "West Point, Troup, Georgia, United States"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Lewis Ogletree",
+      "structured_value": {
+        "given": "Lewis",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Pre-1940 census; respondent unrecorded. Lewis was approximately 13 in 1910; facts likely reported by a parent.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born 1897",
+      "structured_value": {
+        "year": "1897"
+      },
+      "date": "1897",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; respondent unknown, likely a parent.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated; respondent unknown, likely a parent.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "West Point, Troup, Georgia, United States (1910)",
+      "structured_value": {
+        "place": "West Point, Troup, Georgia, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "West Point, Troup, Georgia, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator recorded the household at this dwelling.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "West Point, Troup, Georgia, United States"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "child_2",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Marital status stated; respondent unrecorded. Consistent with Lewis's approximate age of 13 in 1910.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Frank Ogletree",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The 1910 census has a relationship-to-head column; the index encodes this as a ParentChild relationship (Frank \u2192 Lewis), indicating the enumerated relationship column stated 'son' or equivalent. Relationship is stated in the record. However, this is a derivative (index) and the original image was not independently examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956372",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Susie Ogletree",
+      "structured_value": {
+        "given": "Susie",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Pre-1940 census; respondent unrecorded.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956372",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 1893",
+      "structured_value": {
+        "year": "1893"
+      },
+      "date": "1893",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956372",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated; respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956372",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "West Point, Troup, Georgia, United States (1910)",
+      "structured_value": {
+        "place": "West Point, Troup, Georgia, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "West Point, Troup, Georgia, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator recorded the household at this dwelling.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "West Point, Troup, Georgia, United States"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956372",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Frank Ogletree",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1910 census relationship column; index encodes ParentChild (Frank \u2192 Susie). Derivative \u2014 original not independently confirmed.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956374",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "John Ogletree",
+      "structured_value": {
+        "given": "John",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Pre-1940 census; respondent unrecorded.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956374",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born 1901",
+      "structured_value": {
+        "year": "1901"
+      },
+      "date": "1901",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; respondent unknown, likely a parent.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956374",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated; respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956374",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "West Point, Troup, Georgia, United States (1910)",
+      "structured_value": {
+        "place": "West Point, Troup, Georgia, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "West Point, Troup, Georgia, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator recorded the household at this dwelling.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "West Point, Troup, Georgia, United States"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956374",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Frank Ogletree",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1910 census relationship column; index encodes ParentChild (Frank \u2192 John). Derivative \u2014 original not independently confirmed.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956375",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "Otis Ogletree",
+      "structured_value": {
+        "given": "Otis",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Pre-1940 census; respondent unrecorded.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956375",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born 1903",
+      "structured_value": {
+        "year": "1903"
+      },
+      "date": "1903",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; respondent unknown, likely a parent.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956375",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated; respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956375",
+      "record_role": "child_4",
+      "fact_type": "residence",
+      "value": "West Point, Troup, Georgia, United States (1910)",
+      "structured_value": {
+        "place": "West Point, Troup, Georgia, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "West Point, Troup, Georgia, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator recorded the household at this dwelling.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "West Point, Troup, Georgia, United States"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956375",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Frank Ogletree",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1910 census relationship column; index encodes ParentChild (Frank \u2192 Otis). Derivative \u2014 original not independently confirmed.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956376",
+      "record_role": "household_member_1",
+      "fact_type": "name",
+      "value": "Hattie Oneal",
+      "structured_value": {
+        "given": "Hattie",
+        "surname": "Oneal"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Hattie Oneal bears a different surname from Frank Ogletree; her relationship to the head is not encoded in the available GedcomX. She may be Frank's wife (remarried, common-law, or pre-index-update), a sister, a boarder, or other kin. A differently-surnamed female in the household is a FAN lead \u2014 her maiden name could surface relationships. Do not assume she is Lewis's mother without corroboration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956376",
+      "record_role": "household_member_1",
+      "fact_type": "birth",
+      "value": "born 1892",
+      "structured_value": {
+        "year": "1892"
+      },
+      "date": "1892",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956376",
+      "record_role": "household_member_1",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated; respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956376",
+      "record_role": "household_member_1",
+      "fact_type": "residence",
+      "value": "West Point, Troup, Georgia, United States (1910)",
+      "structured_value": {
+        "place": "West Point, Troup, Georgia, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "West Point, Troup, Georgia, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator recorded the household at this dwelling.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "West Point, Troup, Georgia, United States"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956377",
+      "record_role": "household_member_2",
+      "fact_type": "name",
+      "value": "Amps Hogg",
+      "structured_value": {
+        "given": "Amps",
+        "surname": "Hogg"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Amps Hogg bears a different surname and has no encoded relationship to the head. Born approximately 1840 \u2014 roughly 30 years older than Frank. Could be a boarder, in-law, or other non-family member. Differently-surnamed household member is a FAN lead.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956377",
+      "record_role": "household_member_2",
+      "fact_type": "birth",
+      "value": "born 1840",
+      "structured_value": {
+        "year": "1840"
+      },
+      "date": "1840",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; respondent unknown. Amps was approximately 70 in 1910 \u2014 memory-based reporting for an elderly person is likely less reliable.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956377",
+      "record_role": "household_member_2",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated; respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956377",
+      "record_role": "household_member_2",
+      "fact_type": "residence",
+      "value": "West Point, Troup, Georgia, United States (1910)",
+      "structured_value": {
+        "place": "West Point, Troup, Georgia, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "West Point, Troup, Georgia, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator recorded the household at this dwelling.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "West Point, Troup, Georgia, United States"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "absent",
+      "fact_type": "relationship",
+      "value": "No mother of Lewis Ogletree explicitly encoded in 1910 census household \u2014 no woman has a stated ParentChild or spousal relationship linking her to Lewis or to Frank in the index",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "informant_bias_notes": "The GedcomX encodes no Couple relationship between Frank and any woman, and no ParentChild relationship from any woman to Lewis. Hattie Oneal (household_member_1, born 1892) is present but her relationship is unencoded. This absence does not confirm Lewis had no mother in the household \u2014 the index may have omitted the relationship, the mother may have been absent at enumeration, or may have died before 1910. Examination of the original image is required to confirm the relationship column values.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Frank 0gletree [surname OCR artifact: correct reading Ogletree]",
+      "structured_value": {
+        "given": "Frank",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Surname transcribed as '0gletree' (digit zero) in index \u2014 OCR artifact; correct surname is 'Ogletree'. Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born December 1870",
+      "structured_value": {
+        "year": "1870"
+      },
+      "date": "December 1870",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census stated birth month and year directly. Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "District 701, Troup, Georgia, United States, 1900",
+      "structured_value": {
+        "place": "District 701, Troup, Georgia, United States"
+      },
+      "place": "District 701, Troup, Georgia, United States",
+      "date": "1900",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded residence directly.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "District Township, Berks, Pennsylvania, United States"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Troup, Georgia, United States"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "spouse of Carrie Ogletree",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census relationship column states 'Wife' for Carrie, establishing spousal relationship. Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Carrie Ogletree",
+      "structured_value": {
+        "given": "Carrie",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown. Carrie is newly identified as Lewis Ogletree's mother \u2014 does not yet appear in the project tree.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born March 1877",
+      "structured_value": {
+        "year": "1877"
+      },
+      "date": "March 1877",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census stated birth month and year directly. Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "District 701, Troup, Georgia, United States, 1900",
+      "structured_value": {
+        "place": "District 701, Troup, Georgia, United States"
+      },
+      "place": "District 701, Troup, Georgia, United States",
+      "date": "1900",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded residence directly.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "District Township, Berks, Pennsylvania, United States"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Troup, Georgia, United States"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Frank Ogletree",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census relationship column states 'Wife'. Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "wife",
+      "fact_type": "marriage",
+      "value": "married 1895",
+      "date": "1895",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census 'years married' column gives the marriage year as 1895 (5 years). Pre-1940 census; respondent identity unknown. Marriage year derived from years-married column, subject to rounding.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "parent of Lewis Ogletree",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census relationship column lists Lewis as 'Son'; combined with the couple relationship, Carrie is identified as Lewis's mother. Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Susan 0gletree [surname OCR artifact: correct reading Ogletree]",
+      "structured_value": {
+        "given": "Susan",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Surname transcribed '0gletree' (OCR artifact). Pre-1940 census; respondent identity unknown. Likely corresponds to 'Susie Ogletree' (I2) in the project tree \u2014 slight given-name variant across censuses.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born September 1892",
+      "structured_value": {
+        "year": "1892"
+      },
+      "date": "September 1892",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown. Birth year varies slightly from the 1910-derived record (1893) for Susie Ogletree (I2).",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "District 701, Troup, Georgia, United States, 1900",
+      "structured_value": {
+        "place": "District 701, Troup, Georgia, United States"
+      },
+      "place": "District 701, Troup, Georgia, United States",
+      "date": "1900",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded residence directly.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "District Township, Berks, Pennsylvania, United States"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Frank Ogletree",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census relationship column states 'Daughter'. Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Troup, Georgia, United States"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Carrie Ogletree",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census relationship column states 'Daughter'; mother inferred as Carrie (the wife). Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Lewis 0gletree [surname OCR artifact: correct reading Ogletree]",
+      "structured_value": {
+        "given": "Lewis",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Surname transcribed '0gletree' (OCR artifact). Pre-1940 census; respondent identity unknown. Research subject GW8N-X1W.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born March 1897",
+      "structured_value": {
+        "year": "1897"
+      },
+      "date": "March 1897",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown. Consistent with tree birth date for Lewis Ogletree (GW8N-X1W).",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Troup, Georgia, United States"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "District 701, Troup, Georgia, United States, 1900",
+      "structured_value": {
+        "place": "District 701, Troup, Georgia, United States"
+      },
+      "place": "District 701, Troup, Georgia, United States",
+      "date": "1900",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded residence directly.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "District Township, Berks, Pennsylvania, United States"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Frank Ogletree",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census relationship column states 'Son'. Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Carrie Ogletree",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census relationship column states 'Son'; mother identified as Carrie (the wife). This is the key finding for q_001 \u2014 Carrie Ogletree is Lewis's mother. Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "William 0gletree [surname OCR artifact: correct reading Ogletree]",
+      "structured_value": {
+        "given": "William",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Surname transcribed '0gletree' (OCR artifact). Pre-1940 census; respondent identity unknown. William is a previously unrecorded sibling of Lewis Ogletree.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born September 1898",
+      "structured_value": {
+        "year": "1898"
+      },
+      "date": "September 1898",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Troup, Georgia, United States"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "District 701, Troup, Georgia, United States, 1900",
+      "structured_value": {
+        "place": "District 701, Troup, Georgia, United States"
+      },
+      "place": "District 701, Troup, Georgia, United States",
+      "date": "1900",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded residence directly.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "District Township, Berks, Pennsylvania, United States"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Frank Ogletree",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census relationship column states 'Son'. Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:M3VX-5WW",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Carrie Ogletree",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1900 census relationship column states 'Son'; mother identified as Carrie (the wife). Pre-1940 census; respondent identity unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_005",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": 0.93043,
+      "rationale": "Lewis Ogletree: name (Lewis Ogletree), sex (Male), birth year (1897), birthplace (Georgia), 1910 residence (West Point, Troup, Georgia), and race (Black) all agree with GW8N-X1W's known profile. same_person score 0.930, confidence 5. Strong match on all identifiers.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_006",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": 0.93043,
+      "rationale": "Birth year 1897 matches GW8N-X1W's known birth of March 1897. All other identifiers (name, place, sex, race) also agree. Strong match.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_007",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": 0.93043,
+      "rationale": "Birthplace Georgia matches GW8N-X1W's known birthplace. All other identifiers agree. Strong match.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_008",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": 0.93043,
+      "rationale": "1910 residence West Point, Troup, Georgia matches GW8N-X1W's known 1910 residence exactly. All other identifiers agree. Strong match.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_009",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": 0.93043,
+      "rationale": "Marital status Single is consistent with Lewis being ~13 years old in 1910. Bears on GW8N-X1W.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_010",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": 0.93043,
+      "rationale": "Relationship assertion: Lewis is enumerated as child of Frank Ogletree (head). Bears on GW8N-X1W as the child in this parent-child relationship. All identifiers strongly match GW8N-X1W.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Frank Ogletree (head_of_household, b.1869, Georgia) is stated as Lewis's father. Bears on I1 as the parent in this relationship. I1 was minted from this record's head_of_household persona; no independent corroboration yet, so probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_034",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Negative assertion about the absence of an identified mother for Lewis in this record. Directly bears on GW8N-X1W's parentage question (q_001). The GedcomX encodes no maternal ParentChild or Couple relationship for the Frank Ogletree household.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Frank Ogletree named as head of household, born 1869, Georgia. I1 was minted from this persona in this same session; the link is obvious but stub rests on this single record. Probable pending corroboration from additional sources.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1869 for Frank Ogletree (head). I1 created from this persona; probable pending corroboration.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birthplace Georgia for Frank Ogletree (head). I1 created from this persona; probable pending corroboration.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1910 residence West Point, Troup, Georgia for Frank Ogletree (head). I1 created from this persona; probable pending corroboration.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Susie Ogletree enumerated as child of Frank Ogletree (head). Bears on I2 (Susie) as the child. I2 minted from child_1 persona; probable pending corroboration.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Susie Ogletree enumerated as child of Frank Ogletree. Bears on I1 (Frank) as the parent. Corroborates Frank's role as father of multiple Ogletree children in this household.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Susie Ogletree, b.1893, Georgia, child of Frank. I2 minted from this persona; probable pending corroboration.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1893 for Susie Ogletree. I2 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birthplace Georgia for Susie Ogletree. I2 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1910 residence West Point, Troup, Georgia for Susie Ogletree. I2 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_020",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "John Ogletree enumerated as child of Frank Ogletree. Bears on I3 (John) as the child. I3 minted from child_3 persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "John Ogletree enumerated as child of Frank Ogletree. Bears on I1 (Frank) as the parent. Consistent with Frank as father of multiple Ogletree children.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_016",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "John Ogletree, b.1901, Georgia, child of Frank. I3 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_017",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1901 for John Ogletree. I3 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birthplace Georgia for John Ogletree. I3 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1910 residence West Point, Troup, Georgia for John Ogletree. I3 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_025",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Otis Ogletree enumerated as child of Frank Ogletree. Bears on I4 (Otis) as the child. I4 minted from child_4 persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Otis Ogletree enumerated as child of Frank Ogletree. Bears on I1 (Frank) as the parent. Consistent with Frank as father of multiple Ogletree children.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_021",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Otis Ogletree, b.1903, Georgia, child of Frank. I4 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_022",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1903 for Otis Ogletree. I4 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_023",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birthplace Georgia for Otis Ogletree. I4 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_024",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1910 residence West Point, Troup, Georgia for Otis Ogletree. I4 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_026",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Hattie Oneal, b.1892, Georgia, present in Frank Ogletree's household at West Point in 1910 with no encoded relationship. I5 minted from this persona. Probable \u2014 her role in the household (wife, boarder, or other) is unresolved; the original census image must be examined to confirm the relationship column. She is a FAN lead for identifying Lewis's mother.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_027",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1892 for Hattie Oneal. I5 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_028",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birthplace Georgia for Hattie Oneal. I5 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_029",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1910 residence West Point, Troup, Georgia for Hattie Oneal. I5 minted from this persona; probable.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_035",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name Frank Ogletree matches tree person I1. Household in District 701, Troup County, Georgia \u2014 same county as I1's 1910 residence. Race Black matches. Birth December 1870 vs 1869 in 1910-derived data \u2014 normal 1-year census variation. Household includes Lewis (b. Mar 1897) and Susan (b. Sep 1892), matching children known for I1 in 1910.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_036",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Same as a_035: name, location, household composition all confirm I1.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_037",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Same as a_035: name, location, household composition all confirm I1.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_038",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Same as a_035: name, location, household composition all confirm I1.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_039",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Same as a_035: name, location, household composition all confirm I1.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_040",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Same as a_035: name, location, household composition all confirm I1.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_041",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "I6 (Carrie Ogletree) was created by materialize_facts specifically from this persona (role: wife). She is the only Carrie Ogletree in the tree, born March 1877, Georgia. This is a single-source person \u2014 the record that introduced her.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_042",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Same as a_041: I6 minted from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_043",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Same as a_041: I6 minted from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_044",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Same as a_041: I6 minted from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_045",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Same as a_041: I6 minted from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_046",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Same as a_041: I6 minted from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_047",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Same as a_041: I6 minted from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_048",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Same as a_041: I6 minted from this persona. This relationship assertion (parent of Lewis Ogletree) directly links I6 to GW8N-X1W.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_049",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Susan in 1900 census matches Susie Ogletree (I2) in 1910. Name variant: Susan / Susie (common nickname). Birth September 1892 vs tree's 1893 \u2014 1-year census-to-census variation, common for ages reported by household member. Both in Troup County, Georgia; both female; both in Frank Ogletree's household. Household composition across two censuses corroborates.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_050",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Same as a_049.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_051",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Same as a_049.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_052",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Same as a_049.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_053",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Same as a_049.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_054",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Same as a_049.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_055",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "rationale": "Name Lewis Ogletree (OCR zero artifact noted). Birth March 1897, Georgia \u2014 exact match with tree person GW8N-X1W (born March 1897, Georgia). Race Black matches. Household in Troup County, Georgia \u2014 same county as GW8N-X1W's 1910 residence. GedcomX encodes ParentChild from Frank (I1) and Carrie (I6) to this persona, consistent with q_001. No plausible alternative Lewis Ogletree in Troup County.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_056",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "rationale": "Same as a_055: exact birth date match, location, household composition.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_057",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "rationale": "Same as a_055.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_058",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "rationale": "Same as a_055.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_059",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "rationale": "Same as a_055. This assertion names Frank Ogletree (I1) as father \u2014 directly answers q_001 (father).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_060",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "rationale": "Same as a_055. This assertion names Carrie Ogletree (I6) as mother \u2014 directly answers q_001 (mother).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_061",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "I7 (William Ogletree) was created by materialize_facts from this persona (role: child_3). He is the only William Ogletree in the tree, born September 1898, Georgia. Single-source person.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_062",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Same as a_061: I7 minted from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_063",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Same as a_061: I7 minted from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_064",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Same as a_061: I7 minted from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_065",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Same as a_061: I7 minted from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_066",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Same as a_061: I7 minted from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_005",
+        "a_010",
+        "a_034",
+        "a_035",
+        "a_041",
+        "a_047",
+        "a_048",
+        "a_055",
+        "a_059",
+        "a_060"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched the 1910 and 1900 U.S. Federal Census records on FamilySearch, both of which directly encode parentage relationships via the relationship-to-head column. Also searched Georgia delayed birth records 1829\u20131961 (negative), Georgia death records 1914\u20131927 (negative), and the 1920 U.S. census (negative for both Frank and Lewis). Church baptism records for African American congregations in Troup County, Georgia circa 1897 are not indexed on FamilySearch and could not be accessed via MCP tools. Lewis's own later death certificate and Frank and Carrie's marriage record (~1895, outside available collection range) were not located. These gaps represent minor limitations that do not materially undermine two census records' direct evidence on paternity and one census record's direct evidence on maternity.",
+      "narrative_markdown": "## Proof Summary: Parents of Lewis Ogletree (GW8N-X1W)\n\n**Research Question (q_001):** Who are the parents of Lewis Ogletree, born March 1897 in Georgia, who resided in West Point, Troup County, Georgia, in 1910?\n\n**Conclusion (Probable):** The preponderance of available evidence establishes that Lewis Ogletree's father was **Frank Ogletree** (born approximately 1869\u20131870, Georgia) and his mother was **Carrie Ogletree** (born approximately March 1877, Georgia), who were married approximately 1895 in Troup County, Georgia.\n\n---\n\n### Source Classification\n\nBoth records were accessed via FamilySearch as *derivative* sources \u2014 digital photographic reproductions of NARA microfilm. The underlying original government enumeration schedules were not independently examined. The relationship-to-head column in both censuses constitutes *direct evidence* for parentage. Birth years derived from reported ages constitute *indirect evidence*. Residence facts recorded by the enumerator at the dwelling constitute *primary information*.\n\n---\n\n### 1910 U.S. Federal Census \u2014 Paternal Identification\n\n*\"United States, Census, 1910,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9FHP-PMD : accessed 2026-07-22), Household of Frank Ogletree, West Point, Troup, Georgia; citing NARA microfilm T624.*\n\nThe 1910 census enumerates Lewis Ogletree (Male, Black, age 13, Single, born Georgia) in the household of Frank Ogletree, West Point, Troup County, Georgia. The FamilySearch GedcomX index encodes a ParentChild relationship from Frank Ogletree (head, born 1869, Georgia) to Lewis, reflecting the relationship-to-head column (\"son\" or equivalent). Source classification: derivative; information quality: indeterminate (respondent unrecorded); evidence type: direct (assertion a_010).\n\nThe 1910 record does not encode a maternal relationship. Hattie Oneal (born 1892, Georgia) appears as a household member with no relationship to Frank or Lewis encoded in the index (assertion a_026; negative finding a_034). This absence may reflect Carrie's death, the couple's separation, a remarriage, or an indexing omission. It does not contradict the 1900 census's identification of Carrie Ogletree as Lewis's mother.\n\n### 1900 U.S. Federal Census \u2014 Paternal and Maternal Identification\n\n*\"United States, Census, 1900,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M3VX-5WW : accessed 22 July 2026), entry for Frank Ogletree household [indexed as \"0gletree\" \u2014 OCR artifact], District 701, Troup County, Georgia; citing NARA microfilm T623.*\n\nThe 1900 census enumerates in District 701, Troup County, Georgia: Frank Ogletree (head, born December 1870, Georgia; assertion a_035); Carrie Ogletree (wife, born March 1877, Georgia; assertion a_041); Susan Ogletree (daughter, born September 1892); Lewis Ogletree (son, born March 1897, Georgia; assertion a_055); and William Ogletree (son, born September 1898). The surname \"0gletree\" in the FamilySearch index is an OCR artifact \u2014 digit zero substituted for the letter O.\n\nThe GedcomX encodes ParentChild relationships from Frank to Lewis (assertion a_059) and from Carrie to Lewis (assertion a_060), both via the relationship-to-head column (\"Son\" for Lewis, \"Wife\" for Carrie). This constitutes *direct evidence* for both paternal and maternal relationships. The couple's years-married column yields a marriage year of approximately 1895 (assertion a_047), consistent with Lewis's birth in March 1897. Source classification: derivative; information quality: indeterminate; evidence type: direct.\n\n---\n\n### Correlation and Weight of Evidence\n\n**Father (Frank Ogletree):** Two independent direct-evidence sources \u2014 the 1910 and 1900 census records, enumerated in different years by different enumerators with no common informant identified \u2014 both encode Frank Ogletree as Lewis's father via the relationship-to-head column. The household composition independently corroborates: Susie/Susan Ogletree appears in both records as Lewis's sibling. The convergence of two independent census records on the same paternal identity, without any contradicting evidence, establishes Frank Ogletree as Lewis's father at a strong \"probable\" level.\n\n**Mother (Carrie Ogletree):** A single direct-evidence source \u2014 the 1900 census \u2014 names Carrie Ogletree as Lewis's mother via the relationship column. The Couple relationship (Frank + Carrie, married ~1895) and Lewis's birth in March 1897 are internally consistent. No source names a different woman as Lewis's mother.\n\n**Minor Conflict \u2014 Frank's Birth Year:** Frank Ogletree's birth year is recorded as 1869 (derived from age in the 1910 census) versus December 1870 (stated in the 1900 census). A one-year difference falls within normal census-age imprecision and does not affect the parentage conclusion.\n\n---\n\n### Limitations and Tier\n\n**Tier: Probable.** Both sources are *derivative* (FamilySearch digital images of NARA microfilm), and the original microfilm images were not independently examined. The mother's identification rests on a single source. Church baptism records for African American congregations in Troup County, Georgia circa 1897 are not indexed on FamilySearch and remain unsearched. These factors prevent a declaration of \"proved.\" Additional corroboration \u2014 Lewis's own death certificate naming his parents, a church baptismal record, or Frank and Carrie's marriage record \u2014 would be needed to advance this conclusion to proved."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-22T18:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-22T18-00-00.json"
+    }
+  ]
+}

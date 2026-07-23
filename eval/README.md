@@ -28,6 +28,7 @@ eval/
   Start.bat        Windows: launch the CRUD UI
   RunTests.bat     Windows: run the unit harness
   GateSkill.bat    Windows: gate a candidate SKILL.md edit vs its pre-edit baseline
+  OptimizeSkill.bat  Windows: tune a skill's description (when it fires)
   Login.bat               Windows: FamilySearch login for e2e (once a day)
   CheckSetup.bat          Windows: e2e preflight (run this first)
   RunE2E.bat              Windows: run one e2e benchmark fixture (live FS)

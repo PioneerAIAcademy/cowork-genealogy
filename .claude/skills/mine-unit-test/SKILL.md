@@ -12,8 +12,8 @@ description: Mine a first-cut regression unit test, scenario, and MCP
   them via the CRUD UI before committing. Also the right skill for triaging
   an alpha feedback case: unpack it, continue the research from where the
   user left off, and mine the failure you reproduce (`--project <case-dir>`).
-  Use draft-unit-test instead when the bug is already fixed and you are
-  promoting that fix; NOT for authoring an e2e fixture (use
+  Capture the test BEFORE fixing the bug, so the gate has a pre-edit baseline
+  to prove the fix against; NOT for authoring an e2e fixture (use
   author-e2e-fixture).
 allowed-tools:
   - Read
@@ -27,8 +27,8 @@ allowed-tools:
 
 Turns a **real research failure** into a regression unit test — the "mine"
 step of the skill-improvement loop
-([`docs/e2e-testing-guide.md` → "From a noticed issue to a fix"](../../../docs/e2e-testing-guide.md),
-walked through in [`docs/e2e-testing-example.md`](../../../docs/e2e-testing-example.md)).
+([`docs/skill-lifecycle.md`](../../../docs/skill-lifecycle.md) §2, walked
+through in that page's worked example).
 Output is a **first cut** the user refines via the CRUD UI at `eval/app/`.
 
 **This is guided authoring, not a generator.** Three steps need human
@@ -37,15 +37,15 @@ problem (Step 1), pinning *which* sub-skill (Step 2), and carving the
 *mid-flow* scenario the sub-skill actually saw (Step 5). Propose a draft;
 the user fixes it.
 
-**Sibling to `draft-unit-test`.** Both emit the **same** test format
-(`docs/specs/unit-test-spec.md` is the authority); they differ in *when* you
-reach for them, not in what directory you stand in.
+**Capture the failure BEFORE it is fixed.** This is the only test-capture
+skill (it emits the format `docs/specs/unit-test-spec.md` defines), and it is
+meant to run while the failure is **live in front of you** — you are
+reproducing it, not memorialising a fix.
 
-- **`draft-unit-test`** — the bug is already **fixed**, and you are promoting
-  that fix into a regression test. It expects `/compare-state --against=desired`
-  to report "matches" first.
-- **`mine-unit-test`** (this one) — the failure is **live in front of you**.
-  You are reproducing it, not memorialising a fix.
+That ordering is not a style preference. `make gate-skill` scores a candidate
+SKILL.md edit against the *pre-edit* annotated baseline for this test. Mine the
+test after the fix has landed and the bug no longer reproduces on the incumbent
+skill, so the gate returns `INCONCLUSIVE` and proves nothing either way.
 
 An unpacked feedback case is a perfectly good input here. It is a research
 project — `research.json`, `tree.gedcomx.json`, `results/` — and the most
@@ -301,8 +301,9 @@ reference test you read in Step 3:
   because of a marker in the file.
 - Use `"from-e2e"` instead of `"from-cowork"` on the recorded path.
 - **Leave `holdout` unset.** A mined test is *evidence* — the improver
-  forms its edit from it, so it must NOT be a hold-out (`docs/plan/gated-skill-improvement-slice.md`
-  §8.4). Hold-outs are a separate 2-3 tests the improver never sees.
+  forms its edit from it, so it must NOT be a hold-out
+  (`docs/skill-lifecycle.md` §3). Hold-outs are a separate 2-3 tests the
+  improver never sees.
 - **Generalize, don't memorize.** `judge_context` must describe the
   *class* of mistake (e.g. "a census citation must include a locator that
   relocates the record"), not this one scenario's exact strings. A test
@@ -349,7 +350,7 @@ As the **last thing**, print to the session:
 | The cause is a tool bug or a stale rubric/fixture (Step 1) | Stop. Say so and route it (MCP PR, or `rubric-critic`) — do not mine a unit test. |
 | Can't confidently name one sub-skill | Ask the user; on the recorded path, run `/interpret-e2e-result` first. |
 | Cause is `/research` routing, FS drift, or jitter | Not a body test. Split `/research`: "picked the wrong sub-skill" → `make optimize-skill` (description optimizer); "skipped a GPS step" → a `research`-body (orchestrator) `SKILL.md` edit (the optimizer can't fix it). Discard *jitter*. **FS drift needs a second look:** finding simply *unreachable* because FS data changed → discard; but skill **mishandled** a real FS data quirk (mislinked image, mis-transcription, wrong-collection filing) → **mine it** — the gap is the skill's *response*, not the data. |
-| Run inside a feedback-case dir (a `.feedback-repo-root` is present) | Fine — mine it as `--project <case-dir>`. Resolve the repo from that marker rather than assuming cwd, and read `_feedback/feedback.json` for the submitter's Did/Should (and `correct_answer`, when they supplied ground truth) instead of interviewing the user for it. Switch to `/draft-unit-test` only if the bug is already fixed and you are promoting the fix. |
+| Run inside a feedback-case dir (a `.feedback-repo-root` is present) | Fine — mine it as `--project <case-dir>`. Resolve the repo from that marker rather than assuming cwd, and read `_feedback/feedback.json` for the submitter's Did/Should (and `correct_answer`, when they supplied ground truth) instead of interviewing the user for it. Mine it *before* the fix lands, so the gate has a pre-edit baseline. |
 | The `results/` folder / recorded payloads are absent | Emit fixture placeholders and flag them in the Step 8 printout for the user to fill in. |
 | A test or scenario for `<slug>` already exists | Don't overwrite — append `-2`/`-3` and let the user consolidate. |
 | Skill has no `eval/tests/unit/<skill>/` dir yet | Create it; flag in the Step 8 printout that the rubric needs authoring. |
