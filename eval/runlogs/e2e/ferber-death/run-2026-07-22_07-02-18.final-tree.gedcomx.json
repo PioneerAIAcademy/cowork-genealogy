@@ -1,0 +1,771 @@
+{
+  "persons": [
+    {
+      "id": "G7JB-YH6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "William H",
+          "surname": "Ferber"
+        },
+        {
+          "id": "N6",
+          "type": "BirthName",
+          "given": "Wm.",
+          "surname": "Ferber",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "f5736365-17ed-41bc-b16a-362507bcd311",
+          "type": "Birth",
+          "date": "December 1869",
+          "standard_date": "Dec 1869",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "f420b918-09db-4c56-ac07-ccb5cbd0eb73",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "80a81040-6d5b-4079-a866-d15696549516",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "20dbc637-5cf9-4476-a77f-efd5a5344a5e",
+          "type": "Residence",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "11 Mar 1903",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F3",
+          "type": "Birth",
+          "date": "~1870",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "MaritalStatus",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GCD9-9X1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Gerhard",
+          "surname": "Ferber",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "f16bebba-7355-4e8f-822f-1554fa7072d0",
+          "type": "Birth",
+          "date": "29 September 1820",
+          "standard_date": "29 Sep 1820",
+          "place": "Germany",
+          "standard_place": "Germany"
+        },
+        {
+          "id": "09608412-9a8e-406a-b656-670a67ab243e",
+          "type": "Immigration",
+          "date": "1849",
+          "standard_date": "1849"
+        },
+        {
+          "id": "aa43a6c3-52bb-41bb-b2ea-5dc64578de76",
+          "type": "Immigration",
+          "date": "1850",
+          "standard_date": "1850"
+        },
+        {
+          "id": "d0c0f5ad-e3f7-456a-9f11-7fd8952cd812",
+          "type": "Naturalization",
+          "date": "1853",
+          "standard_date": "1853",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "21091cd5-c6ce-4da2-903e-e4a8b0e2fecd",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "7th Ward Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "7600251a-2985-45d7-b07f-b0b9361bc639",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "value": "3rd ward"
+        },
+        {
+          "id": "40d5a717-6c41-406f-9e09-5b3580a44c42",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "1acd5c6e-8d1a-4863-98cb-cad67131169e",
+          "type": "Residence",
+          "date": "1890",
+          "standard_date": "1890",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "9516e76b-f1ff-4879-a97d-5d79aa5119a1",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "51890a97-bc7a-4324-907c-baf0a1a0ea92",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Cincinnati Ward 21, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "7c3a9ac4-5149-499b-a9b6-d7977bb02949",
+          "type": "Death",
+          "date": "31 May 1917",
+          "standard_date": "31 May 1917",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "8c910681-db16-44aa-a042-2d51fb312890",
+          "type": "Obituary",
+          "date": "Jun 1917",
+          "standard_date": "Jun 1917",
+          "place": "Cincinnati, Ohio",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "6921e718-9a38-49e4-8439-85f16a1f67c1",
+          "type": "Residence",
+          "date": "Jun 1917",
+          "standard_date": "Jun 1917",
+          "place": "Cincinnati, Ohio",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "37507d1f-783a-4017-a33b-6c18fcdd9778",
+          "type": "Residence",
+          "place": "Ohio",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "b15235f1-261e-48bd-8ada-3bbe8add6969",
+          "type": "Burial",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "1b92e791-8284-462c-bcb5-cda31ac6b39f",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "8ab977b2-dd6b-42f1-8f91-b9ee3d5fbd20",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "G7JB-2T6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Emma",
+          "surname": "Becker"
+        }
+      ],
+      "facts": [
+        {
+          "id": "76d95c35-12d3-4b70-9423-062b93a945b7",
+          "type": "Birth",
+          "date": "25 March 1870",
+          "standard_date": "25 Mar 1870",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "03babbfb-b4a7-4b68-aaaa-e4192d9ec67e",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "63dea9b5-199b-4776-9a8b-6139423b96a0",
+          "type": "Residence",
+          "date": "1903",
+          "standard_date": "1903",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "3189de2c-3d73-4a93-bcd9-84591b32a0f5",
+          "type": "Residence",
+          "date": "1904",
+          "standard_date": "1904",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "94b84642-07cd-44db-9e09-f56be18e1704",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "6e19df6e-12f1-45b6-b49e-32515d4e9bfd",
+          "type": "Residence",
+          "date": "1906",
+          "standard_date": "1906",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "c5fdd663-b0b2-48de-9283-60dcd2146d01",
+          "type": "Residence",
+          "date": "1907",
+          "standard_date": "1907",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "75203ccd-079c-4cb9-b9b8-977b847e1de0",
+          "type": "Residence",
+          "date": "1908",
+          "standard_date": "1908",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "a130a7c9-5e0f-4e98-b60b-9df3031940a3",
+          "type": "Residence",
+          "date": "1909",
+          "standard_date": "1909",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "87a34d1c-7502-4502-8c7f-062a1fdd167a",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Cincinnati Ward 21, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "28d45def-a2b9-4493-a9c6-3edf64d35c3c",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hamilton, Ohio, United States",
+          "standard_place": "Hamilton, Ohio, United States"
+        },
+        {
+          "id": "ce7f83b7-68e4-4844-b192-b128ed66f33b",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "45725203-87fb-4340-b13d-7541d6f78d2d",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Cincinnati (Districts 1-250), Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "06b5f9eb-5045-4997-ba1e-de6fbf94d66e",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "value": "Same House"
+        },
+        {
+          "id": "28b3bdb2-3658-41c0-8c26-89374200451b",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "3655c1d7-f2d0-47e0-b13b-4e475b0a92c7",
+          "type": "Death",
+          "date": "7 December 1948",
+          "standard_date": "7 Dec 1948",
+          "place": "Dayton, Campbell, Kentucky, United States",
+          "standard_place": "Dayton, Campbell, Kentucky, United States"
+        },
+        {
+          "id": "dda5fa3e-6133-4b68-8a91-d93ade2dcedc",
+          "type": "Burial",
+          "date": "10 December 1948",
+          "standard_date": "10 Dec 1948",
+          "place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "G7JB-Y46",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Charles Hubert",
+          "surname": "Ferber"
+        }
+      ],
+      "facts": [
+        {
+          "id": "89716b85-fe2b-41fd-bb12-f78db2dc2f69",
+          "type": "Birth",
+          "date": "22 June 1891",
+          "standard_date": "22 Jun 1891",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "cb537fed-184b-418a-87db-835592a9dda1",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "a4598a68-cb80-4b8b-a11d-b1b796fecb8a",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Cincinnati Ward 21, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "444b1c6e-7b78-4e92-b235-023541415c79",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "340f4f52-1834-4582-8612-f6d20d0715f8",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "8cb0fc84-cc8e-4fc8-b304-07711011c358",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "034a9ac3-f92b-442d-90e1-e10cdb6cca4d",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "cecd4659-37b6-4b84-aa0d-e6b90aa95f36",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "3051ea8c-37d3-4dc9-a887-205cbaee384a",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Columbia Township, Hamilton, Ohio, United States",
+          "standard_place": "Columbia Township, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "788dc2f4-d496-4c32-8e8d-a7a71acbe4c0",
+          "type": "Military Draft Registration",
+          "date": "1942",
+          "standard_date": "1942",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "38fb121c-7641-4aa8-a855-a13b200a9a4f",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "Mariemont, Hamilton, Ohio, United States",
+          "standard_place": "Mariemont, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "02e2ee05-3240-48d8-9586-36940e9e8cc2",
+          "type": "Death",
+          "date": "12 December 1967",
+          "standard_date": "12 Dec 1967",
+          "place": "Fort Lauderdale, Broward, Florida, United States",
+          "standard_place": "Fort Lauderdale, Broward, Florida, United States"
+        },
+        {
+          "id": "05e3a701-dbe4-40ea-a626-6dc712b54cc5",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "51ea7653-3c36-43a7-bf99-6572df41de48",
+          "type": "Residence",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "94ccff38-b1ea-4779-b791-532ed593e1df",
+          "type": "Burial",
+          "place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "G7J1-QF2",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Eva",
+          "surname": "Engermann"
+        },
+        {
+          "id": "N7",
+          "type": "BirthName",
+          "given": "Eva",
+          "surname": "Ferber",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "dba19df9-3a85-443b-b6f4-a4771e170292",
+          "type": "Birth",
+          "date": "1834",
+          "standard_date": "1834",
+          "place": "Bavaria, German Empire",
+          "standard_place": "Bavaria"
+        },
+        {
+          "id": "f6dce93d-686f-4018-88ae-36b90671fcdf",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "7th Ward Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "05ace355-88aa-4d40-974b-a940fa2070a9",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "af437fde-a3d1-4ce2-b502-ebd53f46a458",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "cb5b471f-0556-4397-9b7e-864681101eb0",
+          "type": "Death",
+          "date": "1 January 1872",
+          "standard_date": "1 Jan 1872",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+        },
+        {
+          "id": "57510da6-03c6-40ab-a6f5-5cab6b0c6f0c",
+          "type": "Burial",
+          "date": "January 1872",
+          "standard_date": "Jan 1872",
+          "place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G7JB-YH6",
+      "person2": "G7JB-2T6",
+      "facts": [
+        {
+          "id": "048428bb-b1db-4454-b4f4-5f65642bb97c",
+          "type": "Marriage",
+          "date": "10 September 1890",
+          "standard_date": "10 Sep 1890",
+          "place": "Hamilton, Ohio, United States",
+          "standard_place": "Hamilton, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GCD9-9X1",
+      "person2": "G7J1-QF2",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "21 May 1856",
+          "standard_date": "21 May 1856",
+          "place": "Hamilton, Ohio, United States",
+          "standard_place": "Hamilton, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GCD9-9X1",
+      "child": "G7JB-YH6"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "G7J1-QF2",
+      "child": "G7JB-YH6"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G7JB-YH6",
+      "child": "G7JB-Y46"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "G7JB-2T6",
+      "child": "G7JB-Y46"
+    }
+  ],
+  "sources": [
+    {
+      "id": "3BNM-TGH",
+      "title": "Wm, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+      "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6866-XGFM : Sun Mar 10 10:19:35 UTC 2024), Entry for Emma Ferber and Wm, 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6866-XGF9"
+    },
+    {
+      "id": "3BNM-TSG",
+      "title": "Wm H, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+      "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z5M-WGHB : Sat Mar 09 16:24:12 UTC 2024), Entry for Emma Ferber and Wm H, 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z5M-WGH1"
+    },
+    {
+      "id": "3BNM-R4L",
+      "title": "Wm, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+      "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68LL-3SKJ : Fri Mar 08 14:47:17 UTC 2024), Entry for Emma Ferber and Wm, 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68LL-3SKV"
+    },
+    {
+      "id": "3BNM-5PW",
+      "title": "Wm, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+      "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZYK-RSP8 : Sun Mar 10 23:29:41 UTC 2024), Entry for Emma Ferber and Wm, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZYK-RSPD"
+    },
+    {
+      "id": "3BNM-PBJ",
+      "title": "Wm, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+      "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z5Z-5FPL : Sun Mar 10 07:33:04 UTC 2024), Entry for Emma Ferber and Wm, 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6Z5Z-5FPG"
+    },
+    {
+      "id": "3BNM-P63",
+      "title": "Wm Ferber, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+      "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:682V-ZH4M : Fri Mar 08 21:18:52 UTC 2024), Entry for Emma Ferber and Wm Ferber, 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:682V-ZH49"
+    },
+    {
+      "id": "3BNM-P7Q",
+      "title": "Wm, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+      "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZBB-LRFD : Sun Mar 10 16:27:30 UTC 2024), Entry for Emma Ferber and Wm, 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZBB-LRF6"
+    },
+    {
+      "id": "3JRQ-P4J",
+      "title": "Ohio, U.S., County Marriage Records, 1774-1993",
+      "url": "https://search.ancestry.com/collections/61378/records/133554"
+    },
+    {
+      "id": "3JRQ-P4N",
+      "title": "U.S., City Directories, 1822-1995",
+      "url": "https://search.ancestry.com/collections/2469/records/1108917757"
+    },
+    {
+      "id": "3JRQ-P4X",
+      "title": "U.S., City Directories, 1822-1995",
+      "url": "https://search.ancestry.com/collections/2469/records/1352545052"
+    },
+    {
+      "id": "3JRQ-P4D",
+      "title": "1900 United States Federal Census",
+      "url": "https://search.ancestry.com/collections/7602/records/40315247"
+    },
+    {
+      "id": "3JRQ-P48",
+      "title": "1870 United States Federal Census",
+      "citation": "Year: 1870; Census Place: Cincinnati Ward 7, Hamilton, Ohio; Roll: M593_1211; Page: 66B",
+      "url": "https://search.ancestry.com/collections/7163/records/38781016"
+    },
+    {
+      "id": "3JRQ-P4W",
+      "title": "Kentucky, U.S., Death Records, 1852-1965",
+      "url": "https://search.ancestry.com/collections/1222/records/451506360"
+    },
+    {
+      "id": "SL2T-6WR",
+      "title": "William Faerber, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M62Z-87S : Mon Oct 13 21:07:52 UTC 2025), Entry for Gerhardt Faerber and Eva Faerber, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M62Z-87H"
+    },
+    {
+      "id": "SLJ6-N3L",
+      "title": "Wm. H. Ferber, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP : Fri Mar 08 17:29:27 UTC 2024), Entry for Wm. H. Ferber and Emma Becker, 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZR1-JZP"
+    },
+    {
+      "id": "SLJ6-DJ6",
+      "title": "William Ferber, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MM88-DGG : Wed Mar 18 15:54:15 UTC 2026), Entry for William Ferber and Emma Ferber, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MM88-DGG"
+    },
+    {
+      "id": "3BNM-RJ4",
+      "title": "Wm, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+      "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:684Z-G4J6 : Sun Mar 10 11:48:44 UTC 2024), Entry for Emma Ferber and Wm, 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:684Z-G4JX"
+    },
+    {
+      "id": "S1",
+      "title": "Ohio, County Death Records, 1840-2001 \u2014 Entry for Wm. Ferber, 11 Mar 1903",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+      "citation": "\"Ohio, County Death Records, 1840-2001\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ : accessed 22 July 2026), Entry for Wm. Ferber and Gerhard Ferber, 11 Mar 1903."
+    },
+    {
+      "id": "S2",
+      "title": "Find a Grave Index \u2014 Entry for William H Ferber",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q23M-1B3H",
+      "citation": "\"Find a Grave Index\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QV2R-MD6H : accessed 2026-07-22), Entry for William H Ferber."
+    }
+  ]
+}
