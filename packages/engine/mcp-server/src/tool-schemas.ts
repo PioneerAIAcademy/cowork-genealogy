@@ -48,6 +48,7 @@ import { researchLogAppendSchema } from "./tools/research-log-append.js";
 import { convertCalendarSchema } from "./tools/convert-calendar.js";
 import { treeEditSchema } from "./tools/tree-edit.js";
 import { treeCorrectSchema } from "./tools/tree-correct.js";
+import { treeForgetSchema } from "./tools/tree-forget.js";
 import { researchAppendSchema } from "./tools/research-append.js";
 import { rankSearchMatchesSchema } from "./tools/rank-search-matches.js";
 import { projectContextSchema } from "./tools/project-context.js";
@@ -95,6 +96,7 @@ export const allToolSchemas = [
   convertCalendarSchema,
   treeEditSchema,
   treeCorrectSchema,
+  treeForgetSchema,
   researchAppendSchema,
   rankSearchMatchesSchema,
   projectContextSchema,

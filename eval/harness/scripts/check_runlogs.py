@@ -62,13 +62,11 @@ AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
 #     unit tests.
 #   - `forget-and-rederive` — a setup/utility skill, not a research step. It
 #     strips a slice of the local tree to stage a practice run, so there is no
-#     genealogical output for a judge to grade: its mechanical half is a
-#     deterministic Python script (`scripts/forget.py`) and its other half is a
-#     behavioral prohibition (don't re-read the forgotten facts off the tree)
-#     that a unit transcript can't observe. Permanent, not a stopgap — confirmed
-#     by Dallan 2026-07-18. `forget.py` itself has no automated coverage today
-#     (see docs/TODOs.md); that gap wants script-level tests, not a skill eval
-#     suite.
+#     genealogical output for a judge to grade: its mechanical half is the
+#     `tree_forget` MCP tool (unit-tested in the engine; it was a bundled Python
+#     script until 2026-07-23) and its other half is a behavioral prohibition
+#     (don't re-read the forgotten facts off the tree) that a unit transcript
+#     can't observe. Permanent, not a stopgap — confirmed by Dallan 2026-07-18.
 #
 # Adding a unit suite for such a skill later means removing it from this set.
 # Otherwise keep this set minimal: it is the only way to edit a skill body

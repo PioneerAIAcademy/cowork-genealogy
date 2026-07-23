@@ -322,17 +322,10 @@ Deferred during the #701 build.
   regradeable evidence.** Deleting all 164 superseded candidates outright would
   reclaim 108MB but orphans 125 annotations from the traces they argue against —
   not recommended.
-- [ ] **Make `forget.py` refuse to clobber an existing backup.** It writes
-  `.tree-before-forget.gedcomx.json` unconditionally on every non-dry-run
-  (`forget.py:332`), so the snapshot always reflects the tree at the start of
-  *that* run. A second forget therefore overwrites the pristine snapshot with
-  the already-forgotten tree and the first slice becomes unrecoverable from it —
-  silent data loss on a file the researcher is told is their restore point.
-  Currently mitigated only by prose in the skill's "Re-invocation behavior".
-  A guard (refuse, or write `.tree-before-forget.<n>.gedcomx.json`) would make
-  the prose unnecessary. Note `forget-and-rederive` is deliberately exempt from
-  the runlog gate (`RUNLOG_GATE_EXEMPT_SKILLS`), so a change here is not gated
-  by the eval suite — verify it by hand.
+- [x] **Make the forget backup refuse to clobber an existing one.** Done
+  2026-07-23: `tree_forget` writes `.tree-before-forget.gedcomx.json` only when
+  it does not already exist, so the restore point always holds the tree as it
+  was before the *first* forget. Spec: `docs/specs/tree-forget-tool-spec.md` §5.
 - [x] **record-extraction real craft gaps (surfaced by the 2026-07-16 classification
   audit) — RESOLVED (#711 + record-extractor informant-craft follow-up).** The audit
   found 3 agent craft gaps + a christening-table gap. Resolution:
@@ -603,23 +596,6 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `tree_edit`, `materialize_facts`, and `extraction_append` appear in no README
   tool table, and `docs/specs/mcpb-package-spec.md` still tells a manual tester
   to assert 21 tools. No CI reads either, so nothing reds.
-- **`forget-and-rederive/scripts/forget.py` has no automated coverage** — the
-  selector resolution, the relationship cascade, and the restore-file write are
-  all untested. The skill is exempt from the runlog gate
-  (`RUNLOG_GATE_EXEMPT_SKILLS`) because a tree-stripping utility has no
-  genealogical output for a judge to grade, so the right coverage is
-  script-level tests, not a skill eval suite. Highest-value cases: the cascade
-  when `person:` removes someone with relationships in both directions, and the
-  `matched nothing` error paths.
-- **`forget.py` overwrites its restore file on every non-dry-run** — 
-  `.tree-before-forget.gedcomx.json` is written unconditionally
-  (`forget.py:332-333`, no existence check), so it always holds the tree as of
-  the most recent run. After a second forget pass the original tree is
-  unrecoverable: pass 1's removals are already baked into the backup. This may
-  be intended (incremental forgetting wants the immediately-prior state), which
-  is why it was documented in the skill's Re-invocation section rather than
-  changed. Decide: keep and document, or refuse to overwrite an existing
-  backup / write per-run timestamped restore files.
 - **`evidence_type: "negative"` is not tied to `record_role: "absent"` in
   `validator.ts`** — the runtime validator checks each assertion field
   independently and has no cross-field rule, so `extraction_append` happily
@@ -666,3 +642,28 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   consistent with the unattributed portion of a real run's cost. Deliberately
   not half-built: a cap that silently fires late is worse than a documented
   reporting threshold. The spec (`e2e-test-spec.md` §5) now says so explicitly.
+
+- **Nothing checks that `forget-and-rederive` honors its own redaction rule** —
+  the skill stays permanently exempt from the runlog gate (a setup utility has no
+  genealogical output for a judge to grade; confirmed 2026-07-18), and as of
+  2026-07-23 its mechanical half is `tree_forget`, whose redaction *is*
+  unit-tested. What no test covers is the skill's behavioral half: that it
+  dry-runs before applying, reaches for `project_context` instead of reading
+  `tree.gedcomx.json`, and does not restate removed values back to the
+  researcher. That is a transcript property, not a tool property, so it needs
+  either a targeted lint over the run transcript or a deliberate decision to
+  leave it to prose. Not a unit suite — see `RUNLOG_GATE_EXEMPT_SKILLS`.
+
+- **Six private copies of `readJson` / `formatIssues` across the writer tools** —
+  `materialize-facts`, `project-context`, `research-append`, `research-log-append`,
+  and `tree-edit` each carry a byte-identical `readJson(projectPath, filename)`,
+  and five carry `formatIssues` (only `merge-shared.ts` exports its copy).
+  `tree_forget` (2026-07-23) added the shared `readProjectJson` to
+  `src/utils/project-io.ts` — the designated project-IO layer — and uses it, but
+  did not migrate the five incumbents, since that touches the merge and append
+  write paths in a PR scoped to a skill fix. Migrate them onto `readProjectJson`
+  and onto `merge-shared.ts`'s `formatIssues`, then delete the copies. The only
+  wrinkle is the error class: each tool wraps the read failure in its own
+  `*Error` type so it surfaces as `{ ok: false, errors }`; `readProjectJson`
+  throws a plain `Error` and leaves that mapping to the caller (see
+  `tree-forget.ts`'s three-line `readJson` wrapper).
