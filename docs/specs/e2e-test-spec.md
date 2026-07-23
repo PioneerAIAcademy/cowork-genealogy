@@ -400,11 +400,11 @@ here:
 
 ## 6. Execution Pipeline
 
-**There is no full-suite flag, by design.** `run_e2e.py` requires exactly one
-of `--test` or `--tag` (a mutually-exclusive required group), so every
-invocation is deliberately scoped. Runs are expensive enough (§12) that an
-accidental sweep is a real cost event; driving one needs an explicit shell
-loop and a budget decision.
+**There is no full-suite flag and no tag sweep, by design.** `run_e2e.py`
+requires `--test <fixture-id>` and runs exactly that one fixture. Runs are
+expensive enough (§12) that an accidental sweep is a real cost event; driving a
+batch needs an explicit shell loop and a budget decision, not a one-word flag.
+(A `--tag` sweep existed until 2026-07 and was removed for this reason.)
 
 1. Harness loads fixture, builds a fresh temp project directory.
 2. Copies `starting-research.json` and `starting-tree.gedcomx.json`
@@ -879,8 +879,10 @@ record-visibility changes show up directly.
 
 ## 9. Roll-up Report
 
-At the end of a multi-fixture `run_e2e.py --tag <tag>` invocation,
-the harness prints a console summary covering the runs:
+At the end of a `run_e2e.py` invocation the harness prints a console summary of
+the run. The roll-up is shaped to aggregate across fixtures — grouping by the
+`tags` dimensions — because it also serves a shell loop that runs several
+fixtures back to back (§6: there is no built-in sweep):
 
 ```
 E2E suite: 7/10 passed, 2 partial, 1 fail

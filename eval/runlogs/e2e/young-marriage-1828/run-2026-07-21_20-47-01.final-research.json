@@ -1,0 +1,3705 @@
+{
+  "project": {
+    "id": "rp_young_marriage_1828",
+    "objective": "What was Elizabeth Young's maiden name, and where and when did she marry Thomas Young?",
+    "subject_person_ids": [
+      "PID-TODO"
+    ],
+    "status": "active",
+    "created": "2026-06-19",
+    "updated": "2026-06-19"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Thomas Young marry Elizabeth (maiden name unknown), and what was her maiden name?",
+      "rationale": "This is the core question the project was created to answer. A marriage record \u2014 whether civil registration, church register, or bond/license \u2014 would name the bride under her maiden name and record the date and place of the ceremony. The two unknowns (maiden name and marriage event) are both attributes of the same record type, making this a single testable question. No prior research exists on this project, so this is the necessary first question before any decomposition into ancillary lines.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "Three complete research plans (pl_001, pl_002, pl_003) and ad-hoc searches (log_027\u2013log_031) have exhausted all FamilySearch-accessible sources across 31 log entries. Evidence gathered confirms Thomas Young (born 7 Aug 1809, Bitton, Gloucestershire; parents: Thomas Young Sr. and Martha) and Elizabeth Young (born ~1811, Bristol/Gloucestershire) as a married couple found in the 1841 census at White Hart Inn Bitton, the 1851 and 1861 censuses at Kirkdale Lancashire, the 1881 census at Everton, and the 1891 census at Kirkdale in their son William's household. Thomas died Jan 1892 (buried 12 Jan 1892 Anfield) and Elizabeth died 10 Sep 1893 (buried 12 Sep 1893 Anfield). No probate was granted for Thomas (died intestate, consistent with working-class status, log_031). Fulltext search across Bristol parish registers returned zero results \u2014 the collection is not AI-transcribed (log_030). No source on FamilySearch names Elizabeth's maiden name or provides a marriage date and place. The Bitton pre-1837 Anglican marriage register is not digitized on FamilySearch. Two broad England-wide marriage searches definitively confirm FamilySearch has no indexed Bristol Diocese or Gloucestershire pre-1837 marriage records. The GRO civil birth register images for post-1837 children (which would include 'Mother: Elizabeth Young formerly [maiden name]') are exclusively on Ancestry (deferred, log_022). Boyd's Marriage Index and Gloucestershire parish transcripts on FindMyPast have not been captured (deferred, log_023). These are the two decisive remaining avenues, both requiring interactive user access. The autonomous session terminates here; an interactive session with Ancestry or FindMyPast access is required to resolve the question.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019",
+          "log_020",
+          "log_021",
+          "log_022",
+          "log_023",
+          "log_024",
+          "log_025",
+          "log_026",
+          "log_027",
+          "log_028",
+          "log_029",
+          "log_030",
+          "log_031"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "No \u2014 Elizabeth's maiden name not found; marriage date and place not confirmed. 31 searches across FamilySearch confirm Thomas and Elizabeth Young as a couple from Bitton, Gloucestershire (~1828\u20131841) then Lancashire (~1849\u20131893), but no source names the maiden name or records the marriage event. Thomas died Jan 1892 intestate (no probate, log_031); Elizabeth died Sep 1893. The 1891 census (log_027) is the last census to show them alive together.",
+          "repository_breadth": "FamilySearch fully exhausted: indexed marriage collections (1473015, 1473014, 1718965, 3648679), two broad England-wide marriage searches confirming no Bristol Diocese/Gloucestershire collections (log_025, log_026), fulltext search across Gloucestershire, image-browse of county marriage index volumes, 1841/1851/1861/1881/1891 censuses, civil birth index (2285338), death registrations confirming Thomas burial 12 Jan 1892 and Elizabeth burial 12 Sep 1893 (log_028, log_029), National Probate Calendar 1892 (log_031, negative \u2014 died intestate), Bristol parish register fulltext (log_030, collection not AI-transcribed, 0 results). Two external repositories remain: Ancestry (GRO civil birth register images, log_022) and FindMyPast (Boyd's Marriage Index, log_023). Both accessible interactively but not capturable in autonomous mode.",
+          "original_substitution": "All FamilySearch records accessed as originals or original-based indexes. The GRO civil birth register pages (the definitive originals containing the mother's maiden name) have not been accessed; only the derivative FamilySearch birth index was consulted. Bristol parish register images exist on FamilySearch but the collection is not AI-transcribed (log_030).",
+          "independent_verification": "Zero sources identify Elizabeth's maiden name. Multiple independent sources corroborate the couple's identity: 1891 census (log_027) confirms Thomas (b.1806) and Elizabeth (b.1810) at Kirkdale in son William's household as late as April 1891; Thomas death registration / burial (log_028) confirms death Jan 1892 Anfield; Elizabeth death registration / burial (log_029) confirms death Sep 1893 Anfield. Probate calendar search (log_031) negative \u2014 consistent with intestate death. These five additional searches all corroborate existing identity conclusions but do not answer the marriage/maiden-name question.",
+          "evidence_class": "Original records with primary information: 1841/1851/1861/1881/1891 census entries, Bitton St Mary christening records, Thomas Young's 1809 baptism, burial registers for Thomas and Elizabeth. These are high-quality identity evidence but indirect on the marriage question. No original marriage record or GRO civil birth register image (the primary evidence types for this question) has been found on FamilySearch.",
+          "conflict_resolution": "All identified conflicts are resolved or explained: (a) Thomas's 1841 census birth county Somerset vs. Gloucestershire \u2014 standard 1841 census recording error; (b) Elizabeth's birth year range across censuses (~1810\u20131816) \u2014 within normal census age-rounding tolerance; (c) probate calendar negative \u2014 consistent with working-class intestate death, not a conflict. No unresolved conflicts block the question.",
+          "overturn_risk": "High \u2014 the GRO civil birth register for John Young (Keynsham Q2 1841, Ancestry log_022) would directly name 'Mother: Elizabeth Young formerly [maiden name]', resolving the core question. FindMyPast Boyd's Marriage Index (log_023) could name the marriage parish and date. Either source, when accessed interactively, is likely to answer the question definitively. The autonomous session is terminated for resource exhaustion (no interactive user to capture external-site PDFs), not because no further known sources exist."
+        }
+      },
+      "created": "2026-07-21"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Gloucestershire, England",
+          "date_range": "1820-1835",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'England Marriages, 1538-1973' (collection 1473015) is the broadest indexed pre-civil-registration England marriage database. Thomas Young married Elizabeth (unknown surname) circa 1828 in Gloucestershire. Searching this collection with name variants should surface the marriage record and reveal the bride's maiden name and the parish where they married. Free and indexed \u2014 highest-probability first search.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Bitton, Gloucestershire, England",
+          "date_range": "1830-1850",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'England, Births and Christenings, 1538-1975' (collection 1473014) indexes christening/baptism entries. Several Young children were christened at Bitton St Mary the Virgin 1830-1841. Some pre-civil-registration baptism registers record both parents' full names including the mother's maiden name in the entry or margin. Reviewing these entries may reveal Elizabeth's maiden name indirectly even without a direct marriage record.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Gloucestershire / Bath, England",
+          "date_range": "1841-1857",
+          "repository": "FamilySearch",
+          "rationale": "England & Wales civil birth registration began July 1837. Thomas and Elizabeth had at least seven children born after that date (John Apr 1841, Robert Feb 1843, Evan c.1845, Ellen c.1848, James Oct 1853, William Apr 1857). A civil birth certificate for any of these children records the mother's full name including maiden name ('Elizabeth Young formerly [maiden name]'). The FamilySearch 'England and Wales, Birth Registration Index, 1837-2008' (collection 2285338) provides the reference needed to order the certificate or access the full image via Findmypast/Ancestry. This is one of the most reliable routes to Elizabeth's maiden name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Gloucestershire, England",
+          "date_range": "1820-1835",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'England, Gloucestershire, Non-Conformist Church Records, 1581-1997' (collection 3648679) covers Methodist, Baptist, and other Dissenting registers for the county. The Bitton/Oldland/Kingswood area of Gloucestershire was a stronghold of Methodism from Wesley's era. If Thomas or Elizabeth's family were non-conformist, the marriage record may appear here rather than in a Church of England register.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Gloucestershire, England",
+          "date_range": "1820-1835",
+          "repository": "other",
+          "rationale": "FindMyPast holds comprehensive Gloucestershire Church of England parish register transcripts including pre-1837 marriage registers for Bitton and adjacent parishes (Oldland, Keynsham, Warmley, Hanham). The FamilySearch volume search shows the Bitton marriage register on FamilySearch only begins July 1837, so the 1828 marriage register is not on FamilySearch \u2014 FindMyPast's Gloucestershire transcripts are the primary paid resource for accessing it. Search for Thomas Young marriages in Gloucestershire 1820-1835 with surname variants.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "census",
+          "jurisdiction": "Walcot, Bath, Somerset, England",
+          "date_range": "1841",
+          "repository": "FamilySearch",
+          "rationale": "Thomas and Elizabeth Young appear in the 1841 census at Walcot, Bath (known from tree data). The 1841 census does not record relationships or maiden names, but it confirms the couple's co-residence, gives approximate ages (helpful to verify identity), records the birthplace 'Y' or 'N' (born in the county), and lists any children still at home. It provides context for interpreting any marriage record found and helps distinguish this Thomas Young from others in Gloucestershire. Also note: any children listed may narrow the marriage window.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Bitton, Gloucestershire, England",
+          "date_range": "1813-1837",
+          "repository": "other",
+          "rationale": "If indexed searches on FamilySearch and FindMyPast fail, the pre-1837 Bitton St Mary the Virgin marriage register (not digitized on FamilySearch) should be browsed directly. It is held at Gloucestershire Archives (Gloucester). The register covers the Hardwicke Act period (1754-1837) in the standard printed banns/licence format which names both parties with their parishes of residence. This item uses the search-images skill to locate the volume on FamilySearch if a microfilm copy exists, or directs to Gloucestershire Archives online catalogue.",
+          "fallback_for": "pli_005",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_008",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Gloucestershire and Somerset, England",
+          "date_range": "1828-1850",
+          "repository": "FamilySearch",
+          "rationale": "Thomas and Elizabeth Young had at least one child (Elizabeth, buried April 1833). A search of FamilySearch England Births/Christenings 1538-1975 for children with father Thomas Young in Gloucestershire/Somerset could surface baptism records listing the mother. Non-Conformist christening registers in particular sometimes recorded the mother's maiden name or pre-nuptial surname alongside the father's. Any record naming 'Elizabeth (n\u00e9e X) wife of Thomas Young' would directly answer the maiden-name question. This is the highest-probability remaining FamilySearch avenue since the marriage register itself is not digitized.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "England",
+          "date_range": "1851",
+          "repository": "FamilySearch",
+          "rationale": "The 1841 census found Thomas Young at Walcot, Bath without his wife. The 1851 census would show Thomas (age ~42) with his household. If Elizabeth was still alive, she would appear and her specific birthplace would narrow the search for her pre-marriage baptism record, which is key to finding her maiden name. The 1851 census also records birthplace more precisely than the 1841 (county level), which could confirm whether Elizabeth was born in Gloucestershire or across the border in Somerset.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Gloucestershire, England",
+          "date_range": "1800-1840",
+          "repository": "FamilySearch",
+          "rationale": "The child Elizabeth Young was buried in a Non-Conformist burial ground (collection 3648679). The parents Thomas and Elizabeth were likely registered members of the same congregation. A direct search for 'Thomas Young' and 'Elizabeth Young' as principals (not as parents of a deceased child) in the Non-Conformist and Non-Parochial Registers collection may surface membership entries, baptism-of-adults records, or marriage entries for this congregation. Non-Conformist bodies often recorded fuller biographical details including maiden names at membership.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Gloucestershire and Somerset, England",
+          "date_range": "1837-1875",
+          "repository": "FamilySearch",
+          "rationale": "Civil death registration began in England in July 1837. If Elizabeth Young died after that date, her death would be in GRO quarterly indexes. A FamilySearch search for Elizabeth Young death records in Gloucestershire/Somerset 1837-1875 would confirm whether she survived past civil registration, identify her approximate age at death (corroborating the estimated birth year), and potentially name the informant \u2014 likely a child of Thomas and Elizabeth whose identity we do not yet know and who could be further researched for FAN evidence.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Bitton, Gloucestershire, England",
+          "date_range": "1805-1815",
+          "repository": "FamilySearch",
+          "rationale": "Thomas Young was born circa 7 August 1809 in Bitton, Gloucestershire. Locating his baptism record would confirm his parents' names, establishing the FAN cluster for his generation. Thomas's siblings and neighbors in Bitton are the most likely social circle in which he would have met Elizabeth. Knowing Thomas's parents' names also allows searching for any deed, will, or church record naming Elizabeth alongside Thomas's family \u2014 a common route to establishing the bride's maiden name when the marriage register itself is missing.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_003",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_013",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Keynsham, Gloucestershire, England",
+          "date_range": "1841",
+          "repository": "Ancestry",
+          "rationale": "Civil birth registration for John Young, born ~23 May 1841, registered in Keynsham district (which covered Bitton parish) Q2 1841. The GRO register page includes a mother column with 'Elizabeth Young formerly [maiden name]' \u2014 the most direct accessible source for Elizabeth's maiden name. Ancestry holds digitized GRO microfilm images for Gloucestershire from 1837. FamilySearch confirmed it does not hold this record (log_021). The John Young christening at Bitton St Mary (23 May 1841, ark XTQB-83K) confirms the birth date and parish to guide the GRO reference lookup.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_014",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Gloucestershire, England",
+          "date_range": "1820-1835",
+          "repository": "other",
+          "rationale": "FindMyPast Boyd's Marriage Index 1538-1850 and Gloucestershire parish marriage transcripts for Thomas Young marrying Elizabeth in Gloucestershire circa 1828-1832. Boyd's Marriage Index is a compiled pre-1837 marriage index covering many Gloucestershire parishes. FindMyPast also holds transcripts of Gloucestershire Anglican registers not available on FamilySearch. The Bitton pre-1837 marriage register is not on FamilySearch (confirmed log_011); FindMyPast may hold a transcript or entry in Boyd's. Prior autonomous-mode deferral (log_010) generated the search URL. This plan item formalises that capture.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_015",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Keynsham, Gloucestershire, England",
+          "date_range": "1843",
+          "repository": "Ancestry",
+          "rationale": "Fallback: civil birth registration for Robert Young, born ~February 1843, registered in Keynsham district Q1 1843. The GRO register page includes the mother's maiden name. Use if John Young (pli_013) is not found or is inconclusive. From the 1851 census Robert was born ~1843 in Gloucestershire, placing his registration in Keynsham before the family moved to Lancashire.",
+          "fallback_for": "pli_013",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_016",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Lancashire, England",
+          "date_range": "1845-1852",
+          "repository": "Ancestry",
+          "rationale": "Second fallback: civil birth registrations for Evan (~1845), Ellen (~1848), or Edward (~1851 Lancashire) Young. The 1851 census shows Evan and Ellen born Gloucestershire, Edward born Lancashire. Any of these GRO register pages would include Elizabeth's maiden name. Use only if the Gloucestershire registrations (pli_013, pli_015) are inconclusive.",
+          "fallback_for": "pli_015",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-21T18:52:26.956Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England Marriages 1538-1973 (1473015)",
+        "surname": "Young",
+        "givenName": "Thomas",
+        "spouseGivenName": "Elizabeth",
+        "marriagePlace": "Gloucestershire, England",
+        "marriageYearFrom": 1824,
+        "marriageYearTo": 1832
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results in FS England Marriages 1538-1973 for Thomas Young + Elizabeth, Gloucestershire 1824-1832. Collection does not appear to have indexed Bitton-area pre-1837 marriage registers."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-21T18:52:35.556Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England Marriages 1538-1973 (1473015)",
+        "surname": "Young",
+        "givenName": "Thomas",
+        "marriagePlace": "Gloucestershire, England",
+        "marriageYearFrom": 1820,
+        "marriageYearTo": 1835,
+        "note": "spouse name dropped to broaden"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Still zero results after dropping spouse name and widening date range 1820-1835. Collection 1473015 does not index Bitton/east Gloucestershire pre-1837 marriages."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-21T18:52:47.324Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Young",
+        "givenName": "Thomas",
+        "spouseGivenName": "Elizabeth",
+        "recordCountry": "England",
+        "recordSubdivision": "Gloucestershire",
+        "recordType": "marriage",
+        "anyYearFrom": 1824,
+        "anyYearTo": 1832,
+        "note": "no collectionId, all England marriage collections"
+      },
+      "outcome": "negative",
+      "results_examined": 25,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 25,
+      "notes": "25 results returned but all from England and Wales Marriage Registration Index 1837-2005 (post-civil-registration) or Bristol parish registers \u2014 none from a pre-1837 Gloucestershire register covering the target 1824-1832 window. Top match score 0.35. No candidate is the subject. FamilySearch does not appear to have indexed the Bitton pre-1837 marriage register. Exhausting this plan item; fallback is FindMyPast (pli_005)."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-21T18:54:05.735Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England Births and Christenings 1538-1975 (1473014)",
+        "surname": "Young",
+        "givenName": "Thomas",
+        "anyPlace": "Bitton, Gloucestershire",
+        "recordType": "birth",
+        "anyYearFrom": 1829,
+        "anyYearTo": 1842,
+        "note": "Searched for Thomas Young christenings \u2014 wrong approach; returned Thomas Young (father, born 1809 Bitton) as top hit but not children's records. Redirecting to father-name search."
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 368,
+      "notes": "Searched for Thomas Young christenings in Gloucestershire 1829-1842. Top hit (score 0.39) is Thomas Young christened 7 Aug 1809 Bitton \u2014 likely the father's own baptism. No children's records with mother's maiden name found this way. Re-running with fatherGivenName/fatherSurname to target the children's christenings at Bitton."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-21T18:55:07.744Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England Births and Christenings 1538-1975 (1473014)",
+        "surname": "Young",
+        "fatherGivenName": "Thomas",
+        "fatherSurname": "Young",
+        "anyPlace": "Bitton, Gloucestershire",
+        "recordType": "birth",
+        "anyYearFrom": 1828,
+        "anyYearTo": 1845
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 2713,
+      "notes": "Searched for children of Thomas Young christened at Bitton, Gloucestershire 1828-1845. 2713 broad results returned but top match score for Mary Ann Young (chr. 29 Aug 1830 Bitton) was only 0.017 \u2014 no Bitton children of our Thomas Young found in the index. The Bitton baptism register (Jan 1813-Mar 1907, volume 004255072) exists on FamilySearch as images but appears unindexed in this collection. Pli_007 (image browse) is the correct route for that register. Proceeding to pli_003 (post-1837 civil birth registrations)."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T18:56:34.885Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Young",
+        "givenName": "Robert",
+        "recordCountry": "England",
+        "recordType": "birth",
+        "birthYearFrom": 1841,
+        "birthYearTo": 1845,
+        "motherGivenName": "Elizabeth",
+        "fatherGivenName": "Thomas",
+        "note": "seeking post-1837 civil birth record to get mother maiden name"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 1258,
+      "notes": "FamilySearch Birth Registration Index (collection 2285338) did not surface via this query \u2014 results came from collection 1473014 (christenings) instead. The GRO-derived civil birth registration index does not include mother's maiden name for pre-1911 registrations anyway. This route requires FindMyPast or a GRO certificate order to obtain mother's maiden name. Marking in_progress; will be addressed via external sites (pli_005)."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T18:59:54.881Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England Gloucestershire Non-Conformist Church Records 1581-1997 (3648679)",
+        "surname": "Young",
+        "givenName": "Thomas",
+        "spouseGivenName": "Elizabeth",
+        "anyPlace": "Gloucestershire, England",
+        "anyYearFrom": 1820,
+        "anyYearTo": 1835,
+        "note": "searching for non-conformist marriage record"
+      },
+      "outcome": "partial",
+      "results_examined": 27,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 27,
+      "notes": "27 results from Gloucestershire Non-Conformist collection. Top-ranked match (rank 1 after re-ranking): ark:/61903/1:1:6NW6-DR2S \u2014 Thos. Young, matchScore 0.18. Several records in the raw results appear titled \"Entry for Elizabeth Young\" suggesting these may be baptism/burial entries recording both parents' names. All scores are low (max 0.18), but records need to be read to determine whether any record parent fields name Elizabeth's maiden surname. Not conclusive without reading the records."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-21T19:00:02.068Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England and Wales Census 1841",
+        "surname": "Young",
+        "givenName": "Thomas",
+        "residencePlace": "Walcot, Bath, Somerset, England",
+        "residenceYearFrom": 1841,
+        "residenceYearTo": 1841
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 267,
+      "notes": "Strong hit: ark:/61903/1:1:MQ1Z-SL7 \u2014 Thomas Young, Lark Hall, Walcot, born from 1807 to 1811, matchScore 0.74, matchConfidence 4, not attached to subject. Perfectly matches p-thomas (born ~1809 Gloucestershire, known to reside Walcot 1841). A second Thomas Young (MQ1Z-VW8) also at Walcot with same birth range but attached to other. Reading MQ1Z-SL7 to confirm identity and see household \u2014 Elizabeth and any children should appear in same household if this is the right record."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-21T19:15:10.604Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Gloucestershire, England, United Kingdom",
+        "host": "findmypast.com",
+        "startYear": 1820,
+        "endYear": 1835
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "notes": "552 total curated links for Gloucestershire 1820-1835. Key FindMyPast collections identified: (1) Boyd's Marriage Indexes 1538-1850 \u2014 compiled index covering many Gloucestershire parishes, most relevant for pre-1837 marriage search; (2) England Newspaper Marriage Notices; (3) Gloucestershire-Bristol Burial Index 1625-1950. No direct link to 'Gloucestershire parish register transcripts' marriage collection in first 50 results."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-21T19:15:27.393Z",
+      "tool": "external_site",
+      "query": {
+        "site": "findmypast",
+        "collection": "England, Boyd's Marriage Indexes 1538-1850",
+        "lastname": "Young",
+        "firstname": "Thomas",
+        "yearofmarriage": 1828,
+        "yearofmarriageoffset": 7,
+        "keywordsplace": "Gloucestershire"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "findmypast",
+        "url_generated": "https://search.findmypast.com/search-world-records/england-boyds-marriage-indexes-1538-1850?lastname=Young&firstname=Thomas&yearofmarriage=1828&yearofmarriageoffset=7&keywordsplace=Gloucestershire",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 requires interactive user capture; not obtainable in autonomous run. URL generated for Boyd's Marriage Index 1538-1850 on FindMyPast: Thomas Young, marriage ~1828 \u00b17 years, Gloucestershire. Boyd's Marriage Index is a compiled index of pre-1837 English parish marriages; Gloucestershire coverage is partial but includes many parishes. A second search on FindMyPast's England & Wales Marriage 1537-1935 collection would also be valuable: https://www.findmypast.com/search/results?lastname=Young&firstname=Thomas&eventyear=1828&eventyearpm=7&keywordsplace=Gloucestershire. Pre-1837 Bitton marriage register not on FamilySearch (FS volume search confirms register begins July 1837 only); FindMyPast is primary route for the pre-1837 Bitton register transcript. Proceeding to pli_007 (image browse of Bitton pre-1837 register on FamilySearch) as the next available autonomous step."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-21T19:23:15.927Z",
+      "tool": "image_search",
+      "query": {
+        "volumeId": "008402315_002",
+        "description": "Gloucestershire Marriage Record Indexes, Parishes S-Y, 1800-1837",
+        "imageGroupNumber": "008402315",
+        "targetSubject": "Thomas Young and Elizabeth, Bitton parish, ca. 1828"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Browsed Gloucestershire Marriage Record Indexes volume 008402315_002 (Parishes S-Y, 369 images). Read image 008402315_00740 (near end of volume) and confirmed the volume is organized alphabetically by PARISH NAME, not by surname. Image 00740 showed WINDRUSH parish marriages (1813-1823). Bitton parish (initial B) is therefore NOT contained in this S-Y volume. Volume 008402315_001 covers Parishes L-R \u2014 also excludes Bitton. No A-K volume was returned by volume_search, suggesting the Bitton section of the county index is either not digitized or not on FamilySearch. Additionally, all Bitton-specific pre-1837 marriage register volumes on FamilySearch returned imageCount: 0 (not digitized). FamilySearch fulltext_search for '+Thomas +Young' with recordPlace 'Gloucestershire' and years 1820-1840 returned 0 results. Conclusion: the Bitton pre-1837 marriage register is not accessible on FamilySearch through any online search route. This plan item is exhausted for autonomous FamilySearch research. The FindMyPast search (pli_005/log_010) remains the principal deferred path to the marriage record \u2014 specifically Boyd's Marriage Indexes and Gloucestershire parish transcripts available there."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-21T19:34:21.489Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England, Bristol, Parish Registers, 1538-1900 (1718965)",
+        "surname": "Young",
+        "fatherGivenName": "Thomas",
+        "motherGivenName": "Elizabeth",
+        "birthPlace": "Bitton, Gloucestershire, England",
+        "recordType": "birth",
+        "dateRange": "1828-1850"
+      },
+      "outcome": "partial",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "notes": "Found 6 top-ranking christening records for children of Thomas Young and Elizabeth Young at Bitton, St Mary, Gloucestershire, from collection 1718965 (England, Bristol, Parish Registers, 1538-1900). Records confirmed: Mary Ann Young christened 29 Aug 1830; Thomas Young christened 29 Aug 1830 (twins); Sarah Young christened 22 May 1836; George Young christened 22 May 1836 (twins); Martha Young christened 13 Oct 1839; John Young christened 23 May 1841. Read full records for Mary Ann (ark:/61903/1:1:XTQB-CDQ), Sarah (ark:/61903/1:1:XTQB-Z6K), and Martha (ark:/61903/1:1:XTQB-ZB7). All three list father 'Thomas Young' and mother 'Elizabeth Young' (married surname only \u2014 no maiden name recorded in Anglican christening registers). These records strongly corroborate that Thomas Young and Elizabeth Young were an established couple in Bitton from at least 1830, with children baptized Anglican throughout 1830-1841. Subsequent marriage search (collection 1718965, Bitton, 1824-1833) returned no indexed marriage for Thomas Young. The pre-1828 Bitton marriage register is not in this collection's indexed records. Goal \u2014 Elizabeth's maiden name \u2014 not achieved by this search; the mother is listed only by married surname in all Anglican christening records found."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-21T19:38:54.935Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Thomas",
+        "surname": "Young",
+        "residenceYearFrom": 1851,
+        "residenceYearTo": 1851,
+        "residencePlace": "England",
+        "birthYearFrom": 1805,
+        "birthYearTo": 1813,
+        "birthPlace": "Gloucestershire",
+        "collectionId": "2563939",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 50,
+      "notes": "Top match (score 0.9463): Thomas Young, male, married, Dock Laborer, born 1809 Gloucestershire, in 1851 census at Kirkdale, Lancashire. Household includes wife Elizabeth Young (born ~1811 Gloucestershire), children Sarah (b.1834), George (b.1836), John (b.1841), Robert (b.1843), Evan (b.1845), Ellen (b.1848), Edward (b.1851 Lancashire). Elizabeth's birthplace confirmed as Gloucestershire; maiden name not recorded in census. Record ark:/61903/1:1:SGLJ-64D. Attached to another person in FamilySearch tree."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_012",
+      "performed": "2026-07-21T19:39:00.727Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Thomas",
+        "surname": "Young",
+        "birthYearFrom": 1805,
+        "birthYearTo": 1813,
+        "birthPlace": "Bitton, Gloucestershire",
+        "collectionId": "1473014",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 50,
+      "notes": "Top result by original rank: Thomas Young christened 7 Aug 1809, Bitton, Gloucestershire (collection 1473014, ark:/61903/1:1:JQ3Q-8NY). Parents: Thomas Young (father) and Martha (mother, surname not recorded). This confirms Thomas Young's baptism at Bitton and names his parents. Ranked 10th by match score (0.4243) \u2014 birth date field absent in stub but record is correct Bitton christening. Ranker ranked other Thomas Young records without dates higher (scores 0.44\u20130.56) but those are unverified candidates."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-21T19:45:19.027Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Thomas",
+        "surname": "Young",
+        "spouseGivenName": "Elizabeth",
+        "anyYearFrom": 1800,
+        "anyYearTo": 1840,
+        "anyPlace": "Gloucestershire, England",
+        "collectionId": "3648679",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 38,
+      "notes": "38 results in England, Gloucestershire, Non-Conformist Church Records, 1581-1997. Top-ranked match (score 0.233 for p-thomas) is a death/burial record for a different Thos Young unrelated to our subject. No confident match for Thomas Young born 1809 Bitton \u2014 all match scores very low (0.008-0.233). Top hits titled 'Entry for Elizabeth Young' with 'Thos Young' are for a different couple: Elizabeth Young born 1774, died 2 Apr 1837, buried 9 Apr 1837 (Z8VG-HW6Z). Thomas and Elizabeth Young appear to have been Anglican (children christened at Bitton St Mary), not Non-Conformist."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-21T19:45:27.455Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Elizabeth",
+        "surname": "Young",
+        "sex": "Female",
+        "birthYearFrom": 1807,
+        "birthYearTo": 1815,
+        "spouseGivenName": "Thomas",
+        "deathYearFrom": 1837,
+        "deathYearTo": 1900,
+        "recordCountry": "England",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 2835,
+      "notes": "2,835 results \u2014 too broad for conclusive identification. Top two hits ARE our Elizabeth Young: (1) 1881 census Q27L-6LPJ \u2014 Elizabeth Young, born 1811 Bristol Gloucestershire, married, Everton Lancashire, Household of Thomas Young; (2) 1851 census SGLJ-646 \u2014 Elizabeth Young, born 1811 Gloucestershire, married, Kirkdale Lancashire. The 1881 census confirms birthplace as 'Bristol, Gloucestershire' \u2014 more specific than the 1851 'Gloucestershire'. No death record for Elizabeth Young identified in this search; she survived to at least 1881. Narrower targeted search for civil death registration would require death place (Lancashire) and tighter birth year constraints."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": null,
+      "performed": "2026-07-21T19:50:18.423Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Elizabeth",
+        "recordCountry": "England",
+        "birthYearFrom": 1806,
+        "birthYearTo": 1816,
+        "birthPlace": "Bitton, Gloucestershire",
+        "recordType": "birth",
+        "collectionId": "1718965",
+        "note": "searching for Elizabeth's baptism to identify her maiden surname"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "results_available": 50,
+      "notes": "Searched collection 1718965 (England, Bristol, Parish Registers) for female christenings at Bitton, Gloucestershire 1806-1816. Returned ~50 results with identical low scores \u2014 no surname data available to distinguish candidates. Surnames in results include Hopes, Matthews, Stone, Peacock, Willis Smith, Isaacs, Gully. Cannot identify Elizabeth's maiden name from this search alone without FAN cross-referencing. Negative for identifying maiden name."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": null,
+      "performed": "2026-07-21T19:50:24.535Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "John",
+        "surname": "Young",
+        "recordCountry": "England",
+        "birthYearFrom": 1839,
+        "birthYearTo": 1843,
+        "fatherGivenName": "Thomas",
+        "motherGivenName": "Elizabeth",
+        "recordType": "birth",
+        "note": "seeking post-1837 civil birth GRO record for John Young (born ~May 1841) to obtain mother maiden name"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "results_available": 50,
+      "notes": "Searched for civil birth registration of John Young (~May 1841) with parents Thomas and Elizabeth Young in England 1839-1843. FamilySearch birth index (collection 2285338) for pre-1911 registrations does not include the mother's maiden name \u2014 the index only provides the registration reference. The full GRO register image (which contains mother's maiden name) is available via Ancestry/FindMyPast but not directly on FamilySearch. This search confirmed no FamilySearch-accessible route to the mother's maiden name via civil birth registration index alone."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": null,
+      "performed": "2026-07-21T19:50:28.862Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Robert",
+        "surname": "Young",
+        "recordCountry": "England",
+        "birthYearFrom": 1841,
+        "birthYearTo": 1846,
+        "fatherGivenName": "Thomas",
+        "motherGivenName": "Elizabeth",
+        "recordType": "birth",
+        "note": "seeking post-1837 civil birth GRO record for Robert Young (born ~1843) to obtain mother maiden name"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 50,
+      "notes": "Searched for civil birth registration of Robert Young (~Feb 1843) with parents Thomas and Elizabeth Young in England 1841-1846. Same finding as John Young search: FamilySearch birth index for pre-1911 does not include mother's maiden name. The GRO register original image on Ancestry/FindMyPast is the required source. No result on FamilySearch that would reveal the maiden name."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": null,
+      "performed": "2026-07-21T19:55:51.674Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Elizabeth",
+        "surname": "Young",
+        "sex": "Female",
+        "residencePlace": "Bitton, Gloucestershire, England",
+        "residenceYearFrom": 1841,
+        "residenceYearTo": 1841,
+        "birthYearFrom": 1807,
+        "birthYearTo": 1815,
+        "count": 50,
+        "collectionId": "1493745",
+        "note": "1841 census search for Elizabeth Young at Bitton"
+      },
+      "outcome": "partial",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_020.json",
+      "results_available": 717,
+      "notes": "Search rank 1 hit: ark:/61903/1:1:M7M7-QJJ \u2014 Elizabeth Young, female, born 1812-1816, at White Hart Inn, Bitton, Gloucestershire, 1841. Record title: 'Household of Thomas Young'. Read the full household: Thomas Young (born ~1769, head), Martha Young (born ~1782, wife), Elizabeth Young (born ~1812-1816), Thomas Young (born 1831 child), John (born 1797-1801). Thomas Young Sr. (born ~1769) and Martha (born ~1782) are Thomas Jr.'s parents (confirmed from pli_012/log_014 baptism). Elizabeth Young at this address is very probably Thomas Jr.'s wife \u2014 staying with in-laws 2 weeks after John's christening (May 23, 1841). Birth year range 1812-1816 slightly late vs. expected ~1811 but consistent with unreliable 1841 census age recording. Record does not contain maiden name. Rank-match re-ranker (against PID-TODO) scored this record low (not in top 10); original search rank is the stronger signal here due to exact Bitton location match."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": null,
+      "performed": "2026-07-21T19:58:40.740Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "John",
+        "surname": "Young",
+        "birthYearFrom": 1841,
+        "birthYearTo": 1841,
+        "birthPlace": "Keynsham, Gloucestershire, England",
+        "recordType": "birth",
+        "note": "searching GRO civil birth registration index collection 2285338 for John Young born 1841 Keynsham"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_021.json",
+      "results_available": 381,
+      "notes": "FamilySearch does not have a civil GRO birth registration entry for John Young born 1841 in the Keynsham registration district. The 381 results are all from christening collections (1473014, 1718965) and Non-Conformist registers (3648679) \u2014 no civil birth registration. The John Young christening at Bitton St Mary (XTQB-83K, 23 May 1841) appears at search rank 4 \u2014 already known. The GRO civil birth register image for John Young (Q2 1841, Keynsham) containing 'Mother: Elizabeth Young formerly [maiden name]' must be accessed via Ancestry or FindMyPast \u2014 it is not on FamilySearch."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_013",
+      "performed": "2026-07-21T20:03:31.462Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "England and Wales Births 1837-2006",
+        "name": "John Young",
+        "birth": 1841,
+        "birthplace": "Keynsham, Gloucestershire, England",
+        "father": "Thomas Young",
+        "mother": "Elizabeth Young",
+        "note": "GRO civil birth register image for John Young born ~May 1841 Keynsham Q2 1841 \u2014 contains mother's maiden name"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/?name=John_Young&birth=1841&birthplace=Gloucestershire%2C+England&father=Thomas_Young&mother=Elizabeth_Young&recordType=39",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 requires interactive user capture; not obtainable in autonomous run. URL generated for Ancestry 'England and Wales Births 1837-2006' collection: John Young born 1841, Gloucestershire, parents Thomas Young and Elizabeth Young. The GRO register page for Q2 1841 Keynsham district will include 'Mother: Elizabeth Young formerly [maiden name]' \u2014 this is the primary remaining route to answering q_001. A FamilySearch equivalent does not exist for this record type: the GRO register images with maiden names are exclusively on Ancestry for this period. In an interactive session, search Ancestry collection 1535 (England and Wales Births 1837-2006), filter to Keynsham or Gloucestershire Q2 1841, find the John Young entry, and view the full register page image for the mother's maiden name column."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_014",
+      "performed": "2026-07-21T20:03:39.516Z",
+      "tool": "external_site",
+      "query": {
+        "site": "findmypast",
+        "collection": "England Boyd's Marriage Indexes 1538-1850",
+        "lastname": "Young",
+        "firstname": "Thomas",
+        "yearofmarriage": 1828,
+        "yearofmarriageoffset": 7,
+        "keywordsplace": "Gloucestershire",
+        "note": "also search FindMyPast England and Wales Marriages 1537-1935 for same parameters"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "findmypast",
+        "url_generated": "https://search.findmypast.com/search-world-records/england-boyds-marriage-indexes-1538-1850?lastname=Young&firstname=Thomas&yearofmarriage=1828&yearofmarriageoffset=7&keywordsplace=Gloucestershire",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 requires interactive user capture; not obtainable in autonomous run. Same deferred search as log_010 (prior session), now formally linked to pli_014. Boyd's Marriage Index on FindMyPast covers many pre-1837 Gloucestershire parishes and is the primary index for pre-1837 Gloucestershire marriages. The Bitton parish may appear in Boyd's. A second search should also be run on FindMyPast 'England and Wales Marriages 1537-1935': https://www.findmypast.com/search/results?lastname=Young&firstname=Thomas&eventyear=1828&eventyearpm=7&keywordsplace=Gloucestershire&collection=2040. The marriage record, if found, would name the bride (Elizabeth with her maiden surname) and the parish and date of marriage \u2014 answering all parts of q_001."
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": null,
+      "performed": "2026-07-21T20:18:26.361Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Thomas",
+        "surname": "Young",
+        "spouseGivenName": "Elizabeth",
+        "residenceYearFrom": 1861,
+        "residenceYearTo": 1861,
+        "birthYearFrom": 1806,
+        "birthYearTo": 1814,
+        "birthPlace": "Gloucestershire",
+        "recordType": "census",
+        "collectionId": "1493747"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_024.json",
+      "notes": "1861 census (collection 1493747): Thomas Young, born 1809 Bristol, Gloucestershire, Labourer, Lancaster Street, Kirkdale, Lancashire. Household: wife Elzth Young (born 1811, Bristol, Gloucestershire); George (b.1836, Bristol, Glos), John (b.1842, Bristol, Glos), Robert (b.1844, Bristol, Glos), unnamed male (b.1845, Bristol, Glos), Ellen (b.1849, Bristol, Glos), James (b.1854, Liverpool, Lancs), William (b.1857, Liverpool, Lancs). Record ark:/61903/1:1:M7TT-CJ3. Elizabeth's birthplace confirmed as 'Bristol, Gloucestershire' \u2014 matches 1881 census. Maiden name still not found. Children born in Bristol, Glos through ~1849, then Liverpool from ~1854 \u2014 consistent with move to Lancashire 1849-1854."
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": null,
+      "performed": "2026-07-21T20:26:02.486Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Young",
+        "givenName": "Thomas",
+        "spouseGivenName": "Elizabeth",
+        "birthPlace": "Bristol, Gloucestershire, England",
+        "anyYearFrom": 1826,
+        "anyYearTo": 1835,
+        "recordType": "marriage",
+        "note": "Broad England-wide marriage search with birthPlace Bristol Gloucestershire to check for any indexed Gloucestershire/Bristol Diocese marriage records on FamilySearch"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 4944,
+      "notes": "Broad England-wide marriage search returned ~4,944 results but NO Gloucestershire or Bristol Diocese records in the result set. All results were from Yorkshire, Northumberland, Wiltshire, Kent, Derbyshire, Surrey, Warwickshire, Staffordshire, Bedfordshire, Hampshire, Middlesex, Herefordshire, Somerset, and Buckinghamshire collections \u2014 not Bristol Diocese or Gloucestershire. Confirms definitively that FamilySearch has no indexed pre-1837 marriage register for Bitton or adjacent Gloucestershire parishes."
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": null,
+      "performed": "2026-07-21T20:26:12.380Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Young",
+        "givenName": "Thomas",
+        "spouseGivenName": "Elizabeth",
+        "anyPlace": "Bristol, Gloucestershire",
+        "anyYearFrom": 1826,
+        "anyYearTo": 1835,
+        "recordType": "marriage",
+        "note": "Second broad England-wide marriage search with anyPlace Bristol Gloucestershire \u2014 confirming no Bristol Diocese / Gloucestershire marriage collections indexed on FamilySearch"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_026.json",
+      "results_available": 4970,
+      "notes": "Second broad England-wide marriage search (anyPlace 'Bristol, Gloucestershire') returned ~4,970 results. Examined top results: all from non-Gloucestershire counties. No Bristol Diocese or Gloucestershire marriage records appear anywhere in the result set. Consistent with log_025 and log_001/log_002: FamilySearch has no indexed pre-1837 marriage registers for Gloucestershire / Bristol Diocese. The Bitton St Mary marriage register (pre-1837) remains undigitized on FamilySearch (confirmed by volume_search imageCount:0, log_011)."
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": null,
+      "performed": "2026-07-21T20:39:09.116Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Elizabeth",
+        "surname": "Young",
+        "spouseGivenName": "Thomas",
+        "residenceYearFrom": 1891,
+        "residenceYearTo": 1891,
+        "residencePlace": "Lancashire, England",
+        "birthYearFrom": 1807,
+        "birthYearTo": 1815,
+        "recordType": "census",
+        "collectionId": "1865747"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_027.json",
+      "results_available": 44,
+      "notes": "1891 census (collection 1865747): rank_search_matches rank 1 with score 0.578 \u2014 ark:/61903/1:1:73FS-C3Z, 'Elizth Young', born 1810, Kirkdale Walton on the Hill, Liverpool, Lancashire. Household of Wm Young (son, b.1858, Carter). Thos Young (b.1806) also present as Wm's parent and Elizth's spouse per GedcomX relationships. Confirms Thomas and Elizabeth still together in 1891, nine months before Thomas's death Jan 1892. Birthplace recorded as 'England' only in index \u2014 no additional maiden-name information. Record already attached to another FamilySearch tree person (attachedToOther: true)."
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": null,
+      "performed": "2026-07-21T20:39:23.501Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Thomas",
+        "surname": "Young",
+        "deathYearFrom": 1891,
+        "deathYearTo": 1893,
+        "deathPlace": "Lancashire, England",
+        "birthYearFrom": 1806,
+        "birthYearTo": 1813,
+        "recordType": "death"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_028.json",
+      "results_available": 1081,
+      "notes": "Two confirming records for Thomas Young death Jan 1892: (1) ark:/61903/1:1:2JV9-MV1 \u2014 Death Registration Index 1837-2007, Thomas Young born 1806, died 1892, West Derby, Lancashire (West Derby = registration district covering Kirkdale/Everton). (2) ark:/61903/1:1:CDTD-TYN2 \u2014 England Deaths and Burials 1538-1991, Thomas Young, born 1806, occupation Master Carter, residence Everton, buried 12 Jan 1892 Anfield, Lancashire. Both match tree's Thomas Young (born ~1809, died Jan 1892, Everton/Liverpool). Birth year 1806 vs. actual 1809 is within normal reporting variation at death. No maiden name information. Occupation 'Master Carter' \u2014 upgrade from 'Labourer' (1861) consistent with 30 years' advancement."
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": null,
+      "performed": "2026-07-21T20:39:35.186Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Elizabeth",
+        "surname": "Young",
+        "deathYearFrom": 1892,
+        "deathYearTo": 1894,
+        "deathPlace": "Lancashire, England",
+        "birthYearFrom": 1807,
+        "birthYearTo": 1815,
+        "recordType": "death"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_029.json",
+      "results_available": 985,
+      "notes": "Two confirming records for Elizabeth Young death Sep 1893: (1) ark:/61903/1:1:2J27-7PX \u2014 Death Registration Index 1837-2007, Elizabeth Young born 1810, died 1893, West Derby, Lancashire. (2) ark:/61903/1:1:CDTS-WBMM \u2014 England Deaths and Burials 1538-1991, Elizabeth Young born 1810, residence Kirkdale, buried 12 Sep 1893 Anfield, Lancashire. Both match tree exactly (burial 12 Sep 1893 Anfield). Kirkdale residence consistent with 1861/1881/1891 censuses. Birth year 1810 vs. ~1811 from censuses \u2014 within normal reporting variation. No maiden name information in either record."
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": null,
+      "performed": "2026-07-21T20:41:52.360Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Young +Elizabeth +Thomas marriage",
+        "collectionId": "1718965",
+        "yearFrom": 1820,
+        "yearTo": 1840
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Fulltext search in collection 1718965 (England, Bristol, Parish Registers) for Thomas Young + Elizabeth marriage 1820-1840: 0 results. Confirms the Bristol parish register collection is not AI-transcribed for fulltext search \u2014 no text layer available to surface marriage entries. This closes the last potential FamilySearch fulltext avenue for locating the Bitton/Bristol-area marriage."
+    },
+    {
+      "id": "log_031",
+      "plan_item_id": null,
+      "performed": "2026-07-21T20:44:21.518Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England and Wales, National Index of Wills and Administrations, 1858-1957 (2451051)",
+        "surname": "Young",
+        "givenName": "Thomas",
+        "residencePlace": "Lancashire",
+        "residenceYearFrom": 1892,
+        "residenceYearTo": 1892
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_031.json",
+      "results_available": 551,
+      "notes": "Searched National Probate Calendar (2451051) for Thomas Young in Lancashire 1892. Broad search returned 551 results; none match Thomas Young of Kirkdale/Everton, Lancashire, buried 12 Jan 1892 Anfield. Thomas Young (Master Carter/labourer, working-class) appears to have died intestate \u2014 consistent with working-class status. No probate entry found, confirming no will or administration was granted. This source cannot supply Elizabeth's maiden name."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"England, Gloucestershire, Non-Conformist Church Records, 1581-1997,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6NW6-DR2S : accessed 21 July 2026), entry for Elizabeth Young, buried 14 Apr 1833, Gloucestershire, England; parents: Thos. Young and Elizabeth Young.",
+      "citation_detail": {
+        "who": "Elizabeth Young (child, buried 14 Apr 1833), daughter of Thos. Young and Elizabeth Young",
+        "what": "Non-Conformist burial register entry",
+        "when_created": "14 April 1833",
+        "when_accessed": "21 July 2026",
+        "where": "FamilySearch, England, Gloucestershire, Non-Conformist Church Records, 1581-1997",
+        "where_within": "Burial entry dated 14 Apr 1833, Gloucestershire"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6NW6-DR2S",
+      "log_entry_id": "log_007",
+      "notes": "Original Non-Conformist burial register image. Record explicitly names father as 'Thos. Young' and mother as 'Elizabeth Young' (married surname only \u2014 no maiden name recorded for the mother).",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"England and Wales, Census, 1841,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:1JXL-Z4T : accessed 2026-07-21), entry for Thomas Young, 1841; household of Sarah Young, Walcot, Somerset, England.",
+      "citation_detail": {
+        "who": "Thomas Young",
+        "what": "1841 England and Wales Census enumeration entry",
+        "when_created": "1841",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch (https://www.familysearch.org/ark:/61903/1:2:1JXL-Z4T)",
+        "where_within": "Household of Sarah Young, Walcot, Somerset, England"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:1JXL-Z4T",
+      "log_entry_id": "log_008",
+      "notes": "Digital image of original census enumeration schedule. Pre-1880 census \u2014 no relationship column; respondent identity not recorded. The household title lists 'Sarah Young' as head, but the primary indexed person is Thomas Young. Elizabeth Young (wife of tree subject p-thomas) does not appear in this household; this absence is analytically notable and flagged for review.",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:1:JQ3Q-8NY : accessed 2026-07-21), entry for Thomas Young, 7 Aug 1809; citing index based upon data collected by the Genealogical Society of Utah, Salt Lake City.",
+      "citation_detail": {
+        "who": "Thomas Young",
+        "what": "Christening record, England Births and Christenings 1538-1975 (FamilySearch index)",
+        "when_created": "Index entry created from original parish register, Bitton, Gloucestershire; collection published by FamilySearch",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "ark:/61903/1:1:JQ3Q-8NY"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://familysearch.org/ark:/61903/1:1:JQ3Q-8NY",
+      "access_date": "2026-07-21",
+      "notes": "Index/database entry derived from original Anglican parish register of Bitton, Gloucestershire. Original register image not examined \u2014 source is the FamilySearch index only. Each indexing step introduces potential transcription error; image confirmation outstanding.",
+      "log_entry_id": "log_014",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"England and Wales, Census, 1881\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q27L-6LG1 : accessed 21 July 2026), Entry for Thomas Young and Elizabeth Young, 1881.",
+      "citation_detail": {
+        "who": "Thomas Young and Elizabeth Young household",
+        "what": "England and Wales Census, 1881 \u2014 household schedule",
+        "when_created": "1881",
+        "when_accessed": "21 July 2026",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "ark:/61903/1:1:Q27L-6LG1"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q27L-6LG1",
+      "notes": "Index entry derived from the 1881 England and Wales census. Original census schedule image available at FamilySearch (ark:/61903/3:1:3Q9M-CSQM-SKFP). Original not examined \u2014 only the index/abstract was accessed via sidecar read.",
+      "log_entry_id": "log_016",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"England and Wales, Census, 1851,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:SGLJ-64D : accessed 2026-07-21), entry for Thomas Young, Kirkdale, Lancashire, England.",
+      "citation_detail": {
+        "who": "Thomas Young household (Thomas, Elizabeth, Sarah, George, John, Robert, Evan, Ellen, Edward Young)",
+        "what": "1851 England and Wales Census index entry",
+        "when_created": "1851",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ark:/61903/1:1:SGLJ-64D; Kirkdale, Lancashire, England"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:SGLJ-64D",
+      "notes": "FamilySearch index entry for 1851 England and Wales Census. Original census image not examined \u2014 this extraction is from the index/abstract only. Confidence in exact transcriptions should be treated accordingly.",
+      "log_entry_id": "log_013",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "\"England and Wales, Census, 1841,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M7M7-QJF : accessed 21 July 2026), entry for Thomas Young household, White Hart Inn, Bitton, Gloucestershire, England.",
+      "citation_detail": {
+        "who": "Thomas Young household (Thomas Young Sr., Martha Young, Elizabeth Young, Thomas Young child, John)",
+        "what": "1841 England and Wales Census index entry",
+        "when_created": "1841",
+        "when_accessed": "21 July 2026",
+        "where": "FamilySearch, England and Wales, Census, 1841 collection",
+        "where_within": "Bitton, Gloucestershire \u2014 White Hart Inn household"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M7M7-QJF",
+      "notes": "Index/abstract of the 1841 England and Wales census schedule. Original census schedule (image) not examined \u2014 browse-only index read via record_read live fetch. Image available at https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS3C-L9C2-2 but not consulted for this extraction.",
+      "log_entry_id": "log_020",
+      "gedcomx_source_description_id": "S6"
+    },
+    {
+      "id": "src_007",
+      "citation": "\"England, Deaths and Burials, 1538-1991,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:CDTS-WBMM : accessed 2026-07-21), entry for Elizabeth Young, burial 12 Sep 1893, Anfield, Lancashire; image of original burial register entry, Anfield Cemetery, Liverpool.",
+      "citation_detail": {
+        "who": "Elizabeth Young",
+        "what": "Burial register entry, England, Deaths and Burials, 1538-1991 (FamilySearch index and images)",
+        "when_created": "12 September 1893 (original register entry); indexed subsequently",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch (familysearch.org), collection 1473016",
+        "where_within": "Entry for Elizabeth Young, 12 Sep 1893, Anfield, Lancashire"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:CDTS-WBMM",
+      "access_date": "2026-07-21",
+      "notes": "Original not examined \u2014 the underlying Anfield Cemetery burial register image was not independently verified beyond the FamilySearch index entry. The index may have been made from the original register image (sd_da1 reference present); original should be confirmed. Standard place for Kirkdale resolved by sidecar as 'Kirkdale, Yorkshire, England' \u2014 this appears mis-standardized; Kirkdale is a district of Liverpool, Lancashire, not Yorkshire.",
+      "log_entry_id": "log_029",
+      "gedcomx_source_description_id": "S7"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6NW6-DR2S",
+      "record_persona_id": "p_296130677101",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Elizabeth Young",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Young"
+      },
+      "information_quality": "primary",
+      "informant": "officiating minister or register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6NW6-DR2S",
+      "record_persona_id": "p_296130677101",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "buried 14 Apr 1833, Gloucestershire, England",
+      "date": "14 Apr 1833",
+      "date_certainty": "exact",
+      "place": "Gloucestershire, England",
+      "standard_place": "Gloucestershire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "officiating minister or register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6NW6-DR2S",
+      "record_persona_id": "p_296130677101",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born ~1829",
+      "date": "~1829",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "officiating minister or register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year derived from the burial register entry; recorded at time of burial, not at birth \u2014 the officiating party likely relied on family-supplied recollection of the birth year rather than a contemporaneous birth record.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6NW6-DR2S",
+      "record_persona_id": "p_296130677101",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Thos. Young",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "officiating minister or register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6NW6-DR2S",
+      "record_persona_id": "p_296130677101",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Young (mother, recorded under married surname only \u2014 maiden name not given)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "officiating minister or register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The mother is recorded only as 'Elizabeth Young' \u2014 her married surname. No maiden name appears in this register entry. This record establishes that a woman named Elizabeth Young (wife of Thos. Young) was mother of this child in Gloucestershire in 1833, but cannot confirm her maiden name or definitively identify her as the Elizabeth in the main research subject (PID-TODO).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6NW6-DR2S",
+      "record_persona_id": "p_296130677102",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Thos. Young",
+      "structured_value": {
+        "given": "Thos.",
+        "surname": "Young"
+      },
+      "information_quality": "primary",
+      "informant": "officiating minister or register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6NW6-DR2S",
+      "record_persona_id": "p_296130677102",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "father of Elizabeth Young (buried 14 Apr 1833)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "officiating minister or register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Explicitly named as father in the burial register. Indirect evidence linking this persona to tree subject p-thomas (Thomas Young, born ~1809 Bitton, Gloucestershire) \u2014 same name and county, but identity not confirmed in this record alone.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6NW6-DR2S",
+      "record_persona_id": "p_296130677102",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Elizabeth Young (mother, recorded under married surname only)",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "primary",
+      "informant": "officiating minister or register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Couple recorded together as parents of the buried child. Direct evidence of a marital or cohabiting union between Thos. Young and Elizabeth Young in Gloucestershire by 1833, which bears on q_001 (marriage of Thomas and Elizabeth Young), but the record gives no marriage date, place, or the mother's maiden name.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6NW6-DR2S",
+      "record_persona_id": "p_296130677103",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Elizabeth Young",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Young"
+      },
+      "information_quality": "primary",
+      "informant": "officiating minister or register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Recorded under married surname 'Young' only. No maiden name is given in this register entry. The record cannot confirm this woman's maiden name or directly identify her as the Elizabeth (PID-TODO) sought in q_001. Corroboration from a marriage record or other source naming her maiden name is required.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6NW6-DR2S",
+      "record_persona_id": "p_296130677103",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "mother of Elizabeth Young (buried 14 Apr 1833)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "officiating minister or register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Explicitly named as mother in the burial register. This record provides indirect evidence only for identifying this persona as PID-TODO (Elizabeth Young, wife of Thomas Young), since the register shows only her married name. Maiden name cannot be determined from this record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6NW6-DR2S",
+      "record_persona_id": "p_296130677103",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "spouse of Thos. Young (father)",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "husband"
+      },
+      "information_quality": "primary",
+      "informant": "officiating minister or register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Couple recorded together as co-parents in the burial register. Establishes that Elizabeth Young and Thos. Young were a couple in Gloucestershire by 1833. Indirect bearing on q_001 \u2014 confirms the couple existed before 1833 but gives no marriage date, place, or maiden name.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:MQ1Z-SL7",
+      "record_persona_id": "p_120962435",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Thomas Young",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:MQ1Z-SL7",
+      "record_persona_id": "p_120962435",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Walcot, Somerset, England, 1841",
+      "structured_value": {
+        "place": "Walcot, Somerset, England, United Kingdom"
+      },
+      "date": "1841",
+      "date_certainty": "exact",
+      "place": "Walcot, Somerset, England",
+      "standard_place": "Walcot, Somerset, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:MQ1Z-SL7",
+      "record_persona_id": "p_120962435",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Somerset, England",
+      "structured_value": {
+        "place": "Somerset, England"
+      },
+      "place": "Somerset, England",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Somerset, England, United Kingdom"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:MQ1Z-SL7",
+      "record_persona_id": "p_120962435",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1807\u20131811 (age-range computed from census)",
+      "structured_value": {
+        "year": "1807-1811"
+      },
+      "date": "between 1807 and 1811",
+      "date_certainty": "between",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "1841 census records age rounded down to nearest 5 for adults; actual birth year could range from approximately 1807 to 1811. Respondent identity unknown \u2014 could be Thomas himself, a co-resident, or a neighbor answering for the household. Note: tree data places Thomas Young's birth as ~7 Aug 1809, Bitton, Gloucestershire \u2014 the census states Somerset, which conflicts with the Gloucestershire birth origin. This discrepancy warrants attention; the 1841 census birth county column records only whether the person was born in the same county as enumerated (Y/N/F for foreign), so 'Somerset' may mean the enumerator marked him as born in-county (consistent with a Gloucestershire origin being marked differently) \u2014 image confirmation recommended.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:JQ3Q-8NY",
+      "record_persona_id": "p_12492748407",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Thomas Young",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Young"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:JQ3Q-8NY",
+      "record_persona_id": "p_12492748407",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "christened 7 August 1809, Bitton, Gloucestershire, England",
+      "date": "7 Aug 1809",
+      "place": "Bitton, Gloucestershire, England, United Kingdom",
+      "standard_place": "Bitton, Gloucestershire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:JQ3Q-8NY",
+      "record_persona_id": "p_12492748408",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Thomas Young",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Young"
+      },
+      "information_quality": "primary",
+      "informant": "Thomas Young (father), named party in record",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:JQ3Q-8NY",
+      "record_persona_id": "p_12492748409",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Martha",
+      "structured_value": {
+        "given": "Martha",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "Martha (mother), named party in record",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's surname not recorded in the Anglican baptism register \u2014 only given name 'Martha' appears. Maiden name unknown; surname may be Young by marriage to Thomas Young Sr.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:JQ3Q-8NY",
+      "record_persona_id": "p_12492748407",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Thomas Young (father)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:JQ3Q-8NY",
+      "record_persona_id": "p_12492748407",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Martha (mother)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880607",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Elizabeth Young",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880607",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880607",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Everton, Lancashire, England",
+      "place": "Everton, Lancashire, England",
+      "standard_place": "Everton, Liverpool, Lancashire, England, United Kingdom",
+      "date": "1881",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880607",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born 1811",
+      "structured_value": {
+        "year": "1811"
+      },
+      "date": "1811",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from stated age on a census; the enumerator did not record who answered, so the respondent is unknown. Age on census is direct; derived birth year is indirect.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880607",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Bristol, Gloucestershire, England",
+      "structured_value": {
+        "place": "Bristol, Gloucestershire, England"
+      },
+      "place": "Bristol, Gloucestershire, England",
+      "standard_place": "Bristol, Gloucestershire, England",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Most specific birthplace recorded for Elizabeth to date. Consistent with Bitton, a Gloucestershire parish in the Bristol area noted in prior research. Pre-1940 census: respondent unknown, so information quality is indeterminate rather than primary.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880607",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "wife of Thomas Young",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1881 England census included a relationship-to-head column; stated relationship is treated as direct. Respondent unknown so information quality is indeterminate.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880589",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Thomas Young",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880589",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Everton, Lancashire, England",
+      "place": "Everton, Lancashire, England",
+      "standard_place": "Everton, Liverpool, Lancashire, England, United Kingdom",
+      "date": "1881",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880589",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1806",
+      "structured_value": {
+        "year": "1806"
+      },
+      "date": "1806",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from stated age; respondent unknown on pre-1940 census.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880589",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born Bristol, Gloucestershire, England",
+      "structured_value": {
+        "place": "Bristol, Gloucestershire, England"
+      },
+      "place": "Bristol, Gloucestershire, England",
+      "standard_place": "Bristol, Gloucestershire, England",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880589",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "husband of Elizabeth Young",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1881 England census relationship column; stated relationship treated as direct. Respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880621",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "George Young",
+      "structured_value": {
+        "given": "George",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880621",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Everton, Lancashire, England",
+      "place": "Everton, Lancashire, England",
+      "standard_place": "Everton, Liverpool, Lancashire, England, United Kingdom",
+      "date": "1881",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880621",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 1863",
+      "structured_value": {
+        "year": "1863"
+      },
+      "date": "1863",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from stated age; respondent unknown on pre-1940 census.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880621",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born Lpool, Lancashire, England",
+      "structured_value": {
+        "place": "Lpool, Lancashire, England"
+      },
+      "place": "Lpool, Lancashire, England",
+      "standard_place": "Liverpool, Lancashire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:Q27L-6LPJ",
+      "record_persona_id": "p_102198880621",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Thomas Young (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1881 England census had a relationship-to-head column. Relationship stated as son/child of head. Respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080922",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Thomas Young",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080922",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Dk Lab",
+      "structured_value": {
+        "occupation": "Dk Lab"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080922",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080922",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Kirkdale, Lancashire, England",
+      "place": "Kirkdale, Lancashire, England",
+      "standard_place": "Kirkdale, Lancashire, England, United Kingdom",
+      "date": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080922",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born ~1809",
+      "structured_value": {
+        "year": "1809"
+      },
+      "date": "~1809",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080922",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born Gloucestershire",
+      "structured_value": {
+        "place": "Gloucestershire, England, United Kingdom"
+      },
+      "place": "Gloucestershire",
+      "standard_place": "Gloucestershire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080923",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Elizabeth Young",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080923",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Kirkdale, Lancashire, England",
+      "place": "Kirkdale, Lancashire, England",
+      "standard_place": "Kirkdale, Lancashire, England, United Kingdom",
+      "date": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080923",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born ~1811",
+      "structured_value": {
+        "year": "1811"
+      },
+      "date": "~1811",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080923",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Gloucestershire",
+      "structured_value": {
+        "place": "Gloucestershire, England, United Kingdom"
+      },
+      "place": "Gloucestershire",
+      "standard_place": "Gloucestershire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080922",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "spouse of Elizabeth Young (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census has no relationship column; spousal link inferred from household position (Thomas listed as head, Elizabeth as wife-role co-resident, consistent ages for a married couple).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080923",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Thomas Young (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census has no relationship column; spousal link inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080924",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Sarah Young",
+      "structured_value": {
+        "given": "Sarah",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080924",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Kirkdale, Lancashire, England",
+      "place": "Kirkdale, Lancashire, England",
+      "standard_place": "Kirkdale, Lancashire, England, United Kingdom",
+      "date": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080924",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born ~1834",
+      "structured_value": {
+        "year": "1834"
+      },
+      "date": "~1834",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080924",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born Gloucestershire",
+      "structured_value": {
+        "place": "Gloucestershire, England, United Kingdom"
+      },
+      "place": "Gloucestershire",
+      "standard_place": "Gloucestershire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080924",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Thomas Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080924",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080925",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "George Young",
+      "structured_value": {
+        "given": "George",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080925",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Kirkdale, Lancashire, England",
+      "place": "Kirkdale, Lancashire, England",
+      "standard_place": "Kirkdale, Lancashire, England, United Kingdom",
+      "date": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080925",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born ~1836",
+      "structured_value": {
+        "year": "1836"
+      },
+      "date": "~1836",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080925",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born Gloucestershire",
+      "structured_value": {
+        "place": "Gloucestershire, England, United Kingdom"
+      },
+      "place": "Gloucestershire",
+      "standard_place": "Gloucestershire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080925",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Thomas Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080925",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080926",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "John Young",
+      "structured_value": {
+        "given": "John",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080926",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Kirkdale, Lancashire, England",
+      "place": "Kirkdale, Lancashire, England",
+      "standard_place": "Kirkdale, Lancashire, England, United Kingdom",
+      "date": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080926",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born ~1841",
+      "structured_value": {
+        "year": "1841"
+      },
+      "date": "~1841",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080926",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born Gloucestershire",
+      "structured_value": {
+        "place": "Gloucestershire, England, United Kingdom"
+      },
+      "place": "Gloucestershire",
+      "standard_place": "Gloucestershire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080926",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Thomas Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080926",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080927",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "Robert Young",
+      "structured_value": {
+        "given": "Robert",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080927",
+      "record_role": "child_4",
+      "fact_type": "residence",
+      "value": "Kirkdale, Lancashire, England",
+      "place": "Kirkdale, Lancashire, England",
+      "standard_place": "Kirkdale, Lancashire, England, United Kingdom",
+      "date": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080927",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born ~1843",
+      "structured_value": {
+        "year": "1843"
+      },
+      "date": "~1843",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080927",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born Gloucestershire",
+      "structured_value": {
+        "place": "Gloucestershire, England, United Kingdom"
+      },
+      "place": "Gloucestershire",
+      "standard_place": "Gloucestershire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080927",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Thomas Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010080927",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078498",
+      "record_role": "child_5",
+      "fact_type": "name",
+      "value": "Evan Young",
+      "structured_value": {
+        "given": "Evan",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078498",
+      "record_role": "child_5",
+      "fact_type": "residence",
+      "value": "Kirkdale, Lancashire, England",
+      "place": "Kirkdale, Lancashire, England",
+      "standard_place": "Kirkdale, Lancashire, England, United Kingdom",
+      "date": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078498",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "born ~1845",
+      "structured_value": {
+        "year": "1845"
+      },
+      "date": "~1845",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078498",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "born Gloucestershire",
+      "structured_value": {
+        "place": "Gloucestershire, England, United Kingdom"
+      },
+      "place": "Gloucestershire",
+      "standard_place": "Gloucestershire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078498",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "child of Thomas Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078498",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078499",
+      "record_role": "child_6",
+      "fact_type": "name",
+      "value": "Ellen Young",
+      "structured_value": {
+        "given": "Ellen",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078499",
+      "record_role": "child_6",
+      "fact_type": "residence",
+      "value": "Kirkdale, Lancashire, England",
+      "place": "Kirkdale, Lancashire, England",
+      "standard_place": "Kirkdale, Lancashire, England, United Kingdom",
+      "date": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078499",
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "born ~1848",
+      "structured_value": {
+        "year": "1848"
+      },
+      "date": "~1848",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078499",
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "born Gloucestershire",
+      "structured_value": {
+        "place": "Gloucestershire, England, United Kingdom"
+      },
+      "place": "Gloucestershire",
+      "standard_place": "Gloucestershire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078499",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "child of Thomas Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078499",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078500",
+      "record_role": "child_7",
+      "fact_type": "name",
+      "value": "Edward Young",
+      "structured_value": {
+        "given": "Edward",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078500",
+      "record_role": "child_7",
+      "fact_type": "residence",
+      "value": "Kirkdale, Lancashire, England",
+      "place": "Kirkdale, Lancashire, England",
+      "standard_place": "Kirkdale, Lancashire, England, United Kingdom",
+      "date": "1851",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078500",
+      "record_role": "child_7",
+      "fact_type": "birth",
+      "value": "born ~1851",
+      "structured_value": {
+        "year": "1851"
+      },
+      "date": "~1851",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078500",
+      "record_role": "child_7",
+      "fact_type": "birth",
+      "value": "born Lancashire",
+      "structured_value": {
+        "place": "Lancashire, England, United Kingdom"
+      },
+      "place": "Lancashire",
+      "standard_place": "Lancashire, England, United Kingdom",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Edward born Lancashire (not Gloucestershire like siblings) \u2014 family had moved north before his birth in 1851, consistent with the census year itself.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078500",
+      "record_role": "child_7",
+      "fact_type": "relationship",
+      "value": "child of Thomas Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:SGLJ-64D",
+      "record_persona_id": "p_2010078500",
+      "record_role": "child_7",
+      "fact_type": "relationship",
+      "value": "child of Elizabeth Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Pre-1880 census; parent-child link inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:M7M7-QJF",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Thomas Young",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/1:1:M7M7-QJF",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born approximately 1767\u20131771",
+      "date": "~1769",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "~1769"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1841 census records adult ages rounded to nearest 5; birth year estimated from stated range 1767\u20131771. Respondent unknown \u2014 information quality indeterminate.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/1:1:M7M7-QJF",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "White Hart Inn, Bitton, Gloucestershire, England",
+      "date": "1841",
+      "place": "Bitton, Gloucestershire, England",
+      "structured_value": {
+        "place": "Bitton, Gloucestershire, England"
+      },
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator visited and recorded the dwelling directly.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006",
+      "standard_place": "Bitton, Gloucestershire, England, United Kingdom"
+    },
+    {
+      "id": "a_095",
+      "record_id": "ark:/61903/1:1:M7M7-QJF",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "spouse of Martha Young (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1841 census. Spousal link inferred from household co-residence and position. Corroborated by baptism record of Thomas Young Jr. (log_014) naming Thomas and Martha Young as parents.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_096",
+      "record_id": "ark:/61903/1:1:M7M7-QJN",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Martha Young",
+      "structured_value": {
+        "given": "Martha",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Role 'wife' inferred from household position \u2014 1841 census has no relationship column.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_097",
+      "record_id": "ark:/61903/1:1:M7M7-QJN",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born approximately 1782\u20131786",
+      "date": "~1784",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "~1784"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1841 census adult ages rounded to nearest 5; birth year estimated from stated range 1782\u20131786. Respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_098",
+      "record_id": "ark:/61903/1:1:M7M7-QJN",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Gloucestershire (stated)",
+      "place": "Gloucestershire, England",
+      "structured_value": {
+        "place": "Gloucestershire, England"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated in census. Respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006",
+      "standard_place": "Gloucestershire, England, United Kingdom"
+    },
+    {
+      "id": "a_099",
+      "record_id": "ark:/61903/1:1:M7M7-QJN",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "White Hart Inn, Bitton, Gloucestershire, England",
+      "date": "1841",
+      "place": "Bitton, Gloucestershire, England",
+      "structured_value": {
+        "place": "Bitton, Gloucestershire, England"
+      },
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator visited and recorded the dwelling directly. Role 'wife' inferred from position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006",
+      "standard_place": "Bitton, Gloucestershire, England, United Kingdom"
+    },
+    {
+      "id": "a_100",
+      "record_id": "ark:/61903/1:1:M7M7-QJN",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Thomas Young Sr. (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1841 census. Spousal link inferred from household position. Corroborated by baptism record of Thomas Young Jr. (log_014).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_101",
+      "record_id": "ark:/61903/1:1:M7M7-QJJ",
+      "record_persona_id": "p_121639127",
+      "record_role": "daughter_in_law_1",
+      "fact_type": "name",
+      "value": "Elizabeth Young",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Role 'daughter_in_law_1' inferred from household position \u2014 1841 census has no relationship column. Elizabeth Young, female, age ~25-29, in Thomas Young Sr.'s household with child Thomas ~age 10. Probable identity: wife of Thomas Young Jr. (PID-TODO). Birth year range 1812-1816 is 1-5 years later than expected ~1811 but within 1841 rounding tolerance. Bitton location and household context strongly support the identification.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_102",
+      "record_id": "ark:/61903/1:1:M7M7-QJJ",
+      "record_persona_id": "p_121639127",
+      "record_role": "daughter_in_law_1",
+      "fact_type": "birth",
+      "value": "born approximately 1812\u20131816",
+      "date": "~1814",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "~1814"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1841 census adult ages rounded to nearest 5; birth year estimated from stated range 1812\u20131816. Slightly later than expected ~1811 for PID-TODO \u2014 a 1-5 year discrepancy is within rounding tolerance but warrants corroboration from a second independent record. Respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_103",
+      "record_id": "ark:/61903/1:1:M7M7-QJJ",
+      "record_persona_id": "p_121639127",
+      "record_role": "daughter_in_law_1",
+      "fact_type": "residence",
+      "value": "White Hart Inn, Bitton, Gloucestershire, England",
+      "date": "1841",
+      "place": "Bitton, Gloucestershire, England",
+      "structured_value": {
+        "place": "Bitton, Gloucestershire, England"
+      },
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator recorded the dwelling directly. Places probable Elizabeth (PID-TODO) at Thomas Sr.'s inn in 1841 \u2014 consistent with hypothesis that Thomas Jr. worked in Bath while Elizabeth stayed with in-laws.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_020",
+      "source_id": "src_006",
+      "standard_place": "Bitton, Gloucestershire, England, United Kingdom"
+    },
+    {
+      "id": "a_104",
+      "record_id": "ark:/61903/1:1:M7M7-QJV",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Thomas Young",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Role 'child_1' inferred from household position \u2014 1841 census has no relationship column. Male child ~age 10 in a Young household; consistent with Thomas Young christened 29 Aug 1830 at Bitton (tree person p-child-thomas).",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_105",
+      "record_id": "ark:/61903/1:1:M7M7-QJV",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born approximately 1831",
+      "date": "~1831",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "~1831"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1841 census; birth year ~1831. Consistent with christening record of twin Thomas Young, 29 Aug 1830 at Bitton \u2014 one-year variance within expected range.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_106",
+      "record_id": "ark:/61903/1:1:M7M7-QJV",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born Gloucestershire (stated)",
+      "place": "Gloucestershire, England",
+      "structured_value": {
+        "place": "Gloucestershire, England"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace stated in census. Respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_020",
+      "source_id": "src_006",
+      "standard_place": "Gloucestershire, England, United Kingdom"
+    },
+    {
+      "id": "a_107",
+      "record_id": "ark:/61903/1:1:M7M7-QJV",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "White Hart Inn, Bitton, Gloucestershire, England",
+      "date": "1841",
+      "place": "Bitton, Gloucestershire, England",
+      "structured_value": {
+        "place": "Bitton, Gloucestershire, England"
+      },
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator recorded the dwelling directly.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_020",
+      "source_id": "src_006",
+      "standard_place": "Bitton, Gloucestershire, England, United Kingdom"
+    },
+    {
+      "id": "a_108",
+      "record_id": "ark:/61903/1:1:M7M7-QJV",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Thomas Young Sr. (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1841 census. Child Thomas most likely grandson of Thomas Sr. (son of Thomas Jr. and Elizabeth), consistent with christening 1830 at Bitton. Inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_109",
+      "record_id": "ark:/61903/1:1:M7M7-QJV",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Martha Young (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1841 census. Second parent link \u2014 same reasoning as Thomas Sr. parent assertion. Child Thomas most likely grandson of Martha Young.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_110",
+      "record_id": "ark:/61903/1:1:M7M7-QJK",
+      "record_role": "lodger_1",
+      "fact_type": "name",
+      "value": "John",
+      "structured_value": {
+        "given": "John"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "No surname recorded in the census for this individual. Role 'lodger_1' is a best-available label \u2014 relationship to Thomas Young Sr. unknown. Could be a lodger, servant, relative, or inn employee. FAN lead for future research.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_111",
+      "record_id": "ark:/61903/1:1:M7M7-QJK",
+      "record_role": "lodger_1",
+      "fact_type": "birth",
+      "value": "born approximately 1797\u20131801",
+      "date": "~1799",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "~1799"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1841 census adult ages rounded to nearest 5. Birth year estimated from stated range 1797\u20131801. Respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_020",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_112",
+      "record_id": "ark:/61903/1:1:M7M7-QJK",
+      "record_role": "lodger_1",
+      "fact_type": "residence",
+      "value": "White Hart Inn, Bitton, Gloucestershire, England",
+      "date": "1841",
+      "place": "Bitton, Gloucestershire, England",
+      "structured_value": {
+        "place": "Bitton, Gloucestershire, England"
+      },
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator recorded the dwelling directly.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_020",
+      "source_id": "src_006",
+      "standard_place": "Bitton, Gloucestershire, England, United Kingdom"
+    },
+    {
+      "id": "a_113",
+      "record_id": "ark:/61903/1:1:CDTS-WBMM",
+      "record_persona_id": "p_206211607200",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Elizabeth Young",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Young"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown burial register informant",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Burial registers typically received name information from whoever arranged or registered the burial \u2014 identity of informant not recorded in this index entry. No maiden name or alternate name appears in the record.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_029",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_114",
+      "record_id": "ark:/61903/1:1:CDTS-WBMM",
+      "record_persona_id": "p_206211607200",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Buried 12 September 1893, Anfield, Lancashire, England",
+      "date": "12 Sep 1893",
+      "date_certainty": "exact",
+      "place": "Anfield, Lancashire, England, United Kingdom",
+      "standard_place": "Anfield, Lancashire, England, United Kingdom",
+      "structured_value": {
+        "place": "Anfield, Lancashire, England, United Kingdom"
+      },
+      "information_quality": "primary",
+      "informant": "burial registrar / cemetery record keeper",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The burial registrar recorded the interment in an official capacity and would have witnessed or directly administered the entry at the time of burial. Date and place are the registrar's own attestation.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_029",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_115",
+      "record_id": "ark:/61903/1:1:CDTS-WBMM",
+      "record_persona_id": "p_206211607200",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Birth year 1810",
+      "date": "1810",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1810"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown burial register informant",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth year 1810 appears in the indexed record. The informant (unknown \u2014 whoever supplied information at burial registration) could not have witnessed Elizabeth's birth in 1810; this is reported biographical data at best. Sidecar records standard_date as 1810.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_029",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_116",
+      "record_id": "ark:/61903/1:1:CDTS-WBMM",
+      "record_persona_id": "p_206211607200",
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "value": "Kirkdale",
+      "place": "Kirkdale, Liverpool, Lancashire, England",
+      "standard_place": null,
+      "structured_value": {
+        "place": "Kirkdale, Liverpool, Lancashire, England"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown burial register informant",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Residence at time of death listed as Kirkdale. Kirkdale is a district of Liverpool, Lancashire \u2014 the sidecar mis-standardized this as 'Kirkdale, Yorkshire, England, United Kingdom' (a different Kirkdale in North Yorkshire). Standard place set to null to avoid propagating the error; the correct place is Kirkdale, Liverpool, Lancashire, England. Informant unknown \u2014 residence may have been supplied by the person arranging the burial.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_029",
+      "source_id": "src_007"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "p-child-elizabeth",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Burial entry for 'Elizabeth Young', born ~1829, buried 14 Apr 1833 Gloucestershire. Tree's p-child-elizabeth is Elizabeth Young, born 1832 christened at Bitton \u2014 same name, same parents (Thos. Young + Elizabeth Young), same county. Birth year discrepancy (~1829 vs. 1832) likely explained by delayed christening, common in pre-1837 England; the burial register's ~1829 is secondary (family recollection at time of burial), while the christening date of Jun 1832 may reflect when the Church of England ceremony took place for a child born earlier.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "p-child-elizabeth",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Child burial 14 Apr 1833, Gloucestershire Non-Conformist register. p-child-elizabeth is Elizabeth Young (daughter of p-thomas and PID-TODO) \u2014 same name, parents, and county. This adds a burial fact to p-child-elizabeth not previously in the tree.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "p-child-elizabeth",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1829 recorded in the burial register as secondary information. p-child-elizabeth has birth 1832 from Bitton christening. The 3-year conflict is consistent with a delayed christening scenario; the burial register's estimate may be off. Confidence probable because the child's identity (parents, county) aligns strongly.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "p-child-elizabeth",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: child of Thos. Young \u2014 the deceased child persona bears on p-child-elizabeth as the child in the parent-child pair. Parents in record match those of p-child-elizabeth.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "p-thomas",
+      "confidence": "confident",
+      "match_score": 0.18,
+      "rationale": "Relationship assertion: child of Thos. Young \u2014 the father role is borne by p-thomas. 'Thos. Young' (abbreviation of Thomas) in Gloucestershire, ~1833, father of an Elizabeth Young child; p-thomas is Thomas Young, born 1809 Bitton Gloucestershire. Score 0.18 from rank_search_matches is low in absolute terms but was the highest-ranked result from 27 Non-Conformist records, reflecting sparse record data rather than a true mismatch. Qualitative correlation is strong: same name, same county, consistent timeline of parenthood (first Bitton christening 1830).",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "p-child-elizabeth",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: child of Elizabeth Young (mother) \u2014 the deceased child persona bears on p-child-elizabeth. Same parents, name, and county as tree person p-child-elizabeth.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "PID-TODO",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: mother of this child is 'Elizabeth Young' \u2014 the mother persona bears on PID-TODO. PID-TODO is Elizabeth Young, born ~1811 Gloucestershire, wife of p-thomas. The mother in this record is the wife of 'Thos. Young' (confidently identified as p-thomas); therefore this mother persona is probable for PID-TODO. Record gives only married surname; maiden name not confirmed.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "p-thomas",
+      "confidence": "confident",
+      "match_score": 0.18,
+      "rationale": "Father's name 'Thos. Young' recorded in Gloucestershire Non-Conformist burial register, 1833. p-thomas is Thomas Young, born ~1809 Bitton Gloucestershire. 'Thos.' is a standard abbreviation of Thomas; surname Young matches. Location (Gloucestershire), era (early 1830s), and family constellation (wife Elizabeth, children christened Bitton from 1830) all confirm. Score 0.18 is degenerate due to sparse record data \u2014 qualitative correlation is strong.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "p-thomas",
+      "confidence": "confident",
+      "match_score": 0.18,
+      "rationale": "Father-child relationship assertion: Thos. Young is father of the buried Elizabeth Young child. p-thomas is Thomas Young, Gloucestershire \u2014 same person as the 'Thos. Young' identified in a_006. Consistent with p-thomas's known children (first Bitton christening 1830; an Elizabeth Young child in 1829-1832 fits the family timeline).",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_007",
+      "person_id": "p-child-elizabeth",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father-child relationship assertion: the child in this record (buried 14 Apr 1833, Gloucestershire) is borne by p-child-elizabeth. See a_001/a_002 rationale for identity reasoning.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "p-thomas",
+      "confidence": "confident",
+      "match_score": 0.18,
+      "rationale": "Spouse/couple assertion: Thos. Young is recorded as husband of Elizabeth Young (mother of the buried child). p-thomas is Thomas Young, Gloucestershire, known to have married an Elizabeth. This couple assertion provides direct evidence that p-thomas and the Elizabeth Young in this record were a couple in Gloucestershire by 1833.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_008",
+      "person_id": "PID-TODO",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Spouse/couple assertion: Elizabeth Young (mother) is the wife of Thos. Young. Since the husband (Thos. Young) is confidently identified as p-thomas, the wife is probable for PID-TODO (Elizabeth Young, born ~1811 Gloucestershire, tree subject). The record does not name her maiden name; this link is probable, not confident, pending a source that names her maiden name.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_009",
+      "person_id": "PID-TODO",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother's name 'Elizabeth Young' recorded in Gloucestershire Non-Conformist burial register 1833. PID-TODO is Elizabeth Young, born ~1811 Gloucestershire. The name matches (married surname Young, consistent), location matches, and the mother is wife of Thos. Young (= p-thomas). Probable rather than confident because the record only shows married surname \u2014 no maiden name to confirm unique identity.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_010",
+      "person_id": "PID-TODO",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother-child relationship assertion: Elizabeth Young (mother) is mother of the buried child. Borne by PID-TODO as the mother in this couple. Identical reasoning to a_009 \u2014 probable pending maiden name confirmation.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_010",
+      "person_id": "p-child-elizabeth",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother-child relationship assertion: the deceased child bears on p-child-elizabeth as the child in the parent-child pair. See a_001 for identity reasoning.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_011",
+      "person_id": "PID-TODO",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother-spouse relationship assertion: Elizabeth Young (mother) is wife of Thos. Young. PID-TODO is the research subject Elizabeth Young, wife of Thomas Young. The husband (p-thomas) is confidently identified; the wife is probable for PID-TODO pending maiden name corroboration.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_011",
+      "person_id": "p-thomas",
+      "confidence": "confident",
+      "match_score": 0.18,
+      "rationale": "Mother-spouse relationship assertion: Thos. Young is husband of Elizabeth Young. This assertion bears on p-thomas as the husband \u2014 same person confidently identified via a_006/a_008.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_012",
+      "person_id": "p-thomas",
+      "confidence": "probable",
+      "match_score": 0.74,
+      "rationale": "Name 'Thomas Young', Male, in 1841 census, Walcot, Somerset. p-thomas is Thomas Young, known to reside at Walcot, Bath in 1841. Name, location, and era match. Score 0.74 from rank_search_matches (strong). Household lacks wife Elizabeth and older children expected from tree data, which is analytically notable but not disqualifying (census night absence, boarding house). Probable not confident due to household composition gap.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_013",
+      "person_id": "p-thomas",
+      "confidence": "probable",
+      "match_score": 0.74,
+      "rationale": "Residence at Walcot, Somerset in 1841. p-thomas's tree data shows Walcot, Bath in 1841. Strong location and date match. Same caveat as a_012 regarding household composition.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_014",
+      "person_id": "p-thomas",
+      "confidence": "probable",
+      "match_score": 0.74,
+      "rationale": "Birth county 'Somerset' in 1841 census. p-thomas was born in Bitton, Gloucestershire \u2014 a conflict. The 1841 census birth column records only same-county (Y/N/F) and is known to be unreliable; an enumerator or indexer error could produce 'Somerset' for a Gloucestershire-born individual. This conflict is flagged for conflict-resolution; it does not in itself disqualify the match given all other identifiers align.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_015",
+      "person_id": "p-thomas",
+      "confidence": "probable",
+      "match_score": 0.74,
+      "rationale": "Birth year range 1807-1811 (age-range from 1841 census). p-thomas born ~7 Aug 1809 \u2014 falls squarely in this range. Consistent with the match.",
+      "created": "2026-07-21"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

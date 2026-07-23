@@ -147,3 +147,112 @@ def test_session_log_falls_back_to_newest_jsonl_without_agent_session():
 
 def test_session_log_none_when_no_transcript():
     assert asyncio.run(fb._session_log(_FakeSandbox({}))) is None
+
+
+# --- living-person redaction (mirrors apps/electron feedback.test.ts) --------
+#
+# FamilySearch's terms forbid sharing living people's details, and a feedback
+# bundle is a capture of a real family. Redaction happens at CAPTURE time, so
+# the data never reaches the Drive folder at all.
+
+_TREE = {
+    "persons": [
+        {
+            "id": "P1", "gender": "Male", "living": False,
+            "names": [{"id": "n1", "given": "Reuben Spencer", "surname": "Spriggs"}],
+            "facts": [{"id": "f1", "type": "Birth", "date": "6 November 1898",
+                       "place": "Maddock, ND"}],
+        },
+        {
+            "id": "P2", "gender": "Female", "living": True,
+            "ark": "https://familysearch.org/ark:/61903/4:1:SECRET",
+            "names": [{"id": "n2", "given": "Jane Marie", "surname": "Spriggs"}],
+            "facts": [{"id": "f2", "type": "Birth", "date": "3 March 1985",
+                       "place": "Riverside, CA"}],
+        },
+        # No `living` flag at all — absent is NOT deceased.
+        {
+            "id": "P3", "gender": "Male",
+            "names": [{"id": "n3", "given": "Bobby", "surname": "Spriggs"}],
+            "facts": [{"id": "f3", "type": "Birth", "date": "1990"}],
+        },
+    ],
+    "relationships": [
+        {"id": "r1", "type": "Couple", "person1": "P1", "person2": "P2",
+         "facts": [{"id": "rf1", "type": "Marriage", "date": "12 June 1980",
+                    "place": "Reno, NV"}]},
+        {"id": "r2", "type": "Couple", "person1": "P1", "person2": "P9",
+         "facts": [{"id": "rf2", "type": "Marriage", "date": "1 Jan 1925"}]},
+    ],
+    "sources": [],
+}
+
+
+def _redact_tree(tree):
+    files = [("research.json", b"{}"),
+             ("tree.gedcomx.json", json.dumps(tree).encode("utf-8"))]
+    out, count = fb._redact_living(files)
+    return json.loads(dict(out)["tree.gedcomx.json"]), count, dict(out)
+
+
+def _person(tree, pid):
+    return next(p for p in tree["persons"] if p["id"] == pid)
+
+
+def test_redact_leaves_explicitly_deceased_person_untouched():
+    tree, _, _ = _redact_tree(_TREE)
+    p1 = _person(tree, "P1")
+    assert p1["names"][0]["given"] == "Reuben Spencer"
+    assert len(p1["facts"]) == 1
+
+
+def test_redact_strips_living_person_name_facts_and_ark():
+    tree, count, _ = _redact_tree(_TREE)
+    p2 = _person(tree, "P2")
+    assert p2["names"][0]["given"] == fb.LIVING_GIVEN
+    assert p2["names"][0]["surname"] == "Spriggs"   # kept: FS's own convention
+    assert p2["facts"] == []
+    assert "ark" not in p2
+    assert p2["gender"] == "Female" and p2["living"] is True
+    assert count == 2
+
+
+def test_missing_living_flag_counts_as_living():
+    """Absent is not deceased — same rule as the e2e fixture gate."""
+    tree, _, _ = _redact_tree(_TREE)
+    assert _person(tree, "P3")["names"][0]["given"] == fb.LIVING_GIVEN
+    assert _person(tree, "P3")["facts"] == []
+
+
+def test_redacted_tree_leaks_no_living_name_date_or_ark():
+    _, _, files = _redact_tree(_TREE)
+    raw = files["tree.gedcomx.json"].decode("utf-8")
+    for leak in ("Jane Marie", "Bobby", "3 March 1985", "Riverside, CA", "SECRET"):
+        assert leak not in raw
+    assert "Reuben Spencer" in raw  # the deceased subject survives
+
+
+def test_couple_facts_cleared_only_when_an_endpoint_is_living():
+    tree, _, _ = _redact_tree(_TREE)
+    rel = {r["id"]: r for r in tree["relationships"]}
+    assert rel["r1"]["facts"] == []
+    assert len(rel["r2"]["facts"]) == 1
+
+
+def test_person_without_names_gets_a_synthesized_placeholder():
+    tree, _, _ = _redact_tree({"persons": [{"id": "P4", "gender": "Female", "living": True}],
+                               "relationships": [], "sources": []})
+    name = _person(tree, "P4")["names"][0]
+    assert name == {"id": "P4-name-1", "given": fb.LIVING_GIVEN,
+                    "surname": fb.LIVING_SURNAME_FALLBACK}
+
+
+def test_other_project_files_are_untouched():
+    _, _, files = _redact_tree(_TREE)
+    assert files["research.json"] == b"{}"
+
+
+def test_unparseable_tree_passes_through_rather_than_failing_the_send():
+    out, count = fb._redact_living([("tree.gedcomx.json", b"not json")])
+    assert dict(out)["tree.gedcomx.json"] == b"not json"
+    assert count == 0
