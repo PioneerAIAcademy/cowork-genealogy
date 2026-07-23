@@ -96,14 +96,38 @@ interface OutcomeExplanation {
  * so the skill under test never ran. Without this, that fail looks
  * mysterious on screen: all-green dimensions, a red outcome, no reason.
  *
- * Returns null for pass/partial/xfail/xpass, and for fails the dimension
- * rows already explain (some dimension scored 1) where no earlier gate
- * fired.
+ * Returns null for pass/partial, and for fails the dimension rows already
+ * explain (some dimension scored 1) where no earlier gate fired.
+ *
+ * xfail/xpass get their own explanation: those outcomes come from the
+ * test's `expected_outcome` marking, not from anything visible in the
+ * dimension rows, so without a note an xfail reads as "green-ish failure"
+ * and an xpass reads as an unexplained oddity.
  */
 function deriveOutcomeExplanation(
   entry: TestEntry,
   skillUnderTest: string,
 ): OutcomeExplanation | null {
+  if (entry.outcome === 'xfail') {
+    return {
+      color: 'gray',
+      title: 'Expected failure (xfail)',
+      body:
+        'This test is marked expected_outcome: xfail, so its failure is not counted as a ' +
+        'regression. The reason lives on the test definition — open the test to see it, and ' +
+        'remove the marker once the underlying issue is fixed.',
+    };
+  }
+  if (entry.outcome === 'xpass') {
+    return {
+      color: 'orange',
+      title: 'Unexpected pass (xpass)',
+      body:
+        'This test is marked expected_outcome: xfail but it passed. Either the underlying ' +
+        'issue is fixed — in which case clear the marker so future failures register as ' +
+        'regressions — or the test no longer exercises what its xfail reason describes.',
+    };
+  }
   if (entry.outcome !== 'fail' && entry.outcome !== 'aborted') return null;
 
   // Pick the run that actually exhibited the test-level outcome; fall back
@@ -174,6 +198,27 @@ function deriveOutcomeExplanation(
     };
   }
   return null;
+}
+
+/**
+ * Mantine color per test outcome. xfail is deliberately neutral (it is a
+ * declared, non-regressing failure) and xpass is orange rather than green —
+ * a passing xfail test is a prompt to investigate the stale marker, not a
+ * clean result. Everything else is the usual green/yellow/red.
+ */
+function outcomeColor(outcome: TestEntry['outcome']): string {
+  switch (outcome) {
+    case 'pass':
+      return 'green';
+    case 'partial':
+      return 'yellow';
+    case 'xfail':
+      return 'gray';
+    case 'xpass':
+      return 'orange';
+    default:
+      return 'red';
+  }
 }
 
 type ScoreOrNull = 1 | 2 | 3 | null;
@@ -568,7 +613,7 @@ function GradesPane({
       <Group justify="space-between" wrap="nowrap">
         <Group gap="xs">
           <Title order={4}>{entry.test_id}</Title>
-          <Badge color={entry.outcome === 'pass' ? 'green' : entry.outcome === 'partial' ? 'yellow' : 'red'}>
+          <Badge color={outcomeColor(entry.outcome)}>
             {entry.outcome}
           </Badge>
           {entry.flaky ? <Badge color="orange">flaky</Badge> : null}

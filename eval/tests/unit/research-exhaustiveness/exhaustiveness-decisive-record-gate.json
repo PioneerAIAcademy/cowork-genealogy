@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_research_exhaustiveness_013",
+    "id": "ut_research_exhaustiveness_015",
     "skill": "research-exhaustiveness",
     "name": "Decisive record types gate the declaration even when every plan item is complete",
     "type": "positive",

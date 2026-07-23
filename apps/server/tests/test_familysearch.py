@@ -13,10 +13,12 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
 from app import fs_oauth
+from app.auth import fresh_fs_token
 from app.config import get_settings
 from app.db import get_engine
 from app.main import app
 from app.models import AllowedEmail, FamilySearchToken, User
+from app.sessions import sync_fs_token
 
 
 def _tokens_path(provider, sandbox_id):
@@ -159,3 +161,168 @@ def test_callback_state_mismatch_is_rejected():
             follow_redirects=False,
         )
         assert r.status_code == 400
+
+
+# ── Re-connect `next` round-trip (session-preserving re-auth) ─────
+# The re-auth banner sends the user through /familysearch/login?next=#/s/<id> so
+# they land back on the session they were reading, not the list. `next` rides a
+# client-held cookie, so the callback MUST re-validate it — an open-redirect hole
+# otherwise.
+
+def _state_header_with_next(state: str, next_val: str) -> dict:
+    signed = fs_oauth.fs_serializer().dumps(
+        {"verifier": "test-verifier", "state": state, "next": next_val}
+    )
+    return {"Cookie": f"{fs_oauth.FS_OAUTH_COOKIE}={signed}"}
+
+
+def test_callback_honours_safe_next(monkeypatch):
+    email = "callback-next@example.com"
+    with Session(get_engine()) as s:
+        if s.get(AllowedEmail, email) is None:
+            s.add(AllowedEmail(email=email))
+            s.commit()
+    _patch_identity(monkeypatch, email=email, fs_id="cis.user.NEXT")
+
+    with TestClient(app) as client:
+        r = client.get(
+            "/callback?code=abc&state=st-next",
+            headers=_state_header_with_next("st-next", "#/s/prj_abc123"),
+            follow_redirects=False,
+        )
+        assert r.status_code == 307, r.text
+        assert r.headers["location"] == f"{get_settings().web_origin}/#/s/prj_abc123"
+
+
+def test_callback_rejects_unsafe_next(monkeypatch):
+    """A tampered `next` (absolute URL → open redirect) is dropped; the user just
+    lands on the app origin."""
+    email = "callback-badnext@example.com"
+    with Session(get_engine()) as s:
+        if s.get(AllowedEmail, email) is None:
+            s.add(AllowedEmail(email=email))
+            s.commit()
+    _patch_identity(monkeypatch, email=email, fs_id="cis.user.BADNEXT")
+
+    with TestClient(app) as client:
+        r = client.get(
+            "/callback?code=abc&state=st-bad",
+            headers=_state_header_with_next("st-bad", "https://evil.example.com/phish"),
+            follow_redirects=False,
+        )
+        assert r.status_code == 307, r.text
+        assert r.headers["location"] == get_settings().web_origin
+
+
+# ── fresh_fs_token: refresh-if-stale, else surface the dead grant ─
+# FamilySearch caps a grant at 8h idle / 24h absolute, so the token injected at
+# sandbox-create is dead by the next day. fresh_fs_token is what /connect calls to
+# hand the sandbox a live token again — or report the grant is gone.
+
+def _seed_token(user_id: str, *, access: str, refresh: str | None, expires_at: datetime) -> None:
+    with Session(get_engine()) as s:
+        s.merge(FamilySearchToken(
+            user_id=user_id, access_token=access, refresh_token=refresh, expires_at=expires_at,
+        ))
+        s.commit()
+
+
+async def test_fresh_fs_token_returns_live_token_as_is(monkeypatch):
+    calls = []
+    async def _no_refresh(_rt):  # must NOT be called for a comfortably-live token
+        calls.append(_rt)
+        return None
+    monkeypatch.setattr(fs_oauth, "refresh_tokens", _no_refresh)
+    _seed_token("usr_live", access="A-live", refresh="R",
+                expires_at=datetime.now(timezone.utc) + timedelta(hours=2))
+
+    with Session(get_engine()) as s:
+        row = await fresh_fs_token(s, "usr_live")
+    assert row is not None and row.access_token == "A-live"
+    assert calls == [], "a live token must not trigger a refresh"
+
+
+async def test_fresh_fs_token_refreshes_when_near_expiry(monkeypatch):
+    async def _refresh(rt):
+        assert rt == "R-old"
+        return {"access_token": "A-new", "refresh_token": "R-new", "expires_in": 3600}
+    monkeypatch.setattr(fs_oauth, "refresh_tokens", _refresh)
+    _seed_token("usr_stale", access="A-old", refresh="R-old",
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=2))
+
+    with Session(get_engine()) as s:
+        row = await fresh_fs_token(s, "usr_stale")
+        assert row is not None and row.access_token == "A-new"
+        # Persisted, so the next connect (and the DB of record) sees the new token.
+        assert s.get(FamilySearchToken, "usr_stale").access_token == "A-new"
+
+
+async def test_fresh_fs_token_none_when_refresh_refused(monkeypatch):
+    async def _dead(_rt):
+        return None  # FS refused — grant is past its 24h cap
+    monkeypatch.setattr(fs_oauth, "refresh_tokens", _dead)
+    _seed_token("usr_dead", access="A-exp", refresh="R-exp",
+                expires_at=datetime.now(timezone.utc) - timedelta(minutes=1))
+
+    with Session(get_engine()) as s:
+        assert await fresh_fs_token(s, "usr_dead") is None
+
+
+async def test_fresh_fs_token_none_without_refresh_token():
+    _seed_token("usr_norefresh", access="A", refresh=None,
+                expires_at=datetime.now(timezone.utc) - timedelta(minutes=1))
+    with Session(get_engine()) as s:
+        assert await fresh_fs_token(s, "usr_norefresh") is None
+
+
+async def test_fresh_fs_token_none_without_row():
+    with Session(get_engine()) as s:
+        assert await fresh_fs_token(s, "usr_absent") is None
+
+
+# ── sync_fs_token: the state /connect reports to the client ──────
+
+class _FakeSandbox:
+    def __init__(self):
+        self.writes: dict[str, bytes] = {}
+
+    async def write_file(self, path: str, data: bytes) -> None:
+        self.writes[path] = data
+
+
+async def test_sync_fs_token_ok_reinjects_refreshed_token(monkeypatch):
+    async def _refresh(_rt):
+        return {"access_token": "A-fresh", "refresh_token": "R", "expires_in": 3600}
+    monkeypatch.setattr(fs_oauth, "refresh_tokens", _refresh)
+    _seed_token("usr_ok", access="A-old", refresh="R",
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=1))
+    user = User(id="usr_ok", email="ok@example.com")
+    sandbox = _FakeSandbox()
+
+    with Session(get_engine()) as s:
+        assert await sync_fs_token(s, user, sandbox) == "ok"
+    injected = json.loads(sandbox.writes[fs_oauth.TOKENS_PATH].decode())
+    assert injected["accessToken"] == "A-fresh"
+
+
+async def test_sync_fs_token_expired_leaves_sandbox_untouched(monkeypatch):
+    async def _dead(_rt):
+        return None
+    monkeypatch.setattr(fs_oauth, "refresh_tokens", _dead)
+    _seed_token("usr_exp", access="A", refresh="R",
+                expires_at=datetime.now(timezone.utc) - timedelta(minutes=1))
+    user = User(id="usr_exp", email="exp@example.com")
+    sandbox = _FakeSandbox()
+
+    with Session(get_engine()) as s:
+        assert await sync_fs_token(s, user, sandbox) == "expired"
+    # Must NOT clobber the sandbox's own (possibly still-live) tokens.json.
+    assert fs_oauth.TOKENS_PATH not in sandbox.writes
+
+
+async def test_sync_fs_token_none_without_row():
+    user = User(id="usr_none", email="none@example.com")
+    sandbox = _FakeSandbox()
+    with Session(get_engine()) as s:
+        assert await sync_fs_token(s, user, sandbox) == "none"
+    assert sandbox.writes == {}

@@ -67,10 +67,15 @@ export const api = {
   sessionLogs: (id: string) => req<{ ws: string; agent: string }>(`/api/sessions/${id}/logs`),
 
   // Make the session live + get the direct connection to its in-sandbox WS server.
+  // `familysearch` reports the user's FamilySearch grant AFTER a refresh+reinject
+  // attempt: 'ok' (a live token was injected), 'expired' (the grant died — FS caps
+  // it at 24h — and the user must Reconnect), or 'none' (this user never had one:
+  // dev-login / mock mode, nothing to reconnect).
   connectSession: (sessionId: string) =>
-    req<{ wssUrl: string; token: string }>(`/api/sessions/${sessionId}/connect`, {
-      method: 'POST'
-    }),
+    req<{ wssUrl: string; token: string; familysearch?: 'ok' | 'expired' | 'none' }>(
+      `/api/sessions/${sessionId}/connect`,
+      { method: 'POST' }
+    ),
 
   // Upload a document/image into <project>/uploads/ so the agent can read it.
   // Not routed through req(): multipart needs the browser to set Content-Type

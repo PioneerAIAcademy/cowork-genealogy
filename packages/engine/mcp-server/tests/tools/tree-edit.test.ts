@@ -5,14 +5,21 @@ import { tmpdir } from "os";
 
 // Stub the network place resolver so add_fact/update_fact tests are offline and
 // deterministic. The tool calls resolveStandardPlace(place) → standardized name.
-vi.mock("../../src/utils/place-resolver.js", () => ({
-  resolveStandardPlace: vi.fn(async (text: string) =>
-    text === "Schuylkill County, Pennsylvania" ? "Schuylkill, Pennsylvania, United States" : null,
-  ),
-}));
+// countryConsistency passes through as the REAL implementation (pure, no
+// network) so the country-contradiction guard tests below exercise real logic.
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
+  return {
+    ...actual,
+    resolveStandardPlace: vi.fn(async (text: string) =>
+      text === "Schuylkill County, Pennsylvania" ? "Schuylkill, Pennsylvania, United States" : null,
+    ),
+  };
+});
 
 import { treeEdit } from "../../src/tools/tree-edit.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
+import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -144,6 +151,59 @@ describe("tree_edit", () => {
     expect(f1.date).toBe("1849");
     expect(f1.standard_place).toBe("Schuylkill, Pennsylvania, United States");
     expect(f1.id).toBe("F1");
+  });
+
+  it("add_fact: nulls an AUTO-RESOLVED standard_place that contradicts the place text's country, with a warning", async () => {
+    // Regression test for the "West Bromwich" -> "West, Cameroon" incident
+    // (hannah-earnest-children e2e rerun, 2026-07-22): resolveStandardPlace
+    // can return a country-contradicting match when its own search is fooled;
+    // tree_edit must not silently commit it.
+    await writeProject(onePersonSourced());
+    vi.mocked(resolveStandardPlace).mockResolvedValueOnce("West, Cameroon");
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Birth", date: "1878", place: "West Bromwich, Staffordshire, England", primary: true, sources: [{ ref: "S1" }] },
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const tree = await readTree();
+    const added = tree.persons[0].facts.find((f: any) => f.id === r.assignedIds?.fact);
+    expect(added.place).toBe("West Bromwich, Staffordshire, England");
+    expect(added.standard_place).toBeUndefined();
+    expect(r.validation.warnings.some((w: string) => w.includes("contradicts place"))).toBe(true);
+  });
+
+  it("add_fact: nulls an EXPLICITLY-SUPPLIED standard_place that contradicts the place text's country too", async () => {
+    // tree_edit never validated a caller-supplied standard_place at all before
+    // this fix (only auto-resolved ones went through maybeResolvePlace at
+    // all) — mirrors research_append's countryConsistency guard, which checks
+    // "the final pair, supplied or resolved."
+    await writeProject(onePersonSourced());
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: {
+        type: "Birth",
+        date: "1878",
+        place: "West Bromwich, Staffordshire, England",
+        standard_place: "West, Cameroon",
+        primary: true,
+        sources: [{ ref: "S1" }],
+      },
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const tree = await readTree();
+    const added = tree.persons[0].facts.find((f: any) => f.id === r.assignedIds?.fact);
+    expect(added.standard_place).toBeUndefined();
+    expect(r.validation.warnings.some((w: string) => w.includes("contradicts place"))).toBe(true);
   });
 
   it("add_name: assigns N id and moves the preferred flag", async () => {

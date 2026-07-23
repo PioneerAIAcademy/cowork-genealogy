@@ -1,0 +1,961 @@
+{
+  "persons": [
+    {
+      "id": "LCPC-PZK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "George",
+          "surname": "Broyles"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e061df20-f0b8-44ac-9c2b-844ab2bff6b4",
+          "type": "Birth",
+          "date": "1830",
+          "standard_date": "1830",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "47f2d2cf-67de-4283-afce-e377bf4d1aa8",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Cooper county, part of, Cooper, Missouri, United States",
+          "standard_place": "Cooper, Missouri, United States"
+        },
+        {
+          "id": "16fe95d6-44bb-4899-9d49-f48b11592b1a",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Palestine Township, Cooper, Missouri, United States",
+          "standard_place": "Palestine Township, Cooper, Missouri, United States"
+        },
+        {
+          "id": "56b37f49-5db9-4495-8642-323a63c7b2a8",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Marshall, Saline, Missouri, United States",
+          "standard_place": "Marshall, Saline, Missouri, United States"
+        }
+      ]
+    },
+    {
+      "id": "GVKX-TS7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Geo. W.",
+          "surname": "Broyles"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9879b9f0-bcaf-48e2-ae3e-60c3c11400b3",
+          "type": "Birth",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Missouri, United States",
+          "standard_place": "Missouri, United States"
+        },
+        {
+          "id": "e607b709-974d-49cc-8548-67ab7e12b6fd",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Marshall, Saline, Missouri, United States",
+          "standard_place": "Marshall, Saline, Missouri, United States"
+        },
+        {
+          "id": "bcd3f21c-da1e-4681-9360-ee2aceeab46d",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MJ7L-SL9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Charles Robinson",
+          "surname": "Broyles"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "9 Dec 1878",
+          "standard_date": "9 Dec 1878",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "c850ca1c-c7a6-4dac-aa05-1653a59eb0d0",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Marshall, Saline, Missouri, United States",
+          "standard_place": "Marshall, Saline, Missouri, United States"
+        },
+        {
+          "id": "7ec4f79d-5d69-41b5-949f-57f34391420e",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Rosen Heightons, Tarrant, Texas, United States",
+          "standard_place": "Tarrant, Texas, United States"
+        },
+        {
+          "id": "0f967f1b-31a3-44bd-81bc-cf9e1d05d340",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Houston City no 2, Texas, United States",
+          "standard_place": "Houston, Harris, Texas, United States"
+        },
+        {
+          "id": "3bd6a096-9860-4f4d-9016-efbbd0eeddb7",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "d4d0a551-c2f6-480c-867d-977ffd42d987",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Houston Ward 5, Harris, Texas, United States",
+          "standard_place": "Houston, Harris, Texas, United States"
+        },
+        {
+          "id": "a2794b9f-e9be-48ac-88ac-a921d2e29d64",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Houston, Harris, Texas, United States",
+          "standard_place": "Houston, Harris, Texas, United States"
+        },
+        {
+          "id": "83ac04cd-0b1d-46c9-9289-faf42326b93e",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "dfeea52d-b4f5-47a7-9d40-94077b23edaf",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Tract 30, Houston, Justice Precinct 1, Harris, Texas, United States",
+          "standard_place": "Houston, Harris, Texas, United States"
+        },
+        {
+          "id": "a6497069-bef6-48d0-b148-a399fb252082",
+          "type": "Military Draft Registration",
+          "date": "1942",
+          "standard_date": "1942",
+          "place": "Houston, Harris, Texas, United States",
+          "standard_place": "Houston, Harris, Texas, United States"
+        },
+        {
+          "id": "9e31bf9a-2cb5-415f-839a-89412884d1da",
+          "type": "Residence",
+          "date": "1949",
+          "standard_date": "1949",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "b8550f0b-75c5-4eea-9d32-85844ff48808",
+          "type": "Residence",
+          "date": "7 April 1950",
+          "standard_date": "7 Apr 1950",
+          "place": "Houston, Harris, Texas, United States",
+          "standard_place": "Houston, Harris, Texas, United States"
+        },
+        {
+          "id": "7e0739c5-8d75-4126-a397-f785dbeebcf2",
+          "type": "Social Program Claim",
+          "date": "30 Jul 1965",
+          "standard_date": "30 Jul 1965"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "18 Mar 1966",
+          "standard_date": "18 Mar 1966"
+        },
+        {
+          "id": "846199d6-e568-4e20-9ca1-f2d170351642",
+          "type": "Residence",
+          "place": "Houston, Harris, Texas",
+          "standard_place": "Houston, Harris, Texas, United States"
+        },
+        {
+          "id": "b7a9f0a0-0669-424f-920a-64de938be3d3",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "f2782625-883b-4977-ab0a-ca000d5a2be0",
+          "type": "Previous Residence",
+          "place": "Houston, Harris, Texas, United States",
+          "standard_place": "Houston, Harris, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "KP3V-5CY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Liddy",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1838",
+          "standard_date": "1838",
+          "place": "Cooper, Missouri, United States",
+          "standard_place": "Cooper, Missouri, United States"
+        },
+        {
+          "id": "3632ee18-f6ea-4707-ba9d-c646fad9b6a4",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Cooper county, part of, Cooper, Missouri, United States",
+          "standard_place": "Cooper, Missouri, United States"
+        },
+        {
+          "id": "b7593cdb-e689-4d5d-a98d-587320631b5d",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Palestine Township, Cooper, Missouri, United States",
+          "standard_place": "Palestine Township, Cooper, Missouri, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KFH6-4DW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Judith A.",
+          "surname": "Broyles"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1869",
+          "standard_date": "1869",
+          "place": "Missouri, United States",
+          "standard_place": "Missouri, United States"
+        },
+        {
+          "id": "99f55f15-1428-454b-ba5a-ff468a0b6b36",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Marshall, Saline, Missouri, United States",
+          "standard_place": "Marshall, Saline, Missouri, United States"
+        },
+        {
+          "id": "5a057731-3239-4783-bc85-38cc45be6822",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Flat Creek Township, Pettis, Missouri, United States",
+          "standard_place": "Flat Creek Township, Pettis, Missouri, United States"
+        },
+        {
+          "id": "b18f6129-b6a2-4c4c-9af7-36affe92aa58",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Flat Creek, Pettis, Missouri, United States",
+          "standard_place": "Flat Creek Township, Pettis, Missouri, United States"
+        },
+        {
+          "id": "d32b7820-f1c8-4d7e-93bd-5d12e2f60ac7",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Flat Creek, Pettis, Missouri, United States",
+          "standard_place": "Flat Creek Township, Pettis, Missouri, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "12 May 1932",
+          "standard_date": "12 May 1932",
+          "place": "Pleasant Hill Church, Pettis, Missouri",
+          "standard_place": "Pleasant Hill Church, Flat Creek Township, Pettis, Missouri, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "       1932",
+          "standard_date": "1932"
+        }
+      ]
+    },
+    {
+      "id": "MH7X-PJ2",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Minnie Belle",
+          "surname": "Broyles"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "28 February 1877",
+          "standard_date": "28 Feb 1877",
+          "place": "Marshall, Saline, Missouri, United States",
+          "standard_place": "Marshall, Saline, Missouri, United States"
+        },
+        {
+          "id": "83188d3a-bb65-421a-be6e-434b2088ad2f",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Marshall, Saline, Missouri, United States",
+          "standard_place": "Marshall, Saline, Missouri, United States"
+        },
+        {
+          "id": "ae339268-a168-49a8-a16a-20282a7d6d9a",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Justice Precinct 6, Navarro, Texas, United States",
+          "standard_place": "Justice Precinct 6, Navarro, Texas, United States"
+        },
+        {
+          "id": "f8ac870e-7662-4f4f-adc5-3fe87d0096dd",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Fort Worth Ward 12, Tarrant, Texas, United States",
+          "standard_place": "Fort Worth, Tarrant, Texas, United States"
+        },
+        {
+          "id": "952e6f86-3b50-4ea3-9174-c0066805eb84",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Tarrant, Texas, United States",
+          "standard_place": "Tarrant, Texas, United States"
+        },
+        {
+          "id": "6b56444f-6c49-434c-b4f0-40e8b4d75fbc",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Fort Worth, Tarrant, Texas, United States",
+          "standard_place": "Fort Worth, Tarrant, Texas, United States"
+        },
+        {
+          "id": "4b79a2a6-3866-4051-b6b7-e535842d7048",
+          "type": "Social Program Application",
+          "date": "Oct 1939",
+          "standard_date": "Oct 1939"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "5 November 1971",
+          "standard_date": "5 Nov 1971"
+        },
+        {
+          "id": "ecd71274-2307-4bc0-9900-1ecf00edd02d",
+          "type": "Obituary",
+          "date": "7 November 1971",
+          "standard_date": "7 Nov 1971",
+          "place": "Fort Worth, Tarrant, Texas, United States",
+          "standard_place": "Fort Worth, Tarrant, Texas, United States"
+        },
+        {
+          "id": "70880d1e-26dc-4d03-934e-14374c157aaa",
+          "type": "Burial",
+          "place": "Arlington, Tarrant, Texas, United States",
+          "standard_place": "Arlington, Tarrant, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "LCPC-PDH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Mary Elizabeth",
+          "surname": "Davis"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1 February 1849",
+          "standard_date": "1 Feb 1849",
+          "place": "Tolar, Hood, Texas, United States",
+          "standard_place": "Tolar, Hood, Texas, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Cooper county, part of, Cooper, Missouri",
+          "standard_place": "Cooper, Missouri, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Springfield Township, Henry, Missouri, United States",
+          "standard_place": "Springfield Township, Henry, Missouri, United States"
+        },
+        {
+          "id": "94280bf0-e38e-44d7-accf-d7a1a69de5aa",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Marshall, Saline, Missouri, United States",
+          "standard_place": "Marshall, Saline, Missouri, United States"
+        },
+        {
+          "id": "ffdd9557-a8a3-4fd5-bce3-1da30b8e276f",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Fort Worth, Tarrant, Texas, United States",
+          "standard_place": "Fort Worth, Tarrant, Texas, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "2 Mar 1918",
+          "standard_date": "2 Mar 1918",
+          "place": "Ft Worth, Tarrant, Texas",
+          "standard_place": "Fort Worth, Tarrant, Texas, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "2 Mar 1918",
+          "standard_date": "2 Mar 1918",
+          "place": "Mt Olivett, Ft Worth, Tarrant, Texas",
+          "standard_place": "Fort Worth, Tarrant, Texas, United States"
+        },
+        {
+          "id": "4d437f06-2f5b-42ee-96f4-040aa91f3e16",
+          "type": "Marital Status",
+          "value": "Widowed"
+        },
+        {
+          "id": "a3f7429e-6ab2-41a0-8515-6ee2080e2f89",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "LR2G-YS9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "William Harrison",
+          "surname": "Broyles"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f17d6025-e138-45b7-8b86-03ef967f8b03",
+          "type": "Birth",
+          "date": "4 September 1857",
+          "standard_date": "4 Sep 1857",
+          "place": "Cooper, Missouri, United States",
+          "standard_place": "Cooper, Missouri, United States"
+        },
+        {
+          "id": "afd39c24-883e-4ab6-a319-823f99291b6a",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Palestine Township, Cooper, Missouri, United States",
+          "standard_place": "Palestine Township, Cooper, Missouri, United States"
+        },
+        {
+          "id": "bea67b26-e977-451c-b187-c7ba9db33d70",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Bogart, Carroll, Missouri, United States",
+          "standard_place": "Carroll, Missouri, United States"
+        },
+        {
+          "id": "175b7954-8d1e-4b1b-9186-1424c3c65cf8",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Marshall, Saline, Missouri, United States",
+          "standard_place": "Marshall, Saline, Missouri, United States"
+        },
+        {
+          "id": "c4b1794f-8693-4eea-9f2a-9512dc1feef7",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Arrow Rock Township (part west of Flat Creek), Saline, Missouri, United States",
+          "standard_place": "Arrow Rock Township, Saline, Missouri, United States"
+        },
+        {
+          "id": "34940fae-5686-44a5-ad7a-518119dc868c",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Nelson Ward 1, Saline, Missouri, United States",
+          "standard_place": "Nelson, Saline, Missouri, United States"
+        },
+        {
+          "id": "3b7670a1-6c31-449e-a556-6c6a8ec028bd",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Kansas City Ward 13, Jackson, Missouri, United States",
+          "standard_place": "Kansas City, Jackson, Missouri, United States"
+        },
+        {
+          "id": "d962f105-e9e6-45a5-9f11-571cf5a5eb74",
+          "type": "Death",
+          "date": "14 July 1929",
+          "standard_date": "14 Jul 1929",
+          "place": "Kansas City, Jackson, Missouri, United States",
+          "standard_place": "Kansas City, Jackson, Missouri, United States"
+        },
+        {
+          "id": "b2f71ae8-9981-4bc9-a1ef-ad68bd27dcd4",
+          "type": "Burial",
+          "place": "Forest Hill Cemetery, Kansas City, Jackson, Missouri, United States",
+          "standard_place": "Forest Hill Cemetery, Kansas City, Jackson, Missouri, United States"
+        }
+      ]
+    },
+    {
+      "id": "LCVG-3RC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Myrtle Leana",
+          "surname": "Broyles"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "17 May 1886",
+          "standard_date": "17 May 1886",
+          "place": "Marshall, Saline, Missouri, United States",
+          "standard_place": "Marshall, Saline, Missouri, United States"
+        },
+        {
+          "id": "a03c4f26-b9b0-4b5c-943f-811143cad4be",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Houston, Harris, Texas, United States",
+          "standard_place": "Houston, Harris, Texas, United States"
+        },
+        {
+          "id": "6c954af5-e6a9-44db-99b3-5ca5af14674b",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Tarrant, Texas, United States",
+          "standard_place": "Tarrant, Texas, United States"
+        },
+        {
+          "id": "b0e2272a-4b0f-4199-a49c-b5695df2d0c5",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Fort Worth, Tarrant, Texas",
+          "standard_place": "Fort Worth, Tarrant, Texas, United States"
+        },
+        {
+          "id": "9b81e2cd-4fce-4c0c-9801-e00b8d7558cb",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Tract 3, Austin, Justice Precinct 3, Travis, Texas, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "January 1970",
+          "standard_date": "Jan 1970",
+          "place": "Cook-Walden Capital Parks Cemetery and Mausoleum, Pflugerville, Travis, Texas, United States",
+          "standard_place": "Cook-Walden Capital Parks Cemetery and Mausoleum, Pflugerville, Travis, Texas, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "16 January 1970",
+          "standard_date": "16 Jan 1970",
+          "place": "Elgin, Bastrop, Texas, United States",
+          "standard_place": "Elgin, Bastrop, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "G745-NL9",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Rebecca",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "11b2a566-28a0-4956-bd8f-80545132d6c3",
+          "type": "Birth",
+          "date": "1806",
+          "standard_date": "1806",
+          "place": "North Carolina, United States",
+          "standard_place": "North Carolina, United States"
+        },
+        {
+          "id": "383cb415-a1ba-4e09-be9f-e95909f35a30",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Cooper county, part of, Cooper, Missouri, United States",
+          "standard_place": "Cooper, Missouri, United States"
+        },
+        {
+          "id": "3736781e-7069-42a4-b745-bc0cb780e2a4",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G74L-LG3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Milton M.",
+          "surname": "Broyles"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3519d60c-7084-41a8-830c-d0f7d24ac69e",
+          "type": "Birth",
+          "date": "1859",
+          "standard_date": "1859",
+          "place": "Cooper, Missouri, United States",
+          "standard_place": "Cooper, Missouri, United States"
+        },
+        {
+          "id": "3d036924-2bcb-4a44-839c-e4e327f51f0a",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Palestine Township, Cooper, Missouri, United States",
+          "standard_place": "Palestine Township, Cooper, Missouri, United States"
+        },
+        {
+          "id": "06f55af1-cd79-4813-b24d-f4f6aadc0da1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G745-42T",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "George",
+          "surname": "Broyles"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ab46bd54-4645-4a19-a19b-af1181114006",
+          "type": "Birth",
+          "date": "1806",
+          "standard_date": "1806",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "ae555fcc-9e6b-4d47-b6ea-827288a3ff67",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LCPC-PZK",
+      "person2": "KP3V-5CY",
+      "facts": [
+        {
+          "id": "2058c47f-f2cf-4bc6-b86d-fc1691a2cbb5",
+          "type": "Marriage",
+          "date": "18 May 1856",
+          "standard_date": "18 May 1856",
+          "place": "Cooper, Missouri, United States",
+          "standard_place": "Cooper, Missouri, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LCPC-PZK",
+      "person2": "LCPC-PDH",
+      "facts": [
+        {
+          "id": "c2548be5-44c9-49c5-ae5a-d0a959a813e6",
+          "type": "Marriage",
+          "date": "       1867",
+          "standard_date": "1867"
+        },
+        {
+          "id": "e573dec0-658e-4a44-8778-6a5b97f18910",
+          "type": "Marriage",
+          "date": "Abt 1867",
+          "standard_date": "Abt 1867",
+          "place": "Missouri",
+          "standard_place": "Missouri, United States"
+        },
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "       1867",
+          "standard_date": "1867",
+          "place": "<Mo>",
+          "standard_place": "Missouri, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "G745-42T",
+      "person2": "G745-NL9"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "G745-42T",
+      "child": "LCPC-PZK"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G745-NL9",
+      "child": "LCPC-PZK"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "LCPC-PZK",
+      "child": "LR2G-YS9"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KP3V-5CY",
+      "child": "LR2G-YS9"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LCPC-PZK",
+      "child": "G74L-LG3"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KP3V-5CY",
+      "child": "G74L-LG3"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LCPC-PZK",
+      "child": "GVKX-TS7"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "KP3V-5CY",
+      "child": "GVKX-TS7"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "LCPC-PZK",
+      "child": "KFH6-4DW",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LCPC-PDH",
+      "child": "KFH6-4DW",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "LCPC-PZK",
+      "child": "MH7X-PJ2",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "LCPC-PDH",
+      "child": "MH7X-PJ2",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "LCPC-PZK",
+      "child": "MJ7L-SL9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "LCPC-PDH",
+      "child": "MJ7L-SL9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "LCPC-PZK",
+      "child": "LCVG-3RC",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "LCPC-PDH",
+      "child": "LCVG-3RC",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S262-9MK",
+      "title": "George Boyles, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZ4-4LX : Tue Oct 21 03:51:34 UTC 2025), Entry for Rebecca Boyles and Sarah Boyles, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZ4-4LN"
+    },
+    {
+      "id": "QYVY-Y9B",
+      "title": "George Broyles, \"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\"",
+      "citation": "\"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XF4-YVCP : Wed Nov 19 04:55:39 UTC 2025), Entry for Joseph S Vandyke and Judie A Broyles, 1 Sep 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XF4-YVC5"
+    },
+    {
+      "id": "S26H-DD7",
+      "title": "Mr George Broyles, \"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\"",
+      "citation": "\"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WGTK-9P6Z : Mon Jan 20 23:48:54 UTC 2025), Entry for George Broyles and Miss Sidney Shoemaker, 18 May 1856.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WGTK-9P6Z"
+    },
+    {
+      "id": "3SS4-B5C",
+      "title": "George Broyles, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KSY2-LWQ : Thu Apr 16 15:28:15 UTC 2026), Entry for Myrtle Leana Cartmill and Morris Hohmann, 16 January 1970.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KSY2-LW7"
+    },
+    {
+      "id": "S26H-D5M",
+      "title": "George Broyles, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHZ5-ZV6 : Mon Jan 20 23:50:34 UTC 2025), Entry for George Broyles and Sidney Broyles, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHZ5-ZV6"
+    },
+    {
+      "id": "QYVY-TNY",
+      "title": "George Broyles, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K7V-X4BQ : Mon Jul 06 11:54:46 UTC 2026), Entry for Minnie Broyles and George Broyles.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K7V-X4BW"
+    },
+    {
+      "id": "7MDD-6LP",
+      "title": "Broyles, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K36Y-YFJ : Mon Jan 20 23:55:08 UTC 2025), Entry for Minnie Bell Strickland and Broyles, 5 November 1971.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K36Y-YFV"
+    },
+    {
+      "id": "QQK2-QZ8",
+      "title": "Geo. Broyles,  \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6F6-6VT : Mon Jan 20 23:53:34 UTC 2025), Entry for Geo. Broyles and Elizabeth Broyles, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M6F6-6VT"
+    }
+  ]
+}
