@@ -8,7 +8,7 @@ step, says which of three places you're working in.
 
 | Doc | What it gives you |
 |---|---|
-| [`skill-lifecycle.md`](skill-lifecycle.md) | The improvement loop itself: run the test, annotate, audit the rubric, improve the `SKILL.md`, gate the edit, produce the release run. Shared with every other on-ramp — this page hands off to it at Step 6 and comes back for Steps 7–10. |
+| [`skill-lifecycle.md`](skill-lifecycle.md) | The improvement loop itself: run the test, grade it, audit the rubric, improve the `SKILL.md`, gate the edit, produce the final graded run. Shared with every other on-ramp — this page hands off to it at Step 6 and comes back for Steps 7–10. |
 | [`specs/feedback-case-spec.md`](specs/feedback-case-spec.md) | The **why**: rationale, contracts, lints. Read only when changing the workflow itself. |
 
 ## Who does what
@@ -319,7 +319,7 @@ value for the gate in Step 6.
 Everything from here to a gated fix is the same regardless of where the bug came
 from, so it lives in one place:
 
-**→ [`skill-lifecycle.md`](skill-lifecycle.md), steps 3–6**
+**→ [`skill-lifecycle.md`](skill-lifecycle.md), steps 4–6**
 
 It covers: setting hold-out tests (do this *before* the baseline run), running
 `make eval-skill SKILL=<skill>`, pasting Marta's Did/Should onto the failing
@@ -403,7 +403,7 @@ If the fix **doesn't** hold in Cowork, the bug may be Cowork-runtime-specific �
 plugin loader, viewer context injection, OS-specific file handling. Diagnose it
 (get help if you need it); **do not ship the PR.**
 
-## Step 9 — Release run, PR, and reply ⌨️ Terminal → 🌐 browser → GitHub
+## Step 9 — Final run, PR, and reply ⌨️ Terminal → 🌐 browser → GitHub
 
 The `check-runlogs` CI gate is blocking and checks two things your Step-6
 baseline run can no longer satisfy, because `SKILL.md` changed underneath it:
@@ -481,10 +481,10 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | 3 Reproduce | paste the user's prompt; viewer open; `/compare-state --against=what-went-wrong` | 🤖 Claude Code (case dir) + Viewer |
 | 4 Classify | skill, tool, or grading fault? | 🤖 Claude Code (case dir) |
 | 5 Capture | `/mine-unit-test --project <case-dir>`; scrub PII | 🤖 Claude Code (case dir) |
-| 6 Improve + gate | → [`skill-lifecycle.md`](skill-lifecycle.md) steps 3–6 | ⌨️ Terminal + 🤖 Claude Code (repo) |
+| 6 Improve + gate | → [`skill-lifecycle.md`](skill-lifecycle.md) steps 4–6 | ⌨️ Terminal + 🤖 Claude Code (repo) |
 | 7 Verify the case | reset + `/clear` + re-paste; `/compare-state --against=desired` | 🤖 Claude Code (case dir) + Viewer |
 | 8 Confirm in Cowork | build + install; fresh unzip; re-issue the prompt | 🖥️ Cowork |
-| 9 Release run + PR | `make eval-skill`, grade **every** dimension, commit, PR, reply | ⌨️ Terminal → 🌐 browser → GitHub |
+| 9 Final run + PR | `make eval-skill`, grade **every** dimension, commit, PR, reply | ⌨️ Terminal → 🌐 browser → GitHub |
 | 10 Clean up | delete both case directories | ⌨️ Terminal / file manager |
 
 **Between any two attempts** (Step 3 retries, Step 7):

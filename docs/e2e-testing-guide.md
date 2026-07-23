@@ -10,7 +10,7 @@ things it deliberately does *not* cover:
 
 | You want to… | Go to |
 |---|---|
-| Fix a skill problem — whether you noticed it while researching or a run exposed it | [`skill-lifecycle.md`](skill-lifecycle.md) — mine a unit test, improve, gate, release. That loop is the same wherever the problem came from, and Step 7 below hands off to it. |
+| Fix a skill problem — whether you noticed it while researching or a run exposed it | [`skill-lifecycle.md`](skill-lifecycle.md) — mine a unit test, improve, gate, PR. That loop is the same wherever the problem came from, and Step 7 below hands off to it. |
 | Look up an exact field, contract, or enum | [`specs/e2e-test-spec.md`](specs/e2e-test-spec.md) — the authoritative format. This guide stays task-shaped and sends you there for reference detail. |
 
 ---
@@ -410,7 +410,8 @@ of the GPS flow.
 ```
 
 That turns the miss into a unit test — cheap, runs on every PR — and drops you
-into [`skill-lifecycle.md`](skill-lifecycle.md) at step 2. Classify the finding
+into [`skill-lifecycle.md`](skill-lifecycle.md) at step 3 (its step 1(b) is this
+very door). Classify the finding
 first, though: the lane rule there exists because most e2e findings are tooling
 or eval bugs, not skill-prose gaps.
 
