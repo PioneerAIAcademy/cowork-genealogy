@@ -1,7 +1,7 @@
 # E2E Testing Guide — authoring and running a benchmark fixture
 
 How to author and run an end-to-end research benchmark test, walked through
-**one real fixture end to end**. Written for the genealogist + developer teams
+**one real fixture end to end**. Written for the team
 doing the work.
 
 This page covers **the e2e benchmark only** — the expensive, live-FamilySearch
@@ -10,7 +10,7 @@ things it deliberately does *not* cover:
 
 | You want to… | Go to |
 |---|---|
-| Fix a skill problem — whether you noticed it while researching or a run exposed it | [`skill-lifecycle.md`](skill-lifecycle.md) — mine a unit test, improve, gate, release. That loop is the same wherever the problem came from, and Step 7 below hands off to it. |
+| Fix a skill problem — whether you noticed it while researching or a run exposed it | [`skill-lifecycle.md`](skill-lifecycle.md) — mine a unit test, improve, gate, PR. That loop is the same wherever the problem came from, and Step 7 below hands off to it. |
 | Look up an exact field, contract, or enum | [`specs/e2e-test-spec.md`](specs/e2e-test-spec.md) — the authoritative format. This guide stays task-shaped and sends you there for reference detail. |
 
 ---
@@ -40,7 +40,7 @@ regression coverage is the unit tests in `eval/tests/unit/`.
 | Icon | Place | What it is | You use it to… |
 |---|---|---|---|
 | ⌨️ | **Terminal** | A plain shell where you type `make …` (Windows: double-click the matching `.bat` in `eval\`). | Set up, validate, seed, run, view. |
-| 🤖 | **Claude Code** | A `claude` session at your **repo root** — not Cowork. The `/`-commands below are repo-local dev skills under `.claude/skills/`, picked up automatically in this checkout. | Author the fixture, interpret the result, grade the run. |
+| 🤖 | **Claude Code** | The **Code tab** of the Claude desktop app opened on your **repo root**, or `claude` in a terminal there — either works, and the Code tab is the usual Windows path. **Not** Cowork. The `/`-commands below are repo-local dev skills under `.claude/skills/`, picked up automatically in this checkout. | Author the fixture, interpret the result, grade the run. |
 | 🖥️ | **Cowork** | The shipping product, with the plugin + MCP extension installed. | Watch `/research` work on the fixture live, before you spend money on a headless run. |
 
 A fourth surface matters throughout: the **Research Viewer** (Electron,
@@ -94,13 +94,20 @@ own slug as you go.
 
 ## Step 0 — Branch ⌨️ Terminal
 
+One task, one branch, always cut from an up-to-date `main` — you open a PR from
+it at the end. Name it with a few hyphenated words describing the task — no
+slashes, no timestamps.
+
+**Terminal:**
+
 ```bash
 git checkout main && git pull
 git checkout -b spriggs-parents-fixture
 ```
 
-**Windows (GitHub Desktop):** Current Branch dropdown → **New branch…** → base
-it on `main` → **Create branch**.
+**GitHub Desktop:** Current Branch dropdown → select **main** and
+**Fetch/Pull** → **New branch…** → name it `spriggs-parents-fixture` → base it
+on `main` → **Create branch**.
 
 Everything the rest of this produces — the fixture files, the run log, the
 grade — lands on this one branch.
@@ -260,7 +267,9 @@ see, and save the headless run for the verdict.
    **Fully quit and reopen** Claude Desktop. Redo both after any MCP-server or
    skill change; without them `/research` says things like
    "validate_research_schema isn't available" and degrades to guessing, which
-   is a missing install, not a `/research` bug.
+   is a missing install, not a `/research` bug. (Canonical version of these
+   rules, including what does *not* need reinstalling:
+   [`skill-lifecycle.md`](skill-lifecycle.md#rebuilding-and-reinstalling).)
 
 2. Seed an editable project from the fixture's starting state:
 
@@ -403,7 +412,8 @@ of the GPS flow.
 ```
 
 That turns the miss into a unit test — cheap, runs on every PR — and drops you
-into [`skill-lifecycle.md`](skill-lifecycle.md) at step 2. Classify the finding
+into [`skill-lifecycle.md`](skill-lifecycle.md) at step 3 (its step 1(b) is this
+very door). Classify the finding
 first, though: the lane rule there exists because most e2e findings are tooling
 or eval bugs, not skill-prose gaps.
 
@@ -444,6 +454,20 @@ report: spec §7.4.
 Commit the fixture directory, the run log, and its `.ann.json` together, push
 the Step-0 branch, and open the PR.
 
+**Terminal:**
+
+```bash
+git add eval/tests/e2e/<slug>/ eval/runlogs/e2e/<slug>/
+git commit -m "e2e: add the <slug> fixture"
+git push -u origin <your-branch>
+gh pr create                            # or open the PR from GitHub's web UI
+```
+
+**GitHub Desktop:** make sure the repository picker says **cowork-genealogy**,
+tick the fixture directory plus the run log **and** its `.ann.json`, type a
+summary, **Commit to `<your-branch>`**, then **Push origin** and **Create Pull
+Request** (it opens GitHub in your browser with the branch pre-filled).
+
 **Prove it's solvable.** Stripping proves the answer isn't *in* the starting
 tree; only a run proves it's *recoverable from live FS*. So run the fixture,
 confirm `pass`, and commit that run log under `eval/runlogs/e2e/<slug>/`.
@@ -460,7 +484,7 @@ confirm `pass`, and commit that run log under `eval/runlogs/e2e/<slug>/`.
 
 | Step | What you do | Where |
 |---|---|---|
-| 0 Branch | `git checkout -b <branch>` | ⌨️ Terminal |
+| 0 Branch | `git checkout -b <short-task-name>` | ⌨️ Terminal |
 | 1 Author | `/author-e2e-fixture` — pick a deceased, well-sourced person | 🤖 Claude Code |
 | 2 Scope | one question, 1–5 findings; keep the search anchors | 🤖 Claude Code |
 | 3 Validate | check the answer is findable; `make e2e-validate TEST=<slug>` | ⌨️ Terminal |
@@ -490,7 +514,7 @@ it from that folder; each prompts for what it needs instead of taking
 | `make e2e-view TEST=<slug>` | `eval\ViewE2E.bat` |
 | `make electron` | `eval\Viewer.bat` |
 | `make e2e-calibrate` *(maintainer)* | `eval\RunCalibration.bat` |
-| `git checkout -b <branch>` | GitHub Desktop → Current Branch → **New branch…** |
+| `git checkout -b <short-task-name>` | GitHub Desktop → Current Branch → **New branch…** |
 
 The `/`-commands (`/author-e2e-fixture`, `/interpret-e2e-result`,
 `/grade-e2e-run`, `/mine-unit-test`) are typed into Claude Code and are the same

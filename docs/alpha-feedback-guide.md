@@ -8,26 +8,24 @@ step, says which of three places you're working in.
 
 | Doc | What it gives you |
 |---|---|
-| [`skill-lifecycle.md`](skill-lifecycle.md) | The improvement loop itself: run the test, annotate, audit the rubric, improve the `SKILL.md`, gate the edit, produce the release run. Shared with every other on-ramp — this page hands off to it at Step 6 and comes back for Steps 7–10. |
+| [`skill-lifecycle.md`](skill-lifecycle.md) | The improvement loop itself: run the test, grade it, audit the rubric, improve the `SKILL.md`, gate the edit, produce the final graded run. Shared with every other on-ramp — this page hands off to it at Step 6 and comes back for Steps 7–10. |
 | [`specs/feedback-case-spec.md`](specs/feedback-case-spec.md) | The **why**: rationale, contracts, lints. Read only when changing the workflow itself. |
 
 ## Who does what
 
 | Role | What they do |
 |---|---|
-| **You** (junior genealogist or any contributor) | Everything from "download the zip" through "commit the fix on a feature branch." |
-| **Developer** | Pairs with you at PR time to build the plugin `.zip`, install it into Cowork, walk through the fresh Cowork verification (Step 8), and open the PR. |
+| **You** (junior genealogist or developer) | The whole loop: download the zip, reproduce the bug, capture the test, improve the skill, build + install the plugin, verify in Cowork, and open the PR. |
 | **Senior genealogist** | Reviews the PR — skill changes, rubric quality, the new unit test — and approves the merge. |
 
-If you get stuck mid-flow, ask a developer. The spec is precise about which
-steps benefit from pairing.
+If you get stuck mid-flow, ask for help.
 
 ## The three places
 
 | Icon | Place | What it is | Used for |
 |---|---|---|---|
 | 🌐 | **The workbench** | <https://genealogy-workbench.fly.dev> in a browser. Where alpha testers research. | *Noticing* the problem and *reporting* it. |
-| 🤖 | **Claude Code** | A `claude` session — sometimes in your repo checkout, sometimes in the unpacked case folder. See below. | *Reproducing*, *classifying*, *capturing the test*, *improving the skill*. |
+| 🤖 | **Claude Code** | The **Code tab** of the Claude desktop app, or `claude` in a terminal — opened sometimes on your repo checkout, sometimes on the unpacked case folder (see below). The Code tab is the usual Windows path. | *Reproducing*, *classifying*, *capturing the test*, *improving the skill*. |
 | ⌨️ | **Terminal** | A plain shell for `make …` (Windows: the matching `.bat`). | *Unpacking* the case, *running tests*, *gating*. One `make` target opens a 🌐 browser tab — the grading UI. |
 
 Alpha testers only ever touch the first one. Everything else is us.
@@ -85,10 +83,9 @@ Already done? Skip ahead.
 
 ## The story: a parent nobody proved
 
-> **The names and the case are invented for the story.** "Marta" (alpha tester)
-> and "Sam" (the genealogist + developer pair, collapsed into one person here)
-> make it concrete, but the split is illustrative — anyone can do any step, and
-> one person can run the whole loop.
+> **The names and the case are invented for the story.** "Marta" is the alpha
+> tester; you're the one running the fix. Anyone can do any step, and one person
+> runs the whole loop.
 
 Marta is working a brick wall — John Schuster, born about 1845 in Augusta
 County. The agent finds an 1850 census household headed by a Robert Schuster
@@ -127,16 +124,23 @@ below is mechanics.
 
 ## Step 1 — Branch before you touch anything ⌨️ Terminal
 
-*(Step 0 happened days earlier, and by someone else. Sam's work starts here.)*
+*(Step 0 happened days earlier, and by someone else. Your work starts here.)*
+
+One task, one branch, always cut from an up-to-date `main` — you open a PR from
+it at the end. Name it with a few hyphenated words describing the fix — no
+slashes, no timestamps.
+
+**Terminal:**
 
 ```bash
 cd ~/cowork-genealogy
 git checkout main && git pull
-git checkout -b feedback/2026-07-21T09-14-22Z
+git checkout -b schuster-parent-fix
 ```
 
-**Windows (GitHub Desktop):** Current Branch dropdown → **New branch…** → base
-it on `main` → **Create branch**.
+**GitHub Desktop:** Current Branch dropdown → select **main** and
+**Fetch/Pull** → **New branch…** → name it `schuster-parent-fix` → base it on
+`main` → **Create branch**.
 
 Do this **before** Step 2, not after: the setup script stamps
 `.feedback-repo-root` with your checkout *as it is when you run it*, and the
@@ -237,10 +241,10 @@ That reads the case folder's current `research.json`, `tree.gedcomx.json` and
   intermittent or already fixed on this branch. Note the date and stop.
 - **`does-not-match`**, but it's wrong in a *different* way → live APIs are
   noisy; reset (below) and run once more. Still wrong? That's a "user-reported
-  bug that doesn't reproduce locally" — escalate with a developer rather than
+  bug that doesn't reproduce locally" — escalate for help rather than
   guessing at a fix.
 - **`partial`** → either the reproduction is genuinely incomplete, or it's
-  live-MCP noise. Try once more; if it oscillates, get a developer's eye on it.
+  live-MCP noise. Try once more; if it oscillates, get a second pair of eyes on it.
 
 > **Resetting between attempts.** Every rerun — here and in Step 7 — needs
 > *both* halves reset, or you're testing contaminated state:
@@ -269,8 +273,11 @@ responses — check:
   ignore him? → a **skill** problem. Continue. ✅ *(This is the case.)*
 - Did the search **never surface** him? → a **tool** problem. Different fix, an
   engineering ticket, not a prose edit.
-- Did the skill behave correctly and a stale rubric would mark it wrong? → a
-  **grading** fix.
+- Did the skill behave correctly and the grading mark it wrong anyway? → a
+  **grading** fix, and it's **yours to make**: this skill's `rubric.md` and this
+  test's `judge_context` are both yours to edit. Re-run the skill's suite
+  afterwards — both are part of the run-log snapshot. Only the base rubric and
+  the global judge prompt belong to the maintainer.
 
 Skipping this check is the classic trap: rewriting instructions for a bug that
 lives in a tool. The full four-lane version is
@@ -294,8 +301,9 @@ same-named candidates fit the evidence, don't assert one as a conclusion* — no
 "the Schuster case." A test that only recognises this one household is a fake
 win: it turns green without the skill getting better.
 
-It prints the new test's id (like `ut_person_evidence_022`). That's the `TEST=`
-value for the gate in Step 6.
+It prints the new test's id — the skill name plus a random three-character
+suffix, like `ut_person_evidence_k3f`. That's the `TEST=` value for the gate in
+Step 6.
 
 > **Capture the test *before* you fix the bug.** That's what lets Step 6's gate
 > prove the fix did something: it compares against a pre-edit baseline, so a
@@ -314,11 +322,13 @@ value for the gate in Step 6.
 Everything from here to a gated fix is the same regardless of where the bug came
 from, so it lives in one place:
 
-**→ [`skill-lifecycle.md`](skill-lifecycle.md), steps 3–6**
+**→ [`skill-lifecycle.md`](skill-lifecycle.md), steps 4–6**
 
 It covers: setting hold-out tests (do this *before* the baseline run), running
-`make eval-skill SKILL=<skill>`, pasting Marta's Did/Should onto the failing
-dimension in the grading UI, `/audit-rubric`, `/improve-skill`, applying the
+`make eval-skill SKILL=<skill>`, commenting in the grading UI on **every
+non-passing dimension** — Marta's Did/Should goes on the one that caught this
+bug, and you correct a *score* only where you disagree but comment wherever a
+dimension isn't passing — then `/audit-rubric`, `/improve-skill`, applying the
 edits yourself, and `make gate-skill SKILL=<skill> TEST=<the mined test id>`.
 
 Two things there are easy to skip and will fail CI if you do — grading **every**
@@ -360,9 +370,9 @@ If it doesn't match, go back to Step 6. The edit landed on the mined test
 without solving the real case, which usually means the test carved too narrow a
 scenario.
 
-## Step 8 — Confirm it in Cowork, paired 🖥️ Cowork
+## Step 8 — Confirm it in Cowork 🖥️ Cowork
 
-**Do this with a developer, and treat it as blocking.** Steps 3 and 7 both run
+**Treat this as blocking.** Steps 3 and 7 both run
 in Claude Code against symlinked skills; this is the only step that exercises
 the fix the way a user gets it — through the built plugin bundle in the real
 product.
@@ -375,9 +385,12 @@ make mcpb                                # Windows: eval\BuildMcpb.bat
 ```
 
 Install the `.mcpb` in Claude Desktop → Settings → Extensions, remove the old
-plugin in Cowork → Customize, upload the new `.zip`, and **fully quit and reopen
-Desktop**. Cowork runs the uploaded `.zip`, not your working tree — skip this
-and the fix will look like it did nothing.
+plugin in Cowork → Customize, and upload the new `.zip` from the **Cowork** tab
+rather than the Code tab — they keep separate plugin lists. Then **fully quit
+and reopen Desktop**. Cowork runs the uploaded `.zip`, not your working tree —
+skip this and the fix will look like it did nothing. (Canonical version of these
+rules, including what does *not* need reinstalling:
+[`skill-lifecycle.md`](skill-lifecycle.md#rebuilding-and-reinstalling).)
 
 Then unzip the **original feedback zip** into a *fresh* folder, so Cowork sees
 the pristine user state rather than your iterated-on one:
@@ -389,16 +402,16 @@ unzip -d ~/feedback/<slug>-cowork-check ~/Downloads/feedback-<timestamp>.zip
 
 No symlinks, no `.claude/skills/`, no reset machinery — Cowork loads from its
 installed plugin bundle, so the fresh unzip is all it needs. Open that folder in
-Cowork as a project, re-issue Marta's prompt verbatim, and both of you confirm
+Cowork as a project, re-issue Marta's prompt verbatim, and confirm
 the fix holds. (If Cowork's UI won't open an existing folder directly, follow
 its workspace-creation flow and copy `research.json`, `tree.gedcomx.json`,
 `results/` and the other top-level files across.)
 
 If the fix **doesn't** hold in Cowork, the bug may be Cowork-runtime-specific —
 plugin loader, viewer context injection, OS-specific file handling. Diagnose it
-with the developer; **do not ship the PR.**
+(get help if you need it); **do not ship the PR.**
 
-## Step 9 — Release run, PR, and reply ⌨️ Terminal → 🌐 browser → GitHub
+## Step 9 — Final run, PR, and reply ⌨️ Terminal → 🌐 browser → GitHub
 
 The `check-runlogs` CI gate is blocking and checks two things your Step-6
 baseline run can no longer satisfy, because `SKILL.md` changed underneath it:
@@ -431,7 +444,8 @@ git commit -m "fix: <one-line summary of the bug>"
 **cowork-genealogy** (not the case directory), tick **only** the paths above —
 the SKILL.md you edited, the new test JSON, the scenario directory, the MCP
 fixtures, and the run log **and** its `.ann.json` — type
-`fix: <one-line summary>` in the Summary box, and **Commit to feedback/…**.
+`fix: <one-line summary>` in the Summary box, and **Commit to
+`schuster-parent-fix`**.
 Commit only the test JSON and it can't run.
 
 The commit message *is* the lesson — explain what went wrong and what changed.
@@ -447,7 +461,7 @@ in the same PR — and run `make eval-skill` for **each** touched skill, since t
 runlog gate checks every skill the PR touches. What to avoid is bundling two
 *unrelated* fixes that happened to share a branch.
 
-A developer pushes and opens the PR with you; the senior genealogist reviews and
+You push and open the PR; the senior genealogist reviews and
 merges.
 
 **Then tell Marta what changed.** An alpha tester who never hears back stops
@@ -470,15 +484,15 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | Step | What you do | Where |
 |---|---|---|
 | 0 Notice | research; spot it; write Did/Should | 🌐 Workbench |
-| 1 Branch | `git checkout -b <branch>` | ⌨️ Terminal (repo) |
+| 1 Branch | `git checkout -b <short-task-name>` | ⌨️ Terminal (repo) |
 | 2 Unpack | `make feedback-case ZIP=<zip>`; copy the prompt it prints | ⌨️ Terminal (repo) |
 | 3 Reproduce | paste the user's prompt; viewer open; `/compare-state --against=what-went-wrong` | 🤖 Claude Code (case dir) + Viewer |
 | 4 Classify | skill, tool, or grading fault? | 🤖 Claude Code (case dir) |
 | 5 Capture | `/mine-unit-test --project <case-dir>`; scrub PII | 🤖 Claude Code (case dir) |
-| 6 Improve + gate | → [`skill-lifecycle.md`](skill-lifecycle.md) steps 3–6 | ⌨️ Terminal + 🤖 Claude Code (repo) |
+| 6 Improve + gate | → [`skill-lifecycle.md`](skill-lifecycle.md) steps 4–6 | ⌨️ Terminal + 🤖 Claude Code (repo) |
 | 7 Verify the case | reset + `/clear` + re-paste; `/compare-state --against=desired` | 🤖 Claude Code (case dir) + Viewer |
-| 8 Confirm in Cowork | build + install; fresh unzip; re-issue the prompt, paired | 🖥️ Cowork |
-| 9 Release run + PR | `make eval-skill`, grade **every** dimension, commit, PR, reply | ⌨️ Terminal → 🌐 browser → GitHub |
+| 8 Confirm in Cowork | build + install; fresh unzip; re-issue the prompt | 🖥️ Cowork |
+| 9 Final run + PR | `make eval-skill`, grade **every** dimension, commit, PR, reply | ⌨️ Terminal → 🌐 browser → GitHub |
 | 10 Clean up | delete both case directories | ⌨️ Terminal / file manager |
 
 **Between any two attempts** (Step 3 retries, Step 7):
@@ -501,7 +515,7 @@ arguments, and rebuilds the MCP server first where that matters.
 | `make e2e-login` | `eval\Login.bat` |
 | `make plugin` / `make mcpb` | `eval\BuildPlugin.bat` / `eval\BuildMcpb.bat` |
 | `make feedback-reset CASE=<dir>` | `scripts\reset-feedback-case.bat` |
-| `git checkout -b <branch>` | GitHub Desktop → Current Branch → **New branch…** |
+| `git checkout -b <short-task-name>` | GitHub Desktop → Current Branch → **New branch…** |
 
 The `/`-commands (`/compare-state`, `/mine-unit-test`, `/audit-rubric`,
 `/improve-skill`) are typed into Claude Code and are the same on every
@@ -525,14 +539,14 @@ Run it as `/mine-unit-test --skill <name>` and pick the skill you edited.
 
 **`run_tests.py` says `fixture_not_found`.**
 Your fix made the agent call a tool the failing transcript didn't. The harness
-has no fixture for that call. Ask a developer to add the fixture under
+has no fixture for that call. Ask a teammate to add the fixture under
 `eval/fixtures/mcp/`.
 
 **`/compare-state --against=desired` keeps saying `partial`.**
 Two possibilities: the fix really is incomplete — keep iterating; or live-MCP
 noise — the same query returns slightly different results run to run. Try once
 more. If it stabilizes you're good; if it oscillates, the rubric may be too
-tight and you'll want a developer's eye on it.
+tight and you'll want a second pair of eyes on it.
 
 **Setup script says the destination already exists.**
 You ran setup on the same zip before. Either delete the old case directory or
