@@ -156,7 +156,11 @@ Two scope limits worth knowing:
 - **The guard is per-skill.** It applies only to a skill that does *not*
   declare `image_read` in its own `allowed-tools` — i.e. one that holds the
   tool solely through `@plugin:image-reader`, like `record-extraction`.
-  `search-images` declares it and browses volumes itself, so it is exempt.
+  (`search-images` used to declare it and browse volumes directly, which was
+  the original exemption case; it has since moved to delegating via
+  `@plugin:image-reader` too — `docs/plan/search-images-base64-accumulation.md`
+  — so no skill currently declares `image_read` directly, though the
+  exemption remains available for one that legitimately needs to.)
 - **Unit only.** e2e runs sub-skills in one session, so it cannot attribute a
   main-thread `image_read` to a skill and cannot apply the guard.
 

@@ -25,15 +25,25 @@ the whole session** — an uncatchable error. This is documented in the tool its
 instance: an e2e run made **17** `image_read` calls (each ≤458 KB raw) and crashed on
 the accumulated ~5.4 MB, not on any single image.
 
-The threshold is brutally low. `image-read.ts:44-46`: **two** ~458 KB scans (~610 KB
-base64 each) "already sum past the buffer." So the safe ceiling is roughly **one**
-image per context.
+The threshold is brutally low **for a context that persists across many calls**, which
+is exactly what `search-images` (a skill, not an isolated agent invocation) has: each
+read's base64 stays resident and is re-sent on every subsequent turn for the rest of
+that skill's run, so blobs from separate reads pile up cumulatively. (Correction,
+2026-07-24: an earlier draft of this section cited `image-read.ts`'s old comment giving
+a specific "two ~458 KB scans already sum past the buffer" figure and generalized it to
+"roughly one image per context" as a universal ceiling. That comment has since been
+rewritten — see `image-read.ts:7-12` — because the "two scans" framing doesn't
+generalize the way this section originally implied: it described *this exact scenario*,
+a skill's own persistent multi-turn context, not a property of any single call or of an
+isolated one-shot subagent invocation, which has no persistent context to accumulate
+into at all. The conclusion below — `search-images` must not call `image_read` directly
+— is unaffected; only the "two-image ceiling" phrasing was overgeneralized.)
 
 `search-images` is built to blow straight through that. It declares `image_read` in its
 own `allowed-tools` (`SKILL.md:20`) and calls it **directly**, page by page, in its own
 context — "### 4. Browse with `image_read`". Its *own* logged example reads
 `imagesExamined: "00040-00075"`, `resultsExamined: 36`. Thirty-six direct reads in one
-context, against a two-image ceiling. It has **zero** references to the `image-reader`
+persistent context. It has **zero** references to the `image-reader`
 agent — `git log -S "image-reader"` on its path is empty across all history.
 
 **Net: any substantial browse crashes the session.** Not intermittently — by
