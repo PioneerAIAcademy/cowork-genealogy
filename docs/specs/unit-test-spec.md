@@ -46,9 +46,9 @@ True multi-turn dialogue support (canned user replies, scripted turn arrays) is 
 
 | Who | Writes | Graded by |
 |-----|--------|-----------|
-| Junior genealogists | JSON test files, scenarios, MCP fixtures via CRUD UI | LLM judge + human verification |
-| Developers | Python pytest files | pytest (deterministic) |
-| Senior genealogists | Skill rubrics, golden sets | Used as calibration baseline |
+| Junior genealogists + developers (one combined role) | JSON test files, scenarios, MCP fixtures, per-test `judge_context`, the **skill rubric** (`eval/tests/unit/<skill>/rubric.md`), and the Python pytest validators | LLM judge + human verification; pytest for the validators |
+| Senior genealogists | Golden sets; PR review and merge | Used as calibration baseline |
+| Project maintainer | Base rubric (shared by every skill), global judge prompt | — |
 
 ### What the test file contains
 
@@ -689,9 +689,16 @@ The judge scores two rubric tiers and additionally reads per-test background con
 
 | Tier | Defined where | Applies to | Who maintains | Scored? |
 |------|--------------|------------|---------------|---------|
-| Base rubric | Shared across all skills | Every unit test | Developers | yes — dimensions |
-| Skill rubric | `eval/tests/unit/<skill>/rubric.md` | Every test for one skill | Senior genealogists | yes — dimensions |
+| Base rubric | Shared across all skills | Every unit test | Project maintainer | yes — dimensions |
+| Skill rubric | `eval/tests/unit/<skill>/rubric.md` | Every test for one skill | Junior genealogists | yes — dimensions |
 | Per-test context | `judge_context` in test JSON | One test only | Junior genealogists | no — background only |
+
+The two junior-owned layers are both embedded in the run-log snapshot, so
+editing either invalidates the skill's latest run and forces a re-run before CI
+will pass. The base rubric and the global judge prompt are the maintainer's
+alone — a change to either re-baselines every skill in the project, which is why
+the judge prompt is tracked out-of-band as `judge_prompt_hash` (warn-only) rather
+than as skill-side state.
 
 The base and skill rubrics produce scored dimensions. `judge_context` is **not** scored: the judge reads it only as background to ground its rationales for the base + rubric dimensions (see §5.4).
 
