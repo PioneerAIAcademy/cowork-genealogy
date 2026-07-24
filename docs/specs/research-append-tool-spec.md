@@ -587,6 +587,7 @@ plain entry write fits here, the computed build may warrant its own tool),
 | `op: update` `fields` attempting to change `id` | input error |
 | `section: plan_items` without a resolvable `planId` | input error |
 | A §5 invariant violated | input error with the specific rule; write nothing |
+| Assertion `evidence_type: "negative"` paired with `record_role` other than the literal `"absent"` (or vice versa) | input error naming the mismatch and the fix; write nothing. `record_role: "absent"` is a mechanical corollary of `evidence_type: "negative"` (research-schema-spec.md §5.6), not a second judgment call — checked on both `append` and `update` (re-validated against the merged entry, not just the patched fields) |
 | `sourceDescription` malformed (missing `title`, unknown keys) or without exactly one sources append op | input error; write nothing |
 | sources append with neither `sourceDescription` nor an existing `gedcomx_source_description_id` (or with both) | op-indexed input error; write nothing |
 | sources append referencing a dangling `S` id | op-indexed precondition error naming the existing S ids; write nothing |

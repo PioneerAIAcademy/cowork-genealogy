@@ -1641,6 +1641,7 @@ describe("research_append (composite persist + enforcement)", () => {
           op: "append",
           entry: {
             ...noId(validAssertion("x", "src_001")),
+            record_role: "absent",
             evidence_type: "negative",
             log_entry_id: "log_001",
           },
@@ -2602,6 +2603,125 @@ describe("research_append — evaluations verdict composite", () => {
       entry: { ...pointer(), file_path: "evaluations/hand-written.json" },
     } as any);
     expect(r.errors ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+});
+
+describe("research_append — negative evidence role invariant", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "ra-negev-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+
+  it("rejects evidence_type: negative with a non-absent record_role", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "father_of_deceased",
+            evidence_type: "negative",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/negative evidence always uses the literal record_role "absent"/);
+  });
+
+  it("rejects record_role: absent paired with a non-negative evidence_type", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "absent",
+            evidence_type: "direct",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/record_role "absent" is reserved for negative evidence/);
+  });
+
+  it("accepts evidence_type: negative paired with record_role: absent", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "absent",
+            evidence_type: "negative",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("re-checks the invariant on update, against the merged (not just patched) fields", async () => {
+    await writeProject();
+    const created = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "absent",
+            evidence_type: "negative",
+          },
+        },
+      ],
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const entryId = (created as any).results[0].entryId as string;
+
+    // Flips evidence_type back to direct without also fixing record_role —
+    // the merged result violates the invariant even though this one update
+    // only names one field.
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "update", entryId, fields: { evidence_type: "direct" } },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/record_role "absent" is reserved for negative evidence/);
+  });
+
+  it("does not fire for non-assertion sections (no evidence_type field)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "sources", op: "append", entry: noId(validSource("x")) }],
+    });
     expect(r.ok).toBe(true);
   });
 });

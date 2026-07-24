@@ -724,6 +724,33 @@ is over-extraction, not thoroughness, and it is not the meaningful absence
 this section is for. A negative assertion always concerns a *person*
 (`record_role: "absent"`), never an absent attribute of a present person.
 
+**A second, equally common pattern: the person IS named in the source, but
+the finding is that they predeceased the subject.** An obituary saying "he
+was preceded in death by his wife, Ruth, and by his parents" is negative
+evidence about three people's vital status — each was dead by the obituary
+date — not about their appearance in this record; they ARE named. Being
+textually present does not change the rule: `record_role` is still the
+literal `"absent"` for each of them, because the analytical finding is their
+absence from among the living, not their absence from the text. Do **not**
+tag them with their familial role (`father_of_deceased`, `spouse_1`, etc.)
+instead — that relational fact belongs in `value`'s prose and in
+person-evidence's later tree linkage, not in `record_role`.
+
+**Multi-person negative evidence needs one assertion PER PERSON, each with a
+`value` that NAMES that specific person — never a shared generic value
+across the batch.** "Preceded in death by his wife, Ruth, and by his
+parents, Walter and Edith" is three assertions:
+- `value: "Ruth Ann Baxter Whitaker preceded Harold Dean Whitaker in death"`
+- `value: "Walter Whitaker preceded Harold Dean Whitaker in death"`
+- `value: "Edith Whitaker preceded Harold Dean Whitaker in death"`
+
+never three assertions sharing one undifferentiated
+`value: "preceded Harold Dean Whitaker in death"` with only `record_role`
+distinguishing them — `record_role` is `"absent"` on all three, so it
+cannot also do the job of telling them apart. If you can't tell from
+`value` alone which specific person an assertion is about, the value is
+too generic.
+
 ## Match checking (only when asked)
 
 When the delegation message says the user asked, after persisting call
