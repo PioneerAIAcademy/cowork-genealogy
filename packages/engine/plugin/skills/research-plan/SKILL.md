@@ -199,6 +199,16 @@ table and contextual factors checklist.
   registration), say so in a plan-item rationale and lean on the
   alternatives — never satisfy the premise by stretching to the
   nearest same-named match inside the presupposed collection.
+  **Breadth is disciplined, not speculative.** Plan each record *type*
+  and its target — never cite or invent a specific source (a `src_` id,
+  or a named document like "the will of X") that is not already in the
+  before-state: a plan item names what to *search for*, not evidence you
+  have not found yet. Keep each `collections_search` / `volume_search`
+  scoped to the subject's surveyed place and era — do not broaden to a
+  whole country when the locality survey has already localized the goal.
+  And breadth **complements** the locality survey — cite that survey's
+  facts (its `loc_` entry) in the plan-item rationales; it does not
+  replace reading them.
 - **For a parentage question, always add a dedicated plan item for the
   candidate parents' marriage to *each other*** — not the subject's own
   marriage, and not folded into a generic "church records" item. The
