@@ -1,0 +1,151 @@
+{
+  "persons": [
+    {
+      "id": "LDSJ-SXL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Katalin",
+          "surname": "Horák"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LDSJ-SXK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "István",
+          "surname": "Banyari"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "15 Apr 1846",
+          "standard_date": "15 Apr 1846",
+          "place": "Kľak, Nová Baňa, Slovakia",
+          "standard_place": "Kľak, Žarnovica, Slovakia"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LDSJ-SX2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "István",
+          "surname": "Banyari"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GGCQ-1B6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "István",
+          "surname": "Banyári"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6efbdfd9-bbdb-46e9-9bfd-e153455d6010",
+          "type": "Birth",
+          "date": "1938",
+          "standard_date": "1938",
+          "place": "Mohol",
+          "standard_place": "Mohol, Solapur, Maharashtra, India"
+        },
+        {
+          "id": "7bdd64e6-68e9-4477-bd04-0d4740850575",
+          "type": "Death",
+          "place": "Dunaújváros, Fejér, Magyarország",
+          "standard_place": "Dunaújváros, Fejér, Hungary"
+        }
+      ]
+    },
+    {
+      "id": "GGC7-K79",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "István",
+          "surname": "Banyári"
+        }
+      ],
+      "facts": [
+        {
+          "id": "219ac861-9e2e-4815-889d-8c5aa0a6fe97",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GGC7-K79",
+      "person2": "LDSJ-SXL"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LDSJ-SX2",
+      "person2": "LDSJ-SXL"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LDSJ-SX2",
+      "child": "LDSJ-SXK"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LDSJ-SXL",
+      "child": "LDSJ-SXK"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GGC7-K79",
+      "child": "GGCQ-1B6"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "LDSJ-SXL",
+      "child": "GGCQ-1B6"
+    }
+  ],
+  "sources": []
+}

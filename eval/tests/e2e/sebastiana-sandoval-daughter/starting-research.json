@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_sebastiana_sandoval_daughter",
+    "objective": "Did Sebastiana Sandoval and her husband Jose Aguilar of Oaxaca, Mexico have a daughter named Juana, born 1876 and died 1879, in addition to their four known children (b. 1877-1885)?",
+    "subject_person_ids": [
+      "K2GV-D61"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

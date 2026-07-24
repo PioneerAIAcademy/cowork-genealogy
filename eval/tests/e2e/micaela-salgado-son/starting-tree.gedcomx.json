@@ -1,0 +1,209 @@
+{
+  "persons": [
+    {
+      "id": "9XGG-PW4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Micaela",
+          "surname": "Salgado"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4dea1a87-2d26-4744-8daa-3a88485c0235",
+          "type": "Birth",
+          "date": "1854",
+          "standard_date": "1854",
+          "place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras",
+          "standard_place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "f02b576e-1f7f-4a1b-8daa-5841b3b676d9",
+          "type": "Christening",
+          "date": "14 de mayo de 1854",
+          "standard_date": "14 May 1854",
+          "place": "Catedral San Miguel Arcángel, Distrito Central, Francisco Morazán, Honduras",
+          "standard_place": "Catedral San Miguel Arcángel, Distrito Central, Francisco Morazán, Honduras"
+        },
+        {
+          "id": "4189ff9a-d501-43a6-8569-9ef06cc30241",
+          "type": "Birth Registration",
+          "place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras",
+          "standard_place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras"
+        }
+      ]
+    },
+    {
+      "id": "MHZ1-4X1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Elena",
+          "surname": "Salgado"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a2de889f-09de-408a-82b6-26c29861ec63",
+          "type": "Birth",
+          "date": "1834",
+          "standard_date": "1834",
+          "place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras",
+          "standard_place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "eb2bf9a6-5393-4511-95cd-197e7e7074a6",
+          "type": "Christening",
+          "place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras",
+          "standard_place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras"
+        }
+      ]
+    },
+    {
+      "id": "PS4K-GN8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Maria Norberta",
+          "surname": "Salgado"
+        }
+      ],
+      "facts": [
+        {
+          "id": "81e5f5b5-6451-4799-b453-e0764c583859",
+          "type": "Birth",
+          "date": "10 de diciembre de 1884",
+          "standard_date": "10 Dec 1884",
+          "place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras",
+          "standard_place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras"
+        },
+        {
+          "id": "5d9df6a9-a66b-4296-b34c-94323a218cf9",
+          "type": "Christening",
+          "date": "10 de febrero de 1885",
+          "standard_date": "10 Feb 1885",
+          "place": "Catedral San Miguel Arcángel, Distrito Central, Francisco Morazán, Honduras",
+          "standard_place": "Catedral San Miguel Arcángel, Distrito Central, Francisco Morazán, Honduras"
+        },
+        {
+          "id": "4d526f34-8380-47e4-b30e-0beded0dfe43",
+          "type": "Death",
+          "place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras",
+          "standard_place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras"
+        },
+        {
+          "id": "42468db6-2c94-4234-a3ff-03a1d67b54c7",
+          "type": "Birth Registration",
+          "place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras",
+          "standard_place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras"
+        }
+      ]
+    },
+    {
+      "id": "9XGG-PWW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Raimunda De Jesus",
+          "surname": "Salgado"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "15 Mar 1874",
+          "standard_date": "15 Mar 1874"
+        },
+        {
+          "id": "453dddf0-cce9-4ea8-bf89-7f0161420bc3",
+          "type": "Christening",
+          "date": "12 Apr 1874",
+          "standard_date": "12 Apr 1874",
+          "place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras",
+          "standard_place": "Tegucigalpa, Distrito Central, Francisco Morazán, Honduras"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "MHZ1-4X1",
+      "child": "9XGG-PW4"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "9XGG-PW4",
+      "child": "9XGG-PWW",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "9XGG-PW4",
+      "child": "PS4K-GN8"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7J8S-549",
+      "title": "Micaela Salgado, \"Honduras, registros parroquiales y diocesanos, 1633-1978\"",
+      "citation": "\"Honduras, registros parroquiales y diocesanos, 1633-1978\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KXPM-NS3 : Sat Mar 09 07:02:56 UTC 2024), Entry for Raimunda de Jesus Salgado and Micaela Salgado, 12 Apr 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KXPM-NSS"
+    },
+    {
+      "id": "7J8S-R2X",
+      "title": "Micaela Salgado, \"Honduras, registros parroquiales y diocesanos, 1633-1978\"",
+      "citation": "\"Honduras, registros parroquiales y diocesanos, 1633-1978\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KXP9-9KW : Sat Mar 09 11:26:46 UTC 2024), Entry for Maria Norberta Salgado and Micaela Salgado, 10 Feb 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KXP9-9K7"
+    },
+    {
+      "id": "7J8S-PJ7",
+      "title": "Micaela Salgado, \"Honduras, registros parroquiales y diocesanos, 1633-1978\"",
+      "citation": "\"Honduras, registros parroquiales y diocesanos, 1633-1978\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KXG1-5MS : Sun Mar 10 09:12:35 UTC 2024), Entry for Micaela Salgado and Elena Salgado, 14 May 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KXG1-5MS"
+    },
+    {
+      "id": "9M77-S7T",
+      "title": "Micaela Salgado in entry for Raimunda de Jesus Salgado, \"Honduras, Baptisms, 1730-1930\"",
+      "citation": "\"Honduras bautismos, 1730-1930\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FLHH-R4H : 20 November 2025), Micaela Salgado in entry for Raimunda de Jesus Salgado, 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLHH-R4H"
+    },
+    {
+      "id": "7J8S-5GM",
+      "title": "Micaela Salgado, \"Honduras, Registro Civil, 1841-1968\"",
+      "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKDY-H6Q1 : Tue Apr 28 13:23:43 UTC 2026), Entry for Maria Norberta Salgado and Micaela Salgado.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKDY-H67M"
+    },
+    {
+      "id": "7J8S-YH4",
+      "title": "Micaela Salgado, \"Honduras, Registro Civil, 1841-1968\"",
+      "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGTX-29PX : Tue Apr 28 13:52:46 UTC 2026), Entry for Micaela Salgado and Elena Salgado.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGTX-29PX"
+    }
+  ]
+}

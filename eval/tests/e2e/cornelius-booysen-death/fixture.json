@@ -1,0 +1,19 @@
+{
+  "id": "cornelius-booysen-death",
+  "name": "Cornelius Hermanus Zacharias Booysen — death in the Transvaal",
+  "genre": "record-hint",
+  "source_pid": "GWDS-CKP",
+  "captured": "2026-07-24",
+  "researcher_question": "When and where did Cornelius Hermanus Zacharias Booysen of Pretoria, Transvaal, South Africa die?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1930s",
+    "geography": "ZA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 30, flag adds_death, confidence 3). Draft transcribed from a South African probate record; unverified."
+}

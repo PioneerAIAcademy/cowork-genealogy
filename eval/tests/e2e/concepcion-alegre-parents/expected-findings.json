@@ -1,0 +1,68 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Concepción Alegre was born 1917 in Altos, Cordillera, Paraguay. The tree currently records no birth fact for her.",
+      "details": {
+        "subject_person": "Concepción Alegre (G384-ZCZ)",
+        "fact_type": "Birth",
+        "date": "1917",
+        "place": "Altos, Cordillera, Paraguay"
+      },
+      "supporting_sources": [
+        "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Concepción Alegre married Vicente Figueredo on 11 May 1940 in San Lorenzo, Altos, Cordillera. The tree currently records this couple with no marriage date.",
+      "details": {
+        "subject_person": "Concepción Alegre (G384-ZCZ)",
+        "fact_type": "Marriage",
+        "date": "11 May 1940",
+        "place": "San Lorenzo, Altos, Cordillera, Paraguay"
+      },
+      "supporting_sources": [
+        "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Concepción Alegre's father was Juan Delgado, per the same marriage record.",
+      "details": {
+        "subject_person": "Concepción Alegre (G384-ZCZ)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Juan Delgado",
+          "birth": "unknown, likely Paraguay"
+        }
+      },
+      "supporting_sources": [
+        "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera"
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "Concepción Alegre's mother was Hipólita Martínez, per the same marriage record.",
+      "details": {
+        "subject_person": "Concepción Alegre (G384-ZCZ)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Hipólita Martínez",
+          "birth": "unknown, likely Paraguay"
+        }
+      },
+      "supporting_sources": [
+        "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera"
+      ],
+      "required": true
+    }
+  ]
+}

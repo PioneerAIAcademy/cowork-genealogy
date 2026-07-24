@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Sebastiana Sandoval and Jose Maria Aguilar (recorded in the tree as Jose Aguilar) had a daughter, Juana Aguilar, born 1876 and died 28 October 1879 in Tlaxiaco, Oaxaca (age about 3), in addition to their four children already in the tree (b. 1877-1885).",
+      "details": {
+        "subject_person": "Sebastiana Sandoval (K2GV-D61)",
+        "relation": "child",
+        "target_person": {
+          "name": "Juana Aguilar",
+          "birth": "1876",
+          "death": "28 October 1879, Tlaxiaco, Oaxaca, Mexico"
+        }
+      },
+      "supporting_sources": [
+        "México, Oaxaca, Registro Civil, 1861-2002 — death registration, 28 Oct 1879, Tlaxiaco, naming parents Jose Maria Aguilar and Sebastiana Sandoval"
+      ],
+      "required": true
+    }
+  ]
+}

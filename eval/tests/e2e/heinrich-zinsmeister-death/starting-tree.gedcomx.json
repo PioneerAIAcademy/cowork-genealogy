@@ -1,0 +1,188 @@
+{
+  "persons": [
+    {
+      "id": "KD72-C6D",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Heinrich",
+          "surname": "Zinsmeister"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MK39-RYL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Juliane",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "01 Jan 1824",
+          "standard_date": "1 Jan 1824",
+          "place": "Evangelisch, Steinwenden, Pfalz, Bavaria",
+          "standard_place": "Palatinate, Bavaria, Germany"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MK39-RN4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Elisabetha",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "23 Nov 1828",
+          "standard_date": "23 Nov 1828",
+          "place": "Evangelisch, Steinwenden, Pfalz, Bavaria",
+          "standard_place": "Palatinate, Bavaria, Germany"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MK39-T4W",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Maria Catharina",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "17 Jul 1819",
+          "standard_date": "17 Jul 1819",
+          "place": "Evangelisch, Steinwenden, Pfalz, Bavaria",
+          "standard_place": "Palatinate, Bavaria, Germany"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KD72-C66",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Elisabetha",
+          "surname": "Engelskircher"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KD72-C6D",
+      "person2": "KD72-C66"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "KD72-C6D",
+      "child": "MK39-T4W",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KD72-C66",
+      "child": "MK39-T4W",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KD72-C6D",
+      "child": "MK39-RYL",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KD72-C66",
+      "child": "MK39-RYL",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KD72-C6D",
+      "child": "MK39-RN4",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KD72-C66",
+      "child": "MK39-RN4",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "M6P1-Q71",
+      "title": "Heinrich Zinsmeister in entry for Juliane Zinsmeister, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N8B2-MHK : 25 October 2021), Heinrich Zinsmeister in entry for Juliane Zinsmeister, 1824.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N8B2-MHK"
+    },
+    {
+      "id": "MDJK-76F",
+      "title": "Heinrich Zinsmeister in entry for Maria Catharina Zinsmeister, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NP7X-YLP : 25 October 2021), Heinrich Zinsmeister in entry for Maria Catharina Zinsmeister, 1819.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NP7X-YLP"
+    },
+    {
+      "id": "M6PB-BJJ",
+      "title": "Heinrich Zinsmeister in entry for Elisabetha Zinsmeister, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NRB6-P5C : 25 October 2021), Heinrich Zinsmeister in entry for Elisabetha Zinsmeister, 1828.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NRB6-P5C"
+    }
+  ]
+}

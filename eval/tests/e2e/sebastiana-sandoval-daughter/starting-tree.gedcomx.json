@@ -1,0 +1,256 @@
+{
+  "persons": [
+    {
+      "id": "K2GV-D61",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Sebastiana",
+          "surname": "Sandoval"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "L4DP-TRJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Juan",
+          "surname": "Aguilar Sandoval"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8dddb0b5-4223-495c-9f1d-80f37098429e",
+          "type": "Birth",
+          "date": "1877",
+          "standard_date": "1877",
+          "place": "Magdalena Peñasco, Oaxaca, México",
+          "standard_place": "Magdalena Peñasco, Oaxaca, Mexico"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PHS7-Y7L",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Remigio",
+          "surname": "Aguilar"
+        }
+      ],
+      "facts": [
+        {
+          "id": "20e95df4-f747-4a26-8084-8d2a0f96d76c",
+          "type": "Birth",
+          "date": "30 de septiembre de 1879",
+          "standard_date": "30 Sep 1879",
+          "place": "Magdalena Peñasco, Oaxaca, México",
+          "standard_place": "Magdalena Peñasco, Oaxaca, Mexico"
+        },
+        {
+          "id": "e0d0f2ab-77ba-44d1-8332-61e91a798547",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K2GV-D6B",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Jose",
+          "surname": "Aguilar"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K2GV-D6Y",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Jose Casimiro Tomas",
+          "surname": "Aguilar Sandoval"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d889f146-9ba7-4106-8597-a74ed0695461",
+          "type": "Birth",
+          "date": "2 de marzo de 1885",
+          "standard_date": "2 Mar 1885",
+          "place": "Santa María Asunción, Santa María Tlahuitoltepec, Oaxaca, México",
+          "standard_place": "Santa María Asunción, Santa María Tlahuitoltepec, Oaxaca, Mexico"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "7 de marzo de 1885",
+          "standard_date": "7 Mar 1885",
+          "place": "Santa María Asunción, Santa María Tlahuitoltepec, Oaxaca, México",
+          "standard_place": "Santa María Asunción, Santa María Tlahuitoltepec, Oaxaca, Mexico"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PCQ2-MZX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Carpio",
+          "surname": "Aguilar Sandoval"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3f234f3b-52c6-4d13-abdd-81d7404298a7",
+          "type": "Birth",
+          "date": "1884",
+          "standard_date": "1884"
+        },
+        {
+          "id": "57809b1f-034b-47a4-89ef-7097abece845",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "K2GV-D6B",
+      "person2": "K2GV-D61"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "K2GV-D6B",
+      "child": "L4DP-TRJ"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "K2GV-D61",
+      "child": "L4DP-TRJ"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "K2GV-D6B",
+      "child": "PHS7-Y7L"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K2GV-D61",
+      "child": "PHS7-Y7L"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "K2GV-D6B",
+      "child": "PCQ2-MZX"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "K2GV-D61",
+      "child": "PCQ2-MZX"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "K2GV-D6B",
+      "child": "K2GV-D6Y"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "K2GV-D61",
+      "child": "K2GV-D6Y"
+    }
+  ],
+  "sources": [
+    {
+      "id": "W8ND-NYL",
+      "title": "Sebastiana Sandoval, \"México bautismos, 1560-1950\"",
+      "citation": "\"México bautismos, 1560-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N1JH-1HZ : Fri Mar 27 14:20:14 UTC 2026), Entry for Jose Casimiro Tomas Aguilar and Jose Aguilar, 7 Mar 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N1JH-1HD"
+    },
+    {
+      "id": "W9S8-TZB",
+      "title": "Sebastiana Sandoval, \"México, Oaxaca, Registro Civil, 1861-2002\"",
+      "citation": "\"México, Oaxaca, Registro Civil, 1861-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG9P-1JRZ : Wed Mar 12 12:04:46 UTC 2025), Entry for Remigio Aguilar and José Maria Aguilar, 1 de octubre de 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QG9P-1JRV"
+    },
+    {
+      "id": "W36H-L1F",
+      "title": "Sebastiana Sandova, \"México, Oaxaca, registros parroquiales y diocesanos, 1559-2022\"",
+      "citation": "\"México, Oaxaca, registros parroquiales y diocesanos, 1559-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D2M8-QYMM : Thu Oct 16 19:51:33 UTC 2025), Entry for Carpio Aguilar and Jose Aguilar, 7 Jul 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D2M8-QYW2"
+    },
+    {
+      "id": "WC7L-NSY",
+      "title": "Sebastiana Sandoval, \"México, Oaxaca, registros parroquiales y diocesanos, 1559-2022\"",
+      "citation": "\"México, Oaxaca, registros parroquiales y diocesanos, 1559-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DK7P-YBMM : Fri Jul 19 13:00:10 UTC 2024), Entry for Juan Aguilar and José Aguilar, 14 Jan 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DK75-W6PZ"
+    },
+    {
+      "id": "7HXT-68R",
+      "title": "Sebastiana Sandoval in entry for Juan Aguilar, \"Mexico, Marriages, 1570-1950\"",
+      "citation": "\"México matrimonios, 1570-1950\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:JHKV-6RT : 20 May 2021), Sebastiana Sandoval in entry for Juan Aguilar, 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JHKV-6RT"
+    },
+    {
+      "id": "WC7L-Z6P",
+      "title": "Sebastiana Sandoval, \"México, Oaxaca, registros parroquiales y diocesanos, 1559-2022\"",
+      "citation": "\"México, Oaxaca, registros parroquiales y diocesanos, 1559-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D2M8-6S3Z : Mon Jan 20 06:02:23 UTC 2025), Entry for Juan Aguilar and José, 24 Jul 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D2M8-6SZM"
+    },
+    {
+      "id": "7HXT-24Z",
+      "title": "Sebastiana Sandoval, \"México, Oaxaca, registros parroquiales y diocesanos, 1559-2022\"",
+      "citation": "\"México, Oaxaca, registros parroquiales y diocesanos, 1559-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DK7K-SD6Z : Mon Jan 20 03:00:47 UTC 2025), Entry for Juan Aguilarl and Jose, 24 Jul 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DK7K-SD2M"
+    },
+    {
+      "id": "WC7L-8QM",
+      "title": "Sebastiana Sandoval, \"México, Oaxaca, registros parroquiales y diocesanos, 1559-2022\"",
+      "citation": "\"México, Oaxaca, registros parroquiales y diocesanos, 1559-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D2MZ-243Z : Fri Jan 17 18:00:30 UTC 2025), Entry for Juan Aguilar and José Aguilar, 14 Jan 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D2MZ-24ZM"
+    }
+  ]
+}

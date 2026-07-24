@@ -1,0 +1,281 @@
+{
+  "persons": [
+    {
+      "id": "G384-ZCZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Concepción",
+          "surname": "Alegre"
+        }
+      ],
+      "facts": [
+        {
+          "id": "315c11b3-dfdc-4067-ab07-12dd73db4526",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P73C-ZRQ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Paulino",
+          "surname": "Figueredo Alegre"
+        }
+      ],
+      "facts": [
+        {
+          "id": "803583a5-7a09-434e-84b1-5791724ee187",
+          "type": "Birth",
+          "date": "30 de agosto de 1938",
+          "standard_date": "30 Aug 1938",
+          "place": "Altos",
+          "standard_place": "Alto, Rio Arriba, New Mexico, United States"
+        },
+        {
+          "id": "dd22fd68-c5d9-4af5-962d-b9d31148c55d",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GYB4-FNS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Antonia",
+          "surname": "Figueredo"
+        }
+      ],
+      "facts": [
+        {
+          "id": "48172d0d-f471-4140-a01e-f34f91ea7312",
+          "type": "Birth",
+          "place": "Guapotá, Santander, Colombia",
+          "standard_place": "Guapotá, Santander, Colombia"
+        },
+        {
+          "id": "039bf1ca-b0fa-4b21-978d-4683fa387698",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PZTC-SM6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Vicente",
+          "surname": "Figueredo"
+        }
+      ],
+      "facts": [
+        {
+          "id": "bfd4b9b5-b9f0-4c6d-a5f2-46be5f40dbab",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G384-Z5K",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Vicente",
+          "surname": "Figueredo"
+        }
+      ],
+      "facts": [
+        {
+          "id": "926ac396-774f-4c2b-9d46-ed571a799603",
+          "type": "Birth",
+          "date": "19 de julho de 1915",
+          "standard_date": "19 Jul 1915",
+          "place": "Altos",
+          "standard_place": "Alto, Rio Arriba, New Mexico, United States"
+        },
+        {
+          "id": "3b6ca076-dbae-4195-af45-c9224dc341ca",
+          "type": "Death",
+          "date": "29 de março de 2009",
+          "standard_date": "29 Mar 2009"
+        },
+        {
+          "id": "bbd6ec37-034e-49cd-b191-8a1a0c81ce92",
+          "type": "Pension",
+          "date": "22 de outubro de 2009",
+          "standard_date": "22 Oct 2009",
+          "place": "La Catedral, Asunción, Paraguai",
+          "standard_place": "La Catedral, Asunción, Paraguay"
+        }
+      ]
+    },
+    {
+      "id": "PZTC-VFW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Agustin",
+          "surname": "Figueredo Alegre"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8a4034c6-f7df-496c-8916-28455f49dab9",
+          "type": "Birth",
+          "date": "28 de agosto de 1941",
+          "standard_date": "28 Aug 1941",
+          "place": "Altos",
+          "standard_place": "Alto, Banks, Georgia, United States"
+        },
+        {
+          "id": "1763af1b-5e0c-4c48-9559-000ef3ea2801",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P73Z-2WC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "natimorto",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "637e3ea8-eab3-455b-ac59-4c8fdfd45ced",
+          "type": "Birth",
+          "date": "06031947",
+          "place": "Altos, Cordillera, Paraguai",
+          "standard_place": "Altos, Cordillera, Paraguay"
+        },
+        {
+          "id": "6c954a22-7046-4772-93c2-b2872414a24a",
+          "type": "Death",
+          "date": "6 de março de 1947",
+          "standard_date": "6 Mar 1947",
+          "place": "Altos, Cordillera, Paraguai",
+          "standard_place": "Altos, Cordillera, Paraguay"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "PZTC-SM6",
+      "person2": "G384-ZCZ"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "G384-Z5K",
+      "person2": "G384-ZCZ"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "G384-Z5K",
+      "child": "P73C-ZRQ"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "G384-ZCZ",
+      "child": "P73C-ZRQ"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "PZTC-SM6",
+      "child": "PZTC-VFW"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "G384-ZCZ",
+      "child": "PZTC-VFW"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "G384-Z5K",
+      "child": "P73Z-2WC"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "G384-ZCZ",
+      "child": "P73Z-2WC"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "PZTC-SM6",
+      "child": "GYB4-FNS"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "G384-ZCZ",
+      "child": "GYB4-FNS"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7RW9-SDX",
+      "title": "Concepcion Alegre, \"Paraguay, registros militares, 1870-1965\"",
+      "citation": "\"Paraguay, registros militares, 1870-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62WX-R727 : Fri Jan 23 14:41:28 UTC 2026), Entry for Adriano Figueredo Alegre and Vicente Figueredo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62WX-R724"
+    },
+    {
+      "id": "WW4L-3YF",
+      "title": "Concepción Alegre, \"Paraguay, registros militares, 1870-1965\"",
+      "citation": "\"Paraguay, registros militares, 1870-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62H5-313P : Mon Jan 13 10:53:21 UTC 2025), Entry for Agustin Figueredo Alegre and Vicente Figueredo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62H5-313R"
+    },
+    {
+      "id": "7RW9-QWG",
+      "title": "Concepción Alegre, \"Paraguay, Civil Registration, 1842-2012\"",
+      "citation": "\"Paraguay, Civil Registration, 1842-2012\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65T3-ZR5M : Mon Sep 15 21:45:37 UTC 2025), Entry for <Unknown> and Vicente Figueredo, 6 de marzo de 1947.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65T3-ZR5S"
+    },
+    {
+      "id": "7RW9-DBJ",
+      "title": "Concepcion Alegre, \"Paraguay, registros militares, 1870-1965\"",
+      "citation": "\"Paraguay, registros militares, 1870-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:629L-9GH5 : Tue Oct 14 05:03:09 UTC 2025), Entry for Silvio Figueredo Alegre and Vicente Figuredo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:629L-9GHT"
+    },
+    {
+      "id": "7RW9-3CH",
+      "title": "Concepcion Alegre, \"Paraguay, registros militares, 1870-1965\"",
+      "citation": "\"Paraguay, registros militares, 1870-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZP3-88WN : Thu Oct 09 04:22:19 UTC 2025), Entry for Paulino Figueredo Alegre and Vicente Figueredo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZP3-88WV"
+    },
+    {
+      "id": "7RWS-2LT",
+      "title": "Concepción Alegre, \"Paraguay, Military Pensions, 1932 - 2015\"",
+      "citation": "\"Paraguay, Military Pensions, 1932 - 2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BLS-4DK8 : Fri Jan 23 00:26:21 UTC 2026), Entry for Vicente Figueredo Bogado and Sixta Idalina, 22 Oct 2009.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BLS-4DKX"
+    }
+  ]
+}

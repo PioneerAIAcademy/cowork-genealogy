@@ -1,0 +1,19 @@
+{
+  "id": "heinrich-zinsmeister-death",
+  "name": "Heinrich Zinsmeister — birth, death and burial (Bavaria, 1854)",
+  "genre": "record-hint",
+  "source_pid": "KD72-C6D",
+  "captured": "2026-07-24",
+  "researcher_question": "When and where was Heinrich Zinsmeister of Steinwenden, Pfalz, Bavaria born, and when and where did he die?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1850s",
+    "geography": "DE"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 5, flags adds_birth/adds_death/adds_burial, confidence 3). Draft transcribed from a German death/burial record; unverified."
+}
