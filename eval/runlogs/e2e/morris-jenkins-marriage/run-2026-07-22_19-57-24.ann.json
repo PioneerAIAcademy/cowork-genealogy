@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f2": "Right person and birthplace recovered; birth date is only an approximate year (\"about 1822\", derived from 1851 census age) vs. the fixture's exact date 15 May 1821 — off by ~1 year with no month/day precision."
+  }
+}

@@ -1,4 +1,4 @@
-// TypeScript types mirroring docs/research-schema-spec.md and docs/simplified-gedcomx-spec.md
+// TypeScript types mirroring docs/specs/research-schema-spec.md and docs/specs/simplified-gedcomx-spec.md
 
 // ============================================================
 // research.json enums
@@ -198,6 +198,9 @@ export interface Source {
   notes: string | null
   log_entry_id?: string | null
   transcription?: string | null
+  /** Project-relative path of the saved page scan (images/<key>.jpg), when the
+   *  source is image-backed and image_transcribe persisted it (§8.5). */
+  image_filename?: string | null
 }
 
 export interface Assertion {
@@ -330,6 +333,38 @@ export interface EvaluationEntry {
   superseded_by: string | null
 }
 
+export interface LocalityPageRead {
+  section: "home" | "getting_started" | "online_records" | "research_tips"
+  url?: string | null
+  found: boolean
+}
+
+export interface LocalityJurisdiction {
+  name: string
+  date_range?: string | null
+}
+
+export interface LocalityCollection {
+  id: string
+  title: string
+  date_range?: string | null
+}
+
+export interface Locality {
+  id: string
+  place: string
+  for_place?: string | null
+  time_period?: string | null
+  jurisdictions?: LocalityJurisdiction[]
+  collections?: LocalityCollection[]
+  quirks?: string[]
+  guide_markdown?: string | null
+  pages_read: LocalityPageRead[]
+  source: string
+  created: string
+  updated?: string
+}
+
 export interface ResearchData {
   project: Project
   researcher_profile?: ResearcherProfile
@@ -345,6 +380,7 @@ export interface ResearchData {
   timelines: Timeline[]
   proof_summaries: ProofSummary[]
   evaluations: EvaluationEntry[]
+  localities?: Locality[]
 }
 
 // ============================================================

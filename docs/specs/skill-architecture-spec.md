@@ -23,7 +23,7 @@ When one skill produces data that another skill needs (e.g., search-records find
 
 ### Canonical MCP tool names
 
-Skills reference MCP tools by these canonical names. This is the authoritative list; `tools.md` and `mcp-endpoints.md` are being brought into line with it.
+Skills reference MCP tools by these canonical names. This is the authoritative list.
 
 Names follow a `noun_verb` convention, with `search` (not `query`) as the verb for retrieval operations that return a list of candidates, and `read` for operations that return the full content of a single resource.
 

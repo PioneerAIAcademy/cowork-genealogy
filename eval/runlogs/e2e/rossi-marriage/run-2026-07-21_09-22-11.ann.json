@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Recovered exactly. Mary Rossi is linked to Charles Ullricht with Marriage 2 Feb 1899, Hoboken, Hudson, New Jersey — matching the stripped marriage date/place. Proof rests on a single source (marriage record), so proof_quality 2. Re-run on post-weekend main; nothing regressed."
+  },
+  "annotator": "ernest"
+}

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_rossi_marriage",
+    "objective": "What was the marriage date of Mary Rossi, born 1879 in New Jersey?",
+    "subject_person_ids": [
+      "GC13-YHG"
+    ],
+    "status": "active",
+    "created": "2026-07-16",
+    "updated": "2026-07-16"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

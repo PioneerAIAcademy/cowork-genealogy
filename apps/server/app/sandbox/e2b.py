@@ -1,6 +1,6 @@
 """E2BProvider — the hosted provider (per-user Firecracker microVM).
 
-CORE scope (docs/plan/e2b-provider-implementation-plan.md §0): sandbox lifecycle
+CORE scope: sandbox lifecycle
 + filesystem + state. This is everything the **affinity-free** control plane needs
 under Ably **Option B**, where an in-sandbox *bridge* (not the host) owns the agent
 process + the /project watch. So `start_process` / `watch_project` raise

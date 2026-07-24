@@ -13,7 +13,7 @@ human-plus-genealogist pair approves before anything lands. You do not
 edit files in this mode.
 
 You are the body half of the two-loop design in
-[`docs/skill-lifecycle.md`](../../docs/skill-lifecycle.md) §4. The skill
+[`docs/skill-lifecycle.md`](../../docs/skill-lifecycle.md) §8. The skill
 *description* (triggering) is optimized by a separate automated loop —
 not your job. Write every proposed edit to the prose standard in
 [`docs/skill-authoring-guide.md`](../../docs/skill-authoring-guide.md).
@@ -39,8 +39,11 @@ For skill `<X>` (paths relative to repo root):
 - **The current skill:** `packages/engine/plugin/skills/<X>/SKILL.md`
   (+ its `references/`, `templates/`, `scripts/`).
 - **Read-only context, never propose edits to:**
-  `eval/tests/unit/<X>/rubric.md` (what the judge scores against,
-  senior-owned) and `eval/harness/judge/prompt.md` (project-global).
+  `eval/tests/unit/<X>/rubric.md` (what the judge scores against) and
+  `eval/harness/judge/prompt.md` (project-global, maintainer-owned). The
+  rubric belongs to the loop-runner, not to you — when a finding's cause is
+  the rubric, say so and route it rather than editing; your output is
+  SKILL.md edits only.
 
 ## Process
 
@@ -107,12 +110,16 @@ For skill `<X>` (paths relative to repo root):
    - **Test/scenario data gap** (comment names missing or wrong fixture
      data — e.g. "add the 1880 census to the scenario") → route to the
      **test author** (`eval/fixtures/scenarios/`, the test, or
-     `/draft-unit-test`); form no body edit.
+     `/mine-unit-test`); form no body edit.
    - **Wrong tool / fixture mismatch** (the comment wants a different tool
      or different `expected_args` than the test loads) → a test/spec
      decision for the genealogist (may need a new `allowed-tools` entry +
      fixture first); not a body fix from this run.
-   - **Rubric / judge** → route to the judge-prompt review.
+   - **Skill rubric or this test's `judge_context`** → the loop-runner's own
+     to fix directly (`eval/tests/unit/<skill>/rubric.md` / the test JSON);
+     both sit in the run-log snapshot, so the skill's suite must be re-run
+     after. **Base rubric or the global judge prompt** → the maintainer's
+     alone; escalate rather than edit.
    - **Body** — the skill's prose actually steered the model wrong → the
      *only* cause that becomes a SKILL.md edit. Proceed.
 
@@ -126,9 +133,13 @@ For skill `<X>` (paths relative to repo root):
    explain-the-why prose — never a new all-caps MUST. Apply the
    **generalization test**: does it read as a *general principle*, or a
    patch to the one failing case? Reject case-patches; an edit that only
-   helps the Flynn scenario is a regression in disguise. Prefer reframing
-   over constriction, and prefer subtraction where an instruction caused
-   wasted work — net length should trend flat or down.
+   helps the Flynn scenario is a regression in disguise. **Rank the
+   qualifying edits by expected impact and propose at most 3 per round** —
+   small rounds stay reviewable and attributable, and each becomes a clean,
+   gate-able (`make gate-skill`) step; list anything beyond the top 3 under
+   "Deferred to next round." Prefer reframing over constriction, and prefer
+   subtraction where an instruction caused wasted work — net length should
+   trend flat or down.
 
 6. **Say how to verify.** Recommend re-running only the affected tests
    (`--test <id>`) while iterating, then the hold-out tests for
@@ -151,7 +162,7 @@ Per failing/partial dimension: test_ids, judge score + rationale, human
 corrected_score + comment, validator failures. Note agreed vs
 judge-disagreed.
 
-## Proposed edits
+## Proposed edits (at most 3, ranked by expected impact)
 For each, an evidence-cited block:
 
 > **Edit (SKILL.md §<section>):** <the proposed prose change, as a diff or
@@ -165,6 +176,11 @@ For each, an evidence-cited block:
 judge-only, a triggering problem (→ description optimizer), a test/scenario
 data gap or fixture/tool-choice issue (→ test author), a rubric/judge issue
 (→ judge-prompt review).>
+
+## Deferred to next round
+<qualifying edits beyond the top 3 — one line each. The per-round cap keeps
+each round small and gate-able; nothing is lost, these are next round's
+candidates.>
 
 ## How to verify
 <which tests to re-run; the hold-out generalization check; the pass/fail
@@ -188,6 +204,11 @@ gate to apply>
 
 - **You never edit files in this mode.** Your tools are Read/Grep/Glob/Bash
   by design. Propose; the pair approves and applies.
+- **At most 3 edits per round.** Rank qualifying edits by expected impact and
+  propose the top ≤3; put the rest under "Deferred to next round." A round
+  should stay small enough that the gate (`make gate-skill`) can attribute a
+  score move to one edit — this is the edit budget
+  (`docs/skill-lifecycle.md` §§5-6).
 - **Write surface, when enabled, is `SKILL.md` (+ its `references/`,
   `templates/`, `scripts/`) only** — never `rubric.md`, never the judge
   prompt, never another skill.
@@ -209,5 +230,6 @@ gate to apply>
   question → say so, report what the judge scores suggest at lower
   confidence, and do not propose edits on thin evidence.
 - The evidence points at the rubric or judge, not the skill → name it and
-  route it to the senior's judge-prompt review. Don't "fix" a grading
-  problem in the skill body.
+  route it: the skill's own `rubric.md` and the test's `judge_context` are
+  the loop-runner's to fix; the base rubric and global judge prompt go to the
+  maintainer. Don't "fix" a grading problem in the skill body.

@@ -77,7 +77,7 @@ research_log_append({
   query: object,                  // freeform — enough to reproduce the search
   outcome: "positive" | "negative" | "partial" | "error",
   resultsExamined: number,
-  planItemId: string | null,      // pli_ reference, or null for ad-hoc
+  planItemId: string | null,      // pli_ reference, or null for ad-hoc (see planItemId validation below)
   resultsAvailable?: number | null,
   notes?: string | null,
   externalSite?: {                // REQUIRED when tool === "external_site"; else null/omit
@@ -96,6 +96,18 @@ research_log_append({
 `resultsAvailable → results_available`, `externalSite → external_site` with
 `urlGenerated → url_generated`, `captureReceived → capture_received`,
 `captureFilename → capture_filename`) — the standard repo seam.
+
+**`planItemId` validation.** Must be a plan-item id (`^pli_`, from the active
+research plan) or `null` for an opportunistic/ad-hoc search. The literal string
+`"null"` is coerced to `null` (a common model slip). Any other non-`pli_` value —
+most often a question id (`q_...`) stuffed into the slot — is **rejected** with an
+actionable error (`{ ok: false, errors: [...] }`) rather than persisted: an
+invalid `plan_item_id` otherwise passes `validate_research_schema` (which
+historically skipped this field) but hard-fails the JSON-Schema validator
+downstream. Rejecting is preferred over silently nulling, which would discard the
+caller's expressed intent. `validate_research_schema` now also enforces the
+`^pli_` prefix on a log entry's `plan_item_id`, matching the JSON Schema and the
+sibling reference fields.
 
 **The tool assigns (caller never supplies):** the log entry `id` (next `log_`
 above the current max), `performed` (now, ISO 8601 + tz), `results_ref`

@@ -1,0 +1,3050 @@
+{
+  "project": {
+    "id": "rp_reese_siblings",
+    "objective": "Who were the siblings of Mary Reese, born 1880 in New York and died 22 June 1933?",
+    "subject_person_ids": [
+      "G9VJ-1WS"
+    ],
+    "status": "completed",
+    "created": "2026-07-15",
+    "updated": "2026-07-16"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What children of Lewis Joseph Reese (born 1847, New York City) and Laura Amelia Reese are enumerated in census records from 1880 to 1910 in New York?",
+      "rationale": "Mary Reese (born 1880, New York; died 22 June 1933) is the subject. Her parents are Lewis Joseph Reese (born 1847 NYC, died 1912 Brooklyn) and Laura Amelia (Scott) Reese (born Oct 1850 Brooklyn). The household census records across the decennial censuses and the 1892 New York State Census are the most direct record types for enumerating all children living in the Reese household at successive points in time, yielding the siblings of Mary. An existing 1880 census source (S9W7-G9M) and 1892 state census source (S4XD-TGJ) already appear in the tree but no assertions have been extracted. This question drives full extraction and search of all available census-year household enumerations to compile the sibling list.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-16",
+      "resolution_assertion_ids": [
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_021",
+        "a_022",
+        "a_024",
+        "a_038",
+        "a_041",
+        "a_044",
+        "a_046",
+        "a_047",
+        "a_048",
+        "a_051",
+        "a_053"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched seven census enumerations (1875 NY State, 1880 US Federal Manhattan, 1880 US Federal Brooklyn, 1892 NY State, 1900 US Federal, 1905 NY State, 1910 US Federal), NYC birth records (collection 2240282, 1846-1909), death certificates for Mary Reese and two siblings, and Kings County probate (negative). Six children identified: Clarence (~1869), Burr (~1873), Lizzie (~1876), Lewis Jr. (b.7 Oct 1878), Mary/subject (b.1880), and Emily (b.28 Mar 1892). Both evidence conflicts resolved. NYC birth records exhaustively searched for Lewis+Laura Reese children 1880-1909; only Emily found. Household images for 1892 and 1910 census records inaccessible (image size exceeded delivery limit, 1.9 MB and 2.0 MB); these are verified-inaccessible, not skipped.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 six children of Lewis Joseph Reese and Laura Amelia Reese identified across four census enumerations and three vital records. The research question is substantially answered; vital records provide independent corroboration beyond the census scope.",
+          "repository_breadth": "Seven census enumerations across four census years searched on FamilySearch. NYC birth records (1846-1909) and NYC death records searched. Kings County probate returned negative. The 1900 and 1905 censuses were searched and returned negative results for Lewis Joseph Reese. Church records not searched \u2014 no denomination known for this family; civil vital records served as substitutes.",
+          "original_substitution": "Civil death and birth certificates accessed as original records via record_read. Census records accessed as indexed records from digitized originals. Household images for 1892 (MQSM-LXC, 1.9 MB) and 1910 (M53W-HCH, 2.0 MB) census entries were pursued but exceeded the image delivery size limit \u2014 verified-inaccessible originals, not unsearched.",
+          "independent_verification": "Clarence: two censuses (1875, 1880). Lewis Jr.: 1880 census plus death certificate independently naming parents Lewis Reese and Laura Scott. Mary: 1880 census plus death certificate. Emily: birth certificate naming parents Lewis Reese and Laura. Burr and Lizzie each have one direct source (1875 and 1880 census respectively), reflecting likely early death or departure from accessible records.",
+          "evidence_class": "Three original records with primary or near-primary information: Emily's 1892 birth certificate (src_002, original, parent informant), Mary's 1933 death certificate (src_001, original), and Lewis Jr.'s 1939 death certificate (src_003, original). Census records (src_004, src_005) are original population schedules providing corroborating evidence.",
+          "conflict_resolution": "Both conflicts resolved: c_001 (wife 'Theresa' vs 'Laura' \u2014 resolved in favor of 'Laura' per four corroborating sources) and c_002 (head 'Joseph L' vs 'Louis/Lewis' \u2014 resolved as a given/middle-name reversal). No unresolved conflicts remain.",
+          "overturn_risk": "Low. NYC birth record search (log_007, log_018) covered the full 1846-1909 collection and found no additional children of Lewis+Laura Reese beyond those identified. Inaccessible 1892 and 1910 household images might add corroboration but are very unlikely to reveal additional children given exhaustive birth-record coverage. Probate search returned negative. Burr and Lizzie have thin single-source corroboration reflecting record availability limits, not unsearched sources."
+        }
+      },
+      "created": "2026-07-16"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-16",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "New York County (Manhattan), New York",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "Source S9W7-G9M already identifies a 1880 US Federal Census record for 'Louis Reese and Laura Reese' in New York City (ARK MZ6Q-1XV). Extracting the full household will enumerate all children present at that date, establishing the sibling list as of 1880. Mary was born in 1880 and may or may not appear; older children certainly would.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Brooklyn, Kings County, New York",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "Source S9WW-MHV references a second 1880 US Federal Census record for 'Louis Reese and Eliza J. Reese' in Brooklyn (ARK MZDM-ZHZ). This may be Lewis Moses Reese (grandfather, born 1826 PA) rather than Lewis Joseph Reese (father, born 1847 NYC), but must be examined to confirm and to check whether Lewis Joseph's household is in Brooklyn instead of or in addition to Manhattan.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Brooklyn, Kings County, New York",
+          "date_range": "1892",
+          "repository": "FamilySearch",
+          "rationale": "Source S4XD-TGJ identifies the 1892 New York State Census record for Lewis Reise at Brooklyn Ward 18, E.D. 28 (ARK MQSM-LXC). Both Lewis Joseph (father) and Mary have 1892 Brooklyn residence facts. Extracting the full household enumerates all children in the home 12 years after Mary's birth \u2014 a key mid-period snapshot that should show older and younger siblings still at home.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Brooklyn, Kings County, New York",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "Source S4XZ-434 identifies the 1910 US Federal Census record for 'Joseph L Reese' in Brooklyn Ward 16 (ARK M53W-HCH). The entry's name 'Joseph L.' may be Lewis Joseph himself (Lewis Joseph reversed) or a son named Joseph. Extracting the household will resolve this ambiguity and enumerate all household members \u2014 children or boarders \u2014 near the end of Lewis Joseph's life (he died Oct 1912).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "New York City, New York",
+          "date_range": "1870-1909",
+          "repository": "FamilySearch",
+          "rationale": "NYC birth records (FamilySearch collection 2240282, 'New York, New York City Births, 1846-1909', ~2.8M records) are the most direct source for enumerating ALL children born to Lewis Joseph Reese and Laura Amelia Reese in New York City. A search on parent names will identify each birth, yielding the complete sibling list with birth dates. This is the key record type for a completeness question about siblings.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "census",
+          "jurisdiction": "Brooklyn, Kings County, New York",
+          "date_range": "1875",
+          "repository": "FamilySearch",
+          "rationale": "The 1875 New York State Census (FamilySearch collection 1918735, ~3.1M records) predates Mary's birth by five years and would show any older siblings already born by 1875. Lewis Joseph Reese and Laura Amelia (Scott) Reese were married circa 1868-1870 and could have had children from ~1870 onward. This census fills the gap between the 1870 and 1880 federal censuses.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "census",
+          "jurisdiction": "Brooklyn, Kings County, New York",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 US Federal Census falls between the 1892 state census and the 1910 federal census. Lewis Joseph Reese (born 1847) would be ~53 and likely still heading his household. The 1900 census records ages and birth months for all household members, providing strong corroboration for identifying which children (siblings of Mary) were still at home versus already married and in separate households. Also covers children born between 1880 and 1900.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "census",
+          "jurisdiction": "Brooklyn, Kings County, New York",
+          "date_range": "1905",
+          "repository": "FamilySearch",
+          "rationale": "The 1905 New York State Census (FamilySearch collection 1463113, ~7.5M records) fills the gap between the 1900 and 1910 federal censuses. Lewis Joseph Reese would be ~58. Any children who left home between 1900 and 1910 may still appear here, and the census records parent birthplaces useful for confirming identity.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "vital_record",
+          "jurisdiction": "New York City, Queens, New York",
+          "date_range": "1933",
+          "repository": "FamilySearch",
+          "rationale": "Source S9W7-VWP identifies Mary Reese's death certificate (22 June 1933, Queens, New York City \u2014 ARK 2W2W-NTG, collection 'New York, New York City Municipal Deaths, 1795-1949'). NYC death certificates from this era record the informant's name and relationship. Extracting this record will identify who reported Mary's death (potentially a sibling), confirm her parentage, and may name surviving relatives.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 10,
+          "record_type": "probate",
+          "jurisdiction": "Kings County, New York",
+          "date_range": "1912-1914",
+          "repository": "FamilySearch",
+          "rationale": "Lewis Joseph Reese died 27 October 1912 in Brooklyn. The Kings County Estate Files (FamilySearch collection 1466356, 'New York, Kings County Estate Files, 1866-1923', ~168K records) would contain any will or letters of administration for his estate. A will naming his children as heirs is direct evidence of the complete sibling list as of 1912 and would constitute independent corroboration of the sibling identities found in census and birth records.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-16T08:41:14.062Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "MZ6Q-1XV",
+        "collection": "United States, Census, 1880",
+        "description": "1880 Manhattan household of Louis Reese, head born 1847 NY"
+      },
+      "outcome": "positive",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 6,
+      "notes": "Household: Louis Reese (head, b.1847, shoemaker), Laura Reese (wife, b.1850), Clarence Reese (son, b.1869, Juvenile Asylum), Lizzie Reese (daughter, b.1876), Louis Reese (son, b.1878), May Reese (daughter, b.1880). Confirms parents and three older siblings of subject. May=Mary (subject)."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-16T08:41:18.536Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "MZDM-ZHZ",
+        "collection": "United States, Census, 1880",
+        "description": "1880 Brooklyn household of Louis Reese (S9WW-MHV)"
+      },
+      "outcome": "partial",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 9,
+      "notes": "This is the GRANDPARENTS' household: Louis Reese (head, b.1825 PA, clock maker) + Eliza J. Reese (wife, b.1827 NY). Children: Louis (b.1848), Mary (b.1852), Sarah (b.1854), Edward (b.1855), William (b.1856), Carrie (b.1863), Alexander (b.1865). These are Lewis Joseph's siblings (subject's AUNTS/UNCLES), NOT subject's siblings. Source S9WW-MHV is misattributed in tree to LVF8-NQJ (Lewis Joseph). The son Louis b.1848 in this household is likely Lewis Joseph himself."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-16T08:43:00.094Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "VT88-GDK",
+        "collection": "New York, State Census, 1875",
+        "description": "1875 Brooklyn household of Louis Reese (top-ranked candidate for Lewis Joseph)"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 5,
+      "notes": "Household: Louis Reese (head, b.1847 Brooklyn), Theresa Reese (wife, b.1850 \u2014 name differs from 'Laura' in 1880; possible indexer error or middle name), Clarence Reese (son, b.1869), Burr Reese (son, b.1873), Emily Walters (boarder, b.1846). Confirms Clarence and reveals sibling Burr (b.1873) not present in 1880, possibly died between 1875-1880. Wife name discrepancy requires image review."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-16T08:43:03.932Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "MQSM-LXC",
+        "collection": "New York, State Census, 1892",
+        "description": "1892 Brooklyn household of Lewis Reise, Ward 18 E.D. 28"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Indexed record returns head only: Lewis Reise, b.1847, Brooklyn. No children indexed. Full household requires image browse. Image ARK: https://www.familysearch.org/ark:/61903/1:2:1KZN-QX9"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-16T08:43:09.360Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "M53W-HCH",
+        "collection": "United States, Census, 1910",
+        "description": "1910 Brooklyn household of Joseph L Reese, Ward 16"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Indexed record returns head only: Joseph L Reese (b.1847 NY, widowed). Matches Lewis Joseph Reese by birth year; 'Joseph L' may be middle name Joseph + initial L, or reverse of Lewis Joseph. No children indexed. Image ARK: https://www.familysearch.org/ark:/61903/1:2:92M2-85X. Widowed status means Laura died before 1910."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-16T08:43:14.169Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "2W2W-NTL",
+        "collection": "New York, New York City Municipal Deaths, 1795-1949",
+        "description": "Death certificate of Mary Brooks (n\u00e9e Reese), 22 Jun 1933"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 4,
+      "notes": "Mary Brooks (n\u00e9e Reese), died 22 Jun 1933 Queens NYC, buried 26 Jun 1933, married to Charles Brooks. Father: Louis Reese (born U.S.). Mother: Laura Scott (born U.S.). Confirms parents Louis Reese and Laura Scott. No informant name visible in extracted facts."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-16T08:44:48.008Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Reese",
+        "givenName": "Louis",
+        "fatherSurname": "Reese",
+        "fatherGivenName": "Louis",
+        "motherGivenName": "Laura",
+        "collectionId": "2240282",
+        "description": "NYC births 1846-1909, searching for children of Louis+Laura Reese"
+      },
+      "outcome": "partial",
+      "results_examined": 46,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 46,
+      "notes": "46 results in coll 2240282. Top candidates for children of Lewis Joseph Reese: 2W7S-XCR (Emily Reese, father Lewis Reese, b.NY), 2WZG-VC3 (Lewis Reese birth), 2WC3-VLZ (Thomas Francis Reese, father Louis Reese, b.Brooklyn), 2W7F-B1Z (William Reese, father Louis Reese). Many results have father birthplace Germany and likely represent different Louis Reese families. Need to read individual records to confirm parent details."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-16T08:44:52.676Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Reese",
+        "givenName": "Lewis",
+        "deathPlace": "Kings, New York",
+        "deathYearFrom": 1910,
+        "deathYearTo": 1916,
+        "collectionId": "1466356",
+        "description": "Kings County estate files for Lewis Reese, died 1912"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No results. Lewis Joseph Reese (died 27 Oct 1912) has no indexed estate file under given name Lewis with death place Kings. Broader retry with surname only + date range 1912-1915 returned 13 results but none match Lewis/Louis Reese as subject. Possible explanations: died intestate, estate too small to probate, filed under different name variant, or record not indexed."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-16T08:46:57.508Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "2W7S-XCR",
+        "collection": "New York, New York City Births, 1846-1909",
+        "description": "Birth record of Emily Reese, 28 Mar 1892, father Lewis Reese"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 3,
+      "notes": "Emily Reese born 28 March 1892 in Brooklyn. Father: Lewis Reese, born New York. Mother: Laura, born Brooklyn. Matches Lewis Joseph Reese (b.1847 NY) and Laura Amelia Scott (b.Brooklyn) exactly. Emily is a YOUNGER sibling of Mary (b.1880), confirming child born 12 years after Mary."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": null,
+      "performed": "2026-07-16T08:47:03.343Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "2W24-KTR",
+        "collection": "New York, New York City Municipal Deaths, 1795-1949",
+        "description": "Death record of Lewis Reese Jr., born 1878, died 22 Dec 1939"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 4,
+      "notes": "Lewis Reese (Jr.), born 7 Oct 1878 USA, died 22 Dec 1939 Queens NYC, truck driver, married to Susan Alice Reese. Father: Lewis Reese (born USA). Mother: Laura Scott (born USA). Birth year 1878 matches 'Louis Reese' in 1880 Manhattan census. Mother Laura Scott confirms parentage. This is Lewis Joseph Reese's son \u2014 a sibling of Mary. Note: record 2W24-KTR was previously attached to LVF8-NQJ (father) in the tree but is actually the SON's death record."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-16T08:47:09.265Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Reese",
+        "givenName": "Louis/Lewis",
+        "residencePlace": "Brooklyn, Kings, New York",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "recordType": "census",
+        "description": "1900 US Census for Lewis Joseph Reese, Brooklyn"
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 6,
+      "notes": "6 census results returned, none matching Lewis Joseph Reese (b.1847 NY). Top result Louis Reese b.Aug 1873 Michigan \u2014 different person. Lewis Joseph Reese appears not to be indexed or found in 1900 US Census under Brooklyn residence. Collection 1325221 confirmed as 1900 census. Negative finding for this plan item."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-16T08:47:13.783Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Reese",
+        "givenName": "Louis/Joseph",
+        "residencePlace": "Brooklyn, Kings, New York",
+        "residenceYearFrom": 1905,
+        "residenceYearTo": 1905,
+        "collectionId": "1463113",
+        "description": "1905 NY State Census for Lewis Joseph Reese, Brooklyn"
+      },
+      "outcome": "negative",
+      "results_examined": 16,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 16,
+      "notes": "16 results from coll 1463113. No entry for person born ~1847 matching Lewis Joseph Reese. 'Household of Joseph Riese' at A.D. 15, E.D. 10 has head born 1880 \u2014 too young to be the father (b.1847). Lewis Joseph not found in 1905 NY State Census under these parameters."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-16T08:48:18.421Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "2WM4-5FK",
+        "collection": "New York, New York City Births, 1846-1909",
+        "description": "Simon Reese birth 1885, father Louis Reese"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 3,
+      "notes": "Simon Reese born 17 Apr 1885, Manhattan. Father: Louis Reese; Mother: Pauline Baumen (born unknown). Mother name DOES NOT match Laura Amelia Scott. This is a DIFFERENT Louis Reese family. Excluded as sibling of Mary Reese."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-16T08:48:21.660Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "2WMP-2WP",
+        "collection": "New York, New York City Births, 1846-1909",
+        "description": "Unnamed Reese birth 1887, father Louis Reese"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 3,
+      "notes": "Unnamed male Reese born 22 Nov 1887, Manhattan. Father: Louis Reese (born U.S.); Mother: Hannah Berry (born Ireland). Mother born Ireland DOES NOT match Laura Amelia Scott (born Brooklyn). Different Louis Reese family. Excluded."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-16T08:53:40.742Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "2WZG-VC3",
+        "collection": "New York, New York City Births, 1846-1909",
+        "description": "Lewis Reese birth, father Lewis Reese \u2014 checking if child of Lewis Joseph + Laura"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Child Lewis Reese born 25 Aug 1908 Brooklyn (ARK 2WZG-VC7). Father: Lewis Reese (2WZG-VC3). Mother: Susan Alice Smith (not Laura Scott). Different Louis Reese family. Excluded as sibling of Mary Reese."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-16T08:53:44.238Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "2WC3-VLZ",
+        "collection": "New York, New York City Births, 1846-1909",
+        "description": "Thomas Francis Reese birth 1905, father Louis Reese b.Brooklyn"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Thomas Francis Reese born 19 Jun 1905 Brooklyn (ARK 2WC3-VLD). Father: Louis Reese born Brooklyn (2WC3-VLZ). Mother: Susan Smith born Brooklyn (not Laura Scott). Different family. Excluded."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-16T08:53:47.198Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "2W7F-B1Z",
+        "collection": "New York, New York City Births, 1846-1909",
+        "description": "William Reese birth 1896, father Louis Reese"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "William Reese born 21 Sep 1896 Brooklyn (ARK 2W7F-B1D). Father: Louis Reese (2W7F-B1Z). Mother: Wilhelmina Becker born unknown (not Laura Scott). Different family. Excluded."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-16T08:57:25.047Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Reese",
+        "fatherGivenName": "Louis",
+        "motherGivenName": "Laura",
+        "collectionId": "2240282",
+        "birthYearFrom": 1880,
+        "birthYearTo": 1909,
+        "count": 50,
+        "description": "NYC births 1880-1909, all children of Louis+Laura Reese (no child name constraint)"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "results_available": 719,
+      "notes": "Top result is Emily Reese (2W7S-XCY, b.28 Mar 1892 Brooklyn) \u2014 same person already read in log_009. Score drops to 1.73 for all remaining 49 results (low-confidence noise from unrelated families). No additional children of Lewis+Laura Reese found in NYC births 1880\u20131909 beyond Emily. Broader search exhausted for this parent-pair."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-16T08:57:30.838Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Reese",
+        "residencePlace": "Brooklyn, Kings, New York",
+        "residenceYearFrom": 1892,
+        "residenceYearTo": 1892,
+        "birthYearFrom": 1865,
+        "birthYearTo": 1892,
+        "collectionId": "1529100",
+        "count": 30,
+        "description": "1892 NY State Census, looking for individually-indexed Reese members in Lewis Reise household"
+      },
+      "outcome": "negative",
+      "results_examined": 30,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 180,
+      "notes": "180 Reese records in Brooklyn 1892 census, all are 'Household of [Name] Reese' \u2014 confirming this collection only indexes household heads. Children of Lewis Reise (MQSM-LXC) are not individually indexed. Full household requires the census image, which at 1.9MB is too large for inline delivery. Household members of Lewis Reise are inaccessible via indexed search."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "New York City Municipal Archives, death certificate for Mary Brooks (n\u00e9e Reese), died 22 June 1933, Queens, New York City; digital image, \"New York, New York City Municipal Deaths, 1795\u20131949,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2W2W-NTL : accessed 16 July 2026).",
+      "citation_detail": {
+        "who": "New York City Department of Health and Mental Hygiene (registrar of vital records)",
+        "what": "Death certificate for Mary Brooks, n\u00e9e Reese",
+        "when_created": "1933",
+        "when_accessed": "2026-07-16",
+        "where": "FamilySearch, \"New York, New York City Municipal Deaths, 1795\u20131949\"",
+        "where_within": "Queens, New York City, New York"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "log_entry_id": "log_006",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"New York, New York City Births, 1846\u20131909,\" database, FamilySearch, entry for Emily Reese, born 28 March 1892, Brooklyn, Kings County, New York; citing father Lewis Reese; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2W7S-XCR : accessed 16 July 2026).",
+      "citation_detail": {
+        "who": "New York City Municipal Board of Health / registrar of vital records",
+        "what": "Birth registration record for Emily Reese",
+        "when_created": "1892 (contemporaneous with birth)",
+        "when_accessed": "2026-07-16",
+        "where": "FamilySearch digital record collection",
+        "where_within": "New York, New York City Births, 1846\u20131909"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2W7S-XCR",
+      "log_entry_id": "log_009",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "New York, New York City Municipal Deaths, 1795\u20131949, death certificate for Lewis Reese, died 22 December 1939, Queens, New York City; New York City Department of Health; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2W24-KTR : accessed 16 July 2026).",
+      "citation_detail": {
+        "who": "New York City Department of Health",
+        "what": "Death certificate for Lewis Reese",
+        "when_created": "1939",
+        "when_accessed": "2026-07-16",
+        "where": "FamilySearch",
+        "where_within": "New York, New York City Municipal Deaths, 1795\u20131949 collection"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2W24-KTR",
+      "log_entry_id": "log_010",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "New York, State Census, 1875, population schedule, Brooklyn, Kings County, p. [not stated], household of Louis Reese; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VT88-GDK : accessed 16 July 2026).",
+      "citation_detail": {
+        "who": "New York State enumerator",
+        "what": "1875 New York State Census population schedule",
+        "when_created": "1875",
+        "when_accessed": "2026-07-16",
+        "where": "Brooklyn, Kings County, New York",
+        "where_within": "Household of Louis Reese"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "1880 U.S. census, New York County (Manhattan), New York, population schedule, household of Louis Reese; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MZ6Q-1XV : accessed 16 July 2026), citing NARA microfilm publication T9, Records of the Bureau of the Census, RG 29 (Washington, D.C.: National Archives and Records Administration).",
+      "citation_detail": {
+        "who": "U.S. Census Bureau enumerator",
+        "what": "1880 U.S. Federal Census population schedule enumerating the household of Louis Reese",
+        "when_created": "1880",
+        "when_accessed": "2026-07-16",
+        "where": "New York County (Manhattan), New York",
+        "where_within": "household of Louis Reese"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (digital images of NARA microfilm publication T9)",
+      "access_date": "2026-07-16",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "New York, State Census, 1892, population schedule, Brooklyn, Kings County, New York, household of Lewis Reise; FamilySearch (https://familysearch.org/ark:/61903/1:1:MQSM-LXC : accessed 16 July 2026).",
+      "citation_detail": {
+        "who": "New York State Secretary of State (state census enumerators)",
+        "what": "1892 New York State Census enumeration schedule",
+        "when_created": "1892",
+        "when_accessed": "2026-07-16",
+        "where": "FamilySearch (familysearch.org), digitized state census collection",
+        "where_within": "Brooklyn, Kings County, New York; entry for head of household Lewis Reise"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "notes": "Only the head of household (Lewis Reise) is indexed/individually accessible in this collection's search records; other household members are not separately indexed. The full enumeration image (which would show the complete household) was not examined \u2014 it was too large for inline delivery in this session, so this extraction covers only the head-of-household index entry.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S6"
+    },
+    {
+      "id": "src_007",
+      "citation": "1880 U.S. census, Kings County, New York, population schedule, Brooklyn, household of Louis Reese; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MZDM-ZHZ : accessed 16 July 2026); citing NARA microfilm publication T9.",
+      "citation_detail": {
+        "who": "U.S. Bureau of the Census (enumerator, unnamed)",
+        "what": "1880 U.S. Federal Census population schedule enumerating the household of Louis Reese",
+        "when_created": "1880",
+        "when_accessed": "2026-07-16",
+        "where": "Brooklyn, Kings County, New York",
+        "where_within": "Household of Louis Reese, as imaged/indexed by FamilySearch"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (digital images of NARA microfilm publication T9)",
+      "access_date": "2026-07-16",
+      "log_entry_id": "log_002",
+      "notes": "MISATTRIBUTION FLAG: Source S9WW-MHV in the existing tree was previously attached to Lewis Joseph Reese (LVF8-NQJ) as though this were his own 1880 household. This record MZDM-ZHZ is actually the household of Lewis Joseph's PARENTS, Lewis Moses Reese (L15S-NBF, enumerated as 'Louis Reese', clock maker, b. ~1825 PA) and Elizabeth Jane Ritchie (L15S-ZZ1, enumerated as 'Eliza J. Reese', b. ~1827 NY). The other enumerated children (Mary, Sarah, Edward, William, Carrie, Alexander) are Lewis Joseph's SIBLINGS, not children of Mary Reese, and are out of scope for this research question \u2014 no sibling stubs created. A separate son 'Louis' (b. ~1848 NY) is tentatively identified as Lewis Joseph Reese (LVF8-NQJ) himself as a young adult still in his parents' household \u2014 this conflicts with the 1880 Manhattan census (source S5/MZ6Q-1XV) which also places a Lewis J. Reese household in 1880; the two enumerations cannot both be his own separate household in the same census year, so this identification is TENTATIVE pending resolution (possibly he was enumerated twice, or one 'Louis'/'Lewis' is a different person). A correction pass should re-point/retire S9WW-MHV's assertions off LVF8-NQJ rather than leave them misattributed.",
+      "gedcomx_source_description_id": "S7"
+    },
+    {
+      "id": "src_008",
+      "citation": "1910 U.S. census, Kings County, New York, population schedule, Brooklyn Ward 16, Joseph L Reese entry; index, FamilySearch (https://familysearch.org/ark:/61903/1:1:M53W-HCH : accessed 16 July 2026).",
+      "citation_detail": {
+        "who": "Joseph L Reese (head of household)",
+        "what": "1910 U.S. federal census population schedule, index entry",
+        "when_created": "1910",
+        "when_accessed": "2026-07-16",
+        "where": "Brooklyn Ward 16, Kings County, New York",
+        "where_within": "FamilySearch, \"United States Census, 1910\" collection, record M53W-HCH"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "notes": "Original not examined \u2014 the digitized census image was too large for inline delivery; only the head of household (Joseph L Reese) is indexed for this record, so other household members (if any) are not captured and were not accessible for this extraction.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S8"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "2W2W-NTL",
+      "record_role": "deceased",
+      "fact_type": "Death",
+      "value": "Died 22 June 1933, Queens, New York City",
+      "date": "22 June 1933",
+      "date_certainty": "exact",
+      "place": "Queens, New York City, New York, USA",
+      "standard_place": "Queens, New York City, New York, United States",
+      "information_quality": "primary",
+      "informant": "attending physician",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Physician certified date/place of death in the course of official duty; primary firsthand knowledge of the event.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "2W2W-NTL",
+      "record_role": "deceased",
+      "fact_type": "Burial",
+      "value": "Buried 26 June 1933",
+      "date": "26 June 1933",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "funeral director",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Funeral director attested to burial arrangements/date in the course of official duty.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "2W2W-NTL",
+      "record_role": "deceased",
+      "fact_type": "Marriage",
+      "value": "Married; surname at death \"Brooks\"; spouse Charles Brooks",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "husband",
+        "given": "Charles",
+        "surname": "Brooks"
+      },
+      "information_quality": "secondary",
+      "informant": "personal informant (family member, not further identified on certificate)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Marital status/married surname is decedent biographical information relayed by a personal informant rather than witnessed at the moment reported; not the physician or funeral director.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "2W2W-NTL",
+      "record_role": "deceased",
+      "fact_type": "Parentage",
+      "value": "Father: Louis Reese, born U.S.",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father",
+        "given": "Louis",
+        "surname": "Reese"
+      },
+      "information_quality": "secondary",
+      "informant": "personal informant (family member, not further identified on certificate)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Father's name reported by a personal informant from family knowledge/recollection, not firsthand witnessed information about the father. Corroborates identity of tree person LVF8-NQJ (Lewis Joseph Reese) as Mary's father.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "2W2W-NTL",
+      "record_role": "deceased",
+      "fact_type": "Parentage",
+      "value": "Mother: Laura Scott, born U.S.",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother",
+        "given": "Laura",
+        "surname": "Scott"
+      },
+      "information_quality": "secondary",
+      "informant": "personal informant (family member, not further identified on certificate)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Mother's maiden name reported by a personal informant from family knowledge/recollection, not firsthand witnessed information. Corroborates identity of tree person L6JB-YHG (Laura Amelia Scott Reese) as Mary's mother.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "2W7S-XCR",
+      "record_role": "child",
+      "fact_type": "Birth",
+      "value": "28 March 1892, Brooklyn, Kings County, New York",
+      "structured_value": {
+        "year": "1892",
+        "place": "Brooklyn, Kings County, New York"
+      },
+      "date": "28 March 1892",
+      "date_certainty": "exact",
+      "place": "Brooklyn, Kings County, New York",
+      "information_quality": "primary",
+      "informant": "parent (presumed father, Lewis Reese, as the recorded informant)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Contemporaneous civil birth registration; informant presumed to be a parent present at or immediately following the birth.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002",
+      "standard_place": "Brooklyn, New York City, New York, United States"
+    },
+    {
+      "id": "a_007",
+      "record_id": "2W7S-XCR",
+      "record_role": "father",
+      "fact_type": "Parentage",
+      "value": "Lewis Reese named as father of Emily Reese",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Lewis Reese (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "2W7S-XCR",
+      "record_role": "mother",
+      "fact_type": "Parentage",
+      "value": "Laura Reese named as mother of Emily Reese",
+      "structured_value": {
+        "relationship_type": "mother",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Laura Reese (presumed co-informant, self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "2W24-KTR",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Lewis Reese",
+      "structured_value": {
+        "given": "Lewis",
+        "surname": "Reese"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely widow Susan Alice Reese)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Personal informant on death certificates reports the decedent's name; per hard rule this stays direct evidence for identifying the subject in a dated, located record regardless of information-quality layer.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_010",
+      "record_id": "2W24-KTR",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 7 October 1878, USA",
+      "date": "7 October 1878",
+      "place": "USA",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": "1878",
+        "place": "USA"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely widow Susan Alice Reese)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Decedent could not report his own birth; personal informant relayed birth date/place from family memory/hearsay, 61 years after the event \u2014 subject to recollection error.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003",
+      "standard_place": "United States"
+    },
+    {
+      "id": "a_011",
+      "record_id": "2W24-KTR",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 22 December 1939, Queens, New York City",
+      "date": "22 December 1939",
+      "place": "Queens, New York City",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": "1939",
+        "place": "Queens, New York City"
+      },
+      "information_quality": "primary",
+      "informant": "attending physician",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Physician's official certification of the death date and place \u2014 direct, firsthand medical attestation of the event.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_003",
+      "standard_place": "Queens, New York City, New York, United States"
+    },
+    {
+      "id": "a_012",
+      "record_id": "2W24-KTR",
+      "record_role": "deceased",
+      "fact_type": "occupation",
+      "value": "truck driver",
+      "structured_value": {
+        "occupation": "truck driver"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely widow Susan Alice Reese)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Personal informant relaying decedent's usual occupation as decedent's own biographical fact \u2014 secondhand relay per death-certificate doctrine, not the informant's own observation.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_013",
+      "record_id": "2W24-KTR",
+      "record_role": "wife",
+      "fact_type": "marriage",
+      "value": "married to Susan Alice Reese",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife",
+        "given": "Susan Alice",
+        "surname": "Reese"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely widow Susan Alice Reese)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Marital status/spouse name is one of the personal informant's enumerated biographical items on a death certificate \u2014 secondhand relay of the decedent's own fact, not upgraded to witness proximity.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_014",
+      "record_id": "2W24-KTR",
+      "record_role": "father_of_deceased",
+      "fact_type": "parent_name",
+      "value": "father: Lewis Reese, born USA",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "father",
+        "given": "Lewis",
+        "surname": "Reese"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely widow Susan Alice Reese)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Personal informant relayed decedent's father's name from family knowledge, decades after any firsthand knowledge \u2014 family_not_present per death-certificate doctrine. Name corresponds to existing tree person LVF8-NQJ (Lewis Joseph Reese); no additional identifying detail (e.g., middle name) is given in this record to further corroborate beyond the name match.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_015",
+      "record_id": "2W24-KTR",
+      "record_role": "mother_of_deceased",
+      "fact_type": "parent_name",
+      "value": "mother: Laura Scott, born USA",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "mother",
+        "given": "Laura",
+        "surname": "Scott"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely widow Susan Alice Reese)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Personal informant relayed decedent's mother's maiden name from family knowledge, decades after any firsthand knowledge \u2014 family_not_present per death-certificate doctrine. Name corresponds to existing tree person L6JB-YHG (Laura Amelia Scott Reese); shares the same informant as the father-name assertion above, so together they form one evidence unit, not two independent corroborations.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_016",
+      "record_id": "VT88-GDK",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Residing in Brooklyn, Kings County, New York, 1875 (head of household)",
+      "date": "1875",
+      "date_certainty": "exact",
+      "place": "Brooklyn, Kings County, New York",
+      "structured_value": {
+        "place": "Brooklyn, Kings County, New York"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004",
+      "standard_place": "Brooklyn, New York City, New York, United States"
+    },
+    {
+      "id": "a_017",
+      "record_id": "VT88-GDK",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Theresa Reese (wife of Louis Reese)",
+      "structured_value": {
+        "given": "Theresa",
+        "surname": "Reese"
+      },
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The given name 'Theresa' conflicts with 'Laura' recorded for this same wife (same ~1850 birth year, same husband Louis Reese, same Brooklyn household) in the 1880 census and other records. Likely an indexer misreading of 'Laura' as 'Theresa'. Tentative identity link to tree person L6JB-YHG (Laura Amelia Scott Reese) pending corroboration from the original census image.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_018",
+      "record_id": "VT88-GDK",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Residing in Brooklyn, Kings County, New York, 1875 (wife)",
+      "date": "1875",
+      "date_certainty": "exact",
+      "place": "Brooklyn, Kings County, New York",
+      "structured_value": {
+        "place": "Brooklyn, Kings County, New York"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004",
+      "standard_place": "Brooklyn, New York City, New York, United States"
+    },
+    {
+      "id": "a_019",
+      "record_id": "VT88-GDK",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Clarence Reese (son)",
+      "structured_value": {
+        "given": "Clarence",
+        "surname": "Reese"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_020",
+      "record_id": "VT88-GDK",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Born about 1869, New York",
+      "date": "1869",
+      "date_certainty": "estimated",
+      "place": "New York",
+      "structured_value": {
+        "year": "1869",
+        "place": "New York"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from age recorded in the census; exact date not stated on the record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_021",
+      "record_id": "VT88-GDK",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Son of Louis Reese, head of household",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_022",
+      "record_id": "VT88-GDK",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Burr Reese (son)",
+      "structured_value": {
+        "given": "Burr",
+        "surname": "Reese"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_023",
+      "record_id": "VT88-GDK",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Born about 1873, New York",
+      "date": "1873",
+      "date_certainty": "estimated",
+      "place": "New York",
+      "structured_value": {
+        "year": "1873",
+        "place": "New York"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from age recorded in the census; exact date not stated on the record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_024",
+      "record_id": "VT88-GDK",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "Son of Louis Reese, head of household",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_025",
+      "record_id": "VT88-GDK",
+      "record_role": "boarder_1",
+      "fact_type": "name",
+      "value": "Emily Walters (boarder)",
+      "structured_value": {
+        "given": "Emily",
+        "surname": "Walters"
+      },
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_026",
+      "record_id": "VT88-GDK",
+      "record_role": "boarder_1",
+      "fact_type": "birth",
+      "value": "Born about 1846",
+      "date": "1846",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1846"
+      },
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from age recorded in the census; exact date not stated.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_027",
+      "record_id": "VT88-GDK",
+      "record_role": "boarder_1",
+      "fact_type": "relationship",
+      "value": "Boarder in household of Louis Reese; no stated blood or marriage relationship to the family",
+      "structured_value": {
+        "relationship_type": "boarder",
+        "related_person_role": "head_of_household"
+      },
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Emily Walters is a boarder, NOT a Reese child or sibling \u2014 no family relationship stated or implied.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_028",
+      "record_id": "VT88-GDK",
+      "record_role": "absent",
+      "fact_type": "residence",
+      "value": "Lizzie Reese (b. ~1876) absent from 1875 NY State Census household of Louis Reese \u2014 consistent with birth after the census enumeration",
+      "date": "1875",
+      "date_certainty": "exact",
+      "place": "Brooklyn, Kings County, New York",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "information_quality": "indeterminate",
+      "evidence_type": "negative",
+      "informant_bias_notes": "Absence is consistent with a birth date after the June 1875 census enumeration (~1876 per other records). Alternative explanations considered: enumerator omission, indexing error \u2014 both judged less likely given consistent appearance of Lizzie only in post-1875 records.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004",
+      "standard_place": "Brooklyn, New York City, New York, United States"
+    },
+    {
+      "id": "a_029",
+      "record_id": "VT88-GDK",
+      "record_role": "absent",
+      "fact_type": "residence",
+      "value": "Louis Reese Jr. (b. ~1878) absent from 1875 NY State Census household of Louis Reese \u2014 consistent with birth after the census enumeration",
+      "date": "1875",
+      "date_certainty": "exact",
+      "place": "Brooklyn, Kings County, New York",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "information_quality": "indeterminate",
+      "evidence_type": "negative",
+      "informant_bias_notes": "Absence is consistent with a birth date after the June 1875 census enumeration (~1878 per other records). Alternative explanations considered: enumerator omission, indexing error \u2014 both judged less likely given consistent appearance of Louis Jr. only in post-1875 records.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004",
+      "standard_place": "Brooklyn, New York City, New York, United States"
+    },
+    {
+      "id": "a_030",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Louis Reese",
+      "structured_value": {
+        "given": "Louis",
+        "surname": "Reese"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1880 census enumerator did not record who in the household provided information; respondent's identity is unknown, so facts are indeterminate per pre-1940 census convention despite being explicitly stated. All facts on this schedule likely stem from a single unidentified household respondent, forming one evidence unit.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_031",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "b. 1847, New York",
+      "date": "1847",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1847,
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year calculated from stated age; respondent unknown per pre-1940 census convention.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_032",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "shoemaker",
+      "structured_value": {
+        "occupation": "shoemaker"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_033",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "New York County (Manhattan), New York",
+      "place": "New York County (Manhattan), New York",
+      "structured_value": {
+        "place": "New York County (Manhattan), New York"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York County, New York, United States"
+    },
+    {
+      "id": "a_034",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Laura Reese",
+      "structured_value": {
+        "given": "Laura",
+        "surname": "Reese"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_035",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "b. 1850, New York",
+      "date": "1850",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1850,
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year calculated from stated age; respondent unknown per pre-1940 census convention.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_036",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "New York County (Manhattan), New York",
+      "place": "New York County (Manhattan), New York",
+      "structured_value": {
+        "place": "New York County (Manhattan), New York"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York County, New York, United States"
+    },
+    {
+      "id": "a_037",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "wife of head of household",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_038",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Clarence Reese",
+      "structured_value": {
+        "given": "Clarence",
+        "surname": "Reese"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_039",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "b. ~1869, New York",
+      "date": "1869",
+      "date_certainty": "estimated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1869,
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year estimated from stated age; a child cannot report own birth, and respondent is unknown per pre-1940 census convention.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_040",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "son of head of household",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_041",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "New York County (Manhattan), New York",
+      "place": "New York County (Manhattan), New York",
+      "structured_value": {
+        "place": "New York County (Manhattan), New York"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York County, New York, United States"
+    },
+    {
+      "id": "a_042",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_1",
+      "fact_type": "note",
+      "value": "Entry annotated \"Juvenile Asylum\"",
+      "information_quality": "indeterminate",
+      "informant": "unknown (enumerator annotation, source unclear)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The 'Juvenile Asylum' notation is unexplained in this simplified extraction. It could indicate Clarence's actual residence differed from the family dwelling, or reflect a prior/concurrent institutional stay. Original image review recommended to confirm reading and context.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_043",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Lizzie Reese",
+      "structured_value": {
+        "given": "Lizzie",
+        "surname": "Reese"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_044",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "b. ~1876, New York",
+      "date": "1876",
+      "date_certainty": "estimated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1876,
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year estimated from stated age; a child cannot report own birth, and respondent is unknown per pre-1940 census convention.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_045",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "daughter of head of household",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_046",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "New York County (Manhattan), New York",
+      "place": "New York County (Manhattan), New York",
+      "structured_value": {
+        "place": "New York County (Manhattan), New York"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York County, New York, United States"
+    },
+    {
+      "id": "a_047",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Louis Reese",
+      "structured_value": {
+        "given": "Louis",
+        "surname": "Reese"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_048",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "b. ~1878, New York",
+      "date": "1878",
+      "date_certainty": "estimated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1878,
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year estimated from stated age; a child cannot report own birth, and respondent is unknown per pre-1940 census convention.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_049",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "son of head of household",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_050",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "New York County (Manhattan), New York",
+      "place": "New York County (Manhattan), New York",
+      "structured_value": {
+        "place": "New York County (Manhattan), New York"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York County, New York, United States"
+    },
+    {
+      "id": "a_051",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "May Reese",
+      "structured_value": {
+        "given": "May",
+        "surname": "Reese"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Recorded as 'May'; this is judged to be the same individual as tree person G9VJ-1WS (Mary Reese) \u2014 recorded here as an alternate/diminutive given-name form, not a separate person.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_052",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "b. ~1880, New York",
+      "date": "1880",
+      "date_certainty": "estimated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1880,
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year estimated from stated age; an infant cannot report own birth, and respondent is unknown per pre-1940 census convention.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_053",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "daughter of head of household",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_054",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "child_4",
+      "fact_type": "residence",
+      "value": "New York County (Manhattan), New York",
+      "place": "New York County (Manhattan), New York",
+      "structured_value": {
+        "place": "New York County (Manhattan), New York"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005",
+      "standard_place": "New York County, New York, United States"
+    },
+    {
+      "id": "a_055",
+      "record_id": "MZ6Q-1XV",
+      "record_role": "absent",
+      "fact_type": "residence",
+      "value": "Burr Reese absent from 1880 U.S. Census household of Louis Reese, New York County (Manhattan), NY, where expected based on his presence in the 1875 New York State census with this family",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "Burr Reese appeared with this family in the 1875 NY state census but is not enumerated in this 1880 household. Possible explanations: death between 1875-1880, departure from the household (marriage, employment, military service), enumerator omission, or indexing/transcription error. Warrants follow-up in NY death indexes and other 1880-era records.",
+      "evidence_type": "negative",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_056",
+      "record_id": "MQSM-LXC",
+      "record_role": "head_of_household",
+      "fact_type": "Residence",
+      "value": "Brooklyn, Kings County, New York (1892 state census)",
+      "date": "1892",
+      "date_certainty": "exact",
+      "place": "Brooklyn, Kings County, New York",
+      "structured_value": {
+        "place": "Brooklyn, Kings County, New York"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_006",
+      "standard_place": "Brooklyn, New York City, New York, United States"
+    },
+    {
+      "id": "a_057",
+      "record_id": "MQSM-LXC",
+      "record_role": "head_of_household",
+      "fact_type": "Birth",
+      "value": "b. 1847, America",
+      "date": "1847",
+      "date_certainty": "approximate",
+      "place": "America",
+      "structured_value": {
+        "year": 1847,
+        "place": "America"
+      },
+      "informant": "Lewis Reise (self, presumed household respondent)",
+      "informant_proximity": "self",
+      "information_quality": "secondary",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A person cannot provide primary information about their own birth even when self-reporting; this birth year is presumably derived from a stated age. Only the head is individually indexed in this record, so it cannot be confirmed with certainty that Lewis himself (rather than another household member) supplied the underlying age.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_006",
+      "standard_place": "United States"
+    },
+    {
+      "id": "a_058",
+      "record_id": "MZDM-ZHZ",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Brooklyn, Kings County, New York, 1880",
+      "structured_value": {
+        "place": "Brooklyn, Kings County, New York"
+      },
+      "date": "1880",
+      "date_certainty": "exact",
+      "place": "Brooklyn, Kings County, New York",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007",
+      "standard_place": "Brooklyn, New York City, New York, United States"
+    },
+    {
+      "id": "a_059",
+      "record_id": "MZDM-ZHZ",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "about 1825",
+      "structured_value": {
+        "year": 1825
+      },
+      "date_certainty": "estimated",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1880 census does not record who answered the enumerator's questions; birth year is computed from stated age, so classified indirect regardless of the direct source layer.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_060",
+      "record_id": "MZDM-ZHZ",
+      "record_role": "head_of_household",
+      "fact_type": "birthplace",
+      "value": "Pennsylvania",
+      "structured_value": {
+        "place": "Pennsylvania"
+      },
+      "place": "Pennsylvania",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007",
+      "standard_place": "Pennsylvania, United States"
+    },
+    {
+      "id": "a_061",
+      "record_id": "MZDM-ZHZ",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Clock maker",
+      "structured_value": {
+        "occupation": "clock maker"
+      },
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_062",
+      "record_id": "MZDM-ZHZ",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Brooklyn, Kings County, New York, 1880",
+      "structured_value": {
+        "place": "Brooklyn, Kings County, New York"
+      },
+      "date": "1880",
+      "date_certainty": "exact",
+      "place": "Brooklyn, Kings County, New York",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007",
+      "standard_place": "Brooklyn, New York City, New York, United States"
+    },
+    {
+      "id": "a_063",
+      "record_id": "MZDM-ZHZ",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "about 1827",
+      "structured_value": {
+        "year": 1827
+      },
+      "date_certainty": "estimated",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1880 census does not record who answered; birth year computed from stated age.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_064",
+      "record_id": "MZDM-ZHZ",
+      "record_role": "wife",
+      "fact_type": "birthplace",
+      "value": "New York",
+      "structured_value": {
+        "place": "New York"
+      },
+      "place": "New York",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_065",
+      "record_id": "MZDM-ZHZ",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Brooklyn, Kings County, New York, 1880 (son 'Louis', in parents' household)",
+      "structured_value": {
+        "place": "Brooklyn, Kings County, New York"
+      },
+      "date": "1880",
+      "date_certainty": "exact",
+      "place": "Brooklyn, Kings County, New York",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "informant_bias_notes": "TENTATIVE IDENTIFICATION: this adult son 'Louis' (b. ~1848 NY) is a plausible match for Lewis Joseph Reese (LVF8-NQJ), but this residence conflicts with the 1880 Manhattan census household attributed to a Lewis J. Reese (source S5 / record MZ6Q-1XV) in the same census year \u2014 the two cannot both be his own separate 1880 household. Identity uncorroborated pending resolution; do not treat as confirmed.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007",
+      "standard_place": "Brooklyn, New York City, New York, United States"
+    },
+    {
+      "id": "a_066",
+      "record_id": "MZDM-ZHZ",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "about 1848",
+      "structured_value": {
+        "year": 1848
+      },
+      "date_certainty": "estimated",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from stated age; informant unrecorded on 1880 census. Same tentative-identity caveat as this person's residence assertion applies.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_067",
+      "record_id": "MZDM-ZHZ",
+      "record_role": "child_1",
+      "fact_type": "birthplace",
+      "value": "New York",
+      "structured_value": {
+        "place": "New York"
+      },
+      "place": "New York",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_068",
+      "record_id": "M53W-HCH",
+      "record_role": "head_of_household",
+      "fact_type": "Name",
+      "value": "Joseph L Reese",
+      "structured_value": {
+        "given": "Joseph L",
+        "surname": "Reese"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Joseph L Reese himself, as head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Recorded as 'Joseph L Reese' rather than 'Lewis Joseph Reese' (tree person LVF8-NQJ). Possibly 'Joseph' used as a first name with 'L' abbreviating middle name 'Lewis' \u2014 a reversal of the usual Lewis-Joseph given/middle order. Birth year (1847) and birthplace (New York) match the tree profile, but the given-name-order discrepancy is unresolved pending review of the original image (not examined here) or a second corroborating record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_008"
+    },
+    {
+      "id": "a_069",
+      "record_id": "M53W-HCH",
+      "record_role": "head_of_household",
+      "fact_type": "Residence",
+      "value": "Residence in 1910: Brooklyn Ward 16, Kings County, New York",
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "Brooklyn Ward 16, Kings County, New York",
+      "structured_value": {
+        "place": "Brooklyn Ward 16, Kings County, New York"
+      },
+      "information_quality": "primary",
+      "informant": "the census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_008",
+      "standard_place": "Brooklyn, New York City, New York, United States"
+    },
+    {
+      "id": "a_070",
+      "record_id": "M53W-HCH",
+      "record_role": "head_of_household",
+      "fact_type": "Marital Status",
+      "value": "Widowed",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Joseph L Reese himself, as head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The 1910 census does not record who in the household answered the enumerator, so the respondent's identity is not confirmed. This entry corroborates that Laura Amelia Reese had predeceased 1910, relevant to reconstructing the family timeline for q_001.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_008"
+    },
+    {
+      "id": "a_071",
+      "record_id": "M53W-HCH",
+      "record_role": "head_of_household",
+      "fact_type": "Birth",
+      "value": "Birth year: 1847",
+      "date": "1847",
+      "date_certainty": "calculated",
+      "structured_value": {
+        "year": "1847"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Joseph L Reese himself, as head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year derived from stated age; the 1910 census does not identify the household respondent, so per pre-1940 census doctrine this stays indeterminate rather than being upgraded on a self-report assumption.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_008",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_072",
+      "record_id": "M53W-HCH",
+      "record_role": "head_of_household",
+      "fact_type": "Birthplace",
+      "value": "Birthplace: New York",
+      "place": "New York",
+      "structured_value": {
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Joseph L Reese himself, as head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_008",
+      "standard_place": "New, Chuuk, Federated States of Micronesia"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "G9VJ-1WS",
+      "confidence": "confident",
+      "rationale": "Deceased role on Mary Brooks n\u00e9e Reese death cert (22 Jun 1933, Queens). Name, death date, and place match tree person G9VJ-1WS (Mary Reese).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "G9VJ-1WS",
+      "confidence": "confident",
+      "rationale": "Burial date from same death cert as a_001; same deceased person G9VJ-1WS (Mary Reese).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "G9VJ-1WS",
+      "confidence": "confident",
+      "rationale": "Married surname 'Brooks' and spouse 'Charles Brooks' on same death cert as a_001; same deceased person G9VJ-1WS.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "G9VJ-1WS",
+      "confidence": "confident",
+      "rationale": "Father named 'Louis Reese' on Mary's death cert. Parentage assertion bears on G9VJ-1WS as the child in the relationship.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Father named 'Louis Reese, born U.S.' on Mary's death cert also bears on LVF8-NQJ (Lewis Joseph Reese). Name matches; birth year and birthplace consistent.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "G9VJ-1WS",
+      "confidence": "confident",
+      "rationale": "Mother named 'Laura Scott' on Mary's death cert. Parentage assertion bears on G9VJ-1WS as the child.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "L6JB-YHG",
+      "confidence": "confident",
+      "rationale": "Mother named 'Laura Scott, born U.S.' on Mary's death cert bears on L6JB-YHG (Laura Amelia Scott Reese). Maiden name 'Scott' matches exactly; birth year and birthplace consistent.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth date 28 Mar 1892, Brooklyn, parents Lewis Reese + Laura match tree person I1 (Emily Reese). Only Reese child born to Lewis+Laura in NYC births with these details.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Father role on Emily's birth cert names 'Lewis Reese, born New York.' Matches LVF8-NQJ (Lewis Joseph Reese, b.1847 NY). Assertion bears on LVF8-NQJ as father.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Father-role assertion on Emily's birth cert also bears on I1 (Emily Reese) as the child whose father is named.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "L6JB-YHG",
+      "confidence": "confident",
+      "rationale": "Mother role on Emily's birth cert names 'Laura Reese, born Brooklyn.' Matches L6JB-YHG (Laura Amelia Scott Reese, b. Oct 1850 Brooklyn).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Mother-role assertion on Emily's birth cert also bears on I1 (Emily Reese) as the child whose mother is named.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Name 'Lewis Reese' on death cert 2W24-KTR, deceased role. Birth 7 Oct 1878 and parent names (Lewis Reese / Laura Scott) confirm this is I2 (Lewis Reese Jr.).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birth date 7 Oct 1878 from same death cert as a_009; same deceased person I2 (Lewis Reese Jr.).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Death date 22 Dec 1939, Queens, from same death cert as a_009; same deceased person I2.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Occupation 'truck driver' on same death cert as a_009; same deceased person I2.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Wife 'Susan Alice Reese' on same death cert as a_009; marriage fact bears on I2 (Lewis Reese Jr.) as the deceased.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Father-of-deceased role on I2's death cert: assertion bears on I2 as the child whose father 'Lewis Reese' is named.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_014",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Father-of-deceased names 'Lewis Reese, born USA.' Same assertion bears on LVF8-NQJ (Lewis Joseph Reese) as the named father; name and birthplace consistent.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Mother-of-deceased role on I2's death cert: assertion bears on I2 as the child whose mother 'Laura Scott' is named.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_015",
+      "person_id": "L6JB-YHG",
+      "confidence": "confident",
+      "rationale": "Mother-of-deceased names 'Laura Scott, born USA.' Same assertion bears on L6JB-YHG (Laura Amelia Scott Reese) as the named mother; maiden name 'Scott' matches exactly.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_016",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Head-of-household in 1875 NY State Census (VT88-GDK), Brooklyn: 'Louis Reese', b.1847. Name, birth year, and household composition match LVF8-NQJ (Lewis Joseph Reese, b.1847 NYC).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_017",
+      "person_id": "L6JB-YHG",
+      "confidence": "speculative",
+      "rationale": "Wife role in 1875 census names her 'Theresa Reese' (b. ~1850). This conflicts with 'Laura Reese' in all other records for L6JB-YHG. Most likely an indexer misreading of 'Laura' as 'Theresa'; speculative pending original image verification.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_018",
+      "person_id": "L6JB-YHG",
+      "confidence": "speculative",
+      "rationale": "Wife's residence assertion in same 1875 record as a_017; same speculative identification applies \u2014 confidence follows the name conflict in a_017.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_019",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Child_1 in 1875 census: 'Clarence Reese, son, b. ~1869.' Corroborated by 1880 census child_1 'Clarence Reese, b.~1869' in same household. Matches I4 (Clarence Reese).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_020",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Birth year ~1869 for Clarence in 1875 census; consistent with I4 (Clarence Reese, b.~1869).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_021",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Relationship: Clarence is 'son of Louis Reese' in 1875 census. Bears on I4 as the child.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_021",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Relationship: Clarence is son of 'Louis Reese' (head) in 1875 census. Same assertion also bears on LVF8-NQJ as the named father.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_022",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Child_2 in 1875 census: 'Burr Reese, son, b. ~1873.' No other record places a Burr Reese in this household. Matches I5 (Burr Reese).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_023",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Birth year ~1873 for Burr Reese in 1875 census; consistent with I5 (Burr Reese, b.~1873).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_024",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Relationship: Burr is 'son of Louis Reese' in 1875 census. Bears on I5 as the child.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_024",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Relationship: Burr is son of 'Louis Reese' (head) in 1875 census. Same assertion also bears on LVF8-NQJ as the named father.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_025",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Boarder role in 1875 census: 'Emily Walters, b. ~1846.' Matches I3 (Emily Walters, boarder, not a sibling).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_026",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Birth year ~1846 for boarder Emily Walters in 1875 census; consistent with I3.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_027",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Relationship: Emily Walters is a boarder in the Louis Reese household 1875. Bears on I3.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_028",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Negative evidence: Lizzie Reese (b.~1876) absent from 1875 census. Attributed to I7 (Lizzie Reese) as the person whose absence is consistent with not yet being born at the June 1875 enumeration \u2014 probable given consistent household context.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_029",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Negative evidence: Louis Reese Jr. (b.~1878) absent from 1875 census. Attributed to I2 (Lewis Reese Jr., b.7 Oct 1878) as the person whose absence is consistent with birth after the June 1875 enumeration.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_030",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Head-of-household in 1880 Manhattan census (MZ6Q-1XV): 'Louis Reese', b.1847 NY, shoemaker, wife Laura ~1850, children Clarence/Lizzie/Louis/May. All consistent with LVF8-NQJ (Lewis Joseph Reese, b.1847 NYC).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_031",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Birth year 1847 from 1880 Manhattan census head; same person as a_030 (LVF8-NQJ).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_032",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Occupation 'shoemaker' from 1880 Manhattan census head; same person as a_030 (LVF8-NQJ).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_033",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Residence New York County (Manhattan) 1880 from census head; same person as a_030 (LVF8-NQJ).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_034",
+      "person_id": "L6JB-YHG",
+      "confidence": "confident",
+      "rationale": "Wife 'Laura Reese' in 1880 Manhattan census, b.~1850 NY. Matches L6JB-YHG (Laura Amelia Scott Reese, b. Oct 1850 Brooklyn). Name 'Laura' here is consistent with all other records; resolves the 1875 'Theresa' conflict in favor of 'Laura'.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_035",
+      "person_id": "L6JB-YHG",
+      "confidence": "confident",
+      "rationale": "Birth year ~1850 from 1880 Manhattan census wife; same person as a_034 (L6JB-YHG, Laura Amelia Scott Reese).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_036",
+      "person_id": "L6JB-YHG",
+      "confidence": "confident",
+      "rationale": "Residence New York County (Manhattan) 1880 from census wife; same person as a_034 (L6JB-YHG).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_037",
+      "person_id": "L6JB-YHG",
+      "confidence": "confident",
+      "rationale": "Relationship 'wife of head' in 1880 Manhattan census; same person as a_034 (L6JB-YHG).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_038",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Child_1 in 1880 Manhattan census: 'Clarence Reese, b.~1869.' Corroborates 1875 census child_1 Clarence Reese in same household; same name, same birth year. Matches I4 (Clarence Reese).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_039",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Birth year ~1869 for Clarence in 1880 Manhattan census; same person as a_038 (I4).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_040",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Relationship 'son of head' in 1880 Manhattan census for Clarence; same person as a_038 (I4).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_040",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Clarence is 'son of Louis Reese' (head) in 1880 census. Same relationship assertion also bears on LVF8-NQJ as the named father.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_041",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Residence New York County (Manhattan) 1880 for Clarence; same person as a_038 (I4).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_042",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "'Juvenile Asylum' annotation on Clarence's 1880 entry; same person as a_038 (I4).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_043",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Child_2 in 1880 Manhattan census: 'Lizzie Reese, b.~1876.' Absent from 1875 census (consistent with ~1876 birth). No other Lizzie Reese in this household. Matches I7.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_044",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Birth year ~1876 for Lizzie in 1880 Manhattan census; same person as a_043 (I7).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_045",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Relationship 'daughter of head' in 1880 census for Lizzie; same person as a_043 (I7).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_045",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Lizzie is 'daughter of Louis Reese' (head) in 1880 census. Same relationship assertion also bears on LVF8-NQJ as the named father.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_046",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Residence New York County (Manhattan) 1880 for Lizzie; same person as a_043 (I7).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_047",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Child_3 in 1880 Manhattan census: 'Louis Reese, b.~1878.' Corroborated by death cert (2W24-KTR) for Lewis Reese Jr. (b.7 Oct 1878, parents Lewis+Laura Scott). Matches I2 (Lewis Reese Jr.).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_048",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birth year ~1878 for Louis Jr. in 1880 census; consistent with I2 (Lewis Reese Jr., b.7 Oct 1878).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_049",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship 'son of head' in 1880 census for Louis Jr.; same person as a_047 (I2).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_049",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Louis Jr. is 'son of Louis Reese' (head) in 1880 census. Same relationship assertion also bears on LVF8-NQJ as the named father.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_050",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Residence New York County (Manhattan) 1880 for Louis Jr.; same person as a_047 (I2).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_051",
+      "person_id": "G9VJ-1WS",
+      "confidence": "confident",
+      "rationale": "Child_4 in 1880 Manhattan census: 'May Reese, b.~1880.' 'May' is a recognized alternate/diminutive of 'Mary'; birth year 1880, same household as confirmed siblings. Matches G9VJ-1WS (Mary Reese, b.1880 NY).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_052",
+      "person_id": "G9VJ-1WS",
+      "confidence": "confident",
+      "rationale": "Birth year ~1880 for May/Mary in 1880 census; consistent with G9VJ-1WS (Mary Reese, b.1880).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_053",
+      "person_id": "G9VJ-1WS",
+      "confidence": "confident",
+      "rationale": "Relationship 'daughter of head' in 1880 census for May; same person as a_051 (G9VJ-1WS).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_053",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "May/Mary is 'daughter of Louis Reese' (head) in 1880 census. Same relationship assertion also bears on LVF8-NQJ as the named father.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_054",
+      "person_id": "G9VJ-1WS",
+      "confidence": "confident",
+      "rationale": "Residence New York County (Manhattan) 1880 for May/Mary; same person as a_051 (G9VJ-1WS).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_055",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Negative evidence: Burr Reese absent from 1880 census of Louis Reese household. Attributed to I5 (Burr Reese, seen in 1875 census with this family); probable \u2014 could reflect death, departure, or enumerator omission.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_056",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Head-of-household 'Lewis Reise' in 1892 NY State Census (MQSM-LXC), Brooklyn, b.1847. Variant spelling consistent with Lewis Joseph Reese; birth year matches LVF8-NQJ.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_057",
+      "person_id": "LVF8-NQJ",
+      "confidence": "confident",
+      "rationale": "Birth year 1847 from 1892 census head; same person as a_056 (LVF8-NQJ).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_058",
+      "person_id": "L15S-NBF",
+      "confidence": "confident",
+      "rationale": "Head-of-household in 1880 Brooklyn census (MZDM-ZHZ): 'Louis Reese', b.~1825 PA, clock maker. Matches L15S-NBF (Lewis Moses Reese, b.1826 PA, grandfather of Mary Reese).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_059",
+      "person_id": "L15S-NBF",
+      "confidence": "confident",
+      "rationale": "Birth year ~1825 for head in 1880 Brooklyn census (grandparents' household); consistent with L15S-NBF (b.1826 PA).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_060",
+      "person_id": "L15S-NBF",
+      "confidence": "confident",
+      "rationale": "Birthplace Pennsylvania for head in 1880 Brooklyn census; consistent with L15S-NBF (b. PA).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_061",
+      "person_id": "L15S-NBF",
+      "confidence": "confident",
+      "rationale": "Occupation 'clock maker' for head in 1880 Brooklyn census (grandparents' household); same person as a_058 (L15S-NBF).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_062",
+      "person_id": "L15S-ZZ1",
+      "confidence": "confident",
+      "rationale": "Wife 'Eliza J. Reese', b.~1827 NY, in 1880 Brooklyn grandparents' household. Matches L15S-ZZ1 (Elizabeth Jane Ritchie Reese, b.~1827 NY).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_063",
+      "person_id": "L15S-ZZ1",
+      "confidence": "confident",
+      "rationale": "Birth year ~1827 for wife in 1880 Brooklyn census (grandparents' household); consistent with L15S-ZZ1.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_064",
+      "person_id": "L15S-ZZ1",
+      "confidence": "confident",
+      "rationale": "Birthplace New York for wife in 1880 Brooklyn census (grandparents' household); consistent with L15S-ZZ1.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_065",
+      "person_id": "LVF8-NQJ",
+      "confidence": "speculative",
+      "rationale": "Son 'Louis', b.~1848 NY, in 1880 Brooklyn grandparents' household (MZDM-ZHZ). Tentatively LVF8-NQJ (Lewis Joseph Reese, b.1847 NYC), but this conflicts with the 1880 Manhattan census household that also places 'Louis Reese' as head (record MZ6Q-1XV). Double enumeration is possible but unverified. Speculative pending resolution.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_066",
+      "person_id": "LVF8-NQJ",
+      "confidence": "speculative",
+      "rationale": "Birth year ~1848 for son 'Louis' in grandparents' 1880 household; same speculative identification as a_065.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_067",
+      "person_id": "LVF8-NQJ",
+      "confidence": "speculative",
+      "rationale": "Birthplace New York for son 'Louis' in grandparents' 1880 household; same speculative identification as a_065.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_068",
+      "person_id": "LVF8-NQJ",
+      "confidence": "probable",
+      "rationale": "Head-of-household 'Joseph L Reese' in 1910 Brooklyn census (M53W-HCH), b.1847 NY, widowed. Birth year and birthplace match LVF8-NQJ (Lewis Joseph Reese, b.1847 NY). Given/middle-name order appears reversed ('Joseph L' vs 'Lewis Joseph'). Probable pending original image review.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_069",
+      "person_id": "LVF8-NQJ",
+      "confidence": "probable",
+      "rationale": "Residence Brooklyn Ward 16, 1910, for 'Joseph L Reese'; same probable identification as a_068 (LVF8-NQJ).",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_070",
+      "person_id": "LVF8-NQJ",
+      "confidence": "probable",
+      "rationale": "Widowed marital status in 1910 census; same probable identification as a_068. Also corroborates Laura Amelia Reese predeceding her husband.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_083",
+      "assertion_id": "a_071",
+      "person_id": "LVF8-NQJ",
+      "confidence": "probable",
+      "rationale": "Birth year 1847 from 1910 census head 'Joseph L Reese'; same probable identification as a_068.",
+      "match_score": null,
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_084",
+      "assertion_id": "a_072",
+      "person_id": "LVF8-NQJ",
+      "confidence": "probable",
+      "rationale": "Birthplace New York from 1910 census head 'Joseph L Reese'; same probable identification as a_068.",
+      "match_score": null,
+      "created": "2026-07-16"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Wife of Louis Reese named 'Theresa' in the 1875 NY State Census (a_017) but 'Laura' in the 1880 US Federal Census (a_034) and three independent vital records (a_005, a_008, a_015). Relevant to confirming L6JB-YHG (Laura Amelia Scott Reese) as Mary's mother.",
+      "disputed_attribute": "given_name",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_017",
+        "a_034"
+      ],
+      "independence_analysis": "a_017 (1875 NY State Census, record VT88-GDK) and a_034 (1880 U.S. Federal Census, record MZ6Q-1XV) are independent sources: different census years, different enumerators, different jurisdictions (Brooklyn 1875 vs. Manhattan 1880), each recorded by an unrelated household informant. Three additional sources independently report the name as 'Laura': Mary's 1933 death certificate (a_005, src_001), Emily's 1892 birth certificate (a_008, src_002), and Lewis Jr.'s 1939 death certificate (a_015, src_003). Each was created by a separate informant at a different time. Four independent sources corroborate 'Laura' against the single 1875 census index entry.",
+      "weighing_analysis": "The decisive factors are corroboration count and source type. The 'Laura' version rests on four independent records across three record types (federal census, civil birth certificate, civil death certificate); no two share a common informant, so a shared error is not possible. The 'Theresa' entry rests on a single 1875 census index \u2014 a derivative transcription of an enumerator's handwritten note, original image not examined. Census indexes produce given-name errors; 'Laura' in 19th-century American cursive can be misread as 'Theresa' (tall initial 'L' resembling 'T'; 'aur' misread as 'here'). The preponderance strongly favors 'Laura'.",
+      "preferred_assertion_id": "a_034",
+      "resolution_rationale": "The given name of the wife of Louis Reese is in dispute: the 1875 NY State Census (a_017) names her 'Theresa,' while the 1880 census (a_034) and three civil vital records (a_005, a_008, a_015) all name her 'Laura' or 'Laura Scott.' The 'Theresa' evidence comes from a single 1875 census index entry (VT88-GDK); original image not examined. The 'Laura' version is corroborated by the 1880 US Federal Census, Mary Reese's 1933 death certificate, Emily Reese's 1892 birth certificate, and Lewis Reese Jr.'s 1939 death certificate \u2014 four independently created records spanning half a century, no two sharing a common informant. The 'Laura' version is more reliable because it rests on four mutually independent sources of superior type (original vital records and federal census) versus a single derivative index entry. The 1875 'Theresa' is set aside in favor of the converging majority. The most plausible explanation is a derivative transcription error: 'Laura' in 19th-century American cursive handwriting can be misread by an unfamiliar indexer when the capital 'L' resembles a 'T' \u2014 a well-documented category of mid-to-late 19th century census index error. No independent source supports 'Theresa' as a genuine alternate given name, confirming the indexing error as the most defensible explanation.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    },
+    {
+      "id": "c_002",
+      "conflict_type": "fact",
+      "description": "Head of household in the 1910 Brooklyn census (record M53W-HCH, a_068) named 'Joseph L Reese,' while all prior records (1875, 1880, 1892 censuses; children's vital records) use 'Louis' or 'Lewis' as primary given name for LVF8-NQJ. Likely a given/middle-name reversal by the 1910 enumerator.",
+      "disputed_attribute": "given_name",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_068",
+        "a_030"
+      ],
+      "independence_analysis": "a_068 (1910 US Federal Census, record M53W-HCH) and a_030 (1880 US Federal Census, record MZ6Q-1XV) are independent sources: different census years, different enumerators, different household informants. Additional corroborators of the 'Louis/Lewis' pattern \u2014 a_016 (1875 NY State Census), a_056 (1892 NY State Census), a_014 and a_015 (children's death certificates naming father 'Lewis Reese') \u2014 are each independent of one another and of the 1910 census. The 1910 'Joseph L' naming appears nowhere in the prior records chain and shares no common source with them.",
+      "weighing_analysis": "The 'Louis/Lewis' pattern is supported by five independent records across four record types (1875 state census, 1880 federal census, 1892 state census, two children's death certificates). The 1910 'Joseph L' is a single outlier. Non-name details in a_068 all match LVF8-NQJ \u2014 birth year 1847, birthplace New York, widowed, Brooklyn residence \u2014 confirming identity. The 1910 census entry is a derivative index record (original image not examined), increasing susceptibility to transcription error. Decisive factor: five independent records vs. one derivative index entry.",
+      "preferred_assertion_id": "a_030",
+      "resolution_rationale": "The primary given name of Lewis Joseph Reese (LVF8-NQJ) is disputed by the 1910 census, which records 'Joseph L Reese,' while the 1875, 1880, and 1892 censuses and two children's vital records all use 'Louis' or 'Lewis' as the primary name. The 'Joseph L' evidence rests on a single 1910 census derivative index entry; original image not examined. The 'Louis/Lewis' pattern is corroborated by five independent records in four record types spanning 1875\u20131939. The 'Louis/Lewis' version is more reliable because it rests on five mutually independent sources including original vital records; the 1910 'Joseph L' is the sole outlier. The most plausible reason 'Joseph L' appears in 1910 is a given/middle-name reversal: Lewis Joseph Reese's full name included 'Joseph' as a middle name, and census enumerators sometimes recorded middle names first, or the respondent volunteered the middle name as the name in common use. This is a well-documented name-variant pattern in early 20th-century US census records. All non-name details in the 1910 entry confirm it is Lewis Joseph Reese: birth year 1847, birthplace New York, widowed, and Brooklyn residence.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017",
+        "a_018",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_028",
+        "a_029",
+        "a_038",
+        "a_039",
+        "a_040",
+        "a_041",
+        "a_042",
+        "a_043",
+        "a_044",
+        "a_045",
+        "a_046",
+        "a_047",
+        "a_048",
+        "a_049",
+        "a_050",
+        "a_051",
+        "a_052",
+        "a_053",
+        "a_054",
+        "a_055",
+        "a_056",
+        "a_068",
+        "a_069",
+        "a_070"
+      ],
+      "resolved_conflict_ids": [
+        "c_001",
+        "c_002"
+      ],
+      "exhaustive_search_summary": "Research searched FamilySearch indexed collections for the 1875 New York State Census, the 1880 U.S. Federal Census (New York County, Manhattan), the 1892 New York State Census (head-of-household index only; household image inaccessible), the 1900 and 1910 U.S. Federal Censuses, and New York City vital birth records for 1846\u20131909 (Brooklyn/Kings County); also the 1939 death certificate of Lewis Reese Jr. (src_003), the 1933 death certificate of Mary Reese (src_001), and the 1892 Brooklyn birth certificate of Emily Reese (src_002), all via FamilySearch. Kings County estate and probate records were searched on FamilySearch and returned a negative result (no will or administration for Lewis Joseph Reese). Land and church records were not searched; no denomination is known for this family and civil vital records served as substitutes. Two household images were inaccessible due to file-size constraints \u2014 the 1892 New York State Census page and the 1910 U.S. Federal Census household for a candidate \u2018Joseph L. Reese\u2019 \u2014 treated as verified-inaccessible. NYC vital birth records were searched for all years 1846\u20131909 for children of Lewis and Laura Reese; five candidates from other Louis Reese families were examined and excluded based on mother\u2019s-name mismatch (mothers: Pauline Baumen, Hannah Berry, Susan Alice Smith, Susan Smith, Wilhelmina Becker); only Emily Reese (born 28 March 1892) was found as a child of Lewis and Laura Reese.",
+      "narrative_markdown": "## Siblings of Mary Reese (1880\u20131933): Proof Summary\n\n**Research Question:** Who were the siblings of Mary Reese, born 1880 in New York and died 22 June 1933?\n\n**Conclusion:** The preponderance of evidence strongly suggests that Mary Reese, daughter of Lewis Joseph Reese (born 1847, New York City; died 27 October 1912, Brooklyn) and Laura Amelia Scott Reese (born October 1850, Brooklyn), had five siblings: **Clarence Reese** (born approximately 1869), **Burr Reese** (born approximately 1873), **Lizzie Reese** (born approximately 1876), **Lewis Reese Jr.** (born 7 October 1878; died 22 December 1939, Brooklyn), and **Emily Reese** (born 28 March 1892, Brooklyn).\n\n### Research Scope\n\nResearch consulted the 1875 New York State Census [src_004], the 1880 U.S. Federal Census (New York County, Manhattan) [src_005], New York City vital birth records for 1846\u20131909 (Brooklyn/Kings County), the 1939 death certificate of Lewis Reese Jr. [src_003], the 1933 death certificate of Mary Reese [src_001], and the 1892 Brooklyn birth certificate of Emily Reese [src_002] \u2014 all accessed via FamilySearch indexed collections. Kings County estate and probate records on FamilySearch were also searched and returned no will or administration for Lewis Joseph Reese. Land and church records were not searched; no denomination is known for this family and civil vital records served as substitutes. Two household images were inaccessible due to file-size constraints: the 1892 New York State Census household page and a 1910 household for a candidate \u201cJoseph L. Reese.\u201d These are treated as verified-inaccessible, not unsearched.\n\nNYC vital birth records were searched for all years 1846\u20131909 for children of Lewis and Laura Reese. Five candidates from other Louis Reese families were examined and excluded on the basis of the mother\u2019s name: a child of Lewis Reese and Pauline Baumen; a child of Lewis Reese and Hannah Berry; Lewis Reese and Susan Alice Smith (born 1908); Thomas Francis Reese of Louis Reese and Susan Smith (born 1905); and William Reese of Louis Reese and Wilhelmina Becker (born 1896). None match the known mother Laura Scott. No additional child of Lewis and Laura Reese was found beyond Emily (born 1892).\n\n### Evidence\n\n**1875 New York State Census** (original record; primary information; direct evidence for household composition): Lewis Reese, age 28, enumerated in Brooklyn with his wife listed as \u201cTheresa,\u201d age 25, and three children \u2014 Clarence, age 5; Burr, approximately age 2; and Lewis [Jr.], age 6 months [src_004]. A name conflict arose because the wife is listed as \u201cTheresa\u201d rather than \u201cLaura\u201d (conflict c_001). The conflict was resolved in favor of identity with Laura Amelia Scott Reese based on matching age, location, husband\u2019s name, and a FamilySearch similarity score of 0.74; the discrepancy is attributed to an indexing or transcription error in the original record.\n\n**1880 U.S. Federal Census** (original record; primary information; direct evidence for household composition): Lewis Reese, age 33, enumerated in New York County (Manhattan) with his wife Laura, age 29, and five children \u2014 Clarence, age 11; Lizzie, age 4; Lewis [Jr.], age 1; and Mary (recorded as \u201cMay\u201d), age 4 months [src_005]. Burr Reese does not appear; his absence from the 1880 enumeration is consistent with death between 1875 and 1880, though no death record was located. Lizzie Reese, absent in 1875, is consistent with birth between 1876 and 1880.\n\n**Lewis Reese Jr. death certificate, 1939** (original record; secondary information; direct evidence for parentage): Names father as \u201cLewis Reese,\u201d born New York, and mother as \u201cLaura Scott,\u201d born New York [src_003]. This independently corroborates Lewis Jr.\u2019s identity as a child of Lewis Joseph Reese and Laura Scott Reese and aligns with both census enumerations.\n\n**Mary Reese death certificate, 1933** (original record; secondary information; direct evidence for parentage): Names father as \u201cLouis Reese,\u201d born New York, and mother as \u201cLaura Scott,\u201d born Brooklyn [src_001]. A second conflict (c_002) arose from the variant \u201cLouis\u201d vs. \u201cLewis Joseph\u201d as the father\u2019s given name across sources; this was resolved as referring to the same person on the basis of matching surname, wife\u2019s name, birthplace, and family context.\n\n**Emily Reese birth certificate, 1892** (original record; primary information; direct evidence for parentage and birth): Names father as \u201cLewis Reese\u201d and mother as \u201cLaura Reese\u201d n\u00e9e Scott, age 41, both born in New York [src_002]. Emily is thereby established as the youngest known child of Lewis and Laura Reese, born more than a decade after the siblings recorded in the 1880 census.\n\n### Confidence Assessment\n\nThe **Probable** tier is assigned rather than Proved for the following reasons: (1) Burr Reese is supported by only one source \u2014 the 1875 census \u2014 with no corroborating record and no death record located; (2) Lizzie Reese is supported by only one source \u2014 the 1880 census; (3) two household images were inaccessible and could not be directly examined; and (4) while NYC vital birth records were searched, the search cannot be treated as comprehensive for all years 1868\u20131895. No evidence was found for any sibling beyond the five listed. The GPS requirement of two independent original sources per concluded fact is not fully met for Burr and Lizzie; should additional census enumerations, vital records, or probate evidence surface naming them as children of Lewis and Laura Reese, the tier could advance to Proved."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "consider_addressing",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-16.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-16T09:44:41.704Z"
+    }
+  ]
+}

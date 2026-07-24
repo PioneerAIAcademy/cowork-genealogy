@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_person_evidence_023",
+    "skill": "person-evidence",
+    "name": "A baptism naming a parent for an existing child is linked via pe_ entries only — the ParentChild edge is deferred to the pipeline",
+    "type": "positive",
+    "description": "Guards the SKILL.md §7 boundary clarification for the gray zone the jens-nielsen e2e f3 finding exposed: a single, NON-household record that merely STATES a parent-child link for a person already in the tree. This is distinct from a co-resident household skeleton (census), where person-evidence DOES write the edges at link time (ut_person_evidence_021) — and it routes the same as a marriage relationship assertion (ut_person_evidence_022): pe_ links only, relationship deferred. The flynn-baptism-names-mother tree holds Patrick (I1) and his father Thomas (I2, via RT1) but NOT the mother. Baptism assertion a_001 (source S2 / src_001, original+primary+direct) names Bridget Doyle as Patrick's mother; a_002 is her name assertion. The correct person-evidence behavior is: create Bridget as a stub person, create a pe_ link for BOTH parties (Patrick I1 and the new Bridget stub) — WITHOUT creating the ParentChild relationship edge or calling tree_edit add_relationship for it. The concluded parentage edge is written later by proof-conclusion → tree-edit. Per TREE_OWNERSHIP_TABLE, research-schema-spec §8 (link-time materialization carries facts + names, not relationship edges), and SKILL.md §7.",
+    "tags": ["person-evidence", "lane-boundary", "relationship-assertion", "parentage", "defer-edge", "ownership", "a_001", "jens-nielsen-grayzone"]
+  },
+  "input": {
+    "user_message": "person-evidence: assertion a_001 is Patrick Flynn's (I1) Kilrush baptism, which names his mother as Bridget Doyle (source src_001 / tree source S2). Bridget Doyle is not yet in the tree. Link this baptism's parentage assertion to the right persons.",
+    "scenario": "flynn-baptism-names-mother"
+  },
+  "judge_context": [
+    "The core behavior under test is LANE DISCIPLINE for a single non-household record that STATES a parentage: person-evidence resolves identity and records pe_ links; it does NOT create the tree ParentChild relationship edge. Grade Correctness primarily on that.",
+    "Bridget Doyle matches no existing person (the tree holds only Patrick I1 and his father Thomas I2), so person-evidence must CREATE A NEW STUB for her — a synthetic id such as I3, gender Female, a name with surname Doyle (as the baptism gives). Creating a stub person is within person-evidence's ownership (the `persons` section).",
+    "person-evidence must create person_evidence (pe_) entries linking a_001 to BOTH parties (Patrick I1 and the new Bridget stub), since a relationship assertion bears on both persons it names.",
+    "It is WRONG for person-evidence to create the ParentChild relationship edge between Bridget and Patrick, and WRONG to call tree_edit add_relationship for it. That belongs to proof-conclusion → tree-edit, which own the `relationships` section. A run that adds the ParentChild edge should FAIL Correctness — the skill should explicitly DEFER the relationship to the downstream pipeline. This is the census-household EXCEPTION's mirror image: a baptism is not a co-resident household skeleton, so the edge is deferred, not written.",
+    "a_001's record_persona_id is null, so same_person cannot run and the new person_evidence entries' match_score must be null — the links rest on correlation (the register names Thomas Flynn and Bridget Doyle as Patrick's parents).",
+    "The new Bridget stub rests on the single baptism with no independent corroboration yet, so her person_evidence link is probable at most — confident would over-claim.",
+    "The stub should be minimal (gender + a name); person-evidence should NOT populate Bridget's birth/other facts — proof-conclusion populates stub facts later.",
+    "COMPLETENESS GRADING NOTE for the judge: score Completeness on whether person-evidence created the Bridget stub and both pe_ links and correctly deferred the ParentChild edge — not on any downstream step (proof-conclusion, tree-edit, check-warnings) that is out of this skill's lane and unavailable in the unit harness."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Recovered — Frank Ogletree linked as Lewis's father, b. December 1870 Georgia, head of household in the 1900 and 1910 Troup County censuses. Full match.",
+    "f2": "Partial — the mother is recovered and linked to Lewis (Carrie, b. ~March 1877 Georgia, married 1895), but recorded under her married name 'Carrie Ogletree'; her maiden name 'Hogg' (the distinguishing part of the finding) is not set on her person, though 'Hogg' appears elsewhere in the tree (a source). Mother identity recovered, maiden name not established -> partial."
+  },
+  "annotator": "ernest"
+}

@@ -1,0 +1,82 @@
+name: Check co-author credit (warn-only)
+
+# Surfaces a warning annotation on a PR when none of its commits credit a
+# HUMAN co-author. This is the CI counterpart to the local `commit-msg` hook
+# (scripts/git-hooks/commit-msg): the hook nudges at commit time on stderr —
+# easy to miss, and invisible when commits are made through a wrapper — so this
+# job re-emits the same nudge where it's actually seen, on the PR.
+#
+# It is a WARNING, never a gate. The job always exits 0, so a missing trailer
+# annotates but never blocks merge — some work is genuinely solo. We squash-merge,
+# and GitHub folds the Co-authored-by trailers from ALL of a PR's commits into
+# the squash commit, so credit survives as long as ANY one commit carries a
+# human trailer — hence this is a per-PR check, not per-commit.
+#
+# "Human" is defined identically to the local hook, matched two ways because our
+# trailer format is a bare GitHub username with no email to key on:
+#   - address @anthropic.com — the trailer Claude Code appends automatically
+#   - name field starting with "Claude" — what the bare-username form produces
+# The trailing ([[:space:]]|$) keeps "Claude" from prefix-matching a real person
+# (a co-author named Claudette is human and passes).
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  coauthor-warn:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR with full history
+        uses: actions/checkout@v5
+        with:
+          # Need base.sha and every PR commit reachable to walk the range.
+          fetch-depth: 0
+
+      - name: Warn when no PR commit credits a human co-author
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -uo pipefail
+
+          # Same "human" definition as scripts/git-hooks/commit-msg. BOT_RE is an
+          # ERE (grep -E); add further AI/bot names or domains as `|` alternatives.
+          BOT_RE='@anthropic\.com>|^Co-authored-by:[[:space:]]*Claude([[:space:]]|$)'
+
+          found_human=0
+          checked=0
+          while IFS= read -r sha; do
+            [ -z "$sha" ] && continue
+            # Merge commits have no "co-author" concept — a merge has >1 parent,
+            # so `<sha> <parent>...` is more than two words. Skip them.
+            nparents=$(git rev-list --parents -n1 "$sha" | wc -w)
+            [ "$nparents" -gt 2 ] && continue
+            checked=$((checked + 1))
+            # Parse trailers with git interpret-trailers (skips the log body and
+            # any comment lines), then filter to human Co-authored-by trailers.
+            human=$(git log -1 --format='%B' "$sha" \
+              | git interpret-trailers --parse \
+              | grep -i '^Co-authored-by:' \
+              | grep -Evi "$BOT_RE" || true)
+            if [ -n "$human" ]; then
+              found_human=1
+              break
+            fi
+          done < <(git rev-list "${BASE_SHA}..${HEAD_SHA}")
+
+          if [ "$checked" -eq 0 ]; then
+            echo "coauthor-warn: no non-merge commits to check ✓"
+            exit 0
+          fi
+
+          if [ "$found_human" -eq 0 ]; then
+            echo "::warning title=No human co-author credited::None of this PR's ${checked} non-merge commit(s) carry a human Co-authored-by trailer. If someone paired with you, add 'Co-authored-by: their-github-username' to a commit so credit survives the squash-merge (Claude/AI co-authors don't count). Solo work? Ignore this — it's only a reminder and never blocks merge."
+          else
+            echo "coauthor-warn: human co-author credited ✓"
+          fi
+          # Warn-only: always succeed so a missing trailer annotates, never gates.
+          exit 0

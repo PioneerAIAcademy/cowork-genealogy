@@ -1,7 +1,7 @@
 """Skill-specific validators for the validate-schema skill.
 
 validate-schema has no `rubric.md` (deleted in the criteria-demotion
-rollout — see docs/plan/criteria-demotion-and-rubric-opt-in.md). All
+rollout). All
 mechanical checks live here; narrative judgment about validation
 reporting lands on the base Correctness + Completeness dimensions in
 the LLM judge.

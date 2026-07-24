@@ -41,6 +41,7 @@ from claude_agent_sdk import (
 )
 
 from harness.auth import AuthConfig, env_for_sdk
+from harness.context_policy import subagent_only_denial, subagent_only_violation
 from harness.mock_mcp import create_mock_server
 
 
@@ -196,6 +197,12 @@ class SkillRunResult:
     # with many >1 runs is paying the cold-cache / API-stall cost the e2e
     # perf analysis flagged. Set by the retry wrapper, not run_skill.
     attempts: int = 1
+    # Subagent-only tools the MAIN thread tried to call and was denied, as
+    # {"tool", "args"} (see harness.context_policy). Empty is the healthy
+    # case. This is the deterministic routing signal: the judge cannot see a
+    # denied call, and grading routing by transcript inference is what made
+    # ut_015 detect the violation ~1-in-8.
+    blocked_context_calls: list[dict[str, Any]] = field(default_factory=list)
 
 
 async def run_skill(
@@ -213,11 +220,20 @@ async def run_skill(
     sdk_message_silence_seconds: int = DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     allowed_tools_override: list[str] | None = None,
     routing_short_circuit_skills: set[str] | None = None,
+    declared_tools: set[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
 
     The caller is responsible for snapshotting workspace state before/after
     and running validators + judge.
+
+    `declared_tools` is the BARE tool names this skill claims in its own
+    `allowed-tools` (`allowed_tools.declared_skill_tools`) — NOT the unioned
+    allowlist. It scopes the per-context policy: a skill that declared
+    `image_read` may call it on the main thread (search-images browses volumes
+    that way); one that holds it only via the agent-union must delegate.
+    Omitting it means "declared nothing", so the guard applies to every
+    guarded tool.
     """
     mock_server, call_log, tools_by_name = create_mock_server(
         fixture_names, fixtures_dir, workspace=workspace
@@ -259,6 +275,8 @@ async def run_skill(
     # this after consuming to force a clean (non-aborted) termination.
     routing_resolved = {"v": False}
     _short_circuit = routing_short_circuit_skills or set()
+    # Main-thread calls to subagent-only tools, denied by the hook below.
+    blocked_context_calls: list[dict[str, Any]] = []
 
     async def pretool_hook(input_data, tool_use_id, ctx):
         tool_name = input_data.get("tool_name", "")
@@ -295,6 +313,20 @@ async def run_skill(
                         "continue_": False,
                         "stopReason": "routing_resolved",
                     }
+        # Per-context tool policy: deny a subagent-only tool (image_read) on
+        # the main thread UNLESS this skill declared it itself. Checked BEFORE
+        # the max_tool_calls counter — a denied call never executes, so it
+        # shouldn't consume the budget (same ordering rationale as the e2e
+        # tree-read block).
+        violation = subagent_only_violation(input_data, declared_tools)
+        if violation:
+            blocked_context_calls.append(
+                {
+                    "tool": violation,
+                    "args": dict(input_data.get("tool_input") or {}),
+                }
+            )
+            return subagent_only_denial(violation)
         # Count MCP tool calls toward max_tool_calls. Block over-limit calls
         # with a permission deny so the SDK doesn't actually execute them; the
         # outer loop reads tool_call_count after the iteration ends and sets
@@ -490,5 +522,6 @@ async def run_skill(
         aborted_reason=aborted_reason,
         error=error,
         attempted_mcp_calls=attempted_mcp_calls,
+        blocked_context_calls=blocked_context_calls,
         registered_mcp_tools=set(tools_by_name.keys()),
     )

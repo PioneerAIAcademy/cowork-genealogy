@@ -72,3 +72,40 @@ def test_session_lifecycle_and_sample_seed():
         assert client.post(f"/api/sessions/{sid}/resume").status_code == 200
         assert client.delete(f"/api/sessions/{sid}").status_code == 200
         assert sid not in [p["id"] for p in client.get("/api/sessions").json()]
+
+
+def test_session_image_serves_saved_scan():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "img@example.com"})
+        proj = client.post("/api/sessions", json={"sample": True}).json()
+        sid = proj["id"]
+        provider = app.state.provider
+        images_dir = provider._root(proj["sandbox_id"]) / "project" / "images"  # LocalProvider
+        images_dir.mkdir(parents=True, exist_ok=True)
+        jpeg = bytes([0xFF, 0xD8, 0xFF, 0xD9])
+        (images_dir / "004884748_02613.jpg").write_bytes(jpeg)
+
+        # Serves the raw bytes as image/jpeg.
+        r = client.get(
+            f"/api/sessions/{sid}/image", params={"filename": "images/004884748_02613.jpg"}
+        )
+        assert r.status_code == 200, r.text
+        assert r.headers["content-type"].startswith("image/jpeg")
+        assert r.content == jpeg
+
+        # Missing file → 404.
+        assert (
+            client.get(
+                f"/api/sessions/{sid}/image", params={"filename": "images/missing.jpg"}
+            ).status_code
+            == 404
+        )
+
+        # Invalid filename (traversal / subdir / wrong shape) → 400.
+        for bad in ("images/../secret.jpg", "images/sub/x.jpg", "x.jpg", "images/x.png"):
+            assert (
+                client.get(f"/api/sessions/{sid}/image", params={"filename": bad}).status_code
+                == 400
+            ), bad
+
+        client.delete(f"/api/sessions/{sid}")

@@ -3,8 +3,7 @@
 proof-conclusion keeps its `rubric.md` — all three dimensions (Tier
 justification, Narrative standalone, Evidence completeness) are GPS
 craft about whether a proof argument actually meets a standard, and
-stay graded by the LLM judge. See
-docs/plan/criteria-demotion-and-rubric-opt-in.md.
+stay graded by the LLM judge.
 
 This file holds the mechanical checks: structural shape of any new
 proof_summary (narrative_markdown non-empty, question_id resolves),

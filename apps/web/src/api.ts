@@ -67,8 +67,39 @@ export const api = {
   sessionLogs: (id: string) => req<{ ws: string; agent: string }>(`/api/sessions/${id}/logs`),
 
   // Make the session live + get the direct connection to its in-sandbox WS server.
+  // `familysearch` reports the user's FamilySearch grant AFTER a refresh+reinject
+  // attempt: 'ok' (a live token was injected), 'expired' (the grant died — FS caps
+  // it at 24h — and the user must Reconnect), or 'none' (this user never had one:
+  // dev-login / mock mode, nothing to reconnect).
   connectSession: (sessionId: string) =>
-    req<{ wssUrl: string; token: string }>(`/api/sessions/${sessionId}/connect`, {
-      method: 'POST'
+    req<{ wssUrl: string; token: string; familysearch?: 'ok' | 'expired' | 'none' }>(
+      `/api/sessions/${sessionId}/connect`,
+      { method: 'POST' }
+    ),
+
+  // Upload a document/image into <project>/uploads/ so the agent can read it.
+  // Not routed through req(): multipart needs the browser to set Content-Type
+  // (it carries the boundary), and req() forces application/json.
+  uploadSessionFile: async (
+    sessionId: string,
+    file: File
+  ): Promise<{ path: string; sizeBytes: number }> => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch(`/api/sessions/${sessionId}/files`, {
+      method: 'POST',
+      credentials: 'include',
+      body: form
     })
+    if (!res.ok) {
+      let detail = res.statusText
+      try {
+        detail = (await res.json()).detail ?? detail
+      } catch {
+        /* non-JSON error */
+      }
+      throw new ApiError(res.status, detail)
+    }
+    return (await res.json()) as { path: string; sizeBytes: number }
+  }
 }

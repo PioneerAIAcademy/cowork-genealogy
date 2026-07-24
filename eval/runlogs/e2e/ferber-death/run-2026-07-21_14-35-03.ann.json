@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Recovered exactly. William H Ferber (G7JB-YH6) has Death 11 March 1903, Cincinnati, Hamilton, Ohio — the required stripped answer.",
+    "f2": "Bonus not recovered for the subject. The tree does have a 'Spring Grove Cemetery, Cincinnati' burial, but it sits on a DIFFERENT person (Charles Hubert Ferber, G7JB-Y46, d. 1967 Florida) — not on William Hubert Ferber, whose person carries no burial fact. So William's Spring Grove burial was not established. Bonus finding, so it does not affect the pass."
+  },
+  "annotator": "ernest"
+}

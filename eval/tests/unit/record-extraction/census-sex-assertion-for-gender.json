@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_record_extraction_020",
+    "skill": "record-extraction",
+    "name": "Census extraction emits a sex assertion per persona (so minted persons get gender, not Unknown)",
+    "type": "positive",
+    "description": "When extracting an 1850 census household whose Sex column states each member's sex, record-extraction must emit a `fact_type: \"sex\"` assertion for every persona whose sex the record states (Thomas=Male, Bridget=Female, Patrick=Male, John=Male), alongside the usual name/age/birthplace assertions. Sex is a non-fact identity attribute that `materialize_facts` reads to set the gender of any person person-evidence later mints from the record; omitting it silently creates every minted household member as `gender: \"Unknown\"`. This test guards the general rule (any record stating a persona's sex must yield a sex assertion), using a census as the vehicle, and keeps the existing assertion-only / pre-1880-inferred-relationship behavior as regression guards.",
+    "tags": ["extraction", "1850", "1850-census", "sex", "gender", "non-fact-assertion", "re-invoke-safe"]
+  },
+  "input": {
+    "user_message": "search-records found this 1850 U.S. Census record for Thomas Flynn's household. Extract assertions for everyone in the household.\n\n1850 United States Census — Schuylkill County, Pennsylvania\nFamilySearch ark:/61903/1:1:MXYZ-TP4 · Dwelling 84, Family 91\n\n| Name | Age | Sex | Occupation | Birthplace |\n| --- | --- | --- | --- | --- |\n| Thomas Flynn | 32 | M | Laborer | Ireland |\n| Bridget Flynn | 7 | F |  | Ireland |\n| Patrick Flynn | 5 | M |  | Ireland |\n| John Flynn | 2 | M |  | Pennsylvania |",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "PRIMARY CHECK: for every household member whose sex the record states (Thomas=M, Bridget=F, Patrick=M, John=M), the extractor must emit a distinct `fact_type: \"sex\"` assertion via extraction_append, with `value` the stated term (\"Male\"/\"Female\" or the bare \"M\"/\"F\"). Sex is a non-fact identity attribute and carries no date/place/structured_value. Emitting name/age/birthplace but NO sex assertion for the members is the failure this test exists to catch, and it is scored on Completeness.",
+    "WHY it matters (context for the judge, not a second check): materialize_facts reads a persona's sex/gender assertions to set the gender of any tree person person-evidence later mints from this record. With no sex assertion, every minted household member is silently created gender: \"Unknown\" even though the census states the sex plainly. The rule is GENERAL — any record that states a persona's sex (a census Sex column, a birth/death certificate sex field) must yield a sex assertion — not specific to this household.",
+    "The sex assertion is classified with the same three layers as that persona's name assertion on this record: on a pre-1940 census the informant is an unknown household_member and information_quality is typically indeterminate; evidence_type is direct where the record states the sex outright. Do not invent a different informant or mark it indirect merely because it is a census.",
+    "Unchanged behavior that must still hold (regression guards): full atomic per-person extraction (name, age/birth, birthplace) for every member; the pre-1880 relationship rule (any ParentChild inferred from household position is indirect with a `_inferred` relationship_type and the researcher as informant); and assertion-only discipline — record-extraction writes the record's S-entry and the assertions and makes ZERO tree_edit/tree_correct calls (tree_edit is not in its frontmatter). Minting the persons and setting their gender happens later in person-evidence.",
+    "Do NOT extract occupation for blank columns (Bridget/Patrick/John have no occupation listed) — absent assertions for blank fields are compliance, not incompleteness."
+  ],
+  "execution": {
+    "max_turns": 60,
+    "max_wall_clock_seconds": 1500,
+    "sdk_message_silence_seconds": 600
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Ora S. Raney was a child of Mary L. Ruse and Albert Raney, born 20 August 1879 in Loudon Township, Seneca County, Ohio.",
+      "details": {
+        "subject_person": { "name": "Mary L. Ruse" },
+        "relation": "child",
+        "target_person": { "name": "Ora S. Raney", "birth": "20 August 1879, Loudon Township, Seneca, Ohio" }
+      },
+      "supporting_sources": [
+        "Ohio, Births and Christenings, 1821-1962 / Ohio, County Births, 1841-2003 — entry for Ora S. Raney naming mother Mary L. Ruse."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "A daughter born 11 April 1887 in Loudon Township, Seneca County, Ohio, was a child of Mary L. Ruse and Albert Raney. She is recorded under two names in the records — 'Mary L. Raney' on her birth record and 'Bertha Belle Raney' on her later marriage records (b. 11 Apr 1887 in both) — and is a single person; recovering the 1887 daughter under either name satisfies this finding.",
+      "details": {
+        "subject_person": { "name": "Mary L. Ruse" },
+        "relation": "child",
+        "target_person": { "name": "Mary L. (Bertha Belle) Raney", "birth": "11 April 1887, Loudon Township, Seneca, Ohio" }
+      },
+      "supporting_sources": [
+        "Ohio, Births and Christenings / County Births — entry for Mary L. Raney (11 Apr 1887) naming mother Mary L. Ruse; Ohio Marriages — Bertha Belle Raney (Fruth) naming mother Lavina Ruse."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Robert M. Raney (also recorded as Milan/Milen) was a child of Mary L. Ruse and Albert Raney, born 25 February 1891 in Loudon Township, Seneca County, Ohio.",
+      "details": {
+        "subject_person": { "name": "Mary L. Ruse" },
+        "relation": "child",
+        "target_person": { "name": "Robert M. Raney", "birth": "25 February 1891, Loudon Township, Seneca, Ohio" }
+      },
+      "supporting_sources": [
+        "Ohio, Births and Christenings, 1821-1962 / Ohio, County Births, 1841-2003 — entry for Robert M. Raney naming mother Mary Ruse."
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "Armedia Elvina (Armeda L.) Raney was a child of Mary L. Ruse and Albert Raney, born about 1882 in Loudon Township, Seneca County, Ohio. (Bonus — indexed under the mother-name variant 'Levina Ruze', so more often found via the father.)",
+      "details": {
+        "subject_person": { "name": "Mary L. Ruse" },
+        "relation": "child",
+        "target_person": { "name": "Armeda Raney", "birth": "about 1882, Loudon Township, Seneca, Ohio" }
+      },
+      "supporting_sources": [
+        "Ohio, Births and Christenings, 1821-1962 — entry for Armeda L. Raney naming mother Levina Ruze."
+      ],
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Clarence Reese was a brother of Mary Reese — a son of Lewis Joseph Reese and Laura Amelia Scott — born about 1869 in New York.",
+      "details": {
+        "subject_person": { "name": "Mary Reese" },
+        "relation": "sibling",
+        "target_person": { "name": "Clarence Reese", "birth": "about 1869, New York" }
+      },
+      "supporting_sources": [
+        "United States, Census, 1880, household of Louis (Lewis) Reese, New York — lists Clarence Reese."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Elizabeth Jane Reese (also 'Lizzie') was a sister of Mary Reese — a daughter of Lewis Joseph Reese and Laura Amelia Scott — born 28 October 1875 in New York.",
+      "details": {
+        "subject_person": { "name": "Mary Reese" },
+        "relation": "sibling",
+        "target_person": { "name": "Elizabeth Jane Reese", "birth": "28 October 1875, New York" }
+      },
+      "supporting_sources": [
+        "United States, Census, 1880, household of Louis (Lewis) Reese, New York — lists Lizzie Reese."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Lewis Reese (Jr.) was a brother of Mary Reese — a son of Lewis Joseph Reese and Laura Amelia Scott — born 7 October 1878 in New York.",
+      "details": {
+        "subject_person": { "name": "Mary Reese" },
+        "relation": "sibling",
+        "target_person": { "name": "Lewis Reese", "birth": "7 October 1878, New York" }
+      },
+      "supporting_sources": [
+        "United States, Census, 1880, household of Louis (Lewis) Reese, New York — lists Louis (Lewis) Reese, age ~2."
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "Lora A. Reese was a sister of Mary Reese — a daughter of Lewis Joseph Reese and Laura Amelia Scott — born about 1883 in New York. (Bonus.)",
+      "details": {
+        "subject_person": { "name": "Mary Reese" },
+        "relation": "sibling",
+        "target_person": { "name": "Lora A Reese", "birth": "about 1883, New York" }
+      },
+      "supporting_sources": [
+        "New York, State Census, 1892 / U.S. Census 1900, household of Lewis Reese — lists Lora."
+      ],
+      "required": false
+    },
+    {
+      "id": "f5",
+      "type": "relationship",
+      "description": "Martin Joseph Reese was a brother of Mary Reese — a son of Lewis Joseph Reese and Laura Amelia Scott — born 15 August 1885 in New York. (Bonus.)",
+      "details": {
+        "subject_person": { "name": "Mary Reese" },
+        "relation": "sibling",
+        "target_person": { "name": "Martin Joseph Reese", "birth": "15 August 1885, New York" }
+      },
+      "supporting_sources": [
+        "New York, State Census, 1892 / U.S. Census 1900, household of Lewis Reese — lists Martin."
+      ],
+      "required": false
+    },
+    {
+      "id": "f6",
+      "type": "relationship",
+      "description": "Jenny Reese was a sister of Mary Reese — a daughter of Lewis Joseph Reese and Laura Amelia Scott — born about 1887 in New York. (Bonus.)",
+      "details": {
+        "subject_person": { "name": "Mary Reese" },
+        "relation": "sibling",
+        "target_person": { "name": "Jenny Reese", "birth": "about 1887, New York" }
+      },
+      "supporting_sources": [
+        "New York, State Census, 1892 / U.S. Census 1900, household of Lewis Reese — lists Jenny."
+      ],
+      "required": false
+    },
+    {
+      "id": "f7",
+      "type": "relationship",
+      "description": "Fanny Reese was a sister of Mary Reese — a daughter of Lewis Joseph Reese and Laura Amelia Scott — born 2 July 1888 in New York. (Bonus.)",
+      "details": {
+        "subject_person": { "name": "Mary Reese" },
+        "relation": "sibling",
+        "target_person": { "name": "Fanny Reese", "birth": "2 July 1888, New York" }
+      },
+      "supporting_sources": [
+        "New York, State Census, 1892 / U.S. Census 1900, household of Lewis Reese — lists Fanny."
+      ],
+      "required": false
+    },
+    {
+      "id": "f8",
+      "type": "relationship",
+      "description": "Richard Reese was a brother of Mary Reese — a son of Lewis Joseph Reese and Laura Amelia Scott — born about 1890 in New York. (Bonus.)",
+      "details": {
+        "subject_person": { "name": "Mary Reese" },
+        "relation": "sibling",
+        "target_person": { "name": "Richard Reese", "birth": "about 1890, New York" }
+      },
+      "supporting_sources": [
+        "U.S. Census 1900, household of Lewis Reese — lists Richard."
+      ],
+      "required": false
+    },
+    {
+      "id": "f9",
+      "type": "relationship",
+      "description": "Emily Florence Reese was a sister of Mary Reese — a daughter of Lewis Joseph Reese and Laura Amelia Scott — born 28 March 1892 in New York. (Bonus.)",
+      "details": {
+        "subject_person": { "name": "Mary Reese" },
+        "relation": "sibling",
+        "target_person": { "name": "Emily Florence Reese", "birth": "28 March 1892, New York" }
+      },
+      "supporting_sources": [
+        "New York, State Census, 1892 / U.S. Census 1900, household of Lewis Reese — lists Emily."
+      ],
+      "required": false
+    }
+  ]
+}

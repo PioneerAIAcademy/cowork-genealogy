@@ -61,5 +61,14 @@ def tool_calls() -> list:
 
 
 @pytest.fixture
+def blocked_context_calls() -> list:
+    """Main-thread calls to subagent-only tools, denied by the PreToolUse hook.
+
+    Empty is the healthy case, so it is also the right standalone default.
+    """
+    return []
+
+
+@pytest.fixture
 def skill_frontmatter() -> dict:
     return {}

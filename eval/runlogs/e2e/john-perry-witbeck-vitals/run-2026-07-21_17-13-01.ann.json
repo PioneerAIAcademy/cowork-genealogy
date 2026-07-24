@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial",
+    "f3": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Birth date recovered exactly (10 Mar 1775); place not on the birth fact (Albany appears only on the retained christening). Same shape as run 1.",
+    "f2": "Exact death date recovered this run (28 Feb 1819) after reaching Find A Grave with the raised wall-clock cap; death place (Niskayuna/Schenectady) not attached to the fact. Big improvement over run 1's wrong bounded 'bef 3 Apr 1819, Albany County'.",
+    "f3": "Burial locality recovered on the subject (Niskayuna, Schenectady, New York) but not the specific cemetery ('Niskayuna Reformed Church Cemetery'); no burial date. Run 1 never reached this finding (timed out)."
+  },
+  "annotator": "bolu"
+}

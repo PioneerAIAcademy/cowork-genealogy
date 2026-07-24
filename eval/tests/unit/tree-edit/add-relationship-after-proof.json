@@ -4,7 +4,7 @@
     "skill": "tree-edit",
     "name": "Add ParentChild relationship after proof reaches probable tier",
     "type": "positive",
-    "description": "Per research-schema-spec.md §8, tree.gedcomx.json is updated when a proof reaches `probable` tier or higher. The mid-research-flynn scenario has ps_001 at `probable` and R1 (Thomas → Patrick ParentChild) ALREADY in tree.gedcomx.json. Tests the skill's handling of this expected-state case: confirm the relationship is present and that its source list reflects the supporting assertions.",
+    "description": "Per research-schema-spec.md §8 (two-layer doctrine), a parent-child edge materializes onto the tree at identity-link time carrying a source-ref — it does not wait for a proof to reach `probable`. The mid-research-flynn scenario has R1 (Thomas → Patrick ParentChild) ALREADY in tree.gedcomx.json (materialized when the relationship assertion was linked), and ps_001 is at `probable`. Tests the skill's handling of this expected-state case: confirm the relationship is present and that its source list carries the relationship assertion's source-ref.",
     "tags": ["tree-edit", "parentchild-relationship", "post-proof", "R1", "no-op-or-verify", "tree-edit-noop"]
   },
   "input": {
@@ -12,8 +12,8 @@
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
-    "Should confirm R1 (Thomas I2 → Patrick I1, type ParentChild) already exists in tree.gedcomx.json — it was created when ps_001 reached `probable`, per the proof-conclusion timing rule",
-    "Should verify R1's sources list reflects the supporting evidence chain from the underlying proof summary",
+    "Should confirm R1 (Thomas I2 → Patrick I1, type ParentChild) already exists in tree.gedcomx.json — under the two-layer doctrine it was materialized by person-evidence at identity-link time carrying a source-ref (parent-child edges land when the relationship assertion is linked, not when a proof reaches `probable`)",
+    "Should verify R1's sources list is populated — the edge carries a non-null source-ref resolved from the relationship assertion (the delta-scoped mandatory-ref guard requires it on any newly-authored edge)",
     "Should make NO modifications if R1 is already in place and correctly sourced — edit-minimality is the right behavior. If sources are missing, ADD them but don't churn other fields",
     "Should NOT delete R1 even if the proof tier were lowered later — tree edits to remove relationships require explicit re-evaluation, not automatic syncing with proof tier",
     "CORRECTNESS GRADING NOTE for the judge: the core task is verifying R1 exists and is correctly sourced. The skill may add tangential observations (e.g., noting that source refs on relationships carry a `quality` field that source refs on facts don't, or any other neutral structural comment) — those side comments are informational and MUST NOT drag Correctness below pass if the core verification is right. Score Correctness on whether R1 was correctly verified, not on whether every adjacent comment was schema-verified"

@@ -1,6 +1,6 @@
 # Simplified GedcomX Specification
 
-This document defines the complete schema for `tree.gedcomx.json`, the deliverable file in a genealogy research project. It formalizes the simplification rules described in `docs/gps/simplified-gedcomx.md`.
+This document defines the complete schema for `tree.gedcomx.json`, the deliverable file in a genealogy research project. It formalizes the simplification rules sketched in the earlier pre-implementation draft.
 
 **Machine-readable schema:** [`docs/specs/schemas/tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json). Enum definitions are shared with `research.json` in [`docs/specs/schemas/enums.schema.json`](schemas/enums.schema.json). This prose document is normative for humans; the JSON Schema files are normative for machine validation.
 
@@ -33,7 +33,7 @@ gates' agreement. **Never use the JSON Schema alone as a validity gate.**
 1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, and `timelines.person_ids` reference `persons[].id`.
 2. **Source description IDs** — `sources[].gedcomx_source_description_id` in `research.json` references `sources[].id` here.
 
-`tree.gedcomx.json` is updated when a proof summary reaches tier `probable` or higher (see `research-schema-spec.md` Section 8, "tree.gedcomx.json update timing"). During early research, it contains stub persons with whatever is known at project initialization.
+`tree.gedcomx.json` is maintained under a two-layer rule: evidence facts and names materialize onto tree persons at identity-link time, each carrying provenance (a non-null source reference), while the `primary`/`preferred` flags plus `proof_tier` express which materialized value is *concluded*; upload to FamilySearch is conclusion-gated (see `research-schema-spec.md` Section 8, "tree.gedcomx.json update timing"). During early research, it contains stub persons with whatever is known at project initialization.
 
 ### Top-level structure
 

@@ -1,8 +1,7 @@
 # Unified FamilySearch login (replace Google OAuth)
 
 **Status:** Proposal for review · 2026-06-07
-**Related:** [`web-oauth-plan.md`](./web-oauth-plan.md) (the current two-provider
-localhost path), [`neon-postgres-plan.md`](./neon-postgres-plan.md),
+**Related:** [`neon-postgres-plan.md`](./neon-postgres-plan.md),
 [`hosted-web-workbench-spec.md`](./hosted-web-workbench-spec.md) §5.
 
 ## Context
@@ -157,7 +156,7 @@ mock mode (`AGENT_MODE=mock`) and never calls real FS. Seed a mock
   `api.familysearch.org` platform call does.)
 - **Production redirect URI (pre-existing, not introduced here)** — real FS
   OAuth in prod needs a registered HTTPS redirect (`https://<host>/callback`)
-  that we noted we can't register yet (`web-oauth-plan.md`). This blocker already
+  that we noted we can't register yet. This blocker already
   applied to data-access FS OAuth, so unifying does not add it — and it *removes*
   the Google Cloud project, client secret, and consent-screen verification
   burden, consolidating to a single FS registration. Locally everything works on
@@ -179,8 +178,7 @@ mock mode (`AGENT_MODE=mock`) and never calls real FS. Seed a mock
 - `apps/server/app/main.py` — router wiring (remove dead routers).
 - `apps/web/src/components/LoginScreen.tsx`, `SessionView.tsx`, `src/api.ts` —
   FS login button; remove Google + per-session connect.
-- `Makefile` (`server-oauth` target), `apps/server/.env`,
-  `web-oauth-plan.md` — update for FS-only.
+- `Makefile` (`server-oauth` target), `apps/server/.env` — update for FS-only.
 
 ## Verification
 

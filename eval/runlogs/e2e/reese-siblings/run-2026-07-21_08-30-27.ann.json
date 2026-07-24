@@ -1,0 +1,22 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "false",
+    "f5": "false",
+    "f6": "false",
+    "f7": "false",
+    "f8": "false",
+    "f9": "false"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Recovered — Clarence Reese (~1869) linked as a child of Lewis Joseph Reese + Laura Amelia Scott (Mary's sibling).",
+    "f2": "Recovered — Elizabeth Jane 'Lizzie' Reese (~1876) linked as a sibling.",
+    "f3": "Recovered — Lewis Jr / 'Louis' Reese (~1878) linked as a sibling.",
+    "f4": "Not recovered this run — no ~1883 child linked (the run hit cost_cap before pursuing the bonus siblings).",
+    "f9": "Bonus siblings (f5-f9) not recovered — run stopped on cost_cap before reaching them."
+  },
+  "annotator": "ernest"
+}

@@ -3,7 +3,7 @@ conversation transcript into a zip and POSTs it to the **same Google Apps Script
 -> Drive endpoint the Electron viewer uses** (config.feedback_url / FEEDBACK_URL).
 No local-disk write, so the control plane scales to >1 instance. The zip structure
 + feedback.json schema match the Electron flow so the existing feedback-case
-triage workflow (docs/feedback-workflow.md) consumes it unchanged.
+triage workflow (docs/alpha-feedback-guide.md) consumes it unchanged.
 
 The transcript is the Claude Code session JSONL the Agent SDK writes inside the
 sandbox; it carries the narration, full tool I/O, and the agent's reasoning that
@@ -47,20 +47,163 @@ _CLAUDE_PROJECTS_DIR = f"{HOME_DIR}/.claude/projects/{_CLAUDE_PROJECT_SLUG}"
 # limit. The reported failure is ~always at the end, so we keep the newest entries.
 _SESSION_LOG_CAP_BYTES = 20 * 1024 * 1024
 
+# Mirrors apps/electron/src/main/feedback.ts so a web case and a desktop case
+# unzip to the same shape and the triage workflow consumes them identically.
+_MEDIA_EXTS = frozenset(
+    {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp",
+     ".mp3", ".wav", ".m4a", ".ogg", ".mp4", ".mov", ".avi"}
+)
+_TEXT_EXTS = frozenset({".json", ".md", ".txt", ".csv", ".tsv", ".yaml", ".yml"})
+_INDIVIDUAL_FILE_CAP_BYTES = 25 * 1024 * 1024
+_ZIP_CAP_BYTES = 35 * 1024 * 1024
 
-async def _project_files(sandbox) -> list[tuple[str, bytes]]:
-    """(relativePath, bytes) for research.json, tree.gedcomx.json, results/*."""
+
+def _ext(name: str) -> str:
+    dot = name.rfind(".")
+    return name[dot:].lower() if dot > 0 else ""
+
+
+async def _walk_project(sandbox) -> list[tuple[str, bytes]]:
+    """(relativePath, bytes) for every file under PROJECT_DIR, recursively.
+
+    Matches the Electron walker: skips dotfiles and dot-directories, and skips
+    any single file over the per-file cap. Previously this returned only
+    research.json / tree.gedcomx.json / results/*.json, which meant a web case
+    could not reproduce anything touching the rest of the project (uploads,
+    CLAUDE.md, images). DirEntry carries no size, so the read is what tells us
+    how big a file is — fine for a project folder, which is small by design.
+    """
     out: list[tuple[str, bytes]] = []
-    for name in ("research.json", "tree.gedcomx.json"):
-        raw = await sandbox.read_file(f"{PROJECT_DIR}/{name}")
-        if raw is not None:
-            out.append((name, raw))
-    for entry in await sandbox.list_dir(f"{PROJECT_DIR}/results"):
-        if not entry.is_dir and entry.name.endswith(".json"):
+
+    async def walk(dir_path: str, prefix: str) -> None:
+        for entry in await sandbox.list_dir(dir_path):
+            if entry.name.startswith("."):
+                continue
+            rel = f"{prefix}{entry.name}"
+            if entry.is_dir:
+                await walk(entry.path, f"{rel}/")
+                continue
             raw = await sandbox.read_file(entry.path)
-            if raw is not None:
-                out.append((f"results/{entry.name}", raw))
+            if raw is None or len(raw) > _INDIVIDUAL_FILE_CAP_BYTES:
+                continue
+            out.append((rel, raw))
+
+    await walk(PROJECT_DIR, "")
     return out
+
+
+TREE_FILENAME = "tree.gedcomx.json"
+LIVING_GIVEN = "Living"
+LIVING_SURNAME_FALLBACK = "Unknown"
+
+
+def _is_living(person: dict) -> bool:
+    """Whether a tree person must be treated as living.
+
+    Same rule as the e2e fixture gate (eval/harness/e2e/author.py::living_gate):
+    **absent is not deceased.** `living` is optional in simplified GedcomX, and
+    defaulting a missing flag to "probably dead" is exactly the wrong bet for a
+    bundle that is about to leave the user's machine.
+    """
+    return person.get("living") is not False
+
+
+def _redact_person(person: dict) -> dict:
+    """Reduce a living person to structure: no given name, dates, places, or ark.
+
+    Keeps `id` (relationships reference it, so dropping the person would dangle
+    every edge) and `gender`; the schema requires `id`/`gender`/`names`, and a
+    name requires `id`/`given`/`surname` with `minItems: 1` on `names` — so the
+    placeholder has to carry a surname rather than omit it. Surname is retained
+    deliberately: it is already inferable from the deceased relatives around
+    them, and "Living Spriggs" is the convention FamilySearch itself displays,
+    so a triager reads it as redaction rather than as corrupt data.
+    """
+    names = person.get("names") or []
+    first = names[0] if names else {}
+    placeholder = {
+        "id": first.get("id") or f"{person.get('id', 'unknown')}-name-1",
+        "given": LIVING_GIVEN,
+        "surname": first.get("surname") or LIVING_SURNAME_FALLBACK,
+    }
+    out = {"id": person.get("id"), "living": True, "names": [placeholder], "facts": []}
+    if "gender" in person:
+        out["gender"] = person["gender"]
+    return out
+
+
+def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, bytes]], int]:
+    """Redact living persons out of the bundled tree before it leaves the sandbox.
+
+    FamilySearch's terms forbid sharing living people's details, and a feedback
+    bundle is a capture of a real family. Doing this at capture time (rather than
+    at triage) means the data never reaches the Drive folder at all.
+
+    Also clears `facts` on any Couple relationship touching a living person — a
+    marriage date/place is as identifying as a birth. Returns the files with the
+    tree rewritten, plus the number of persons redacted. Unparseable or
+    unexpectedly-shaped trees are passed through untouched: this is a privacy
+    filter, not a validator, and it must never be the reason a report fails to
+    send.
+    """
+    out: list[tuple[str, bytes]] = []
+    redacted = 0
+    for rel, data in files:
+        if rel != TREE_FILENAME:
+            out.append((rel, data))
+            continue
+        try:
+            tree = json.loads(data.decode("utf-8"))
+            persons = tree.get("persons")
+            if not isinstance(persons, list):
+                raise ValueError("no persons array")
+            living_ids = set()
+            new_persons = []
+            for person in persons:
+                if isinstance(person, dict) and _is_living(person):
+                    living_ids.add(person.get("id"))
+                    new_persons.append(_redact_person(person))
+                    redacted += 1
+                else:
+                    new_persons.append(person)
+            tree["persons"] = new_persons
+            for relationship in tree.get("relationships") or []:
+                if not isinstance(relationship, dict) or "facts" not in relationship:
+                    continue
+                if {relationship.get("person1"), relationship.get("person2")} & living_ids:
+                    relationship["facts"] = []
+            data = json.dumps(tree, indent=2).encode("utf-8")
+        except Exception:  # noqa: BLE001 — never block a submission on this
+            redacted = 0
+        out.append((rel, data))
+    return out, redacted
+
+
+def _select_files(
+    files: list[tuple[str, bytes]], include_media: bool
+) -> tuple[list[tuple[str, bytes]], list[str]]:
+    """Apply the media toggle and the total-size cap.
+
+    Returns (kept, dropped_relpaths). Over the cap we drop largest-first, which
+    preserves the small structured JSON that triage actually reads and sheds the
+    big binaries. Whatever gets dropped is named in FEEDBACK.md rather than
+    vanishing silently.
+    """
+    def wanted(rel: str) -> bool:
+        return include_media or _ext(rel) not in _MEDIA_EXTS
+
+    kept = [(rel, data) for rel, data in files if wanted(rel)]
+    dropped = [rel for rel, _ in files if not wanted(rel)]
+
+    total = sum(len(d) for _, d in kept)
+    if total > _ZIP_CAP_BYTES:
+        for rel, data in sorted(kept, key=lambda kv: len(kv[1]), reverse=True):
+            if total <= _ZIP_CAP_BYTES:
+                break
+            kept = [kv for kv in kept if kv[0] != rel]
+            dropped.append(rel)
+            total -= len(data)
+    return kept, dropped
 
 
 def _filter_transcript(raw: bytes) -> bytes | None:
@@ -140,6 +283,11 @@ class FeedbackBody(BaseModel):
     userPrompt: str = ""
     agentDid: str = ""
     agentShouldHave: str = ""
+    # Ground truth, when the agent reached a *wrong conclusion* rather than just
+    # working badly. Optional and always shown in the UI — the app can't tell
+    # which kind of failure this is, so the tester decides whether to fill it in.
+    # This is what lets a case become a test without going back to the submitter.
+    correctAnswer: str = ""
     notes: str | None = None
     includeMedia: bool = False
     includeSessionLog: bool = True
@@ -155,8 +303,13 @@ async def feedback_context(
     project = _owned(session, user, sessionId)
     sandbox = await provider.resume(project.sandbox_id)
     files = [
-        {"relativePath": rel, "sizeBytes": len(data), "isMedia": False, "isText": True}
-        for rel, data in await _project_files(sandbox)
+        {
+            "relativePath": rel,
+            "sizeBytes": len(data),
+            "isMedia": _ext(rel) in _MEDIA_EXTS,
+            "isText": _ext(rel) in _TEXT_EXTS,
+        }
+        for rel, data in await _walk_project(sandbox)
     ]
     log = await _session_log(sandbox)
     return {"files": files, "sessionLogSize": len(log) if log else 0, "hasSessionLog": bool(log)}
@@ -169,13 +322,21 @@ def _norm(v: str) -> str:
     return v
 
 
-def _feedback_markdown(f: dict, submitted_at: str, project_label: str, session_log: bool) -> str:
+def _feedback_markdown(
+    f: dict,
+    submitted_at: str,
+    project_label: str,
+    session_log: bool,
+    viewer_version: str,
+    dropped: list[str] | None = None,
+    redacted_living: int = 0,
+) -> str:
     parts = [
         "# Feedback",
         "",
         f"- **From:** {f['email']}",
         f"- **When:** {submitted_at}",
-        "- **Viewer version:** web-poc",
+        f"- **Viewer version:** {viewer_version}",
         f"- **Project:** {project_label}",
         "",
         "## What I asked",
@@ -190,6 +351,8 @@ def _feedback_markdown(f: dict, submitted_at: str, project_label: str, session_l
         "",
         f["agentShouldHave"],
     ]
+    if f["correctAnswer"]:
+        parts += ["", "## The correct answer, and the evidence for it", "", f["correctAnswer"]]
     if f["notes"]:
         parts += ["", "## Notes", "", f["notes"]]
     if session_log:
@@ -199,6 +362,26 @@ def _feedback_markdown(f: dict, submitted_at: str, project_label: str, session_l
             "",
             "See `_feedback/session-log.jsonl` — the full Claude Code conversation "
             "transcript (user turns, tool calls, results, and the agent's reasoning).",
+        ]
+    if redacted_living:
+        parts += [
+            "",
+            "## Living people redacted",
+            "",
+            f"{redacted_living} person(s) in `tree.gedcomx.json` are living or not "
+            "marked deceased, so their given names, dates and places were replaced "
+            f"with `{LIVING_GIVEN} <Surname>` before this bundle was created. Their "
+            "ids and relationships are intact, so the case still reproduces. This is "
+            "expected — not corrupt data.",
+        ]
+    if dropped:
+        parts += [
+            "",
+            "## Files not included",
+            "",
+            "Left out of this bundle (media excluded, or over the total size cap):",
+            "",
+            *[f"- `{rel}`" for rel in sorted(dropped)],
         ]
     return "\n".join(parts) + "\n"
 
@@ -218,6 +401,7 @@ async def submit_feedback(
         "userPrompt": _norm(body.userPrompt),
         "agentDid": _norm(body.agentDid),
         "agentShouldHave": _norm(body.agentShouldHave),
+        "correctAnswer": _norm(body.correctAnswer),
         "notes": _norm(body.notes or ""),
     }
     submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -226,24 +410,46 @@ async def submit_feedback(
     # agent's reasoning). None when the agent never ran or in mock-mode local runs.
     session_log = (await _session_log(sandbox)) if body.includeSessionLog else None
 
+    settings = get_settings()
+    # Human-readable date first — a triager reading a stack of cases dates one at
+    # a glance; the sha is there when they need the exact checkout.
+    viewer_version = f"web {settings.build_date} ({settings.git_sha})"
+
     feedback_json = {
         "schema_version": FEEDBACK_SCHEMA_VERSION,
         "submitted_at": submitted_at,
-        "viewer_version": "web-poc",
+        "viewer_version": viewer_version,
+        "build_date": settings.build_date,
+        "git_sha": settings.git_sha,
         "platform": "web",
         "email": fields["email"],
         "project_folder_path": body.sessionId,  # web analog of the local folder
         "user_prompt": fields["userPrompt"],
         "agent_did": fields["agentDid"],
         "agent_should_have": fields["agentShouldHave"],
+        "correct_answer": fields["correctAnswer"],
         "notes": fields["notes"],
     }
 
+    redacted_files, redacted_living = _redact_living(await _walk_project(sandbox))
+    project_files, dropped = _select_files(redacted_files, body.includeMedia)
+
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for rel, data in await _project_files(sandbox):
+        for rel, data in project_files:
             zf.writestr(rel, data)
-        zf.writestr("FEEDBACK.md", _feedback_markdown(fields, submitted_at, project.title, bool(session_log)))
+        zf.writestr(
+            "FEEDBACK.md",
+            _feedback_markdown(
+                fields,
+                submitted_at,
+                project.title,
+                bool(session_log),
+                viewer_version,
+                dropped,
+                redacted_living,
+            ),
+        )
         zf.writestr("_feedback/feedback.json", json.dumps(feedback_json, indent=2) + "\n")
         if session_log:
             zf.writestr("_feedback/session-log.jsonl", session_log)

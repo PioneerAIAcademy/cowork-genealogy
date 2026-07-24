@@ -1,0 +1,74 @@
+{
+  "log_id": "log_005",
+  "tool": "record_search",
+  "retrieved": "2026-05-04T10:40:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Flynn",
+      "givenName": "Thomas"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "MARR-8T3",
+        "personName": "Thomas Flynn",
+        "score": 0.94,
+        "sex": "Male",
+        "birthDate": "",
+        "birthPlace": "",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "12 May 1843",
+            "place": "St. Patrick's Church, Schuylkill County, Pennsylvania"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:MARR-8T3",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:MARR-8T3",
+        "collectionId": "1682000",
+        "collectionTitle": "Pennsylvania Church Marriages",
+        "recordTitle": "Thomas Flynn and Mary Doyle marriage",
+        "treeMatches": [],
+        "primaryId": "MP1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "MP1",
+              "gender": "Male",
+              "names": [
+                { "id": "MN1", "preferred": true, "nameForms": [{ "fullText": "Thomas Flynn" }] }
+              ]
+            },
+            {
+              "id": "MP2",
+              "gender": "Female",
+              "names": [
+                { "id": "MN2", "preferred": true, "nameForms": [{ "fullText": "Mary Doyle" }] }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "MR1",
+              "type": "http://gedcomx.org/Couple",
+              "person1": { "resource": "#MP1" },
+              "person2": { "resource": "#MP2" },
+              "facts": [
+                {
+                  "type": "http://gedcomx.org/Marriage",
+                  "date": { "original": "12 May 1843" },
+                  "place": { "original": "St. Patrick's Church, Schuylkill County, Pennsylvania" }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

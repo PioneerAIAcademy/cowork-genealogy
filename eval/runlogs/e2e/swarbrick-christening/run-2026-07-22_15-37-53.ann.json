@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "partial",
+    "f4": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f3": "Date and twin detail correct; place field is under-specified — standardized to 'Poulton le Fylde' without the St. Chad parish/church name that the finding calls for."
+  },
+  "annotator": "EdmondOware"
+}

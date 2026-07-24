@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -37,6 +38,9 @@ from claude_agent_sdk import (
 )
 
 from harness.auth import env_for_sdk, resolve_auth
+from harness.context_policy import (
+    bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
+)
 
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
@@ -45,6 +49,7 @@ from e2e.stop_checker import (
     read_tree_json,
     should_continue_run,
 )
+from e2e.subagent_capture import collect_subagents
 from e2e import judge as judge_module
 
 
@@ -111,11 +116,6 @@ BLOCKED_TREE_TOOLS = frozenset(
         "person_person_matches",
     }
 )
-
-
-def _bare_tool_name(tool_name: str) -> str:
-    """Strip the `mcp__<server>__` prefix to get the advertised tool name."""
-    return tool_name.rsplit("__", 1)[-1] if "__" in tool_name else tool_name
 
 
 def is_turn_cap_error(detail: str | None) -> bool:
@@ -284,11 +284,28 @@ def provided_documents(fixture: Fixture) -> list[Path]:
     return sorted(p for p in d.iterdir() if p.is_file() and not p.name.startswith("."))
 
 
+def _override_agent_model(md_text: str, model: str) -> str:
+    """Rewrite a staged subagent's ``model:`` frontmatter to ``model``.
+
+    Overrides the agent's own pin (e.g. record-extractor's ``claude-sonnet-5``)
+    so an e2e run can be executed against a different model — e.g. to test
+    whether the sonnet-5 record-extractor freeze reproduces under sonnet-4-6,
+    the model Cowork uses. Inserts a ``model:`` line if the agent has none.
+    """
+    if re.search(r"(?m)^model:[ \t]*.*$", md_text):
+        return re.sub(r"(?m)^model:[ \t]*.*$", f"model: {model}", md_text, count=1)
+    if md_text.startswith("---\n"):
+        return f"---\nmodel: {model}\n" + md_text[len("---\n"):]
+    return md_text  # no frontmatter to pin into
+
+
 def build_workspace(
     fixture: Fixture,
     target: Path,
     skills_dir: Path,
     agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+    effort_level: str | None = None,
+    agent_model: str | None = None,
 ) -> Path:
     """Populate a temp dir with fixture starting state + plugin skills + agents.
 
@@ -319,7 +336,31 @@ def build_workspace(
         agents_target = target / ".claude" / "agents"
         agents_target.mkdir(parents=True, exist_ok=True)
         for agent_file in sorted(agents_dir.glob("*.md")):
-            shutil.copy(agent_file, agents_target / agent_file.name)
+            dest = agents_target / agent_file.name
+            if agent_model is None:
+                shutil.copy(agent_file, dest)
+            else:
+                # Override every staged subagent's model pin (see agent_model).
+                dest.write_text(
+                    _override_agent_model(agent_file.read_text(encoding="utf-8"), agent_model),
+                    encoding="utf-8",
+                )
+
+    # Optionally pin the run's reasoning effort via a PROJECT-level setting.
+    # setting_sources=["project"] reads this file; the CLAUDE_EFFORT env var does
+    # NOT (it's output-only — verified). This is the only working effort lever
+    # from the harness. Session-wide (parent + every subagent). Left unset, the
+    # run uses the CLI's bare default, which for sonnet-5 resolves to 'high' —
+    # deep enough that the record-extractor subagent can spend its whole output
+    # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
+    # freeze the run; lower it here to A/B whether that clears (read the runlog's
+    # `subagents[].runaway_thinking`). Valid: low | medium | high | xhigh | max.
+    if effort_level is not None:
+        claude_dir = target / ".claude"
+        claude_dir.mkdir(parents=True, exist_ok=True)
+        (claude_dir / "settings.json").write_text(
+            json.dumps({"effortLevel": effort_level}, indent=2) + "\n", encoding="utf-8"
+        )
 
     # Drop bundled captures into the workspace root, where an uploaded PDF
     # would land — the agent reads them by filename like a user upload.
@@ -363,12 +404,87 @@ def _summarize_tool_response(content: Any) -> str:
     return text
 
 
+_USAGE_FIELDS = (
+    "input_tokens",
+    "output_tokens",
+    "cache_read_input_tokens",
+    "cache_creation_input_tokens",
+)
+
+
+def _accumulate_usage(acc: dict[str, dict[str, int]], message: Any) -> None:
+    """Record one AssistantMessage's usage, keyed by its message id.
+
+    Do NOT sum on arrival. The SDK re-emits the same assistant message once
+    per content block, and every copy carries the SAME cumulative usage for
+    that message — so adding each time multiplies the totals (verified by
+    replaying a real run: naive summing reported 358,610 output tokens
+    against a true 106,661, and 226 messages against 87 distinct ones).
+    Keying by message id and letting the last write win reproduces the
+    ResultMessage token totals exactly.
+
+    Best-effort by design: the SDK types `usage` loosely (a dict on the
+    observed path, an object on some versions) and a malformed or absent
+    block must never take down a run.
+    """
+    msg_id = getattr(message, "message_id", None)
+    # No id to dedupe on — count it once under a synthetic key rather than
+    # dropping it or letting it collide with another anonymous message.
+    key = msg_id if msg_id else f"__anon_{len(acc)}"
+    usage = getattr(message, "usage", None)
+
+    def _get(field: str) -> int:
+        if usage is None:
+            return 0
+        raw = usage.get(field) if isinstance(usage, dict) else getattr(usage, field, 0)
+        return raw if isinstance(raw, int) else 0
+
+    acc[key] = {field: _get(field) for field in _USAGE_FIELDS}
+
+
+def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str, Any]:
+    """Usage block reconstructed from the stream when no ResultMessage came.
+
+    Two fields are deliberately left null rather than synthesized:
+
+    `total_cost_usd` — a run spans several models (the parent plus each
+    subagent on its own `.md` pin), so one price lookup would be wrong, and a
+    plausible-but-wrong dollar figure is worse than a null here: it would be
+    silently compared against real costs from clean runs. Token counts are
+    exact, so cost stays derivable later from a per-model breakdown.
+
+    `num_turns` — the SDK counts turns differently from distinct assistant
+    messages (118 vs 87 on the replayed run), and `latency_report` divides
+    output tokens by it. Publishing the smaller number under the same name
+    would inflate tokens-per-turn by ~1.4x in exactly the metric the latency
+    work depends on. The exact count we DO have is reported separately as
+    `assistant_messages`.
+
+    `duration_api_ms` is absent for the same reason: only the SDK knows the
+    API/local split, and a monotonic clock can't recover it.
+    """
+    return {
+        "duration_ms": elapsed_ms,
+        "duration_api_ms": None,
+        "num_turns": None,
+        "assistant_messages": len(acc),
+        "is_error": True,
+        "stop_reason": None,
+        "total_cost_usd": None,
+        "usage": {
+            field: sum(m[field] for m in acc.values()) for field in _USAGE_FIELDS
+        },
+    }
+
+
 async def _run_agent(
     *,
     fixture: Fixture,
     workspace: Path,
     mcp_server_entry: Path,
     resume_on_stall: bool = False,
+    max_output_tokens: int | None = None,
+    agent_model: str | None = None,
 ) -> tuple[
     list[dict[str, Any]],
     list[str],
@@ -421,8 +537,23 @@ async def _run_agent(
     last_progress = {"t": run_started}
     # session_id from the SDK init message — required to resume a stalled run.
     session_id: dict[str, str | None] = {"id": None}
+    # Claude Code CLI version from the init message. Logged so a harness-vs-Cowork
+    # discrepancy can be checked against a version delta (the local CLI the SDK
+    # spawns may differ from Cowork's bundled one).
+    cli_version: dict[str, str | None] = {"v": None}
     resumes = {"n": 0}  # how many times we resumed after a stall (capped)
     MAX_RESUME = 2
+
+    # Streamed usage accumulator. The SDK's ResultMessage carries the
+    # authoritative duration/turns/cost, but it only arrives on a CLEAN end —
+    # a wall-clock timeout, an inactivity abort or a no-progress stall cuts the
+    # stream before it, so `usage` stayed {} and the run landed in the runlog
+    # with no turns, no duration and no tokens at all. That silently blinded
+    # every `timeout` run (9 of 9 in the corpus as of 2026-07-20) — exactly the
+    # runs whose cost and turn count you most want to see. Accumulating per
+    # AssistantMessage gives a fallback that is always available. See
+    # _fallback_usage below for what is and isn't recoverable this way.
+    streamed: dict[str, dict[str, int]] = {}
 
     def _emit(line: str) -> None:
         """Live progress to stderr so a long, otherwise-silent run shows
@@ -444,6 +575,15 @@ async def _run_agent(
         activity_count["n"] += 1
         if not tool_name.startswith("mcp__"):
             return {}
+
+        # NOTE: the per-context tool policy (harness/context_policy.py) is
+        # deliberately NOT enforced here — see docs/plan/image-read-context-policy.md
+        # §4.1. It is unit-only because the guard needs to know which SKILL is
+        # active, and e2e cannot know: sub-skills run in this same session via
+        # the Skill tool (no `agent_id` to attribute them), so a legitimate
+        # `search-images` browse — which declares `image_read` and pages through
+        # volumes itself — is indistinguishable from a record-extraction router
+        # violation. Denying on the bare tool name would break real browsing.
 
         # Block tree-reading tools BEFORE counting toward the cap — a denied
         # call never runs, so it shouldn't consume the budget. The run
@@ -584,8 +724,20 @@ async def _run_agent(
         # falls back to injecting the key when there's no subscription. The
         # judge keeps using the key from os.environ — only the agent subprocess
         # env is overridden here.
-        env={"ENABLE_TOOL_SEARCH": "true", **env_for_sdk(resolve_auth())},
-        model=fixture.agent_model,
+        # CLAUDE_CODE_MAX_OUTPUT_TOKENS caps the model's output budget. Unlike
+        # CLAUDE_EFFORT (output-only, verified inert as input), this env var IS
+        # read as input by the CLI. Left unset the run uses the CLI default (for
+        # sonnet-5, 32000). Set it to bound a runaway-thinking subagent that
+        # fills the output budget with thinking (see subagent_capture); recorded
+        # in the runlog. Applies session-wide (parent + every subagent).
+        env={
+            "ENABLE_TOOL_SEARCH": "true",
+            **({"CLAUDE_CODE_MAX_OUTPUT_TOKENS": str(max_output_tokens)} if max_output_tokens else {}),
+            **env_for_sdk(resolve_auth()),
+        },
+        # Parent model: the --agent-model override (also applied to staged
+        # subagents in build_workspace) or the fixture's default.
+        model=agent_model or fixture.agent_model,
         max_turns=fixture.caps.max_turns,
         # The SDK's stdio transport defaults to a 1 MiB max_buffer_size for a
         # single JSON message (claude_agent_sdk _DEFAULT_MAX_BUFFER_SIZE). A
@@ -679,6 +831,9 @@ async def _run_agent(
                             elif block.name.startswith("mcp__"):
                                 _emit(f"   - {_bare_tool_name(block.name)}")
                             progressed = True
+                    # Record before the timeline append so a message that
+                    # arrives moments before a timeout still counts.
+                    _accumulate_usage(streamed, message)
                     timeline.append([round(now - run_started, 1), "assistant"])
                 elif isinstance(message, UserMessage):
                     # Tool results return as UserMessages with ToolResultBlock content.
@@ -695,10 +850,15 @@ async def _run_agent(
                     timeline.append([round(now - run_started, 1), "tool_result"])
                 elif isinstance(message, SystemMessage):
                     # Init / config / hint messages. Capture the session id (for
-                    # resume); these do NOT count as progress.
-                    sid = (getattr(message, "data", None) or {}).get("session_id")
+                    # resume) and the CLI version (for the runlog); neither counts
+                    # as progress.
+                    data = getattr(message, "data", None) or {}
+                    sid = data.get("session_id")
                     if sid:
                         session_id["id"] = sid
+                    ver = data.get("version") or data.get("cli_version")
+                    if ver:
+                        cli_version["v"] = ver
                     timeline.append(
                         [round(now - run_started, 1), f"system:{message.subtype}"]
                     )
@@ -785,8 +945,21 @@ async def _run_agent(
         aborted_reason = "max_tool_calls"
         error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
 
+    # A ResultMessage populates `usage` with the SDK's authoritative numbers.
+    # Every abort path (wall-clock timeout, inactivity silence, no-progress
+    # stall) cuts the stream before it, leaving `usage` empty — so fall back to
+    # what the stream already told us. `usage_source` marks which one you're
+    # reading: a fallback block has exact token counts but a null cost, and
+    # must not be compared against a clean run's `total_cost_usd`.
+    result_message_seen = "num_turns" in usage
+    if not result_message_seen:
+        usage = _fallback_usage(
+            streamed, int((time.monotonic() - run_started) * 1000)
+        )
+
     usage = {
         **usage,
+        "usage_source": "result_message" if result_message_seen else "streamed_fallback",
         "continue_nudges": continue_nudges["n"],
         # Stall-resume + forensics (added with the progress watchdog). `timeline`
         # is [elapsed_seconds, kind] per SDK message — split structural vs stall
@@ -796,6 +969,12 @@ async def _run_agent(
         "resumes": resumes["n"],
         "resume_on_stall": resume_on_stall,
         "timeline": timeline,
+        # Reasoning knobs actually used, so a run is self-describing when we
+        # A/B effort × output-budget against subagent behavior. `effort_level`
+        # and `agent_model` are added in run_e2e_test; `max_output_tokens` None
+        # means the CLI default (sonnet-5 -> 32000).
+        "max_output_tokens": max_output_tokens,
+        "cli_version": cli_version["v"],
         "caps": {
             "wall_clock_seconds": fixture.caps.wall_clock_seconds,
             "inactivity_seconds": fixture.caps.inactivity_seconds,
@@ -846,8 +1025,22 @@ async def run_e2e_test(
     skills_dir: Path = DEFAULT_PLUGIN_SKILLS,
     skip_judge: bool = False,
     resume_on_stall: bool = False,
+    effort_level: str | None = "high",
+    max_output_tokens: int | None = None,
+    agent_model: str | None = None,
 ) -> tuple[E2eResult, dict[str, Path]]:
-    """Run one e2e fixture end-to-end. Returns (result, written-paths)."""
+    """Run one e2e fixture end-to-end. Returns (result, written-paths).
+
+    Reasoning is pinned deliberately so runs don't inherit the launching Claude
+    Code session / shell (which made verdicts non-reproducible):
+    ``effort_level`` (low|medium|high|xhigh|max, default "high" to match Cowork)
+    via a project-level setting; ``max_output_tokens`` (None = CLI default,
+    sonnet-5 → 32000) via CLAUDE_CODE_MAX_OUTPUT_TOKENS. ``agent_model`` (None =
+    fixture default for the parent + each subagent's own `.md` pin) overrides the
+    model for BOTH the parent and every staged subagent — e.g. run the whole flow
+    under claude-sonnet-4-6 to test whether the sonnet-5 record-extractor freeze
+    reproduces under Cowork's model. All are logged.
+    """
     fixture = load_fixture(fixture_dir)
     if not mcp_server_entry.exists():
         raise FileNotFoundError(
@@ -858,7 +1051,9 @@ async def run_e2e_test(
     started_at = time.time()  # real clock (counts system sleep)
     started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
     with tempfile.TemporaryDirectory(prefix=f"e2e-{fixture.id}-") as tmp:
-        workspace = build_workspace(fixture, Path(tmp), skills_dir)
+        workspace = build_workspace(
+            fixture, Path(tmp), skills_dir, effort_level=effort_level, agent_model=agent_model
+        )
 
         (
             tool_calls,
@@ -872,6 +1067,8 @@ async def run_e2e_test(
             workspace=workspace,
             mcp_server_entry=mcp_server_entry,
             resume_on_stall=resume_on_stall,
+            max_output_tokens=max_output_tokens,
+            agent_model=agent_model,
         )
 
         final_research = read_research_json(workspace)
@@ -925,7 +1122,24 @@ async def run_e2e_test(
             "real_clock_seconds": real_seconds,
             "slept_seconds": max(0.0, real_seconds - active_seconds),
             "judge_seconds": judge_seconds,
+            # Reasoning config, so a run is self-describing when A/B'ing effort ×
+            # output-budget × model vs subagents[] behavior. `agent_model` is the
+            # effective PARENT model. `subagent_model_override` is non-null only
+            # when --agent-model forced every staged subagent off its own `.md`
+            # pin (record-extractor's default is sonnet-5); null means each
+            # subagent used its pin. `max_output_tokens` / `cli_version` come from
+            # _run_agent.
+            "agent_model": agent_model or fixture.agent_model,
+            "subagent_model_override": agent_model,
+            "effort_level": effort_level,
         }
+
+        # Summarize any subagent transcripts (record-extractor, image-reader, …)
+        # from the SDK's ephemeral cache while `workspace` is still in scope (the
+        # cache lives outside the tempdir, keyed on workspace.name). Best-effort;
+        # surfaces a runaway-thinking subagent freeze directly in the committed
+        # runlog, which tool_calls alone can't show. See subagent_capture.py.
+        subagents = collect_subagents(workspace)
 
         result = E2eResult(
             test_id=fixture.id,
@@ -938,6 +1152,7 @@ async def run_e2e_test(
             error=error,
             tags=fixture.tags,
             blocked_tree_reads=blocked_tree_reads,
+            subagents=subagents,
         )
 
         runlog_dir = runlog_root / fixture.id

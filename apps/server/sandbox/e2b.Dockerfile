@@ -80,17 +80,13 @@ RUN cd ${AGENT_HOME}/engine && npm ci --omit=dev --ignore-scripts
 #    plugins=[{type:"local", path: ENGINE_PLUGIN_DIR}]. ──
 COPY packages/engine/plugin ${AGENT_HOME}/plugin
 
-# ── Pre-crawled wiki markdown corpus (wikiMarkdownDir) ────────────────────
-# The wiki_read / wiki_place_page tools read a directory of pre-crawled wiki
-# markdown from ~/.familysearch-mcp/config.json -> "wikiMarkdownDir". That
-# corpus is NOT baked here (its source path is TBD by Dallan). Until it is
-# baked and wired, those two tools will throw the configured
-# WIKI_MARKDOWN_DIR_MISSING_MESSAGE; every other tool works. To bake it later,
-# add a `COPY <corpus> ${AGENT_HOME}/wiki` line and have the control plane
-# write {"wikiMarkdownDir": "/opt/genealogy-agent/wiki"} into the per-sandbox
-# ~/.familysearch-mcp/config.json on connect (alongside the FS token). See
-# README.md "wiki corpus". (wiki_search uses the hosted wiki-query-api over the
-# network and is unaffected.)
+# ── Wiki tools: nothing to bake ───────────────────────────────────────────
+# wiki_search, wiki_read and wiki_place_page are all HTTP clients of the hosted
+# wiki-query-api (see CLAUDE.md "External service dependencies"); the corpus
+# lives on that server. getWikiApiUrl() falls back to a working default, so no
+# per-sandbox config is required. (This block used to describe a local
+# `wikiMarkdownDir` corpus the page tools read from disk — that code path is
+# gone; the tools were moved to the networked API.)
 
 # ── Engine env baked as defaults so a bare `python -m app.agent.runner` in
 #    this image already points at the baked engine/plugin even if a caller

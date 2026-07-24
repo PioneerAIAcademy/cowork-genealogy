@@ -4,7 +4,7 @@
     "skill": "proof-conclusion",
     "name": "Write a possible-tier proof for a single uncorroborated lead",
     "type": "positive",
-    "description": "The flynn-parentage-possible scenario has only one indirect record bearing on parentage — the 1850 census showing Patrick (age 5) in a Thomas Flynn household, relationship inferred from household position. No corroboration (1860 census and death certificate not yet searched). The skill should write a `possible`-tier conclusion — a credible but uncorroborated lead — and must NOT write tree.gedcomx.json (the write-back lower bound: tree updates only at probable or higher).",
+    "description": "The flynn-parentage-possible scenario has only one indirect record bearing on parentage — the 1850 census showing Patrick (age 5) in a Thomas Flynn household, relationship inferred from household position. No corroboration (1860 census and death certificate not yet searched). The skill should write a `possible`-tier conclusion — a credible but uncorroborated lead — and must set no `primary`/concluded value in tree.gedcomx.json (proof-conclusion sets `primary` only at probable or higher, so at `possible` it makes no tree write during its run; any evidence fact person-evidence already materialized stays un-`primary`).",
     "tags": ["proof", "parentage", "possible", "GPS-step-5", "tier-possible-q001", "no-tree-write"]
   },
   "input": {
@@ -15,7 +15,7 @@
     "Should select the `possible` tier: a young child in a same-surname household is a credible parentage lead, but a single uncorroborated indirect co-residence could equally be a nephew, grandchild, or boarder",
     "Should justify `possible` against the adjacent tiers — weaker than `probable` (only one source, no corroboration) but stronger than `not_proved` (the evidence does lean toward Thomas)",
     "Should state what would advance the tier: corroborating records such as the 1860 census or the 1908 death certificate",
-    "Must NOT update tree.gedcomx.json — at `possible`, no ParentChild relationship or concluded fact is written (tree updates begin at `probable`)",
+    "Must NOT set a `primary`/concluded value in tree.gedcomx.json — at `possible` the skill reaches no conclusion, so during its run it marks no fact `primary` and writes no concluded ParentChild edge (proof-conclusion sets `primary` only at probable+; any evidence facts person-evidence already materialized stay un-`primary`)",
     "narrative_markdown should read as a standalone document with an inline citation to the single 1850 source, and should use conditional (not definitive) phrasing"
   ],
   "judge_reads_files": true,

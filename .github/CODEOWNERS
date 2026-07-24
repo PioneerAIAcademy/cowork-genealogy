@@ -1,0 +1,5 @@
+# Every PR needs one approval from a senior genealogist (this team),
+# in addition to at least one more approval from anyone else with
+# write access. Enforced together with branch protection's
+# "required_approving_review_count: 2" + "require_code_owner_reviews".
+* @PioneerAIAcademy/senior-genealogists

@@ -37,6 +37,28 @@ export const CLIENT_ID_PACKAGING_ERROR =
 
 export const DEFAULT_WIKI_API_URL = "https://malachi.taild68f1b.ts.net/wiki";
 
+// Default OCR model for image_transcribe. Overridable per-user via
+// `openRouterModel` in config.json (set the Phase-0-chosen slug without a
+// rebuild). The LLM does not choose the model — it is not a tool parameter.
+export const DEFAULT_OPENROUTER_MODEL = "qwen/qwen3-vl-235b-a22b-instruct";
+
+// What to tell the LLM when FamilySearch auth is unusable in the HOSTED runtime.
+// The `login` tool's loopback flow cannot complete there: the callback listener
+// binds the sandbox's 127.0.0.1:1837, while the registered redirect resolves on
+// the user's own laptop. Sending the user to the app's Reconnect button is the
+// only path that actually re-authenticates them, so the error must say that and
+// must NOT mention the login tool.
+export const HOSTED_REAUTH_INSTRUCTION =
+  "Your FamilySearch session has expired — FamilySearch sign-ins last at most " +
+  "24 hours. Click \"Reconnect FamilySearch\" at the top of the app to sign in " +
+  "again, then ask me to continue. (Do not call the login tool: it cannot open " +
+  "a sign-in page from here.)";
+
+export const OPENROUTER_API_KEY_MISSING_MESSAGE =
+  "No OpenRouter API key is configured. Ask the user for their OpenRouter " +
+  "API key (from https://openrouter.ai/keys) and call configure_openrouter " +
+  "to save it for future projects.";
+
 export async function loadConfig(): Promise<AppConfig> {
   try {
     const raw = await readFile(CONFIG_STORAGE_PATH, "utf8");
@@ -84,6 +106,14 @@ export async function getClientId(): Promise<string> {
   return clientId.trim();
 }
 
+// True inside a hosted sandbox (the control plane writes `hosted: true` into
+// config.json when it provisions one). Defaults to false, so the desktop .mcpb
+// — where interactive loopback login IS the right answer — is unaffected.
+export async function isHostedMode(): Promise<boolean> {
+  const config = await loadConfig();
+  return config.hosted === true;
+}
+
 export async function getWikiApiUrl(): Promise<string> {
   const config = await loadConfig();
   const url = config.wikiApiUrl?.trim().replace(/\/$/, "");
@@ -98,4 +128,22 @@ export async function getLearningCenterDir(): Promise<string | null> {
 export async function getLibraryDir(): Promise<string | null> {
   const config = await loadConfig();
   return config.libraryDir?.trim() ?? null;
+}
+
+// OpenRouter key resolution is config-only (no env-var fallback, per the repo
+// rule): the server reads it here in every runtime. e2e and the hosted
+// sandbox bridge their env var into config.json at the orchestration layer —
+// see docs/specs/image-transcribe-tool-spec.md §6.5.
+export async function getOpenRouterApiKey(): Promise<string> {
+  const config = await loadConfig();
+  const key = config.openRouterApiKey?.trim();
+  if (!key) {
+    throw new Error(OPENROUTER_API_KEY_MISSING_MESSAGE);
+  }
+  return key;
+}
+
+export async function getOpenRouterModel(): Promise<string> {
+  const config = await loadConfig();
+  return config.openRouterModel?.trim() || DEFAULT_OPENROUTER_MODEL;
 }

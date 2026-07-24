@@ -1,0 +1,19 @@
+{
+  "test": {
+    "id": "ut_person_evidence_021",
+    "skill": "person-evidence",
+    "name": "Build the household skeleton — mint census siblings and write the edges",
+    "type": "positive",
+    "description": "Exercises the 'Person minting and connecting edges' rubric dimension. The 1850 census household of Thomas Flynn is already extracted in research.json (assertions a_001-a_007), but the two children — John Flynn (child_1) and Bridget Flynn (child_2) — are NOT yet in tree.gedcomx.json (only parent Thomas I2 and subject Patrick I1 exist). person-evidence owns the household skeleton: it must mint each sibling via materialize_facts create-or-enrich (carrying their sourced census facts, not name-only stubs), write the Thomas->John and Thomas->Bridget parent-child edges via tree_edit add_relationship (each with a source-ref from the relationship assertion's source_id, at LOWER ref quality because a pre-1880 census parent-child edge is indirect), run a merge_warnings dry-run coherence gate BEFORE committing, and FLAG (not overwrite) the fact that in-tree child Patrick is absent from this census.",
+    "tags": ["person-evidence", "household-skeleton", "materialization", "sibling-mint", "edge-source-ref", "pre-1880-census-indirect"]
+  },
+  "input": {
+    "user_message": "I've extracted Thomas Flynn's 1850 census household into research.json (assertions a_001-a_007). Thomas is already in the tree (I2). Build out this household in the tree from those assertions.",
+    "scenario": "flynn-household-skeleton"
+  },
+  "judge_context": [
+    "The two census children are absent from the tree — John Flynn (child_1: name a_002, birth a_003) and Bridget Flynn (child_2: name a_005, birth a_006); the tree holds only Thomas (I2) and Patrick (I1). Each must be MINTED via materialize_facts create-or-enrich carrying its sourced census facts (not a name-only shell) and linked.",
+    "The Thomas->John and Thomas->Bridget parent-child edges (relationship assertions a_004 / a_007, src_001 -> tree source S1) are written via tree_edit add_relationship with a source-ref, at LOWER ref quality — a pre-1880 census parent-child relationship is INDIRECT (inferred from household position; no relationship column before 1880).",
+    "A merge_warnings dry-run coherence gate runs over the household set before committing; and Patrick (I1, Thomas's child via R1) is absent from this census — that absence is FLAGGED as an identity question, never resolved by renaming or overwriting Patrick."
+  ]
+}

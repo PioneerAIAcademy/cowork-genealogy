@@ -1,6 +1,6 @@
-// Shared helpers for the two merge tools (merge_record_into_tree,
-// merge_tree_persons). The pure tree merge lives in utils/merge-gedcomx.ts;
-// this module owns the tool-layer concerns both wrappers share: reading the
+// Shared helpers for the merge tools (merge_tree_persons and the read-only
+// merge_warnings dry-run). The pure tree merge lives in utils/merge-gedcomx.ts;
+// this module owns the tool-layer concerns those wrappers share: reading the
 // project files, validating an inline candidate, deriving the compact summary
 // from the merged document, backing up before an irreversible overwrite, and
 // the Mode-2 research.json person-id remap. Spec: merge-gedcomx-spec.md §5b.
@@ -13,16 +13,11 @@ import { createReport, isValid } from "../validation/types.js";
 import type { ValidationError } from "../validation/types.js";
 import { iteratePersonIdRefs } from "../validation/person-id-refs.js";
 import { backupIfExists } from "../utils/project-io.js";
+// Single source of the vital single-occurrence fact types — shared with the
+// merge core and materialize_facts's conflict-surfacing gate (spec §4.4).
+import { VITAL_PRIMARY_TYPES } from "../utils/merge-gedcomx.js";
 
 export { backupIfExists };
-
-/** Vital types the core marks exactly one `primary` fact for (mirrors the core). */
-const VITAL_PRIMARY_TYPES: ReadonlySet<string> = new Set([
-  "Birth",
-  "Death",
-  "Christening",
-  "Burial",
-]);
 
 export interface MergePairSummary {
   survivorId: string;

@@ -227,6 +227,57 @@ describe("Project Validator", () => {
         result.errors.some((e) => e.message.includes("should start with 'q_'"))
       ).toBe(true);
     });
+
+    it("reports a non-pli_ log entry plan_item_id (drift with the JSON Schema)", async () => {
+      // A question id (or any non-pli_ value) stuffed into a log entry's
+      // plan_item_id must fail here, matching the JSON-Schema ^pli_ constraint.
+      // Previously validate_research_schema skipped this field, so a q_ id
+      // passed here but hard-failed the JSON-Schema validator downstream.
+      const research = {
+        ...minimalResearch,
+        log: [
+          {
+            id: "log_001",
+            plan_item_id: "q_001",
+            performed: "2026-01-01T00:00:00.000Z",
+            tool: "record_search",
+            query: {},
+            outcome: "negative",
+            results_examined: 0,
+            external_site: null,
+            results_ref: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("should start with 'pli_'"))
+      ).toBe(true);
+    });
+
+    it("accepts a null log entry plan_item_id (opportunistic search)", async () => {
+      const research = {
+        ...minimalResearch,
+        log: [
+          {
+            id: "log_001",
+            plan_item_id: null,
+            performed: "2026-01-01T00:00:00.000Z",
+            tool: "record_search",
+            query: {},
+            outcome: "negative",
+            results_examined: 0,
+            external_site: null,
+            results_ref: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(true);
+    });
   });
 
   describe("Enum validation", () => {
@@ -1738,6 +1789,27 @@ describe("Research closed shapes", () => {
           superseded_by: null,
         },
       ],
+      localities: [
+        {
+          id: "loc_001",
+          place: "Norway",
+          for_place: "Ringebu, Oppland, Norway",
+          time_period: "1870-1880",
+          jurisdictions: [{ name: "Ringebu, Oppland, Norway", date_range: "1838-" }],
+          collections: [
+            { id: "4237104", title: "Norway, Church Books, 1797-1958", date_range: "1797-1958" },
+          ],
+          quirks: ["Indexed only at county level (Oppland)."],
+          guide_markdown: "## Norway\nChurch books are the core source.",
+          pages_read: [
+            { section: "home", url: "https://x/Norway_Genealogy", found: true },
+            { section: "research_tips", url: null, found: false },
+          ],
+          source: "locality-guide",
+          created: "2026-01-02",
+          updated: "2026-01-02",
+        },
+      ],
     };
   }
 
@@ -1797,6 +1869,7 @@ describe("Research closed shapes", () => {
     },
     { site: "proof_summaries", plant: (r) => (r.proof_summaries[0].zz_extra = true) },
     { site: "evaluations", plant: (r) => (r.evaluations[0].zz_extra = true) },
+    { site: "localities", plant: (r) => (r.localities[0].zz_extra = true) },
   ];
 
   for (const v of vectors) {
@@ -1848,6 +1921,7 @@ describe("Research closed shapes", () => {
       timeline_impossibility: schema.$defs.timeline_impossibility,
       proof_summary: schema.$defs.proof_summary,
       evaluation_entry: schema.$defs.evaluation_entry,
+      locality: schema.$defs.locality,
     };
 
     expect(Object.keys(defFor).sort()).toEqual(Object.keys(RESEARCH_SHAPES).sort());

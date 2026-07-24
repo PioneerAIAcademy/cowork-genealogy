@@ -26,13 +26,13 @@ When an assertion implies a relationship (e.g., "listed as son of Thomas"), did 
 - **partial:** Most relationship assertions get both links, but one or two have only one side linked.
 - **fail:** Relationship assertions consistently only link to one side (typically the subject), missing the implied other-person link.
 
-## Stub-person creation
+## Person minting and connecting edges
 
-When an assertion's persona matches no existing GedcomX person, did the skill create a new stub person and link to it — rather than forcing a bad match or skipping the role? (Only graded when the scenario contains an assertion with no plausible existing match; mark N/A otherwise.)
+When an assertion's persona (or a household member the record introduces) matches no existing GedcomX person, did person-evidence mint it itself — carrying the record's SOURCED facts via `materialize_facts` create-or-enrich, not a name-only stub — link the assertion(s), and write the connecting parent-child / spouse EDGE(s) via `tree_edit` `add_relationship` with a source-ref? person-evidence owns the household skeleton; record-extraction is assertion-only. (Only graded when the scenario has an unmatched persona or household members absent from the tree; mark N/A otherwise.)
 
-- **pass:** Recognizes no existing person fits, creates a minimal stub in `tree.gedcomx.json` (synthetic id, `gender`, one name with a surname), and creates the `person_evidence` entry linking the assertion to that new stub. Confidence is calibrated to the evidence (a single will naming the relationship → `probable`, not `confident`); `match_score` is null for a full-text-sourced assertion.
-- **partial:** Creates the link but the stub is malformed (missing gender or name), or over-claims confidence, or hedges by recommending the stub be created later instead of creating it.
-- **fail:** Forces the assertion onto an existing person who does not match, or skips the role entirely, leaving the persona unlinked.
+- **pass:** Mints each new person via `materialize_facts` create-or-enrich so it arrives WITH its sourced fact(s) — at minimum the sourced name fact, plus `gender` — each carrying a resolved non-null source-ref, not a bare name-only stub, and links the assertion(s). Any parent-child / spouse edge the record establishes is written via `tree_edit` `add_relationship` carrying a source-ref resolved from the relationship assertion's `source_id`: a directly-stated relationship (a will's "my son") is direct evidence; a pre-1880 census relationship (inferred from household position, no relationship column) is INDIRECT, materialized at lower ref quality. For a multi-person household, a `merge_warnings` dry-run coherence gate is run over the pre-materialization set before committing, and an existing tree person unexplainedly absent from the record is FLAGGED as an identity question — never renamed or overwritten. Confidence is calibrated to the evidence (a single source → `probable`, not `confident`); `match_score` is null for a full-text-sourced assertion.
+- **partial:** Mints and links but leaves a member a name-only shell (the old stub shape), omits a record-established edge or writes one without a source-ref, mis-classifies a pre-1880 inferred edge as directly-stated, skips the `merge_warnings` gate on a household, is malformed (missing gender/name), over-claims confidence, or hedges by deferring the mint to a later step.
+- **fail:** Forces an assertion onto a non-matching person, skips the role leaving the persona unlinked, does not build the household skeleton, writes edges with no source provenance, or overwrites/renames an existing tree person to force a record match.
 
 ## Score discipline (advisory)
 

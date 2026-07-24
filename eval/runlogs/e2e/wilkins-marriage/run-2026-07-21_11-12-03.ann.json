@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Recovered — Elijah Wilkins is linked as a couple to his first wife, Sarah 'Sally' (Millard) Wilkins (tree records her married name 'Sarah Wilkins'; proof notes maiden name 'probably Millard'). Matches the expected spouse identity.",
+    "f2": "PARTIAL — the marriage relationship (Elijah x Sarah) is recovered, but the stripped answer (marriage date December 1834, Kentucky) is NOT in the tree: the couple relationship carries no marriage fact, and the proof states 'the exact date of their first marriage was not located.' Same outcome as the original 2026-07-10 run (which also lacked the Dec 1834 fact), so this is consistent — not a regression. Judge marked the run pass on the spouse + marriage relationship; the exact date remains unrecovered."
+  },
+  "annotator": "ernest"
+}

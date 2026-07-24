@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_ruse_children",
+    "objective": "What were the names of the children of Mary L. Ruse, wife of Albert Raney, of Loudon Township, Seneca County, Ohio?",
+    "subject_person_ids": [
+      "L87N-ZCW"
+    ],
+    "status": "active",
+    "created": "2026-07-15",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

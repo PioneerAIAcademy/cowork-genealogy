@@ -1,0 +1,66 @@
+{
+  "log_id": "log_002",
+  "tool": "record_search",
+  "retrieved": "2026-05-04T10:10:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Flynn",
+      "givenName": "Patrick"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "CFLT-9K2",
+        "personName": "Patrick Flynn",
+        "score": 0.71,
+        "sex": "Male",
+        "birthDate": "1845",
+        "birthPlace": "Germany",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:CFLT-9K2",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:CFLT-9K2",
+        "collectionId": "1488411",
+        "collectionTitle": "Pennsylvania, Church and Town Records",
+        "recordTitle": "Patrick Flynn, baptism",
+        "treeMatches": [],
+        "primaryId": "CP1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "CP1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "CN1",
+                  "preferred": true,
+                  "given": "Patrick",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "CF1",
+                  "type": "Birth",
+                  "date": "1845",
+                  "place": "Germany"
+                },
+                {
+                  "id": "CF2",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Branch Township, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,7 +1,7 @@
 # Fly.io deploy plan — hosted genealogy workbench (alpha)
 
 **Date:** 2026-06-06. **Branch:** `hosted-web-workbench`. **Read with:**
-`hosted-web-workbench-POC-status.md` (current state),
+`realtime-rearch-status.md` (current state),
 `sandbox-provider-interface.md` (E2B mapping). Artifacts: `deploy/Dockerfile`,
 `deploy/fly.toml`.
 

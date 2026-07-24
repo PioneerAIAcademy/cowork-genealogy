@@ -1,4 +1,7 @@
 {
+  "execution": {
+    "max_wall_clock_seconds": 900
+  },
   "test": {
     "id": "ut_research_exhaustiveness_006",
     "skill": "research-exhaustiveness",

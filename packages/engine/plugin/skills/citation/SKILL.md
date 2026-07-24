@@ -17,6 +17,7 @@ description: Refines source citations to Evidence Explained standards. Updates c
   creates source entries — only refines entries created by
   record-extraction.
 allowed-tools:
+  - research_append
   - validate_research_schema
 ---
 
@@ -448,12 +449,32 @@ reviewed by user.
 ### 5. Update source entries
 
 Write the refined `citation` and `citation_detail` fields back to
-`research.json`. This is an in-place update to existing `src_`
-entries — never create new source entries.
+`research.json` **through `research_append`** — never with `Write`,
+`Edit`, or a script. Direct file writes bypass validate-before-persist
+and the `.bak` safety copy.
+
+Use one `op: "update"` per source entry, batched into a single call:
+
+```
+research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  ops: [
+    { section: "sources", op: "update", entryId: "src_007",
+      fields: { citation: "...", citation_detail: { who: "...", what: "...",
+                when_created: "...", when_accessed: "...", where: "...",
+                where_within: "..." } } }
+  ]
+})
+```
+
+This is an in-place update to existing `src_` entries — never create
+new source entries. `op: "append"` on `sources` is record-extraction's
+job, not yours.
 
 Do NOT change: `id`, `gedcomx_source_description_id`,
 `source_classification`, `repository`, `access_date`, `url`,
-`url_archived`. These are set by record-extraction.
+`url_archived`. These are set by record-extraction. Omit them from
+`fields` entirely — a field you don't name is left untouched.
 
 The `notes` field may be updated if the citation analysis reveals
 provenance concerns not previously noted.

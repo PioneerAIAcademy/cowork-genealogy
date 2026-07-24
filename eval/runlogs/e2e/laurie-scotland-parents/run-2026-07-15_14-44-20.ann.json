@@ -1,0 +1,15 @@
+{
+  "annotator": "francis",
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f2": "Correct mother (Mary Marshall) and relationship present, but recovered off the 1909 NY death certificate, not the controlling 1859 Scottish baptism. The subject's own birth event was conflated with a different John Laurie (Maryhill 1858).",
+    "f3": "Satisfied only trivially: Agnes Wardrop is absent because the agent never searched censuses and never encountered her — not because it reasoned her out.",
+    "f4": "Not recovered. The agent never found the 1861/1871 censuses, never encountered Agnes Wardrop, and never engaged the stepmother-vs-biological-mother distinction the fixture was built to test. Proof quality (2/3): correct parents but single-US-source parentage and a mis-resolved identity conflation (c_001 declares a Maryhill 1858 birth, an 1862 marriage, and the subject 'the same individual'); controlling baptism + censuses missed."
+  }
+}

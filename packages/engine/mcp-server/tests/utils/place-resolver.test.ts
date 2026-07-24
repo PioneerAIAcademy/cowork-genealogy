@@ -22,6 +22,7 @@ import {
   placeIdToRepIds,
   withRetry,
   mapWithConcurrency,
+  countryConsistency,
   __clearPlaceResolverCachesForTests,
 } from "../../src/utils/place-resolver.js";
 
@@ -90,6 +91,20 @@ describe("resolveStandardPlace", () => {
     const second = resolveStandardPlace("Paris");
     await vi.runAllTimersAsync();
     expect(await second).toBe("Paris, France");
+  });
+});
+
+describe("countryConsistency", () => {
+  // Full case coverage lives in tests/tools/research-append.test.ts (the
+  // original owner); this is a light direct-import smoke test confirming the
+  // check is importable straight from its new shared home, since tree-edit.ts
+  // (and any future tool) should import it from here, not from research-append.
+  it.each([
+    ["West Bromwich, England", "West Bromwich, Staffordshire, England, United Kingdom", "ok"],
+    ["West Bromwich, England", "Bamenda, Mezam, Northwest Region, Cameroon", "contradiction"],
+    ["Schuylkill County, Pennsylvania", "Schuylkill, Pennsylvania, United States", "unverifiable"],
+  ])("%s vs %s → %s", (place, standard, expected) => {
+    expect(countryConsistency(place as string, standard as string)).toBe(expected);
   });
 });
 

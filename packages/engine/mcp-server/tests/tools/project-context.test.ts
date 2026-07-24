@@ -107,7 +107,50 @@ describe("project_context", () => {
       { persons: [], relationships: [], sources: [] },
     );
     const r = await projectContext({ projectPath: dir });
-    expect(r).toEqual({ ok: true, projectStatus: "active", openQuestions: [], persons: [], sources: [] });
+    expect(r).toEqual({ ok: true, projectStatus: "active", openQuestions: [], persons: [], sources: [], localities: [] });
+  });
+
+  it("projects localities: snake→camel, omits guide_markdown, pagesRead = found sections only", async () => {
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "T", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        localities: [
+          {
+            id: "loc_001",
+            place: "Norway",
+            for_place: "Ringebu, Oppland, Norway",
+            time_period: "1870-1880",
+            jurisdictions: [{ name: "Ringebu, Oppland, Norway", date_range: "1838-" }],
+            collections: [{ id: "4237104", title: "Norway, Church Books", date_range: "1797-1958" }],
+            quirks: ["Indexed only at county level."],
+            guide_markdown: "## Norway\nlong prose that must not leak into the compact projection",
+            pages_read: [
+              { section: "home", url: "u1", found: true },
+              { section: "research_tips", url: null, found: false },
+            ],
+            source: "locality-guide",
+            created: "2026-01-02",
+          },
+        ],
+      },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.localities).toEqual([
+      {
+        id: "loc_001",
+        place: "Norway",
+        forPlace: "Ringebu, Oppland, Norway",
+        timePeriod: "1870-1880",
+        jurisdictions: [{ name: "Ringebu, Oppland, Norway", dateRange: "1838-" }],
+        collections: [{ id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958" }],
+        quirks: ["Indexed only at county level."],
+        pagesRead: ["home"],
+      },
+    ]);
+    expect(JSON.stringify(r.localities)).not.toContain("long prose");
   });
 
   it("truncates a long question to 140 chars ending in an ellipsis; leaves a 140-char one alone", async () => {

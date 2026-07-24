@@ -2,7 +2,9 @@
   "project": {
     "id": "rp_001",
     "objective": "Identify the father of Mikkel Nielsen Blyeberg, born 20 August 1779 in Stagstrup Sogn, Thisted Amt, Denmark, and determine when the father died",
-    "subject_person_ids": ["I1"],
+    "subject_person_ids": [
+      "I1"
+    ],
     "status": "active",
     "created": "2026-07-08",
     "updated": "2026-07-08"
@@ -42,5 +44,66 @@
   "hypotheses": [],
   "timelines": [],
   "proof_summaries": [],
-  "evaluations": []
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Denmark",
+      "for_place": "Stagstrup Sogn, Thisted Amt, Denmark",
+      "time_period": "1779-1820",
+      "jurisdictions": [
+        {
+          "name": "Thisted Amt, Denmark",
+          "date_range": "historical"
+        },
+        {
+          "name": "Stagstrup Sogn (parish)",
+          "date_range": "historical"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1503265",
+          "title": "Denmark, Military Levying Rolls (Laegdsruller), 1789-1861",
+          "date_range": "1789-1861"
+        },
+        {
+          "id": "1476091",
+          "title": "Denmark, Church Books (Kirkeboeger), 1484-1941",
+          "date_range": "1484-1941"
+        }
+      ],
+      "quirks": [
+        "Danish military levy rolls (laegdsruller) begin in 1789 and enroll every male from early childhood under his father's name — each son's entry sits directly beneath the father's, making the rolls DIRECT parentage evidence for a male subject.",
+        "Danish naming is patronymic before ~1850: 'Mikkel Nielsen' means Mikkel son of Niels, so the father's given name is Niels — the patronymic alone does not identify which Niels.",
+        "Vital events are recorded in parish church books (kirkeboeger); baptism entries name both parents. Civil registration is much later.",
+        "The Stagstrup parish register is only ~3% name-indexed on FamilySearch — plan to browse the register images by year rather than rely on the index."
+      ],
+      "guide_markdown": "## Stagstrup Sogn, Thisted Amt, Denmark - late 1700s\n\nFor a male subject born 1779, two record classes carry parentage. Church books (kirkeboeger) hold the baptism naming both parents. The military levy rolls (laegdsruller), kept from 1789, enroll every boy under his father's name from childhood - direct evidence of the father. Danish patronymics (Nielsen = son of Niels) point to the father's given name but not the specific man. The Stagstrup register is only ~3% indexed, so plan to browse images.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Denmark_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Denmark_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Denmark_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Denmark_Research_Tips",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-08"
+    }
+  ]
 }

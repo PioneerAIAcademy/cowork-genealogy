@@ -1,0 +1,759 @@
+{
+  "project": {
+    "id": "rp_rossi_marriage",
+    "objective": "What was the marriage date of Mary Rossi, born 1879 in New Jersey?",
+    "subject_person_ids": [
+      "GC13-YHG"
+    ],
+    "status": "completed",
+    "created": "2026-07-16",
+    "updated": "2026-07-16"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "On what date did Mary Rossi (born 1879, New Jersey) marry Charles Ullricht?",
+      "rationale": "The tree shows Mary Rossi in a spousal relationship with Charles Ullricht, with children born from August 1899 onward, indicating marriage ca. 1896\u20131899. New Jersey vital registration began 1848 and marriage records for this period are indexed on FamilySearch, making direct record retrieval the most efficient first step. This is the sole fact needed to answer the research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-16",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_014"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two independent sources from different informants and record-creation processes confirm the marriage year as 1899, with the derivative index (src_001) providing the exact date of 2 Feb 1899 in Hoboken, Hudson, NJ. (1) NJ Marriages 1678-1985 derivative index (src_001, log_003): direct evidence, primary information \u2014 the marrying parties themselves supplied data at the time of marriage. (2) 1900 US Census (src_002, log_005): original record, primary information \u2014 the Ulrich household reported approximately 1 year married as of June 1900, independently corroborating 1899. Bride name and groom name variant searches were executed (logs 001-004). The parish register images underlying src_001 were located (volume 007433501, Hoboken Religious Marriage Records 1889-1908) but are inaccessible via the MCP transport cap (all images ~1.1 MB; see log_006). This is a pursued-and-unavailable source, not an unsearched gap. The accessible evidence is sufficient for a defensible conclusion; overturn risk is low.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 two concordant sources establish the marriage date: the NJ Marriages 1678-1985 index gives 2 Feb 1899, Hoboken, Hudson, NJ (direct evidence), and the 1900 US Census confirms marriage year ~1899 (indirect corroboration). The question is answered.",
+          "repository_breadth": "Yes \u2014 FamilySearch marriage index (collection 1675446), 1900 US Census, and Hoboken church record volumes all searched or attempted. Bride and groom searches under multiple name spellings executed. County-level (collection 1803976) and statewide (collection 1675446) FamilySearch searches both run. NJ 1895 state census skipped (marriage date already established; bounding not needed). Ancestry fallback skipped (marriage found via FamilySearch).",
+          "original_substitution": "Partial \u2014 narrow exception applies. The derivative index (src_001, collection 1675446) is the sole direct source for the marriage entry. The original Hoboken parish register (volume 007433501, Religious Marriage Records 1889-1908) was located via volume_search and accessed via image_search (414 images identified), but all page images are ~1.1 MB, exceeding the MCP transport cap. Full-text search of the FTS-capable Hoboken marriage volume (007433498) returned nil. The original is pursued-and-unavailable. The 1900 US Census (src_002) is an original record and provides independent primary-information corroboration.",
+          "independent_verification": "Yes \u2014 two independent sources with different informants and creation processes. (1) NJ Marriages derivative index: informants are the marrying parties (self-reported at marriage). (2) 1900 US Census: informant is an unknown household member (likely Charles or Mary Ulrich), different record type, different institutional origin. Census assertions a_012, a_013, a_014 share the same household informant and count as one evidence unit; combined with src_001, that is two independent units confirming the marriage.",
+          "evidence_class": "Yes \u2014 src_002 (1900 US Census) is an original source with primary information (marital status and marriage-year self-reported contemporaneously by the couple's household). At least one original record with primary information is present.",
+          "conflict_resolution": "Yes for q_001 \u2014 both sources agree on 1899 as the marriage year; src_001 gives the precise date of 2 Feb 1899. The unresolved birth-year (1874 vs 1875) and birthplace (NJ vs MA) conflict for Charles Ullricht (a_006, a_007 vs tree) affects his biography but is independent of the marriage date question and does not undermine the conclusion.",
+          "overturn_risk": "Low. Two independent sources agree on 1899; one provides the exact date (2 Feb 1899). The original parish register, if accessed, might add witness names or officiants but is very unlikely to contradict the date recorded in the derivative index and corroborated by the census. No identified record type for this jurisdiction and period is expected to name a different marriage date."
+        }
+      },
+      "created": "2026-07-16"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-16",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Hudson County, New Jersey",
+          "date_range": "1895-1901",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'New Jersey, County Marriages, 1682-1956' (collection 1803976) is the indexed county marriage register for NJ. Hudson County records cover Hoboken. A direct search for Mary Rossi or Ullricht in this period should produce the civil marriage record, which would state the exact date. Best first source \u2014 free, indexed, and targeted at the right jurisdiction and period.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "New Jersey (statewide)",
+          "date_range": "1895-1901",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'New Jersey, Marriages, 1678-1985' (collection 2365247) is a broader statewide compiled marriage index with 119,658 records and 348,215 images. May capture entries not indexed in the county collection. Run as a parallel search on Mary Rossi and on Ullricht to maximize recall.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Hoboken, Hudson County, New Jersey",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 US Census (already in the tree as source 3J4D-BWP, ARK M9JK-HPG) includes a 'years married' column for married women, giving the number of years the couple had been married as of June 1900. This yields an indirect approximate marriage year. Assertions must be extracted via record-extraction \u2014 the source is in the tree but no GPS assertions have been logged from it yet.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Hoboken, Hudson County, New Jersey",
+          "date_range": "1895",
+          "repository": "FamilySearch",
+          "rationale": "1895 NJ State Census would bound the marriage date, but the marriage date (2 Feb 1899) is already established by two concordant sources. Bounding evidence adds no value to q_001's resolution. Skipped to conserve resources.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "New Jersey (statewide)",
+          "date_range": "1895-1901",
+          "repository": "Ancestry",
+          "rationale": "Ancestry fallback for pli_001. The marriage record was found via FamilySearch collection 1675446 and corroborated by the 1900 census. Paid fallback not needed.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Hoboken, Hudson County, New Jersey",
+          "date_range": "1895-1901",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'New Jersey, Church Records, 1675-1970' (collection 2106099) includes Catholic parish registers. Given Mary's Italian surname (Rossi), a Catholic church marriage in Hoboken is plausible. Church records often predate civil registration or document marriages not captured in the county register. Final fallback if civil records are absent.",
+          "fallback_for": "pli_002",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-16T12:55:34.113Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Rossi",
+        "givenName": "Mary",
+        "spouseGivenName": "Charles",
+        "marriageYearFrom": 1893,
+        "marriageYearTo": 1901,
+        "recordType": "marriage",
+        "collectionId": "1803976",
+        "collection": "New Jersey, County Marriages, 1682-1956"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results in NJ County Marriages collection 1803976. The target period marriage may be in statewide compiled collections rather than the county-level index."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-16T12:55:44.258Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Rossi",
+        "givenName": "Mary",
+        "spouseGivenName": "Charles",
+        "marriageYearFrom": 1893,
+        "marriageYearTo": 1901,
+        "recordType": "marriage",
+        "collectionId": "2365247",
+        "collection": "New Jersey, Marriages, 1670-1980"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results in NJ Marriages 1670-1980 (collection 2365247) with spouse name constraint. Retried without spouse constraint and broader year range \u2014 positive result found from sister collection 1675446."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-16T12:55:57.057Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Rossi",
+        "givenName": "Mary",
+        "marriageYearFrom": 1890,
+        "marriageYearTo": 1903,
+        "recordType": "marriage",
+        "recordSubdivision": "New Jersey",
+        "recordCountry": "United States",
+        "note": "Variant: dropped spouse name, widened date range, no collection scope"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 14,
+      "notes": "Top match: Mary Rossi born 1879, 'Entry for Charles A. Ulrich', collection 1675446 (NJ Marriages 1678-1985). Record_read confirms marriage date 2 Feb 1899, Hoboken, Hudson, NJ. Match score 0.79, already attached to subject GC13-YHG. Second match Maria Rossi / Carolum A. Ulrich (score 0.43) appears to be the Latin-form index entry for the same church register record."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-16T12:56:03.365Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ullricht",
+        "givenName": "Charles",
+        "marriageYearFrom": 1890,
+        "marriageYearTo": 1903,
+        "recordType": "marriage",
+        "recordSubdivision": "New Jersey",
+        "recordCountry": "United States",
+        "note": "Groom-side search using Ullricht spelling"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results under groom surname Ullricht. Record is indexed under Ulrich (one 't') as confirmed by the positive bride-side search. No further variant needed; record already located."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-16T13:06:09.890Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:M9JK-HPP",
+        "description": "1900 US Census household of Charles Ulrich and Mary Ulrich, Hoboken, Hudson, NJ. Household includes Adeline Ulrich (daughter, born Aug 1899). Couple relationship encodes Marriage: 1899, corroborating marriage date of 2 Feb 1899. Charles birth Jul 1874 (vs 1875 in marriage record); Mary birth Jun 1879 NJ."
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 3,
+      "notes": "1900 census shows Charles Ulrich (b. Jul 1874, NJ) and Mary Ulrich (b. Jun 1879, NJ) in Hoboken. Couple relationship carries marriage year 1899, independently corroborating the marriage record date. Adeline Ulrich (b. Aug 1899, NJ) is present as child. Source already in tree as 3J4D-BWP; passing to record-extraction for GPS assertion creation."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-16T13:22:17.648Z",
+      "tool": "image_search",
+      "query": {
+        "description": "Attempted to locate and access original church/parish marriage register for the Ulrich/Rossi 1899 marriage in Hoboken, Hudson, NJ. Steps: (1) fulltext_search imageGroup 007433498 (Hoboken Marriages 1893-1908, fulltextSearchable:true) for '+Ulrich +Rossi' 1897-1901 \u2192 0 results; (2) fulltext_search '+Ulrich +Rossi' recordPlace3=Hoboken yearFrom=1897-1901 \u2192 0 results; (3) fulltext_search '+Ulrich +Rossi' recordPlace1=New Jersey recordType=marriage 1898-1900 \u2192 0 results; (4) volume_search Hudson NJ 1895-1902 \u2192 identified imageGroup 007433501 (Religious Marriage Records, Hoboken, 1889-1908, 414 images, fulltextSearchable:false); (5) image_read attempted 007433501_00215 \u2192 NOT READ: image 1.1 MB exceeds MCP transport cap.",
+        "volumes_searched": [
+          "007433498",
+          "007433501"
+        ],
+        "imageGroupNumber": "007433501"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 414,
+      "notes": "Original Hoboken parish marriage register images (volume 007433501, 414 images) located but inaccessible \u2014 all images are ~1.1 MB, exceeding the MCP transport cap. Full-text search of the FTS-capable Hoboken marriage volume (007433498) returned nil for Ulrich/Rossi 1897-1901. Original record is pursued-and-unavailable via current tooling; the derivative index (src_001) remains the sole direct source for the marriage entry."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"New Jersey, Marriages, 1678-1985,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9SKD-YHL : 27 August 2020), Entry for Charles A. Ulrich and Mary Rossi, marriage 2 Feb 1899, Hoboken, Hudson, New Jersey.",
+      "citation_detail": {
+        "who": "FamilySearch (compiler)",
+        "what": "New Jersey, Marriages, 1678-1985 (database), entry for Charles A. Ulrich",
+        "when_created": "27 August 2020 (index publication date)",
+        "when_accessed": "16 July 2026",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "New Jersey, Marriages, 1678-1985 collection > Entry for Charles A. Ulrich (Hoboken, Hudson, New Jersey)"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "url": "https://familysearch.org/ark:/61903/1:2:9SKD-YHL",
+      "notes": "original not examined \u2014 this is a FamilySearch database index compiled from New Jersey marriage registers; the underlying original marriage register/license was not viewed.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States, Census, 1900,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M9JK-HPG : accessed 16 July 2026), entry for Charles Ulrich and Mary Ulrich household, Hoboken, Hudson, New Jersey, United States, 1900; citing FamilySearch digital image ark:/61903/3:1:S3HT-63B9-FHG.",
+      "citation_detail": {
+        "who": "U.S. Bureau of the Census enumerator",
+        "what": "1900 U.S. Federal Census population schedule, household of Charles Ulrich",
+        "when_created": "1900",
+        "when_accessed": "2026-07-16",
+        "where": "Hoboken, Hudson County, New Jersey, United States",
+        "where_within": "FamilySearch \"United States, Census, 1900\" collection (collection 1325221); digital image ark:/61903/3:1:S3HT-63B9-FHG"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:1YQR-H4D",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "3J4D-BWP"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:FZLZ-YXJ",
+      "record_role": "bride",
+      "record_persona_id": "p_11195304737",
+      "log_entry_id": "log_003",
+      "fact_type": "Marriage",
+      "value": "Married 2 Feb 1899, Hoboken, Hudson, New Jersey, United States",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "date": "2 Feb 1899",
+      "date_certainty": "exact",
+      "place": "Hoboken, Hudson, New Jersey, United States",
+      "standard_place": "Hoboken, Hudson, New Jersey, United States",
+      "information_quality": "primary",
+      "informant": "Mary Rossi and Charles A. Ulrich (the marrying parties)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:FZLZ-YXJ",
+      "record_role": "bride",
+      "record_persona_id": "p_11195304737",
+      "log_entry_id": "log_003",
+      "fact_type": "Birth",
+      "value": "1879",
+      "structured_value": {
+        "year": "1879"
+      },
+      "date": "1879",
+      "date_certainty": "estimated",
+      "information_quality": "secondary",
+      "informant": "Mary Rossi",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year appears derived from age stated at marriage in the original register; a person cannot provide primary information about their own birth, so classified secondary despite self as informant.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:FZLZ-YXJ",
+      "record_role": "groom",
+      "record_persona_id": "p_11195304738",
+      "log_entry_id": "log_003",
+      "fact_type": "Birth",
+      "value": "1875",
+      "structured_value": {
+        "year": "1875"
+      },
+      "date": "1875",
+      "date_certainty": "estimated",
+      "information_quality": "secondary",
+      "informant": "Charles A. Ulrich",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year appears derived from age stated at marriage in the original register; a person cannot provide primary information about their own birth, so classified secondary despite self as informant.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:M9JK-HPP",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Hoboken, Hudson, New Jersey, United States",
+      "place": "Hoboken, Hudson, New Jersey, United States",
+      "standard_place": "Hoboken, Hudson, New Jersey, United States",
+      "structured_value": {
+        "place": "Hoboken, Hudson, New Jersey, United States"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling in person; residence is the enumerator's direct observation of where the household was found.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:M9JK-HPP",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Hoboken, Hudson, New Jersey, United States",
+      "place": "Hoboken, Hudson, New Jersey, United States",
+      "standard_place": "Hoboken, Hudson, New Jersey, United States",
+      "structured_value": {
+        "place": "Hoboken, Hudson, New Jersey, United States"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling in person; residence is the enumerator's direct observation of where the household was found.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:M9JK-HPP",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Jul 1874",
+      "date": "July 1874",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": 1874
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who answered; respondent unknown, so birth month/year is indeterminate rather than secondary. Tree records Charles Ullricht's birth as 1875, Massachusetts \u2014 conflicts with this census's Jul 1874, New Jersey; discrepancy unresolved, flagged for correlation.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:M9JK-HPP",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "New Jersey",
+      "place": "New Jersey",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown on pre-1940 census. Conflicts with tree's Massachusetts birthplace for Charles Ullricht; discrepancy unresolved.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "structured_value": {
+        "place": "New Jersey"
+      },
+      "source_id": "src_002",
+      "standard_place": "New Jersey, United States"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:M9JK-HPP",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Jun 1879",
+      "date": "June 1879",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": 1879
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census respondent unknown, so kept indeterminate rather than secondary. Consistent with tree's 1879 birth year for Mary Rossi.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:M9JK-HPP",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "New Jersey",
+      "place": "New Jersey",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown on pre-1940 census. Consistent with tree's New Jersey birthplace for Mary Rossi.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "structured_value": {
+        "place": "New Jersey"
+      },
+      "source_id": "src_002",
+      "standard_place": "New Jersey, United States"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:M9JK-HPP",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Aug 1899",
+      "date": "August 1899",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": 1899
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census respondent unknown; even though a parent likely reported, we cannot confirm who answered, so indeterminate. Consistent with tree's 24 Aug 1899 birth date for Adeline Ullrich.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:M9JK-HPP",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "New Jersey",
+      "place": "New Jersey",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown on pre-1940 census. Consistent with tree's New Jersey birthplace for Adeline Ullrich.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "structured_value": {
+        "place": "New Jersey"
+      },
+      "source_id": "src_002",
+      "standard_place": "New Jersey, United States"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:M9JK-HPP",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely Charles or Mary)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Current marital status (unlike own birth) is directly knowable by any household member reporting for the household at the time of enumeration.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:M9JK-HPP",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely Charles or Mary)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Current marital status is directly knowable by any household member reporting for the household at the time of enumeration.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:M9JK-HPP",
+      "record_role": "wife",
+      "fact_type": "marriage",
+      "value": "Census 'years married' column (as processed into a Couple/Marriage fact) indicates approximately 1 year married as of the June 1900 enumeration, implying a marriage year of about 1899.",
+      "date": "1899",
+      "date_certainty": "estimated",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely Charles or Mary)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Contemporaneous self-report by the couple's own household about their own marriage duration, so primary information, but the census records years-married rather than an exact date, so evidence is indirect as to the marriage date itself. Shares its informant with the marital_status assertions above (same household report) \u2014 treat as one evidence unit, not independent corroboration. Original census image not reviewed to confirm the literal 'years married' figure underlying this derived date; corroborates but does not resolve q_001's exact marriage date.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "GC13-YHG",
+      "confidence": "confident",
+      "match_score": 0.79,
+      "rationale": "Bride persona p_11195304737 is Mary Rossi, born 1879 US \u2014 identical name and birth year to tree person GC13-YHG (Mary Rossi, born 1879). Residence in Hoboken NJ is consistent with tree residences for GC13-YHG from 1900 onward. Record already attached to GC13-YHG in FamilySearch (attachedToSubject: true). Match score 0.79 from rank_search_matches using FamilySearch's own matcher. All core identifiers agree \u2014 strong match.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_001",
+      "person_id": "GC13-LZ1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage assertion also bears on the groom (Charles A. Ulrich, p_11195304738, born 1875 US). Tree person GC13-LZ1 is Charles Ullricht, born 1875, Massachusetts \u2014 birth year exact match, given name exact match. 'Ulrich' vs 'Ullricht' is a well-documented indexing/transcription variant; the record was found by searching the bride name, so the groom's surname form reflects how the register was indexed. Both persons are in a Couple relationship (R1) in the tree. No same_person score obtained for the groom (search targeted bride); qualitative correlation is strong \u2014 birth year, given name, spouse, and place all agree.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_002",
+      "person_id": "GC13-YHG",
+      "confidence": "confident",
+      "match_score": 0.79,
+      "rationale": "Same bride persona (p_11195304737, Mary Rossi born 1879) as a_001. Birth year 1879 corroborates the tree's existing birth year for GC13-YHG. Identification is identical to a_001 \u2192 GC13-YHG link.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "GC13-LZ1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same groom persona (p_11195304738, Charles A. Ulrich born 1875) as a_001. Birth year 1875 matches the tree's existing birth year for GC13-LZ1 exactly. Identification is identical to a_001 \u2192 GC13-LZ1 link.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "GC13-LZ1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Residence assertion (Hoboken, Hudson, NJ) for the head_of_household persona 'Charles Ulrich' in the 1900 census household. Given name matches exactly; 'Ulrich' is a documented spelling variant of 'Ullricht' (already recorded as alternate name in tree for GC13-LZ1). Household wife 'Mary Ulrich' matches GC13-YHG, the known spouse of GC13-LZ1 in Couple R1. Location consistent with tree residences. Confidence is probable rather than confident due to birth-year and birthplace conflicts between this census (Jul 1874, New Jersey) and tree data (1875, Massachusetts) \u2014 unresolved discrepancy flagged for conflict-resolution.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "GC13-YHG",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence assertion (Hoboken, Hudson, NJ) for the wife persona 'Mary Ulrich' in the 1900 census household. 'Ulrich' is the married surname, consistent with Mary Rossi having married Charles Ulrich/Ullricht in 1899 (per a_001). Birth Jun 1879 NJ (a_008) matches GC13-YHG's 1879 NJ birth exactly. Household head 'Charles Ulrich' matches GC13-LZ1, the known spouse of GC13-YHG. All core identifiers agree \u2014 strong match.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "GC13-LZ1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth month/year (Jul 1874) for head_of_household 'Charles Ulrich' \u2014 same persona as a_004. Conflicts with tree's 1875 birth year for GC13-LZ1; one year difference may reflect census rounding or a different source's error. The spousal and location match strongly supports identity; the birth-year conflict caps confidence at probable. Conflict logged for resolution.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "GC13-LZ1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birthplace (New Jersey) for head_of_household 'Charles Ulrich' \u2014 same persona as a_004. Conflicts with tree's Massachusetts birthplace for GC13-LZ1. Identity otherwise well-supported (name, spouse, location); birthplace conflict caps confidence at probable pending conflict-resolution.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "GC13-YHG",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth month/year (Jun 1879) for wife persona 'Mary Ulrich' \u2014 same persona as a_005. Consistent with tree's 1879 birth year for GC13-YHG (Mary Rossi). No conflicts; identity is strong.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "GC13-YHG",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace (New Jersey) for wife persona 'Mary Ulrich' \u2014 same persona as a_005. Consistent with tree's New Jersey birthplace for GC13-YHG (Mary Rossi). No conflicts; identity is strong.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "GC13-KG4",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth month/year (Aug 1899) for child_1 persona 'Adeline Ulrich'. Tree person GC13-KG4 is Adeline Ullrich, born 24 Aug 1899, New Jersey \u2014 exact name and birth-month/year match. Parents in the census household (Charles and Mary Ulrich, GC13-LZ1 and GC13-YHG) are consistent with GC13-KG4's parent relationships (R5 and R6). Strong match.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "GC13-KG4",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace (New Jersey) for child_1 persona 'Adeline Ulrich' \u2014 same persona as a_010. Consistent with tree's New Jersey birthplace for GC13-KG4. No conflicts; identity is strong.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "GC13-LZ1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marital_status (Married) for head_of_household 'Charles Ulrich' \u2014 same persona as a_004. Confirms Charles Ulrich was married as of June 1900, consistent with GC13-LZ1's spousal relationship R1 with GC13-YHG. Confidence follows persona-level assessment: probable due to birth-year/birthplace conflicts on a_006/a_007.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_013",
+      "person_id": "GC13-YHG",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital_status (Married) for wife persona 'Mary Ulrich' \u2014 same persona as a_005. Confirms Mary Ulrich was married as of June 1900, consistent with GC13-YHG's spousal relationship R1 with GC13-LZ1. All core identifiers for this persona agree; confident.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_014",
+      "person_id": "GC13-YHG",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage-year assertion (approx. 1899) derived from the census 'years married' column for wife persona 'Mary Ulrich'. Bears on GC13-YHG as one of the married parties. Identity of wife persona as GC13-YHG is strong (name, birth, spouse, location all agree). The inferred marriage year 1899 independently corroborates the 2 Feb 1899 date from src_001. Note: this assertion shares its informant with a_012 and a_013 (same household report) and is therefore not independent of them for evidential weighting purposes.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "GC13-LZ1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage-year assertion also bears on the husband (head_of_household 'Charles Ulrich', GC13-LZ1) as the other party to the marriage. Confidence follows head_of_household persona assessment: probable due to birth-year (Jul 1874 vs. tree 1875) and birthplace (NJ vs. MA) conflicts unresolved. Identity otherwise well-supported by name, spouse, and location.",
+      "created": "2026-07-16"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_012",
+        "a_013",
+        "a_014"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Six searches across FamilySearch marriage indexes (collections 1803976, 1675446), 1900 US Census (record_read), full-text search of Hoboken marriage volumes (007433498), and image browse of Hoboken parish register (007433501, 414 images \u2014 all over MCP transport cap). Bride and groom name variants searched. NJ 1895 state census and Ancestry fallback skipped (marriage established). Original register images pursued-and-unavailable. Exhaustive declaration persisted.",
+      "narrative_markdown": "## Marriage of Mary Rossi and Charles A. Ulrich\n\n**Question:** On what date did Mary Rossi (born June 1879, New Jersey) marry Charles A. Ulrich (Ullricht)?\n\n**Conclusion:** Mary Rossi married Charles A. Ulrich on **2 February 1899** in **Hoboken, Hudson County, New Jersey**.\n\n### Evidence\n\n**Source 1 \u2014 New Jersey, Marriages, 1678\u20131985 (derivative database)**\n\nThe FamilySearch database \u201cNew Jersey, Marriages, 1678\u20131985\u201d (collection 1675446), entry for Charles A. Ulrich and Mary Rossi, records a marriage on 2 Feb 1899 at Hoboken, Hudson, New Jersey.[\u00b9] The entry was found by a statewide name search under the bride (Mary Rossi, born 1879); the record was already attached to the subject (GC13-YHG) in FamilySearch (match score 0.79). A second index entry in the same collection lists the parties in Latin forms (Maria Rossi / Carolum A. Ulrich), consistent with transcription from a Catholic parish register. This source is a derivative database compiled from New Jersey marriage records; the underlying original parish register (volume 007433501, Hoboken Religious Marriage Records, 1889\u20131908, 414 images) was located but its images exceed the MCP transport cap (~1.1 MB each) and cannot be read inline \u2014 a pursued-and-unavailable source. The date 2 Feb 1899 is recorded as direct, primary evidence: the marrying parties themselves supplied the information at the time of the event.\n\n**Source 2 \u2014 United States, Census, 1900 (original)**\n\nThe 1900 federal census (FamilySearch collection 1325221, ARK ark:/61903/1:1:M9JK-HPP) enumerates a household in Hoboken, Hudson, NJ: Charles Ulrich (head, born Jul 1874 NJ) and Mary Ulrich (wife, born Jun 1879 NJ), with daughter Adeline Ulrich (born Aug 1899 NJ).[\u00b2] The \u201cyears married\u201d column, processed as a GedcomX Couple/Marriage fact, indicates the couple had been married approximately one year as of the June 1900 enumeration, placing the marriage year as approximately 1899. The married-status assertions (a_012, a_013) and the derived marriage-year assertion (a_014) all come from the same household informant and count as one evidence unit. This source is an original federal record; the household reporter (likely Charles or Mary Ulrich) provided primary information about their own contemporaneous marital status.\n\n### Correlation and Analysis\n\nThe two evidence units are independent: they derive from different informants (the marrying parties at the time of registration vs. the household respondent at the 1900 census), different record types (vital/marriage vs. population census), and different institutional origins (New Jersey state registration vs. federal enumeration). Both agree on 1899 as the marriage year. The derivative index alone supplies the specific date (2 Feb) and place (Hoboken, Hudson, NJ); the census independently confirms the year.\n\nThe year 1899 is doubly corroborated; the exact date (2 Feb) rests on the derivative index, which is reliable and corroborated for the year. No source contradicts the date or year. The birth-year and birthplace conflict for Charles Ullricht (census: Jul 1874 NJ; marriage record: 1875; tree: 1875 Massachusetts) is noted in the person_evidence record (pe_005, pe_007, pe_008) but does not affect the marriage date conclusion.\n\n### GPS Assessment\n\n1. **Reasonably exhaustive research** \u2014 Declared (six searches, multiple record types and repositories; original images pursued-and-unavailable documented).\n2. **Complete and accurate citations** \u2014 Both sources carry full working citations with who, what, when created, when accessed, and where.\n3. **Analysis and correlation** \u2014 Two independent evidence units analyzed; informant independence assessed; one-unit counting applied to the census assertions; the derivative-only limitation on the specific date is identified and evaluated.\n4. **Conflict resolution** \u2014 No conflict on the marriage date or year. The Charles Ullricht birth-year/birthplace conflict is documented and does not undermine the conclusion.\n5. **Soundly reasoned conclusion** \u2014 The conclusion is supported by two independent sources; the reasoning is documented above; the tier (proved) reflects that all five GPS components are satisfied for this marriage date.\n\n---\n[\u00b9] \u201cNew Jersey, Marriages, 1678\u20131985,\u201d database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9SKD-YHL : 27 August 2020), Entry for Charles A. Ulrich and Mary Rossi, marriage 2 Feb 1899, Hoboken, Hudson, New Jersey.\n\n[\u00b2] \u201cUnited States, Census, 1900,\u201d database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M9JK-HPG : accessed 16 July 2026), Charles Ulrich and Mary Ulrich household, Hoboken, Hudson, New Jersey; citing FamilySearch digital image ark:/61903/3:1:S3HT-63B9-FHG."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-16.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-16T13:30:07.425Z"
+    }
+  ]
+}

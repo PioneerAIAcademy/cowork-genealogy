@@ -19,7 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { join } from "path";
-import { readFile } from "fs/promises";
+import { readFile, mkdir } from "fs/promises";
 import { validateParsed } from "../validation/validator.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
@@ -30,9 +30,18 @@ import {
   isInsideProject,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { exampleHints } from "./research-append-examples.js";
+import { gcUnreferencedImages } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
-import { resolveStandardPlace } from "../utils/place-resolver.js";
+import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
+
+// Re-exported for back-compat: tests and any other importer that reaches this
+// check via research-append.ts (its original home) keep working unchanged.
+// The implementation now lives in place-resolver.ts, shared with tree-edit.ts.
+export { countryConsistency };
+import { stdDate } from "../utils/date-standardize.js";
+import { MONTH_NUM } from "../utils/date-constants.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
@@ -71,6 +80,7 @@ const SECTIONS: Record<string, SectionConfig> = {
   proof_summaries: { prefix: "ps_" },
   evaluations: { prefix: "ev_", stampTimestamp: { field: "timestamp", kind: "datetime" } },
   known_holdings: { prefix: "kh_", stampTimestamp: CREATED_DATE },
+  localities: { prefix: "loc_", stampTimestamp: CREATED_DATE },
   // Singleton metadata (one object, not a list): update-only field writes.
   // proof-conclusion sets `project.status: "completed"` here at the end of a
   // GPS cycle; the tool stamps `project.updated` (iso_date).
@@ -114,6 +124,56 @@ function planActiveInvariants(entry: any, research: any): string[] {
   return [];
 }
 
+/** An uncertain transcription rides in the assertion's `value` as `[?]` — the
+ *  record-extractor contract ("Keep the uncertain reading in `value` with
+ *  `[?]`"). Nothing else in the entry marks doubt structurally. */
+function hasUncertainReading(assertion: any): boolean {
+  return typeof assertion?.value === "string" && assertion.value.includes("[?]");
+}
+
+/** Distinct records (falling back to source) that already tie other, still-live
+ *  person_evidence rows to this person — excluding this entry and its own
+ *  record. Size 0 ⇒ the identity rests on this single record alone. */
+function corroboratingRecordCount(entry: any, research: any, byId: Map<string, any>): number {
+  const own = byId.get(entry.assertion_id);
+  const ownRecord = own?.record_id ?? own?.source_id ?? null;
+  const distinct = new Set<string>();
+  for (const pe of research.person_evidence ?? []) {
+    if (pe === entry || pe.id === entry.id) continue;
+    if (pe.person_id !== entry.person_id) continue;
+    if (pe.superseded_by != null) continue;
+    const a = byId.get(pe.assertion_id);
+    const rec = a?.record_id ?? a?.source_id ?? null;
+    if (rec != null && rec !== ownRecord) distinct.add(rec);
+  }
+  return distinct.size;
+}
+
+/** Epistemic gate for identity over-reach (the record-extractor's tentative-cap,
+ *  enforced at the link point rather than left to prose).
+ *
+ *  Deliberately CONJUNCTIVE: an uncertain reading AND no corroborating record.
+ *  A `confident` link off a single *clean* record stays legal — that is the
+ *  ordinary case (a death certificate that plainly names its subject), and
+ *  gating on record-count alone would reject it. Doubt only becomes
+ *  disqualifying when nothing independent backs it up. */
+function personEvidenceInvariants(entry: any, research: any): string[] {
+  if (entry.confidence !== "confident") return [];
+  const assertions: any[] = research.assertions ?? [];
+  const byId = new Map<string, any>(assertions.map((a: any) => [a.id, a]));
+  const linked = byId.get(entry.assertion_id);
+  // Missing FK is already reported by the document validator; don't double-fault.
+  if (!linked || !hasUncertainReading(linked)) return [];
+  if (corroboratingRecordCount(entry, research, byId) > 0) return [];
+  return [
+    `confidence 'confident' is not available here: assertion '${entry.assertion_id}' carries an ` +
+      `uncertain reading ([?]) and no other record independently ties person '${entry.person_id}' ` +
+      `to this identity. Use 'probable' (or 'speculative'), keep the [?] in the assertion value, ` +
+      `and record what would resolve it — a second independent record, or the original image. ` +
+      `A confident wrong parent is worse than a flagged uncertain one.`,
+  ];
+}
+
 export type ResearchAppendSection = keyof typeof SECTIONS | string;
 
 /** One mutation. The body of a single call, or one element of a batch `ops`. */
@@ -151,6 +211,14 @@ export interface ResearchAppendInput {
   // Composite persist: create the tree.gedcomx.json `S` entry for this call's
   // single sources append op and stamp its `gedcomx_source_description_id`.
   sourceDescription?: SourceDescriptionInput;
+  // Composite persist (evaluations): the structured verdict body. When present
+  // on an `evaluations` append, the tool writes it to
+  // `evaluations/<focus>-<target_id>-<short_iso>.json` and stamps the entry's
+  // `file_path` itself — the same shape as the search-results sidecar, where
+  // `log[].results_ref` points at a file only the host writes. Writing the
+  // pointer and its payload in one call is what makes a dangling `file_path`
+  // structurally impossible; the agent never hand-serializes the verdict.
+  verdict?: Record<string, unknown>;
   // Default true: auto-resolve standard_place for an assertion append that has a
   // `place` but omits `standard_place` (sidecar copy first, then geocoding).
   // Pass false to skip the geocoding network call (sidecar copy still applies).
@@ -287,6 +355,189 @@ function normalizeDateFields(entry: Record<string, unknown>): void {
   }
 }
 
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const DD_MON_YYYY_RE = /^(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})$/;
+
+/** Convert a human-written date to ISO `YYYY-MM-DD`, or null if it can't be
+ *  resolved unambiguously to a full day. Reuses the genealogical `stdDate`
+ *  standardizer (handles i18n month names, `July 12, 2026`, dashed forms, etc.),
+ *  which yields a canonical `DD Mon YYYY`; a form without a day (`Jul 2026`) or a
+ *  range/modifier does not match and returns null. */
+function humanDateToIso(raw: string): string | null {
+  if (ISO_DATE_RE.test(raw)) return raw;
+  const m = DD_MON_YYYY_RE.exec(stdDate(raw));
+  if (!m) return null;
+  const monNum = MONTH_NUM.get(m[2]);
+  if (monNum === undefined) return null;
+  return `${m[3]}-${String(monNum).padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+}
+
+/** Normalize a source's `access_date` to ISO in place. The schema requires ISO
+ *  `YYYY-MM-DD`; models routinely supply a human form (`12 July 2026`), which is
+ *  persisted verbatim and then hard-fails the JSON-Schema validator. Rewrite a
+ *  parseable human date to ISO; leave an ISO/absent/non-string value untouched,
+ *  and leave an unparseable value in place so the joint validator reports the
+ *  real problem (a rejection the caller can then correct) rather than the tool
+ *  silently inventing a date. Only sources carry `access_date`, so this is a
+ *  no-op for every other section. */
+function normalizeAccessDate(entry: Record<string, unknown>): void {
+  const v = entry.access_date;
+  if (typeof v !== "string" || ISO_DATE_RE.test(v)) return;
+  const iso = humanDateToIso(v);
+  if (iso) entry.access_date = iso;
+}
+
+/** Canonical assertion `fact_type` spellings, plus the common non-canonical
+ *  forms the model emits, keyed by a *normalized comparison form* (lowercased,
+ *  every non-alphanumeric character stripped) so casing/underscore/camelCase
+ *  variants all collapse to one key: `Cause of Death`, `cause_of_death`, and
+ *  `CauseOfDeath` all key on `causeofdeath`.
+ *
+ *  `fact_type` is an OPEN enum (`fact_type_recommended` in enums.schema.json),
+ *  so this is a best-effort *translator*, NOT a closed allow-list: a value whose
+ *  normalized key is not present passes through UNCHANGED (an unrecognized fact
+ *  type is legal, just left un-normalized). Two things this buys us that the
+ *  eval validator's own casefolding cannot: (1) mapping *semantic* aliases the
+ *  casefold can't reach — `father_name`→`name`, `parentage`→`relationship` —
+ *  and (2) one canonical spelling in the persisted file for downstream skills
+ *  and the judge.
+ *
+ *  Event place/date are ATTRIBUTES of the event fact, not their own fact types
+ *  (matching the tree + GedcomX, which have no `Birthplace`/`Deathplace` type —
+ *  birthplace is the `place` of a `Birth` fact). So a place-of-event variant is
+ *  folded into the event type — `birthplace`/`place_of_birth` → `birth`,
+ *  `deathplace` → `death` — and `PLACE_VARIANT_KEYS` (below) additionally lifts
+ *  the place VALUE into the machine-readable `place` field so the folded
+ *  assertion is distinguishable from the event's date-claim by field population
+ *  (`place != null` = the place-claim, `date != null` = the date-claim). This
+ *  keeps birthplace and birth-date *independently classifiable* as separate
+ *  `birth` assertions (census: a `direct` place-claim + an `indirect`
+ *  computed-year claim) while giving downstream code one grouping key per event.
+ *  `sex`/`gender` stay distinct — a model mislabeling those is a content error
+ *  we surface, not silently "correct". */
+const FACT_TYPE_ALIASES: Record<string, string> = {
+  // name — plus the role-prefixed variants the model emits when it folds
+  // "whose name" into the fact_type instead of leaving it to the record_role
+  // (father_name on a father_of_deceased role → just `name`).
+  name: "name",
+  fathername: "name",
+  mothername: "name",
+  parentname: "name",
+  spousename: "name",
+  maidenname: "name",
+  fullname: "name",
+  givenname: "name",
+  age: "age",
+  // birth EVENT — date and place are attributes of the one `birth` fact, so the
+  // place variants fold in here and PLACE_VARIANT_KEYS lifts the place value.
+  birth: "birth",
+  birthdate: "birth",
+  dateofbirth: "birth",
+  birthplace: "birth",
+  placeofbirth: "birth",
+  residence: "residence",
+  occupation: "occupation",
+  // relationship — plus the bare-structure aliases the model reaches for.
+  relationship: "relationship",
+  parentage: "relationship",
+  familycomposition: "relationship",
+  gender: "gender",
+  sex: "sex",
+  race: "race",
+  // death / burial / christening EVENTS — place variants fold into the event.
+  death: "death",
+  deathdate: "death",
+  dateofdeath: "death",
+  deathplace: "death",
+  placeofdeath: "death",
+  causeofdeath: "cause_of_death",
+  durationofillness: "duration_of_illness",
+  burial: "burial",
+  burialplace: "burial",
+  placeofburial: "burial",
+  christening: "christening",
+  christeningplace: "christening",
+  baptism: "christening",
+  marriage: "marriage",
+  marriagelicense: "marriage",
+};
+
+/** Normalized keys of the place-of-event fact_type variants. When the model
+ *  labels an assertion with one of these, `canonicalizeAssertionLabels` folds
+ *  the type into the event (via FACT_TYPE_ALIASES) AND lifts the place value
+ *  into the `place` field if it is not already there — so the machine-readable
+ *  place survives the fold and the assertion reads as the event's place-claim. */
+const PLACE_VARIANT_KEYS = new Set([
+  "birthplace",
+  "placeofbirth",
+  "deathplace",
+  "placeofdeath",
+  "burialplace",
+  "placeofburial",
+  "christeningplace",
+]);
+
+/** Reduce a label to its normalized comparison key: lowercase, then drop every
+ *  non-alphanumeric character. */
+function labelKey(raw: string): string {
+  return raw.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function isBlank(v: unknown): boolean {
+  return typeof v !== "string" || v.trim() === "";
+}
+
+/** Best-effort canonicalization of an assertion's `fact_type` in place. Maps a
+ *  known alias (by normalized key) to its canonical spelling, and folds a
+ *  place-of-event variant into the event type while lifting its place value into
+ *  the `place` field (see the doc comment on FACT_TYPE_ALIASES). Leaves an
+ *  unrecognized value untouched (open enum). No-op for a non-assertion entry
+ *  (only assertions carry `fact_type`) or a non-string value. */
+function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
+  const ft = entry.fact_type;
+  if (typeof ft !== "string") return;
+  const key = labelKey(ft);
+  const canonical = FACT_TYPE_ALIASES[key];
+  if (canonical) entry.fact_type = canonical;
+  // A folded place-of-event variant must keep its place machine-readable: if
+  // neither `place` nor `standard_place` is set, lift the human `value` (which
+  // for a place-claim IS the place string, e.g. "Ireland") into `place`.
+  if (PLACE_VARIANT_KEYS.has(key) && isBlank(entry.place) && isBlank(entry.standard_place) && !isBlank(entry.value)) {
+    entry.place = entry.value;
+  }
+}
+
+/** Assertions with `evidence_type: "negative"` must set `record_role` to the
+ *  exact string `"absent"` (research-schema-spec.md §5.6), and vice versa —
+ *  the two fields are not independent judgment calls, `record_role: "absent"`
+ *  is a mechanical corollary of the evidence_type decision, so this REJECTS
+ *  rather than silently coercing. Silently overwriting `record_role` would
+ *  risk masking an assertion whose `value` also failed to differentiate the
+ *  person — observed live: three negative-evidence assertions on three
+ *  different people sharing one generic `value` string ("preceded Harold
+ *  Dean Whitaker in death"), with `record_role` as their only distinguishing
+ *  field. No-op for a non-assertion entry (only assertions carry
+ *  `evidence_type`) or a non-string `evidence_type`. */
+function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
+  if (typeof entry.evidence_type !== "string") return;
+  const isNegative = entry.evidence_type === "negative";
+  const roleIsAbsent = entry.record_role === "absent";
+  if (isNegative && !roleIsAbsent) {
+    throw new ResearchAppendError(
+      `assertion has evidence_type "negative" but record_role '${entry.record_role}' ` +
+        `— negative evidence always uses the literal record_role "absent". Keep the ` +
+        `person's identity in \`value\` instead (e.g. "Walter Whitaker preceded Harold ` +
+        `Dean Whitaker in death", not a generic value shared across multiple people).`,
+    );
+  }
+  if (roleIsAbsent && !isNegative) {
+    throw new ResearchAppendError(
+      `assertion has record_role "absent" but evidence_type '${entry.evidence_type}' ` +
+        `— record_role "absent" is reserved for negative evidence (evidence_type: "negative").`,
+    );
+  }
+}
+
 function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<string>): AppliedOp {
   const section = op.section;
   const config = SECTIONS[section];
@@ -316,6 +567,37 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
         `field(s) not updatable on '${section}': ${rejected.join(", ")} ` +
           `(allowed: ${config.singleton.allowedFields.join(", ")})`,
       );
+    }
+    // Completed-gate (GPS Component 4, deterministic): refuse to mark the
+    // project completed while a BLOCKING conflict is unresolved. Blocking =
+    // status "unresolved" AND (identity_question true OR blocks_question_ids
+    // non-empty). "resolved" and "moot" both settle a conflict. This is a
+    // tool precondition on the status transition, not a document-validity
+    // rule — an already-completed project with such a conflict still loads.
+    // Motivated by the wilkins-death-kentucky e2e run where an agent logged
+    // an unresolved identity conflict (wrong-person death certificate,
+    // 43-year birth mismatch) and completed the project anyway; prose-level
+    // guardrails (warnings, mentor) fired and were rationalized away.
+    if (section === "project" && op.fields.status === "completed") {
+      const blocking = (Array.isArray(research.conflicts) ? research.conflicts : []).filter(
+        (c: any) =>
+          c &&
+          c.status === "unresolved" &&
+          (c.identity_question === true ||
+            (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
+      );
+      if (blocking.length > 0) {
+        const names = blocking
+          .map((c: any) => `${c.id} (${c.conflict_type ?? "conflict"}${c.identity_question ? ", identity" : ""})`)
+          .join(", ");
+        throw new ResearchAppendError(
+          `cannot set project.status = "completed": unresolved blocking conflict(s) ${names}. ` +
+            "GPS Component 4 requires conflicting evidence to be resolved before concluding. " +
+            "Run conflict-resolution for each — set its status to 'resolved' (with " +
+            "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
+            "(with a rationale for why it no longer matters) — then retry completing the project.",
+        );
+      }
     }
     for (const [k, v] of Object.entries(op.fields)) target[k] = v;
     const stamp = config.singleton.stampTimestamp;
@@ -371,6 +653,9 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
     delete rest.id;
     const newEntry: Record<string, unknown> = { id: entryId, ...rest };
     normalizeDateFields(newEntry);
+    normalizeAccessDate(newEntry);
+    canonicalizeAssertionLabels(newEntry);
+    validateNegativeEvidenceRole(newEntry);
     const stamp = config.stampTimestamp;
     if (stamp && newEntry[stamp.field] === undefined) {
       newEntry[stamp.field] = stamp.kind === "date" ? today() : now();
@@ -432,6 +717,9 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
       existing[k] = v;
     }
     normalizeDateFields(existing);
+    normalizeAccessDate(existing);
+    canonicalizeAssertionLabels(existing);
+    validateNegativeEvidenceRole(existing);
     entryId = op.entryId;
     resultEntry = existing;
   } else {
@@ -446,6 +734,11 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
   if (section === "plans") {
     invariantErrors.push(...planActiveInvariants(resultEntry, research));
   }
+  // Identity over-reach: runs on append AND on an update that raises confidence
+  // to "confident"; the helper no-ops for every other confidence value.
+  if (section === "person_evidence") {
+    invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
+  }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
   }
@@ -454,87 +747,6 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
 }
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
-
-/** Country-token guard for the wrong-geocode theme. Small, conservative alias
- *  map: only when the assertion's own place TEXT ends in a recognized country
- *  can a contradiction be declared. */
-const COUNTRY_ALIASES: Record<string, string> = {
-  "united states": "united states",
-  "united states of america": "united states",
-  usa: "united states",
-  us: "united states",
-  america: "united states",
-  "united kingdom": "united kingdom",
-  uk: "united kingdom",
-  "great britain": "united kingdom",
-  england: "england",
-  scotland: "scotland",
-  wales: "wales",
-  "northern ireland": "northern ireland",
-  ireland: "ireland",
-  canada: "canada",
-  australia: "australia",
-  "new zealand": "new zealand",
-  germany: "germany",
-  france: "france",
-  norway: "norway",
-  sweden: "sweden",
-  denmark: "denmark",
-  netherlands: "netherlands",
-  holland: "netherlands",
-  belgium: "belgium",
-  italy: "italy",
-  spain: "spain",
-  portugal: "portugal",
-  poland: "poland",
-  russia: "russia",
-  austria: "austria",
-  hungary: "hungary",
-  switzerland: "switzerland",
-  mexico: "mexico",
-};
-
-const UK_CONSTITUENTS = new Set(["england", "scotland", "wales", "northern ireland"]);
-
-function canonicalCountry(segment: string): string | null {
-  const norm = segment.trim().toLowerCase().replace(/\./g, "");
-  return COUNTRY_ALIASES[norm] ?? null;
-}
-
-function placeSegments(place: string): string[] {
-  return place
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-}
-
-/**
- * Compare the country the place TEXT names (its trailing token, when that token
- * is a recognized country) against the standard_place's segments.
- * - "ok": the input names a country and the standard place is consistent.
- * - "contradiction": the input names a country the standard place plainly lacks.
- * - "unverifiable": the input text names no recognized country — cannot compare.
- */
-export function countryConsistency(place: string, standardPlace: string): "ok" | "contradiction" | "unverifiable" {
-  const inputSegs = placeSegments(place);
-  if (inputSegs.length === 0) return "unverifiable";
-  const inputCountry = canonicalCountry(inputSegs[inputSegs.length - 1]);
-  if (!inputCountry) return "unverifiable";
-
-  const stdCountries = placeSegments(standardPlace)
-    .map(canonicalCountry)
-    .filter((c): c is string => c !== null);
-  if (stdCountries.includes(inputCountry)) return "ok";
-  // UK constituents: "England" is consistent with a standard place that ends in
-  // "United Kingdom" — unless a DIFFERENT constituent is present.
-  if (UK_CONSTITUENTS.has(inputCountry)) {
-    if (stdCountries.some((c) => UK_CONSTITUENTS.has(c) && c !== inputCountry)) return "contradiction";
-    if (stdCountries.includes("united kingdom")) return "ok";
-  }
-  // Historic Irish records: "Ireland" is consistent with "Northern Ireland".
-  if (inputCountry === "ireland" && stdCountries.includes("northern ireland")) return "ok";
-  return "contradiction";
-}
 
 /** Find a converter-resolved standard_place inside a sidecar record's
  *  simplified gedcomx whose fact `place` matches `place` (trimmed,
@@ -571,6 +783,79 @@ interface PreparedOps {
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces: ResolvedPlaceEcho[];
   warnings: string[];
+  /** Verdict sidecar to write iff the whole call validates. */
+  verdictFile?: { relPath: string; body: unknown };
+}
+
+/** `YYYY-MM-DDTHH-MM-SS` — colons replaced for filesystem safety, matching the
+ *  gps-mentor spec's `<short_iso>`. */
+function shortIso(timestamp: unknown): string {
+  const d = typeof timestamp === "string" ? new Date(timestamp) : new Date();
+  const iso = (isNaN(d.getTime()) ? new Date() : d).toISOString();
+  return iso.slice(0, 19).replace(/:/g, "-");
+}
+
+/** Filesystem-safe slug for the focus/target segments of the verdict filename. */
+function fileSlug(v: unknown): string {
+  return String(v ?? "")
+    .trim()
+    .replace(/[^A-Za-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+}
+
+/**
+ * Composite verdict persist. On an `evaluations` append carrying `verdict`,
+ * derive the sidecar path, stamp it onto the entry as `file_path`, and hand the
+ * body back for the write phase. Nothing touches disk here — the file is only
+ * written once the whole document validates, so a rejected call leaves no
+ * orphan verdict file behind.
+ */
+function prepareVerdict(
+  input: ResearchAppendInput,
+  ops: ResearchAppendOp[],
+  fmt: (i: number, msg: string) => string,
+  errors: string[],
+): PreparedOps["verdictFile"] {
+  if (input.verdict === undefined) return undefined;
+  const idxs = ops
+    .map((o, i) => ({ o, i }))
+    .filter(({ o }) => o.section === "evaluations" && o.op === "append");
+  if (idxs.length === 0) {
+    errors.push("`verdict` is only valid on an `evaluations` append op");
+    return undefined;
+  }
+  if (idxs.length > 1) {
+    errors.push("`verdict` applies to a single evaluations append; this call has more than one");
+    return undefined;
+  }
+  const { o, i } = idxs[0];
+  if (!input.verdict || typeof input.verdict !== "object" || Array.isArray(input.verdict)) {
+    errors.push(fmt(i, "`verdict` must be an object (the structured verdict body)"));
+    return undefined;
+  }
+  const entry = o.entry as any;
+  if (!entry || typeof entry !== "object") return undefined;
+  if (entry.file_path != null) {
+    errors.push(
+      fmt(
+        i,
+        "entry carries a file_path AND the call supplies `verdict` — use one: pass `verdict` " +
+          "and let the tool write the file and stamp file_path, or write the file yourself and " +
+          "pass file_path alone",
+      ),
+    );
+    return undefined;
+  }
+  const focus = fileSlug(entry.focus);
+  const target = fileSlug(entry.target_id);
+  if (!focus || !target) {
+    errors.push(fmt(i, "`verdict` requires the entry to carry `focus` and `target_id` (they name the file)"));
+    return undefined;
+  }
+  const relPath = `evaluations/${focus}-${target}-${shortIso(entry.timestamp)}.json`;
+  entry.file_path = relPath;
+  return { relPath, body: input.verdict };
 }
 
 /** Normalized-exact repository comparison key (trim + casefold). */
@@ -865,8 +1150,35 @@ async function prepareOps(
     if (logEntry) {
       const ref = logEntry.results_ref;
       if (!ref) {
-        // No sidecar (record_read, PDF, image, pasted records): the field must
-        // be absent or null — there is no persona document to point at.
+        // Staging gap (#699): a record/full-text search that RETURNED results
+        // but staged no sidecar. D2 auto-fill resolves record_persona_id from
+        // the log entry's sidecar, and it cannot fill what was never staged —
+        // proceeding would silently null out every persona id (identity
+        // unrecoverable). Reject loudly and point at the fix (re-run WITH
+        // projectPath so the host stages the results), rather than persisting
+        // the null. Scoped to the staging producers and to searches that
+        // actually found something, so legitimate sidecar-less entries below
+        // (record_read/PDF/image/pasted, and nil/negative searches) never trip.
+        const producerTools = new Set(["record_search", "fulltext_search"]);
+        const foundResults =
+          logEntry.outcome === "positive" ||
+          logEntry.outcome === "partial" ||
+          (typeof logEntry.results_examined === "number" &&
+            logEntry.results_examined > 0);
+        if (producerTools.has(logEntry.tool) && foundResults) {
+          errors.push(
+            fmt(
+              i,
+              `log entry '${logId}' (${logEntry.tool}) returned results but staged no sidecar ` +
+                "(results_ref is null) — record_persona_id cannot be resolved and would be lost. " +
+                "Re-run the search WITH projectPath so the results are staged, then re-append.",
+            ),
+          );
+          continue;
+        }
+        // No sidecar (record_read, PDF, image, pasted records, or a nil/negative
+        // search): the field must be absent or null — there is no persona
+        // document to point at.
         if (entry.record_persona_id != null) {
           errors.push(
             fmt(
@@ -1015,13 +1327,35 @@ async function prepareOps(
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
-  return { treeMutated, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings };
+  const verdictFile = prepareVerdict(input, ops, fmt, errors);
+  if (errors.length > 0) throw new ResearchAppendError(errors);
+  return { treeMutated, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile };
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
+/** Lane scoping for a narrow caller (e.g. `extraction_append`).
+ *
+ *  This is a second FUNCTION PARAMETER, deliberately not a field on
+ *  `ResearchAppendInput`: `index.ts` dispatches with `researchAppend(args)`, a
+ *  single argument built from `request.params.arguments`, so an extra key on the
+ *  tool input can never reach this object. The restriction is therefore
+ *  unforgeable from the LLM side — a caller cannot widen its own lane.
+ *
+ *  It also lives here, in the module, rather than in the dispatch layer, because
+ *  `eval/harness/harness/mock_mcp.py` imports these functions directly and never
+ *  routes through `index.ts`. A gate in dispatch would be invisible to every
+ *  eval run. */
+export interface ResearchAppendOptions {
+  /** Sections this caller may write. Omitted = every section (`research_append`). */
+  allowedSections?: ReadonlySet<string>;
+  /** Tool name used in lane-rejection text, so a narrow caller names itself. */
+  toolName?: string;
+}
+
 export async function researchAppend(
   input: ResearchAppendInput,
+  options: ResearchAppendOptions = {},
 ): Promise<ResearchAppendResult> {
   const { projectPath } = input;
 
@@ -1033,11 +1367,20 @@ export async function researchAppend(
   input.entry = coerceJsonArg(input.entry) as Record<string, unknown> | undefined;
   input.fields = coerceJsonArg(input.fields) as Record<string, unknown> | undefined;
   input.sourceDescription = coerceJsonArg(input.sourceDescription) as SourceDescriptionInput | undefined;
+  input.verdict = coerceJsonArg(input.verdict) as Record<string, unknown> | undefined;
 
   const isBatch = input.ops !== undefined;
   const opsReceived = isBatch && Array.isArray(input.ops) ? input.ops.length : undefined;
-  const fail = (errors: string[]): ResearchAppendResult =>
-    opsReceived !== undefined ? { ok: false, errors, opsReceived } : { ok: false, errors };
+  /** `hint` names the op(s) the failure is about; their worked examples are
+   *  appended so a rejected call teaches the shape on the spot instead of
+   *  depending on the right SKILL.md having been loaded. */
+  const fail = (
+    errors: string[],
+    hint?: Array<{ section: string; op: "append" | "update" }>,
+  ): ResearchAppendResult => {
+    const all = hint && hint.length > 0 ? [...errors, ...exampleHints(hint)] : errors;
+    return opsReceived !== undefined ? { ok: false, errors: all, opsReceived } : { ok: false, errors: all };
+  };
 
   try {
     const research = await readJson(projectPath, "research.json");
@@ -1071,6 +1414,32 @@ export async function researchAppend(
 
     const fmt = (i: number, msg: string) => (isBatch ? `ops[${i}]: ${msg}` : msg);
 
+    // ─── Lane gate ───────────────────────────────────────────────────────────
+    // Runs BEFORE prepareOps: that pre-pass does live Places-API resolution and
+    // mutates the tree in memory, so a call that was always going to be rejected
+    // must not burn network round-trips first.
+    //
+    // The message names ONLY this tool and the sections it does write. It must
+    // not name the broad tool or enumerate the denied sections — that string is
+    // exactly the routing map a model needs to work around the lane.
+    if (options.allowedSections) {
+      const allowed = options.allowedSections;
+      const toolName = options.toolName ?? "this tool";
+      const writes = [...allowed].join(", ");
+      for (let i = 0; i < ops.length; i++) {
+        const section = ops[i]?.section;
+        if (typeof section !== "string" || !allowed.has(section)) {
+          return fail([
+            fmt(
+              i,
+              `section '${section}' is not writable by ${toolName} (it writes only: ${writes}). ` +
+                "Another skill owns that section — surface the finding in your summary instead.",
+            ),
+          ]);
+        }
+      }
+    }
+
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
     const prep = await prepareOps(input, ops, research, tree, projectPath, fmt);
 
@@ -1083,7 +1452,10 @@ export async function researchAppend(
       } catch (e) {
         if (e instanceof ResearchAppendError) {
           // Identify the failing op; nothing has been written.
-          return fail(e.errors.map((m) => fmt(i, m)));
+          return fail(
+            e.errors.map((m) => fmt(i, m)),
+            [{ section: String(ops[i].section), op: ops[i].op === "update" ? "update" : "append" }],
+          );
         }
         throw e;
       }
@@ -1098,9 +1470,29 @@ export async function researchAppend(
     if (anyMutation) {
       const validation = await validateParsed(research, tree, { projectPath });
       if (!validation.valid) {
-        return fail(mapValidationErrors(formatIssues(validation.errors), applied, isBatch));
+        // Shape errors surface here (the document validator, not applyOne), so
+        // this is the site the evaluations/known_holdings rejections land on.
+        const mapped = mapValidationErrors(formatIssues(validation.errors), applied, isBatch);
+        // Only hint the sections the errors actually name — in a wide batch,
+        // examples for ops that validated fine would be noise pointing away
+        // from the real problem.
+        const blamed = ops.filter((o) => mapped.some((m) => m.includes(String(o.section))));
+        return fail(
+          mapped,
+          (blamed.length > 0 ? blamed : ops).map((o) => ({
+            section: String(o.section),
+            op: o.op === "update" ? "update" : "append",
+          })),
+        );
       }
       validationWarnings = formatIssues(validation.warnings);
+      // Verdict sidecar first: research.json's file_path pointer must never
+      // name a file that does not exist. Written before the document commit so
+      // a failure here aborts before the pointer is persisted.
+      if (prep.verdictFile) {
+        await mkdir(join(projectPath, "evaluations"), { recursive: true });
+        await atomicWriteJson(join(projectPath, prep.verdictFile.relPath), prep.verdictFile.body);
+      }
       const researchPath = join(projectPath, "research.json");
       if (prep.treeMutated) {
         const treePath = join(projectPath, "tree.gedcomx.json");
@@ -1115,6 +1507,18 @@ export async function researchAppend(
         await atomicWriteJson(researchPath, research);
         filesWritten = ["research.json"];
       }
+      if (prep.verdictFile) filesWritten = [...filesWritten, prep.verdictFile.relPath];
+      // GC unreferenced source images (best-effort, TTL-gated) — design B, §8.5:
+      // remove images/*.jpg no source cites and older than the TTL, so a
+      // just-transcribed-but-unretained scan ages out instead of lingering.
+      await gcUnreferencedImages(
+        projectPath,
+        new Set(
+          (Array.isArray(research.sources) ? research.sources : [])
+            .map((s: any) => s?.image_filename)
+            .filter((f: unknown): f is string => typeof f === "string" && f.length > 0),
+        ),
+      ).catch(() => {});
     }
 
     const validationBlock = { valid: true as const, warnings: [...validationWarnings, ...opWarnings] };
@@ -1142,7 +1546,14 @@ export async function researchAppend(
       validation: validationBlock,
     };
   } catch (e) {
-    if (e instanceof ResearchAppendError) return fail(e.errors);
+    if (e instanceof ResearchAppendError) {
+      // Single-op path (and pre-pass throws): the section is only known when
+      // the caller used the non-batch form.
+      return fail(
+        e.errors,
+        input.section ? [{ section: String(input.section), op: input.op === "update" ? "update" : "append" }] : undefined,
+      );
+    }
     throw e;
   }
 }
@@ -1224,6 +1635,7 @@ export const researchAppendSchema = {
           "proof_summaries",
           "evaluations",
           "known_holdings",
+          "localities",
           "project",
         ],
         description:
@@ -1276,6 +1688,7 @@ export const researchAppendSchema = {
                 "proof_summaries",
                 "evaluations",
                 "known_holdings",
+                "localities",
                 "project",
               ],
               description: "The research.json section this op writes.",
@@ -1303,6 +1716,17 @@ export const researchAppendSchema = {
           url: { type: "string", description: "Optional URL. Omit when not applicable (never null)." },
         },
         required: ["title"],
+      },
+      verdict: {
+        type: "object",
+        description:
+          "Composite persist for an `evaluations` append: the structured verdict body " +
+          "(strengths, must_address, consider_addressing, narrative_for_user, …). The " +
+          "tool writes it to evaluations/<focus>-<target_id>-<short_iso>.json and stamps " +
+          "the entry's `file_path` itself — do NOT write the file yourself, and do NOT " +
+          "set file_path when passing this. The entry stays a pointer record; the verdict " +
+          "body never goes into research.json. Supplying both `verdict` and `file_path` " +
+          "is rejected.",
       },
       resolveStandardPlace: {
         type: "boolean",

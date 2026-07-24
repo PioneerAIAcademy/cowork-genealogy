@@ -84,4 +84,22 @@ export class WsResearchTransport implements ResearchTransport {
     if (!res.ok) return { files: [], sessionLogSize: 0, hasSessionLog: false }
     return (await res.json()) as FeedbackContext
   }
+
+  async getSourceImage(filename: string): Promise<string | null> {
+    const res = await fetch(
+      `/api/sessions/${this.sessionId}/image?filename=${encodeURIComponent(filename)}`,
+      { credentials: 'include' }
+    )
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`Failed to read image (${res.status})`)
+    const blob = await res.blob()
+    // Return a data: URL so getSourceImage's contract matches the Electron
+    // transport (a URL usable directly in <img src>); no object-URL to revoke.
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(reader.error ?? new Error('Failed to read image blob'))
+      reader.readAsDataURL(blob)
+    })
+  }
 }

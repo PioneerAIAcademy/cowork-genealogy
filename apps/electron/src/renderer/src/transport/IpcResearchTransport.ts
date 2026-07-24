@@ -58,4 +58,8 @@ export class IpcResearchTransport implements ResearchTransport {
       hasSessionLog: sessionLog.entries.length > 0
     }
   }
+
+  getSourceImage(filename: string): Promise<string | null> {
+    return window.api.readImage(filename)
+  }
 }

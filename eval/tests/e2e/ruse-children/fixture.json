@@ -1,0 +1,19 @@
+{
+  "id": "ruse-children",
+  "name": "Mary L. Ruse — children",
+  "genre": "strip",
+  "source_pid": "L87N-ZCW",
+  "captured": "2026-07-15",
+  "researcher_question": "What were the names of the children of Mary L. Ruse, wife of Albert Raney, of Loudon Township, Seneca County, Ohio?",
+  "tags": {
+    "question_type": "children",
+    "era": "1880s",
+    "geography": "US-OH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Mary L. Ruse married Albert Raney (1878, Seneca Co., OH); their children were born in Loudon Township, Seneca County, Ohio. Children (deduped from a messy tree with duplicate entries): Ora S. Raney (1879), Armeda/Armedia Elvina Raney (1881), Bertha Belle Raney (1887), Mary L. Raney (1887), Robert M. Raney (1891). Stripped all child persons + the birth/marriage records that name a child. Anchors left: Mary's own birth/marriage/census/SSN records, the Mary-Albert marriage, and the census households (which enumerate the children when read). Reachability confirmed: Ohio birth records name the mother 'Mary L. Ruse', so a mother-name search returns the children (top hits). NOTE: the submitted vitals (b. 16 Nov 1882, d. 1915) do not match the tree — the person at this PID is b. ~1855 and appears in census/SSN through 1940; built around the person at the PID."
+}

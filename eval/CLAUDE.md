@@ -20,6 +20,8 @@ eval/
   Setup.bat              One-time Windows setup (uv, npm, API key)
   Start.bat              Launch the Next.js CRUD UI
   RunTests.bat           Execute the Python test harness
+  GateSkill.bat          Gate a candidate SKILL.md edit against its pre-edit baseline
+  OptimizeSkill.bat      Tune a skill's description (the vendored triggering optimizer)
   app/                   Next.js CRUD UI (test authoring + annotation + comparison)
   harness/               Python test runner (Claude Agent SDK)
     harness/             Implementation modules (snapshot, versioning, runlog, …)
@@ -80,7 +82,7 @@ This eval framework is one of three complementary testing layers:
 
 1. **Vitest** (`packages/engine/mcp-server/tests/`) — Tests whether MCP tool code works correctly. Developers maintain these.
 2. **Skill evals** (this framework) — Tests whether Claude performs genealogy tasks well when using skills, including tool usage. Genealogists create, run, and grade these.
-3. **Prompt optimizers** (automated) — Description and grading-prompt optimizers consume eval results to improve prompts. Both run unattended. See `docs/gps/skill-mcp-testing-plan.md` Appendix C.
+3. **Prompt optimizers** (automated) — Description and grading-prompt optimizers consume eval results to improve prompts. Both run unattended. See `docs/skill-mcp-testing-plan.md` Appendix C.
 
 Skill evals include tool-usage rubric dimensions, so there is no separate MCP tool eval suite for genealogists to maintain.
 
@@ -153,7 +155,7 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 
 ## GitHub Action rules
 
-`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `packages/engine/plugin/skills/**`, `eval/fixtures/**`, or `eval/harness/**`. (`packages/engine/mcp-server/src/**` is no longer a trigger — MCP source isn't in the snapshot, so a src-only change can't affect run-log activeness.) Three blocking rules + one warn-only check (per `docs/plan/eval-runlog-versioning.md` §C6):
+`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `packages/engine/plugin/skills/**`, `eval/fixtures/**`, or `eval/harness/**`. (`packages/engine/mcp-server/src/**` is no longer a trigger — MCP source isn't in the snapshot, so a src-only change can't affect run-log activeness.) Four blocking rules + one warn-only check (per `docs/plan/eval-runlog-versioning.md` §C6):
 
 | Rule | Severity | What |
 |---|---|---|
@@ -161,6 +163,7 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 | 2 | block | The latest full-skill run log per touched skill is **active** — its snapshot matches the current PR-branch state. **Cosmetic-skip:** a senior can apply the `eval-cosmetic-skip` label to a PR whose only skill-side change is behavior-neutral; the workflow sets `COSMETIC_SKIP=1` and this rule downgrades to a warning (no re-run). |
 | 2b | warn | The same run log's `judge_prompt_hash` matches the current judge prompt. Mismatch is non-blocking (judge edits are a separate cadence). |
 | 3 | block | The same run log's `.ann.json` has a correction entry for every dimension in every test. (Cosmetic-skip keeps the *prior* run log as the target, so its already-complete `.ann.json` satisfies this with no re-grade — and because rule 3 still runs, an unannotated baseline can't be waved through.) |
+| 4 | block | No two files under `eval/tests/unit/**` share a `test.id`. Runs only when the PR touches a test file, and then scans the whole corpus (a duplicate's other half can sit in an untouched skill). Duplicates corrupt grading silently: the harness collects every file, so one run log carries two `tests[]` entries under one `test_id`, and annotations key on `(test_id, dimension_source, dimension_name)` — one test's corrections become the other's, and rule 3 still passes because the lookup finds *a* correction for every dimension. |
 
 The `eval-cosmetic-skip` label is for genuinely behavior-neutral edits only (rewording, typos, comments, formatting). It is **auto-removed on every new push** (the workflow's `synchronize` step), so the bypass can't outlive the commit it was approved for — a later substantive push re-reds the check until the senior re-applies. Only rule 2 is relaxed. Full workflow + one-time `gh label create` setup: `eval/README.md` "Cosmetic-change exemption". The label must exist in the repo and seniors need Triage/Write to apply it.
 
@@ -170,12 +173,13 @@ The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-
 
 ### E2E checks (`check-e2e-fixtures.yml`)
 
-A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` with two checks:
+A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` — one blocking check:
 
 | Check | Severity | What |
 |---|---|---|
 | Grading gate | **block** | Every `run-<ts>.json` **added in the PR** that produced a final tree (`run-<ts>.final-tree.gedcomx.json` present) must ship its `run-<ts>.ann.json` sibling in the same PR. Grading is same-PR. Treeless runs (crash/skip before a tree) are exempt. Scoped to PR-added logs via `git diff --diff-filter=A` (`BASE_SHA`/`HEAD_SHA`); presence only — content validity is the maintainer's `calibrate_judge --dry-run`, not CI. |
-| Fixture validity | warn | Every fixture under `eval/tests/e2e/<slug>/` should have a committed `run-*.json` with `verdict=pass` (spec §14). Advisory so draft/PID-less fixtures can land with the validity run still owed; `--strict` hard-fails locally. |
+
+**Fixture validity is not CI-gated.** Whether a fixture has a committed *passing* run log (proof it is solvable from live FamilySearch — spec §14) is a recommended authoring practice surfaced in the docs, not a check. A fixture can land without one (draft/PID-less fixtures routinely do). This used to be an advisory warning; it was removed because it re-flagged every un-run fixture in the repo on every e2e PR — pure noise.
 
 The e2e `.ann.json` is written by the `/grade-e2e-run` skill (blind grading), **not** the CRUD UI — see the "never hand-write" note above, which is scoped to *unit* annotations.
 
@@ -185,10 +189,12 @@ The skill harness pins a specific model per skill via `model:` in `packages/engi
 
 `judge_model` is project-global, not per-run-versioned — bumping the judge model is a separate decision that invalidates historical comparisons.
 
+Judge temperature is pinned to 0 (`harness/judge.py::JUDGE_TEMPERATURE`) — project-global like `judge_model`, not recorded per run. Adopted 2026-07-16: grades drawn before that date (at the API default of 1.0) are not comparable to grades after it.
+
 ## What This Framework Does NOT Cover
 
 - MCP tool code correctness (use Vitest in `packages/engine/mcp-server/tests/`)
-- Description optimization (automated, see `docs/gps/skill-mcp-testing-plan.md` Appendix C)
+- Description optimization (automated, see `docs/skill-mcp-testing-plan.md` Appendix C)
 - Grading prompt optimization (automated, see same)
 - Network/integration testing of MCP tools (use `packages/engine/mcp-server/dev/try-*.ts`)
 
@@ -197,7 +203,7 @@ The skill harness pins a specific model per skill via `model:` in `packages/engi
 The harness is deliberately *not* a perfect reproduction of how skills run in Cowork. A passing eval suite does not guarantee identical production behavior. The known divergences:
 
 - **`setting_sources=["project"]`.** Production loads `["user","project"]`. Eval omits `"user"` so a developer's `~/.claude/skills/` doesn't contaminate routing tests.
-- **No `temperature=0`.** The installed `claude-agent-sdk` doesn't expose a `temperature` field. Variance leaks into single-run outcomes — fine for PR gates, matters for description-optimizer / golden-set work (bump `runs_per_test`).
+- **No `temperature=0` on the skill run.** The installed `claude-agent-sdk` doesn't expose a `temperature` field, so the skill under test samples freely and variance leaks into single-run outcomes — fine for PR gates, matters for description-optimizer / golden-set work (bump `runs_per_test`). The judge *is* pinned (see "Model Pinning"), so this jitter is the skill's behavior, not its grade.
 - **Mock MCP server.** Production hits real APIs; eval hits in-process mock responses from `eval/fixtures/mcp/`. Argument-quality grading is approximate.
 - **Sandboxed workspace.** Production runs in Cowork's VM with its egress allowlist; eval runs in a tempdir on the host.
 - **Concurrent execution.** Eval runs tests through a bounded thread pool *within a single invocation* (RAM-aware default ~4–8 slots; override with `--concurrency N`, or `--concurrency 1` to force serial). Tests are submitted **longest-first** (estimated from each test's `max_wall_clock_seconds` cap) so a long-pole test can't land in the last wave and stretch the makespan tail. To cover several skills, pass them to **one** invocation — `--skill a b c` (or `make eval-skill SKILL="a b c"`); each skill still writes its own releasable run log and they all share the one pool. **Still avoid running multiple `run_tests.py` invocations concurrently from the shell on one machine** — each spawns its own Claude Code SDK subprocess and the parallel memory pressure has been observed to trigger SIGKILL (`exit code -9`); the in-process pool (one invocation, many skills) is the safe way to parallelize. The retry mechanism recovers most transient stalls.

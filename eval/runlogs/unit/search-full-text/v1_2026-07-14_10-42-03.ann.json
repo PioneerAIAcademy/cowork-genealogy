@@ -1,0 +1,486 @@
+{
+  "run_log": "v1_2026-07-14_10-42-03.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_011`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Both full-text searches returned correct results: the same 1878 deed of conveyance showing Thomas Flynn and Patrick Flynn as witnesses in Branch Township, Schuylkill County, PA. The ARK URI (ark:/61903/1:1:QV9N-YS37) was correctly identified and checked for attachment status via source_attachments. All factual claims about the record content (date, place, witness roles) are accurate and supported by the returned FamilySearch document. The attachment check correctly reported the record as unattached. No fabricated or unsupported material.\n\nJunior: ((Pass): The skill successfully handled the attachment‑triage flow end‑to‑end: correct queries, accurate record retrieval, proper attachment check, and clear triage presentation.)"
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_011`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The user message required two separate searches (Thomas Flynn AND Patrick Flynn as witnesses in Schuylkill County records) plus attachment status checks. The skill executed both phrase queries (+\"Thomas Flynn\" and +\"Patrick Flynn\"), both returned the same deed record, and the skill then ran source_attachments on the ARK URI to check attachment status. Both research log entries were properly appended. All required work was completed without omission.\n\nJunior: ((Pass) : Completeness is fully met. No omissions in the required workflow.)"
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_011`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls used correct arguments. The fulltext_search calls passed keywords matching expected_args (~Flynn requirement), with proper phrase quoting (+\"Thomas Flynn\", +\"Patrick Flynn\"). The source_attachments call passed the correct ARK URI. The research_log_append calls included all required fields (projectPath, tool, query, outcome, resultsExamined, resultsAvailable, notes). No fixture_not_found errors. Arguments are semantically aligned with the fixture expectations.\n\nJunior: ((Pass) : Tool arguments were complete, correct, and consistent with fixture requirements.)"
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_011`** — `rubric` / `Query construction`\nLLM: 3 → Junior: 3\n\n> Both queries used phrase quoting correctly: +\"Thomas Flynn\" and +\"Patrick Flynn\". Per the grading note, canonical-spelling phrase queries that return the expected witness record are sufficient; abbreviation variants (Thos/Pat) are not required when the canonical query already recovers the result. The skill explicitly noted that variants were queued but unnecessary given the positive result. Schuylkill County was appropriately scoped as recordPlace filter in the returned query metadata. Both queries executed cleanly and recovered the correct witness record.\n\nJunior: ((Pass) : Query construction was correct, complete, and aligned with rubric expectations.)"
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_011`** — `rubric` / `FAN awareness`\nLLM: 3 → Junior: 3\n\n> This is a direct subject search (both Thomas Flynn and Patrick Flynn as witnesses in a specific county/record type) rather than a prompt requiring FAN pivoting. Per the rubric, for direct subject searches the skill is not required to unprompted-expand to FAN or suggest follow-up FAN searches. Both requested subjects were searched and recovered in the same deed record, demonstrating they co-appear as witnesses together. The dimension passes on correct execution of the requested witness searches.\n\nJunior: ((Pass) Correct execution of the requested witness searches; FAN pivoting was not necessary in this context.)"
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_011`** — `rubric` / `Negative result handling`\nLLM: 3 → Junior: 3\n\n> Both searches returned positive results (1 record each, same document). Since all executed searches returned results, this dimension has nothing to grade per rubric guidance ('When every executed search returned positive results, this dimension has nothing to grade — score pass'). The condition for grading this dimension (at least one search with zero results) did not occur.\n\nJunior: ((Pass) : All searches produced positive results, so negative result handling is not applicable and automatically passes.)"
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_009`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly searched for José María García using Spanish orthography with the diacritic, recovered the 1834 poder otorgado from Habana, and logged it accurately. The record details (apoderado role, principal Francisco de Quesada, witnesses, date, debt collection in Matanzas) all match the textDocument response. No fabricated claims—all assertions are supported by the tool response.\n\nJunior: ((Pass) : Correctness is fully met; the search, record details, and logging are accurate and aligned with the fixture response.)"
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_009`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The user requested a full-text search for José María García in Cuban notarial protocolos, execution of that search, and logging it as an ad-hoc query (plan_item_id: null). The skill did all of this: executed the search, recovered the target record, logged log_006 and its sidecar results/log_006.json, and did not add a question or plan item.\n\nJunior: (Pass) : Completeness is fully met. The search, record recovery, and logging were all performed correctly without omissions.)\n\n\n\n"
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_009`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The fulltext_search call passed keywords=\"+\\\"José Maria García\\\"\" with diacritics preserved, matching expected_args ~García exactly. The research_log_append call properly passed planItemId: null, the staged results reference, and detailed query metadata. No critical identifier mismatches; both calls matched the fixture's expectations semantically.\n\nJunior: ((Pass) : Tool arguments were correct, complete, and matched the fixture requirements.)"
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_009`** — `rubric` / `Query construction`\nLLM: 3 → Junior: 3\n\n> The query +'José Maria García' correctly uses phrase quoting (+\"...\") and retains Spanish diacritics—the exact form expected for FTS, which does not transliterate. The skill correctly omitted collectionId, year filter, and place filter on the first pass, following FTS protocol for name-only searches. The rationale (triple co-occurrence specific enough for phrase hit, handled particles with one-word slop) demonstrates proper operator understanding.\n\nJunior: ((Pass) : Query construction was precise, orthographically correct, and aligned with FTS best practices.)"
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_009`** — `rubric` / `FAN awareness`\nLLM: 3 → Junior: 3\n\n> The prompt requested a direct search for a specific person (José María García, 1830s Habana notarial records). Per the rubric, direct subject searches do not require unprompted FAN exploration; the skill is graded pass solely on whether the requested search executed correctly. The search executed and recovered the correct record. Cross-reference candidates (Francisco de Quesada, Antonio Pérez, Ignacio Suárez) were mentioned as potential follow-up subjects, which is helpful but not required.\n\nJunior: ((Pass) : FAN awareness dimension passes because the direct subject search was executed correctly; optional mention of related individuals adds value but is not mandatory.)"
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_009`** — `rubric` / `Negative result handling`\nLLM: 3 → Junior: 3\n\n> The search returned 1 positive result (the 1834 poder otorgado). Since all executed searches returned results, there are no negative results to log. Per the rubric, this dimension passes when every executed search returns results—nothing to grade.\n\nJunior: ((Pass) : Query construction was precise, orthographically correct, and aligned with FTS best practices.)"
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_007`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The query `+Patrick +Fl?n*` is factually correct and demonstrates proper Lucene wildcard syntax. The skill correctly identified that `?` matches a single character (y/i vowel variation) and `*` matches zero or more characters (variable endings). The result (Hugh Devlin will with 'Patrick Flinn') validates the wildcard worked as intended. The substantive claim that the subject Patrick (b.~1845) could not be the 1849 witness at age 4 is logically sound. No fabrications or unsupported assertions.\n\nJunior: ((Pass) : Correctness is fully met; the query construction, wildcard explanation, and record interpretation are accurate and logically consistent.)"
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_007`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The user requested a single wildcard query covering all four surname variants (Flynn, Flinn, Flyn, Flynne) and probate records pre-1850 in Schuylkill County, Pennsylvania. The skill delivered: constructed `+Patrick +Fl?n*` (one query, covers all variants), executed it with correct place/date filters (Schuylkill County, 1750–1849), found and reported one result with full context, and logged the search. Nothing required was omitted.\n\nJunior: ((Pass) : Completeness is fully met. The skill delivered exactly what was requested: one wildcard query covering all variants, correct filters, successful record recovery, and proper logging.)"
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_007`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both tool calls passed correct arguments. The fulltext_search call used `keywords: '+Patrick +Fl?n*'` matching the rubric's expected pattern with `?` and `*` wildcards. Place filters were correctly split into recordPlace1='Pennsylvania' and recordPlace2='Schuylkill', yearFrom/yearTo set to 1750–1849 as required, and recordType='probate'. The research_log_append call included full query details and result metadata. All identifier args (projectPath, collectionId) were valid.\n\nJunior: (Pass: Tool arguments were complete, precise, and semantically correct, fully matching the rubric requirements.)"
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_007`** — `rubric` / `Query construction`\nLLM: 3 → Junior: 3\n\n> The query `+Fl?n*` is the minimal pattern that covers all four variants in one term: `?` absorbs the y/i vowel, `*` absorbs the trailing variation (nothing/n/ne). The skill correctly explained why each variant matches (showed the parsing path through the pattern for Flyn/Flynn/Flinn/Flynne). Both `+Patrick` and `+Fl?n*` terms are marked required with `+`, and place was correctly applied via post-search filters rather than in the query string. The canonical-spelling query was validated by the actual hit ('Flinn'), confirming the wildcard was necessary and functional.\n\nJunior: (Pass: Query construction was precise, logically explained, and validated by the successful recovery of the intended record.)"
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_007`** — `rubric` / `FAN awareness`\nLLM: 3 → Junior: 3\n\n> This is a direct subject search (find Patrick Flynn in probate records). Per the rubric, the skill is not required to pivot to FAN unprompted on direct subject searches—the dimension passes solely on whether the requested search executed correctly. The skill executed the search successfully and noted John McGonigle as a co-witness worth cross-reference, which shows opportunistic (not required) FAN awareness. The direct search requirement was met.\n\nJunior: (Pass: The direct subject search was executed successfully; optional FAN observations added value but were not mandatory.)"
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_007`** — `rubric` / `Negative result handling`\nLLM: 3 → Junior: 3\n\n> The executed search returned 1 positive result (Hugh Devlin will with Patrick Flinn as witness). When all executed searches return positive results, this dimension has nothing to grade and passes per the rubric. The log entry included detailed query construction (the Lucene pattern), filters applied, and the single result examined. N/A to exhaustiveness narrative here—positive result, nothing to grade.\n\nJunior: (Pass: All searches returned results, so negative result handling is not applicable and automatically passes.)"
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_005`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> This is a negative test where the correct behavior is to decline the full-text search task and route to search-external-sites. The skill correctly identified that Newspapers.com and Ancestry are external sites not covered by FamilySearch's full-text search and appropriately routed the user to the correct skill. The routing decision is correct.\n\nJunior: (Pass: Correctness is fully met. The skill declined the inappropriate FTS route and properly directed the request to external‑site searching.)"
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_005`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill completed the required behavior for a negative test: it recognized that the request targets external sites (Newspapers.com and Ancestry) outside FamilySearch's FTS coverage and routed accordingly. No further action was required from search-full-text. The decline was appropriate and complete.\n\nJunior: (Pass: Completeness is fully met. The skill performed the required behavior for a negative test: decline and route to external‑site searching.)"
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_full_text_005`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. The skill correctly declined to execute a fulltext_search call, which was the expected behavior for this negative test. N/A scoring applies.\n\nJunior: (N/A Tool arguments dimension passes because no tool calls were made, which was the expected and correct behavior.)"
+    },
+    {
+      "test_id": "ut_search_full_text_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_003`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined to perform its own task (full-text search) and instead routed the user to record-extraction, which is the appropriate skill for extracting assertions from a deed document. This routing decision is correct because the user is asking for data extraction from a specific document, not a full-text search operation.\n\nJunior: (Pass: Correctness is fully met. The skill made the right routing decision, directing the request to record‑extraction instead of attempting a search.)"
+    },
+    {
+      "test_id": "ut_search_full_text_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_003`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed what the test required: declining the search-full-text task and routing to record-extraction. The negative test was expecting exactly this behavior — no substantive output from search-full-text itself, but proper handoff to the correct skill. The routing accomplishes the user's underlying need completely.\n\nJunior: (Pass: Completeness is fully met. The skill performed the required behavior: decline and route to record‑extraction, which accomplishes the user’s underlying need.)"
+    },
+    {
+      "test_id": "ut_search_full_text_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_full_text_003`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. The skill correctly declined and routed, producing no tool calls. N/A.\n\nJunior: (Pass : Tool arguments dimension passes because no tool calls were made, which was the expected and correct behavior.)"
+    },
+    {
+      "test_id": "ut_search_full_text_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_006`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> This is a negative test requiring the skill to decline its own task (search-full-text) and route to a planning skill. The skill correctly routed to question-selection, which is the appropriate skill for helping the user formulate opening research questions from an objective. The user explicitly said 'Don't run any searches,' and no searches were executed. The routing decision is correct.\n\nJunior: (Pass:  Correctness is fully met. The skill made the right routing decision, directing the request to planning rather than attempting a search.)"
+    },
+    {
+      "test_id": "ut_search_full_text_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_006`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill appropriately declined to perform a full-text search without a research plan or question in place. The routing to question-selection is the complete correct behavior expected in a negative test. Not executing the search-full-text task is the intended outcome, not a gap or omission.\n\nJunior: (Pass: Completeness is fully met. The skill performed the intended outcome: decline search and route to planning, with no omissions.)"
+    },
+    {
+      "test_id": "ut_search_full_text_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_full_text_006`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the skill under test (search-full-text). The skill declined and routed, which is correct behavior. Tool Arguments is N/A.\n\nJunior: (Pass: Tool arguments dimension passes because no tool calls were made, which was the correct and expected behavior.)"
+    },
+    {
+      "test_id": "ut_search_full_text_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_004`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined to perform search-full-text's task and routed the user to search-records. The request was for indexed search by person attributes (Flynn, Pennsylvania, 1880 census), which is search-records' domain. The skill made no incorrect claims or fabricated material.\n\nJunior: ( Pass: Correctness is fully met. The skill routed the request to search‑records, which is the right domain for census index searches.)"
+    },
+    {
+      "test_id": "ut_search_full_text_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_004`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill completed the appropriate action for this negative test by routing to the correct skill. The decline/routing decision is the expected behavior here, and it was executed without omissions. No further action was required.\n\nJunior: (Pass: Completeness is fully met. The skill executed the expected decline and routing behavior, with no gaps.)"
+    },
+    {
+      "test_id": "ut_search_full_text_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_full_text_004`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by search-full-text. The skill correctly routed to search-records without invoking its own tools, which is the appropriate behavior for this negative test. N/A.\n\nJunior: (Pass: Tool arguments dimension passes because no MCP tool calls were made, which was the correct and expected behavior.)"
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_012`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly executed the nlQuery search using the tree person ID 'KWCJ-RN4' as instructed and accurately reported the two results returned by the fixture: a 1869 deed with boundary-clause evidence linking Patrick Flynn to 'the heirs of Thomas Flynn deceased', and an 1885 probate appraisement showing Patrick Flynn as appraiser. The narrative correctly interprets both records' relevance to parentage research without fabrication. All factual claims are grounded in the fixture response.\n\nJunior: (Pass: Correctness is fully met. The skill executed the proper nlQuery search, explained why it was the right choice, and accurately reported and interpreted the two returned records.)"
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_012`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude fully addressed the user's request to run an FTS search for Patrick Flynn using the tree person ID, explained why nlQuery is the correct field, reported both records returned, logged the search with detailed notes, and marked the active plan item completed. All required work was completed; no silent omissions.\n\nJunior: (Pass:  Completeness is fully met. The skill carried out all required work without omissions.)"
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_012`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude called fulltext_search with nlQuery='KWCJ-RN4' matching the expected_args expectation (~KWCJ-RN4). The projectPath was correctly passed. The research_log_append and research_append calls correctly captured plan item ID pli_006 and the outcome. All tool arguments are semantically correct and match expectations.\n\nJunior: (Pass: Tool arguments are semantically correct and fully match the expected values. The calls were executed properly with no mismatches or omissions.)"
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_012`** — `rubric` / `Query construction`\nLLM: 3 → Junior: 3\n\n> Claude correctly used the nlQuery parameter instead of a keyword query, which per SKILL.md and references/query-syntax.md is the right entry point when the upstream resolves the tree ID against the person's facts and aliases. This approach is superior to a bare keyword query like '+Patrick +Flynn' because it leverages the tree's stored facts for expansion. Query construction is sound.\n\nJunior: (Pass: Query construction is sound. The skill used the correct parameter (nlQuery) and explained why this approach is superior to a keyword only query.)"
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_012`** — `rubric` / `FAN awareness`\nLLM: 3 → Junior: 3\n\n> This is a direct subject search ('search for Patrick Flynn using his tree ID'), not a prompt explicitly requesting FAN exploration. Per the rubric, the skill is not required to unprompted-expand to FAN in such cases. Claude correctly executed the requested search. The two records that emerged (Cornelius Sheridan transaction and appraisement) function as associates/neighbors evidence, but that emerged organically from the search rather than from explicit FAN querying—which is appropriate for this direct subject request.\n\nJunior: (Pass: FAN awareness is fully met. The skill did not force FAN expansion but appropriately noted the associate context that emerged from the records.)"
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_012`** — `rubric` / `Negative result handling`\nLLM: 3 → Junior: 3\n\n> All executed searches returned positive results (2 results found, both examined), so there are no negative results to log. Per the rubric, this dimension passes when 'all executed searches returned results.' Nothing to grade—dimension automatically passes.\n\nJunior: (Pass: Negative result handling is fully met. Since all searches returned results, no negative logging was required.)"
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_013`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified Francisco Naveda Somarriba's parents (Juan de Naveda and María de Somarriba González) using three on-target records. All factual claims are supported by the source documents cited: the 1833 baptism of sister Balentina, the 1834 burial of mother María, and the 1843 remarriage of father Juan. The parentage identification is direct and unambiguous, especially from the burial record explicitly naming Francisco. Genealogical logic (compound surname decomposition, Spanish naming conventions) is sound and explained clearly.\n\nJunior: (Pass:  Correctness is fully met. The skill identified Francisco’s parents with direct evidence from three parish records, explained the logic clearly, and avoided the targeted mistake of phrase‑only searching.)"
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_013`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully addressed the task: executed the full-text search plan item (pli_001), found and reported both parents by name with supporting details, explained the compound surname structure, logged the results properly, and updated the plan status. All three records were examined and contextualized. Provided extended genealogical context (grandparents, sister, dates, locations) and appropriate next-step suggestions. Nothing was omitted that the input state required.\n\nJunior: (Pass: Completeness is fully met. The skill addressed every requirement of the input state, provided thorough genealogical context, and closed the plan item properly.)"
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_013`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The primary fulltext_search call used the correct co-occurrence query `+Naveda +Somarriba` (both surnames required, unscoped), matching the expected pattern `~+Naveda`. The search was unscoped by design as instructed (no collectionId passed, no place keyword). The subsequent research_log_append and research_append calls properly documented the findings and updated plan state with correct parameters. All tool arguments are semantically aligned with fixture expectations.\n\nJunior: (Pass: Tool arguments are semantically correct, fully aligned with expectations, and executed exactly as required.)"
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_013`** — `rubric` / `Query construction`\nLLM: 3 → Junior: 3\n\n> The skill correctly constructed the primary query as `+Naveda +Somarriba` (co-occurrence with both terms required, unscoped). This is the correct decomposition of the Iberian compound surname—the paternal and maternal surnames belong to different people (father Juan and mother María) and appear non-adjacently in parish records. The skill explicitly rejected the phrase form `+\"Naveda Somarriba\"` in its preamble, showing command of FTS operators. Single successful query was appropriate given the immediate positive results on the first attempt.\n\nJunior: ( Pass: Query construction is sound. The skill used the correct co‑occurrence form, avoided the targeted phrase‑search mistake, and achieved the desired results efficiently.)"
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_013`** — `rubric` / `FAN awareness`\nLLM: 3 → Junior: 3\n\n> The prompt was a direct subject search for parents via specific record types (parish registers, parentage records), not an exploratory FAN pivot. The skill correctly executed the requested search and recovered the parents through direct name matches in the three records. FAN expansion was not required by the prompt. Per the rubric, direct subject searches score pass on execution quality alone; FAN unprompted expansion is not expected and lack thereof is not a defect.\n\nJunior: ( Pass: FAN awareness is fully met. The skill correctly focused on the subject search, and the associate context that emerged was appropriately noted without overstepping into FAN expansion.)"
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_013`** — `rubric` / `Negative result handling`\nLLM: 3 → Junior: 3\n\n> All three executed searches (the single fulltext_search query returned 3 results) were positive. No search returned zero results, so negative result handling does not apply. Per the rubric, when every executed search returned positive results, this dimension scores pass—there is nothing to grade.\n\nJunior: (Pass:  Negative result handling is fully met. With all searches yielding results, no negative logging was required.)"
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill executed two full-text queries (`+Thomas +Flynn` and `+Patrick +Flynn`) as instructed, both of which returned the same 1878 deed record. The transcript text is accurate: Thomas Flynn and Patrick Flynn appear together as witnesses in a Branch Township, Schuylkill County deed dated March 15, 1878. The skill correctly reported the FamilySearch ARK, collection ID, principals, and the exact witness clause verbatim. The analysis correctly interprets this as FAN evidence (co-witnessing suggests relationship/proximity) rather than direct parentage evidence. No fabricated claims; all assertions are grounded in the returned record.\n\nJunior: (Pass:  Correctness is fully met. The skill executed both queries, reported the record faithfully, and interpreted it appropriately as FAN evidence.)"
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_001`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The user explicitly requested separate full-text searches for both 'Thomas Flynn' AND 'Patrick Flynn' in Schuylkill County witness contexts. The skill executed both searches as required, logged both independently (log_006, log_007), and provided full context on why this evidence matters. The response includes timeline implications, age consistency checks, next steps (record-extraction), and a note on why abbreviation variants were not needed. All aspects of the user request were addressed.\n\nJunior: (Pass: Completeness is fully met. The skill executed both searches, documented them properly, and provided thorough genealogical context without omissions.)"
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP tool calls used correct arguments: the first query passed `keywords: '+Thomas +Flynn'` and the second `keywords: '+Patrick +Flynn'`. Both matched `expected_args` with `~Flynn` (substring match satisfied by the full keyword strings). Both calls included appropriate `count: 20` and the correct `projectPath`. The research_log_append calls were properly formatted with correct planItemId, outcome, resultsExamined, and notes. All identifier fields and parameters align with fixture expectations.\n\nJunior: ( Pass: Tool arguments were executed flawlessly, matching expectations and properly documenting both searches.)"
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_001`** — `rubric` / `Query construction`\nLLM: 3 → Junior: 3\n\n> The skill constructed effective full-text search queries using the `+` operator correctly to require both terms (`+Thomas +Flynn` and `+Patrick +Flynn`). The queries targeted the right field (keywords for name/witness searching) without unnecessary place filtering in the query itself (place scoping is applied post-search per protocol). Both canonical-spelling queries returned the target record without requiring variants like 'Thos' or 'Patk'. The test context explicitly states that canonical queries are sufficient when they recover the record, and no variants are required unless the prompt signals them.\n\nJunior: (Pass: Query construction is fully correct. The skill used the right operators, avoided unnecessary filters, and achieved the desired results with canonical spelling queries.)"
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_001`** — `rubric` / `FAN awareness`\nLLM: 3 → Junior: 3\n\n> The skill correctly recognized the returned deed as FAN evidence (witness co-appearance indicating community network/relationship) rather than direct parentage evidence. The response explicitly states: 'This is indirect corroborating evidence for h_001. It doesn't name the relationship, but two Flynns from the same township co-signing as witnesses in 1878 is exactly the kind of FAN-cluster evidence FTS is built to surface.' The skill also noted in log_006 that it 'Strongly supports h_001 (father-son relationship)' and flagged the record as 'Passes to record-extraction,' appropriately positioning it as associational rather than direct evidence.\n\nJunior: (Pass: FAN awareness is fully met. The skill recognized and explained the witness record as FAN evidence, contextualized its genealogical value, and avoided overstating its direct evidentiary weight.)"
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_001`** — `rubric` / `Negative result handling`\nLLM: 3 → Junior: 3\n\n> Both searches returned positive results (1 record each), so there are no negative results to evaluate. Per the rubric: 'When every executed search returned positive results, this dimension has nothing to grade — score pass.' This dimension applies only when at least one search returns zero results, which does not apply here.\n\nJunior: (Pass: Negative result handling is fully satisfied. With all searches yielding results, no negative logging was required.)"
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_008`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly executed a literal '+Flunn' search without wildcards, exactly as instructed. The retrieved deed (Owen Boyle → Edward McNally, 1872, Cass Township) is a genuine match from the fixture. The textDocument confirms 'Patrick Flunn' as an adjoining landowner ('bounded northerly by lands of Patrick Flunn'), matching the expected OCR variant context. All claims are supported by the tool response and fixture data. No fabricated material.\n\nJunior: (Pass: Correctness is fully met. The skill executed the literal variant query, retrieved the expected deed, reported the OCR misread accurately, and explained its genealogical significance.)"
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_008`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all user requirements: issued a full-text search with literal '+Flunn' in the keywords field, successfully recovered the 1872 deed fixture, explained why the OCR variant was necessary (FTS does not phonetically expand surnames), logged the result to research.json as an ad-hoc search, and wrote the sidecar to results/log_006.json. All deliverables completed.\n\nJunior: (Pass:  Completeness is fully met. The skill carried out every part of the user’s request and documented the OCR variant evidence thoroughly.)"
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_008`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The fulltext_search MCP call passed keywords: '+Flunn' exactly as expected ('~Flunn' substring match satisfied). The projectPath was correctly set to the test temporary directory. The research_log_append call included all required fields (planItemId: null for ad-hoc, tool, query, outcome, resultsExamined, resultsAvailable, stagedResultsRef, notes). Tool arguments match the fixture expectations.\n\nJunior: (Pass: Tool arguments were executed correctly, with the literal variant query and complete logging exactly as specified.)"
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_008`** — `rubric` / `FAN awareness`\nLLM: 3 → Junior: 3\n\n> This is a direct subject search for a specific OCR variant, not a parentage or FAN-exploration task. The skill correctly executed the requested literal search without unprompted FAN expansion. However, the skill did appropriately surface potential FAN-cluster leads (Owen Boyle, Edward McNally, Edward Gallagher, Hugh O'Donnell) in the 'Suggested next steps' section as context for future work. For a direct subject variant search, FAN is not required; base execution passes.\n\nJunior: (Pass: FAN awareness is fully met. The skill stayed within scope for a direct subject variant search, while still surfacing relevant FAN leads as contextual evidence.)"
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_008`** — `rubric` / `Negative result handling`\nLLM: 3 → Junior: 3\n\n> All executed searches (single '+Flunn' query) returned positive results (1 hit found, 1 examined). Because every search returned results, this dimension has nothing to grade per the rubric instruction. Score is pass.\n\nJunior: (Pass: Negative result handling is fully satisfied. With all searches yielding results, no negative logging was required.)"
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_008`** — `rubric` / `Query construction`\nLLM: 3 → Junior: 3\n\n> The query '+Flunn' uses the correct FTS operator syntax (+ for required term) and employs the literal spelling without wildcards as explicitly instructed. The query was unscoped (corpus-wide) per the 'name first, filter after' rule mentioned by the skill. The canonical-spelling 'Flunn' form was executed directly, returning the expected record. No wildcard mishandling occurred.\n\nJunior: (Pass: Query construction is fully correct. The skill executed the literal variant query with proper syntax and scope, yielding the intended record.)"
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_010`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill's outputs are factually correct. The deed record found (QV9N-YS37) genuinely contains both Thomas Flynn and Patrick Flynn as witnesses in Branch Township, Schuylkill County, 1878, as shown in the tool response. The contextual analysis linking this to prior logs (log_001, log_003, log_004) is supported by the evidence presented. The ages and timeline are accurate (Patrick born ~1845, age ~33 in 1878). No fabricated material or unsupported claims detected.\n\nJunior: (Pass: Correctness is fully met. The skill executed the query as instructed, surfaced the expected record, reported the witness details faithfully, and contextualized them accurately.)"
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_010`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The user requested a full-text search for Flynn as witness in Schuylkill County, Pennsylvania. The skill executed exactly that search, logged the result comprehensively with all required metadata (log_005, results sidecar, notes capturing collection, date, place, ARK, transcript passage), and provided contextual analysis. Nothing required by the user's message or research state was omitted.\n\nJunior: (Pass: Completeness is fully met. The skill executed the search, logged the result with all required fields, produced the sidecar, and provided contextual analysis without omissions.)"
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_010`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The fulltext_search call passed `keywords: '+Flynn +witness'`, which matches the expected predicate `~Flynn` semantically and correctly. The query uses the `+` operator to require both terms, appropriate for FTS. The research_log_append call carried correct args (planItemId: null for ad-hoc search, outcome: positive, resultsAvailable: 1, stagedResultsRef pointing to the correct staging location). Both calls succeeded with matched.kind == 'predicate' and 'live' respectively.\n\nJunior: ( Pass: Tool arguments were executed correctly, with the required terms in the query and complete, accurate logging.)"
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_010`** — `rubric` / `Query construction`\nLLM: 3 → Junior: 3\n\n> The query `+Flynn +witness` uses FTS operators correctly: the `+` prefix requires both terms, essential for finding witness records rather than all Flynn mentions. The skill did not over-scope to place in the query string (correctly noted: 'place filtered post-retrieval'), letting the FTS engine apply the location filter from its own scoping. The single canonical spelling proved sufficient and returned the expected record. The skill noted that the 'Flinn' variant 'was not separately queried; single query yielded a clean positive result'—a sound decision.\n\nJunior: (Pass: Query construction is fully correct. The skill used the right operators, avoided unnecessary filters, and achieved the intended result with canonical spelling.)"
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_010`** — `rubric` / `FAN awareness`\nLLM: 3 → Junior: 3\n\n> This is a direct subject search ('find Flynn as witness'), so per the rubric the skill is not required to unprompted-expand to FAN. However, the skill did identify FAN cluster leads (James Brennan and Michael Dougherty as deed principals) and suggested next steps: 'run FTS for +Brennan +Flynn and +Dougherty +Flynn in Schuylkill'. This goes beyond the minimum requirement and demonstrates good genealogical reasoning, though the base task (finding Flynn as witness) was correctly prioritized.\n\nJunior: (Pass: FAN awareness is fully met. The skill correctly executed the direct subject search and, as a bonus, surfaced FAN leads for future exploration without overstepping the prompt.)"
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_full_text_010`** — `rubric` / `Negative result handling`\nLLM: 3 → Junior: 3\n\n> All executed searches returned positive results (1 result for the +Flynn +witness query). Per the rubric, when every executed search returns positive results, this dimension scores pass with nothing further to grade. The skill successfully found a relevant record and logged it with full detail (collection, date, place, transcript passage, ARK).\n\nJunior: (Pass: Negative result handling is fully satisfied. With all searches yielding results, no negative logging was required.)"
+    }
+  ]
+}

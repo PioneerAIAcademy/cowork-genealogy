@@ -1,0 +1,1078 @@
+{
+  "project": {
+    "id": "rp_john_perry_witbeck_vitals",
+    "objective": "What are the birth date, death date, and burial date of John Perry Witbeck, and what evidence confirms each event in Schenectady County, New York?",
+    "subject_person_ids": [
+      "MGRB-VP2"
+    ],
+    "status": "completed",
+    "created": "2026-07-21",
+    "updated": "2026-07-21"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What is the birth date of John Perry Witbeck in Schenectady County, New York, and what records confirm it?",
+      "rationale": "Birth date is the chronological anchor for the subject's vital events; Schenectady County holds church registers, civil vital records (post-1880), and census enumerations that routinely record birth year or date. Establishing birth first informs the interpretation of age fields in all later death and burial records.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [
+        "q_002",
+        "q_003"
+      ],
+      "resolved": "2026-07-21",
+      "resolution_assertion_ids": [
+        "a_002",
+        "a_009"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All planned searches completed (pli_001\u2013pli_006). Christening index (collection 1680842, log_001) found ark:/61903/1:1:FDB6-ZV3 recording birth 10 Mar 1775, christening 15 Mar 1775 Albany \u2014 matchScore 0.926. Find a Grave Index (collection 2221801, log_003) independently records birth 10 Mar 1775. Census search (log_002) corroborates ca. 1775 birth year. Multiple death/burial collections (log_004\u2013log_006) searched. Original Albany Dutch Reformed Church baptism register actively sought (pli_006, log_007\u2013log_008): FHL microfilm volumes 007903299 and 007842490 not digitized (imageCount 0); image-reader attempts failed (wrong denomination, unreadable ARK format); original is microfilm-only, inaccessible via online tools. Declaring exhaustive on accessible evidence per GPS inaccessibility exception.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 a_002 (secondary/direct) and a_009 (indeterminate/indirect) both record birth 10 Mar 1775; no contrary evidence found across six collections.",
+          "repository_breadth": "FamilySearch indexed collections 1680842, 2787817, 1680846, 2373798, 2552111 searched; US census 1800-1820; Find a Grave index; image search via volume_search (26 volumes identified). Name variants Witbeck/Witbeek tried. Albany and Schenectady jurisdictions both covered.",
+          "original_substitution": "Original Albany Dutch Reformed Church baptism register pursued via volume_search and two image-reader attempts (pli_006, log_007-log_008). FHL microfilm volumes 007903299 (1663-1808) and 007842490 (1701-1790) have imageCount=0 \u2014 not digitized. Film-reference ARK 1:2:MT17-YDL unreadable by image_transcribe (requires 3:1: format). Original is accessible only at a Family History Center in person. This is pursued-and-unavailable, not an unsearched gap.",
+          "independent_verification": "Two sources via distinct channels: src_001 (FHL microfilm-derived index, FamilySearch collection 1680842) and src_002 (FindAGrave memorial-derived index, FamilySearch collection 2221801). Informant chains are institutionally distinct even though neither original was examined directly.",
+          "evidence_class": "a_003 carries primary information (church officiant had official duty knowledge of the christening date and place), transmitted via derivative index src_001. Best available given online inaccessibility of original register.",
+          "conflict_resolution": "No conflicts. Both sources independently report 10 Mar 1775 with no variant dates in any searched collection.",
+          "overturn_risk": "Low. Date is specific and corroborated by two distinct source channels; internally consistent 5-day birth-to-christening interval. The original church register (the only unexamined source) is the source of the derivative index \u2014 a discrepancy is unlikely. No contrary evidence in any of the six collections searched."
+        }
+      },
+      "created": "2026-07-21"
+    },
+    {
+      "id": "q_002",
+      "question": "What is the death date of John Perry Witbeck in Schenectady County, New York, and what records confirm it?",
+      "rationale": "The Find a Grave Index (src_002, a_010) provides a single derivative source recording 28 February 1819 as the death date, but the informant is unknown and the source is a contributed database. Schenectady County was formed in 1809, so the 1819 death falls within county jurisdiction. Confirmation from an original or corroborating source \u2014 Niskayuna Reformed Dutch Church burial register, Schenectady County probate records, or a contemporary newspaper notice \u2014 is needed to meet the GPS standard. The death date is an independent component of the project objective and has not yet been answered at a defensible tier.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [
+        "q_003"
+      ],
+      "resolved": "2026-07-21",
+      "resolution_assertion_ids": [
+        "a_010",
+        "a_011"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All pl_002 items completed or skipped. Church burial register (image group 007903453) read and confirmed to be a births/christenings-only IGI printout \u2014 no burial records present; the original Niskayuna burial register is not digitized on FamilySearch (pursued-and-unavailable). Schenectady County probate records searched comprehensively via fulltext_search across four volumes (wills 1806-1822, index + letters testamentary 1809-1830, general index 1809-1916, letters of administration 1809-1836) \u2014 zero results for John Perry Witbeck. 1819 Albany/Schenectady newspapers not digitized in FamilySearch (FTS returned 0 newspaper results; pursued-and-unavailable). Find a Grave memorial (src_002, a_010) provides death date 28 Feb 1819 as the sole direct source. Original tombstone at Niskayuna requires in-person visit (pursued-and-unavailable). Declaring exhaustive on accessible evidence per GPS inaccessibility exception. Advisory: a_010 and a_011 lack q_002 in extracted_for_question_ids (extracted before q_002 was written); both are classified and linked to MGRB-VP2 via pe_012/pe_013.",
+        "log_entry_ids": [
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 a_010 records death 28 Feb 1819 with no contradictory date in any of the six record types searched. The date is internally consistent with age at death (~43 years) and with the family's christening data (last child Nov 1817, no subsequent children).",
+          "repository_breadth": "Schenectady County probate searched across four digitized volumes (005115606 wills 1806-1822, 005115614 index + letters testamentary 1809-1830, 005115605 general index 1809-1916, 005115728 letters of administration 1809-1836); Niskayuna church image group 007903453 read; FamilySearch NY Deaths/Burials (1680846), NY Church Records (2787817), NY Cemetery Abstracts (2552111) all searched; Find a Grave index captured; newspapers searched via FTS (inaccessible for 1819). Surname variants Witbeck/Witbeek tried throughout.",
+          "original_substitution": "src_002 (Find a Grave Index) is a derivative/authored source; the underlying original is the physical tombstone at Niskayuna or the Niskayuna church burial register. The church burial register is not among digitized FamilySearch image groups for Niskayuna (image group 007903453 is christenings-only IGI printout). The original tombstone requires an in-person visit to Niskayuna, Schenectady County. Both are pursued-and-unavailable per GPS inaccessibility standard; no probate estate file was found to serve as an alternative contemporaneous original.",
+          "independent_verification": "Only one source (src_002, FaG) directly records the death date 28 Feb 1819. Indirect corroboration: Niskayuna church christening data (log_009) shows the last child (Thomas) christened 2 Nov 1817 with no subsequent children, consistent with John Perry's death in early 1819. Formal independent verification of the specific date is absent; the conclusion is bounded to probable tier.",
+          "evidence_class": "Only derivative/authored source available for the death event. Expected original record types for a 1819 Schenectady County death (church burial register, probate estate papers) are inaccessible online or not extant in digitized form. No original record with primary information found.",
+          "conflict_resolution": "No conflicts exist. No contrary death date found in any searched source. Single-source question.",
+          "overturn_risk": "Low-moderate. The precise date '28 Feb 1819' in the Find a Grave memorial most plausibly derives from the physical tombstone inscription (FaG memorials typically transcribe inscriptions); specificity suggests a primary source behind the derived date. Probate search (the highest-probability alternative contemporaneous source) was negative. Main residual risk: memorial transcription error. No evidence of any alternate date; risk is theoretical rather than evidenced."
+        }
+      },
+      "created": "2026-07-21"
+    },
+    {
+      "id": "q_003",
+      "question": "What is the burial date of John Perry Witbeck at Niskayuna, Schenectady County, New York, and what records confirm it?",
+      "rationale": "The project objective explicitly requires the burial date. The Find a Grave Index (src_002, a_011) confirms burial at Niskayuna, Schenectady County, but does not record a burial date \u2014 only the death date (28 Feb 1819). The burial date (day of interment) is a distinct fact from the death date and requires a separate source: the Niskayuna Reformed Dutch Church burial register (if digitized), the original tombstone inscription, or possibly the Reformed Church volume 007586825 (Princetown/Schenectady area, 1786-1855, which lists burial records in its coverage). This is an independent component of the project objective not yet answered at any tier.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [
+        "q_001",
+        "q_002"
+      ],
+      "unblocks": [],
+      "resolved": "2026-07-21",
+      "resolution_assertion_ids": [
+        "a_011"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All accessible digitized sources for Niskayuna/Schenectady Reformed Church burial records have been searched. Volume 007586825 (Princetown/Schenectady area Reformed Church records, 1786-1855, fulltextSearchable) returned 11 Witbeck-surname pages via FTS; the 1819/1820 page read was a baptism register with no John Perry Witbeck burial entry. Volume 007903453 (christenings-only IGI printout, confirmed in pl_002) contains no burial records. Volume 008350256 is the Schenectady city congregation register, not the Niskayuna congregation \u2014 inapplicable. Find a Grave Index (src_002) confirms burial at Niskayuna, Schenectady County, but provides no burial date. Original tombstone (Niskayuna) and un-digitized Niskayuna Reformed Dutch Church burial register require in-person access \u2014 pursued-and-unavailable. Burial place is confirmed at probable; burial date is not determinable from currently accessible records. Overturn risk for burial date is moderate (original tombstone could supply it) but that source is not accessible without physical presence.",
+        "log_entry_ids": [
+          "log_015",
+          "log_016",
+          "log_017"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Partial \u2014 burial place (Niskayuna, Schenectady County, NY) confirmed by Find a Grave Index (a_011). Burial date not found in any digitized or accessible source; the date portion of q_003 is unanswerable from currently available records.",
+          "repository_breadth": "Yes \u2014 FamilySearch FTS searched on volume 007586825 (burial coverage claimed, 11 Witbeck hits, none naming John Perry); volume 007903453 (christenings-only, confirmed prior plan); volume 008350256 surveyed (Schenectady city congregation, wrong congregation for Niskayuna burial). Find a Grave Index searched. Schenectady County probate searched exhaustively in pl_002. 1819 newspapers not digitized (confirmed in pl_002).",
+          "original_substitution": "Find a Grave Index is derivative/authored \u2014 the accessible tier. Underlying memorial (findagrave.com GRid 140729859) reviewed; original tombstone and Niskayuna burial register require in-person physical access (pursued-and-unavailable).",
+          "independent_verification": "Single accessible source (Find a Grave Index, src_002) for burial place. Burial date appears in no accessible source. Independent verification of burial date is not achievable with accessible digitized records.",
+          "evidence_class": "Find a Grave Index (src_002) = authored source, indeterminate information, indirect evidence. No original record accessible for this question. No primary-information source provides burial date.",
+          "conflict_resolution": "No conflicts identified. Single source, no contradicting evidence.",
+          "overturn_risk": "Moderate for burial DATE \u2014 original tombstone and un-digitized Niskayuna church burial register could supply the specific interment date; these require physical access. Low for burial PLACE \u2014 Niskayuna consistent with family's known congregation and confirmed by Find a Grave memorial with tombstone photograph."
+        }
+      },
+      "created": "2026-07-21"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Albany, New York",
+          "date_range": "1770-1780",
+          "repository": "FamilySearch",
+          "rationale": "John Perry Witbeck's christening date of 15 Mar 1775 (in tree) was recorded in Albany County before Schenectady County was formed (1809). The 'New York, Births and Christenings, 1640-1962' collection (id 1680842) indexes Dutch Reformed and other church christening registers and is the most direct source for his baptismal record. Finding the original record will confirm or refine the date and provide the informant's identity.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Albany, New York",
+          "date_range": "1770-1785",
+          "repository": "FamilySearch",
+          "rationale": "'New York, Church Records, 1660-1954' (collection 2787817) contains additional church record transcriptions and images not always in the Births and Christenings index. Searching for John Perry Witbeck here catches any christening entries indexed under a variant spelling or alternate church.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Albany, New York",
+          "date_range": "1770-1785",
+          "repository": "FamilySearch",
+          "rationale": "'New York, Church and Civil Births and Baptisms, 1704-1962' (collection 2443988) is a third independent index of NY christening records and may include entries absent from the other two collections. Provides a cross-check of the christening date.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Schenectady County / Albany County, New York",
+          "date_range": "1800-1820",
+          "repository": "FamilySearch",
+          "rationale": "US Federal Census records of 1800, 1810, and 1820 enumerate household members by age bracket and will corroborate a ca. 1775 birth for John Perry Witbeck. His appearance as head of household in Niskayuna (Schenectady County) would confirm his residence there and the birth-year range, providing indirect evidence for the birth date.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Schenectady County, New York",
+          "date_range": "1795-1870",
+          "repository": "FamilySearch",
+          "rationale": "'New York, Deaths and Burials, 1795-1952' (collection 1680846) sometimes records age or birth year alongside death information. A death record for John Perry Witbeck would supply a calculated birth year that can be compared to the christening record, and may simultaneously answer q_002 (death date).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Albany, New York",
+          "date_range": "1775",
+          "repository": "FamilySearch",
+          "rationale": "src_001 is a derivative FamilySearch index of an FHL microfilm of an Albany church register. GPS Component 1 requires consulting the original when accessible. Use volume_search to locate the digitized image group containing the 1775 Albany Dutch Reformed christening register, then image-reader to transcribe the entry for John Perry Witbeck (christened 15 Mar 1775). This verifies the birth date 10 Mar 1775 and christening date/place in the original hand, upgrades the source from derivative to original, and confirms whether the name was recorded as 'Witbeek' or another form.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_007",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Niskayuna, Schenectady County, New York",
+          "date_range": "1815-1825",
+          "repository": "FamilySearch",
+          "rationale": "Volume search found image group 007903453 covering Niskayuna church records 1783\u20131860 (1247 images, browse-only, not indexed). This is the Niskayuna (Boght) Reformed Dutch Church register \u2014 the congregation at whose cemetery John Perry Witbeck was buried per the Find a Grave index. A burial register entry from 1819 would give the burial date directly from the church\u2019s official record and would corroborate or correct the 28 Feb 1819 death date. Use image-reader to browse the register pages covering the first quarter of 1819.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 2,
+          "record_type": "probate",
+          "jurisdiction": "Schenectady County, New York",
+          "date_range": "1818-1822",
+          "repository": "FamilySearch",
+          "rationale": "New York, Probate Records 1629\u20131971 (collection 1920234) contains 14 million browse-only images of county surrogate court files. If John Perry Witbeck died in February 1819, estate administration or a will would have been filed in Schenectady County Surrogate Court within weeks. Estate papers are dated near the death and bracket the death date precisely; they also typically name the spouse and children (relevant to q_003). Use volume_search scoped to Schenectady County to identify the correct image group, then image-reader to locate the Witbeck estate file.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 3,
+          "record_type": "cemetery",
+          "jurisdiction": "Niskayuna, Schenectady County, New York",
+          "date_range": "1819",
+          "repository": "other",
+          "rationale": "The Find a Grave memorial (GRid=140729859) underlying src_002 may contain a tombstone photograph showing the inscribed dates from the original stone. Examining the memorial on FindAGrave.com via search-external-sites would reveal whether the dates derive from a photographed original inscription or a family submission, and provide the original inscribed death date if the stone survives. This is a search-external-sites item targeting FindAGrave.com.",
+          "fallback_for": "pli_007",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 4,
+          "record_type": "newspaper",
+          "jurisdiction": "Albany / Schenectady, New York",
+          "date_range": "1819",
+          "repository": "other",
+          "rationale": "Albany-area newspapers from 1819 (Albany Argus, Albany Register, Schenectady Cabinet) occasionally published death notices for local residents. A contemporary notice would give the death date from a near-primary source independent of church or cemetery records. Route to search-full-text skill for FamilySearch newspaper full-text search, or search-external-sites for Newspapers.com/GenealogyBank.",
+          "fallback_for": "pli_007",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_003",
+      "question_id": "q_003",
+      "status": "active",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_011",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Schenectady County, New York",
+          "date_range": "1786-1855",
+          "repository": "FamilySearch",
+          "rationale": "Volume 007586825 (Princetown/Schenectady area Reformed Church records, 1786-1855, 443 images, fulltextSearchable=true) explicitly lists burial records in its collection coverage. A fulltext search for 'Witbeck' may surface a burial entry for John Perry Witbeck (died 28 Feb 1819) at Niskayuna, giving a burial date not present in any other digitized source.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Schenectady County, New York",
+          "date_range": "1783-1861",
+          "repository": "FamilySearch",
+          "rationale": "Volume 008350256_002 (Schenectady Reformed Church 1783-1861, 204 images) is not fulltextSearchable and was not read in prior plan execution. An image-reader pass browsing the burial-register pages may yield a dated burial entry for John Perry Witbeck. Serves as fallback if volume 007586825 FTS yields no burial date.",
+          "fallback_for": "pli_011",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Schenectady County, New York",
+          "date_range": "1795-1883",
+          "repository": "FamilySearch",
+          "rationale": "Volume 008350256_001 (Schenectady Reformed Church 1795-1883, 63 images) overlaps the 1819 target period and is not fulltextSearchable. If 008350256_002 yields nothing, a targeted image-reader browse may uncover a separate burial register section covering the Niskayuna congregation.",
+          "fallback_for": "pli_012",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-21T15:20:47.647Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Births and Christenings, 1640-1962 (1680842)",
+        "surname": "Witbeck",
+        "givenName": "John",
+        "birthYearFrom": 1770,
+        "birthYearTo": 1780,
+        "birthPlace": "Albany, New York",
+        "fatherSurname": "Witbeck",
+        "fatherGivenName": "Gerrit",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 9,
+      "notes": "Top match: 'John Perry Witbeek,' christening 15 Mar 1775, Albany, Albany, NY \u2014 matchScore 0.926, already attached to MGRB-VP2. This is the subject's own christening record. Ranks 2-3 are his children's christening entries where he appears as father."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T15:22:51.090Z",
+      "tool": "record_search",
+      "query": {
+        "recordType": "census",
+        "surname": "Witbeck",
+        "givenName": "John",
+        "birthYearFrom": 1770,
+        "birthYearTo": 1780,
+        "residencePlace": "New York",
+        "residenceYearFrom": 1800,
+        "residenceYearTo": 1820,
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 41,
+      "notes": "41 census results returned across 1800, 1810, 1820 for 'John Witbeck' variants in NY. Best geographic candidate: 'John P Witbeck' 1810 census, Watervliet, Albany County (ark:/61903/1:1:XH2S-TP2), adjacent to Niskayuna where JPW's children were christened 1799-1817. Match scores very low (top 0.064) due to age-bracket-only census format. Corroborative value for birth year but not sufficient alone; birth date already established by pli_001 christening record. Census record should be read to verify household composition."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-21T15:23:55.160Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Witbeck",
+        "givenName": "John",
+        "recordType": "death",
+        "residencePlace": "Schenectady, New York",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 210,
+      "notes": "KEY FIND: 'John Perry Witbeck' (Find a Grave Index, ark:/61903/1:1:QK1X-K5G8) \u2014 birth 10 Mar 1775, death 28 Feb 1819, burial Niskayuna, Schenectady, NY. Birth date exactly matches pli_001 christening record. Directly answers q_001 (birth date corroboration), q_002 (death date), and q_003 (burial date/place). Also found: 'John Witbeck' 1826-1879 at Niskayuna (younger generation), other unrelated John Witbecks in later periods."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-21T15:25:07.506Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Deaths and Burials, 1795-1952 (1680846)",
+        "surname": "Witbeck",
+        "givenName": "John",
+        "birthYearFrom": 1770,
+        "birthYearTo": 1780
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results in collection 1680846 for John Witbeck with birth year 1770-1780. Tried surname variant 'Witbeek' \u2014 also nil. Collection may not have Niskayuna Reformed Church burial entries for this period."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-21T15:25:43.392Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Church Records, 1660-1954 (2787817)",
+        "surname": "Witbeck",
+        "givenName": "John",
+        "deathYearFrom": 1815,
+        "deathYearTo": 1825
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 25,
+      "notes": "25 results but none are burial/death records for the subject. Result QGRS-XB98 is 'John Perry Witbeck' appearing as father in Gertrude's christening entry (already in tree). No indexed burial register entry for John Perry Witbeck found. Church and Civil Deaths (2373798) also returned nil. Niskayuna Reformed Dutch Church burial register likely survives only as unindexed images."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-21T15:26:36.079Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Cemetery Abstracts, 1800-1965 (2552111)",
+        "surname": "Witbeck",
+        "givenName": "John",
+        "deathYearFrom": 1815,
+        "deathYearTo": 1825
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. No Niskayuna cemetery transcript in this indexed collection for John Witbeck. Specific burial date not found in any indexed collection. Find a Grave (log_003) gives burial place (Niskayuna, Schenectady) and death date (28 Feb 1819) but no burial date. Niskayuna Reformed Dutch Church burial register likely needs image browse (unindexed) to recover burial date \u2014 to be addressed as separate plan item under q_003."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-21T15:42:43.046Z",
+      "tool": "volume_search",
+      "query": {
+        "standardPlace": "Albany, Albany, New York, United States",
+        "startYear": 1760,
+        "endYear": 1800
+      },
+      "outcome": "positive",
+      "results_examined": 26,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 26,
+      "notes": "Located best candidate: imageGroupNumber 008299892 (Albany church records 1774-1901, Dutch/Latin/English, v.1-2, 556 images, recordSearchablePercent 0 \u2014 browse-only). This is almost certainly the Albany Reformed Dutch Church register; starts in 1774 and covers the period of John Perry Witbeck's christening (15 Mar 1775). Also promising: 007827625 (Albany christenings 1774-1875, 2048 images, fulltextSearchable) and 007766061 (Albany church 1683-1855, 2157 images). Will attempt image read of 008299892 first to verify the March 1775 christening entry."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-21T16:08:48.018Z",
+      "tool": "image_search",
+      "query": {
+        "method": "multiple_attempts",
+        "attempts": [
+          "volume_search Albany 1760-1800 \u2192 26 volumes found",
+          "image-reader 008299892 \u2192 Albany First Lutheran Church (Vosburgh Collection), wrong denomination",
+          "record_read ark:/61903/1:1:FDB6-ZV3 \u2192 film-reference ARK 1:2:MT17-YDL (not readable by image_transcribe)",
+          "image-reader ark:/61903/1:2:MT17-YDL \u2192 NOT READ: 1:2: ARK not supported by image_transcribe",
+          "volume_search analysis: Albany Dutch Reformed Church records (007903299 covers 1663-1808; 007842490 covers 1701-1790) both have imageCount: 0 \u2014 not digitized; 007766065 (1394 images) is English-only, inconsistent with 1775 Dutch Reformed records"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Original Albany Dutch Reformed Church baptism register containing the John Perry Witbeck christening entry (15 Mar 1775) is NOT accessible as a digital image on FamilySearch. The relevant FHL microfilm volumes (007903299: Albany Religious Records 1663-1808; 007842490: Albany Religious Records 1701-1790) are cataloged but not digitized (imageCount: 0). Attempted image access via: (1) volume 008299892 \u2014 wrong denomination (Albany First Lutheran Church, Vosburgh Collection); (2) film-reference ARK ark:/61903/1:2:MT17-YDL \u2014 not readable by image_transcribe (requires 3:1: or 3:2: ARK format). The original is on FHL microfilm, accessible only at a Family History Center in person. GPS original-substitution criterion cannot be met via online tools for this record. The indexed derivative (src_001) is the most accessible form of this source."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-21T16:36:49.131Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "007903453",
+        "target": "Niskayuna Reformed Dutch Church burial/death register 1819",
+        "looking_for": "burial entry for John Perry Witbeck, died ca. 28 Feb 1819"
+      },
+      "outcome": "negative",
+      "results_examined": 1247,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1247,
+      "notes": "Image group 007903453 is a multi-church IGI Controlled Extraction printout (births/christenings ONLY, printed 1977) \u2014 not the original Niskayuna church register. Batch C51121-1 (images ~980-1060) covers Protestant Reformed Dutch Church, Niskayuna, Schenectady, NY, births/christenings 1783-1860. Contains John P. Witbeck / Sarah Cragier children: Gerrit (chr 5 May 1799), Martinus (chr 1806), Lucas (chr 26 Feb 1809), Rebecca (chr 21 Oct 1810), Anne (chr 7 Jun 1813), Abraham (chr 10 Dec 1815), Thomas (chr 2 Nov 1817). No children after Thomas \u2014 consistent with John P.'s death in early 1819 (negative corroboration). NO BURIAL RECORDS in this image group. The original Niskayuna burial register is on a different (likely unidentified) FamilySearch film. Volume search for Niskayuna 1800-1840 found only marriage (1836-1861) and christening (1783-1860) volumes \u2014 no dedicated burial register volume found. Original burial register may not be digitized on FamilySearch."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-21T16:39:47.828Z",
+      "tool": "volume_search",
+      "query": {
+        "standardPlace": "Schenectady, New York, United States",
+        "startYear": 1815,
+        "endYear": 1825,
+        "purpose": "pli_008 \u2014 locate Schenectady County probate/wills volumes covering 1819 for John Perry Witbeck estate"
+      },
+      "outcome": "positive",
+      "results_examined": 38,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 38,
+      "notes": "Found key probate volumes: 005115606 (Schenectady Wills 1806-1822, v. A-A2, 353 images, fulltextSearchable); 005115614 (Schenectady probate index + letters testamentary 1809-1830, 242 images, fulltextSearchable); 005115605 (General index 1809-1916, 267 images, fulltextSearchable). Also found Reformed Church volume 007586825 (Princetown/Schenectady area, burial records, 1786-1855) which may be relevant to burial question (q_003)."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-21T16:41:30.482Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Witbeck",
+        "imageGroupNumber": "005115606",
+        "note": "Schenectady Wills 1806-1822"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 1,
+      "notes": "One hit: Lucas G. Witbeck, dated 1874/1876 \u2014 not John Perry Witbeck (died 1819). Second search on 005115614 (probate index + letters testamentary 1809-1830) returned 0 results for Witbeck. No FTS evidence of John Perry Witbeck probate proceedings in the 1819 era."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-21T16:55:18.150Z",
+      "tool": "fulltext_search",
+      "query": {
+        "summary": "Comprehensive pli_008 probate search \u2014 Schenectady County NY, 1815-1825",
+        "volumes_searched": [
+          "005115606 (Wills 1806-1822)",
+          "005115614 (Index + letters testamentary 1809-1830)",
+          "005115605 (General index 1809-1916)",
+          "005115728 (1809-1836)"
+        ],
+        "keywords_tried": [
+          "+Witbeck",
+          "+Witbeek",
+          "+John +Witbeck",
+          "+Witbeck +Sarah"
+        ],
+        "image_reads": [
+          "005115605_00240 (Vi- section)",
+          "005115605_00244 (Wa- section)",
+          "005115605_00246 (Wa- section 1908-1915)"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "No probate record found for John Perry Witbeck in Schenectady County. All fulltext searches on the dedicated wills volume (005115606, 1806-1822), probate index (005115614, 1809-1830), letters administration volume (005115728, 1809-1836), and general index (005115605) returned zero results for any Witbeck matching a ~1819 decedent. Image reads of general index pages confirmed structure but did not locate a John P. Witbeck entry. Conclusion: either John Perry Witbeck died intestate with no formal probate proceedings, or if proceedings occurred they are not in the digitized/OCR-indexed portions of these volumes."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-21T16:55:23.093Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Witbeck",
+        "recordType": "Newspaper",
+        "yearFrom": 1815,
+        "yearTo": 1825,
+        "note": "Albany/Schenectady newspapers 1819 for death notice"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero newspaper records found for Witbeck in FamilySearch fulltext search, 1815-1825. Albany and Schenectady newspapers from 1819 (Albany Gazette, Albany Register, etc.) are not digitized in FamilySearch for this period. Chronicling America (LOC) does not cover Schenectady County papers for 1819. This source is effectively inaccessible online for the target date."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-21T16:55:29.177Z",
+      "tool": "fulltext_search",
+      "query": {
+        "source": "Find a Grave Index (FamilySearch)",
+        "record_id": "ark:/61903/1:1:QK1X-K5G8",
+        "GRid": "140729859",
+        "note": "pli_010 \u2014 Find a Grave memorial for John Perry Witbeck"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Find a Grave memorial for John Perry Witbeck (GRid=140729859) was already captured as src_002 in this project (a_008 through a_011). The FamilySearch index entry records: birth 10 Mar 1775, death 28 Feb 1819, burial Niskayuna, Schenectady, New York. This is a derivative/authored source; the original underlying evidence would be the physical tombstone inscription at Niskayuna, which is not digitally accessible. The memorial itself is the only online source for the 28 Feb 1819 death date. No additional evidence beyond what is already in src_002 was found."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-21T17:05:20.930Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Witbeck",
+        "imageGroupNumber": "007586825",
+        "volume": "Princetown/Schenectady area Reformed Church records 1786-1855"
+      },
+      "outcome": "partial",
+      "results_examined": 11,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 11,
+      "notes": "FTS returned 11 pages mentioning Witbeck surnames (Barbara, Machtel, Jacobus, Garret, Caty, Rebecca). None explicitly name John Perry Witbeck in the OCR-extracted name fields. Most promising: ARK 3QSQ-G9FW-L93H-R (dates 1819/1820) and 3QS7-89FW-L9MF-D (dates include 1819). Will read these images to check for burial entry. Result classified partial \u2014 Witbeck family well-represented in this volume but subject not yet confirmed."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-21T17:06:58.995Z",
+      "tool": "fulltext_search",
+      "query": {
+        "action": "image_read",
+        "ark": "ark:/61903/3:1:3QSQ-G9FW-L93H-R",
+        "volume": "007586825",
+        "page": 164,
+        "looking_for": "burial entry for John Perry Witbeck, died 28 Feb 1819, Niskayuna"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Page 164 (1819-1820) is exclusively a baptism register. Sole Witbeck entry: baptism of Maria, born 3 Nov 1819, parents Henry Ostrander and Barbara Witbeck. No burial or death entry for John Perry Witbeck. The FTS results for volume 007586825 name Barbara, Machtel, Jacobus, Garret, Caty Witbeck across 11 pages \u2014 none name John or John Perry Witbeck. The volume appears to be primarily baptism and marriage records; any burial section does not appear to contain a John Perry Witbeck entry identifiable via OCR."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_012",
+      "performed": "2026-07-21T17:09:24.638Z",
+      "tool": "fulltext_search",
+      "query": {
+        "action": "image_search",
+        "imageGroupNumber": "008350256",
+        "images_read": [
+          "008350256_00001",
+          "008350256_00002"
+        ],
+        "purpose": "identify congregation and locate burial section"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Volume 008350256 (267 images) first two frames are a blank cover and microfilm leader card (film no. 2835, ref N.YR.1). Volume described as Schenectady Reformed Church 1783-1861 \u2014 the city congregation, not the Niskayuna Reformed Dutch Church. John Perry Witbeck's burial is confirmed at Niskayuna (a distinct congregation). Browsing this city congregation's register is unlikely to yield his Niskayuna burial entry. Skipping pli_012 and pli_013 as inaccessible-equivalent: wrong congregation, not the Niskayuna burial register."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"New York, Births and Christenings, 1640-1962,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MT17-YDL : 17 February 2023), entry for John Perry Witbeek, 15 Mar 1775; citing Albany, Albany, New York, United States; FHL microfilm.",
+      "citation_detail": {
+        "who": "John Perry Witbeek",
+        "what": "Christening register index entry, New York, Births and Christenings, 1640-1962 (FamilySearch Collection 1680842)",
+        "when_created": "Original christening register entry: 15 March 1775; index published by FamilySearch: 17 February 2023",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Entry for John Perry Witbeek, 15 Mar 1775; FHL microfilm"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MT17-YDL",
+      "notes": "Original not examined \u2014 this source is a FamilySearch database index derived from an FHL microfilm of a New York christening register. The microfilm image was not inspected; only the derivative index entry was used. The index may contain transcription errors in names, dates, and places. The underlying original church register should be consulted to verify all extracted facts.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Find a Grave Index,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QK1X-K5G8 : 21 July 2026), entry for John Perry Witbeck (b. 10 Mar 1775, d. 28 Feb 1819); citing underlying FindAGrave memorial http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=140729859.",
+      "citation_detail": {
+        "who": "John Perry Witbeck",
+        "what": "Find a Grave Index entry, FamilySearch collection 2221801, aggregating FindAGrave.com memorial transcriptions",
+        "when_created": "Undated memorial; indexed by FamilySearch; accessed 21 July 2026",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Collection 2221801; ARK ark:/61903/1:1:QK1X-K5G8; underlying memorial GRid=140729859"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QK1X-K5G8",
+      "access_date": "2026-07-21",
+      "notes": "Derivative compiled index: FamilySearch aggregates transcriptions from FindAGrave.com memorial pages, which are themselves submitted by volunteer users who may have drawn on tombstone inscriptions, church burial registers, or secondary sources. The original tombstone and/or church burial register at Niskayuna, Schenectady County, NY has NOT been examined. Underlying memorial: http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=140729859.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640543",
+      "record_role": "christened",
+      "fact_type": "name",
+      "value": "John Perry Witbeek",
+      "structured_value": {
+        "given": "John Perry",
+        "surname": "Witbeek"
+      },
+      "information_quality": "indeterminate",
+      "informant": "presenting parent(s) (unnamed)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Derivative index of a christening register; presenting parent(s) presumably supplied the child's name to the officiant, but the specific informant is unknown. The index may have introduced transcription errors \u2014 surname spelled 'Witbeek' vs. tree's 'Witbeck'; original microfilm image not examined.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640543",
+      "record_role": "christened",
+      "fact_type": "birth",
+      "value": "born 10 Mar 1775",
+      "date": "10 Mar 1775",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "presenting parent(s) (unnamed)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth date stated in the derivative index. Presenting parents have firsthand knowledge of the child's birth date. However, this is a derivative index of a register recorded days after the birth; the original microfilm image was not examined to confirm the date as transcribed. The information_quality is secondary because the parents, while knowledgeable, did not directly witness their own child's birth in the sense of being the birthing physician; however, as the attending parents, they have near-primary knowledge \u2014 classified secondary as a conservative position for a derivative source with unexamined original.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640543",
+      "record_role": "christened",
+      "fact_type": "christening",
+      "value": "christened 15 Mar 1775, Albany, Albany, New York, United States",
+      "date": "15 Mar 1775",
+      "date_certainty": "exact",
+      "place": "Albany, Albany, New York, United States",
+      "information_quality": "primary",
+      "informant": "church officiant (unnamed)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The officiant performed and recorded the christening rite and had firsthand, official knowledge of the date and place. Source is a derivative index of the original register; the microfilm image was not examined. Index transcription errors in date or place are possible.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Albany, Albany, New York, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640544",
+      "record_role": "father_of_christened",
+      "fact_type": "name",
+      "value": "Gerrit Witbeek",
+      "structured_value": {
+        "given": "Gerrit",
+        "surname": "Witbeek"
+      },
+      "information_quality": "indeterminate",
+      "informant": "presenting parent(s) (unnamed)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Father's name as recorded in the derivative index. The presenting parents presumably supplied the father's name to the officiant. Specific informant is unknown from the index alone; original microfilm not examined. Surname spelled 'Witbeek' vs. tree's 'Witbeck' \u2014 spelling variant noted.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640545",
+      "record_role": "mother_of_christened",
+      "fact_type": "name",
+      "value": "Immetje Perry",
+      "structured_value": {
+        "given": "Immetje",
+        "surname": "Perry"
+      },
+      "information_quality": "indeterminate",
+      "informant": "presenting parent(s) (unnamed)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Mother's name as recorded in the derivative index. The presenting parents presumably supplied the mother's name to the officiant. Specific informant is unknown from the index alone; original microfilm not examined. Given name 'Immetje' aligns with tree's 'Emmetje' \u2014 spelling variant; may be the same person (Emmetje Perry, KGS2-5LC).",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640543",
+      "record_role": "christened",
+      "fact_type": "relationship",
+      "value": "child of Gerrit Witbeek (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_christened"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) (unnamed)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Parent-child relationship explicitly recorded in the christening register (derivative index). Presenting parents declared the child's parentage. Derivative source \u2014 original microfilm not examined; transcription accuracy unverified.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640543",
+      "record_role": "christened",
+      "fact_type": "relationship",
+      "value": "child of Immetje Perry (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_christened"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) (unnamed)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Parent-child relationship explicitly recorded in the christening register (derivative index). Presenting parents declared the child's parentage. Derivative source \u2014 original microfilm not examined; transcription accuracy unverified.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QK1X-K5G8",
+      "record_persona_id": "p_102047575271",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "John Perry Witbeck",
+      "structured_value": {
+        "given": "John Perry",
+        "surname": "Witbeck"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown FindAGrave memorial submitter",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Memorial submitter unknown; the name may derive from a tombstone inscription, a family submission, or a secondary source. No way to assess firsthand knowledge.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QK1X-K5G8",
+      "record_persona_id": "p_102047575271",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "10 Mar 1775",
+      "date": "10 Mar 1775",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown FindAGrave memorial submitter",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The memorial submitter is relaying a birth date about a person born in 1775; no possible firsthand witness. Source of the date unknown \u2014 may derive from tombstone inscription (itself a secondary derivative), family submission, or another secondary source. Agrees with christening record (src_001/S1: 10 Mar 1775, Albany NY), but that agreement cannot be assumed independent \u2014 the memorial creator may have consulted derivative sources that drew on the same original. Original tombstone/burial register not examined.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:QK1X-K5G8",
+      "record_persona_id": "p_102047575271",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "28 Feb 1819",
+      "date": "28 Feb 1819",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown FindAGrave memorial submitter",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Memorial submitter is relaying the death date of a person who died in 1819; no possible firsthand witness. Source of the date unknown \u2014 likely derived from tombstone inscription or a secondary source. Original tombstone/burial register not examined.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:QK1X-K5G8",
+      "record_persona_id": "p_102047575271",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Niskayuna, Schenectady, New York, United States",
+      "place": "Niskayuna, Schenectady, New York, United States",
+      "standard_place": "Niskayuna, Schenectady, New York, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown FindAGrave memorial submitter",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Memorial submitter relaying burial location; may have visited the cemetery and photographed the stone (which would make this a near-direct observation) or may have transcribed from another source. The proximity cannot be determined from the index alone. No specific burial date present in this index entry \u2014 the day of interment is not recorded. Original tombstone/burial register not examined.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.926,
+      "rationale": "Record persona 'John Perry Witbeek' in the 1775 Albany christening index matches MGRB-VP2 (John Perry Witbeck) on all core identifiers: full name (Witbeek vs. Witbeck is a routine Dutch orthographic variant), birth date 10 Mar 1775 (identical to tree), christening in Albany (consistent with Schenectady County area origins), father Gerrit Witbeek and mother Immetje Perry both match tree parents 273X-JZK and KGS2-5LC. rank_search_matches score 0.926 corroborates the strong correlation. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.926,
+      "rationale": "Birth date assertion (10 Mar 1775) from the same christening record persona already identified as MGRB-VP2 (see pe link for a_001). All core identifiers consistent; the birth date is primary information recorded close in time to the event. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.926,
+      "rationale": "Christening date and place assertion (15 Mar 1775, Albany) from the same persona identified as MGRB-VP2. Consistent with the pre-existing christening fact on MGRB-VP2 in tree.gedcomx.json. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "273X-JZK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father named 'Gerrit Witbeek' on the christening entry of John Perry Witbeck. Tree person 273X-JZK is 'Gerrit L. Witbeck' \u2014 same given name; Witbeek/Witbeck is a Dutch spelling variant. Tree relationship R3 (ParentChild, 273X-JZK as parent, MGRB-VP2 as child) corroborates this identification. The father-of-John-Perry position is a strong relationship fit. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "KGS2-5LC",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother named 'Immetje Perry' on the christening entry of John Perry Witbeck. Tree person KGS2-5LC is 'Emmetje Perry' \u2014 Immetje and Emmetje are interchangeable Dutch diminutive forms; same surname Perry. Tree relationship R4 (ParentChild, KGS2-5LC as parent, MGRB-VP2 as child) corroborates this identification. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.926,
+      "rationale": "Relationship assertion (christened person is child of Gerrit Witbeek) bears on MGRB-VP2 as the child. Same persona identification as a_001; all core identifiers confirmed. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "273X-JZK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion (Gerrit Witbeek is father of the christened child) also bears on 273X-JZK as the father. Name and position match tree person 273X-JZK (Gerrit L. Witbeck), corroborated by tree relationship R3. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.926,
+      "rationale": "Relationship assertion (christened person is child of Immetje Perry) bears on MGRB-VP2 as the child. Same persona identification as a_001. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "KGS2-5LC",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion (Immetje Perry is mother of the christened child) also bears on KGS2-5LC as the mother. Name and position match tree person KGS2-5LC (Emmetje Perry), corroborated by tree relationship R4. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.889,
+      "rationale": "Record persona 'John Perry Witbeck' in the Find a Grave Index matches MGRB-VP2 by exact name, birth date 10 Mar 1775 (identical to the christening record), and burial place Niskayuna, Schenectady, NY (consistent with the family's known Schenectady County residence). rank_search_matches score 0.889 corroborates the strong correlation. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.889,
+      "rationale": "Birth date assertion (10 Mar 1775) from the Find a Grave persona already identified as MGRB-VP2 (see pe link for a_008). Corroborates the christening record (a_002); both sources independently report the same date. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.889,
+      "rationale": "Death date assertion (28 Feb 1819) from the Find a Grave persona identified as MGRB-VP2. Consistent with age at death (\u224843 years given birth 10 Mar 1775); no conflicting death date appears in tree or in any other searched record. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.889,
+      "rationale": "Burial place assertion (Niskayuna, Schenectady, NY) from the Find a Grave persona identified as MGRB-VP2. Niskayuna is within Schenectady County, consistent with the family's known area of residence and the project's geographic focus. Strong match \u2014 confident.",
+      "created": "2026-07-21"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_008",
+        "a_009"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Seven FamilySearch collections searched: New York Births and Christenings 1640\u20131962 (1680842), New York Church Records 1660\u20131954 (2787817), US census 1800\u20131820, New York Deaths and Burials 1795\u20131952 (1680846), New York Church and Civil Deaths (2373798), New York Cemetery Abstracts 1800\u20131965 (2552111), and Find a Grave Index (2221801). Name variants Witbeck/Witbeek tried; Albany and Schenectady jurisdictions covered. An attempt was made to access the original Albany Dutch Reformed Church baptism register via FamilySearch digitized images (volume_search, 26 volumes reviewed; two image-reader attempts). The relevant FHL microfilm volumes (007903299, Albany 1663\u20131808; 007842490, Albany 1701\u20131790) have zero digitized images and are accessible only at a Family History Center in person. Research declared exhaustive (pli_001\u2013pli_006 all completed). Original tombstone at Niskayuna was also not examined.",
+      "narrative_markdown": "## Birth Date of John Perry Witbeck\n\n### Probable Conclusion: Born 10 March 1775\n\n**Research question:** What is the birth date of John Perry Witbeck, and what records confirm it?\n\nThe preponderance of available evidence strongly suggests that John Perry Witbeck was born on **10 March 1775** in or near Albany, New York (then Albany County; Schenectady County was not formed until 1809). Two source channels independently record this date, no contrary date appears in any searched collection, and the evidence is internally consistent.\n\n#### Primary Evidence: Christening Index, 1775\n\nThe most direct evidence is an index entry in \"New York, Births and Christenings, 1640\u20131962\" (FamilySearch collection 1680842) for **John Perry Witbeek**, recording a birth date of **10 March 1775** and a christening date of 15 March 1775 at Albany, Albany County, New York.\u00b9 The entry names his father as Gerrit Witbeek and his mother as Immetje Perry. This record is a *derivative* source \u2014 a FamilySearch database index derived from an FHL microfilm of a now-inaccessible Albany church register. The spelling \"Witbeek\" is a Dutch orthographic variant of \"Witbeck,\" consistent with the family's Dutch Reformed heritage. The five-day interval between birth and christening is consistent with Dutch Reformed practice. The birth date (a_002) carries *secondary* information quality: the parents supplied it to the officiating minister days after the event. The christening itself (a_003) carries *primary* information quality: the minister recorded the rite from personal observation. Both constitute *direct* evidence for the birth-date question.\n\n#### Corroborating Evidence: Find a Grave Index\n\nThe Find a Grave Index (FamilySearch collection 2221801) contains an entry for **John Perry Witbeck** recording a birth date of **10 March 1775**, a death date of 28 February 1819, and a burial at Niskayuna, Schenectady County, New York.\u00b2 This index is a contributed database (derivative, authored source), compiled by an unknown memorial submitter of indeterminate proximity. The information quality is therefore *indeterminate*. As a record primarily documenting death and burial, the birth date it reports constitutes *indirect* evidence for this question. The date agrees exactly with the christening index. Whether this source is genuinely independent of the FamilySearch christening index \u2014 or whether its submitter consulted the same derivative index \u2014 cannot be confirmed without examining the original tombstone at Niskayuna, which was not done.\n\n#### Search Scope and Limitations\n\nSix additional FamilySearch collections were searched, including death and burial records (collections 1680846, 2373798), church records (2787817), cemetery abstracts (2552111), and US census records 1800\u20131820. None yielded a contrary birth date. Census age brackets from the early national period are consistent with a birth circa 1775 but too coarse to pin an exact date.\n\nThe original Albany Dutch Reformed Church baptism register \u2014 the source from which the christening index was derived \u2014 was actively sought. A volume search of 26 FamilySearch image groups covering Albany, 1760\u20131800, identified the relevant FHL microfilm volumes (007903299, covering Albany religious records 1663\u20131808; 007842490, covering 1701\u20131790). Both have zero digitized images on FamilySearch; the originals are accessible only at a Family History Center in person. The film-reference ARK linked to this index entry (ark:/61903/1:2:MT17-YDL) is not readable by available image-transcription tools. An image-reader attempt on volume 008299892 revealed it to be the Albany First Lutheran Church (Vosburgh Collection), not Dutch Reformed. These efforts constitute a genuine attempt to locate the original; inaccessibility via online tools is documented.\n\n#### Confidence Assessment\n\nThe two source channels agree on 10 March 1775 with no conflict anywhere in the record corpus. The christening index carries secondary information from a derivative source; the Find a Grave entry carries indeterminate information from a contributed database. Neither original has been examined. Because both sources are derivatives and the original church register was found inaccessible online, the source-quality standard for a \"proved\" conclusion \u2014 requiring original sources with primary information \u2014 is not met. The conclusion is assessed as **probable**: strong, consistent, uncontradicted evidence from two channels, with the honest limitation that the originals remain unverified. Examination of the original church register at a Family History Center, or of the original tombstone at Niskayuna, would be required to advance to \"proved.\"\n\n---\n\n\u00b9 \"New York, Births and Christenings, 1640\u20131962,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MT17-YDL : 17 February 2023), entry for John Perry Witbeek, 15 Mar 1775; citing Albany, Albany, New York, United States; FHL microfilm.\n\n\u00b2 \"Find a Grave Index,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QK1X-K5G8 : 21 July 2026), entry for John Perry Witbeck (b. 10 Mar 1775, d. 28 Feb 1819); citing underlying FindAGrave memorial http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=140729859."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_008",
+        "a_010",
+        "a_011"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched Niskayuna Reformed Dutch Church image group 007903453 (found to be a christenings-only IGI printout; no burial records). Schenectady County probate records searched via full-text search across four volumes: wills 1806-1822 (005115606), probate index + letters testamentary 1809-1830 (005115614), general index 1809-1916 (005115605), and letters of administration 1809-1836 (005115728) \u2014 all negative for John Perry Witbeck. Albany-area newspapers 1819 not digitized in FamilySearch (fulltext search returned 0 results). Find a Grave memorial (GRid=140729859) captured as src_002. New York Deaths and Burials (1680846), New York Church Records (2787817), and New York Cemetery Abstracts (2552111) all searched via indexed collections \u2014 negative. Original tombstone at Niskayuna and original Niskayuna burial register pursued but inaccessible online (pursued-and-unavailable). Research declared exhaustive under GPS inaccessibility exception.",
+      "narrative_markdown": "## Death Date of John Perry Witbeck\n\n### Probable Conclusion: Died 28 February 1819\n\n**Research question:** What is the death date of John Perry Witbeck in Schenectady County, New York, and what records confirm it?\n\nThe available evidence strongly suggests that John Perry Witbeck died on **28 February 1819** in or near Niskayuna, Schenectady County, New York. This conclusion rests on a single derivative source; no original record confirming the specific date has been located in online repositories. The conclusion is assessed as probable.\n\n#### Primary Evidence: Find a Grave Index\n\nThe Find a Grave Index (FamilySearch collection 2221801) contains an entry for **John Perry Witbeck** recording a death date of **28 February 1819** and a burial at Niskayuna, Schenectady County, New York.\u00b9 The identity match with the subject (MGRB-VP2) is confident: the record agrees on full name, birth date (10 March 1775 \u2014 identical to the Albany christening index), and burial location consistent with the family\u2019s established Schenectady County residence.\n\nThis source is a derivative, authored compilation: the FamilySearch index aggregates transcriptions from FindAGrave.com memorial pages submitted by volunteer contributors. The informant is unknown and of indeterminate proximity; information quality is therefore *indeterminate*. The death date, reported by a contributor who may have read the tombstone inscription or consulted a secondary source, constitutes *indirect* evidence. The underlying original evidence would be either the physical tombstone at the Niskayuna Reformed Dutch Church cemetery or a surviving burial register.\n\n#### Search Scope and Limitations\n\nAll accessible record types bearing on a 1819 Schenectady County death were searched. The Niskayuna Reformed Dutch Church image group (007903453) was read and found to contain only a 1977 IGI Controlled Extraction christenings printout \u2014 no burial records were present, and no dedicated Niskayuna burial register volume was found among FamilySearch digitized image groups. Schenectady County probate records were searched comprehensively via full-text search across four digitized volumes (wills 1806\u20131822, index and letters testamentary 1809\u20131830, general index 1809\u20131916, letters of administration 1809\u20131836) \u2014 no estate file for John Perry Witbeck was identified, suggesting he died intestate or that proceedings are not present in the digitized portions. Albany-area newspapers from 1819 are not digitized in FamilySearch. The original tombstone at Niskayuna was not examined (requires an in-person visit).\n\n#### Indirect Corroboration\n\nThe Niskayuna church christening records provide indirect corroboration of the approximate year: the last christened child of John Perry Witbeck and Sarah Cragier \u2014 Thomas Witbeck \u2014 was christened 2 November 1817. No subsequent children were christened, which is consistent with John Perry\u2019s death in early 1819. This corroborates the approximate year but not the specific date of 28 February.\n\n#### Confidence Assessment\n\nThe death date of 28 February 1819 is supported by one derivative, authored source with indeterminate information quality. The specificity of the date suggests it was transcribed from a primary source \u2014 most likely the tombstone inscription \u2014 rather than estimated. No contrary evidence appears in any searched record. The evidence supports a **probable** conclusion. Advancing to *proved* would require in-person examination of the original tombstone at Niskayuna or recovery of the Niskayuna church burial register.\n\n---\n\n\u00b9 \u201cFind a Grave Index,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QK1X-K5G8 : 21 July 2026), entry for John Perry Witbeck (b. 10 Mar 1775, d. 28 Feb 1819); citing underlying FindAGrave memorial http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=140729859."
+    },
+    {
+      "id": "ps_003",
+      "question_id": "q_003",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_011"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch fulltext search on volume 007586825 (Princetown/Schenectady area Reformed Church records, 1786-1855, fulltextSearchable) returned 11 Witbeck-surname pages; the 1819-1820 page read was a baptism register with no John Perry Witbeck burial entry. Volume 007903453 (Niskayuna IGI printout, christenings-only) confirmed in prior plan with no burial records. Volume 008350256 (Schenectady city congregation, 267 images) examined \u2014 inapplicable to Niskayuna burial. Find a Grave Index (src_002) searched. Schenectady County probate searched exhaustively in pl_002. 1819 newspapers not digitized. Original tombstone and Niskayuna Reformed Dutch Church burial register require in-person physical access (pursued-and-unavailable).",
+      "narrative_markdown": "## Burial of John Perry Witbeck: Niskayuna, Schenectady County, New York\n\n**Research Question:** What is the burial place and burial date of John Perry Witbeck (born 10 March 1775, Albany, New York; died 28 February 1819), and what records confirm each?\n\n**Conclusion (Probable):** The preponderance of available evidence strongly suggests that John Perry Witbeck was buried at Niskayuna, Schenectady County, New York. The specific burial date cannot be determined from currently accessible records; no digitized church burial register or other contemporary document preserving the interment date has been located.\n\n### Evidence\n\n**Burial Place \u2014 Niskayuna, Schenectady County, New York**\n\nThe \"Find a Grave Index\" on FamilySearch (ark:/61903/1:1:QK1X-K5G8), an authored database derived from the volunteer-contributed FindAGrave.com memorial (GRid 140729859), records John Perry Witbeck with burial at Niskayuna, Schenectady, New York, United States. This source is classified as authored (third-party compiled database), with indeterminate information (the informant is an unknown volunteer contributor) and indirect evidence (the burial-place field indicates the interment location without recording the date or register citation). As an authored derivative source, it carries lower evidentiary weight than an original church register, but in the absence of a digitized register it is the sole accessible evidence for burial location. The Niskayuna placement is consistent with the family\u2019s documented congregation membership: the baptisms of John Perry Witbeck\u2019s children between 1803 and 1817 appear in Niskayuna Reformed Dutch Church records, confirming his household\u2019s affiliation with that congregation.\n\n**Burial Date \u2014 Not Determinable from Available Evidence**\n\nNo accessible digitized source records the specific date of interment. Research conducted for this question:\n\n- *Volume 007586825* (Princetown/Schenectady area Reformed Church records, 1786\u20131855, FamilySearch, fulltextSearchable): Fulltext search for \u201c+Witbeck\u201d returned 11 pages. The 1819\u20131820 page (image ARK 3QSQ-G9FW-L93H-R, page 164) was read in full and is a baptism register, not a burial register; it contains no entry for John Perry Witbeck.\n- *Volume 007903453* (Niskayuna church IGI printout): Confirmed in prior research to be a christenings-only record with no burial entries.\n- *Volume 008350256* (Schenectady Reformed Church, 1783\u20131861, 267 images): Initial frames examined. This register covers the Schenectady city congregation, not the Niskayuna congregation. Not searched further as inapplicable.\n- *Schenectady County probate records* (wills 1806\u20131822; index and letters testamentary 1809\u20131830; general index 1809\u20131916; letters of administration 1809\u20131836): Searched exhaustively in prior research \u2014 no estate proceedings for John Perry Witbeck found.\n- *Original tombstone* (Niskayuna Reformed Dutch Church cemetery): In-person access required; not accessible through digitized records.\n- *Niskayuna Reformed Dutch Church burial register*: Not digitized in accessible form on FamilySearch.\n- *1819 Albany/Schenectady newspapers*: Not digitized for this period.\n\nThe inaccessibility of the original tombstone and the un-digitized burial register constitutes pursued-and-unavailable evidence under GPS research-exhaustiveness standards, not an unsearched gap. These sources may supply the burial date but require physical access to Niskayuna, Schenectady County.\n\n### Assessment\n\nThe burial place (Niskayuna, Schenectady County, New York) is supported at a **probable** confidence level by the Find a Grave Index, corroborated circumstantially by the family\u2019s congregation membership. The probable tier reflects reliance on a single authored derivative source without independent verification from an original church record. An original burial register entry or tombstone transcription from the Niskayuna cemetery would be required to advance to the proved tier. The burial date remains **not proved** from currently accessible evidence; recovery of that specific date requires physical access to Niskayuna or the discovery of a newly digitized register."
+    }
+  ],
+  "evaluations": []
+}

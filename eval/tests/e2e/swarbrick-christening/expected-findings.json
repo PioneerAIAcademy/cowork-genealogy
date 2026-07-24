@@ -1,0 +1,75 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Robert Swarbrick's father was John Swarbrick (about 1764–1830, of Carleton, Poulton-le-Fylde, Lancashire). Established by the 20 December 1797 St. Chad, Poulton-le-Fylde christening record naming Robert as son of John Swarbrick and Grace, alongside his twin brother John.",
+      "details": {
+        "subject_person": "Robert Swarbrick (PID MM4W-19N)",
+        "relation": "father",
+        "target_person": {
+          "name": "John Swarbrick",
+          "birth": "~1764, Carleton, Poulton-le-Fylde, Lancashire, England"
+        }
+      },
+      "supporting_sources": [
+        "England, Lancashire, Parish Registers 1538-1910 — christening of Robert Swarbrick (twin of John), 20 Dec 1797, St. Chad, Poulton-le-Fylde, son of John Swarbrick and Grace"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Robert Swarbrick's mother was Grace Collinson (about 1769–1825, of Carleton, Lancashire), wife of John Swarbrick. Established by the same 1797 Poulton-le-Fylde christening record.",
+      "details": {
+        "subject_person": "Robert Swarbrick (PID MM4W-19N)",
+        "relation": "mother",
+        "target_person": {
+          "name": "Grace Collinson",
+          "birth": "~1769, Carleton, Lancashire, England"
+        }
+      },
+      "supporting_sources": [
+        "England, Lancashire, Parish Registers 1538-1910 — christening of Robert Swarbrick (twin of John), 20 Dec 1797, St. Chad, Poulton-le-Fylde, son of John Swarbrick and Grace"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Robert Swarbrick was christened on 20 December 1797 at St. Chad, Poulton-le-Fylde, Lancashire, England (born about 19 December 1797, Carleton), as a twin with his brother John.",
+      "details": {
+        "target_person": {
+          "name": "Robert Swarbrick",
+          "pid": "MM4W-19N"
+        },
+        "fact_type": "Christening",
+        "date": "20 December 1797",
+        "place": "St. Chad, Poulton-le-Fylde, Lancashire, England"
+      },
+      "supporting_sources": [
+        "England, Lancashire, Parish Registers 1538-1910 — christening of Robert Swarbrick (twin of John), 20 Dec 1797, St. Chad, Poulton-le-Fylde",
+        "England, Births and Christenings, 1538-1975 — Robert Swarbrick, 1797"
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT attach this Robert Swarbrick (husband of Ellen Gardner, d. 1839 Hambleton) to the parents of the OTHER same-name Robert Swarbrick christened 11 June 1797 in the parish of Hambleton, son of William Swarbrick. The two Roberts were christened within months of each other in neighboring Lancashire parishes and are easily confused. Pass = the recovered father is John Swarbrick (not William Swarbrick), and no parentage tracing back to a Hambleton-parish William Swarbrick christening is asserted for this Robert (or it appears only as an explicitly rejected hypothesis).",
+      "details": {
+        "subject_person": "Robert Swarbrick (PID MM4W-19N)",
+        "relation": "father",
+        "wrong_candidate": {
+          "name": "William Swarbrick",
+          "note": "father of the OTHER Robert Swarbrick, christened 11 Jun 1797 in the parish of Hambleton, Lancashire — a different family, same name, same year, neighboring parish"
+        }
+      },
+      "supporting_sources": [
+        "England, Lancashire, Parish Registers 1538-1910 — christening of Robert Swarbrick, 11 Jun 1797, Hambleton, son of William Swarbrick (the wrong-family candidate the agent must decline)"
+      ],
+      "required": true
+    }
+  ]
+}

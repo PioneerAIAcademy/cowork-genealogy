@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_john_perry_witbeck_vitals",
+    "objective": "What are the birth date, death date, and burial date of John Perry Witbeck, and what evidence confirms each event in Schenectady County, New York?",
+    "subject_person_ids": [
+      "MGRB-VP2"
+    ],
+    "status": "active",
+    "created": "2026-07-21",
+    "updated": "2026-07-21"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

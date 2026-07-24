@@ -117,6 +117,7 @@ const ID_PREFIXES: Record<string, string> = {
   timelines: "t_",
   proof_summaries: "ps_",
   evaluations: "ev_",
+  localities: "loc_",
 };
 
 /**
@@ -288,6 +289,36 @@ function checkRefExists(
   }
 }
 
+/**
+ * Scalar-typed fields declared `["string", "null"]` in research.schema.json.
+ *
+ * `checkAllowedKeys` only checks that a KEY is permitted, never that its value
+ * has the declared type, so an object handed to a scalar field slipped through
+ * both here and through the writer tools' validate-before-persist. Observed:
+ * record-extraction ut_017 (2026-07-19) corrected a typo'd assertion date via
+ * an `extraction_append` update op carrying
+ * `date: { value: "March 14, 2021", iso: "2021-03-14" }`, which persisted and
+ * only failed later against the JSON Schema.
+ */
+function checkStringOrNull(
+  obj: any,
+  fields: string[],
+  path: string,
+  report: ValidationReport
+): void {
+  for (const field of fields) {
+    if (!(field in obj)) continue;
+    const v = obj[field];
+    if (v !== null && typeof v !== "string") {
+      addError(
+        report,
+        path,
+        `'${field}' must be a string or null (got ${Array.isArray(v) ? "array" : typeof v})`
+      );
+    }
+  }
+}
+
 interface ResearchIds {
   questions: Set<string>;
   plans: Set<string>;
@@ -337,6 +368,7 @@ export const RESEARCH_SHAPES = {
     "project", "researcher_profile", "known_holdings", "questions", "plans",
     "log", "sources", "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
+    "localities",
   ]),
   project: new Set([
     "id", "title", "objective", "subject_person_ids", "status",
@@ -378,7 +410,7 @@ export const RESEARCH_SHAPES = {
   source: new Set([
     "id", "gedcomx_source_description_id", "citation", "citation_detail",
     "source_classification", "repository", "access_date", "url",
-    "url_archived", "notes", "transcription", "log_entry_id",
+    "url_archived", "notes", "transcription", "image_filename", "log_entry_id",
   ]),
   citation_detail: new Set([
     "who", "what", "when_created", "when_accessed", "where", "where_within",
@@ -428,6 +460,11 @@ export const RESEARCH_SHAPES = {
   evaluation_entry: new Set([
     "id", "focus", "target_id", "target_type", "verdict", "file_path",
     "timestamp", "superseded_by",
+  ]),
+  locality: new Set([
+    "id", "place", "for_place", "time_period", "jurisdictions",
+    "collections", "quirks", "guide_markdown", "pages_read", "source",
+    "created", "updated",
   ]),
 };
 
@@ -655,6 +692,18 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("outcome" in entry) {
       checkEnum(entry.outcome, "log_outcome", lp, report);
     }
+    // A log entry's plan_item_id must be a plan-item id (^pli_) or null. The
+    // JSON-Schema validator enforces that prefix; validate_research_schema here
+    // did not — a drift that let a bad value (e.g. a question id q_001 stuffed
+    // into the slot) pass here while the JSON-Schema validator rejected it,
+    // hard-failing the write downstream. Close the gap by MATCHING the schema:
+    // a prefix check, not full ref-existence (JSON Schema can't express
+    // ref-existence, and requiring it here would reject a well-formed but
+    // dangling pli_ that the schema accepts — a new divergence in the other
+    // direction).
+    if (entry.plan_item_id) {
+      checkIdPrefix(entry.plan_item_id, ID_PREFIXES.plan_items, lp, report);
+    }
 
     const ext = entry.external_site;
     if (entry.tool === "external_site" && ext === null) {
@@ -711,6 +760,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       "evidence_type", "extracted_for_question_ids",
     ], ap, report, NULLABLE_FIELDS);
     checkAllowedKeys(a, RESEARCH_SHAPES.assertion, "assertions", ap, report);
+    checkStringOrNull(
+      a,
+      ["date", "place", "standard_place", "record_persona_id", "informant_bias_notes"],
+      ap,
+      report
+    );
     if ("id" in a) {
       checkIdPrefix(a.id, ID_PREFIXES.assertions, ap, report);
       ids.assertions.add(a.id);
@@ -893,6 +948,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
 
   // Evaluations
   validateEvaluations(data, ids, path, report);
+  validateLocalities(data, path, report);
 
   return ids;
 }
@@ -969,6 +1025,34 @@ function validateEvaluations(
         addError(report, ep, `timestamp '${ev.timestamp}' is not a valid ISO 8601 date-time`);
       }
     }
+  }
+}
+
+function validateLocalities(
+  data: any,
+  path: string,
+  report: ValidationReport
+): void {
+  // Optional section: place/locale research knowledge written by locality-guide.
+  // Nested objects (jurisdictions / collections / pages_read items) are closed in
+  // the schema but not deep-checked here (same precedent as structured_value).
+  const localities = Array.isArray(data.localities) ? data.localities : [];
+  for (let i = 0; i < localities.length; i++) {
+    const loc = localities[i];
+    const lp = `${path}/localities[${i}]`;
+    checkRequired(
+      loc,
+      ["id", "place", "pages_read", "source", "created"],
+      lp,
+      report,
+      NULLABLE_FIELDS
+    );
+    checkAllowedKeys(loc, RESEARCH_SHAPES.locality, "localities", lp, report);
+    if ("id" in loc) {
+      checkIdPrefix(loc.id, ID_PREFIXES.localities, lp, report);
+    }
+    if ("created" in loc) checkIsoDate(loc, "created", lp, report);
+    if ("updated" in loc && loc.updated != null) checkIsoDate(loc, "updated", lp, report);
   }
 }
 

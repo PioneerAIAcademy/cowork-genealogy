@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Recovered — William Hubert Ferber linked as a couple to his wife Emma (Becker), recorded in the tree under her married name 'Emma Ferber', b. March 1871 Ohio (finding says Emma Becker, 25 Mar 1870 Cincinnati — month matches, year off by one). Spouse identity recovered.",
+    "f2": "Recovered exactly (and better) — the couple relationship carries Marriage 10 September 1890, Hamilton County, Ohio, matching the expected 1890 / Hamilton County answer with a full date. Proof tier proved, independent corroboration -> proof_quality 3."
+  },
+  "annotator": "ernest"
+}

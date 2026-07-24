@@ -8,12 +8,12 @@ import json
 import re
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
-from . import fs_oauth
-from .auth import get_current_user
+from . import agent_secrets, fs_oauth
+from .auth import fresh_fs_token, get_current_user
 from .config import get_settings
 from .db import get_session
 from .models import FamilySearchToken, Project, User, utcnow
@@ -25,6 +25,15 @@ from .seed import seed_sample_project
 # Sidecar log ids are filenames; constrain them so a crafted id can't escape the
 # results dir (the validate_research_schema path-traversal concern, spec §13).
 _LOG_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
+# Persisted source scans: images/<sanitized-key>.jpg (engine image-store.ts).
+# Rejects subdirectories, traversal, and any other extension.
+_IMAGE_REF_RE = re.compile(r"^images/[A-Za-z0-9._-]+\.jpg$")
+# Researcher uploads land in <project>/uploads/ — inside the project folder, so
+# the agent reads them with a relative path and they ride along in a feedback
+# bundle. The name is taken as a basename and constrained; no subdirectories.
+_UPLOAD_DIR = "uploads"
+_UPLOAD_MAX_BYTES = 25 * 1024 * 1024
+_UPLOAD_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ -]{0,120}$")
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
@@ -124,6 +133,34 @@ def _maybe_backfill_title(session: Session, project: Project, research: object) 
         session.refresh(project)
 
 
+async def sync_fs_token(session: Session, user: User, sandbox) -> str:
+    """Refresh the user's FamilySearch grant if needed and (re-)inject it into
+    `sandbox`. Returns the state the client renders: `ok` | `expired` | `none`.
+
+    **Why on every connect and not just at create.** FS caps a grant at 8h idle
+    / 24h absolute, so the token baked in at sandbox-create is dead by the next
+    day no matter how diligently the in-sandbox MCP self-refreshes. Re-injecting
+    here is also the only path by which a *fresh* front-door login reaches a
+    sandbox that already exists — which is what makes the "Reconnect
+    FamilySearch" banner actually able to fix anything.
+
+    `none` (the user never had a grant — dev-login / mock mode) is deliberately
+    distinct from `expired`: only the latter is worth interrupting someone over.
+
+    On `expired` the sandbox's own tokens.json is left ALONE rather than
+    cleared. The in-sandbox MCP refreshes on its own schedule, so its copy can
+    outlive the control plane's by a few minutes; clobbering it would turn a
+    stale-but-working session into a broken one.
+    """
+    if session.get(FamilySearchToken, user.id) is None:
+        return "none"
+    row = await fresh_fs_token(session, user.id)
+    if row is None:
+        return "expired"
+    await fs_oauth.write_tokens(sandbox, row.access_token, row.refresh_token, row.expires_at)
+    return "ok"
+
+
 async def create_project(
     *,
     session: Session,
@@ -161,11 +198,19 @@ async def create_project(
             fs_oauth.expires_at_from(token_json),
         )
     else:
-        row = session.get(FamilySearchToken, user.id)
-        if row is not None:
-            await fs_oauth.write_tokens(
-                sandbox, row.access_token, row.refresh_token, row.expires_at
-            )
+        # Refreshes first if the stored grant is stale — creating a session hours
+        # after signing in must not hand the sandbox an already-dead token.
+        await sync_fs_token(session, user, sandbox)
+    # Provision the sandbox's ~/.familysearch-mcp/config.json. `hosted` tells the
+    # in-sandbox MCP it is running in the VM, where the desktop `login` tool's
+    # loopback OAuth flow can never complete — see fs_oauth.hosted_config().
+    # Always written (not just when a key exists), because that marker is what
+    # keeps the login tool from claiming a browser tab opened on a headless VM.
+    await fs_oauth.write_config(sandbox, fs_oauth.hosted_config(settings.openrouter_api_key))
+    # The Anthropic key the Agent SDK runs on. Written here AND on every connect
+    # (the env copy injected at create() can never be updated afterwards, so it
+    # goes stale the moment the key is rotated). See app/agent_secrets.py.
+    await agent_secrets.write_secrets(sandbox)
     if sample:
         await seed_sample_project(sandbox)
 
@@ -306,6 +351,74 @@ async def session_sidecar(
     return {"raw": raw.decode("utf-8"), "mtime": mtime}
 
 
+@router.get("/{session_id}/image")
+async def session_image(
+    session_id: str,
+    filename: str,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+    provider: SandboxProvider = Depends(get_provider),
+) -> Response:
+    """Serve a persisted source page scan (images/<key>.jpg) from the session's
+    sandbox project folder, so the web viewer can show it beside a transcription
+    (§8.5). `filename` is validated to the images/<key>.jpg shape — no traversal,
+    no other path — mirroring the engine + Electron readers."""
+    if not _IMAGE_REF_RE.match(filename) or ".." in filename:
+        raise HTTPException(status_code=400, detail="Invalid image filename")
+    project = _owned(session, user, session_id)
+    sandbox = await provider.get(project.sandbox_id)
+    raw = await sandbox.read_file(f"{PROJECT_DIR}/{filename}")
+    if raw is None:
+        raise HTTPException(status_code=404, detail="Image not found")
+    return Response(content=raw, media_type="image/jpeg")
+
+
+@router.post("/{session_id}/files")
+async def upload_session_file(
+    session_id: str,
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+    provider: SandboxProvider = Depends(get_provider),
+) -> dict:
+    """Write a researcher-supplied document/image into <project>/uploads/.
+
+    This is the only way bytes get into a session. The FamilySearch tools reach
+    FS-hosted record images, but a scan from another site, a county PDF, or a
+    photo of a family bible has no path in without it — the researcher could
+    only describe it. The agent reads the result with a relative path
+    ("uploads/<name>"), and because it lives in the project folder it is also
+    captured in any feedback bundle.
+    """
+    project = _owned(session, user, session_id)
+
+    # Basename only: a client-supplied name may carry a path (some browsers send
+    # one for directory uploads) and must never steer the write.
+    raw_name = (file.filename or "").replace("\\", "/").split("/")[-1].strip()
+    if not _UPLOAD_NAME_RE.match(raw_name) or ".." in raw_name:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid filename. Use letters, numbers, spaces, dots, dashes or "
+                "underscores (max 120 characters)."
+            ),
+        )
+
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="That file is empty.")
+    if len(data) > _UPLOAD_MAX_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"That file is larger than the {_UPLOAD_MAX_BYTES // (1024 * 1024)} MB limit.",
+        )
+
+    sandbox = await provider.resume(project.sandbox_id)
+    rel = f"{_UPLOAD_DIR}/{raw_name}"
+    await sandbox.write_file(f"{PROJECT_DIR}/{rel}", data)
+    return {"path": rel, "sizeBytes": len(data)}
+
+
 @router.get("/{session_id}/logs")
 async def session_logs(
     session_id: str,
@@ -339,12 +452,22 @@ async def connect_session(
     subprocess); each returns its own wss:// or ws:// URL."""
     project = _owned(session, user, session_id)
     sandbox = await provider.resume(project.sandbox_id)
+    # Refresh the operator secrets BEFORE the agent can be handed a turn, so a
+    # rotated Anthropic key reaches sandboxes created under the old one.
+    await agent_secrets.write_secrets(sandbox)
+    # Same reasoning for the user's FamilySearch grant, which expires far faster
+    # (24h absolute) than the 30-day app session cookie — so the app looks
+    # signed in long after FamilySearch has stopped answering. `familysearch`
+    # tells the client whether to show the "Reconnect" banner. Every reconnect
+    # lands here (WsSessionConnection re-fetches credentials per attempt), which
+    # is what makes a tab left open overnight recover on its own.
+    fs_state = await sync_fs_token(session, user, sandbox)
     conn = await sandbox.expose_port(SANDBOX_WS_PORT)
     token = mint_token(project.sandbox_id)
     project.last_active = utcnow()
     session.add(project)
     session.commit()
-    return {"wssUrl": conn.url, "token": token}
+    return {"wssUrl": conn.url, "token": token, "familysearch": fs_state}
 
 
 @router.delete("/{session_id}")

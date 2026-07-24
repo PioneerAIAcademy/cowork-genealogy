@@ -1,0 +1,19 @@
+{
+  "id": "ogletree-children",
+  "name": "Lewis Washington Ogletree",
+  "genre": "strip",
+  "source_pid": "GW4W-DTG",
+  "captured": "2026-07-20",
+  "researcher_question": "Who were the children of Lewis Washington Ogletree, born 1882 in Georgia, who married Mattie Pearcy in 1905 in Spalding County, Georgia and later moved to Chicago, Illinois?",
+  "tags": {
+    "question_type": "children",
+    "era": "1910s",
+    "geography": "US-GA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "African American family. Subject Lewis Washington Ogletree (1882-1955) married Mattie Pearcy (1 Nov 1905, Spalding Co, GA), had 5 children, then migrated to Chicago by the 1920s (2nd wife Nellie Mae, m.1924, no children in tree). Children recoverable from records: 1910 Spalding census (MLLW-J7F) names Annie + Girard ('Guyson') as children of L W & Mattie Ogletree; 1930 Chicago census (XSTQ-2BF) shows the sibling group Louise, Girard, Willa Mae ('Willie M'), Lewis Jr ('Lewis W'). Girard is the linchpin appearing in both censuses. Indexing variants: Girard='Guyson' (1910); Willa Mae='Willie M' (1930). NOTE the 1930 household head 'Hattie L Ogletree' (b.1900) is NOT a child (predates the 1905 marriage). Required: Annie, Girard, Louise, Willa Mae. Bonus: Lewis Washington Jr (identical name to father, conflation risk)."
+}

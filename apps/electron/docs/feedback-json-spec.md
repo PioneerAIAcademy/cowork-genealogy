@@ -6,7 +6,7 @@ Electron viewer). Specifically `src/main/feedback.ts` and the
 submission dialog.
 **Repo that consumes this spec:** `cowork-genealogy` (this repo).
 The feedback workflow (`docs/specs/feedback-case-spec.md`) and two
-Claude Code skills (`/compare-state`, `/draft-unit-test`) read
+Claude Code skills (`/compare-state`, `/mine-unit-test`) read
 `feedback.json` from inside the submitted zip.
 
 This spec is the contract between the two repos. The viewer must
@@ -65,11 +65,19 @@ related additions (manifest, screenshots) go inside `_feedback/`.
   "user_prompt": "Find a marriage record for John Smith born 1850 in Ohio.",
   "agent_did": "The agent searched the 1860 census and reported no results, then stopped.",
   "agent_should_have": "The agent should have tried the 1870 and 1880 censuses, and should have searched marriage records in Ohio counties.",
+  "correct_answer": "",
   "notes": "",
   "project_folder_path": "/Users/example/genealogy/smith-family",
   "platform": "darwin"
 }
 ```
+
+**Two producers, one schema.** The Electron viewer
+(`apps/electron/src/main/feedback.ts`) and the hosted web workbench
+(`apps/server/app/feedback.py`) both emit this file, and the triage workflow
+consumes either unchanged. The web producer additionally emits `build_date` and
+`git_sha` (below) and sets `platform` to the literal `"web"`; everything else is
+identical.
 
 ### Field reference
 
@@ -81,10 +89,13 @@ related additions (manifest, screenshots) go inside `_feedback/`.
 | `email` | string | yes | May be empty string for anonymous submissions. Not used by the workflow's automation; included so devs can follow up. |
 | `user_prompt` | string | yes | Verbatim text of the prompt the user typed when the bad result occurred. The Claude Code session re-issues this verbatim in §3.2 of the workflow spec. |
 | `agent_did` | string | yes | The user's free-text description of what the agent actually did wrong. Read by `/compare-state --against=what-went-wrong` to confirm repro. |
-| `agent_should_have` | string | yes | The user's free-text description of what the agent should have done. Read by `/compare-state --against=desired` to verify fixes and by `/draft-unit-test` as the starting-point rubric. |
+| `agent_should_have` | string | yes | The user's free-text description of what the agent should have done. Read by `/compare-state --against=desired` to verify fixes and by `/mine-unit-test` as the starting-point rubric. |
 | `notes` | string | yes | Free-text notes ("first time this happened", "had this same issue last week", etc.). Always present; empty string when the user left the field blank. Same model as `email`. |
 | `project_folder_path` | string | yes | Absolute path of the project folder the user was working in when they submitted. Lets devs disambiguate when one user has multiple projects open and helps correlate with the user's filesystem layout. Mild PII; included because the diagnostic value outweighs the leak (the same path is already in `FEEDBACK.md` today). Empty string if the viewer cannot determine it. |
-| `platform` | string | yes | `process.platform` value at submit time (e.g. `"darwin"`, `"linux"`, `"win32"`). Useful for triaging viewer-specific bugs. Empty string if unknown. |
+| `correct_answer` | string | yes | The user's free-text description of the right answer *and the evidence for it*, for when the agent reached a **wrong conclusion** rather than an unproven one. Read by `/mine-unit-test` as attested ground truth when non-empty. Always present; empty string when the user left the field blank — and blank is the correct answer when the defect is the reasoning rather than the result, so consumers must not treat empty as a malformed submission. |
+| `platform` | string | yes | Which runtime produced the bundle. Electron sends `process.platform` (e.g. `"darwin"`, `"linux"`, `"win32"`); the hosted web workbench sends the literal `"web"`. Empty string if unknown. This is the field that tells a triager which product the report came from. |
+| `build_date` | string | web only | Build date of the hosted server that produced the bundle. Absent from Electron submissions — the viewer's `viewer_version` is its whole build identity. |
+| `git_sha` | string | web only | Commit sha of the hosted server that produced the bundle, so a triager can pin the exact checkout. Absent from Electron submissions. |
 
 ### Constraints
 
@@ -105,7 +116,9 @@ related additions (manifest, screenshots) go inside `_feedback/`.
   the example in this spec lists fields in a readable order for
   human reviewers, but consumers MUST NOT depend on order.
 - **Producer-side closure, consumer-side openness.** v1 producers
-  MUST emit only the fields listed above (no ad-hoc extras).
+  MUST emit only the fields listed above (no ad-hoc extras) —
+  including the two marked *web only*, which are part of the v1
+  contract rather than ad-hoc extras, and which Electron omits.
   Consumers MUST ignore unknown fields — this is what allows §5
   to add optional fields in a future schema_version without
   breaking older consumers. Together these rules give producers a
@@ -194,7 +207,7 @@ readable for the human reader. Only `feedback.json` is contractual.
 The viewer optionally includes `_feedback/session-log.jsonl` — the
 Claude Code transcript of the session in which the bad result
 occurred. The workflow uses it as **read-only context** for the dev
-and for the `/draft-unit-test` skill (to identify which tools the
+and for the `/mine-unit-test` skill (to identify which tools the
 agent called during the failure).
 
 ### Shape contract (when included)
@@ -286,7 +299,7 @@ acceptable for triage.
 
 A `_feedback/tool-calls.json` listing MCP tools called during the
 failure was considered. Rejected: the same data is in
-`session-log.jsonl` and `/draft-unit-test` computes it on demand.
+`session-log.jsonl` and `/mine-unit-test` computes it on demand.
 Storing a derived view risks divergence from the underlying log.
 
 ### 7.4 Screenshots — out of scope

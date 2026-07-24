@@ -1,0 +1,191 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Jessie Cleveland Reese (b. 1906) is a child of Benjamin Franklin Reese and Mallie Shue.",
+      "details": {
+        "subject_person": "Benjamin Franklin Reese (L4X1-2RB)",
+        "relation": "child",
+        "target_person": {
+          "name": "Jessie Cleveland Reese",
+          "birth": "1906, Texas"
+        }
+      },
+      "supporting_sources": [
+        "1910 and 1920 U.S. Census, Benjamin Reese household, Navarro County, Texas (son Jessie in the household)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Delia Reese (b. 1907) is a child of Benjamin Franklin Reese and Mallie Shue.",
+      "details": {
+        "subject_person": "Benjamin Franklin Reese (L4X1-2RB)",
+        "relation": "child",
+        "target_person": {
+          "name": "Delia Reese",
+          "birth": "11 June 1907, Belton, Bell, Texas"
+        }
+      },
+      "supporting_sources": [
+        "1910 and 1920 U.S. Census, Benjamin Reese household, Navarro County, Texas; Texas Births and Christenings (daughter of Benjamin F. Reese)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Cora Bell Reese (b. 1909) is a child of Benjamin Franklin Reese and Mallie Shue.",
+      "details": {
+        "subject_person": "Benjamin Franklin Reese (L4X1-2RB)",
+        "relation": "child",
+        "target_person": {
+          "name": "Cora Bell Reese",
+          "birth": "13 March 1909, Navarro, Texas"
+        }
+      },
+      "supporting_sources": [
+        "1910/1920/1930 U.S. Census, Benjamin Reese household, Navarro/Hill County, Texas; Texas Births and Christenings (daughter of Benjamin Franklin Reese)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "Lida Mae Reese (b. 1911) is a child of Benjamin Franklin Reese and Mallie Shue.",
+      "details": {
+        "subject_person": "Benjamin Franklin Reese (L4X1-2RB)",
+        "relation": "child",
+        "target_person": {
+          "name": "Lida Mae Reese",
+          "birth": "20 August 1911, Navarro, Texas"
+        }
+      },
+      "supporting_sources": [
+        "1920 U.S. Census, Benjamin Reese household, Navarro County, Texas; Texas Births and Christenings (daughter of Benjamin Franklin Reese)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f5",
+      "type": "relationship",
+      "description": "Whitfield Donald Reese (b. 1915) is a child of Benjamin Franklin Reese and Mallie Shue.",
+      "details": {
+        "subject_person": "Benjamin Franklin Reese (L4X1-2RB)",
+        "relation": "child",
+        "target_person": {
+          "name": "Whitfield Donald Reese",
+          "birth": "20 August 1915, Navarro, Texas"
+        }
+      },
+      "supporting_sources": [
+        "1920 and 1930 U.S. Census, Benjamin Reese household, Navarro/Hill County, Texas; Texas Births and Christenings (son of Ben F. Reese)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f6",
+      "type": "relationship",
+      "description": "Willard Franklin Reese (b. 1917) is a child of Benjamin Franklin Reese and Mallie Shue.",
+      "details": {
+        "subject_person": "Benjamin Franklin Reese (L4X1-2RB)",
+        "relation": "child",
+        "target_person": {
+          "name": "Willard Franklin Reese",
+          "birth": "6 September 1917, Texas"
+        }
+      },
+      "supporting_sources": [
+        "1920 and 1930 U.S. Census, Benjamin Reese household, Navarro/Hill County, Texas"
+      ],
+      "required": false
+    },
+    {
+      "id": "f7",
+      "type": "relationship",
+      "description": "Abner Wesley Reese (b. 1919) is a child of Benjamin Franklin Reese and Mallie Shue.",
+      "details": {
+        "subject_person": "Benjamin Franklin Reese (L4X1-2RB)",
+        "relation": "child",
+        "target_person": {
+          "name": "Abner Wesley Reese",
+          "birth": "11 August 1919, Corsicana, Navarro, Texas"
+        }
+      },
+      "supporting_sources": [
+        "1920 and 1930 U.S. Census, Benjamin Reese household, Navarro/Hill County, Texas; Texas Births and Christenings (son of Benjamin F. Reece)"
+      ],
+      "required": false
+    },
+    {
+      "id": "f8",
+      "type": "relationship",
+      "description": "Janie Faye Reese (b. 1921) is a child of Benjamin Franklin Reese and Mallie Shue.",
+      "details": {
+        "subject_person": "Benjamin Franklin Reese (L4X1-2RB)",
+        "relation": "child",
+        "target_person": {
+          "name": "Janie Faye Reese",
+          "birth": "4 November 1921, Navarro, Texas"
+        }
+      },
+      "supporting_sources": [
+        "1930 U.S. Census, Benjamin Reese household, Hill County, Texas; Texas Births and Christenings (daughter of Benjamin Franklin Reese)"
+      ],
+      "required": false
+    },
+    {
+      "id": "f9",
+      "type": "relationship",
+      "description": "Floyd Haden Reese (b. 1924) is a child of Benjamin Franklin Reese and Mallie Shue.",
+      "details": {
+        "subject_person": "Benjamin Franklin Reese (L4X1-2RB)",
+        "relation": "child",
+        "target_person": {
+          "name": "Floyd Haden Reese",
+          "birth": "8 July 1924, Chatfield, Navarro, Texas"
+        }
+      },
+      "supporting_sources": [
+        "1930 U.S. Census, Benjamin Reese household, Hill County, Texas; Texas Births and Christenings (son of Benjamin Franklin Reese)"
+      ],
+      "required": false
+    },
+    {
+      "id": "f10",
+      "type": "relationship",
+      "description": "Mary Janice Reese (b. 1927) is a child of Benjamin Franklin Reese and Mallie Shue.",
+      "details": {
+        "subject_person": "Benjamin Franklin Reese (L4X1-2RB)",
+        "relation": "child",
+        "target_person": {
+          "name": "Mary Janice Reese",
+          "birth": "18 March 1927, Texas"
+        }
+      },
+      "supporting_sources": [
+        "1930 U.S. Census, Benjamin Reese household, Hill County, Texas"
+      ],
+      "required": false
+    },
+    {
+      "id": "f11",
+      "type": "relationship",
+      "description": "Patsy Ruth Reese (b. 1930) is a child of Benjamin Franklin Reese and Mallie Shue.",
+      "details": {
+        "subject_person": "Benjamin Franklin Reese (L4X1-2RB)",
+        "relation": "child",
+        "target_person": {
+          "name": "Patsy Ruth Reese",
+          "birth": "2 March 1930, Texas"
+        }
+      },
+      "supporting_sources": [
+        "1930 U.S. Census, Benjamin Reese household, Hill County, Texas"
+      ],
+      "required": false
+    }
+  ]
+}

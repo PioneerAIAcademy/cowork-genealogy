@@ -1,0 +1,343 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Mary Catherine",
+          "surname": "Butler",
+          "id": "PID-TODO-name-1"
+        },
+        {
+          "id": "N3",
+          "type": "BirthName",
+          "given": "Mary",
+          "surname": "Butler",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-birth-mary",
+          "type": "Birth",
+          "date": "20 March 1908",
+          "standard_date": "20 Mar 1908",
+          "place": "Waterford, Waterford, Ireland",
+          "standard_place": "Waterford, Waterford, Ireland"
+        },
+        {
+          "id": "fact-marriage-mary",
+          "type": "Marriage",
+          "date": "1 February 1931",
+          "standard_date": "1 Feb 1931",
+          "place": "Waterford, Waterford, Ireland",
+          "standard_place": "Waterford, Waterford, Ireland"
+        },
+        {
+          "id": "F3",
+          "type": "Birth",
+          "date": "20 March 1908",
+          "place": "Waterford, County Waterford, Ireland",
+          "standard_place": "County Waterford, Ireland",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "p-husband",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Michael Thomas",
+          "surname": "Kelly",
+          "id": "p-husband-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-birth-michael",
+          "type": "Birth",
+          "date": "circa 1905",
+          "standard_date": "abt 1905",
+          "place": "Waterford, Waterford, Ireland",
+          "standard_place": "Waterford, Waterford, Ireland"
+        },
+        {
+          "id": "fact-death-michael",
+          "type": "Death",
+          "date": "16 October 1980",
+          "standard_date": "16 Oct 1980",
+          "place": "Waterford, Waterford, Ireland",
+          "standard_place": "Waterford, Waterford, Ireland"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "type": "BirthName",
+          "given": "John",
+          "surname": "Butler",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "1906-09-02",
+          "place": "Waterford, County Waterford, Ireland",
+          "standard_place": "County Waterford, Ireland",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F4",
+          "type": "Birth",
+          "date": "1881",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "place": "Kilkenny, County Kilkenny, Ireland",
+          "standard_place": "County Kilkenny, Ireland",
+          "primary": true
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1901",
+          "place": "Waterford City",
+          "standard_place": "County Waterford, Ireland",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Occupation",
+          "value": "Carpenter",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "Religion",
+          "value": "Roman Catholic",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "type": "BirthName",
+          "given": "Catherine",
+          "surname": "Canty",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "preferred": true
+        },
+        {
+          "id": "N4",
+          "type": "BirthName",
+          "given": "",
+          "surname": "Canty",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Marriage",
+          "date": "1906-09-02",
+          "place": "Waterford, County Waterford, Ireland",
+          "standard_place": "County Waterford, Ireland",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "p-husband",
+      "person2": "PID-TODO",
+      "facts": [
+        {
+          "id": "fact-rel-marriage",
+          "type": "Marriage",
+          "date": "1 February 1931",
+          "standard_date": "1 Feb 1931",
+          "place": "Waterford, Waterford, Ireland",
+          "standard_place": "Waterford, Waterford, Ireland"
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "PID-TODO",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        },
+        {
+          "ref": "S2",
+          "quality": 1
+        }
+      ],
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "PID-TODO",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        },
+        {
+          "ref": "S2",
+          "quality": 1
+        },
+        {
+          "ref": "S4",
+          "quality": 1
+        }
+      ],
+      "id": "R2"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 2
+        }
+      ],
+      "id": "R3"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-1",
+      "title": "Waterford No. 2 Urban District, Ireland, Mary Kate Butler Birth, 1908, General Register Office, Dublin; IrishGenealogy.ie"
+    },
+    {
+      "id": "src-2",
+      "title": "1911 Census of Ireland, County Waterford, Waterford No. 3 Urban, Monastery Street, household no. 4, John Butler; National Archives of Ireland"
+    },
+    {
+      "id": "S1",
+      "title": "Waterford No. 2 Urban District, Ireland, Mary Kate Butler Birth, 1908, General Register Office, Dublin; IrishGenealogy.ie",
+      "url": "https://www.irishgenealogy.ie/view/?record_id=e768beed6b-1731172",
+      "citation": "\"Birth Records,\" IrishGenealogy.ie, online transcription (https://www.irishgenealogy.ie/view/?record_id=e768beed6b-1731172 : accessed 22 July 2026), entry for Mary Butler, 20 March 1908, SR District Waterford; transcribed from General Register Office civil birth registers, Dublin; register image not examined."
+    },
+    {
+      "id": "S2",
+      "title": "Ireland Civil Registration Marriage, John Butler and Catherine Canty, 2 September 1906, Waterford \u2014 IrishGenealogy.ie index transcription",
+      "url": "https://www.irishgenealogy.ie/view/?record_id=cima-1949366",
+      "citation": "\"Ireland, Civil Registration Marriages,\" IrishGenealogy.ie (General Register Office, Dublin), online index/transcription, entry for John Butler and Catherine Canty, 2 September 1906, SR District: Waterford, Group Registration ID: 1949366; https://www.irishgenealogy.ie/view/?record_id=cima-1949366 (accessed 22 July 2026). Original civil marriage register image not examined."
+    },
+    {
+      "id": "S3",
+      "title": "Birth Registration Index for John Butler, 1881, Kilkenny \u2014 IrishGenealogy.ie online index (General Register Office, Dublin)",
+      "url": "https://www.irishgenealogy.ie/view/?record_id=e768beed6b-4776410",
+      "citation": "\"Ireland Civil Registration Births Index,\" IrishGenealogy.ie (General Register Office, Dublin), online index, entry for John Butler, birth year 1881, SR District/Reg Area: Kilkenny, Group Registration ID: 8930305; https://www.irishgenealogy.ie/view/?record_id=e768beed6b-4776410, accessed 22 July 2026. Register image not examined \u2014 online index only."
+    },
+    {
+      "id": "S4",
+      "title": "\"Ireland, Census, 1901,\" household of Elizabeth Dobbyn, Waterford City \u2014 John Butler",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QTSK-ZS3W",
+      "citation": "\"Ireland, Census, 1901,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPB5-2NQQ : accessed 2026-07-22), entry for John Butler in household of Elizabeth Dobbyn, Waterford City; National Archives of Ireland, http://www.census.nationalarchives.ie/reels/nai001235367/."
+    }
+  ]
+}

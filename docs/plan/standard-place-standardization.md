@@ -17,9 +17,9 @@ naming split.
 NAME) the only place vocabulary above the MCP tool layer — in skills, in
 SimplifiedGedcomX, and in persisted research artifacts. Keep `placeId` /
 `placeRepId` as private, cached, in-server plumbing.
-**Related:** `docs/plan/id-vocabulary-standardization-progress.md` (which
+**Related:** the earlier id-vocabulary standardization effort, which
 explicitly scoped the placeId chain OUT as "a separate task" — this is
-that task), and the `place-search`/`place-search-all` specs, which already
+that task; and the `place-search`/`place-search-all` specs, which already
 promise "a later phase will route every tool that needs a place ID through
 placeSearch so IDs stay inside the server."
 
@@ -428,14 +428,12 @@ converter/tool changes (expected; `eval/CLAUDE.md` snapshot model tracks
   field + sidecar rule + test 13.
 - `metadata-search-tool-spec.md`, `place-population-tool-spec.md`,
   `place-external-links-tool-spec.md`, `place-collections-tool-spec.md`
-  (documents `placeIds` across ~15 sites), `2026-05-07-timeline-distances-design.md`
-  (distance) — input-contract changes.
+  (documents `placeIds` across ~15 sites) — input-contract changes.
 - `gps-mentor-agent-spec.md` (lists `place_search`/`place_distance` in
   allowed-tools + usage, `:108-109,222,616`) — tool-usage guidance.
 - **Testing guides** (CLAUDE.md verify-before-ship playbooks):
-  `docs/testing-guides/place-population-tool-testing-guide.md`,
-  `place-external-links-tool-testing-guide.md`,
-  `place-collections-tool-testing-guide.md` all teach passing a `placeId` —
+  `place-external-links-tool-testing-guide.md` and
+  `place-collections-tool-testing-guide.md` both teach passing a `placeId` —
   rewrite to `standard_place`.
 - `research-schema-spec.md` (+ schema + validator + eval TS schema) — §8.
 - `types/place.ts` (stale `:74-75` comments), `CLAUDE.md` (place-helper
@@ -570,8 +568,8 @@ the key + date as a resolution hint.
      (resolver's version is used) — leave or remove with a CLAUDE.md note.
 5. **Schema** — ✅ **DONE**. research.json `timelines[].events[].place_id` →
    `standard_place`: `research.schema.json`, `validator.ts` (NULLABLE_FIELDS),
-   `eval/app/.../schema.ts` (TS mirror), `research-schema-spec.md` +
-   `2026-05-07-timeline-distances-design.md` (rows + derivation), and the
+   `eval/app/.../schema.ts` (TS mirror), `research-schema-spec.md`
+   (rows + derivation), and the
    `timeline` skill now persists `standard_place` on events (distance keys off
    `standard_place` equality). No Python stubs / scenario fixtures carried
    `place_id` (verified — no-op). Also fixed a step-4 leftover: `try-place-distance.ts`
@@ -583,8 +581,8 @@ the key + date as a resolution hint.
    description). Fixed the last stale skill call (`research-plan`'s
    `image_search({ placeId })` → `imageGroupNumber`). Manifest drift test
    green; `spec-review` run on the 4 specced tools. Confirmed out-of-scope
-   id-spaces left alone: `place-date-mechanics.md` / `docs/gps/record-search.md`
-   `{parent_place_id}` (record_search `f.*Place` filter), `place_collections`
+   id-spaces left alone: `record_search`'s
+   `{parent_place_id}` (`f.*Place` filter), `place_collections`
    upstream `searchMetadata.placeIds`, and Pop Stats / `q.placeId` internals.
    **Eval re-record needed (eval-team):** `eval/fixtures/mcp/place-search-*.json`
    mock the old place_search shape (`fullName` → should be `standardPlace`,
@@ -614,4 +612,4 @@ the key + date as a resolution hint.
 - Skills broken (`query` param + expect stripped placeId): `locality-guide:84`, `research-plan:124,127`, `timeline:129`, `search-external-sites:125`, `historical-context:90`
 - `place_collections.placeIds` separate id-space, unused by skills: `place-collections.ts:305`, grep `packages/engine/plugin/` empty
 - Prior "drop place IDs for human-readable" decision: `research-schema-spec.md:1438`
-- This task scoped out of id-vocabulary effort: `id-vocabulary-standardization-progress.md:6`
+- This task scoped out of the earlier id-vocabulary effort

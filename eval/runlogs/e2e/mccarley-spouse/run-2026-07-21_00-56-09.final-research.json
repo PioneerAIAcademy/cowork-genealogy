@@ -1,0 +1,833 @@
+{
+  "project": {
+    "id": "rp_mccarley_spouse",
+    "objective": "Who was the spouse of Moses J McCarley Sr, who was born 17 January 1767 and died 9 April 1844?",
+    "subject_person_ids": [
+      "L7P6-3TT"
+    ],
+    "status": "completed",
+    "created": "2026-07-14",
+    "updated": "2026-07-21"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who did Moses J McCarley Sr (born 17 January 1767; died 9 April 1844, Owen County, Indiana) marry?",
+      "rationale": "The project objective directly asks for Moses's spouse. No Couple relationship exists for him in the tree, yet he fathered at least ten children born in Garrard County, Kentucky between about 1792 and 1808. Kentucky marriage records and Garrard County records are the most logical starting point. This is the gatekeeper question \u2014 answering it fulfills the entire research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-20",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004"
+      ],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "FamilySearch marriage records searched (Kentucky County Marriages, 1786-1965) \u2014 found derivative index entry naming Elizabeth Patt as Moses Sr.'s bride, 24 Jul 1792, Lincoln County, KY. Indiana census (1830, 1840) and Owen County probate (1819-1845) returned nil on FamilySearch \u2014 these collections are not indexed on FamilySearch for this jurisdiction and period. The original Lincoln County marriage register image (ark:/61903/3:1:3Q9M-C9BK-BSZ8-3) was attempted but could not be read due to transient OpenRouter connectivity failure (not permanently inaccessible). Ancestry and Indiana State Archives (for census/probate) are not accessible in this autonomous session. Terminating on resource-limit grounds: the accessible FamilySearch evidence has been exhausted. The question is answered at probable confidence by the derivative marriage record, but GPS exhaustiveness cannot be declared. Remaining steps for a future session: (1) read original Lincoln County register image when OpenRouter is restored; (2) search Ancestry for Indiana probate (1844 estate of Moses McCarley, Owen County) and Indiana census (1830, 1840); (3) consider land records in Owen County/Kentucky as additional corroboration.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Probable answer obtained: src_001 (derivative) names Elizabeth Patt as Moses Sr.'s bride in a period-contemporary Lincoln County, Kentucky marriage record; Q28D-NHWN is attached to L7P6-3TT on FamilySearch with match score 0.917.",
+          "repository_breadth": "FamilySearch marriage (KY County Marriages collection), census (1830, 1840 Indiana \u2014 nil, unindexed), and probate (Owen Co. Indiana \u2014 nil, unindexed) all searched with multiple spelling variants. Ancestry and Indiana State Archives not searched (session constraint). Land records not searched.",
+          "original_substitution": "NOT MET. Both sources are derivative indexes from Kentucky County Marriages, 1786-1965. Original Lincoln County register image attempted (ark:/61903/3:1:3Q9M-C9BK-BSZ8-3) but unreadable \u2014 OpenRouter connectivity failure (transient, not permanently inaccessible). Image exists on FamilySearch; retry when OpenRouter is restored.",
+          "independent_verification": "NOT MET. src_001 and src_002 are from the same collection (Kentucky County Marriages, 1786-1965). No record from an independent repository names Elizabeth Patt as Moses Sr.'s wife.",
+          "evidence_class": "NOT MET. Both sources are derivative indexes; no original record with primary information has been accessed for this question.",
+          "conflict_resolution": "NOT MET. Sophia McCarley born 19 Apr 1792, approximately 3 months before the recorded marriage bond date of 24 Jul 1792 \u2014 possible bond-vs.-ceremony-date discrepancy noted in a_003 and a_004 but unresolved. Reading the original register could clarify.",
+          "overturn_risk": "MODERATE. The original Lincoln County register could show a different bride name or date than the index transcription. Owen County Indiana probate (not indexed on FamilySearch; Ancestry and local archives unsearched) could name a different or additional wife. These unsearched sources present real overturn risk."
+        }
+      },
+      "created": "2026-07-21"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-20",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Garrard County / Madison County / Lincoln County, Kentucky",
+          "date_range": "1785-1800",
+          "repository": "FamilySearch",
+          "rationale": "Kentucky County Marriages, 1786-1965 (collection 1804888) is the largest indexed Kentucky marriage collection (3.3M records). Moses's first known child was born April 1792 in the area that became Garrard County (formed 1796 from Madison and Lincoln counties), so his marriage likely occurred 1789-1792 in Madison or Lincoln County. This is the highest-probability source for a direct marriage record naming Moses's wife.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Owen County, Indiana",
+          "date_range": "1840",
+          "repository": "FamilySearch",
+          "rationale": "Moses died in Owen County, Indiana on 9 April 1844. The 1840 US Federal Census would show his household ~4 years before his death. His wife would appear as a female tick in an age column (likely 50-59 for a woman who married ~1790). The household composition also corroborates other children still at home and confirms the spouse's approximate birth year, narrowing candidate identification.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "probate",
+          "jurisdiction": "Owen County, Indiana",
+          "date_range": "1819-1845",
+          "repository": "FamilySearch",
+          "rationale": "Moses died 9 April 1844 in Owen County, Indiana (formed 1819). His will or estate administration record would be filed in Owen County Circuit/Common Pleas Court and would likely name his wife as heir or executrix \u2014 direct evidence of her identity. FamilySearch catalog holds Owen County probate images. A wife named in a will is the strongest possible direct evidence short of a marriage record.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Indiana",
+          "date_range": "1830",
+          "repository": "FamilySearch",
+          "rationale": "The 1830 US Federal Census provides an earlier household snapshot roughly 14 years before Moses's death. If the family had already migrated to Indiana by 1830, his wife appears as a female age column entry. Comparing 1830 and 1840 household compositions helps confirm which adult female is the spouse versus daughters. Also useful for establishing when the family migrated from Kentucky.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Kentucky",
+          "date_range": "1802-1850",
+          "repository": "Ancestry",
+          "rationale": "Ancestry's Kentucky Compiled Marriages, 1802-1850 (collection 2089) uses different transcriptions and index metadata than FamilySearch's Kentucky marriage collections. If the FS search (pli_001) yields no result \u2014 due to spelling variation, indexing gaps, or a marriage occurring after 1800 \u2014 this collection may capture what FS missed. Also searches statewide rather than county-by-county.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Kentucky",
+          "date_range": "1785-1800",
+          "repository": "FamilySearch",
+          "rationale": "Kentucky Marriages, 1785-1979 (collection 1674849) is a complementary FamilySearch marriage index distinct from the County Marriages collection. It may index sources or volumes not covered by collection 1804888 and handles pre-statehood (Virginia-era) Kentucky records from 1785. Searches here with name variants (McCaley, McCarty, McCauley) may surface a marriage missed in the primary search.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-21T00:18:23.481Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Kentucky, County Marriages, 1786-1965 (1804888)",
+        "surname": "McCarley",
+        "givenName": "Moses",
+        "recordType": "marriage",
+        "marriageYearFrom": 1783,
+        "marriageYearTo": 1805
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 4,
+      "notes": "Top match: Moses McCarley married Elizabeth Patt, 24 Jul 1792, Lincoln County, KY (ark:/61903/1:1:Q28D-NHWN); already attached to L7P6-3TT. Second result is Moses McCarley Jr. marrying Betsy Lawson 1817 \u2014 Moses Sr. appears as father/surety, not principal. Flag: Sophia's birth (19 Apr 1792) predates marriage bond date (24 Jul 1792); may indicate prior ceremony or earlier relationship."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-21T00:32:57.841Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McCarley",
+        "givenName": "Moses",
+        "recordType": "census",
+        "residenceYearFrom": 1840,
+        "residenceYearTo": 1840,
+        "residencePlace": "Owen County, Indiana",
+        "birthYearFrom": 1762,
+        "birthYearTo": 1772,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 2,
+      "notes": "Returned 2 results (\"Job M Carley\", \"J M Carley\") with match scores near zero \u2014 not the subject. Birth year filter may have been too narrow. Broadening to Indiana state level without birth year filter."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-21T00:34:13.959Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McCarley",
+        "givenName": "Moses",
+        "recordType": "census",
+        "residenceYearFrom": 1840,
+        "residenceYearTo": 1840,
+        "residencePlace": "Indiana, United States",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 2,
+      "notes": "Broadened to all Indiana, no birth year filter \u2014 still only the same two \"J M Carley\" / \"Job M Carley\" results, not the subject. Trying national search with spelling variant."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-21T00:34:22.323Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McCarly",
+        "givenName": "Moses",
+        "recordType": "census",
+        "residenceYearFrom": 1840,
+        "residenceYearTo": 1840,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 34,
+      "notes": "National search with spelling variant McCarly returned 34 results (4 named \"Moses McCarley\"), all in GA, AR, KY, or OH \u2014 none in Indiana. Top-ranked by match score was Garrard, KY (0.185, attached to other person). No Owen County, Indiana result found. The 1840 census index for Owen County, Indiana does not appear to contain Moses McCarley Sr. \u2014 the record may be unindexed or indexed under a form not returned by any tested variant (McCarley/Carley/McCarly). Proceeding to probate records."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T00:35:13.581Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McCarley",
+        "givenName": "Moses",
+        "recordType": "probate",
+        "residencePlace": "Owen County, Indiana",
+        "anyYearFrom": 1819,
+        "anyYearTo": 1845,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. FamilySearch has no indexed probate records for Owen County, Indiana in this period. Trying Indiana state level."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T00:35:21.692Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Carley",
+        "givenName": "Moses",
+        "recordType": "probate",
+        "anyYearFrom": 1819,
+        "anyYearTo": 1850,
+        "count": 50,
+        "note": "national surname variant search"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 38,
+      "notes": "38 results, all from England, Ireland, Australia, or wrong US states \u2014 none in Indiana. FamilySearch does not have Owen County, Indiana probate records 1819-1845 indexed. This data gap is a known limitation: early Indiana county probate records are largely undigitized on FamilySearch. These records would need to be checked at the Indiana State Archives or via Ancestry."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T00:37:45.718Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McCarley",
+        "givenName": "Moses",
+        "recordType": "census",
+        "residenceYearFrom": 1830,
+        "residenceYearTo": 1830,
+        "residencePlace": "Owen County, Indiana",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Owen County, Indiana 1830 census. Tried Indiana state level next."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T00:37:58.526Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McCarley",
+        "givenName": "Moses",
+        "recordType": "census",
+        "residenceYearFrom": 1830,
+        "residenceYearTo": 1830,
+        "residencePlace": "Indiana, United States",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results at Indiana state level. Trying national spelling variant."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T00:38:11.299Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McCarly",
+        "givenName": "Moses",
+        "recordType": "census",
+        "residenceYearFrom": 1830,
+        "residenceYearTo": 1830,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 22,
+      "notes": "22 results nationally, including multiple \"Moses McCarley\" entries. Top match by score: Garrard County, Kentucky (0.189, attached to different person). No Indiana result in any of 22 records. The 1830 US Census for Owen County, Indiana does not appear indexed on FamilySearch for this surname. Consistent with 1840 census gap \u2014 early Owen County census records are not indexed on FamilySearch."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-21T00:39:41.711Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McCarley",
+        "givenName": "Moses",
+        "recordType": "marriage",
+        "residencePlace": "Kentucky, United States",
+        "marriageYearFrom": 1785,
+        "marriageYearTo": 1800,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 5,
+      "notes": "Returned 5 results, all from Kentucky County Marriages (same collection as pli_001). Top result Q28D-NHWN (Moses McCarley & Elizabeth Patt, score 0.917, attachedToSubject) is already extracted as src_001. Q28D-N9Z9 (Moses Jr. & Betsy Lawson) already extracted as src_002. New: Q28D-XWSS \u2014 'Mofes [Moses] Mccarley' in the Westley Alverson & Salvina Mccarley marriage record, also attachedToSubject (FAN \u2014 likely Moses Sr. as Salvina's father); not yet extracted. pli_006 is the same underlying collection as pli_001 \u2014 no independent corroboration added. Skipping further fallback since the primary is already complete."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": null,
+      "performed": "2026-07-21T00:42:31.222Z",
+      "tool": "image_search",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3Q9M-C9BK-BSZ8-3",
+        "purpose": "Read original Lincoln County, Kentucky marriage register page for Moses McCarley & Elizabeth Patt entry, circa 24 Jul 1792, to upgrade src_001 from derivative index to original register"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "image-reader returned NOT READ: \"Could not reach OpenRouter. (fetch failed)\" \u2014 transient connectivity failure, not a missing key. The original Lincoln County, Kentucky marriage register image (ark:/61903/3:1:3Q9M-C9BK-BSZ8-3) could not be transcribed. src_001 remains a derivative index entry. The image exists on FamilySearch and is the original register backing the Q28D-NHWN indexed record; retry in a future session when OpenRouter connectivity is restored. Per skill guidance: do not treat NOT READ as evidence; pivot to indexes (already done \u2014 indexed content is in src_001)."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Kentucky, County Marriages, 1786-1965\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q28D-NHWN : accessed 20 July 2026), Entry for Moses McCarley and Elizabeth Patt, 24 Jul 1792.",
+      "citation_detail": {
+        "who": "Moses McCarley and Elizabeth Patt",
+        "what": "Kentucky, County Marriages, 1786-1965 (index entry)",
+        "when_created": "Original register created 24 Jul 1792; index compiled from county marriage records spanning 1786-1965",
+        "when_accessed": "2026-07-20",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Entry for Moses McCarley and Elizabeth Patt, 24 Jul 1792, Lincoln County"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q28D-NHWN",
+      "access_date": "2026-07-20",
+      "notes": "Index entry only \u2014 original county marriage register not directly examined. The underlying register (likely Lincoln County, Kentucky) is the original source. The image URL (https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BK-BSZ8-3) may link to the register image but was not read in this extraction session; original not examined \u2014 index entry only.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Kentucky, County Marriages, 1786-1965,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q28D-N9C1 : accessed 20 July 2026), entry for Moses McCarley and Betsy Lawson, 21 Nov 1817, Jessamine County, Kentucky; index of county marriage records.",
+      "citation_detail": {
+        "who": "Moses McCarley and Betsy Lawson",
+        "what": "Kentucky, County Marriages, 1786-1965 (index), FamilySearch",
+        "when_created": "Record date 21 November 1817; index accessed 2026",
+        "when_accessed": "2026-07-20",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Entry for Moses McCarley and Betsy Lawson, 21 Nov 1817, Jessamine County"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q28D-N9C1",
+      "access_date": "2026-07-20",
+      "notes": "Index of Kentucky county marriage registers, 1786-1965. Original register not examined \u2014 only the FamilySearch index entry was accessed. Index may contain transcription errors. Underlying original is the Jessamine County marriage register.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:Q28D-NHWN",
+      "record_persona_id": "p_102337459396",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Moses McCarley",
+      "structured_value": {
+        "given": "Moses",
+        "surname": "McCarley"
+      },
+      "information_quality": "primary",
+      "informant": "Moses McCarley (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:Q28D-NHWN",
+      "record_persona_id": "p_102337459399",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Elizabeth Patt",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Patt"
+      },
+      "information_quality": "primary",
+      "informant": "Elizabeth Patt (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:Q28D-NHWN",
+      "record_persona_id": "p_102337459396",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Moses McCarley married Elizabeth Patt, 24 Jul 1792, Lincoln, Kentucky",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "date": "24 Jul 1792",
+      "date_certainty": "exact",
+      "place": "Lincoln, Kentucky, United States",
+      "standard_place": "Lincoln, Kentucky, United States",
+      "information_quality": "primary",
+      "informant": "marriage clerk, Lincoln County, Kentucky",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The recorded date of 24 Jul 1792 is approximately three months after the birth of Sophia McCarley (19 Apr 1792), the eldest known child of Moses J McCarley Sr. This may indicate the index records a marriage bond date rather than the ceremony date (bond-and-ceremony gap was common in Kentucky), or there may be a prior union or earlier ceremony not yet documented. This discrepancy should be investigated but does not constitute a resolved conflict at this stage. As a derivative index entry, the underlying register should be examined to confirm the date and its nature (bond vs. ceremony).",
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:Q28D-NHWN",
+      "record_persona_id": "p_102337459399",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Elizabeth Patt married Moses McCarley, 24 Jul 1792, Lincoln, Kentucky",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "date": "24 Jul 1792",
+      "date_certainty": "exact",
+      "place": "Lincoln, Kentucky, United States",
+      "standard_place": "Lincoln, Kentucky, United States",
+      "information_quality": "primary",
+      "informant": "marriage clerk, Lincoln County, Kentucky",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Same date discrepancy noted on groom's marriage assertion: 24 Jul 1792 is after the birth of Sophia McCarley (19 Apr 1792). The date may be a bond date. Original register not examined \u2014 confirmation recommended.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:Q28D-N9Z9",
+      "record_persona_id": "p_102337453199",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Moses McCarley",
+      "structured_value": {
+        "given": "Moses",
+        "surname": "McCarley"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative index; the original informant (likely the groom or a parent at the time of the marriage bond/license) cannot be identified from the index alone.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:Q28D-N9Z9",
+      "record_persona_id": "p_102337453199",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Betsy Lawson, 21 November 1817, Jessamine County, Kentucky",
+      "date": "21 Nov 1817",
+      "date_certainty": "exact",
+      "place": "Jessamine County, Kentucky",
+      "standard_place": "Jessamine, Kentucky, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative index; the original informant for the marriage event (likely the officiant or clerk who recorded the ceremony in the county register) cannot be confirmed from the index alone.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:Q28D-N9Z9",
+      "record_persona_id": "p_102337453199",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Moses Mccarley (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The ParentChild relationship between Moses Mccarley Sr. and Moses McCarley Jr. is reflected in the index; the original record likely named the father on the marriage bond or license, but the underlying informant (groom or father) cannot be confirmed from this derivative.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:Q28D-N9Z9",
+      "record_persona_id": "p_102337453201",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Moses Mccarley",
+      "structured_value": {
+        "given": "Moses",
+        "surname": "Mccarley"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Named as father of groom in the index. The original informant (likely the groom or the father himself at the time of the marriage bond) cannot be identified from the index. Surname spelling 'Mccarley' is the index's rendering \u2014 may reflect transcription variation. This persona is believed to be Moses J McCarley Sr. (L7P6-3TT), the research subject, but identity confirmation requires corroboration.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:Q28D-N9Z9",
+      "record_persona_id": "p_102337453201",
+      "record_role": "father_of_groom",
+      "fact_type": "relationship",
+      "value": "parent of Moses McCarley (groom) (inferred)",
+      "structured_value": {
+        "relationship_type": "parent_inferred",
+        "related_person_role": "groom"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "ParentChild relationship reflected in index. The original marriage bond/license likely named the father; the underlying informant cannot be confirmed from this derivative index entry.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:Q28D-N9Z9",
+      "record_persona_id": "p_102337453209",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Betsy Lawson",
+      "structured_value": {
+        "given": "Betsy",
+        "surname": "Lawson"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative index; the original informant (likely the bride herself or a parent at the time of the marriage) cannot be identified from the index alone.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:Q28D-N9Z9",
+      "record_persona_id": "p_102337453209",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Moses McCarley, 21 November 1817, Jessamine County, Kentucky",
+      "date": "21 Nov 1817",
+      "date_certainty": "exact",
+      "place": "Jessamine County, Kentucky",
+      "standard_place": "Jessamine, Kentucky, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative index; original informant for the marriage event cannot be confirmed from the index alone.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "L7P6-3TT",
+      "confidence": "confident",
+      "match_score": 0.62,
+      "rationale": "Groom 'Moses McCarley' in Lincoln County, KY marriage of 24 Jul 1792 matches Moses J McCarley Sr. (L7P6-3TT) on all key identifiers: exact name, male gender, age ~25 at marriage (born 17 Jan 1767 \u2713), KY location consistent with early family residence. FamilySearch already attached this record to L7P6-3TT (attachedToSubject: true). Rank-ranker score 0.620 (moderate-to-strong band) corroborates qualitative assessment.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride 'Elizabeth Patt' in the 24 Jul 1792 Lincoln County marriage record. No existing tree person for Moses Sr.'s wife. Created as new stub person I1. Single-record introduction; no independent corroboration yet \u2014 probable is the maximum warranted confidence.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "L7P6-3TT",
+      "confidence": "confident",
+      "match_score": 0.62,
+      "rationale": "Groom's marriage event (24 Jul 1792, Lincoln Co., KY) bearing on Moses J McCarley Sr. (L7P6-3TT). Same qualitative basis as a_001: name, age, place, and FS attachment all confirm. This marriage assertion directly addresses q_001.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom's marriage assertion names Elizabeth Patt as the other party \u2014 this assertion therefore also bears on bride persona I1. As a new stub with no independent corroboration, probable is the ceiling.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride's marriage event (24 Jul 1792, Lincoln Co., KY) bearing on Elizabeth Patt (I1). Name, gender, event date, and place all consistent with the new stub person created from this same record.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "L7P6-3TT",
+      "confidence": "confident",
+      "match_score": 0.62,
+      "rationale": "Bride's marriage assertion names Moses McCarley as the other party \u2014 also bears on Moses J McCarley Sr. (L7P6-3TT). Same strong identification basis as a_003.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "M6M6-LLW",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom 'Moses McCarley' in 21 Nov 1817 Jessamine Co., KY marriage matches Moses McCarley Jr. (M6M6-LLW): name exact, male, age ~20 (born 9 Nov 1797 \u2713), Jessamine County is adjacent to Garrard where M6M6-LLW resided, father shown as Moses Mccarley = L7P6-3TT (Moses Sr., already the tree parent of M6M6-LLW). All identifiers agree \u2014 confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "M6M6-LLW",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom's marriage event (21 Nov 1817, Jessamine Co.) bearing on Moses McCarley Jr. (M6M6-LLW). Same basis as a_005; age, location, and father-of-groom identification all consistent.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom's marriage assertion names Betsy Lawson as bride \u2014 also bears on I2 (Betsy Lawson stub). New person with no independent corroboration; probable ceiling.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_007",
+      "person_id": "M6M6-LLW",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: groom is child of Moses Mccarley Sr. The groom (Moses McCarley Jr.) is M6M6-LLW per a_005/a_006 analysis. This relationship assertion therefore bears on M6M6-LLW as the child party.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_007",
+      "person_id": "L7P6-3TT",
+      "confidence": "confident",
+      "match_score": 0.089,
+      "rationale": "Relationship assertion: groom is child of Moses Mccarley Sr. The father persona (p_102337453201) is L7P6-3TT per a_008 analysis. This relationship assertion bears on L7P6-3TT as the parent party. FS ranker score 0.089 is low but reflects the derivative/sparse index record; qualitative correlation (name variant, role, age, FS attachment) is strong.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_008",
+      "person_id": "L7P6-3TT",
+      "confidence": "confident",
+      "match_score": 0.089,
+      "rationale": "Father-of-groom 'Moses Mccarley' in the 1817 Jessamine Co. marriage matches Moses J McCarley Sr. (L7P6-3TT): name variant (Mccarley vs McCarley) is common in early KY records; role = father of Moses McCarley Jr. who is already in tree as M6M6-LLW child of L7P6-3TT; age ~50 in 1817 (born 1767 \u2713); FS already attached record to L7P6-3TT. Score 0.089 reflects sparse index; qualitative correlation is strong.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_009",
+      "person_id": "L7P6-3TT",
+      "confidence": "confident",
+      "match_score": 0.089,
+      "rationale": "Relationship assertion: father_of_groom is parent of groom. Father persona is L7P6-3TT (per a_008 analysis). This assertion bears on L7P6-3TT as the parent party.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_009",
+      "person_id": "M6M6-LLW",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: father_of_groom is parent of groom. Groom persona is M6M6-LLW (per a_005 analysis). This assertion bears on M6M6-LLW as the child party.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride 'Betsy Lawson' in 21 Nov 1817 Jessamine Co. marriage. No existing tree person for Moses Jr.'s wife. Created as new stub I2. Single-record introduction; probable ceiling.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride's marriage event (21 Nov 1817, Jessamine Co.) bearing on Betsy Lawson (I2). Consistent with stub created from this record.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_011",
+      "person_id": "M6M6-LLW",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride's marriage assertion names Moses McCarley as the other party \u2014 bears on M6M6-LLW (Moses Jr., the groom per a_005 analysis) as well.",
+      "created": "2026-07-21"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_008",
+        "a_009"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch's Kentucky, County Marriages, 1786-1965 collection was searched (pli_001, pli_006) and yielded a derivative index entry naming Elizabeth Patt as Moses McCarley's bride in Lincoln County, Kentucky, 24 July 1792. The original Lincoln County register image (ark:/61903/3:1:3Q9M-C9BK-BSZ8-3) was attempted but unreadable due to transient OpenRouter connectivity failure. Indiana census (1830, 1840) and Owen County probate (1819-1845) were searched on FamilySearch with multiple spelling variants; these collections are not indexed for this jurisdiction and period and returned no results. Ancestry (Kentucky Compiled Marriages; Indiana probate; Indiana census) was not accessible in this autonomous session. Research was terminated on resource-limitation grounds; the exhaustive_declaration is declared: false.",
+      "narrative_markdown": "## Who Did Moses J. McCarley Sr. Marry?\n\n**Research Question:** Who did Moses J. McCarley Sr. (born 17 January 1767; died 9 April 1844, Owen County, Indiana) marry?\n\n**Conclusion (Probable):** The available evidence strongly suggests that Moses J. McCarley Sr. married **Elizabeth Patt**, in Lincoln County, Kentucky, about 24 July 1792. The conclusion rests on a single derivative index entry from a contemporary county marriage collection; the original register was not examined, and no independent repository corroborates the identification. Research was terminated on resource-limitation grounds before all relevant sources were searched. The GPS threshold for \"proved\" is not met; the tier is **probable**.\n\n---\n\n### Principal Source\n\n\"Kentucky, County Marriages, 1786-1965,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:Q28D-NHWN : accessed 20 July 2026), entry for Moses McCarley and Elizabeth Patt, 24 July 1792, Lincoln County, Kentucky [a_001\u2013a_004; src_001 / S1].\n\nThis derivative index entry records the marriage of Moses McCarley to Elizabeth Patt on 24 July 1792 in Lincoln County, Kentucky, drawn from records maintained by the Lincoln County clerk at the time of the event. Informants for a Kentucky marriage bond were ordinarily the groom and a bondsman \u2014 parties with direct knowledge \u2014 making the information **primary**. The evidence is **direct**: the record expressly names Elizabeth Patt as Moses McCarley's bride. Source classification: *derivative; primary information; direct evidence.*\n\nThe identity of the groom as Moses J. McCarley Sr. (L7P6-3TT) is established with confidence: the exact name matches; Moses Sr.'s approximate age was 25 in 1792 (born 17 January 1767), consistent with the record; the Kentucky location aligns with the family's known residence in what became Garrard County; and FamilySearch's own system had attached this record to L7P6-3TT (match score 0.917). No competing candidate has been identified.\n\n### FAN Corroboration\n\n\"Kentucky, County Marriages, 1786-1965,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:Q28D-N9C1 : accessed 20 July 2026), entry for Moses McCarley and Betsy Lawson, 21 November 1817, Jessamine County, Kentucky [a_008\u2013a_009; src_002 / S2].\n\nMoses Mccarley [Sr.] appears as father of the groom in Moses Jr.'s 1817 Jessamine County marriage record. This confirms Moses Sr. was alive in 1817, but it does not name Elizabeth Patt and provides no independent evidence of her spousal identity. Because this record derives from the same *Kentucky, County Marriages, 1786-1965* collection as the principal source, it is not an independent source under evidence-independence rules. Source classification: *derivative; indeterminate information; indirect evidence* as to Moses Sr.'s marriage.\n\n### Negative Findings\n\nSearches of FamilySearch for Owen County, Indiana \u2014 where Moses Sr. died in 1844 \u2014 returned no results for the 1840 census (pli_002), 1830 census (pli_004), or Owen County probate (pli_003) under any tested surname variant. These collections appear unindexed for this jurisdiction and period on FamilySearch. The probate record of Moses Sr.'s estate, which would likely name his surviving wife, remains a significant unsearched gap.\n\n### Date Discrepancy\n\nSophia McCarley, the eldest known child of Moses Sr., was born 19 April 1792 \u2014 about three months before the recorded bond date of 24 July 1792. In early Kentucky practice, the marriage bond date and the ceremony date often differed. This discrepancy concerns the precise date of the marriage, not the identity of the parties, and does not constitute a conflict disputing the concluded fact. Examining the original Lincoln County register (ark:/61903/3:1:3Q9M-C9BK-BSZ8-3, unread due to transient infrastructure failure) would resolve this detail.\n\n### Tier and Limitations\n\nResearch is not exhaustive (declaration: false). Only derivative sources were examined; the original register was not read; Ancestry, Indiana probate, and Indiana census records were not searched. The GPS threshold for \"proved\" requires at least two independent original sources with primary information and fully exhaustive research \u2014 conditions not met here. The evidence is nonetheless clearly weighted toward Elizabeth Patt as Moses Sr.'s wife: a contemporary civil record directly names her, the groom has been confidently identified as Moses Sr., and no conflicting evidence points to another candidate.\n\nThe conclusion is **probable**. To advance to proved: (1) read the original Lincoln County register when OpenRouter connectivity is restored; (2) search Ancestry for Moses Sr.'s Owen County, Indiana estate probate (ca. 1844\u20131848); (3) search Ancestry or Indiana State Archives for the 1830 and 1840 Indiana census."
+    }
+  ],
+  "evaluations": []
+}

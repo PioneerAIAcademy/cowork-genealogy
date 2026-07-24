@@ -148,16 +148,28 @@ place_search({ placeName: "<place name>" })
 ```
 
 Take the `standardPlace` from the response — do not guess it — and pass it
-to `external_links_search` with the plan item's year window:
+to `external_links_search` with the plan item's year window, your target
+site as `host`, and `projectPath` so the full curated set is retained on disk:
 
 ```
-external_links_search({ standardPlace: "<standardPlace>", startYear: <year>, endYear: <year> })
+external_links_search({
+  standardPlace: "<standardPlace>",
+  startYear: <year>,
+  endYear: <year>,
+  host: "<target-site host, e.g. ancestry.com>",
+  projectPath: "<absolute path of the current working directory>"
+})
 ```
 
-It returns a flat `results[]` of `{ url, linkText }` mixing every curated
-site for the place — ungrouped, unclassified, undeduped. Consume it:
-1. **Filter by host** — keep links for your target site, e.g.
-   `result.url.includes("ancestry.com")`.
+`host` narrows the returned `results[]` toward your target site (so a
+link-dense place can't overflow the response); `projectPath` stages the **full**
+year-filtered set (all sites) to disk and returns a `staged.resultsRef` — hold
+it for the step-4 log. `results[]` is a flat list of `{ url, linkText }`. Consume
+it:
+1. **Filter to your target site** — keep only links whose URL is for your site,
+   e.g. `result.url.includes("ancestry.com")`. `host` already narrows this
+   server-side, but filter here too so you stay correct if any off-site links
+   come through.
 2. **Dedupe by URL** — FS repeats the same URL once per record-type
    category. Collapse duplicates, and say so in one line when it happens
    ("collection 8800 appeared 3× under different labels — collapsed to one")
@@ -167,10 +179,10 @@ site for the place — ungrouped, unclassified, undeduped. Consume it:
    Records"); the collection ID is embedded in the URL path. This match is
    what step 3 acts on.
 
-**`totalForPlace` vs `results.length`:**
-- `results.length > 0` → a curated URL exists; go to Case A.
-- empty but `totalForPlace > 0` → FS curates this place but nothing
-  overlaps your year window; widen the window or fall back (Case B).
+**How many links survived the site filter (call it `matched`):**
+- `matched > 0` → a curated URL for your site exists; go to Case A.
+- `matched === 0` but `totalForPlace > 0` → FS curates this place but nothing
+  matches your site + year window; widen the window or fall back (Case B).
 - `totalForPlace === 0` → no curated links here at all; fall back (Case B).
 
 ### 3. Build the URL
@@ -247,6 +259,29 @@ https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place=
 
 ### 4. Log the search, then present the URL
 
+**First, persist the curated-links fetch.** If `external_links_search`
+returned a `staged.resultsRef` (present whenever the year-filtered set was
+non-empty), log the fetch as its **own** entry so the full curated set is
+retained on disk — it rides along when the user submits feedback, and makes the
+fetch part of the research record. This is separate from the external-site log
+below:
+
+```
+research_log_append({
+  projectPath: <absolute path of the current working directory>,
+  planItemId: "<pli_XXX or null>",
+  tool: "external_links_search",
+  query: { standardPlace: "<standardPlace>", host: "<host>", startYear: <year>, endYear: <year> },
+  outcome: "<positive if returned > 0, else negative>",
+  resultsExamined: <returned>,
+  notes: "Curated external links for <place>.",
+  stagedResultsRef: staged.resultsRef   // omit only when there is no staged handle (empty year-filtered set)
+})
+```
+
+Do **not** pass `externalSite` here — that field is only for `external_site`
+entries. Then log the site search itself.
+
 The log entry is what makes the search part of the research record, so
 **write it before you hand over the URL** — this step is not finished
 until both exist. If you present the URL and stop, `research.json` shows
@@ -278,8 +313,9 @@ research_log_append({
 
 `projectPath` is the project folder you are already operating in (the
 directory that contains `research.json`). Pass its absolute path.
-External-site searches retain no result sidecar, so do **not** pass
-`stagedResultsRef`.
+This **external-site** entry has no result sidecar (the capture hasn't
+arrived yet), so do **not** pass `stagedResultsRef` here — that handle
+belongs on the `external_links_search` entry above.
 
 `outcome: "partial"` + `captureReceived: false` mark it in-flight. When a
 capture comes back you append a **new** entry (step 6) — never edit this

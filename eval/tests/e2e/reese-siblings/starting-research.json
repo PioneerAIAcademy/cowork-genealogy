@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_reese_siblings",
+    "objective": "Who were the siblings of Mary Reese, born 1880 in New York and died 22 June 1933?",
+    "subject_person_ids": [
+      "G9VJ-1WS"
+    ],
+    "status": "active",
+    "created": "2026-07-15",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

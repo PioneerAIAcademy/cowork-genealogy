@@ -8,7 +8,7 @@
     "tags": ["near-miss", "person-evidence-vs-record-extraction", "boundary"]
   },
   "input": {
-    "user_message": "Pull the facts out of this death certificate and add them as assertions.",
+    "user_message": "Pull the facts out of this death certificate — FamilySearch record ark:/61903/1:1:9V2T-QK8 — and add them as assertions.",
     "scenario": "mid-research-flynn"
   },
   "negative": {

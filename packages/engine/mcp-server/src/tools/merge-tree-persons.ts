@@ -108,9 +108,9 @@ export const mergeTreePersonsSchema = {
   name: "merge_tree_persons",
   description:
     "Collapse two (or more) persons that already exist in the project tree into " +
-    "one, when they turn out to be the same person. Use this — not " +
-    "`merge_record_into_tree` — when both people are already in tree.gedcomx.json " +
-    "(e.g. two father records that were never merged).\n" +
+    "one, when they turn out to be the same person. Use this when both people " +
+    "are already in tree.gedcomx.json (e.g. two father records that were never " +
+    "merged).\n" +
     "\n" +
     "`merges` is a list of `[survivorId, collapsedId]` pairs (both ids in the " +
     "tree): the survivor is kept, the collapsed person folds into it " +

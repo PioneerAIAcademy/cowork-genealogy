@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f2": "Judge scored this run partial overall; independent review found all four required findings correctly established in the final tree. Flagging as a possible judge under-score — mother's surname wasn't in the index text itself (inferred via couple/sibling correlation), and f3's place string carries a bogus geocoded 'Kenya' artifact that may have confused automated matching. Human read: full pass on recall.",
+    "f3": "Judge scored this run partial overall; independent review found all four required findings correctly established in the final tree. Flagging as a possible judge under-score — mother's surname wasn't in the index text itself (inferred via couple/sibling correlation), and f3's place string carries a bogus geocoded 'Kenya' artifact that may have confused automated matching. Human read: full pass on recall."
+  }
+}

@@ -109,6 +109,11 @@ This may mean:
 - The records never existed (e.g., pre-registration vital events)
 - The records were destroyed (courthouse fires, war damage)
 - The person was never recorded in surviving sources
+- The records exist but are access-restricted by privacy law (e.g.,
+  recent U.S. vital records — births are commonly sealed for ~100 years,
+  released only to the registrant or an heir on request). A record that
+  is not reasonably obtainable is not an exhaustiveness gap, and must not
+  be offered as a routine next step to advance the tier.
 
 Document the absence honestly. An unanswered question is a valid
 research outcome — it means proof is not currently achievable, not

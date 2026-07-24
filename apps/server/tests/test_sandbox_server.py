@@ -36,7 +36,8 @@ def _token(ttl: int = 3600) -> str:
 
 
 @pytest.fixture
-def ws_server(tmp_path):
+def ws_server(tmp_path, request):
+    extra_env = getattr(request, "param", {}) or {}
     proj = tmp_path / "project"
     (proj / "results").mkdir(parents=True)
     (tmp_path / "home").mkdir()
@@ -46,6 +47,7 @@ def ws_server(tmp_path):
         "WS_PORT": str(port), "WS_TOKEN_SECRET": SECRET,
         "PROJECT_DIR": str(proj), "HOME": str(tmp_path / "home"),
         "AGENT_MODE": "mock", "PYTHONPATH": str(SERVER_ROOT),
+        **extra_env,
     }
     proc = subprocess.Popen(
         [sys.executable, "-m", "app.sandbox_server"], env=env,
@@ -168,3 +170,159 @@ def test_token_mint_verify_roundtrip(monkeypatch):
     # a different sandbox's secret must not verify this token
     monkeypatch.setattr(ss, "SECRET", wt.sandbox_secret("sbx_other"))
     assert ss.verify_token(wt.mint_token(sid)) is False
+
+
+def test_token_ttl_outlives_the_sandbox_timeout():
+    """Regression guard for the alpha hang: the handshake TTL and the sandbox
+    running-timeout both start at the same /connect, so when they were EQUAL
+    (3600 == 3600) the pause that forced a reconnect expired the token needed to
+    make one. Every retry then failed `bad/expired token` and the UI spun on a
+    turn whose end it could never receive. The client re-mints per attempt now,
+    but keep the margin so an equal-clocks regression can't recreate a lockout
+    that no retry can escape.
+    """
+    from app.sandbox.e2b import _RUNNING_TIMEOUT_S
+    from app.ws_token import DEFAULT_TTL_SECONDS
+
+    assert DEFAULT_TTL_SECONDS > _RUNNING_TIMEOUT_S
+
+
+def test_reconnect_is_told_when_a_turn_is_still_running(monkeypatch):
+    """The fix for the 2026-07-20 "no working indicator" report: busy is otherwise
+    local to the browser that hit Send, so a reload mid-turn shows idle while the
+    agent works. The Hub outlives the connection and announces an in-flight turn
+    to every (re)connect; when nothing is running it stays quiet.
+    """
+    import app.sandbox_server as ss
+
+    monkeypatch.setattr(ss, "SECRET", "")  # auth disabled → handshake passes
+
+    sent: list[dict] = []
+
+    class FakeReq:
+        path = "/?token=x"
+
+    class FakeWS:
+        request = FakeReq()
+
+        async def send(self, payload):
+            sent.append(json.loads(payload))
+
+        async def close(self, *a):
+            pass
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            raise StopAsyncIteration  # no client→server messages; connection ends
+
+    async def noop(*a, **k):
+        pass
+
+    def states():
+        return [m.get("state") for m in sent if m.get("type") == "status"]
+
+    hub = ss.Hub()
+    hub._turn_active = True
+    monkeypatch.setattr(hub, "ensure_started", noop)
+    monkeypatch.setattr(hub, "send_snapshot", noop)
+    asyncio.run(hub.handle(FakeWS()))
+    assert "chat_ready" in states() and "turn_active" in states()
+
+    sent.clear()
+    idle = ss.Hub()  # nothing running
+    monkeypatch.setattr(idle, "ensure_started", noop)
+    monkeypatch.setattr(idle, "send_snapshot", noop)
+    asyncio.run(idle.handle(FakeWS()))
+    assert "chat_ready" in states() and "turn_active" not in states()
+
+
+def test_turn_active_clears_when_the_turn_finishes():
+    """turn_done in the agent stream ends the in-flight state, so a reconnect
+    after the turn completes is not falsely told a turn is running."""
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return 0
+
+    hub = ss.Hub()
+    hub._turn_active = True
+    q: asyncio.Queue = asyncio.Queue()
+    q.put_nowait(json.dumps({"type": "agent_event", "event": {"kind": "turn_done"}}))
+    q.put_nowait(None)
+    # proc is not hub._proc, so the crash path is skipped.
+    asyncio.run(hub._pump(q, FakeProc()))
+    assert hub._turn_active is False
+
+
+def test_rejection_log_is_throttled_to_protect_the_timeline():
+    """A token-locked client reconnects in a tight loop; without throttling its
+    rejections fill the 20 KB /logs window and evict the agent activity timeline
+    (the 2026-07-20 failure). At most one line per interval, with a count of the
+    ones it stands in for.
+    """
+    import app.sandbox_server as ss
+
+    hub = ss.Hub()
+    t = 1000.0
+    # First rejection always logs, reporting itself.
+    assert hub._note_rejection(t) == 1
+    # A flood inside the window is suppressed...
+    for _ in range(50):
+        t += 0.1
+        assert hub._note_rejection(t) is None
+    # ...then the next rejection past the window reports every one it swallowed.
+    assert hub._note_rejection(t + ss._REJECT_LOG_INTERVAL) == 51
+
+
+@pytest.mark.parametrize("ws_server", [{"WS_HEARTBEAT_INTERVAL": "0.5"}], indirect=True)
+def test_heartbeat_keeps_an_idle_socket_warm(ws_server):
+    """A silent turn must still put frames on the wire — the edge proxy in front
+    of the sandbox drops a socket it reads as idle, which is how a long
+    record-extraction subagent lost its connection mid-turn. Pings must NOT enter
+    the replay transcript, or they would evict real events from it.
+    """
+    port, _ = ws_server
+
+    async def drive():
+        ws = await websockets.connect(
+            f"ws://127.0.0.1:{port}/?token={_token()}", open_timeout=10
+        )
+        try:
+            # Never send a user_msg: the socket stays idle exactly as it does
+            # during a long turn that emits nothing.
+            pings, end = 0, time.time() + 6
+            while time.time() < end and pings < 2:
+                m = json.loads(await asyncio.wait_for(ws.recv(), 6))
+                if m.get("type") == "ping":
+                    pings += 1
+            assert pings >= 2, "no repeating keepalive on an idle socket"
+        finally:
+            await ws.close()
+
+        # Reconnect: the replayed transcript must carry no pings.
+        ws2 = await websockets.connect(
+            f"ws://127.0.0.1:{port}/?token={_token()}", open_timeout=10
+        )
+        try:
+            replayed, end = [], time.time() + 2
+            while time.time() < end:
+                try:
+                    replayed.append(json.loads(await asyncio.wait_for(ws2.recv(), 1)))
+                except (asyncio.TimeoutError, websockets.ConnectionClosed):
+                    break
+            # Live pings arrive during the drain too; only the replay is at issue,
+            # and it is delivered before chat_ready.
+            before_ready = []
+            for m in replayed:
+                if m.get("type") == "status" and m.get("state") == "chat_ready":
+                    break
+                before_ready.append(m)
+            assert not [m for m in before_ready if m.get("type") == "ping"], \
+                "keepalive frames leaked into the replay transcript"
+        finally:
+            await ws2.close()
+
+    asyncio.run(drive())

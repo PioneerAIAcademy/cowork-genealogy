@@ -1,0 +1,603 @@
+{
+  "persons": [
+    {
+      "id": "GC13-YHG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Mary",
+          "surname": "Rossi"
+        }
+      ],
+      "facts": [
+        {
+          "id": "490e01c7-c7c2-4353-8441-0e00c47a31f9",
+          "type": "Birth",
+          "date": "1879",
+          "standard_date": "1879",
+          "place": "U.S.",
+          "standard_place": "United States"
+        },
+        {
+          "id": "6774c5ed-38a1-4d4d-8357-3a44d8ddd7a8",
+          "type": "Death"
+        },
+        {
+          "id": "6063ea8c-00ba-48dd-8c8c-9cbb4217dc6a",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "4039ede3-0eb1-4c2d-b63c-e5c235e91948",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "e0d1d7e4-5626-4e63-b6a9-6c39878aa3f1",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hoboken Ward 4, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "53040e07-55b6-4eed-a889-c4a5788c1678",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Hoboken, 4 ward, 5 district, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "a0d2f65d-09e2-46df-9d13-94ae410edee0",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hudson, New Jersey, United States",
+          "standard_place": "Hudson, New Jersey, United States"
+        },
+        {
+          "id": "111111e0-b46a-4156-bf69-c2e269a31233",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        }
+      ]
+    },
+    {
+      "id": "GC13-LZ1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Charles",
+          "surname": "Ullricht"
+        },
+        {
+          "given": "Charles A.",
+          "surname": "Ulrich",
+          "id": "N6"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ef1cf5e1-c121-4c5a-bd29-dccb71b4df31",
+          "type": "Birth",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Massachusetts",
+          "standard_place": "Massachusetts, United States"
+        },
+        {
+          "id": "cd2fd452-c7b6-4d44-a400-eec746d8fe65",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "3487029b-1eef-4d23-8acb-8fe386ce536e",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "cdc9dc33-3feb-4ead-b07a-40c743c124f8",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hudson, New Jersey",
+          "standard_place": "Hudson, New Jersey, United States"
+        },
+        {
+          "id": "0eb0f163-cfdc-4c96-9c36-f2d21936f71b",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hoboken Ward 4, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "93f4e68d-f9ff-4268-bab1-ca04bd0c31c7",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Hoboken, 4 ward, 5 district, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "62df0100-9b0b-4daa-bd0f-e03b2cbc3df4",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hudson, New Jersey, United States",
+          "standard_place": "Hudson, New Jersey, United States"
+        },
+        {
+          "id": "649caa09-4e7d-4380-9b39-eb86df9089aa",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "ab7331fb-1d81-4dbe-9c93-c0c22bb87763",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "f81b0282-cce7-4639-860d-7a3a565c2a41",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "140e1f53-94b3-4a42-971a-2a6f822a224b",
+          "type": "Death",
+          "date": "3 May 1955",
+          "standard_date": "3 May 1955",
+          "place": "Cliffside Park, Bergen, New Jersey, United States",
+          "standard_place": "Cliffside Park, Bergen, New Jersey, United States"
+        }
+      ]
+    },
+    {
+      "id": "GC13-5LJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Charles",
+          "surname": "Ullrich"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6e77f858-bb02-4e41-a860-4d653b7764b2",
+          "type": "Birth",
+          "date": "4 December 1902",
+          "standard_date": "4 Dec 1902",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "475b4188-02a2-4364-9f5b-2adf840bd5cd",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "aa728c65-6112-4a40-8cfc-ad62a2362bf8",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hoboken Ward 4, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "b46143b6-92c2-4bfb-9e2f-8bc1fd753cb0",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Hoboken, 4 ward, 5 district, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "0f0e83c6-3d8c-4ef7-b228-a4302e93eba2",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hudson, New Jersey, United States",
+          "standard_place": "Hudson, New Jersey, United States"
+        },
+        {
+          "id": "aea85b3e-7b73-485d-aabc-06a167a35961",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "199d6522-7f67-447f-ab2e-255bcf821e81",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Union City, Hudson, New Jersey",
+          "standard_place": "Union City, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "9c96beff-859e-4743-8dfc-de8b37bc4248",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "27dc426c-7a58-400c-bbb1-b1dc81ead859",
+          "type": "Residence",
+          "date": "1950",
+          "standard_date": "1950",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "88b9660f-a7b1-4c19-8588-0e1011d9980a",
+          "type": "Obituary",
+          "date": "4 February 1971",
+          "standard_date": "4 Feb 1971",
+          "place": "Jersey City, New Jersey",
+          "standard_place": "Jersey City, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "2bf0d27f-9659-4040-a449-bf19ff89ff0f",
+          "type": "Obituary",
+          "date": "4 February 1971",
+          "standard_date": "4 Feb 1971",
+          "place": "Jersey City, Hudson, New Jersey, United States",
+          "standard_place": "Jersey City, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "557b519a-78e7-4a22-9ef5-b0f91b48cb26",
+          "type": "Death",
+          "date": "February 1971",
+          "standard_date": "Feb 1971",
+          "place": "Hudson, New Jersey, United States",
+          "standard_place": "Hudson, New Jersey, United States"
+        },
+        {
+          "id": "e8c1e733-1001-4430-8702-581ab77d1aa6",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "44d7cfc9-28ba-4cea-aa21-e50206d34e07",
+          "type": "Burial",
+          "place": "Holy Name Cemetery, Jersey City, Hudson, New Jersey, United States",
+          "standard_place": "Holy Name Cemetery, Jersey City, Hudson, New Jersey, United States"
+        }
+      ]
+    },
+    {
+      "id": "GC13-KWZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Marie R",
+          "surname": "Ullrich"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b83dda3a-c4ae-450c-b30f-0e1a9bca075b",
+          "type": "Birth",
+          "date": "1901",
+          "standard_date": "1901",
+          "place": "New Jersey",
+          "standard_place": "New Jersey, United States"
+        },
+        {
+          "id": "bf665f1e-ca2e-46e4-be65-c2171197afef",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hoboken Ward 4, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "54bec246-aa12-408a-9cf7-26c7d9371c13",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "c3f29540-3cb6-4c77-bbd2-75e3bbdc55e1",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Union City, Hudson, New Jersey, United States",
+          "standard_place": "Union City, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "fddd95df-f5cf-432a-86f6-d34272646448",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "62042079-a899-421d-a143-12752283979f",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Cliffside Park, Bergen, New Jersey, United States",
+          "standard_place": "Cliffside Park, Bergen, New Jersey, United States"
+        },
+        {
+          "id": "53157599-f644-40a9-a62e-01a3a28df4f9",
+          "type": "Residence",
+          "date": "1950",
+          "standard_date": "1950",
+          "place": "Cliffside Park, Bergen, New Jersey, United States",
+          "standard_place": "Cliffside Park, Bergen, New Jersey, United States"
+        },
+        {
+          "id": "7a6c294d-ff74-42df-9749-a27e936a71d4",
+          "type": "Death",
+          "date": "6 February 1975",
+          "standard_date": "6 Feb 1975",
+          "place": "Teaneck, Bergen, New Jersey, United States",
+          "standard_place": "Teaneck, Bergen, New Jersey, United States"
+        },
+        {
+          "id": "e54c74a9-b054-4e83-885e-34dc6c26c289",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "GC13-KG4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Adeline",
+          "surname": "Ullrich"
+        }
+      ],
+      "facts": [
+        {
+          "id": "191ef8db-0a24-49c7-9b7d-e253d96b7fb2",
+          "type": "Birth",
+          "date": "24 August 1899",
+          "standard_date": "24 Aug 1899",
+          "place": "New Jersey, United States",
+          "standard_place": "New Jersey, United States"
+        },
+        {
+          "id": "dc38c475-f799-4c6b-ae8a-574e2d04f308",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "a22dc874-ab70-45ac-91c3-6b393bf9bf1f",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "b0bc25ab-82bb-4d63-9add-f56dc45df2d6",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hoboken Ward 4, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "78a5c7d1-22e1-4cb2-9adc-230159a9a2dd",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Hoboken, 4 ward, 5 district, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "cbd425dd-80fd-49c6-8e37-29ea7346a6c7",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hudson, New Jersey, United States",
+          "standard_place": "Hudson, New Jersey, United States"
+        },
+        {
+          "id": "9db75874-bbc8-4bc6-a6dd-8b0cb5473c57",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "1e1a963e-1e24-4c52-876e-b5e20ec49d3a",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "ac3fa522-90f8-420a-bbaa-f0008b9c8244",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        },
+        {
+          "id": "74d38a8a-84ed-47bc-885b-b9e5bbcb22dd",
+          "type": "Death",
+          "date": "6 July 1984",
+          "standard_date": "6 Jul 1984"
+        },
+        {
+          "id": "03fac08d-2fed-4f36-8f19-95ae842e3699",
+          "type": "Burial",
+          "place": "Holy Name Cemetery, Jersey City, Hudson, New Jersey, United States",
+          "standard_place": "Holy Name Cemetery, Jersey City, Hudson, New Jersey, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GC13-LZ1",
+      "person2": "GC13-YHG",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "2 Feb 1899",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "primary": true,
+          "id": "F1",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GC13-LZ1",
+      "child": "GC13-KG4"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GC13-YHG",
+      "child": "GC13-KG4"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GC13-LZ1",
+      "child": "GC13-KWZ"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GC13-YHG",
+      "child": "GC13-KWZ"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GC13-LZ1",
+      "child": "GC13-5LJ"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GC13-YHG",
+      "child": "GC13-5LJ"
+    }
+  ],
+  "sources": [
+    {
+      "id": "3J4D-1S6",
+      "title": "Mary Ullrich, \"New Jersey, State Census, 1915\"",
+      "citation": "\"New Jersey, State Census, 1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9Q-V4BJ : Mon Jan 20 08:33:59 UTC 2025), Entry for Charles Ullrich and Mary Ullrich, 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9Q-V4BV"
+    },
+    {
+      "id": "3WWK-D9V",
+      "title": "Mary Ullricht, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MKYD-LF9 : Tue Oct 21 17:20:17 UTC 2025), Entry for Charles Ullricht, Sr and Mary Ullricht, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MKYD-LFS"
+    },
+    {
+      "id": "QW2F-3ZH",
+      "title": "Mary Ullrich, \"New Jersey, Birth Index, 1901-1903\"",
+      "citation": "\"New Jersey, Birth Index, 1901-1903\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSP-J7QL : Sun Mar 10 07:56:46 UTC 2024), Entry for Maria Ullrich and Charles Ullrich, 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSP-J7Q2"
+    },
+    {
+      "id": "772K-Z2B",
+      "title": "Mary Ullrich, \"New Jersey, State Census, 1905\"",
+      "citation": "\"New Jersey, State Census, 1905\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KM4P-9PX : Sat Mar 09 19:40:49 UTC 2024), Entry for Charles Ullrich and Mary Ullrich, 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KM4P-9PF"
+    },
+    {
+      "id": "3J4D-BXR",
+      "title": "Mary Rossi in entry for Adaline Ullrich, \"New Jersey, Births and Christenings, 1660-1980\"",
+      "citation": "\"New Jersey, Births and Christenings, 1660-1980\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FCYP-JJT : 26 August 2020), Mary Rossi in entry for Adaline Ullrich, 1899.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FCYP-JJT"
+    },
+    {
+      "id": "3J4D-Y13",
+      "title": "Mary Ullrich, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X46N-W22 : Mon Jan 20 13:29:16 UTC 2025), Entry for Chas A Ullrich and Mary Ullrich, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X46N-W2L"
+    },
+    {
+      "id": "7722-9YR",
+      "title": "Mary Ullrich, \"New Jersey, Birth Index, 1901-1903\"",
+      "citation": "\"New Jersey, Birth Index, 1901-1903\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPSB-6CRC : Sun Mar 10 00:35:15 UTC 2024), Entry for Charles A Ullrich and Charles Ullrich, 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPSB-6CRH"
+    },
+    {
+      "id": "3J4D-T9D",
+      "title": "Mary Ullrich, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4RJ-P6R : Tue Oct 21 08:34:55 UTC 2025), Entry for Charles Ullrich and Mary Ullrich, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M4RJ-P6T"
+    },
+    {
+      "id": "3J4D-BWP",
+      "title": "Mary Ulrich, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9JK-HPG : Sun Jan 19 23:04:57 UTC 2025), Entry for Charles Ulrich and Mary Ulrich, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M9JK-HPP"
+    },
+    {
+      "id": "S1",
+      "title": "Entry for Charles A. Ulrich, 'New Jersey, Marriages, 1678-1985'",
+      "author": "FamilySearch",
+      "url": "https://familysearch.org/ark:/61903/1:2:9SKD-YHL"
+    }
+  ]
+}

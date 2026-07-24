@@ -1,0 +1,41 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Thomas Seaver (PID M38B-2K8, d. March 1837, Salem, Essex, Massachusetts) separated from or was widowed by Rachel Wilkins and remarried another woman before his death. Every attached vital/town record for Thomas ties back to exactly one marriage — to Rachel Wilkins, 31 March 1811, Salem, Essex, Massachusetts — and every child's birth/death record (1812-1829) names Thomas and this same marriage. Rachel Wilkins survived Thomas by more than 40 years (she died 15 November 1880), so he was never widowed during his lifetime, and no Massachusetts vital or town record shows a Thomas Seaver of matching birth year (~1789, Hingham) marrying anyone else between 1811 and his 1837 death. Pass = the final tree/research contains no second spouse, no second marriage fact, and no stub person representing an 'other wife' for Thomas Seaver (or such a candidate appears only as an explicitly rejected hypothesis).",
+      "details": {
+        "subject_person": "Thomas Seaver (PID M38B-2K8)",
+        "relation": "spouse",
+        "wrong_candidate": {
+          "name": "an unidentified second wife of Thomas Seaver, married after Rachel Wilkins and before his 1837 death",
+          "note": "no marriage record for a matching Thomas Seaver (b. ~1789, Hingham, Plymouth, MA) to anyone but Rachel Wilkins appears in Massachusetts vital or town clerk records 1811-1837; Rachel is independently documented alive until 1880, ruling out widowhood as the route to a second marriage"
+        }
+      },
+      "supporting_sources": [
+        "Massachusetts, State Vital Records, 1638-1927 and Massachusetts, Town Clerk, Vital and Town Records, 1626-2001 — multiple entries for Thomas Seaver and Rachel Wilkins, marriage 31 Mar 1811, Salem, Essex, MA",
+        "Massachusetts vital records for the couple's children (Sarah B., Joseph Haraden, Mary H., Eliza N., Timothy Augustus H., Rachel A., Thomas, Daniel A. Seaver), 1812-1829, each naming Thomas Seaver as father",
+        "Rachel Wilkins Seaver's own death record, 15 Nov 1880, Salem, Essex, MA — establishing she outlived Thomas by over four decades"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having searched Massachusetts vital, town, and probate/court records for evidence of a separation, divorce, or second marriage for Thomas Seaver between his 1811 marriage to Rachel Wilkins and his March 1837 death, the agent should document a negative/exhausted-search conclusion: no credible evidence supports an 'other wife,' and the sole documented marriage for Thomas Seaver remains the 1811 union with Rachel Wilkins.",
+      "details": {
+        "subject_person": "Thomas Seaver (PID M38B-2K8)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: no second marriage found",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Absence of any Massachusetts marriage, divorce, or separation record for a matching Thomas Seaver besides the 1811 Rachel Wilkins marriage"
+      ],
+      "required": true
+    }
+  ]
+}

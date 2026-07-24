@@ -1,0 +1,217 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Jan",
+          "surname": "Gallo",
+          "id": "PID-TODO-name-1",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "PID-TODO-fact-birth",
+          "type": "Birth",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "\u0160\u00fatovo, Turany parish, Slovakia (Sutt\u00f3, Tur\u00e1ny parish, Tur\u00f3cz County, Hungary)",
+          "standard_place": "\u0160\u00fatovo, Slovakia"
+        },
+        {
+          "id": "F1",
+          "type": "Christening",
+          "date": "1893",
+          "place": "Turany, Martin, Slovakia",
+          "standard_place": "Turany, Martin, Slovakia",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "type": "BirthName",
+          "given": "Andrej",
+          "surname": "Gallo",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "preferred": true
+        },
+        {
+          "id": "N4",
+          "type": "BirthName",
+          "given": "Ondrej",
+          "surname": "Gallo",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "type": "BirthName",
+          "given": "Katarina",
+          "surname": "Kri\u017eko",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "preferred": true
+        },
+        {
+          "id": "N5",
+          "type": "BirthName",
+          "given": "Katarina",
+          "surname": "Kricko",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N3",
+          "type": "BirthName",
+          "given": "Ondrej",
+          "surname": "Gallo",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Christening",
+          "date": "1895",
+          "place": "Turany, Martin, Slovakia",
+          "standard_place": "Turany, Martin, Slovakia",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "ref": "S1"
+        },
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "PID-TODO",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "PID-TODO",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R5"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-jan-birth-known",
+      "title": "Researcher's family group record and pedigree chart (starting information): Jan Gallo born 1893 in \u0160\u00fatovo, Turany Lutheran parish."
+    },
+    {
+      "id": "S1",
+      "title": "Entry for Jan Gallo, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R"
+    },
+    {
+      "id": "S2",
+      "title": "Entry for Ondrej Gallo, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KHWD-XGS"
+    }
+  ]
+}

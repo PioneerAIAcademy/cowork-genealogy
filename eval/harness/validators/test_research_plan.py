@@ -14,8 +14,8 @@ function-signature contract. The `test` argument is the parsed test
 JSON dict (the inner "test" block) — used to gate test-specific checks
 on `test["tags"]`.
 
-Migrated from `rubric.md` + per-test `additional_criteria` per
-docs/plan/criteria-demotion-and-rubric-opt-in.md.
+Migrated from `rubric.md` + per-test `additional_criteria` in the
+criteria-demotion rollout.
 """
 
 from __future__ import annotations

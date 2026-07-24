@@ -540,6 +540,37 @@ describe("fulltextSearchTool result staging", () => {
     expect(result.stagingError).toBeUndefined();
   });
 
+  it("34b. strips inline textDocument once staged, keeping triage stubs", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
+    );
+    mockedStage.mockResolvedValueOnce({
+      resultsRef: "results/abc123.json",
+      returnedCount: 1,
+    });
+    const result = await fulltextSearchTool({
+      keywords: "Flynn",
+      projectPath: "/tmp/project",
+    });
+    // The 79–136 KB overflow driver is gone from the inline copy...
+    expect(result.results[0]?.textDocument).toBeUndefined();
+    // ...but the light triage fields survive for in-context ranking.
+    expect(result.results[0]?.names).toContain("Patrick Flynn");
+    expect(result.results[0]?.title).toBe(
+      "Last Will and Testament of Patrick Flynn"
+    );
+    expect(result.results[0]?.recordType).toBe("Probate");
+  });
+
+  it("34c. keeps inline textDocument when staging did not run", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
+    );
+    const result = await fulltextSearchTool({ keywords: "Flynn" });
+    expect(result.staged).toBeUndefined();
+    expect(result.results[0]?.textDocument).toBe("...full transcript text...");
+  });
+
   it("35. never fails the search when staging throws", async () => {
     mockFetch.mockResolvedValueOnce(
       makeOk({ results: 1, index: 0, entries: [flynnEntry()] })

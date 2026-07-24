@@ -24,7 +24,7 @@
     "Should call record_person_matches with id MXHY-TP4 (the record persona ID from the search result)",
     "Should report that the record is already accepted-matched to tree person LZNY-BRF (Patrick Flynn) in the FamilySearch tree",
     "Should still extract assertions from the record — the match check is supplemental, not a replacement for extraction",
-    "Should write assertions to research.json with record_persona_id set to P1 for the focus person; the persisted record_id should be an ARK form of this record (any submitted ARK form is acceptable — research_append canonicalizes sidecar-backed record_ids, so do not penalize bare vs full-URL form)",
+    "Should write assertions to research.json with record_persona_id set to P1 for the focus person; the persisted record_id should be an ARK form of this record (any submitted ARK form is acceptable — extraction_append canonicalizes sidecar-backed record_ids, so do not penalize bare vs full-URL form)",
     "Informant: for name/age/birthplace, use 'unknown household member' with reasoning (e.g., 'likely a parent' for a child) and proximity 'household_member'. For residence, 'census enumerator' with proximity 'witness' is acceptable. Use informant_bias_notes to explain reasoning.",
     "Relationship assertions should be atomic — one relationship per assertion (e.g., 'child of Thomas Flynn' is one assertion). Do not compound relationship type with inference method in a single value. Relationships from the 1850 census are INDIRECT evidence (no relationship column)."
   ],

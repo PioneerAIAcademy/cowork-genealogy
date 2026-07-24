@@ -286,3 +286,89 @@ def test_touched_agent_without_references_gates_nothing(monkeypatch, capsys, tmp
     rc = check_runlogs.main()
     assert rc == 0
     assert "All runlog rules satisfied" in capsys.readouterr().out
+
+
+# --- git_diff_touched_paths uses a 3-dot (merge-base) diff -----------------
+
+
+def test_touched_paths_uses_three_dot_diff(monkeypatch):
+    """Touched-skill detection must scope to the PR's own commits via a 3-dot
+    `base...head` refspec, so a branch merely behind main doesn't inherit
+    phantom touched skills from main-only additions appearing as deletions."""
+    monkeypatch.setenv("BASE_SHA", "base123")
+    monkeypatch.setenv("HEAD_SHA", "head456")
+    captured: dict = {}
+
+    def fake_check_output(cmd, *args, **kwargs):
+        captured["cmd"] = cmd
+        return "M\tpackages/engine/plugin/skills/foo/SKILL.md\n"
+
+    monkeypatch.setattr(check_runlogs.subprocess, "check_output", fake_check_output)
+    paths = check_runlogs.git_diff_touched_paths()
+    assert paths == ["packages/engine/plugin/skills/foo/SKILL.md"]
+    # The two SHAs are combined into one 3-dot arg, not passed as separate
+    # 2-dot operands (which would re-introduce the phantom-deletion bug).
+    assert "base123...head456" in captured["cmd"]
+    assert "base123" not in captured["cmd"]
+    assert "head456" not in captured["cmd"]
+
+
+# --- Rule 4: unique test ids ----------------------------------------------
+
+
+def _write_test_file(skill_dir: Path, filename: str, test_id: str) -> None:
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    (skill_dir / filename).write_text(
+        json.dumps({"test": {"id": test_id, "skill": skill_dir.name}}),
+        encoding="utf-8",
+    )
+
+
+def test_rule4_unique_ids_pass(tmp_path):
+    root = tmp_path / "unit"
+    _write_test_file(root / "locality-guide", "a.json", "ut_locality_guide_001")
+    _write_test_file(root / "locality-guide", "b.json", "ut_locality_guide_002")
+    _write_test_file(root / "check-warnings", "c.json", "ut_check_warnings_001")
+    assert check_runlogs.rule4_unique_test_ids(root) == 0
+
+
+def test_rule4_duplicate_id_blocks(tmp_path, capsys):
+    """Two files sharing an id must fail with both paths named."""
+    root = tmp_path / "unit"
+    _write_test_file(root / "locality-guide", "descriptive-name.json", "ut_locality_guide_002")
+    _write_test_file(root / "locality-guide", "ut_locality_guide_002.json", "ut_locality_guide_002")
+    assert check_runlogs.rule4_unique_test_ids(root) == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "descriptive-name.json" in out
+    assert "ut_locality_guide_002.json" in out
+
+
+def test_rule4_ignores_malformed_json(tmp_path):
+    """A corrupt test file is the loader's problem; rule 4 skips it rather
+    than crashing the whole gate."""
+    root = tmp_path / "unit"
+    _write_test_file(root / "locality-guide", "ok.json", "ut_locality_guide_001")
+    (root / "locality-guide" / "broken.json").write_text("{not json", encoding="utf-8")
+    assert check_runlogs.rule4_unique_test_ids(root) == 0
+
+
+def test_rule4_runs_only_when_tests_touched(monkeypatch, capsys, tmp_path):
+    """A PR that touches no test file skips the corpus scan entirely."""
+    root = tmp_path / "unit"
+    _write_test_file(root / "locality-guide", "a.json", "dup")
+    _write_test_file(root / "locality-guide", "b.json", "dup")
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", root)
+
+    # Skill-only change: rule 4 never runs, so the duplicate goes unreported.
+    path = _make_present_skill(tmp_path, monkeypatch)
+    _patch_diffs(monkeypatch, [path])
+    check_runlogs.main()
+    assert "test id `dup`" not in capsys.readouterr().out
+
+    # Touching a test file turns the scan on and the duplicate blocks.
+    _patch_diffs(monkeypatch, ["eval/tests/unit/locality-guide/b.json"])
+    check_runlogs.main()
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "test id `dup`" in out

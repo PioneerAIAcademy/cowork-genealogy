@@ -2,10 +2,10 @@
   "test": {
     "id": "ut_search_records_019",
     "skill": "search-records",
-    "name": "Search under the modern country when the place changed national borders",
+    "name": "Search under the modern country the plan staged when borders changed",
     "type": "positive",
-    "description": "Jan Gallo was born 1893 in Šútovo, Turany parish — then Turócz County, Kingdom of Hungary, but today in Slovakia. FamilySearch indexes the parish record under the PRESENT-DAY country (Slovakia, Church and Synagogue Books), not the historical empire. A record_search scoped to 'Hungary' returns nil no matter how many name variants are tried; the record is filed under Slovakia. The skill must recognize the national-jurisdiction change and retry under the modern country, where it finds the 1893 baptism naming father Andrej Gallo. This is the exact gap that made the jan-gallo-father e2e run flounder through Hungary collections before stumbling onto the record via volume_search. The modern-jurisdiction lever (search-strategy-levers.md) grades this.",
-    "tags": ["search", "jurisdiction-change", "modern-country", "central-europe", "e2e-derived"]
+    "description": "Jan Gallo was born 1893 in Šútovo, Turany parish — then Turócz County, Kingdom of Hungary, today in Slovakia. FamilySearch indexes the parish record under the PRESENT-DAY country (Slovakia, Church and Synagogue Books), not the historical empire; a record_search scoped to 'Hungary' returns nil. The plan item pli_001 (produced by research-plan from the locality guide) STAGES the successor jurisdiction — its rationale tells search-records the parish is indexed under present-day Slovakia. search-records must act on that staged jurisdiction and search Slovakia, where it finds the 1893 baptism naming father Andrej Gallo. Tests that search-records uses the plan's staged successor — NOT that it works out the border change itself (that is locality-guide/research-plan's job; search-records holds no place tools).",
+    "tags": ["search", "jurisdiction-change", "modern-country", "central-europe", "e2e-derived", "uses-plan-staged-successor"]
   },
   "input": {
     "user_message": "Execute plan item pli_001 — find Jan Gallo's 1893 baptism from Turany parish and report what it says about his father.",
@@ -16,11 +16,11 @@
     "max_turns": 35
   },
   "judge_context": [
-    "This is a POSITIVE test for the modern-country jurisdiction lever. The place (Šútovo, Turócz County) was in the Kingdom of Hungary in 1893 but is in modern Slovakia; FamilySearch indexes the record under Slovakia.",
-    "REQUIRED: after a Hungary-scoped search returns nil (or as its opening move), the skill must run a record_search scoped to the MODERN country — recordCountry 'Slovakia' (or a Slovakia place/collection) — which returns Jan Gallo's 1893 baptism. Recovering the father Andrej Gallo requires this country switch.",
-    "Correctness=3 when the skill retries under Slovakia (the modern country) after the Hungary nil and reports the father Andrej Gallo. Correctness=1 if it only ever searches Hungary/Turócz, gives up after the nil, or concludes the record is unavailable without trying the present-day country.",
-    "It is fine — even ideal — to search Slovakia FIRST (recognizing the border change up front) without a wasted Hungary search; do not penalize skipping straight to the modern country. Also acceptable: using place_search_all to establish the jurisdiction succession before searching.",
+    "POSITIVE test. The plan item pli_001's rationale STAGES the successor jurisdiction — it states the Turany parish is indexed by FamilySearch under present-day Slovakia (not the Kingdom of Hungary). search-records should act on that staged jurisdiction and search Slovakia.",
+    "REQUIRED: run a record_search scoped to the MODERN country — recordCountry 'Slovakia' (or a Slovakia place/collection) — which returns Jan Gallo's 1893 baptism. Recovering the father Andrej Gallo requires this. Searching Slovakia FIRST (as the plan staged) is ideal; a Hungary search that nils before switching to Slovakia is acceptable but not required.",
+    "Correctness=3 when the skill searches Slovakia (the staged successor) and reports the father Andrej Gallo. Correctness=1 if it only ever searches Hungary/Turócz, ignores the plan's staged Slovakia jurisdiction, or gives up after the nil without searching Slovakia.",
+    "search-records holds NO place tools and should NOT try to work out the succession itself. Here it does not need to — the plan already staged Slovakia. (Had the plan staged no successor and a boundary-related nil persisted, bouncing to research-plan would be the correct move — but that is not this test.)",
     "Do not penalize the absence of a denomination filter; assuming 'Roman Catholic' for a Slovak Lutheran parish would be a mistake, so a denomination-agnostic search is correct.",
-    "Tool Arguments: score 3 if the primary searches keep givenName (Jan) with surname (Gallo) and the winning search targets Slovakia. Score 1 if it drops givenName to a surname-only search or never targets the modern country."
+    "Tool Arguments: score 3 if the primary searches keep givenName (Jan) with surname (Gallo) and the winning search targets Slovakia. Score 1 if it drops givenName to a surname-only search or never targets Slovakia."
   ]
 }

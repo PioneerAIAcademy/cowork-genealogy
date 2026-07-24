@@ -66,6 +66,14 @@ COPY --from=web /repo/apps/web/dist /app/server/web-dist
 # NOT baked into this control-plane image — only this one config file is.)
 COPY packages/engine/mcp-server/config/familysearch.json /packages/engine/mcp-server/config/familysearch.json
 
+# Build identity, stamped into feedback bundles so triage can date a case and
+# tie it to an exact checkout. `make deploy` fills these from git; they default
+# to "dev" so a plain `docker build` still works.
+ARG GIT_SHA=dev
+ARG BUILD_DATE=dev
+ENV GIT_SHA=${GIT_SHA} \
+    BUILD_DATE=${BUILD_DATE}
+
 # Where the StaticFiles mount looks for the built client.
 ENV WEB_DIST_DIR=/app/server/web-dist
 # get_settings() mkdirs its work dir under DATA_DIR. With the DB on Neon

@@ -107,6 +107,7 @@ The allowed IPC channels (update this list when adding new ones):
 | `project:get-state` | invoke | Current watcher state (cached; no file I/O) |
 | `project:list-files` | invoke | List files under the open project folder |
 | `project:read-sidecar` | invoke | Read a `results/<logId>.json` sidecar (logId validated in `readSidecar`) |
+| `project:read-image` | invoke | Read a source page scan (`images/<key>.jpg`) as a `data:` URL (filename validated in `readSourceImage`) |
 | `session:get-log` | invoke | Read the session log for the open folder |
 | `feedback:submit` | invoke | Build + POST a feedback zip (the POST is a **main-process** `fetch`, not a renderer request) |
 | `project:research-updated` | on (push) | Parsed research.json |

@@ -1,5 +1,5 @@
-// Test fixture extracted from docs/research-schema-spec.md Section 9 (Worked Example)
-// and docs/simplified-gedcomx-spec.md Section 8
+// Test fixture extracted from docs/specs/research-schema-spec.md Section 9 (Worked
+// Example) and docs/specs/simplified-gedcomx-spec.md Section 8
 
 import type { ResearchData, GedcomxData } from '../schema'
 

@@ -15,6 +15,28 @@ if "%SLUG%"=="" (
   exit /b 1
 )
 
+if not exist ..\packages\engine\mcp-server\node_modules\ (
+  echo.
+  echo ERROR: mcp-server dependencies are not installed.
+  echo Please run Setup.bat once to install everything, then retry.
+  pause
+  exit /b 1
+)
+
+echo.
+echo Building MCP server (the scratch session runs the compiled server;
+echo without it /research has no genealogy tools)...
+cd ..\packages\engine\mcp-server
+call npm run build
+if errorlevel 1 (
+  echo.
+  echo ERROR: MCP server build failed. Aborting.
+  cd ..\..\..\eval
+  pause
+  exit /b 1
+)
+cd ..\..\..\eval
+
 cd harness
 call uv run python -m e2e.scratch --test %SLUG%
 if errorlevel 1 (

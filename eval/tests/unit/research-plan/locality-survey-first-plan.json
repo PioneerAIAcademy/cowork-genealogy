@@ -2,39 +2,38 @@
   "test": {
     "id": "ut_research_plan_005",
     "skill": "research-plan",
-    "name": "First plan for q_001 uses full locality survey",
+    "name": "First plan for q_001 plans from the persisted locality entry",
     "type": "positive",
-    "description": "No plan exists yet for q_001. The skill must perform a locality survey (wiki_search, place_search_all, place_population, wiki_place_page, volume_search) before writing the first plan for the parentage question. Tests that the plan reflects actual record availability for Schuylkill County, PA — e.g., references probate availability, Catholic diocese jurisdiction, or browse-only films.",
-    "tags": ["planning", "locality-survey", "first-plan", "parentage", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
+    "description": "No plan exists yet for q_001, but a `localities` entry (loc_001, Schuylkill County / Pennsylvania) is already present because the orchestrator ran locality-guide first. research-plan is a pure consumer: it must READ that entry and plan from its facts — citing actual record availability (probate 1811+, Catholic Diocese of Scranton post-1868, PA statewide vital registration only from 1906, browse-only coal-region films) — WITHOUT calling any place-fact/wiki survey tools (it no longer has wiki_search/wiki_place_page/place_population). It may call collections_search/volume_search/place_search to discover the specific records to plan. Tests the pure-consumer behavior after the orchestration split.",
+    "tags": [
+      "planning",
+      "reads-localities-entry",
+      "first-plan",
+      "parentage",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status"
+    ]
   },
   "input": {
     "user_message": "Create a research plan for the parentage question.",
-    "scenario": "flynn-first-plan"
+    "scenario": "flynn-first-plan-surveyed"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",
     "place-search-pennsylvania",
+    "place-search-all-schuylkill",
     "collections-search-schuylkill",
     "collections-search-pennsylvania",
     "collections-search-us-national",
     "external-links-search-schuylkill",
-    "wiki-search-schuylkill-coal-mining",
-    "wiki-search-pennsylvania-probate",
-    "wiki-search-death-records",
-    "wiki-search-pennsylvania-records",
-    "wiki-search-immigration-records",
-    "wiki-search-irish-catholic-records",
-    "place-search-all-schuylkill",
-    "place-population-schuylkill",
-    "wiki-place-page-pennsylvania-research-tips",
-    "wiki-place-page-pennsylvania-online-records",
     "volume-search-schuylkill"
   ],
   "judge_context": [
-    "This is the FIRST plan for q_001. The skill should call survey tools (wiki_search, place_search_all, place_population, wiki_place_page, volume_search, collections_search) to discover what record types exist for Schuylkill County, PA before planning.",
-    "The plan must cite at least ONE piece of evidence from the locality survey — e.g., referencing probate records available 1811+, Catholic diocese of Scranton (post-1868), browse-only naturalization or church films from volume_search, or PA vital registration starting 1906.",
+    "A `localities` entry (loc_001) for Schuylkill County / Pennsylvania is ALREADY in research.json — the orchestrator ran locality-guide before research-plan. The skill should READ that entry and use its facts/quirks; it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools — the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+    "The plan must cite at least ONE fact from the localities entry — e.g., probate available 1811+ at the county Register of Wills, the Catholic Diocese of Scranton (post-1868), PA statewide vital registration only from 1906, or browse-only anthracite-region films.",
+    "research-plan MAY call collections_search / volume_search / external_links_search / place_search to discover the specific records to plan — that is its record-discovery role and is expected, not a violation.",
     "Plan items must include rationale explaining why each record type was chosen for the parentage question — generic rationale ('more records would help') is a fail.",
-    "At least one item should target post-1850 census (1870, 1880, or 1900) to track Patrick into adulthood; the 1880 census relationship column is the best direct parentage indicator in the available fixtures."
+    "At least one item should target a post-1850 census (1870, 1880, or 1900) to track Patrick into adulthood; the 1880 census relationship column is the best direct parentage indicator in the available fixtures."
   ],
   "judge_reads_files": true,
   "execution": {

@@ -1,0 +1,19 @@
+{
+  "id": "ferber-death",
+  "name": "William Hubert Ferber — death date & place (1903, Cincinnati, Ohio)",
+  "genre": "strip",
+  "source_pid": "G7JB-YH6",
+  "captured": "2026-07-15",
+  "researcher_question": "When and where did William Hubert Ferber die?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1900s",
+    "geography": "US-OH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Strip fixture. Removed William's Death (11 Mar 1903, Cincinnati) and Burial facts plus the death/burial sources (Ohio county death record, FS + Ancestry Find a Grave, Spring Grove index). Answer is the top hit on a death search: Ohio County Death Records + FS Find a Grave both give 11 Mar 1903 Cincinnati (death record names parents Gerhard & Eva, locking identity). DELIBERATE DISTRACTOR left in: a Kentucky death record (3JRQ-P4W) on William's node is actually his widow Emma (Becker) Ferber's 1948 death (Dayton, Campbell Co., KY). Burial cemetery (Spring Grove) is off-FS -> bonus."
+}

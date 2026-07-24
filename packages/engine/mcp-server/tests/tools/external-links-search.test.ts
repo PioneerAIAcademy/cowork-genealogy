@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { externalLinksSearchTool } from "../../src/tools/external-links-search.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
+import { stageSearchResults } from "../../src/utils/results-staging.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -10,11 +11,19 @@ vi.mock("../../src/utils/place-resolver.js", () => ({
   standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
 }));
 
+// The staging util is exercised by tests/utils/results-staging.test.ts; here we
+// only assert the tool calls it correctly and shapes the inline copy around it.
+vi.mock("../../src/utils/results-staging.js", () => ({
+  stageSearchResults: vi.fn(),
+}));
+const mockedStage = vi.mocked(stageSearchResults);
+
 // Runs before every test (in addition to the per-describe fetch resets);
 // default the resolver to a successful placeId so existing cases reach fetch.
 beforeEach(() => {
   mockStandardPlaceToPlaceId.mockReset();
   mockStandardPlaceToPlaceId.mockResolvedValue("1927089");
+  mockedStage.mockReset();
 });
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -323,5 +332,130 @@ describe("externalLinksSearchTool — User-Agent contract", () => {
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
     expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
+  });
+});
+
+describe("externalLinksSearchTool — staging, host filter, and inline cap", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  const twoHostCollections = [
+    { url: "https://www.ancestry.com/search/collections/1/", linkText: "PA Wills" },
+    { url: "https://www.findagrave.com/cemetery/22", linkText: "PA Graves" },
+    { url: "https://www.ancestry.com/search/collections/2/", linkText: "PA Census" },
+  ];
+
+  it("stages the full pre-filter set with tool 'external_links_search' when projectPath is supplied", async () => {
+    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
+    mockedStage.mockResolvedValueOnce({
+      resultsRef: "results/.staging/abc.json",
+      returnedCount: 3,
+    });
+
+    const result = await externalLinksSearchTool({
+      standardPlace: "Pennsylvania, United States",
+      projectPath: "/tmp/project",
+    });
+
+    expect(mockedStage).toHaveBeenCalledTimes(1);
+    const stageArg = mockedStage.mock.calls[0][0];
+    expect(stageArg).toMatchObject({
+      projectPath: "/tmp/project",
+      tool: "external_links_search",
+    });
+    // The staged payload is the FULL set (all hosts), before any host filter.
+    expect(stageArg.response.results).toHaveLength(3);
+    expect(result.staged).toEqual({
+      resultsRef: "results/.staging/abc.json",
+      returnedCount: 3,
+    });
+    expect(result.stagingError).toBeUndefined();
+  });
+
+  it("host filter narrows the inline results while the full set is still staged", async () => {
+    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
+    mockedStage.mockResolvedValueOnce({
+      resultsRef: "results/.staging/abc.json",
+      returnedCount: 3,
+    });
+
+    const result = await externalLinksSearchTool({
+      standardPlace: "Pennsylvania, United States",
+      host: "ancestry.com",
+      projectPath: "/tmp/project",
+    });
+
+    // Inline: only the two ancestry links, and `returned` reflects that.
+    expect(result.results).toHaveLength(2);
+    expect(result.returned).toBe(2);
+    expect(result.results.every((r) => r.url.includes("ancestry.com"))).toBe(true);
+    // Staged: still the full 3-link set (host filter never touches the sidecar).
+    expect(mockedStage.mock.calls[0][0].response.results).toHaveLength(3);
+  });
+
+  it("applies the host filter even when not staged (explicit query narrowing)", async () => {
+    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
+    const result = await externalLinksSearchTool({
+      standardPlace: "Pennsylvania, United States",
+      host: "findagrave.com",
+    });
+    expect(mockedStage).not.toHaveBeenCalled();
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]?.url).toContain("findagrave.com");
+    expect(result.staged).toBeUndefined();
+  });
+
+  it("caps the inline set to 50 only when staged; returns the full set un-staged", async () => {
+    const many = Array.from({ length: 120 }, (_, i) => ({
+      url: `https://example.com/c${i}`,
+      linkText: `Collection ${i}`,
+    }));
+
+    // Un-staged: full set comes back (back-compat; nothing retained to recover).
+    mockFetch.mockResolvedValueOnce(singlePage(many));
+    const unstaged = await externalLinksSearchTool({
+      standardPlace: "Pennsylvania, United States",
+    });
+    expect(unstaged.results).toHaveLength(120);
+    expect(unstaged.returned).toBe(120);
+
+    // Staged: inline capped at 50, full 120 staged to disk.
+    mockFetch.mockResolvedValueOnce(singlePage(many));
+    mockedStage.mockResolvedValueOnce({
+      resultsRef: "results/.staging/def.json",
+      returnedCount: 120,
+    });
+    const staged = await externalLinksSearchTool({
+      standardPlace: "Pennsylvania, United States",
+      projectPath: "/tmp/project",
+    });
+    expect(staged.results).toHaveLength(50);
+    expect(staged.returned).toBe(50);
+    expect(mockedStage.mock.calls[0][0].response.results).toHaveLength(120);
+  });
+
+  it("never fails the search when staging throws", async () => {
+    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
+    mockedStage.mockRejectedValueOnce(new Error("disk full"));
+
+    const result = await externalLinksSearchTool({
+      standardPlace: "Pennsylvania, United States",
+      projectPath: "/tmp/project",
+    });
+
+    expect(result.staged).toBeNull();
+    expect(result.stagingError).toBe("disk full");
+    expect(result.results).toHaveLength(3); // search result intact
+  });
+
+  it("does not stage when projectPath is omitted", async () => {
+    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
+    const result = await externalLinksSearchTool({
+      standardPlace: "Pennsylvania, United States",
+    });
+    expect(mockedStage).not.toHaveBeenCalled();
+    expect(result.staged).toBeUndefined();
+    expect(result.returned).toBe(3);
   });
 });

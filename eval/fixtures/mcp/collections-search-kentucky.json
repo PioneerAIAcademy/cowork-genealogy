@@ -1,0 +1,64 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search — FamilySearch collections for Kentucky/Muhlenberg. Certificates begin 1911; county death registers 1852-1910 are gappy; probate is deep for the 1870s.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Muhlenberg, Kentucky, United States"
+    },
+    "scope": "Kentucky",
+    "totalForPlace": 5,
+    "results": [
+      {
+        "id": "1417491",
+        "title": "Kentucky Deaths, 1911-1967",
+        "dateRange": "1911-1967",
+        "recordCount": 2900412,
+        "personCount": 2900412,
+        "imageCount": 2611350,
+        "url": "https://www.familysearch.org/search/collection/1417491",
+        "notes": "Statewide death certificates — registration began 1 January 1911; no statewide certificates exist for earlier deaths."
+      },
+      {
+        "id": "1804888",
+        "title": "Kentucky, Deaths and Burials, 1843-1970",
+        "dateRange": "1843-1970",
+        "recordCount": 421870,
+        "personCount": 421870,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1804888",
+        "notes": "Index of county-level death registers (1852-1910 era coverage is partial — many counties have gaps for the 1860s-1870s) and later certificates."
+      },
+      {
+        "id": "1875188",
+        "title": "Kentucky Probate Records, 1727-1990",
+        "dateRange": "1727-1990",
+        "recordCount": 0,
+        "personCount": 0,
+        "imageCount": 1349204,
+        "url": "https://www.familysearch.org/search/collection/1875188",
+        "notes": "County court probate — wills, administrator bonds, estate settlements, inventories. Browse-only images organized by county and volume; deep coverage for the 1870s including Muhlenberg County."
+      },
+      {
+        "id": "1804987",
+        "title": "Kentucky, County Marriages, 1797-1954",
+        "dateRange": "1797-1954",
+        "recordCount": 1330975,
+        "personCount": 1330975,
+        "imageCount": 990120,
+        "url": "https://www.familysearch.org/search/collection/1804987"
+      },
+      {
+        "id": "1417683",
+        "title": "United States Census, 1850-1880 (Kentucky)",
+        "dateRange": "1850-1880",
+        "recordCount": 6231540,
+        "personCount": 6231540,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1417683"
+      }
+    ]
+  }
+}

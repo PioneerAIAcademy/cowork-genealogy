@@ -3,22 +3,25 @@
 Usage (run from eval/harness/):
 
   uv run python -m e2e.run_e2e --test <fixture-id>
-  uv run python -m e2e.run_e2e --tag <tag>
 
 Or from the repo root with PYTHONPATH set:
 
   PYTHONPATH=eval/harness python -m e2e.run_e2e --test <fixture-id>
+
+**One fixture per invocation, by design.** There is deliberately no
+full-suite flag and no tag sweep: a run costs 20-60 minutes and $3-10, so a
+10-fixture sweep is 4-10 hours and $30-100. Anyone who genuinely needs a
+batch drives it with a shell loop and budgets for it explicitly, rather than
+having a one-word flag make that spend easy to trigger by accident.
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
-import json
 import os
 import sys
 from pathlib import Path
-from typing import Iterable
 
 from e2e.orchestrator import (
     DEFAULT_FIXTURES_ROOT,
@@ -27,48 +30,17 @@ from e2e.orchestrator import (
     DEFAULT_RUNLOG_ROOT,
     run_e2e_test,
 )
+from e2e.env import ENV_FILE, load_env_file, stage_openrouter_key
 from e2e.report import print_rollup
 from e2e.result import E2eResult, is_committable_run
 
 
-# eval/.env holds ANTHROPIC_API_KEY (written by Setup.bat). The judge talks
-# to the Anthropic API directly via the SDK, which reads ANTHROPIC_API_KEY
-# from the process env — so without this the judge fails to authenticate
-# and every run comes back verdict=skipped. The agent run itself uses the
-# Claude Agent SDK's own auth and is unaffected, which is why the symptom
-# is "agent ran, judge skipped". A key already set in the shell wins.
-_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
-
-
-def load_env_file(env_file: Path = _ENV_FILE) -> None:
-    """Load keys from eval/.env into os.environ without overriding the shell."""
-    if not env_file.exists():
-        return
-    try:
-        from dotenv import dotenv_values
-    except ImportError:
-        return
-    for key, value in dotenv_values(env_file).items():
-        if value is not None and not os.environ.get(key):
-            os.environ[key] = value
-
-
-def _list_fixture_dirs(fixtures_root: Path) -> list[Path]:
-    return sorted(
-        p for p in fixtures_root.iterdir()
-        if p.is_dir() and (p / "fixture.json").exists()
-    )
-
-
-def _filter_by_tag(fixture_dirs: Iterable[Path], tag: str) -> list[Path]:
-    """Keep fixtures whose tags contain the given tag value (any dimension)."""
-    matched = []
-    for d in fixture_dirs:
-        meta = json.loads((d / "fixture.json").read_text(encoding="utf-8"))
-        tag_values = set((meta.get("tags") or {}).values())
-        if tag in tag_values:
-            matched.append(d)
-    return matched
+# Judge auth from eval/.env. Lives in e2e.env so calibrate_judge can share it
+# without importing this module (which pulls in claude_agent_sdk via
+# e2e.orchestrator). Re-exported here: the agent run uses the Claude Agent SDK's
+# own auth and is unaffected, which is why the symptom of a missing key is
+# "agent ran, judge skipped".
+_ENV_FILE = ENV_FILE  # back-compat alias
 
 
 def _print_proof_quality(result: E2eResult) -> None:
@@ -118,13 +90,17 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
 
 def main(argv: list[str] | None = None) -> int:
     load_env_file()  # make ANTHROPIC_API_KEY from eval/.env available to the judge
+    stage_openrouter_key()  # bridge OPENROUTER_API_KEY -> ~/.familysearch-mcp/config.json for the MCP subprocess (spec §6.5)
     parser = argparse.ArgumentParser(
         prog="e2e.run_e2e",
-        description="Run one or more e2e tests against the GPS research flow.",
+        description="Run one e2e test against the GPS research flow.",
     )
-    target = parser.add_mutually_exclusive_group(required=True)
-    target.add_argument("--test", help="Fixture id (slug) under eval/tests/e2e/")
-    target.add_argument("--tag", help="Run fixtures with this tag value (any dimension)")
+    parser.add_argument(
+        "--test",
+        required=True,
+        help="Fixture id (slug) under eval/tests/e2e/. One fixture per run — "
+             "there is no suite or tag sweep (see the module docstring).",
+    )
     parser.add_argument(
         "--fixtures-root",
         type=Path,
@@ -166,6 +142,44 @@ def main(argv: list[str] | None = None) -> int:
             "not a double-applied write); pass --no-resume-on-stall to disable."
         ),
     )
+    parser.add_argument(
+        "--effort-level",
+        choices=["low", "medium", "high", "xhigh", "max"],
+        default="high",
+        help=(
+            "Pin the run's reasoning effort via a project-level setting "
+            "(.claude/settings.json effortLevel). Session-wide. Default: high "
+            "(matches Cowork). setting_sources=['project'] already isolates from "
+            "the user's effortLevel, and CLAUDE_EFFORT is output-only, so this is "
+            "the sole working effort lever. Vary it to test whether a runaway-"
+            "thinking subagent freeze clears (see subagents[].runaway_thinking)."
+        ),
+    )
+    parser.add_argument(
+        "--max-output-tokens",
+        type=int,
+        default=None,
+        help=(
+            "Cap the model's output budget via CLAUDE_CODE_MAX_OUTPUT_TOKENS "
+            "(session-wide). Default: unset = the CLI default (sonnet-5 -> 32000). "
+            "This env var IS inherited from the launching shell, so pass it "
+            "explicitly for reproducible runs. Lower it (e.g. 16000, 8000) to test "
+            "whether it bounds a subagent that fills the output budget with "
+            "thinking. Recorded in the runlog."
+        ),
+    )
+    parser.add_argument(
+        "--agent-model",
+        default=None,
+        help=(
+            "Override the model for BOTH the parent agent and every staged "
+            "subagent (rewrites each agent's `.md` model pin). Default: unset = "
+            "fixture default parent (claude-sonnet-4-6) + each subagent's own pin "
+            "(record-extractor = claude-sonnet-5). Set e.g. claude-sonnet-4-6 to "
+            "run the whole flow under Cowork's model and test whether the "
+            "sonnet-5 record-extractor freeze reproduces. Recorded in the runlog."
+        ),
+    )
     args = parser.parse_args(argv)
 
     fixtures_root: Path = args.fixtures_root
@@ -173,16 +187,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Fixtures root does not exist: {fixtures_root}", file=sys.stderr)
         return 2
 
-    if args.test:
-        fixture_dirs = [fixtures_root / args.test]
-        if not fixture_dirs[0].exists():
-            print(f"Fixture not found: {fixture_dirs[0]}", file=sys.stderr)
-            return 2
-    else:  # --tag
-        fixture_dirs = _filter_by_tag(_list_fixture_dirs(fixtures_root), args.tag)
-
-    if not fixture_dirs:
-        print("No fixtures matched.", file=sys.stderr)
+    fixture_dir = fixtures_root / args.test
+    if not fixture_dir.exists():
+        print(f"Fixture not found: {fixture_dir}", file=sys.stderr)
         return 2
 
     kwargs = {
@@ -191,22 +198,24 @@ def main(argv: list[str] | None = None) -> int:
         "skills_dir": args.skills_dir,
         "skip_judge": args.skip_judge,
         "resume_on_stall": args.resume_on_stall,
+        "effort_level": args.effort_level,
+        "max_output_tokens": args.max_output_tokens,
+        "agent_model": args.agent_model,
     }
 
     results: list[E2eResult] = []
-    for fixture_dir in fixture_dirs:
-        try:
-            result = asyncio.run(_run_one(fixture_dir, **kwargs))
-            results.append(result)
-        except KeyboardInterrupt:
-            print("\nInterrupted.", file=sys.stderr)
-            return 130
-        except Exception as e:  # noqa: BLE001 — keep the suite running
-            print(f"  ERROR: {type(e).__name__}: {e}", file=sys.stderr)
+    try:
+        results.append(asyncio.run(_run_one(fixture_dir, **kwargs)))
+    except KeyboardInterrupt:
+        print("\nInterrupted.", file=sys.stderr)
+        return 130
+    except Exception as e:  # noqa: BLE001 — report, then fall through to a nonzero exit
+        print(f"  ERROR: {type(e).__name__}: {e}", file=sys.stderr)
+        return 1
 
     print()
     print_rollup(results)
-    # Exit nonzero if any test failed or aborted.
+    # Exit nonzero if the test failed or aborted.
     failed = sum(1 for r in results if r.verdict in {"fail", "skipped"})
     return 1 if failed else 0
 

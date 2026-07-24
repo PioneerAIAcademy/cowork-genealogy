@@ -531,9 +531,8 @@ npx @modelcontextprotocol/inspector node build/index.js
   `personDetails: true`.
 
 ### Manual Layers 0–3 (smoke → Inspector → Claude Code → Cowork)
-Full layered playbook in
-`docs/testing-guides/person-ancestors-tool-testing-guide.md` (OAuth setup
-per `docs/testing-guides/oauth-tool-testing-guide.md`).
+Run `dev/try-person-ancestors.ts` for the smoke layer; OAuth setup per
+`docs/testing-guides/oauth-tool-testing-guide.md`.
 
 ---
 

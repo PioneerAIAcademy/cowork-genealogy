@@ -1,0 +1,41 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "William Hubert Ferber died on 11 March 1903 at Cincinnati, Hamilton County, Ohio. His death is documented by an Ohio county death record — which also names his parents, Gerhard and Eva Ferber, confirming identity — and by a FamilySearch Find a Grave memorial, both recoverable via record_search.",
+      "details": {
+        "target_person": {
+          "name": "William H Ferber",
+          "pid": "G7JB-YH6"
+        },
+        "fact_type": "Death",
+        "date": "11 March 1903",
+        "place": "Cincinnati, Hamilton, Ohio, United States"
+      },
+      "supporting_sources": [
+        "Ohio, County Death Records, 1840-2001 — Wm. Ferber, died 11 Mar 1903 at Cincinnati, Hamilton, Ohio (parents Gerhard and Eva Ferber).",
+        "Find a Grave Index — William H Ferber, died 11 Mar 1903, Cincinnati, Hamilton, Ohio."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "William Hubert Ferber was buried at Spring Grove Cemetery, Cincinnati, Hamilton County, Ohio. The FamilySearch Find a Grave memorial supports the burial locale (Cincinnati); the specific cemetery name, Spring Grove, comes from an off-FamilySearch cemetery index, so it is scored as bonus credit rather than required.",
+      "details": {
+        "target_person": {
+          "name": "William H Ferber",
+          "pid": "G7JB-YH6"
+        },
+        "fact_type": "Burial",
+        "place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States"
+      },
+      "supporting_sources": [
+        "Find a Grave Index — burial at Cincinnati, Hamilton, Ohio.",
+        "Cincinnati, Ohio, Spring Grove Cemetery Index, 1845-2012 (off-FamilySearch) — Spring Grove Cemetery, Cincinnati."
+      ],
+      "required": false
+    }
+  ]
+}

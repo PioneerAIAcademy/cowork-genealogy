@@ -1,0 +1,894 @@
+{
+  "persons": [
+    {
+      "id": "GPZR-3X2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "John",
+          "surname": "Laurie"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3e5d95ee-3140-42c2-89d5-facb69586150",
+          "type": "Birth",
+          "date": "4 December 1859",
+          "standard_date": "4 Dec 1859",
+          "place": "Glasgow, Lanarkshire, Scotland, United Kingdom",
+          "standard_place": "Glasgow, Lanarkshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "55b5048a-bba3-4c3b-83ff-b2162f91f2d0",
+          "type": "Death",
+          "date": "7 December 1909",
+          "standard_date": "7 Dec 1909",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "0ffaa199-6023-4168-b88e-b0547d28f084",
+          "type": "Christening",
+          "date": "24 February 1859",
+          "standard_date": "24 Feb 1859",
+          "place": "Glasgow, Lanarkshire, Scotland, United Kingdom",
+          "standard_place": "Glasgow, Lanarkshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "c9d021d6-e7a1-4f52-aa4d-6e2516e9ed61",
+          "type": "Residence",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Glasgow, Lanarkshire, Scotland, United Kingdom",
+          "standard_place": "Glasgow, Lanarkshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "02564015-e256-442c-9ae9-3a0281bba390",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Tradeston, Lanarkshire, Scotland",
+          "standard_place": "Tradeston, Lanarkshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "ff893dae-92ab-4630-8b68-ea4cbbfd8455",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, New York City, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "0de3641c-cc79-43a1-a49f-a6eb743cadc8",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, A.D. 20, E.D. 09, New York, New York",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "682d7588-3a0c-4c0f-bb21-6931678dc097",
+          "type": "Burial",
+          "date": "10 December 1909",
+          "standard_date": "10 Dec 1909"
+        },
+        {
+          "id": "fb7a4338-bf6a-433c-a216-4d221b9f8a95",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "5d9392be-e8f8-4a38-bec6-d4792567d02d",
+          "type": "Occupation",
+          "value": "iron moulder"
+        },
+        {
+          "id": "64ae0d6d-87e7-4c28-a6b1-2a77c4b4526a",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "f0731b52-1ef9-49c8-befc-ddf2f339c98a",
+          "type": "Marital Status",
+          "value": "Single"
+        }
+      ]
+    },
+    {
+      "id": "L1WZ-DYD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Mary",
+          "surname": "Laurie"
+        }
+      ],
+      "facts": [
+        {
+          "id": "adcadc28-2289-4432-b354-5ae369dee174",
+          "type": "Birth",
+          "date": "14 Dec 1899",
+          "standard_date": "14 Dec 1899",
+          "place": "Manhattan, New York, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "35278637-611f-4d5d-bcd9-d2e726b1ed8e",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, New York City, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "cebcff7b-e2c5-48bb-bee8-13faed455438",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, A.D. 20, E.D. 09, New York, New York",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "4865447c-819e-4992-b2cf-70933d41aedf",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Manhattan Ward 21, New York, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "16fdcb3e-e079-483a-a1c4-614a55192a53",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "8687ee44-10e3-41f4-9e90-eb609a389519",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Kings, New York, United States",
+          "standard_place": "Kings, New York, United States"
+        },
+        {
+          "id": "4f620a9a-33af-42e8-9423-4e0395f8bc80",
+          "type": "Death"
+        },
+        {
+          "id": "72d1a6c6-68b0-4192-b9aa-cb52ca5f3efc",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "350cf34c-ec9b-43bc-9882-82e582281b51",
+          "type": "Marital Status",
+          "value": "Single"
+        }
+      ]
+    },
+    {
+      "id": "GPZ5-5ZY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Ellen C.",
+          "surname": "Cahill"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c52c1dcc-3961-4928-92b0-16d5040890ed",
+          "type": "Birth",
+          "date": "24 December 1864",
+          "standard_date": "24 Dec 1864",
+          "place": "Dublin, Ireland",
+          "standard_place": "Dublin, Ireland"
+        },
+        {
+          "id": "7acda6e1-b21b-4980-8e84-db4c8d1cf8d4",
+          "type": "Immigration",
+          "date": "1882",
+          "standard_date": "1882"
+        },
+        {
+          "id": "47d38c14-9d1a-414a-8d39-dcd393a2fa72",
+          "type": "Immigration",
+          "date": "1883",
+          "standard_date": "1883"
+        },
+        {
+          "id": "b4e33519-372a-4523-843e-abcdf6ec7624",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, New York City, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "ef8baa6e-3c6c-41b3-a6eb-306d052e57bb",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, A.D. 20, E.D. 09, New York, New York",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "42453a30-d17b-4459-bac0-2c7cf5f9ded9",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Manhattan Ward 21, New York, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "38648038-7c3d-4c1e-ace2-4fcfd004de80",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "New York, New York",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "a3bf8809-c739-4d61-9978-f9b65ef458a4",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "067e5353-0f53-49c2-8b1e-ee7e36795596",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "7c0f7ae3-be96-42a0-9336-f9fa09064c63",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Queens Village, Queens, New York, United States",
+          "standard_place": "Queens Village, Queens, New York, United States"
+        },
+        {
+          "id": "29989325-be60-41ac-b04f-a78d72c5e0b1",
+          "type": "Death",
+          "date": "1 October 1934",
+          "standard_date": "1 Oct 1934",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "7c0aa03f-f39d-405b-947c-6921774f3d46",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "c4f1c956-73f1-432f-adf4-427025f93fde",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "69b70953-a072-46a2-a351-3c46531c2d66",
+          "type": "Burial",
+          "place": "Saint John Cemetery and Mausoleum, Middle Village, Queens, New York, United States",
+          "standard_place": "Saint John Cemetery and Mausoleum, Middle Village, Queens, New York, United States"
+        },
+        {
+          "id": "ca9a5993-24cd-4667-b502-a0f9e1022de1",
+          "type": "Marital Status",
+          "value": "Widowed"
+        }
+      ]
+    },
+    {
+      "id": "GWGS-RBB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Jessie Jack Ellen",
+          "surname": "Laurie"
+        }
+      ],
+      "facts": [
+        {
+          "id": "185b4c82-bd8a-4cbb-9373-dd9c1e26e604",
+          "type": "Birth",
+          "date": "15 June 1893",
+          "standard_date": "15 Jun 1893",
+          "place": "Carteret, Woodbridge Township, Middlesex, New Jersey, United States",
+          "standard_place": "Carteret, Woodbridge Township, Middlesex, New Jersey, United States"
+        },
+        {
+          "id": "84c7b8a6-ea6d-4ae4-82e3-bcbf91cdfd8a",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, New York City, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "2764e8b9-81d8-4aba-8340-ae17ea5fe12d",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, A.D. 20, E.D. 09, New York, New York",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "472aec89-866a-492b-b37c-265dce6661ae",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Manhattan Ward 21, New York, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "28dfa42b-ab6f-4070-8a44-c9023b52ee47",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "c3a21bdd-31da-468b-93b2-deb93bba2f73",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Queens (Districts 0501-0750), Queens, New York, United States",
+          "standard_place": "County Laois, Ireland"
+        },
+        {
+          "id": "a4ba3c0b-429a-4013-8342-b92e2e40c601",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "861d1fd2-7aa4-48fb-8b24-0799c35be2aa",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Queens Village, Queens, New York City, New York, United States",
+          "standard_place": "Queens Village, Queens, New York City, New York, United States"
+        },
+        {
+          "id": "32cc9e82-2f5a-4281-a673-08af0aa33234",
+          "type": "Social Program Application",
+          "date": "July 1942",
+          "standard_date": "Jul 1942"
+        },
+        {
+          "id": "2245575a-0008-4ada-baf0-cceceaff2d68",
+          "type": "Death",
+          "date": "June 1978",
+          "standard_date": "Jun 1978",
+          "place": "Patchogue, Suffolk, New York, United States",
+          "standard_place": "Patchogue, Brookhaven, Suffolk, New York, United States"
+        },
+        {
+          "id": "63d9cd00-5872-46ee-956b-6e0e8cf7e535",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "3a5b90e5-15bc-4e1a-8c0b-8ba2059981d0",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "08fb2a19-ed65-4395-90fc-21444cf25dc2",
+          "type": "Social Program Correspondence",
+          "value": "Social Program Correspondence"
+        }
+      ]
+    },
+    {
+      "id": "GCFM-5XZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Agnes",
+          "surname": "Laurie"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ffc27a73-05b4-40aa-8795-dd1e43179a53",
+          "type": "Birth",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "New York",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "ceddfa3a-1c9d-4157-95e3-807e6d9ff304",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, New York City, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "bfd76f8c-8f61-4001-82c4-26a2be75e05e",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, A.D. 20, E.D. 09, New York, New York",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "478354f6-55b4-4eb3-9be3-29dfee4956bb",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Manhattan Ward 21, New York, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "79cb76aa-9962-4456-af4b-70f160099f18",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "688c1f5f-2d6c-478d-b9a2-62fda35b203b",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Kings, New York, United States",
+          "standard_place": "Kings, New York, United States"
+        },
+        {
+          "id": "9efb3159-6ac1-4566-a799-97ae615e0b73",
+          "type": "Death"
+        },
+        {
+          "id": "93d2b660-acf7-4c1d-9792-89b98bc85c2e",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "6b459917-2711-4d08-9b41-96b65161d001",
+          "type": "Marital Status",
+          "value": "Single"
+        }
+      ]
+    },
+    {
+      "id": "PZVP-5W6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Margeret",
+          "surname": "Laurie"
+        }
+      ],
+      "facts": [
+        {
+          "id": "79120e08-70a9-4756-a026-98307ecf3d5d",
+          "type": "Birth",
+          "date": "26 March 1895",
+          "standard_date": "26 Mar 1895",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "3120d5a6-80b1-432a-844c-61ee332eae14",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, New York City, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "2b712ed0-b980-4c1c-a828-588b43beba6b",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, A.D. 20, E.D. 09, New York, New York",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "9b58393c-3d39-4e93-ad2f-924aa378d3ce",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Manhattan Ward 21, New York, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "5ad5e1ac-1e99-4a5b-8ac0-7c304477d7c8",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "6702f986-94ec-4f74-90e7-c6c38aae3502",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Kings, New York, United States",
+          "standard_place": "Kings, New York, United States"
+        },
+        {
+          "id": "573a40be-dc43-4879-9f02-8e14248f8e3f",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Queens Village, Queens, New York, United States",
+          "standard_place": "Queens Village, Queens, New York, United States"
+        },
+        {
+          "id": "2b5ce4b8-f0b5-4b50-b202-636dffd42239",
+          "type": "Death",
+          "date": "3 January 1935",
+          "standard_date": "3 Jan 1935",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "5470c86d-0c92-4208-b612-1511d70b8795",
+          "type": "Burial",
+          "date": "7 January 1935",
+          "standard_date": "7 Jan 1935"
+        },
+        {
+          "id": "0ff83e38-0fe9-4281-a4bf-02f578bff32d",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "1e9d4f60-315d-4a7a-a3c3-8587ce37dd7d",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "82c31b0e-229b-4f6d-81bd-1d999af09d97",
+          "type": "Occupation",
+          "value": "switchboard operator"
+        },
+        {
+          "id": "c0e1cfbf-f800-4bca-85db-ed636670823a",
+          "type": "Residence",
+          "place": "Brooklyn, New York City, New York, United States",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "9QKQ-J79",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Honoria",
+          "surname": "Laurie"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f103",
+          "type": "Birth",
+          "date": "26 September 1890",
+          "standard_date": "26 Sep 1890",
+          "place": "W., Middlesex, New Jersey",
+          "standard_place": "Middlesex, New Jersey, United States"
+        },
+        {
+          "id": "91dbef8d-885d-46ef-b71b-662ac8c40ff9",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, New York City, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "6b8b7c33-794e-48c6-b6f5-0e1350ef4203",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, A.D. 20, E.D. 09, New York, New York",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "29ecafaf-f6f4-467a-9fe2-d00608bdc089",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Manhattan Ward 21, New York, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "b8088bfa-10b0-4619-b698-44363f64b271",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "35302158-ca91-47e2-8750-89478d711957",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Kings, New York, United States",
+          "standard_place": "Kings, New York, United States"
+        },
+        {
+          "id": "cd1c9f5b-68da-4509-ac67-3724d6a9eaf7",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Queens Village, Queens, New York, United States",
+          "standard_place": "Queens Village, Queens, New York, United States"
+        },
+        {
+          "id": "101bfa93-b0e6-4512-97c5-b175f77cdac8",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Brooklyn, New York City, New York, United States",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "83a87348-302d-492f-ad01-1f971ed1510f",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Los Angeles Judicial Township, Los Angeles, California, United States",
+          "standard_place": "Los Angeles Judicial Township, Los Angeles, California, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "c2250040-e4bf-4cf2-a517-824ab496852c",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "1707ca66-39f4-4f67-84c6-90e2b7604fc3",
+          "type": "Marital Status",
+          "value": "Single"
+        }
+      ]
+    },
+    {
+      "id": "GCFM-P8G",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "Ellen Christina \"Nellie\"",
+          "surname": "Laurie"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5904c5dc-1257-47d6-b50a-31874a1f109a",
+          "type": "Birth",
+          "date": "7 Aug 1896",
+          "standard_date": "7 Aug 1896",
+          "place": "Manhattan, New York, New York",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "4c0b0212-afb6-4462-93f4-657b45b636bf",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, New York City, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "dccc2aca-bb4b-4125-b0c3-3ddf9a545ce9",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Manhattan, A.D. 20, E.D. 09, New York, New York",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "641cb21c-6b9b-4a4f-a84a-d4c15d45ecae",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Manhattan Ward 21, New York, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "4640c413-9142-43b7-aeed-7432f8f1c1bf",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "d429193e-b8a1-423e-8cc4-b69c9ccd1648",
+          "type": "Death"
+        },
+        {
+          "id": "70edc7a9-b83e-4202-89d5-698492aadbf4",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GPZR-3X2",
+      "person2": "GPZ5-5ZY",
+      "facts": [
+        {
+          "id": "2d18503b-1a31-4ba1-b222-a52d52662545",
+          "type": "Marriage",
+          "date": "28 November 1888",
+          "standard_date": "28 Nov 1888",
+          "place": "New York County, New York, United States",
+          "standard_place": "New York County, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GPZR-3X2",
+      "child": "9QKQ-J79",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "GPZ5-5ZY",
+      "child": "9QKQ-J79",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "GPZR-3X2",
+      "child": "GCFM-5XZ"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "GPZ5-5ZY",
+      "child": "GCFM-5XZ"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "GPZR-3X2",
+      "child": "GWGS-RBB"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "GPZ5-5ZY",
+      "child": "GWGS-RBB"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "GPZR-3X2",
+      "child": "PZVP-5W6"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "GPZ5-5ZY",
+      "child": "PZVP-5W6"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "GPZR-3X2",
+      "child": "GCFM-P8G"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "GPZ5-5ZY",
+      "child": "GCFM-P8G"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "GPZR-3X2",
+      "child": "L1WZ-DYD"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "GPZ5-5ZY",
+      "child": "L1WZ-DYD"
+    }
+  ],
+  "sources": [
+    {
+      "id": "MHMS-RYH",
+      "title": "John Laurie in entry for Honoria Laurie, \"New Jersey, Births and Christenings, 1660-1980\"",
+      "citation": "\"New Jersey, Births and Christenings, 1660-1980\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FZD5-BLF : 26 August 2020), John Laurie in entry for Honoria Laurie, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FZD5-BLF"
+    },
+    {
+      "id": "W7GR-KT1",
+      "title": "John Laurie, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2WR9-YVV : Wed Mar 26 21:56:40 UTC 2025), Entry for Margaret M. Laurie and John Laurie, 3 Jan 1935.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2WR9-YVK"
+    },
+    {
+      "id": "W7GR-V31",
+      "title": "John Laurie, \"New York, New York City Births, 1846-1909\"",
+      "citation": "\"New York, New York City Births, 1846-1909\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2WSG-23G : Wed Jul 08 15:15:08 UTC 2026), Entry for Ellen Christina Laurie and John Laurie, 07 Aug 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2WSG-232"
+    },
+    {
+      "id": "W7GR-N6N",
+      "title": "John Laurie, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2493-2Z1 : Fri Jul 25 07:14:00 UTC 2025), Entry for John Laurie and Ellen Cahile, 28 November 1888.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2493-2Z1"
+    },
+    {
+      "id": "MZ9C-JVJ",
+      "title": "John Laurie in entry for Ellen Christina Laurie, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FDBM-P91 : 18 January 2020), John Laurie in entry for Ellen Christina Laurie, 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDBM-P91"
+    },
+    {
+      "id": "91CP-TG7",
+      "title": "John Laurie, \"New York, New York City Births, 1846-1909\"",
+      "citation": "\"New York, New York City Births, 1846-1909\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2WW6-ZVN : Wed Mar 12 01:27:24 UTC 2025), Entry for Laurie and John Laurie, 14 Dec 1899.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2WW6-ZV6"
+    },
+    {
+      "id": "W7GR-38R",
+      "title": "John Laurie, \"New York, State Census, 1905\"",
+      "citation": "\"New York, State Census, 1905\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:SPF4-J9C : Fri Jan 31 20:43:38 UTC 2025), Entry for John Laurie and Ellen Laurie, 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:SPF4-J9C"
+    },
+    {
+      "id": "M8JM-9TM",
+      "title": "John Laurie, \"New York, Marriages, 1686-1980\"",
+      "citation": "\"New York, Marriages, 1686-1980\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F6Q1-QBM : 21 January 2020), John Laurie, 1888.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F6Q1-QBM"
+    },
+    {
+      "id": "QYX5-764",
+      "title": "John Laurie, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K9M-3DSZ : Sat Jul 04 22:17:13 UTC 2026), Entry for Jessie Ellen Laurie and John Laurie.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K9M-3DS8"
+    }
+  ]
+}

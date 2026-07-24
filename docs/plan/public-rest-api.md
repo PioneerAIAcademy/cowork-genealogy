@@ -7,7 +7,7 @@
 > **History:** the original proposal targeted a control-plane `LiveSession`
 > with an in-process `_publish` listener fanout over pluggable `realtime`
 > backends. That architecture was removed by the realtime re-architecture
-> (`ably-realtime-migration.md` / `realtime-rearch-status.md`): **the agent
+> (`ably-realtime-migration.md`): **the agent
 > stream now lives inside the sandbox** (`app/sandbox_server.py`'s `Hub`), and
 > the browser connects a WebSocket straight to it — the control plane is out of
 > the streaming path. This doc has been rewritten to match what shipped.

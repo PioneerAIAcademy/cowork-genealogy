@@ -1,0 +1,19 @@
+{
+  "id": "swarbrick-christening",
+  "name": "Robert Swarbrick's parents and christening",
+  "genre": "strip",
+  "source_pid": "MM4W-19N",
+  "captured": "2026-07-16",
+  "researcher_question": "Who were the parents of Robert Swarbrick, and when and where was he christened, given that two same-named Robert Swarbricks were christened within months of each other in neighboring Lancashire parishes in 1797?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1790s",
+    "geography": "GB-ENG"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Robert Swarbrick (MM4W-19N) married Ellen Gardner in 1821 and died/was buried at Hambleton/Poulton-le-Fylde in 1839. Two same-named Roberts were christened in 1797 in neighboring Lancashire parishes: this one, son of John Swarbrick and Grace Collinson, christened 20 Dec 1797 at St. Chad, Poulton-le-Fylde (twin of John); the other, son of William Swarbrick, christened 11 Jun 1797 in the parish of Hambleton. The starting tree strips the christening/birth facts, the parent links, and the differentiating LifeSketch note and source so the agent must re-derive the identity resolution from parish register evidence rather than read it off a note."
+}

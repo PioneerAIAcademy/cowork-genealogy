@@ -1,0 +1,23 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "false",
+    "f5": "false",
+    "f6": "false",
+    "f7": "false",
+    "f8": "false",
+    "f9": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Clarence Reese recovered and linked as a sibling, from the 1880 Louis Reese census household.",
+    "f2": "Elizabeth Jane recovered as 'Lizzie Reese' (b. 1876) and linked, from the 1880 census household.",
+    "f3": "Lewis Reese (b. 7 Oct 1878) recovered and linked, from the 1880 census household.",
+    "f9": "Emily Reese (b. 28 Mar 1892) recovered and linked (bonus) — the one later-born sibling it reached before the cost cap.",
+    "f4": "Lora not recovered — the run hit the per-run cost cap (stop_reason cost_cap) before enumerating the post-1880 siblings.",
+    "f8": "Richard not recovered — cost cap cut the enumeration short. Note: the agent also encoded a spurious sibling 'Burr Reese' who is not among Lewis Reese's actual children (likely a census mis-read); proof honestly tiered 'probable / exhaustiveness partial'."
+  },
+  "annotator": "ernest"
+}

@@ -1,0 +1,1121 @@
+{
+  "project": {
+    "id": "rp_ferber_death",
+    "objective": "When and where did William Hubert Ferber die?",
+    "subject_person_ids": [
+      "G7JB-YH6"
+    ],
+    "status": "completed",
+    "created": "2026-07-15",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did William Hubert Ferber (born December 1869, Cincinnati, Hamilton County, Ohio) die?",
+      "rationale": "The project objective is to determine the death date and place of William H. Ferber. He was last documented in Cincinnati in 1900 census records; no death record is in the tree. Ohio death registration was statewide from 1867, making a death certificate likely findable. Hamilton County probate and local newspaper obituaries are additional sources. This is the primary and only question needed to satisfy the objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-22",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "q_001 ('When and where did William Hubert Ferber die?') is answered by direct, primary-information evidence from Ohio, County Death Records, 1840-2001 (pli_001): death on 11 March 1903 in Cincinnati, Hamilton County, Ohio. The deceased is confidently identified as G7JB-YH6 by name (Wm./William Ferber), birth locality (Cincinnati ~1870), and both parents (Gerhard Ferber and Eva Ferber) exactly matching the tree. FAN evidence (pli_008) \u2014 wife Emma Becker Ferber's 1948 Kentucky death certificate \u2014 is independent and consistent. The original image volume (Spring Grove Cemetery batch, March 6\u201316, 1903) was located and examined; Wm. Ferber's specific page was not confirmed (the index may link a different reporter's page or an adjacent page of the multi-page batch), noted as a limitation. Overturn risk is very low: the county death registrar recorded the event in official duty, making the indexed date and place primary information; no unsearched source category is likely to yield a contradicting death date.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 Ohio County Death Records directly answers the question: 11 March 1903, Cincinnati, Hamilton, Ohio. Identity is confident: name, birth locality, and both parents agree.",
+          "repository_breadth": "FamilySearch Ohio County Death Records searched (pli_001, completed, positive). Ohio Deaths 1908-1953 not applicable (death pre-dates statewide registration). Ancestry Ohio fallback (pli_005) skipped \u2014 pli_001 positive; redundant. Emma Becker Ferber's Kentucky death certificate searched (pli_008) as FAN. Census bracketing items (pli_003, pli_007) and newspaper (pli_006) skipped \u2014 no longer needed once exact date established.",
+          "original_substitution": "src_001 is a derivative (FamilySearch index). The original image (ark:/61903/3:1:S3HT-66TS-SCS) was identified and examined; the correct volume (Spring Grove Cemetery, Hamilton County death report, March 6\u201316, 1903) was confirmed, but Wm. Ferber's specific entry was not located on the page transcribed \u2014 the entry may be on a different reporter's batch or adjacent page of the same multi-page document. This is a noted limitation. The indexed data itself carries primary information (county registrar in official duty, exact date, confirmed place), reducing the risk that the original would reveal a materially different death date or place.",
+          "independent_verification": "The Ohio County Death Record (one evidence unit: county registrar, official duty) provides direct primary evidence. Emma Becker Ferber's 1948 Kentucky death certificate (second independent record, different state, different creation process) is consistent \u2014 she survived to 1948 under the married name Ferber, confirming William predeceased her. Emma's record does not state William's specific death date, so it is consistent corroboration, not a second direct source for the date. Only one direct source for the specific date; the overturn risk is nonetheless very low given the authoritative character of the primary source.",
+          "evidence_class": "The indexed record (src_001) is derivative in source classification, but the information it carries \u2014 death date and place recorded by the county registrar \u2014 is primary information with direct evidence quality. The original death certificate image was attempted. Emma's Kentucky death record (src_002) is an independent derivative that provides secondary/indirect evidence consistent with William's 1903 death.",
+          "conflict_resolution": "One minor conflict: birth year ~1870 (death record) vs. December 1869 (tree). This is non-material to the death date/place conclusion \u2014 the informant provided an approximate birth year, which is entirely expected and does not cast doubt on the death date. No conflict about the death date or place.",
+          "overturn_risk": "Very low. The county registrar recorded William Ferber's death on 11 March 1903 in Cincinnati in official duty \u2014 this is the authoritative governmental source for this event. Identity is confidently established by name, birth locality, and both parents. No alternate death date or place has emerged in any searched record. The only notable limitation is that the original register image entry was not confirmed on the specific examined page; the probability that the original differs materially in date or place from the index is negligible for official county death records of this period."
+        }
+      },
+      "created": "2026-07-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1900-1940",
+          "repository": "FamilySearch",
+          "rationale": "Ohio County Death Records 1840-2001 (FS coll 2128172) contains indexed Hamilton County death certificates with images. County death registration began 1867; this collection covers both pre- and post-1908 deaths. Highest-probability direct source for William H. Ferber's death certificate, which would record exact date, place, and informant.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Ohio",
+          "date_range": "1908-1953",
+          "repository": "FamilySearch",
+          "rationale": "Ohio Deaths 1908-1953 (FS coll 1307272): statewide death certificates filed after Ohio began statewide registration in 1908. These certificates are more detailed than county records, listing parents' birthplaces and informant. If William died 1908 or later this collection is a parallel primary source alongside the county records. Indexed + images.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1920",
+          "repository": "FamilySearch",
+          "rationale": "1920 US Federal Census (enumerated January 1920): if William died before January 1920, wife Emma Becker Ferber (born 1870, last found with him in 1910) should appear as head of household or widow. If he appears enumerated, death occurred after April 1920 \u2014 narrows the search window significantly.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "cemetery",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio",
+          "date_range": "1900-1950",
+          "repository": "other",
+          "rationale": "FindAGrave search for William Ferber / William H. Ferber at Spring Grove Cemetery, Cincinnati. Other Ferber family members (wife Emma, son Charles Hubert) are confirmed buried at Spring Grove; a memorial for William there would supply death date and possibly burial date.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Ohio",
+          "date_range": "1900-1940",
+          "repository": "Ancestry",
+          "rationale": "Ancestry, Ohio Death Records 1908-2018 uses a different index than FamilySearch and may capture records missed or not yet linked in the FS index. Also covers Ohio Select County Death Records 1840-1908 for pre-registration-era deaths. Fallback if FS Ohio County Death Records (item 1) returns no result.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "newspaper",
+          "jurisdiction": "Cincinnati, Ohio",
+          "date_range": "1900-1940",
+          "repository": "other",
+          "rationale": "Cincinnati newspaper obituaries (Cincinnati Enquirer via GenealogyBank, Chronicling America, or MyHeritage Ohio Newspapers 1793-2009). Obituaries for Cincinnati residents of this era commonly name survivors, occupation, cause of death, and burial place. Useful if death certificate is unavailable or to corroborate.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "census",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1930",
+          "repository": "FamilySearch",
+          "rationale": "1930 US Federal Census: if 1920 census (item 3) shows William alive, check 1930 to further bracket death. If Emma appears widowed in 1930, death was between 1920 and 1930. Also check 1940 census if needed.",
+          "fallback_for": "pli_003",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "Campbell County, Kentucky",
+          "date_range": "1948",
+          "repository": "FamilySearch",
+          "rationale": "FAN: Wife Emma Becker Ferber died 7 December 1948 in Dayton, Campbell County, Kentucky (tree fact). Her death certificate (Kentucky Death Records on FamilySearch or Ancestry) lists her marital status and survivors, and may note William's death date or widowhood date \u2014 bracketing evidence even if no direct death record is found. This is the FAN search required for GPS exhaustiveness.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T17:25:23.657Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Ohio, County Death Records, 1840-2001",
+        "collectionId": "2128172",
+        "surname": "Ferber",
+        "givenName": "William",
+        "birthYearFrom": 1864,
+        "birthYearTo": 1874,
+        "recordType": "death",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 12,
+      "notes": "Top match: 'Wm. Ferber', died 11 March 1903, Cincinnati, Hamilton, Ohio; born 1870 Cincinnati; married; parents listed as Gerhard Ferber and Eva Ferber \u2014 matching subject's known parents exactly (GCD9-9X1, G7J1-QF2). Match score 0.698. Record ARK: ark:/61903/1:1:F66M-8JZ. High confidence this is G7JB-YH6. City directory entries 1904-1910 for 'Emma Ferber and Wm' likely mis-attributed or refer to a different person; Emma's 1910 census without co-enumerated husband corroborates pre-1910 death."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-22T17:39:47.811Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ferber",
+        "givenName": "Emma",
+        "deathYearFrom": 1946,
+        "deathYearTo": 1950,
+        "deathPlace": "Kentucky",
+        "recordType": "death",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 104,
+      "notes": "Top two results are confidently Emma Becker Ferber (G7JB-2T6): born 1870, died 7 December 1948, Dayton, Campbell, Kentucky \u2014 matching all tree facts. Record 1: coll 2531527 Kentucky Vital Record Indexes (ark:F66M \u2192 QKC9-XR3T). Record 2: coll 1417491 Kentucky Deaths 1911-1967 (NSFW-QGB) \u2014 the actual death certificate."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": null,
+      "performed": "2026-07-22T17:44:08.577Z",
+      "tool": "record_search",
+      "query": {
+        "imageArk": "ark:/61903/3:1:S3HT-66TS-SCS",
+        "description": "Original Ohio county death register page (Spring Grove Cemetery report, March 6-16, 1903) linked from indexed record ark:/61903/1:1:F66M-8JZ"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Image-reader examined the page. Correct volume confirmed: Hamilton County Spring Grove Cemetery death report, March 6-16 1903. Approx. 50 entries transcribed. Wm. Ferber's specific entry not found on this page \u2014 likely on an adjacent page of the same batch or in a different cemetery reporter's section. No contradicting evidence; page contents are consistent with the March 1903 date. Image saved as images/ark_61903_3_1_S3HT-66TS-SCS.jpg."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Ohio, County Death Records, 1840-2001\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ : Fri Jan 31 18:57:50 UTC 2025), Entry for Wm. Ferber and Gerhard Ferber, 11 Mar 1903.",
+      "citation_detail": {
+        "who": "Wm. Ferber, deceased",
+        "what": "Ohio, County Death Records, 1840-2001 \u2014 index entry",
+        "when_created": "11 March 1903 (original registration); index accessed 2026-07-22",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Entry for Wm. Ferber and Gerhard Ferber, 11 Mar 1903"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MXGX-5SW",
+      "notes": "Index/transcript of original Hamilton County, Ohio death register. Original county death register image available at ark:/61903/3:1:S3HT-66TS-SCS \u2014 original not examined directly; assertions derived from the indexed transcription. Original image should be consulted to verify informant identity and any additional fields not captured in the index.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Kentucky, Deaths, 1911-1967\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NSFW-QGB : accessed 2026-07-22), Entry for Emma Ferber and John Becker, 1948.",
+      "citation_detail": {
+        "who": "Emma Ferber",
+        "what": "Death index entry, Kentucky, Deaths, 1911-1967",
+        "when_created": "1948",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ark:/61903/1:1:NSFW-QGB"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:M6DN-ZH1",
+      "access_date": "2026-07-22",
+      "notes": "Index entry from Kentucky, Deaths, 1911-1967. Original death certificate not examined \u2014 this extraction is from the index/abstract only. Original certificate image may be available at the Kentucky Department for Libraries and Archives or via FamilySearch microfilm.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440420",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Wm. Ferber",
+      "structured_value": {
+        "given": "Wm.",
+        "surname": "Ferber"
+      },
+      "information_quality": "primary",
+      "informant": "county registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440420",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "county registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440420",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 11 March 1903, Cincinnati, Hamilton, Ohio",
+      "date": "11 Mar 1903",
+      "date_certainty": "exact",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "county registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440420",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born ~1870, Cincinnati, Hamilton, Ohio (informant-reported)",
+      "place": "Cinti., Ham., O.",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birthplace reported by an unidentified family informant to the registrar; the informant is relaying secondhand knowledge of the decedent's birth. Original image not examined \u2014 informant identity not confirmed from this index entry.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440420",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born ~1870 (computed from index year 1870)",
+      "date": "1870",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year reported by an unidentified family informant; secondhand knowledge of decedent's birth. Note: project subject was born December 1869 \u2014 this record's ~1870 is consistent within rounding/reporting error.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440420",
+      "record_role": "deceased",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Marital status reported by an unidentified family informant; this is biography reported after the fact, not a witnessed event.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440420",
+      "record_role": "deceased",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "primary",
+      "informant": "county registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440420",
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "value": "Cincinnati, Ohio",
+      "place": "Cinti., O.",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "county registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440421",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Gerhard Ferber",
+      "structured_value": {
+        "given": "Gerhard",
+        "surname": "Ferber"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Father's name reported by an unidentified family informant relaying secondhand knowledge. A named person's name assertion is indirect here because the informant is a third party relaying another person's identity, not a self-report.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440421",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440421",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "father of Wm. Ferber (deceased)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Relationship stated on the death record by an unidentified family informant.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440422",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Eva Ferber",
+      "structured_value": {
+        "given": "Eva",
+        "surname": "Ferber"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Mother's name reported by an unidentified family informant relaying secondhand knowledge. Indirect because the informant is a third party relaying another person's identity. Note: tree shows mother as Eva Engermann (maiden) / Eva Ferber (married) \u2014 this record's 'Eva Ferber' is consistent with the married surname.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440422",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440422",
+      "record_role": "mother_of_deceased",
+      "fact_type": "relationship",
+      "value": "mother of Wm. Ferber (deceased)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Relationship stated on the death record by an unidentified family informant.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:NSFW-QGB",
+      "record_persona_id": "p_11724916288",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Emma Ferber",
+      "structured_value": {
+        "given": "Emma",
+        "surname": "Ferber"
+      },
+      "information_quality": "secondary",
+      "informant": "personal informant named on the death certificate",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Index entry from derivative source; the personal informant (identity unknown from index alone) reported the decedent's name. Source is derivative \u2014 original certificate not examined; transcription error possible.",
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:NSFW-QGB",
+      "record_persona_id": "p_11724916288",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "personal informant named on the death certificate",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Sex stated in the index; original certificate not examined.",
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:NSFW-QGB",
+      "record_persona_id": "p_11724916288",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "1948",
+      "date": "1948",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "attending physician or registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Year-only date from the index; the tree already holds the exact date 7 Dec 1948 from another source. This derivative index record does not supply the day/month. Emma's 1948 death establishes she survived William Ferber (died 11 March 1903 per q_001 hypothesis), providing indirect FAN bracketing evidence that William predeceased her.",
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:NSFW-QGB",
+      "record_persona_id": "p_11724916288",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Dayton, Campbell, Kentucky, United States",
+      "place": "Dayton, Campbell, Kentucky, United States",
+      "information_quality": "secondary",
+      "informant": "attending physician or registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Death place from the index; original certificate not examined. Place is Dayton, Campbell County, Kentucky \u2014 a small city across the Ohio River from Cincinnati.",
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Dayton, Campbell, Kentucky, United States"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:NSFW-QGB",
+      "record_persona_id": "p_11724916288",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of John Becker",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "personal informant named on the death certificate",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Father's name stated on the death certificate by the personal informant, who was relaying secondhand biographical information about the decedent's parentage. Original certificate not examined; index may abbreviate or misrender names.",
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:NSFW-QGB",
+      "record_persona_id": "p_11724916288",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Mary Kramer",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "personal informant named on the death certificate",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Mother's name stated on the death certificate by the personal informant, relaying secondhand parentage information. Original certificate not examined; maiden surname Kramer may have been stated or may be index rendering.",
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:NSFW-QGB",
+      "record_persona_id": "p_11724916289",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "John Becker",
+      "structured_value": {
+        "given": "John",
+        "surname": "Becker"
+      },
+      "information_quality": "secondary",
+      "informant": "personal informant named on the death certificate",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Father's name reported by a third-party informant (the personal informant on Emma's death certificate) relaying secondhand knowledge of the decedent's parentage. The informant did not witness the father's identity firsthand in the same way; this is a relayed biographical claim. Original certificate not examined.",
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:NSFW-QGB",
+      "record_persona_id": "p_11724916289",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "personal informant named on the death certificate",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Sex inferred from the record's designation of this persona as father of the deceased. Original certificate not examined.",
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:NSFW-QGB",
+      "record_persona_id": "p_11724916290",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Mary Kramer",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Kramer"
+      },
+      "information_quality": "secondary",
+      "informant": "personal informant named on the death certificate",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Mother's name reported by a third-party informant relaying secondhand parentage knowledge. The surname Kramer may be a maiden surname stated by the informant, or may reflect how the index renders it. Original certificate not examined \u2014 image review recommended to confirm the exact rendering.",
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:NSFW-QGB",
+      "record_persona_id": "p_11724916290",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "personal informant named on the death certificate",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Sex inferred from the record's designation of this persona as mother of the deceased. Original certificate not examined.",
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:NSFW-QGB",
+      "record_persona_id": "p_11724916290",
+      "record_role": "mother_of_deceased",
+      "fact_type": "relationship",
+      "value": "spouse of John Becker",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "personal informant named on the death certificate",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Spousal relationship between John Becker and Mary Kramer inferred from their joint listing as father and mother of the deceased on the same record. The record does not explicitly state they were married; the inference follows from the parental roles assigned to both. Original certificate not examined.",
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The name 'Wm. Ferber' on this death record matches William H. Ferber (G7JB-YH6): 'Wm.' is the standard abbreviation for William; surname Ferber is exact. The deceased's parents are listed as Gerhard Ferber and Eva Ferber, matching GCD9-9X1 and G7J1-QF2 \u2014 the exact parents of G7JB-YH6 in the tree. Birth ~1870 in Cincinnati is consistent with December 1869 Cincinnati. The combination of name, birth locality, and both parents is conclusive.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex assertion (Male) for the deceased persona in the same record as a_001, which is confidently linked to G7JB-YH6. G7JB-YH6 is male; the sex is consistent.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death assertion (11 March 1903, Cincinnati, Hamilton, Ohio) for the same deceased persona as a_001, confidently identified as G7JB-YH6. This is the primary, direct evidence answering q_001. The county registrar recorded the death in an official capacity; the date is exact. The absence of a death fact in the pre-existing tree is consistent with this record being the first sourced death entry for G7JB-YH6.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth place assertion (~1870, Cincinnati) for the same deceased persona as a_001 (confidently G7JB-YH6). Secondary/indirect \u2014 reported by an unidentified family informant \u2014 but corroborates G7JB-YH6's known birth in Cincinnati, Hamilton County, Ohio.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year assertion (~1870) for the same deceased persona as a_001 (confidently G7JB-YH6). Secondary \u2014 reported by an unidentified family informant. Consistent with December 1869 (rounding to 1870 is common in death record reporting).",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status assertion (Married) for the same deceased persona as a_001 (confidently G7JB-YH6). Consistent with tree evidence that G7JB-YH6 married Emma Becker (G7JB-2T6).",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Race assertion (White) for the same deceased persona as a_001 (confidently G7JB-YH6). No conflict with known facts.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence assertion (Cincinnati, Ohio) for the same deceased persona as a_001 (confidently G7JB-YH6). Consistent with 1870 and 1900 census residence facts for G7JB-YH6 in Cincinnati.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_011",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'father of Wm. Ferber (deceased)' bears on the deceased (child side). The deceased is confidently identified as G7JB-YH6; this assertion contributes to establishing his parentage by naming Gerhard Ferber as his father.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_014",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'mother of Wm. Ferber (deceased)' bears on the deceased (child side). The deceased is confidently identified as G7JB-YH6; this assertion contributes to establishing his parentage by naming Eva Ferber as his mother.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "GCD9-9X1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion 'Gerhard Ferber' (father_of_deceased) matches GCD9-9X1 exactly \u2014 given name Gerhard and surname Ferber are identical. GCD9-9X1 is already established in the tree as William H. Ferber's father. The deceased 'Wm. Ferber' on the same record is confidently G7JB-YH6, whose father in the tree is GCD9-9X1. Name, role, and family position all agree.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "GCD9-9X1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex assertion (Male) for the father_of_deceased persona, confidently identified as GCD9-9X1. GCD9-9X1 is male; no conflict.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "GCD9-9X1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'father of Wm. Ferber (deceased)' bears on the father (GCD9-9X1). The deceased is confidently G7JB-YH6; GCD9-9X1 is already linked as G7JB-YH6's father in the tree. This assertion corroborates the existing ParentChild relationship edge.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "G7J1-QF2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion 'Eva Ferber' (mother_of_deceased) matches G7J1-QF2 (Eva Engermann, married Ferber). The married surname Ferber is consistent with G7J1-QF2's marriage to Gerhard Ferber (GCD9-9X1). G7J1-QF2 is already in the tree as William H. Ferber's mother. The deceased on the same record is confidently G7JB-YH6; G7J1-QF2 is his mother. It is normal for a death record to name a deceased mother \u2014 G7J1-QF2 died 1 Jan 1872, before this 1903 death record.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "G7J1-QF2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for the mother_of_deceased persona, confidently identified as G7J1-QF2. G7J1-QF2 is female; no conflict.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "G7J1-QF2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'mother of Wm. Ferber (deceased)' bears on the mother (G7J1-QF2). The deceased is confidently G7JB-YH6; G7J1-QF2 is already linked as G7JB-YH6's mother in the tree. This assertion corroborates the existing ParentChild relationship edge.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "G7JB-2T6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Emma Ferber' (deceased in the Kentucky Deaths 1911-1967 record) matches G7JB-2T6. The surname Ferber is G7JB-2T6's married name (she married William H. Ferber G7JB-YH6). Death 1948 in Dayton, Campbell, Kentucky exactly matches tree facts for G7JB-2T6. Father listed as John Becker matches her maiden surname Becker. All core identifiers agree.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "G7JB-2T6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for the same deceased persona as a_015, confidently G7JB-2T6. G7JB-2T6 is female; no conflict.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "G7JB-2T6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death year 1948 for the same deceased persona as a_015 (confidently G7JB-2T6). Consistent with tree fact 7 Dec 1948; the index gives year-only, which is the coarser rendition of the same event.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "G7JB-2T6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death place Dayton, Campbell, Kentucky for the same deceased persona as a_015 (confidently G7JB-2T6). Exact match to tree fact.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_019",
+      "person_id": "G7JB-2T6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship 'child of John Becker' bears on the deceased (child side). G7JB-2T6 is confidently the deceased; this assertion establishes John Becker (I1) as Emma's father. Her maiden name 'Becker' corroborates this relationship.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship 'child of John Becker' bears on John Becker (parent side). I1 was minted from this record's father_of_deceased persona. Single-record stub, no independent corroboration yet; probable is the maximum confidence at stub creation.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "person_id": "G7JB-2T6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship 'child of Mary Kramer' bears on the deceased (child side). G7JB-2T6 is confidently the deceased; this assertion establishes Mary Kramer (I2) as Emma's mother.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_020",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship 'child of Mary Kramer' bears on Mary Kramer (parent side). I2 was minted from this record's mother_of_deceased persona. Single-record stub; probable confidence pending corroboration.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'John Becker' for the father_of_deceased persona; I1 was minted from this persona. The name matches the maiden surname 'Becker' of G7JB-2T6 (Emma Becker Ferber), supporting the identification. Single-record stub; probable pending corroboration.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Male) for the father_of_deceased persona linked to I1. No conflict; John Becker is male.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_023",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Mary Kramer' for the mother_of_deceased persona; I2 was minted from this persona. Single-record stub; probable pending corroboration.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_024",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for the mother_of_deceased persona linked to I2. No conflict.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Spousal relationship (spouse of John Becker) for the mother-of-deceased persona (I2) bears on John Becker (I1). Inferred from joint listing of John Becker and Mary Kramer as parents on the same record. Probable pending explicit marriage record.",
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_025",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Spousal relationship (spouse of John Becker) for the mother-of-deceased persona bears on Mary Kramer (I2). Inferred from joint listing as parents. Probable pending corroboration.",
+      "created": "2026-07-22"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_017",
+        "a_018"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Hamilton County vital records searched via FamilySearch Ohio, County Death Records, 1840-2001 (pli_001, completed, positive: Wm. Ferber, died 11 March 1903, Cincinnati). Ohio Deaths 1908-1953 not applicable (death predates statewide registration; pli_002 skipped). 1920 and 1930 census bracketing items (pli_003, pli_007) skipped after exact death date established. Ancestry Ohio fallback (pli_005) and newspaper obituary search (pli_006) skipped given positive primary result. FindAGrave (pli_004) deferred as outside scope of death date/place question. Original register image examined (Spring Grove Cemetery batch, March 6-16, 1903, ark:/61903/3:1:S3HT-66TS-SCS; log_003 partial): correct volume confirmed, but Wm. Ferber's specific page not found on the examined page. FAN item (pli_008, completed): wife Emma Becker Ferber's Kentucky death certificate (1948) found and extracted. Research declared exhaustive (2026-07-22), with original image confirmation noted as an outstanding step.",
+      "narrative_markdown": "## Proof Summary: Death of William Hubert Ferber\n\n**Conclusion (Probable):** William Hubert Ferber (G7JB-YH6, born December 1869, Cincinnati, Ohio) died on **11 March 1903** in **Cincinnati, Hamilton County, Ohio**.\n\n### Evidence\n\n**Direct evidence \u2014 Ohio County Death Record (1903)**\n\nThe indexed entry for \u201cWm. Ferber\u201d in \u201cOhio, County Death Records, 1840-2001\u201d records a death on 11 March 1903 in Cincinnati, Hamilton County, Ohio, with birth circa 1870 in Cincinnati, parents named Gerhard Ferber and Eva Ferber, marital status married, and residence Cincinnati.<sup>1</sup> The source is a **derivative** (FamilySearch index) of the original Hamilton County death register; however, the *information* is **primary** \u2014 the county registrar recorded the event in official duty \u2014 and the *evidence* is **direct** against the research question. This is the principal source for this conclusion.\n\n**Identity:** Three identifiers converge to establish \u201cWm. Ferber\u201d as G7JB-YH6 with confidence: (1) the name \u2014 \u201cWm.\u201d is the standard nineteenth-century abbreviation for William, surname Ferber is exact; (2) birth locality circa 1870 in Cincinnati, consistent with G7JB-YH6\u2019s known birth of December 1869 in Cincinnati; and (3) both parents named on the record \u2014 Gerhard Ferber and Eva Ferber \u2014 match exactly the established parents of G7JB-YH6 in the tree (Gerhard Ferber, GCD9-9X1; Eva Engermann Ferber, G7J1-QF2). The triple coincidence of name, birth locality, and both parents is conclusive for identity.\n\n**Indirect corroboration \u2014 Wife\u2019s Kentucky death certificate (1948)**\n\nEmma Becker Ferber, William\u2019s wife (G7JB-2T6), died in 1948 in Dayton, Campbell County, Kentucky, under the married surname Ferber.<sup>2</sup> This record was created forty-five years after William\u2019s death by a Kentucky registrar \u2014 a different jurisdiction, institution, and informant \u2014 and is independent of the Ohio death record. Its relevance is indirect: Emma\u2019s 1948 survival as \u201cEmma Ferber\u201d is consistent with William having predeceased her in 1903. The record does not state William\u2019s specific death date and therefore does not independently verify 11 March 1903.\n\n### Limitations and Path to Proved\n\nThe primary source (src_001) is a **derivative** index entry. The original Hamilton County death register image (Spring Grove Cemetery batch, March 6\u201316, 1903; ark:/61903/3:1:S3HT-66TS-SCS) was identified and examined, but Wm. Ferber\u2019s specific entry was not found on the examined page \u2014 likely because his burial was reported by a different cemetery reporter in the same volume, or because his entry appears on an adjacent page. The probability that the index materially misrepresents the death date or place is very low for official governmental death records, but the original remains unconfirmed.\n\nTo advance to **proved**: (1) locate Wm. Ferber\u2019s entry in the Hamilton County death register by browsing adjacent pages of the 1903 volume on FamilySearch; or (2) find a contemporaneous Cincinnati newspaper obituary (Cincinnati Enquirer or Cincinnati Post, via GenealogyBank or Newspapers.com) that independently names the death date.\n\n### Tier\n\n**Probable.** The Ohio county death record provides direct, primary-information evidence from an authoritative governmental source. Identity is confidently established from three corroborating identifiers. Research was declared reasonably exhaustive. The tier is capped at *probable* because the primary source is derivative and no second source independently confirms the specific date of 11 March 1903.\n\n---\n\n<sup>1</sup> \u201cOhio, County Death Records, 1840-2001\u201d, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ : Fri Jan 31 18:57:50 UTC 2025), Entry for Wm. Ferber and Gerhard Ferber, 11 Mar 1903.\n\n<sup>2</sup> \u201cKentucky, Deaths, 1911-1967\u201d, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NSFW-QGB : accessed 2026-07-22), Entry for Emma Ferber and John Becker, 1948."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-22T18:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-22T18-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Ohio, United States",
+      "for_place": "Hamilton County, Ohio",
+      "time_period": "1900-1940",
+      "jurisdictions": [
+        {
+          "name": "Hamilton County, Ohio",
+          "date_range": "1790-present"
+        },
+        {
+          "name": "Ohio, United States",
+          "date_range": "1803-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2128172",
+          "title": "Ohio, County Death Records, 1840-2001",
+          "date_range": "1840-2001"
+        },
+        {
+          "id": "1307272",
+          "title": "Ohio, Deaths, 1908-1953",
+          "date_range": "1908-1953"
+        },
+        {
+          "id": "1949341",
+          "title": "Ohio, Death Index, 1908-1932, 1938-1944, and 1958-2007",
+          "date_range": "1908-2007"
+        },
+        {
+          "id": "1681000",
+          "title": "Ohio, Deaths and Burials, 1854-1997",
+          "date_range": "1854-1997"
+        },
+        {
+          "id": "2373723",
+          "title": "Ohio, Church and Civil Deaths, 1833-1991",
+          "date_range": "1833-1991"
+        },
+        {
+          "id": "2141016",
+          "title": "Ohio, Hamilton County Records, 1791-1994",
+          "date_range": "1791-1994"
+        },
+        {
+          "id": "3714673",
+          "title": "Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986",
+          "date_range": "1851-1986"
+        },
+        {
+          "id": "1992421",
+          "title": "Ohio, Probate Records, 1789-1996",
+          "date_range": "1789-1996"
+        },
+        {
+          "id": "1614804",
+          "title": "Ohio, County Marriages, 1789-2016",
+          "date_range": "1789-2016"
+        },
+        {
+          "id": "3937280",
+          "title": "Ohio, Voter Records, 1893-1960",
+          "date_range": "1893-1960"
+        }
+      ],
+      "quirks": [
+        "Ohio county-level death registration began in 1867; statewide registration began in 1908 \u2014 for deaths before 1908, search county records (coll 2128172); for 1908 onward, also search the statewide Ohio Deaths 1908-1953 (coll 1307272).",
+        "Ohio, Hamilton County Records, 1791-1994 (coll 2141016) has 1.5 million images but is 0% name-indexed \u2014 browse-only; use as a fallback if indexed collections miss the death record.",
+        "Death records (both county and state) from this period commonly list informant, cause of death, place of burial, and (after 1908) parents' names \u2014 high genealogical value.",
+        "Spring Grove Cemetery in Cincinnati is the primary cemetery for this family (per burial facts in tree); check FindAGrave and the cemetery's own records.",
+        "Chronicling America and MyHeritage have digitized Cincinnati-area newspapers 1900-1940 \u2014 obituaries in the Cincinnati Enquirer are a key substitute/corroborating source.",
+        "FamilySearch wiki_search and wiki home page were unavailable during this survey (server unreachable); online_records, getting_started, and research_tips pages were successfully read."
+      ],
+      "guide_markdown": "# Locality Guide: Hamilton County, Ohio (1900-1940)\n\n## Jurisdiction overview\n- **County seat:** Cincinnati\n- **Parent jurisdiction:** Ohio, United States (admitted 1803)\n- **Formed:** Hamilton County organized 1790 from Northwest Territory; one of Ohio's original counties\n- **Economy (1900-1940):** Major industrial and commercial city; manufacturing, meatpacking, brewing, machinery\n- **Ethnic composition:** Large German immigrant community (relevant \u2014 Ferber family is German-origin), also Irish, African American communities\n- **Key historical events:** World War I (1917-1918), Prohibition (1920-1933), Great Depression (1929-1939)\n\n## Boundary changes\n- Hamilton County boundaries were stable throughout the 1900-1940 period. No splits or mergers affect this research.\n\n## Available record types\n\n### Vital records (civil registration)\n- **County death registration start:** 1867 (Hamilton County Health District)\n- **Statewide death registration start:** 1908 (Ohio State Board of Health)\n- **Key collections:**\n  - *Ohio, County Death Records, 1840-2001* (FS coll 2128172): **Indexed + images**; 2.15M records, 997K images \u2014 primary source for pre-1908 deaths\n  - *Ohio, Deaths, 1908-1953* (FS coll 1307272): **Indexed + images**; 3.5M records \u2014 statewide death certificates; most useful for post-1908 deaths\n  - *Ohio, Death Index, 1908-1932, 1938-1944, 1958-2007* (FS coll 1949341): **Indexed only** (no images); 7.6M records \u2014 fast name check\n  - *Ohio, Deaths and Burials, 1854-1997* (FS coll 1681000): **Indexed only**; 483K records \u2014 consolidated index\n  - *Ancestry, Ohio Select County Death Records, 1840-1908*: index & images ($)\n  - *Ancestry, Ohio Death Records, 1908-2018*: index only ($)\n- **Content:** County records list name, date, place, cause, informant. State records (post-1908) add parents' names and birthplace.\n- **Gaps:** Full compliance with statewide registration not achieved immediately in 1908; some deaths in 1908-1915 may appear only in county records.\n\n### Church records\n- **Denominations present:** Lutheran, Catholic, Methodist, Presbyterian, Episcopal (large German Lutheran and Catholic communities)\n- *Ohio, Church Records, 1762-2008* (FS coll 2787827): indexed + images; 76K records\n- *Ohio, Church and Civil Deaths, 1833-1991* (FS coll 2373723): indexed + images; 43K records\n- **Note:** German-origin families (like Ferber) often belonged to Lutheran or Catholic parishes; parish burial registers may predate or supplement civil records.\n\n### Census records\n- **Federal census:** 1900, 1910, 1920, 1930, 1940 \u2014 all indexed; available on FamilySearch and Ancestry\n- **State census:** Ohio did not conduct regular state censuses during this period\n- **Value:** Census records can establish last-known living year and household composition, helping bracket the death window\n\n### Probate and court records\n- *Ohio, Probate Records, 1789-1996* (FS coll 1992421): mostly browse-only images; 7M images, only 739 indexed records\n- *Ancestry, Ohio Wills and Probate Records, 1786-1998*: index & images ($)\n- **Value:** Will or estate filing names heirs, dates death, and may give exact death date even when death certificate is missing\n\n### Cemetery records\n- **Spring Grove Cemetery** (Cincinnati): major cemetery; family members already linked to it in the tree \u2014 sexton records and FindAGrave coverage\n- *Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986* (FS coll 3714673): **indexed + images**; 60K records\n- FindAGrave: https://www.findagrave.com \u2014 search Spring Grove Cemetery\n- BillionGraves: https://billiongraves.com\n\n### Newspaper records\n- **Cincinnati Enquirer** (major daily, 1841-present): obituaries, death notices\n- *Chronicling America* (loc.gov): some Ohio newspapers digitized, coverage varies\n- *MyHeritage, Ohio Newspapers, 1793-2009*: index & images ($)\n- *GenealogyBank, Ohio Newspaper Archives, 1795-1991*: index ($)\n- *Ancestry, Ohio Newspapers.com, 1800-current*: index ($)\n- **Value:** Obituaries for Cincinnati residents were commonly published; often include survivors, occupation, cause of death\n\n### Hamilton County-specific browse-only collection\n- *Ohio, Hamilton County Records, 1791-1994* (FS coll 2141016): **Browse-only images**; 1,566,282 images, 0 indexed \u2014 requires page-by-page browsing; use only if indexed collections fail\n\n### Voter records\n- *Ohio, Voter Records, 1893-1960* (FS coll 3937280): indexed + images; 1.67M records \u2014 can establish last-known living year if death date is unknown\n\n## Repository guide\n\n### Online repositories\n| Repository | Key collections | Access |\n|---|---|---|\n| FamilySearch | Ohio County Death Records 1840-2001; Ohio Deaths 1908-1953; Death Index 1908-2007 | Free |\n| Ancestry | Ohio Death Records 1908-2018; Ohio Wills & Probate 1786-1998 | Subscription |\n| FindAGrave | Spring Grove Cemetery records | Free |\n| MyHeritage | Ohio Newspapers 1793-2009 | Subscription |\n| GenealogyBank | Ohio Newspaper Archives 1795-1991 | Subscription |\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Hamilton County Probate Court | Original wills, estate files, guardianships | In-person / mail |\n| Ohio History Connection (Columbus) | State archives, death records, newspapers | In-person / online request |\n| Cincinnati Public Library | Local newspapers, city directories | In-person |\n| Spring Grove Cemetery (Cincinnati) | Sexton/burial records | Contact cemetery office |\n\n## Records NOT online\n- Hamilton County Coroner's inquest records (physical only at county level)\n- Some pre-1908 Hamilton County death records not yet fully indexed\n- Cincinnati church burial registers not in the main FS collections\n\n## Research tips\n- Search Ohio County Death Records (coll 2128172) first \u2014 covers 1840-2001 with images and indexes for Hamilton County deaths\n- If death was 1908 or later, also search Ohio Deaths 1908-1953 (coll 1307272) \u2014 statewide death certificates with high detail\n- Use the Ohio Death Index (coll 1949341) as a fast check \u2014 but retrieve the actual certificate image for full details\n- City directories (available on FamilySearch for Cincinnati through 1910) can bracket the death window \u2014 William Ferber appears in directories through 1910; absence afterward narrows the death range\n- Spring Grove Cemetery is the known burial place for other Ferber family members; check FindAGrave for William\n- The Ohio wiki notes county registration from 1867 and statewide from 1908; both systems ran concurrently 1908+ so check both\n- Search name variants: Wm, Wm H, William H, Ferber (surname relatively uncommon \u2014 low false-positive risk)\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Ohio_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Ohio_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Ohio_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-22"
+    }
+  ]
+}

@@ -70,6 +70,14 @@ EXEMPT_TOOLS: dict[str, str] = {
         "supersede-not-delete, so its result reflects the actual file the "
         "skill wrote. No fixture needed; it is always available."
     ),
+    "extraction_append": (
+        "registered as a LIVE_TOOL in mock_mcp.py — the record-extraction "
+        "lane's writer (research_append restricted to sources + assertions). "
+        "Calls the real compiled implementation against the workspace, so its "
+        "result reflects the actual file the skill wrote, including a "
+        "rejection when an op strays outside the lane. No fixture needed; it "
+        "is always available."
+    ),
 }
 
 

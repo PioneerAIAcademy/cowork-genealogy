@@ -1,45 +1,74 @@
 # Evidence-Grounded Tree Edits
 
-Tree edits must be grounded in proved or well-supported conclusions,
-not speculative connections. Every modification to the tree file
-represents a claim about a real person's identity, life events, or
-family relationships. Unsubstantiated edits degrade the tree's
-reliability and can mislead future research.
+Tree edits must be grounded in evidence — a **sourced piece of
+evidence** or a **proved/well-supported conclusion** — not speculative
+connections. Every modification to the tree file represents a claim
+about a real person's identity, life events, or family relationships.
+Unsubstantiated edits degrade the tree's reliability and can mislead
+future research.
+
+The tree carries **two layers** (`research-schema-spec.md` §8).
+**Sourced evidence facts materialize onto tree persons as research
+proceeds**, at identity-link time (via person-evidence's
+`materialize_facts`), each carrying a non-null source-ref — they do
+**not** wait for a proof conclusion. **Which value is *concluded*** —
+the `primary` fact / `preferred` name — is a separate, later act owned
+by proof-conclusion, and **upload to FamilySearch stays
+conclusion-gated** (only `primary`/proof-backed facts leave the working
+tree). The old "nothing lands until proof ≥ probable" reading is relaxed
+accordingly: proof ≥ probable gates the **conclusion** and the
+**upload**, not the sourced evidence.
 
 ## When edits are justified
 
-An edit to the tree is justified when:
+A tree edit is justified when it fits one of the two layers:
 
-- A proof conclusion at "probable" tier or higher supports the change
-- The edit corrects an objective error (typo, transcription mistake)
-  that is verifiable against the cited source
-- The edit adds factual data directly extracted from a source already
-  linked to the person (e.g., adding an occupation found in a census
-  record that was already cited)
+- **Sourced evidence** — the edit adds a fact, name, or relationship
+  extracted from a source and carrying a non-null source-ref. Evidence
+  facts materialize at identity-link time; a proof conclusion is **not**
+  required to land sourced evidence. (This is normally person-evidence's
+  `materialize_facts` path; ad-hoc, tree-edit may add such a fact when
+  its source is already linked — e.g. an occupation found in a census
+  record already cited.)
+- **A concluded value** — a proof conclusion at "probable" tier or
+  higher supports marking which value is `primary`/`preferred`, or
+  concluding a relationship no single record states. Setting the
+  concluded value is proof-gated; materializing the underlying evidence
+  is not.
+- **An objective-error correction** (typo, transcription mistake) that
+  is verifiable against the cited source.
 
 An edit is NOT justified when:
 
 - The connection is speculative or based on name-matching alone
-- No reasonably thorough research supports the claim
-- Conflicting evidence has not been examined and resolved
+- No source supports the fact and no reasonably thorough research
+  supports the claim
+- A value is *concluded* prematurely — coexisting sourced facts are
+  fine and expected, but marking one `primary` before the conflicting
+  evidence is examined and resolved is not
 - The edit assumes a relationship that documentation does not support
 
 ## Avoiding premature conclusions
 
-Database entries should never force a researcher to commit to a
-conclusion before the evidence warrants it. A tree file is a working
-tool, not a finished publication. When evidence is insufficient:
+Materializing sourced evidence is not the same as committing to a
+conclusion. Sourced evidence facts accumulate on a person freely; what
+must never be forced prematurely is the **concluded value**
+(`primary`/`preferred`) or an unsupported relationship. A tree file is a
+working tool, not a finished publication. When the evidence does not yet
+settle a *conclusion*:
 
-- Record what is known without implying what is not
-- Use person stubs to hold extracted data without asserting identity
-  connections
-- Leave relationship fields empty rather than guessing
-- Flag uncertain data for further research rather than treating
-  guesses as facts
+- Record the sourced evidence, and leave the concluded value
+  (`primary`/`preferred`) unset until proof-conclusion weighs it
+- Let conflicting sourced values coexist as separate facts rather than
+  picking a side
+- Leave relationship fields empty rather than guessing at a subtype
+- Flag uncertain conclusions for further research rather than treating
+  guesses as concluded facts
 
-The tree should reflect the current state of proved knowledge. It is
-better to have gaps than to have wrong connections that become
-entrenched and difficult to undo.
+The tree should reflect the current state of **sourced evidence and
+proved conclusions**. It is better to have un-concluded evidence — or
+gaps — than wrong *conclusions* that become entrenched and difficult to
+undo.
 
 ## Source support for every edit
 

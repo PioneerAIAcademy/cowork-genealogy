@@ -1,0 +1,19 @@
+{
+  "id": "thomas-seaver-other-wife",
+  "name": "Thomas Seaver",
+  "genre": "record-hint",
+  "source_pid": "M38B-2K8",
+  "captured": "2026-07-20",
+  "researcher_question": "Thomas Seaver married Rachel Wilkins in Salem, Massachusetts in 1811 and had eight children with her, but did he separate from her and remarry another woman before his death in March 1837?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1800s-1830s",
+    "geography": "US-MA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Tree shows only the 1811 marriage to Rachel Wilkins, who outlived Thomas by decades (d. 1880). Investigate whether records show an unrecorded separation/divorce and a second marriage before his 1837 death in Salem, MA."
+}

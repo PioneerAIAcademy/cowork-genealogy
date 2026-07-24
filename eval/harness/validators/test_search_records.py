@@ -164,7 +164,7 @@ def test_no_search_or_writes_on_planning_request(
     gate for the grade_on_invariant negative ut_search_records_005: the
     routing (research-plan vs a project-status detour) is a known-unstable
     model prior, but the state-harm invariant always holds and is what we
-    assert. See docs/plan/invariant-grading.md.
+    assert. See docs/specs/unit-test-spec.md.
 
     Fails iff the run:
       - made a `record_search` MCP call (a search was executed), or

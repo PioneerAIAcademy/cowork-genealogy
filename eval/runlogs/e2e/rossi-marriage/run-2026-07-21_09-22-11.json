@@ -1,0 +1,3025 @@
+{
+  "test_id": "rossi-marriage",
+  "captured_at": "2026-07-21_09-22-11",
+  "verdict": "pass",
+  "stop_reason": "completed",
+  "judge_output": {
+    "per_finding": [
+      {
+        "finding_id": "f1",
+        "matched": "true",
+        "agent_evidence": "Mary Rossi (GC13-YHG) has a Marriage fact with date '2 Feb 1899', place 'Hoboken, Hudson, New Jersey, United States', linked to Charles A. Ulrich (GC13-LZ1) via Couple relationship (R1) with matching marriage fact. The marriage date, place, and parties all match the expected finding.",
+        "notes": "The agent successfully recovered the key fact: Mary Rossi married Charles A. Ulrich on 2 February 1899 in Hoboken, Hudson County, New Jersey. The tree contains the marriage event with all essential details. Name variant (Ulrich vs. Ullricht) is documented across multiple records and is acceptable per grading tolerance."
+      }
+    ],
+    "recall_required": 1.0,
+    "recall_total": 1.0,
+    "verdict": "pass",
+    "rationale": "The agent recovered the single required finding completely. Mary Rossi's marriage to Charles A. Ulrich on 2 February 1899 in Hoboken, Hudson County, New Jersey is explicitly documented in the final tree as a Marriage fact on Mary Rossi's record (GC13-YHG) and corroborated by a parallel Marriage fact on Charles A. Ulrich's record (GC13-LZ1), with both linked via a Couple relationship. The date, place, and parties match the expected finding precisely.",
+    "proof_quality": {
+      "score": 2,
+      "exhaustiveness": "partial",
+      "conflicts_addressed": "na",
+      "corroboration": "single_source",
+      "tier_appropriate": "yes",
+      "rationale": "The proof narrative is clear and well-reasoned, and the tier of 'probable' is appropriately justified given the limitations acknowledged by the agent. However, the proof rests on a single derivative source (FamilySearch compiled index collection 1675446), with no independent corroboration from a second source (e.g., the original civil register, census years-married field, or church records). The exhaustive_search_summary candidly notes that the original Hudson County civil marriage register was not directly examined and that several secondary sources (census, church records, Ancestry) were not pursued after the initial hit. While the agent's restraint in stopping at a positive result is understandable, the proof would be stronger with independent verification. The agent correctly identifies these limitations and appropriately assigns a 'probable' rather than 'proved' tier, which justifies a score of 2 rather than 3."
+    }
+  },
+  "usage": {
+    "duration_ms": 198379,
+    "duration_api_ms": 1738230,
+    "num_turns": 6,
+    "is_error": false,
+    "stop_reason": "end_turn",
+    "total_cost_usd": 4.306224249999998,
+    "usage": {
+      "input_tokens": 10,
+      "cache_creation_input_tokens": 9036,
+      "cache_read_input_tokens": 453733,
+      "output_tokens": 11762,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 9036,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 300,
+          "cache_read_input_tokens": 77562,
+          "cache_creation_input_tokens": 3450,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 3450
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "usage_source": "result_message",
+    "continue_nudges": 0,
+    "session_id": "e56b5a58-c3da-482c-8f8b-5165d4189565",
+    "resumes": 0,
+    "resume_on_stall": true,
+    "timeline": [
+      [
+        3.0,
+        "system:init"
+      ],
+      [
+        14.1,
+        "assistant"
+      ],
+      [
+        14.3,
+        "assistant"
+      ],
+      [
+        14.4,
+        "tool_result"
+      ],
+      [
+        20.0,
+        "assistant"
+      ],
+      [
+        21.4,
+        "assistant"
+      ],
+      [
+        21.4,
+        "tool_result"
+      ],
+      [
+        24.9,
+        "assistant"
+      ],
+      [
+        25.3,
+        "tool_result"
+      ],
+      [
+        25.6,
+        "assistant"
+      ],
+      [
+        26.0,
+        "tool_result"
+      ],
+      [
+        37.2,
+        "assistant"
+      ],
+      [
+        37.2,
+        "assistant"
+      ],
+      [
+        37.2,
+        "tool_result"
+      ],
+      [
+        37.2,
+        "tool_result"
+      ],
+      [
+        40.8,
+        "assistant"
+      ],
+      [
+        43.2,
+        "assistant"
+      ],
+      [
+        43.3,
+        "tool_result"
+      ],
+      [
+        44.1,
+        "assistant"
+      ],
+      [
+        44.1,
+        "tool_result"
+      ],
+      [
+        59.4,
+        "assistant"
+      ],
+      [
+        59.5,
+        "assistant"
+      ],
+      [
+        59.5,
+        "tool_result"
+      ],
+      [
+        69.8,
+        "assistant"
+      ],
+      [
+        77.0,
+        "assistant"
+      ],
+      [
+        77.1,
+        "tool_result"
+      ],
+      [
+        81.4,
+        "assistant"
+      ],
+      [
+        83.5,
+        "assistant"
+      ],
+      [
+        83.7,
+        "assistant"
+      ],
+      [
+        83.7,
+        "tool_result"
+      ],
+      [
+        83.8,
+        "tool_result"
+      ],
+      [
+        86.5,
+        "assistant"
+      ],
+      [
+        88.9,
+        "assistant"
+      ],
+      [
+        89.4,
+        "tool_result"
+      ],
+      [
+        89.8,
+        "assistant"
+      ],
+      [
+        89.8,
+        "tool_result"
+      ],
+      [
+        96.8,
+        "assistant"
+      ],
+      [
+        96.8,
+        "assistant"
+      ],
+      [
+        96.8,
+        "assistant"
+      ],
+      [
+        96.8,
+        "tool_result"
+      ],
+      [
+        101.5,
+        "assistant"
+      ],
+      [
+        102.0,
+        "assistant"
+      ],
+      [
+        102.9,
+        "assistant"
+      ],
+      [
+        103.0,
+        "assistant"
+      ],
+      [
+        105.6,
+        "tool_result"
+      ],
+      [
+        111.4,
+        "tool_result"
+      ],
+      [
+        112.6,
+        "tool_result"
+      ],
+      [
+        136.6,
+        "assistant"
+      ],
+      [
+        136.6,
+        "assistant"
+      ],
+      [
+        137.9,
+        "tool_result"
+      ],
+      [
+        141.2,
+        "assistant"
+      ],
+      [
+        143.2,
+        "tool_result"
+      ],
+      [
+        182.8,
+        "assistant"
+      ],
+      [
+        182.9,
+        "assistant"
+      ],
+      [
+        206.1,
+        "assistant"
+      ],
+      [
+        206.1,
+        "tool_result"
+      ],
+      [
+        213.3,
+        "assistant"
+      ],
+      [
+        214.1,
+        "assistant"
+      ],
+      [
+        221.7,
+        "assistant"
+      ],
+      [
+        221.7,
+        "tool_result"
+      ],
+      [
+        221.7,
+        "tool_result"
+      ],
+      [
+        225.5,
+        "assistant"
+      ],
+      [
+        226.6,
+        "assistant"
+      ],
+      [
+        226.6,
+        "tool_result"
+      ],
+      [
+        232.9,
+        "assistant"
+      ],
+      [
+        234.3,
+        "assistant"
+      ],
+      [
+        238.1,
+        "assistant"
+      ],
+      [
+        239.1,
+        "tool_result"
+      ],
+      [
+        247.5,
+        "assistant"
+      ],
+      [
+        247.5,
+        "assistant"
+      ],
+      [
+        249.5,
+        "assistant"
+      ],
+      [
+        250.5,
+        "tool_result"
+      ],
+      [
+        251.1,
+        "assistant"
+      ],
+      [
+        251.4,
+        "tool_result"
+      ],
+      [
+        257.8,
+        "assistant"
+      ],
+      [
+        261.1,
+        "assistant"
+      ],
+      [
+        261.1,
+        "assistant"
+      ],
+      [
+        261.9,
+        "tool_result"
+      ],
+      [
+        262.9,
+        "assistant"
+      ],
+      [
+        263.4,
+        "tool_result"
+      ],
+      [
+        264.5,
+        "assistant"
+      ],
+      [
+        264.8,
+        "tool_result"
+      ],
+      [
+        274.0,
+        "assistant"
+      ],
+      [
+        274.4,
+        "assistant"
+      ],
+      [
+        276.3,
+        "assistant"
+      ],
+      [
+        277.2,
+        "tool_result"
+      ],
+      [
+        278.6,
+        "assistant"
+      ],
+      [
+        279.5,
+        "tool_result"
+      ],
+      [
+        280.5,
+        "assistant"
+      ],
+      [
+        281.2,
+        "tool_result"
+      ],
+      [
+        288.7,
+        "assistant"
+      ],
+      [
+        288.8,
+        "assistant"
+      ],
+      [
+        290.0,
+        "assistant"
+      ],
+      [
+        290.1,
+        "tool_result"
+      ],
+      [
+        302.0,
+        "assistant"
+      ],
+      [
+        302.0,
+        "assistant"
+      ],
+      [
+        303.9,
+        "assistant"
+      ],
+      [
+        305.1,
+        "tool_result"
+      ],
+      [
+        326.3,
+        "assistant"
+      ],
+      [
+        327.1,
+        "assistant"
+      ],
+      [
+        332.8,
+        "assistant"
+      ],
+      [
+        332.9,
+        "tool_result"
+      ],
+      [
+        337.7,
+        "assistant"
+      ],
+      [
+        343.8,
+        "assistant"
+      ],
+      [
+        344.1,
+        "tool_result"
+      ],
+      [
+        355.2,
+        "assistant"
+      ],
+      [
+        355.3,
+        "tool_result"
+      ],
+      [
+        365.3,
+        "assistant"
+      ],
+      [
+        365.3,
+        "assistant"
+      ],
+      [
+        366.4,
+        "assistant"
+      ],
+      [
+        366.5,
+        "tool_result"
+      ],
+      [
+        376.7,
+        "assistant"
+      ],
+      [
+        377.5,
+        "assistant"
+      ],
+      [
+        380.9,
+        "assistant"
+      ],
+      [
+        381.0,
+        "tool_result"
+      ],
+      [
+        381.0,
+        "tool_result"
+      ],
+      [
+        389.3,
+        "assistant"
+      ],
+      [
+        389.3,
+        "assistant"
+      ],
+      [
+        405.0,
+        "assistant"
+      ],
+      [
+        405.0,
+        "system:task_started"
+      ],
+      [
+        405.0,
+        "tool_result"
+      ],
+      [
+        410.1,
+        "system:task_progress"
+      ],
+      [
+        410.1,
+        "assistant"
+      ],
+      [
+        410.1,
+        "tool_result"
+      ],
+      [
+        447.4,
+        "system:task_progress"
+      ],
+      [
+        447.4,
+        "assistant"
+      ],
+      [
+        447.4,
+        "tool_result"
+      ],
+      [
+        477.7,
+        "system:task_progress"
+      ],
+      [
+        477.7,
+        "assistant"
+      ],
+      [
+        477.8,
+        "tool_result"
+      ],
+      [
+        494.3,
+        "system:task_notification"
+      ],
+      [
+        494.3,
+        "tool_result"
+      ],
+      [
+        514.8,
+        "assistant"
+      ],
+      [
+        516.2,
+        "assistant"
+      ],
+      [
+        521.3,
+        "assistant"
+      ],
+      [
+        521.3,
+        "tool_result"
+      ],
+      [
+        521.3,
+        "tool_result"
+      ],
+      [
+        525.7,
+        "assistant"
+      ],
+      [
+        526.6,
+        "assistant"
+      ],
+      [
+        527.0,
+        "tool_result"
+      ],
+      [
+        527.1,
+        "assistant"
+      ],
+      [
+        527.5,
+        "tool_result"
+      ],
+      [
+        560.0,
+        "assistant"
+      ],
+      [
+        561.3,
+        "assistant"
+      ],
+      [
+        561.6,
+        "assistant"
+      ],
+      [
+        561.6,
+        "tool_result"
+      ],
+      [
+        579.4,
+        "assistant"
+      ],
+      [
+        579.4,
+        "assistant"
+      ],
+      [
+        595.7,
+        "assistant"
+      ],
+      [
+        596.6,
+        "tool_result"
+      ],
+      [
+        616.2,
+        "assistant"
+      ],
+      [
+        616.9,
+        "assistant"
+      ],
+      [
+        619.7,
+        "assistant"
+      ],
+      [
+        620.3,
+        "tool_result"
+      ],
+      [
+        621.4,
+        "assistant"
+      ],
+      [
+        621.4,
+        "tool_result"
+      ],
+      [
+        638.2,
+        "assistant"
+      ],
+      [
+        638.7,
+        "assistant"
+      ],
+      [
+        661.1,
+        "assistant"
+      ],
+      [
+        661.1,
+        "tool_result"
+      ],
+      [
+        685.3,
+        "assistant"
+      ],
+      [
+        685.5,
+        "assistant"
+      ],
+      [
+        691.9,
+        "assistant"
+      ],
+      [
+        691.9,
+        "tool_result"
+      ],
+      [
+        691.9,
+        "tool_result"
+      ],
+      [
+        696.1,
+        "assistant"
+      ],
+      [
+        696.9,
+        "assistant"
+      ],
+      [
+        697.0,
+        "tool_result"
+      ],
+      [
+        792.9,
+        "assistant"
+      ],
+      [
+        796.4,
+        "assistant"
+      ],
+      [
+        801.0,
+        "assistant"
+      ],
+      [
+        801.0,
+        "tool_result"
+      ],
+      [
+        837.8,
+        "assistant"
+      ],
+      [
+        845.5,
+        "assistant"
+      ],
+      [
+        860.7,
+        "assistant"
+      ],
+      [
+        860.7,
+        "tool_result"
+      ],
+      [
+        867.7,
+        "assistant"
+      ],
+      [
+        871.2,
+        "assistant"
+      ],
+      [
+        871.2,
+        "tool_result"
+      ],
+      [
+        871.2,
+        "tool_result"
+      ],
+      [
+        879.1,
+        "assistant"
+      ],
+      [
+        879.8,
+        "assistant"
+      ],
+      [
+        879.9,
+        "tool_result"
+      ],
+      [
+        929.0,
+        "assistant"
+      ],
+      [
+        929.7,
+        "assistant"
+      ],
+      [
+        930.0,
+        "assistant"
+      ],
+      [
+        930.0,
+        "tool_result"
+      ],
+      [
+        1004.4,
+        "assistant"
+      ],
+      [
+        1004.4,
+        "assistant"
+      ],
+      [
+        1023.1,
+        "assistant"
+      ],
+      [
+        1023.1,
+        "tool_result"
+      ],
+      [
+        1023.1,
+        "system:status"
+      ],
+      [
+        1146.6,
+        "system:status"
+      ],
+      [
+        1146.6,
+        "system:compact_boundary"
+      ],
+      [
+        1146.6,
+        "tool_result"
+      ],
+      [
+        1160.8,
+        "assistant"
+      ],
+      [
+        1160.8,
+        "assistant"
+      ],
+      [
+        1160.8,
+        "tool_result"
+      ],
+      [
+        1186.2,
+        "assistant"
+      ],
+      [
+        1187.6,
+        "assistant"
+      ],
+      [
+        1187.6,
+        "tool_result"
+      ],
+      [
+        1193.5,
+        "assistant"
+      ],
+      [
+        1193.6,
+        "tool_result"
+      ],
+      [
+        1197.4,
+        "assistant"
+      ],
+      [
+        1199.8,
+        "assistant"
+      ],
+      [
+        1199.9,
+        "tool_result"
+      ],
+      [
+        1205.6,
+        "assistant"
+      ],
+      [
+        1208.5,
+        "assistant"
+      ],
+      [
+        1208.6,
+        "tool_result"
+      ],
+      [
+        1305.3,
+        "assistant"
+      ],
+      [
+        1306.1,
+        "assistant"
+      ],
+      [
+        1308.3,
+        "assistant"
+      ],
+      [
+        1308.4,
+        "tool_result"
+      ],
+      [
+        1316.0,
+        "assistant"
+      ],
+      [
+        1316.3,
+        "assistant"
+      ],
+      [
+        1316.5,
+        "assistant"
+      ],
+      [
+        1316.5,
+        "tool_result"
+      ],
+      [
+        1322.3,
+        "assistant"
+      ],
+      [
+        1325.0,
+        "assistant"
+      ],
+      [
+        1325.0,
+        "tool_result"
+      ],
+      [
+        1362.3,
+        "assistant"
+      ],
+      [
+        1362.4,
+        "assistant"
+      ],
+      [
+        1362.9,
+        "assistant"
+      ],
+      [
+        1363.1,
+        "tool_result"
+      ],
+      [
+        1369.6,
+        "assistant"
+      ],
+      [
+        1371.9,
+        "assistant"
+      ],
+      [
+        1372.0,
+        "tool_result"
+      ],
+      [
+        1375.1,
+        "assistant"
+      ],
+      [
+        1375.1,
+        "tool_result"
+      ],
+      [
+        1388.2,
+        "assistant"
+      ],
+      [
+        1388.2,
+        "assistant"
+      ],
+      [
+        1401.6,
+        "assistant"
+      ],
+      [
+        1401.6,
+        "system:task_started"
+      ],
+      [
+        1401.6,
+        "tool_result"
+      ],
+      [
+        1414.1,
+        "system:task_progress"
+      ],
+      [
+        1414.1,
+        "assistant"
+      ],
+      [
+        1414.2,
+        "assistant"
+      ],
+      [
+        1415.8,
+        "assistant"
+      ],
+      [
+        1415.8,
+        "tool_result"
+      ],
+      [
+        1442.4,
+        "assistant"
+      ],
+      [
+        1445.0,
+        "assistant"
+      ],
+      [
+        1481.0,
+        "system:task_progress"
+      ],
+      [
+        1505.4,
+        "system:task_progress"
+      ],
+      [
+        1517.1,
+        "system:task_updated"
+      ],
+      [
+        1517.1,
+        "system:task_notification"
+      ],
+      [
+        1517.2,
+        "system:init"
+      ],
+      [
+        1540.3,
+        "assistant"
+      ],
+      [
+        1541.1,
+        "assistant"
+      ],
+      [
+        1563.0,
+        "assistant"
+      ],
+      [
+        1563.0,
+        "tool_result"
+      ],
+      [
+        1595.0,
+        "assistant"
+      ],
+      [
+        1605.9,
+        "assistant"
+      ],
+      [
+        1605.9,
+        "tool_result"
+      ],
+      [
+        1616.1,
+        "assistant"
+      ],
+      [
+        1631.8,
+        "assistant"
+      ],
+      [
+        1631.8,
+        "tool_result"
+      ],
+      [
+        1639.7,
+        "assistant"
+      ],
+      [
+        1655.9,
+        "assistant"
+      ],
+      [
+        1655.9,
+        "tool_result"
+      ],
+      [
+        1693.4,
+        "assistant"
+      ],
+      [
+        1704.8,
+        "assistant"
+      ],
+      [
+        1704.8,
+        "tool_result"
+      ],
+      [
+        1715.5,
+        "assistant"
+      ],
+      [
+        1715.5,
+        "result"
+      ]
+    ],
+    "max_output_tokens": null,
+    "cli_version": null,
+    "caps": {
+      "wall_clock_seconds": 7200,
+      "inactivity_seconds": 600,
+      "progress_stall_seconds": 600,
+      "tool_calls": 300,
+      "max_turns": 250,
+      "max_cost_usd": 15.0
+    },
+    "wall_clock_seconds": 1726.0540570209996,
+    "real_clock_seconds": 1726.2212688922882,
+    "slept_seconds": 0.16721187128860038,
+    "judge_seconds": 9.487347663998662,
+    "agent_model": "claude-sonnet-4-6",
+    "subagent_model_override": null,
+    "effort_level": "high"
+  },
+  "tool_calls": [
+    {
+      "tool": "Glob",
+      "args": {
+        "pattern": "**/*",
+        "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": ".claude/skills/check-warnings/SKILL.md\n.claude/skills/check-warnings/references/assumption-categories.md\n.claude/skills/check-warnings/references/warning-checks.md\n.claude/skills/check-warnings/references/warnings-as-identity-signals.md\n.claude/skills/citation/SKILL.md\n.claude/skills/citation/references/gps-citation-standards.md\n.claude/skills/citation/references/validation-protocol.md\n.claude/skills/conflict-resolution/SKILL.md\n.claude/skills/conflict-resolution/references/historical-contrad..."
+    },
+    {
+      "tool": "Glob",
+      "args": {
+        "pattern": "*.json",
+        "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json\n.claude/settings.json"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_rossi_marriage\",\n4\t    \"objective\": \"What was the marriage date of Mary Rossi, born 1879 in New Jersey?\",\n5\t    \"subject_person_ids\": [\n6\t      \"GC13-YHG\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-16\",\n10\t    \"updated\": \"2026-07-16\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [],\n18\t  \"plans\": [],\n19\t  \"log\": [..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/tree.gedcomx.json"
+      },
+      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"GC13-YHG\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Mary\",\n11\t          \"surname\": \"Rossi\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"490e01c7-c7c2-4353-8441-0e00c47a31f9\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"1879\",\n19\t          \"standard_date\": \"1879\",\n20\t          \"place\": \"U.S.\",\n21\t          \"standard_place..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "question-selection"
+      },
+      "response_summary": "Launching skill: question-selection"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/.claude/skills/question-selection/references/question-formulation.md"
+      },
+      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/.claude/skills/question-selection/references/pedigree-analysis.md"
+      },
+      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__research_append",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "section": "questions",
+        "op": "append",
+        "entry": {
+          "question": "What was the date and place of marriage of Mary Rossi (born 1879, New Jersey) to Charles Ullricht?",
+          "rationale": "The project objective directly asks for Mary Rossi's marriage date. The tree already records a Couple relationship (R1) between Mary Rossi (GC13-YHG) and Charles Ullricht (GC13-LZ1) but no marriage date or place. Their first known child Adeline was born 24 August 1899 in New Jersey, placing the marriage no later than mid-1899. New Jersey had civil marriage registration from 1848; the state archives and FamilySearch hold New Jersey marriage records and certificates from the late 19th century. Census records (1900\u20131930) may also report years married. This is the gatekeeper question \u2014 answering it answers the full project objective.",
+          "selection_basis": "objective_decomposition",
+          "priority": "high",
+          "status": "open",
+          "depends_on": [],
+          "unblocks": [],
+          "resolved": null,
+          "resolution_assertion_ids": [],
+          "exhaustive_declaration": {
+            "declared": false,
+            "justification": null,
+            "log_entry_ids": [],
+            "stop_criteria": null
+          }
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-plan"
+      },
+      "response_summary": "Launching skill: research-plan"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/.claude/skills/research-plan/references/planning-standards.md"
+      },
+      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/.claude/skills/research-plan/references/record-type-guide.md"
+      },
+      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search,mcp__genealogy__place_search",
+        "max_results": 4
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__place_search",
+      "args": {
+        "placeName": "Hudson County",
+        "contextName": "New Jersey"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Hudson, New Jersey, United States\\\",\\n      \\\"type\\\": \\\"County\\\",\\n      \\\"dateRange\\\": \\\"+1840/\\\",\\n      \\\"latitude\\\": 40.71667,\\n      \\\"longitude\\\": -74.06667,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Hudson&focusedId=394880\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Hudson_County,_New_Jersey\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Hudson City,..."
+    },
+    {
+      "tool": "mcp__genealogy__collections_search",
+      "args": {
+        "standardPlace": "New Jersey, United States",
+        "startYear": 1875,
+        "endYear": 1910
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"New Jersey, United States\\\",\\n    \\\"startYear\\\": 1875,\\n    \\\"endYear\\\": 1910\\n  },\\n  \\\"scope\\\": \\\"New Jersey\\\",\\n  \\\"totalForPlace\\\": 31,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"2843408\\\",\\n      \\\"title\\\": \\\"New Jersey, Birth Index, 1901-1903\\\",\\n      \\\"dateRange\\\": \\\"1901-1903\\\",\\n      \\\"recordCount\\\": 121290,\\n      \\\"personCount\\\": 296041,\\n      \\\"imageCount\\\": 0,\\n      \\\"url\\\": \\\"https://www.familysearch.org/s..."
+    },
+    {
+      "tool": "mcp__genealogy__wiki_search",
+      "args": {
+        "query": "New Jersey marriage records genealogy civil registration"
+      },
+      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+    },
+    {
+      "tool": "mcp__genealogy__external_links_search",
+      "args": {
+        "standardPlace": "New Jersey, United States",
+        "startYear": 1890,
+        "endYear": 1905
+      },
+      "response_summary": "{\"error\":\"Could not resolve \\\"New Jersey, United States\\\" to a FamilySearch place. Use place_search to get a standard place name first.\"}"
+    },
+    {
+      "tool": "mcp__genealogy__external_links_search",
+      "args": {
+        "standardPlace": "Hudson, New Jersey, United States",
+        "startYear": 1890,
+        "endYear": 1905
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Hudson, New Jersey, United States\\\",\\n    \\\"startYear\\\": 1890,\\n    \\\"endYear\\\": 1905\\n  },\\n  \\\"totalForPlace\\\": 405,\\n  \\\"returned\\\": 308,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.myheritage.com/research/collection-20877/1915-new-jersey-state-census\\\",\\n      \\\"linkText\\\": \\\"1915 New Jersey State Census\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"https://www.americanancestors.org/search/databasesearch/46/cemetery-tr..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "ops": [
+          {
+            "section": "plans",
+            "op": "append",
+            "entry": {
+              "question_id": "q_001",
+              "status": "active",
+              "created": "2026-07-21"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 1,
+              "record_type": "vital_record",
+              "jurisdiction": "Hudson County, New Jersey",
+              "date_range": "1893-1899",
+              "repository": "FamilySearch",
+              "rationale": "New Jersey required civil marriage registration from May 1848; Hudson County (seat: Jersey City) maintained marriage registers held in the county clerk's office and later microfilmed by FamilySearch. 'New Jersey, County Marriages, 1682-1956' (collection 1803976) is indexed and covers the target window. Mary Rossi's first known child was born August 1899, placing the marriage no later than mid-1899; Mary was born 1879, making her marriage-age earliest ~1895. Searching under both 'Rossi' (bride's maiden name) and 'Ullrich'/'Ullricht' (groom's surname) will maximize recall.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 2,
+              "record_type": "vital_record",
+              "jurisdiction": "New Jersey",
+              "date_range": "1893-1899",
+              "repository": "FamilySearch",
+              "rationale": "'New Jersey, Marriages, 1670-1980' (collection 2365247, 348,215 images) and 'New Jersey, Marriages, 1678-1985' (collection 1675446, 788,846 records) are broader statewide aggregates that may index records not captured in the county-specific collection and include church marriages returned to the state. Searching both broadens coverage beyond civil county records.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 3,
+              "record_type": "census",
+              "jurisdiction": "Hoboken, Hudson, New Jersey",
+              "date_range": "1900",
+              "repository": "FamilySearch",
+              "rationale": "The 1900 federal census (source 3J4D-BWP already in the tree) asks the number of years married and the number of children born/living. Extracting that entry for Charles and Mary Ulrich will yield an indirect date anchor: if it reports, say, '3 years married,' that places the marriage in approximately 1897. This narrows the search window for vital records even if the marriage certificate itself is not yet found.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 4,
+              "record_type": "census",
+              "jurisdiction": "Hudson County, New Jersey",
+              "date_range": "1895",
+              "repository": "FamilySearch",
+              "rationale": "'New Jersey, State Census, 1895' (collection 2659407, 1,484,097 records) was taken in June 1895. If Mary and Charles appear together as a married couple it confirms they wed before June 1895; if she appears in her father's household under 'Rossi' she was not yet married. Either outcome tightens the marriage date window and may provide her parents' identities.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 5,
+              "record_type": "vital_record",
+              "jurisdiction": "New Jersey",
+              "date_range": "1893-1899",
+              "repository": "Ancestry",
+              "rationale": "Ancestry's 'New Jersey, Marriage Records, 1670-1965' (collection 61376) and 'New Jersey Compiled Marriage Records, 1684-1895' (collection 4480) index records from a different transcription pipeline and may surface an entry missed on FamilySearch. Fallback for items 1-2 if FamilySearch searches yield no result.",
+              "fallback_for": "pli_001",
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 6,
+              "record_type": "church",
+              "jurisdiction": "Hoboken, Hudson, New Jersey",
+              "date_range": "1893-1899",
+              "repository": "FamilySearch",
+              "rationale": "Hoboken had a large Italian Catholic immigrant community (Rossi surname suggests Italian Catholic background) and a significant German community (Ullricht surname). Catholic parishes in Hoboken kept separate marriage registers which may predate or supplement civil registration. 'New Jersey, Church Records, 1675-1970' (collection 2106099, 413,850 images) contains microfilmed NJ church registers. If civil records are absent or ambiguous, the church register is the most likely alternative source.",
+              "fallback_for": "pli_001",
+              "status": "planned"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "search-records",
+        "args": "Execute pli_001 and pli_002: search FamilySearch for the marriage of Mary Rossi (born 1879, New Jersey) to Charles Ullricht/Ullrich in NJ County Marriages 1682-1956 (collection 1803976) and NJ Marriages 1670-1980 (collection 2365247) and NJ Marriages 1678-1985 (collection 1675446). Target date range 1893-1899, Hudson County NJ. Also execute pli_003: extract the 1900 federal census entry for Charles and Mary Ulrich already in the tree (source 3J4D-BWP, ARK https://familysearch.org/ark:/61903/1:1:M9JK-HPP) to capture the years-married field. Also execute pli_004: search NJ State Census 1895 (collection 2659407) for Mary Rossi or Mary Ullrich in Hudson County to determine whether she was married by June 1895. Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "Launching skill: search-records"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
+        "max_results": 4
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Rossi",
+        "givenName": "Mary",
+        "spouseGivenName": "Charles",
+        "spouseSurname": "Ullricht",
+        "marriageYearFrom": 1893,
+        "marriageYearTo": 1899,
+        "recordType": "marriage",
+        "collectionId": "1803976",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Rossi\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"spouseGivenName\\\": \\\"Charles\\\",\\n    \\\"spouseSurname\\\": \\\"Ullricht\\\",\\n    \\\"marriageYearFrom\\\": 1893,\\n    \\\"marriageYearTo\\\": 1899,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"1803976\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappe..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Rossi",
+        "givenName": "Mary",
+        "spouseGivenName": "Charles",
+        "spouseSurname": "Ullrich",
+        "marriageYearFrom": 1893,
+        "marriageYearTo": 1899,
+        "recordType": "marriage",
+        "collectionId": "1803976",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Rossi\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"spouseGivenName\\\": \\\"Charles\\\",\\n    \\\"spouseSurname\\\": \\\"Ullrich\\\",\\n    \\\"marriageYearFrom\\\": 1893,\\n    \\\"marriageYearTo\\\": 1899,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"1803976\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCapped..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Rossi",
+        "givenName": "Mary",
+        "marriageYearFrom": 1890,
+        "marriageYearTo": 1902,
+        "recordType": "marriage",
+        "collectionId": "1803976",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Rossi\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"marriageYearFrom\\\": 1890,\\n    \\\"marriageYearTo\\\": 1902,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"1803976\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  ..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Rossi",
+        "givenName": "Mary",
+        "recordType": "marriage",
+        "collectionId": "1803976",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Rossi\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"1803976\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Ullricht",
+        "givenName": "Charles",
+        "spouseGivenName": "Mary",
+        "marriageYearFrom": 1890,
+        "marriageYearTo": 1902,
+        "recordType": "marriage",
+        "collectionId": "1803976",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Ullricht\\\",\\n    \\\"givenName\\\": \\\"Charles\\\",\\n    \\\"spouseGivenName\\\": \\\"Mary\\\",\\n    \\\"marriageYearFrom\\\": 1890,\\n    \\\"marriageYearTo\\\": 1902,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"1803976\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n ..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Ullrich",
+        "givenName": "Charles",
+        "spouseGivenName": "Mary",
+        "marriageYearFrom": 1890,
+        "marriageYearTo": 1902,
+        "recordType": "marriage",
+        "collectionId": "1803976",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Ullrich\\\",\\n    \\\"givenName\\\": \\\"Charles\\\",\\n    \\\"spouseGivenName\\\": \\\"Mary\\\",\\n    \\\"marriageYearFrom\\\": 1890,\\n    \\\"marriageYearTo\\\": 1902,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"1803976\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  ..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Rossi",
+        "givenName": "Mary",
+        "marriageYearFrom": 1890,
+        "marriageYearTo": 1902,
+        "recordType": "marriage",
+        "collectionId": "2365247",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Rossi\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"marriageYearFrom\\\": 1890,\\n    \\\"marriageYearTo\\\": 1902,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"2365247\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh\\\"\\n  },\\n  \\\"totalMatches\\\": 4,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 4,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  ..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Ullrich",
+        "givenName": "Charles",
+        "spouseGivenName": "Mary",
+        "marriageYearFrom": 1890,
+        "marriageYearTo": 1902,
+        "recordType": "marriage",
+        "collectionId": "2365247",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Ullrich\\\",\\n    \\\"givenName\\\": \\\"Charles\\\",\\n    \\\"spouseGivenName\\\": \\\"Mary\\\",\\n    \\\"marriageYearFrom\\\": 1890,\\n    \\\"marriageYearTo\\\": 1902,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"2365247\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  ..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Ullrich",
+        "givenName": "Charles",
+        "spouseGivenName": "Mary",
+        "marriageYearFrom": 1890,
+        "marriageYearTo": 1902,
+        "recordType": "marriage",
+        "collectionId": "1675446",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Ullrich\\\",\\n    \\\"givenName\\\": \\\"Charles\\\",\\n    \\\"spouseGivenName\\\": \\\"Mary\\\",\\n    \\\"marriageYearFrom\\\": 1890,\\n    \\\"marriageYearTo\\\": 1902,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"collectionId\\\": \\\"1675446\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  ..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:FZLZ-YXV",
+        "resultsRef": "results/.staging/df389e77-1c72-43f1-b8b5-9918be0a68a2.json",
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11195304738\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:FZLZ-YXV\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Charles A.\\\",\\n          \\\"surname\\\": \\\"Ulrich\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1875\\\",\\n          \\\"standard_date\\\": \\\"1875\\\",\\n          \\\"place\\\": \\\"U.S.\\\",\\n       ..."
+    },
+    {
+      "tool": "mcp__genealogy__rank_search_matches",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "stagedResultsRef": "results/.staging/df389e77-1c72-43f1-b8b5-9918be0a68a2.json",
+        "subjectId": "GC13-YHG",
+        "checkAttachments": true
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"GC13-YHG\\\",\\n  \\\"scoredCount\\\": 1,\\n  \\\"returnedCount\\\": 1,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:FZLZ-YXV\\\",\\n      \\\"matchScore\\\": 0.000009654418,\\n      \\\"primaryId\\\": \\\"p_11195304738\\\",\\n      \\\"personName\\\": \\\"Charles A. Ulrich\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"birthDate\\\": \\\"1875\\\",\\n      \\\"birthPlace\\\": \\\"..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "tool": "record_search",
+        "planItemId": "pli_001",
+        "query": {
+          "collection": "1803976 (NJ County Marriages 1682-1956)",
+          "surname": "Rossi",
+          "givenName": "Mary",
+          "spouseGivenName": "Charles",
+          "spouseSurname": "Ullricht",
+          "marriageYearFrom": 1893,
+          "marriageYearTo": 1899,
+          "recordType": "marriage"
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "resultsAvailable": 0,
+        "notes": "Zero results. Tried again with spouseSurname=Ullrich (no 't'), then with no spouse filter and wider date range 1890-1902, then groom-side searches (Ullricht/Ullrich + spouseGivenName Mary) \u2014 all returned zero. Collection 1803976 appears not to index this marriage.",
+        "externalSite": null
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-21T08:58:58.569Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "tool": "record_search",
+        "planItemId": "pli_002",
+        "query": {
+          "collection": "2365247 (NJ Marriages 1670-1980)",
+          "surname": "Rossi",
+          "givenName": "Mary",
+          "marriageYearFrom": 1890,
+          "marriageYearTo": 1902,
+          "recordType": "marriage"
+        },
+        "outcome": "negative",
+        "resultsExamined": 4,
+        "resultsAvailable": 4,
+        "stagedResultsRef": "results/.staging/7238eef9-0dc5-4f62-9134-460ff00fcbfe.json",
+        "notes": "4 results for Mary Rossi/Rosso in collection 2365247, but all are for different grooms (Bartolini, Ippolito, Gouffet) \u2014 none for Ullrich/t. Groom-side search (Charles Ullrich + Mary, same collection) returned 0. No match for our couple in this collection.",
+        "externalSite": null
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-21T08:59:09.532Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 4,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "tool": "record_search",
+        "planItemId": "pli_002",
+        "query": {
+          "collection": "1675446 (NJ Marriages 1678-1985)",
+          "surname": "Ullrich",
+          "givenName": "Charles",
+          "spouseGivenName": "Mary",
+          "marriageYearFrom": 1890,
+          "marriageYearTo": 1902,
+          "recordType": "marriage"
+        },
+        "outcome": "positive",
+        "resultsExamined": 1,
+        "resultsAvailable": 1,
+        "stagedResultsRef": "results/.staging/df389e77-1c72-43f1-b8b5-9918be0a68a2.json",
+        "notes": "Single result: Charles A. Ulrich b.1875 (United States) married Mary Rossi b.1879 (United States) on 2 February 1899 in Hoboken, Hudson, New Jersey. Both birth years match tree subjects GC13-LZ1 and GC13-YHG exactly. Record read confirmed: marriage date 2 Feb 1899, place Hoboken, Hudson, NJ. Record persona for bride: ark:/61903/1:1:FZLZ-YXJ (p_11195304737). Passing to record-extraction.",
+        "externalSite": null
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-21T08:59:20.981Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_001",
+            "fields": {
+              "status": "in_progress"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_002",
+            "fields": {
+              "status": "in_progress"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "record-extraction",
+        "args": "Extract all assertions from the marriage record found in log_003. Record: \"New Jersey, Marriages, 1678-1985\" (collection 1675446), recordId ark:/61903/1:1:FZLZ-YXV (groom persona; bride persona is ark:/61903/1:1:FZLZ-YXJ). The record shows Charles A. Ulrich (b.1875, US) married Mary Rossi (b.1879, US) on 2 February 1899 in Hoboken, Hudson, New Jersey. Log entry is log_003. The resultsRef sidecar is results/log_003.json. Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh. Tree subjects: Mary Rossi = GC13-YHG, Charles Ullricht = GC13-LZ1."
+      },
+      "response_summary": "Launching skill: record-extraction"
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "Extract marriage record assertions for Mary Rossi / Charles Ulrich",
+        "subagent_type": "record-extractor",
+        "prompt": "Please extract all GPS-conformant assertions from this marriage record and persist them to research.json and tree.gedcomx.json.\n\n**Project path:** /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh\n\n**Log entry:** log_003 (already written by search-records \u2014 do not create a new log entry)\n\n**Results sidecar:** results/log_003.json (use as resultsRef for record_read)\n\n**Record:** \"New Jersey, Marriages, 1678-1985\" (collection 1675446)\n- Groom persona recordId: ark:/61903/1:1:FZLZ-YXV\n- Bride persona recordId: ark:/61903/1:1:FZLZ-YXJ\n\n**Full record content (from record_read):**\n```json\n{\n  \"persons\": [\n    {\n      \"id\": \"p_11195304738\",\n      \"ark\": \"ark:/61903/1:1:FZLZ-YXV\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"Charles A.\", \"surname\": \"Ulrich\"}],\n      \"facts\": [{\"type\": \"Birth\", \"date\": \"1875\", \"standard_date\": \"1875\", \"place\": \"U.S.\", \"standard_place\": \"United States\"}]\n    },\n    {\n      \"id\": \"p_11195304737\",\n      \"ark\": \"ark:/61903/1:1:FZLZ-YXJ\",\n      \"gender\": \"Female\",\n      \"names\": [{\"type\": \"BirthName\", \"given\": \"Mary\", \"surname\": \"Rossi\"}],\n      \"facts\": [{\"type\": \"Birth\", \"date\": \"1879\", \"standard_date\": \"1879\", \"place\": \"U.S.\", \"standard_place\": \"United States\"}]\n    }\n  ],\n  \"relationships\": [\n    {\n      \"type\": \"Couple\",\n      \"person1\": \"p_11195304738\",\n      \"person2\": \"p_11195304737\",\n      \"facts\": [\n        {\n          \"type\": \"Marriage\",\n          \"primary\": true,\n          \"date\": \"2 Feb 1899\",\n          \"standard_date\": \"2 Feb 1899\",\n          \"place\": \"Hoboken, Hudson, New Jersey, United States\",\n          \"standard_place\": \"Hoboken, Hudson, New Jersey, United States\"\n        }\n      ]\n    }\n  ],\n  \"sources\": [\n    {\n      \"id\": \"sd_c_1675446\",\n      \"title\": \"New Jersey, Marriages, 1678-1985\",\n      \"url\": \"https://familysearch.org/collections/1675446\"\n    },\n    {\n      \"id\": \"src_r_793338561\",\n      \"title\": \"Entry for Charles A. Ulrich, \\\"New Jersey, Marriages, 1678-1985\\\"\",\n      \"citation\": \"\\\"New Jersey, Marriages, 1678-1985,\\\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9SKD-YHL : 27 August 2020), Entry for Charles A. Ulrich\",\n      \"url\": \"https://familysearch.org/ark:/61903/1:2:9SKD-YHL\"\n    }\n  ]\n}\n```\n\n**Research context:**\n- Active research question q_001: \"What was the date and place of marriage of Mary Rossi (born 1879, New Jersey) to Charles Ullricht?\"\n- Tree subjects: Mary Rossi (GC13-YHG, born 1879 NJ) and Charles Ullricht (GC13-LZ1, born 1875 Massachusetts)\n- This record is a derivative database index (FamilySearch compiled database from \"New Jersey, Marriages, 1678-1985\") \u2014 classify source_classification accordingly\n- The marriage date (2 Feb 1899) and place (Hoboken, Hudson, NJ) are the primary facts needed\n- Also extract birth facts for both parties as stated in the record\n- Do not create person_evidence links \u2014 identity resolution happens separately\n\n**Classification guidance:**\n- Source type: this is a derivative database (FamilySearch compiled index), not an original civil register\n- The informant for the marriage date/place would be the parties themselves at the time of the event\n- Apply standard three-layer GPS classification for each assertion"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"All assertions persisted successfully.\\n\\n**Source:** src_001 / S1 \\u2014 created (derivative, FamilySearch compiled index)\\n\\n**Assertions written \\u2014 9 total:**\\n- groom (Charles A. Ulrich): a_001 name, a_002 birth/date, a_003 birth/place, a_007 marriage \\u2014 4 assertions\\n- bride (Mary Rossi): a_004 name, a_005 birth/date, a_006 birth/place, a_008 marriage \\u2014 4 assertions\\n\\n**Key findings:**\\n\\n1. \\\"Original not examined\\\" \\u2014 this is a derivative Fa..."
+    },
+    {
+      "tool": "mcp__genealogy__project_context",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"What was the date and place of marriage of Mary Rossi (born 1879, New Jersey) to Charles Ullricht?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"GC13-YHG\\\",\\n      \\\"name\\\": \\\"Mary Rossi\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"GC13-LZ1\\\",\\n      \\\"name\\\": \\\"Charles Ullricht..."
+    },
+    {
+      "tool": "mcp__genealogy__extraction_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "sourceDescription": {
+          "title": "New Jersey, Marriages, 1678-1985",
+          "url": "https://familysearch.org/collections/1675446"
+        },
+        "ops": [
+          {
+            "section": "sources",
+            "op": "append",
+            "entry": {
+              "citation": "\"New Jersey, Marriages, 1678-1985,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9SKD-YHL : 27 August 2020), Entry for Charles A. Ulrich.",
+              "citation_detail": {
+                "who": "Charles A. Ulrich and Mary Rossi",
+                "what": "Marriage index entry",
+                "when_created": "2020",
+                "when_accessed": "2026-07-21",
+                "where": "FamilySearch, \"New Jersey, Marriages, 1678-1985\" (collection 1675446)",
+                "where_within": "Entry for Charles A. Ulrich, image ref ark:/61903/1:2:9SKD-YHL"
+              },
+              "source_classification": "derivative",
+              "repository": "FamilySearch",
+              "access_date": "2026-07-21",
+              "url": "https://familysearch.org/ark:/61903/1:2:9SKD-YHL",
+              "notes": "FamilySearch compiled database index. Original civil register not examined \u2014 image of original not accessed; classification based on derivative index only.",
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXV",
+              "record_persona_id": "p_11195304738",
+              "record_role": "groom",
+              "fact_type": "name",
+              "value": "Charles A. Ulrich",
+              "structured_value": {
+                "given": "Charles A.",
+                "surname": "Ulrich"
+              },
+              "information_quality": "primary",
+              "informant": "Charles A. Ulrich",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXV",
+              "record_persona_id": "p_11195304738",
+              "record_role": "groom",
+              "fact_type": "birth",
+              "value": "born 1875",
+              "structured_value": {
+                "year": "1875"
+              },
+              "date": "1875",
+              "date_certainty": "approximate",
+              "information_quality": "primary",
+              "informant": "Charles A. Ulrich",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXV",
+              "record_persona_id": "p_11195304738",
+              "record_role": "groom",
+              "fact_type": "birth",
+              "value": "born U.S.",
+              "structured_value": {
+                "place": "U.S."
+              },
+              "place": "U.S.",
+              "standard_place": "United States",
+              "information_quality": "primary",
+              "informant": "Charles A. Ulrich",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXJ",
+              "record_persona_id": "p_11195304737",
+              "record_role": "bride",
+              "fact_type": "name",
+              "value": "Mary Rossi",
+              "structured_value": {
+                "given": "Mary",
+                "surname": "Rossi"
+              },
+              "information_quality": "primary",
+              "informant": "Mary Rossi",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXJ",
+              "record_persona_id": "p_11195304737",
+              "record_role": "bride",
+              "fact_type": "birth",
+              "value": "born 1879",
+              "structured_value": {
+                "year": "1879"
+              },
+              "date": "1879",
+              "date_certainty": "approximate",
+              "information_quality": "primary",
+              "informant": "Mary Rossi",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXJ",
+              "record_persona_id": "p_11195304737",
+              "record_role": "bride",
+              "fact_type": "birth",
+              "value": "born U.S.",
+              "structured_value": {
+                "place": "U.S."
+              },
+              "place": "U.S.",
+              "standard_place": "United States",
+              "information_quality": "primary",
+              "informant": "Mary Rossi",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXV",
+              "record_persona_id": "p_11195304738",
+              "record_role": "groom",
+              "fact_type": "marriage",
+              "value": "married 2 Feb 1899, Hoboken, Hudson, New Jersey",
+              "structured_value": {
+                "place": "Hoboken, Hudson, New Jersey, United States"
+              },
+              "date": "2 Feb 1899",
+              "date_certainty": "exact",
+              "place": "Hoboken, Hudson, New Jersey, United States",
+              "standard_place": "Hoboken, Hudson, New Jersey, United States",
+              "information_quality": "primary",
+              "informant": "Charles A. Ulrich and Mary Rossi",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXJ",
+              "record_persona_id": "p_11195304737",
+              "record_role": "bride",
+              "fact_type": "marriage",
+              "value": "married 2 Feb 1899, Hoboken, Hudson, New Jersey",
+              "structured_value": {
+                "place": "Hoboken, Hudson, New Jersey, United States"
+              },
+              "date": "2 Feb 1899",
+              "date_certainty": "exact",
+              "place": "Hoboken, Hudson, New Jersey, United States",
+              "standard_place": "Hoboken, Hudson, New Jersey, United States",
+              "information_quality": "primary",
+              "informant": "Charles A. Ulrich and Mary Rossi",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[4]: record_id 'ark:/61903/1:1:FZLZ-YXJ' does not match any result in sidecar 'results/log_003.json' \\u2014 expected one of: ark:/61903/1:1:FZLZ-YXV\\\",\\n    \\\"ops[5]: record_id 'ark:/61903/1:1:FZLZ-YXJ' does not match any result in sidecar 'results/log_003.json' \\u2014 expected one of: ark:/61903/1:1:FZLZ-YXV\\\",\\n    \\\"ops[6]: record_id 'ark:/61903/1:1:FZLZ-YXJ' does not match any result in sidecar 'results/log_003.json..."
+    },
+    {
+      "tool": "mcp__genealogy__extraction_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "sourceDescription": {
+          "title": "New Jersey, Marriages, 1678-1985",
+          "url": "https://familysearch.org/collections/1675446"
+        },
+        "ops": [
+          {
+            "section": "sources",
+            "op": "append",
+            "entry": {
+              "citation": "\"New Jersey, Marriages, 1678-1985,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9SKD-YHL : 27 August 2020), Entry for Charles A. Ulrich.",
+              "citation_detail": {
+                "who": "Charles A. Ulrich and Mary Rossi",
+                "what": "Marriage index entry",
+                "when_created": "2020",
+                "when_accessed": "2026-07-21",
+                "where": "FamilySearch, \"New Jersey, Marriages, 1678-1985\" (collection 1675446)",
+                "where_within": "Entry for Charles A. Ulrich, image ref ark:/61903/1:2:9SKD-YHL"
+              },
+              "source_classification": "derivative",
+              "repository": "FamilySearch",
+              "access_date": "2026-07-21",
+              "url": "https://familysearch.org/ark:/61903/1:2:9SKD-YHL",
+              "notes": "FamilySearch compiled database index. Original civil register not examined \u2014 image of original not accessed; classification based on derivative index only.",
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXV",
+              "record_persona_id": "p_11195304738",
+              "record_role": "groom",
+              "fact_type": "name",
+              "value": "Charles A. Ulrich",
+              "structured_value": {
+                "given": "Charles A.",
+                "surname": "Ulrich"
+              },
+              "information_quality": "primary",
+              "informant": "Charles A. Ulrich",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXV",
+              "record_persona_id": "p_11195304738",
+              "record_role": "groom",
+              "fact_type": "birth",
+              "value": "born 1875",
+              "structured_value": {
+                "year": "1875"
+              },
+              "date": "1875",
+              "date_certainty": "approximate",
+              "information_quality": "primary",
+              "informant": "Charles A. Ulrich",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXV",
+              "record_persona_id": "p_11195304738",
+              "record_role": "groom",
+              "fact_type": "birth",
+              "value": "born U.S.",
+              "structured_value": {
+                "place": "U.S."
+              },
+              "place": "U.S.",
+              "standard_place": "United States",
+              "information_quality": "primary",
+              "informant": "Charles A. Ulrich",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXJ",
+              "record_role": "bride",
+              "fact_type": "name",
+              "value": "Mary Rossi",
+              "structured_value": {
+                "given": "Mary",
+                "surname": "Rossi"
+              },
+              "information_quality": "primary",
+              "informant": "Mary Rossi",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXJ",
+              "record_role": "bride",
+              "fact_type": "birth",
+              "value": "born 1879",
+              "structured_value": {
+                "year": "1879"
+              },
+              "date": "1879",
+              "date_certainty": "approximate",
+              "information_quality": "primary",
+              "informant": "Mary Rossi",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXJ",
+              "record_role": "bride",
+              "fact_type": "birth",
+              "value": "born U.S.",
+              "structured_value": {
+                "place": "U.S."
+              },
+              "place": "U.S.",
+              "standard_place": "United States",
+              "information_quality": "primary",
+              "informant": "Mary Rossi",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXV",
+              "record_persona_id": "p_11195304738",
+              "record_role": "groom",
+              "fact_type": "marriage",
+              "value": "married 2 Feb 1899, Hoboken, Hudson, New Jersey",
+              "structured_value": {
+                "place": "Hoboken, Hudson, New Jersey, United States"
+              },
+              "date": "2 Feb 1899",
+              "date_certainty": "exact",
+              "place": "Hoboken, Hudson, New Jersey, United States",
+              "standard_place": "Hoboken, Hudson, New Jersey, United States",
+              "information_quality": "primary",
+              "informant": "Charles A. Ulrich and Mary Rossi",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:FZLZ-YXJ",
+              "record_role": "bride",
+              "fact_type": "marriage",
+              "value": "married 2 Feb 1899, Hoboken, Hudson, New Jersey",
+              "structured_value": {
+                "place": "Hoboken, Hudson, New Jersey, United States"
+              },
+              "date": "2 Feb 1899",
+              "date_certainty": "exact",
+              "place": "Hoboken, Hudson, New Jersey, United States",
+              "standard_place": "Hoboken, Hudson, New Jersey, United States",
+              "information_quality": "primary",
+              "informant": "Charles A. Ulrich and Mary Rossi",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "person-evidence",
+        "args": "Link all record personas from src_001 (the \"New Jersey, Marriages, 1678-1985\" marriage record, log_003) to tree persons. The record contains two personas: (1) Mary Rossi (ark:/61903/1:1:FZLZ-YXJ), born 1879, US \u2014 evaluate identity with tree person GC13-YHG (Mary Rossi, born 1879 NJ). (2) Charles A. Ulrich (ark:/61903/1:1:FZLZ-YXV), born 1875, US \u2014 evaluate identity with tree person GC13-LZ1 (Charles Ullricht, born 1875 Massachusetts). Assertions from this record: a_001\u2013a_008. Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "Launching skill: person-evidence"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/.claude/skills/person-evidence/references/evidence-standards.md"
+      },
+      "response_summary": "1\t# Evidence Standards for Identity Resolution\n2\t\n3\tThese standards from the Genealogical Proof Standard (GPS) govern how\n4\tevidence should be evaluated during identity resolution.\n5\t\n6\t## Assumptions (GPS Standard 45)\n7\t\n8\tWhen linking records to persons, you inevitably make assumptions.\n9\tRecognize and categorize them:\n10\t\n11\t### Fundamental Assumptions\n12\t\n13\tConcepts generally accepted as true. Incorporate these into reasoning\n14\twithout needing supporting evidence.\n15\t\n16\t- People cannot..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_rossi_marriage\",\n4\t    \"objective\": \"What was the marriage date of Mary Rossi, born 1879 in New Jersey?\",\n5\t    \"subject_person_ids\": [\n6\t      \"GC13-YHG\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-16\",\n10\t    \"updated\": \"2026-07-16\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"id\": \"q_001\",\n..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__same_person,mcp__genealogy__materialize_facts",
+        "max_results": 2
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__same_person",
+      "args": {
+        "gedcomx1": {
+          "persons": [
+            {
+              "id": "p_11195304738",
+              "ark": "ark:/61903/1:1:FZLZ-YXV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Charles A.",
+                  "surname": "Ulrich"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1875",
+                  "standard_date": "1875",
+                  "place": "U.S.",
+                  "standard_place": "United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11195304737",
+              "ark": "ark:/61903/1:1:FZLZ-YXJ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Rossi"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "U.S.",
+                  "standard_place": "United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11195304738",
+              "person2": "p_11195304737",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "2 Feb 1899",
+                  "standard_date": "2 Feb 1899",
+                  "place": "Hoboken, Hudson, New Jersey, United States",
+                  "standard_place": "Hoboken, Hudson, New Jersey, United States"
+                }
+              ]
+            }
+          ]
+        },
+        "primaryId1": "p_11195304738",
+        "gedcomx2": {
+          "persons": [
+            {
+              "id": "GC13-LZ1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "given": "Charles",
+                  "surname": "Ullricht"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "ef1cf5e1-c121-4c5a-bd29-dccb71b4df31",
+                  "type": "Birth",
+                  "date": "1875",
+                  "standard_date": "1875",
+                  "place": "Massachusetts",
+                  "standard_place": "Massachusetts, United States"
+                },
+                {
+                  "id": "cd2fd452-c7b6-4d44-a400-eec746d8fe65",
+                  "type": "Residence",
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Hoboken, Hudson, New Jersey, United States"
+                },
+                {
+                  "id": "140e1f53-94b3-4a42-971a-2a6f822a224b",
+                  "type": "Death",
+                  "date": "3 May 1955",
+                  "standard_date": "3 May 1955",
+                  "place": "Cliffside Park, Bergen, New Jersey, United States"
+                }
+              ]
+            },
+            {
+              "id": "GC13-YHG",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "given": "Mary",
+                  "surname": "Rossi"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "490e01c7-c7c2-4353-8441-0e00c47a31f9",
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "U.S.",
+                  "standard_place": "United States"
+                }
+              ]
+            },
+            {
+              "id": "GC13-KG4",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N5",
+                  "given": "Adeline",
+                  "surname": "Ullrich"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "191ef8db-0a24-49c7-9b7d-e253d96b7fb2",
+                  "type": "Birth",
+                  "date": "24 August 1899",
+                  "standard_date": "24 Aug 1899",
+                  "place": "New Jersey, United States"
+                }
+              ]
+            },
+            {
+              "id": "GC13-KWZ",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N4",
+                  "given": "Marie R",
+                  "surname": "Ullrich"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "b83dda3a-c4ae-450c-b30f-0e1a9bca075b",
+                  "type": "Birth",
+                  "date": "1901",
+                  "standard_date": "1901",
+                  "place": "New Jersey"
+                }
+              ]
+            },
+            {
+              "id": "GC13-5LJ",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N3",
+                  "given": "Charles",
+                  "surname": "Ullrich"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "6e77f858-bb02-4e41-a860-4d653b7764b2",
+                  "type": "Birth",
+                  "date": "4 December 1902",
+                  "standard_date": "4 Dec 1902",
+                  "place": "Hoboken, Hudson, New Jersey, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "R1",
+              "type": "Couple",
+              "person1": "GC13-LZ1",
+              "person2": "GC13-YHG"
+            },
+            {
+              "id": "R2",
+              "type": "ParentChild",
+              "parent": "GC13-LZ1",
+              "child": "GC13-KG4"
+            },
+            {
+              "id": "R3",
+              "type": "ParentChild",
+              "parent": "GC13-YHG",
+              "child": "GC13-KG4"
+            },
+            {
+              "id": "R4",
+              "type": "ParentChild",
+              "parent": "GC13-LZ1",
+              "child": "GC13-KWZ"
+            },
+            {
+              "id": "R5",
+              "type": "ParentChild",
+              "parent": "GC13-YHG",
+              "child": "GC13-KWZ"
+            },
+            {
+              "id": "R6",
+              "type": "ParentChild",
+              "parent": "GC13-LZ1",
+              "child": "GC13-5LJ"
+            },
+            {
+              "id": "R7",
+              "type": "ParentChild",
+              "parent": "GC13-YHG",
+              "child": "GC13-5LJ"
+            }
+          ]
+        },
+        "primaryId2": "GC13-LZ1"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matched\\\": true,\\n  \\\"score\\\": 0.88322914,\\n  \\\"queryArk\\\": \\\"ark:/61903/1:1:FZLZ-YXV\\\",\\n  \\\"candidateArk\\\": \\\"ark:/61903/1:1:R7031GW\\\",\\n  \\\"apiTitle\\\": \\\"Matches for ark:/61903/1:1:FZLZ-YXV\\\",\\n  \\\"updated\\\": \\\"2026-07-21T09:03:22.600Z\\\",\\n  \\\"confidence\\\": 5\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__materialize_facts",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "personId": "GC13-LZ1",
+        "recordId": "ark:/61903/1:1:FZLZ-YXV",
+        "recordRole": "groom"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"GC13-LZ1\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 1,\\n  \\\"namesAdded\\\": 1,\\n  \\\"refsAttached\\\": 3,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__materialize_facts",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "personId": "GC13-YHG",
+        "recordId": "ark:/61903/1:1:FZLZ-YXJ",
+        "recordRole": "bride"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"personId\\\": \\\"GC13-YHG\\\",\\n  \\\"created\\\": false,\\n  \\\"factsAdded\\\": 1,\\n  \\\"factsEnriched\\\": 1,\\n  \\\"namesAdded\\\": 0,\\n  \\\"refsAttached\\\": 3,\\n  \\\"conflicts_surfaced\\\": [],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "ops": [
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_001",
+              "person_id": "GC13-LZ1",
+              "confidence": "confident",
+              "match_score": 0.883,
+              "rationale": "Groom name 'Charles A. Ulrich' matches Charles Ullricht (GC13-LZ1): given name identical; surname is a documented spelling variant ('Ulrich'/'Ullrich'/'Ullricht' used interchangeably across 1900\u20131930 records for this person). Birth year 1875 exact match. Spouse Mary Rossi (born 1879) on this record matches tree spouse GC13-YHG exactly. same_person score 0.883 (strong tier). Hoboken marriage location consistent with known Hoboken residence."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_002",
+              "person_id": "GC13-LZ1",
+              "confidence": "confident",
+              "match_score": 0.883,
+              "rationale": "Birth year 1875 in groom persona matches GC13-LZ1's established birth year 1875 exactly. Same-record link: same_person scored this persona at 0.883 against GC13-LZ1."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_003",
+              "person_id": "GC13-LZ1",
+              "confidence": "confident",
+              "match_score": 0.883,
+              "rationale": "Birth place 'U.S.' is compatible with GC13-LZ1's known birth in Massachusetts. Broad claim; does not conflict. Same-record persona scored 0.883 against GC13-LZ1."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_007",
+              "person_id": "GC13-LZ1",
+              "confidence": "confident",
+              "match_score": 0.883,
+              "rationale": "Marriage assertion for groom (Charles A. Ulrich, born 1875) links to GC13-LZ1: exact birth year, surname variant documented, spouse cross-check (Mary Rossi born 1879 = GC13-YHG). same_person score 0.883. Marriage date 2 Feb 1899 and place Hoboken, Hudson, NJ are consistent with all known facts. Direct evidence for q_001."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_007",
+              "person_id": "GC13-YHG",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Relationship assertion \u2014 the marriage act involves both groom and bride. Groom (Charles A. Ulrich, born 1875) is GC13-LZ1; bride named on this same record as 'Mary Rossi, born 1879' matches GC13-YHG (exact name, exact birth year, Hoboken residence). Both parties to the marriage event are linked; this cross-side link is required so the marriage date is attributed to both persons."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_004",
+              "person_id": "GC13-YHG",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Bride name 'Mary Rossi' is an exact match to GC13-YHG's name. Birth year 1879 exact match. No record_persona_id on bride assertions (co-resident persona); qualitative correlation is strong: name + birth year + spouse cross-check (groom Charles A. Ulrich born 1875 = GC13-LZ1, already scored 0.883) fully supports identification. Project searched specifically for GC13-YHG's marriage record."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_005",
+              "person_id": "GC13-YHG",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Birth year 1879 in bride persona matches GC13-YHG's established birth year 1879 exactly. Same-persona link; see a_004 rationale for full identification argument."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_006",
+              "person_id": "GC13-YHG",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Birth place 'U.S.' compatible with GC13-YHG's known New Jersey birth. Broad claim; no conflict. Same-persona link; see a_004 rationale."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_008",
+              "person_id": "GC13-YHG",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Marriage assertion for bride (Mary Rossi, born 1879) links to GC13-YHG: exact name and birth year match, spouse cross-check (Charles A. Ulrich born 1875 = GC13-LZ1). No formal same_person score available for bride co-resident persona, but qualitative correlation is strong on all core identifiers. Marriage date 2 Feb 1899, Hoboken, Hudson, NJ. Direct evidence for q_001."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_008",
+              "person_id": "GC13-LZ1",
+              "confidence": "confident",
+              "match_score": 0.883,
+              "rationale": "Relationship assertion \u2014 the marriage act involves both bride and groom. Bride (Mary Rossi, born 1879) is GC13-YHG; groom on this record as 'Charles A. Ulrich, born 1875' matches GC13-LZ1 (same_person score 0.883). Cross-side link required so marriage date is attributed to both persons."
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-exhaustiveness",
+        "args": "Evaluate whether research on q_001 (\"What was the date and place of marriage of Mary Rossi (born 1879, New Jersey) to Charles Ullricht?\") is reasonably exhaustive. We found the marriage record (src_001, NJ Marriages 1678-1985): Mary Rossi married Charles A. Ulrich on 2 February 1899 in Hoboken, Hudson, New Jersey. Assertions a_007 and a_008 directly answer the question. pli_001 (NJ County Marriages 1803976) returned nil across 5 variants; pli_002 (NJ Marriages aggregates) found the record in collection 1675446. pli_003 (1900 census years-married), pli_004 (1895 NJ census), pli_005 (Ancestry marriage records), and pli_006 (church records) are still planned but the question appears answered. Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "Launching skill: research-exhaustiveness"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
+      },
+      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_001",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_002",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_003",
+            "fields": {
+              "status": "skipped"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_004",
+            "fields": {
+              "status": "skipped"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_005",
+            "fields": {
+              "status": "skipped"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_006",
+            "fields": {
+              "status": "skipped"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "section": "questions",
+        "op": "update",
+        "entryId": "q_001",
+        "fields": {
+          "status": "exhaustive_declared",
+          "exhaustive_declaration": {
+            "declared": true,
+            "justification": "The decisive record type for a marriage question (a marriage record) was searched across two FamilySearch NJ marriage collections and found: 'New Jersey, Marriages, 1678-1985' (collection 1675446) contains an entry for Charles A. Ulrich and Mary Rossi, married 2 February 1899 in Hoboken, Hudson, NJ, with both parties' birth years (1875 and 1879) matching the tree subjects exactly. Multiple name variants and search strategies were employed. Remaining plan items were skipped because the question was directly answered. Known limitation: the found record is a derivative compiled database; the original Hudson County civil register was not directly accessed, and no second independent source was gathered. Overturn risk is low given internal consistency and no conflicting evidence.",
+            "log_entry_ids": [
+              "log_001",
+              "log_002",
+              "log_003"
+            ],
+            "stop_criteria": {
+              "goal_alignment": "Yes \u2014 a_007 and a_008 directly state marriage date 2 Feb 1899 and place Hoboken, Hudson, New Jersey. The record names both parties with matching birth years.",
+              "repository_breadth": "Two FamilySearch NJ marriage collections searched (1803976 nil across 5 variants; 1675446 positive). Multiple name spellings tried (Rossi/Ullricht/Ullrich/Ulrich), groom- and bride-side. Ancestry and church record fallbacks skipped because positive result was found. Adequate for a simple marriage-date recall question.",
+              "original_substitution": "Gap: src_001 is a derivative FamilySearch compiled database (collection 1675446). The original Hudson County civil marriage register for 1899 was not directly accessed. The collection 1803976 (NJ County Marriages, 90,538 images) may contain the original image but returned nil in search. This limitation caps the proof tier at probable rather than proved.",
+              "independent_verification": "Gap: only one source found and extracted. The 1900 federal census (pli_003, source 3J4D-BWP already in tree) would supply an independent years-married datum but was skipped. No second independent informant corroborates the 2 Feb 1899 date.",
+              "evidence_class": "Source is derivative (compiled database); no original record with primary information was examined as a document. The underlying original civil register exists and likely carries the same primary information, but was not directly accessed.",
+              "conflict_resolution": "No conflicts. All evidence is internally consistent: both birth years match exactly, Hoboken is the known residence, and the Feb 1899 marriage date precedes the first known child (24 Aug 1899) by approximately 6.5 months \u2014 biologically plausible.",
+              "overturn_risk": "Low. The record is internally consistent with all known facts about GC13-YHG and GC13-LZ1. No unsearched source is likely to name a substantially different marriage date. A transcription error in the index date is theoretically possible but unlikely to shift the conclusion materially. Accessing the original civil register would confirm or refine the date but is unlikely to change it."
+            }
+          }
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "proof-conclusion",
+        "args": "Write a proof conclusion for q_001: \"What was the date and place of marriage of Mary Rossi (born 1879, New Jersey) to Charles Ullricht?\" The answer is 2 February 1899 in Hoboken, Hudson, New Jersey, based on src_001 (NJ Marriages 1678-1985, derivative index). Key limitation: derivative source only, no independent corroboration \u2014 tier should reflect this honestly. Assertions a_007 and a_008 are the direct evidence. Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh"
+      },
+      "response_summary": "Launching skill: proof-conclusion"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
+      },
+      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__tree_correct",
+        "max_results": 2
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "section": "proof_summaries",
+        "op": "append",
+        "entry": {
+          "question_id": "q_001",
+          "tier": "probable",
+          "vehicle": "summary",
+          "supporting_assertion_ids": [
+            "a_007",
+            "a_008",
+            "a_001",
+            "a_004"
+          ],
+          "resolved_conflict_ids": [],
+          "exhaustive_search_summary": "Two FamilySearch New Jersey marriage collections were searched for the 1890\u20131902 window. Collection 1803976 (NJ County Marriages, 1682\u20131956) returned zero results across five search variations using bride surname Rossi, groom surnames Ullricht and Ullrich, and both groom-side and bride-side queries. Collection 1675446 (NJ Marriages, 1678\u20131985) returned one result, confirmed as the couple's marriage record. The 1900 federal census (years-married field), the 1895 New Jersey state census, Ancestry NJ marriage records, and Hoboken church records were not searched after the positive result was found. The original Hudson County civil marriage register was not directly examined; only the derivative compiled FamilySearch index was accessed.",
+          "narrative_markdown": "## Marriage of Mary Rossi and Charles A. Ulrich, 2 February 1899\n\n### Conclusion\n\nThe preponderance of available evidence indicates that Mary Rossi (born 1879, New Jersey) married Charles A. Ulrich (born 1875, United States) on **2 February 1899** in **Hoboken, Hudson County, New Jersey**.\n\n### Evidence\n\nThe primary evidence is a single entry in the FamilySearch compiled database \u201cNew Jersey, Marriages, 1678\u20131985\u201d (collection 1675446), citing the record at ARK ark:/61903/1:2:9SKD-YHL.\u00b9 The record identifies the groom as Charles A. Ulrich, born 1875 in the United States, and the bride as Mary Rossi, born 1879 in the United States. The marriage is dated 2 February 1899 and placed at Hoboken, Hudson County, New Jersey.\n\nThis source is a **derivative** compiled database\u2014an index derived from original New Jersey civil marriage registers. The information about the marriage date, place, and parties constitutes **primary** information, as the parties themselves (and/or a marriage official) provided it at the time of the event. The marriage date and place assertions (a_007 and a_008) are **direct** evidence for the research question.\n\n### Identity\n\nThe bride and groom in this record are identified as Mary Rossi (GC13-YHG) and Charles Ullricht (GC13-LZ1). The identification rests on the following: the bride is named \u201cMary Rossi\u201d\u2014an exact name match to the subject\u2014with birth year 1879 matching exactly. The groom is named \u201cCharles A. Ulrich\u201d\u2014a variant spelling of \u201cUllricht\u201d documented across multiple records from 1900 through 1930 for this individual\u2014with birth year 1875 matching exactly. A FamilySearch person-matcher score of 0.883 (strong tier) corroborates the groom\u2019s identification with GC13-LZ1. The marriage place (Hoboken, Hudson County) is consistent with the documented residence of both subjects throughout the 1900\u20131930 period. The marriage date (2 February 1899) is temporally consistent with the birth of the couple\u2019s first known child, Adeline Ullrich, on 24 August 1899\u2014approximately 6.5 months after the marriage, a biologically plausible interval.\n\n### Search Scope\n\nTwo FamilySearch New Jersey marriage collections were searched for the 1890\u20131902 window. The collection \u201cNew Jersey, County Marriages, 1682\u20131956\u201d (collection 1803976) returned zero results across five search variations. The match was located in the broader aggregate \u201cNew Jersey, Marriages, 1678\u20131985\u201d (collection 1675446). Ancestry NJ marriage records, Hoboken church records, the 1900 federal census years-married field, and the 1895 New Jersey state census were not searched after the marriage record was found.\n\n### Limitations and Tier\n\nThis conclusion is offered at the **probable** tier. Two GPS components are incomplete: (1) the only source is a derivative compiled index\u2014the original Hudson County civil marriage register for 1899 was not directly examined; and (2) no second independent source corroborates the 2 February 1899 date. The overturn risk is low: no contradicting evidence was found, the record is internally consistent with all known facts about the subjects, and the date is temporally consistent with the family chronology. Accessing the original civil register (likely available through the New Jersey State Archives or as an image in FamilySearch collection 1803976) and extracting the years-married field from the 1900 census would provide independent corroboration and could advance this conclusion to the proved tier.\n\n---\n\u00b9 \u201cNew Jersey, Marriages, 1678\u20131985,\u201d database, *FamilySearch* (https://www.familysearch.org/ark:/61903/1:2:9SKD-YHL : 27 August 2020), Entry for Charles A. Ulrich."
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__research_append",
+        "max_results": 2
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/tree.gedcomx.json",
+        "limit": 80
+      },
+      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"GC13-YHG\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Mary\",\n11\t          \"surname\": \"Rossi\",\n12\t          \"sources\": [\n13\t            {\n14\t              \"ref\": \"S1\",\n15\t              \"quality\": 3\n16\t            }\n17\t          ]\n18\t        }\n19\t      ],\n20\t      \"facts\": [\n21\t        {\n22\t          \"id\": \"490e01c7-c7c2-4353-8441-0e00c47a31f9\",\n23\t          \"type\"..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/tree.gedcomx.json",
+        "offset": 80,
+        "limit": 120
+      },
+      "response_summary": "80\t          \"id\": \"111111e0-b46a-4156-bf69-c2e269a31233\",\n81\t          \"type\": \"Residence\",\n82\t          \"date\": \"1930\",\n83\t          \"standard_date\": \"1930\",\n84\t          \"place\": \"Hoboken, Hudson, New Jersey, United States\",\n85\t          \"standard_place\": \"Hoboken, Hudson, New Jersey, United States\"\n86\t        },\n87\t        {\n88\t          \"id\": \"F2\",\n89\t          \"type\": \"Marriage\",\n90\t          \"date\": \"2 Feb 1899\",\n91\t          \"place\": \"Hoboken, Hudson, New Jersey, United States\",\n92\t  ..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/tree.gedcomx.json",
+        "offset": 200,
+        "limit": 120
+      },
+      "response_summary": "200\t          \"standard_date\": \"1935\",\n201\t          \"place\": \"Hoboken, Hudson, New Jersey, United States\",\n202\t          \"standard_place\": \"Hoboken, Hudson, New Jersey, United States\"\n203\t        },\n204\t        {\n205\t          \"id\": \"f81b0282-cce7-4639-860d-7a3a565c2a41\",\n206\t          \"type\": \"Residence\",\n207\t          \"date\": \"1940\",\n208\t          \"standard_date\": \"1940\",\n209\t          \"place\": \"Hoboken, Hudson, New Jersey, United States\",\n210\t          \"standard_place\": \"Hoboken, Hudson, ..."
+    },
+    {
+      "tool": "Grep",
+      "args": {
+        "pattern": "\"R1\"",
+        "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/tree.gedcomx.json",
+        "output_mode": "content",
+        "context": 4
+      },
+      "response_summary": "536-    }\n537-  ],\n538-  \"relationships\": [\n539-    {\n540:      \"id\": \"R1\",\n541-      \"type\": \"Couple\",\n542-      \"person1\": \"GC13-LZ1\",\n543-      \"person2\": \"GC13-YHG\"\n544-    },"
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "operation": "add_fact",
+        "relationshipId": "R1",
+        "fact": {
+          "type": "Marriage",
+          "date": "2 Feb 1899",
+          "standard_date": "2 Feb 1899",
+          "place": "Hoboken, Hudson, New Jersey, United States",
+          "standard_place": "Hoboken, Hudson, New Jersey, United States",
+          "primary": true,
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ]
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"fact\\\": \\\"F3\\\"\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__tree_correct",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__tree_correct",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "ops": [
+          {
+            "operation": "update_fact",
+            "personId": "GC13-LZ1",
+            "factId": "F1",
+            "fact": {
+              "primary": true
+            }
+          },
+          {
+            "operation": "update_fact",
+            "personId": "GC13-YHG",
+            "factId": "F2",
+            "fact": {
+              "primary": true
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_fact\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/research.json",
+        "limit": 60,
+        "offset": 1
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_rossi_marriage\",\n4\t    \"objective\": \"What was the marriage date of Mary Rossi, born 1879 in New Jersey?\",\n5\t    \"subject_person_ids\": [\n6\t      \"GC13-YHG\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-16\",\n10\t    \"updated\": \"2026-07-16\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"id\": \"q_001\",\n..."
+    },
+    {
+      "tool": "Grep",
+      "args": {
+        "pattern": "\"proof_summaries\"",
+        "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/research.json",
+        "output_mode": "content",
+        "context": 2
+      },
+      "response_summary": "473-  \"hypotheses\": [],\n474-  \"timelines\": [],\n475:  \"proof_summaries\": [\n476-    {\n477-      \"id\": \"ps_001\","
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh/research.json",
+        "offset": 475,
+        "limit": 60
+      },
+      "response_summary": "475\t  \"proof_summaries\": [\n476\t    {\n477\t      \"id\": \"ps_001\",\n478\t      \"question_id\": \"q_001\",\n479\t      \"tier\": \"probable\",\n480\t      \"vehicle\": \"summary\",\n481\t      \"supporting_assertion_ids\": [\n482\t        \"a_007\",\n483\t        \"a_008\",\n484\t        \"a_001\",\n485\t        \"a_004\"\n486\t      ],\n487\t      \"resolved_conflict_ids\": [],\n488\t      \"exhaustive_search_summary\": \"Two FamilySearch New Jersey marriage collections were searched for the 1890\u20131902 window. Collection 1803976 (NJ County Marr..."
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "GPS mentor proof-critique on ps_001",
+        "subagent_type": "gps-mentor",
+        "run_in_background": true,
+        "prompt": "Conduct a proof-critique (GPS review) on proof summary ps_001 for project at /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh.\n\nContext:\n- Question q_001: \"What was the date and place of marriage of Mary Rossi (born 1879, New Jersey) to Charles Ullricht?\"\n- Tier: probable\n- Vehicle: summary\n- Supporting assertions: a_007 (marriage date 2 Feb 1899), a_008 (marriage place Hoboken, Hudson, NJ), a_001 (groom name/birth year), a_004 (bride name/birth year)\n- Source: src_001 \u2014 \"New Jersey, Marriages, 1678\u20131985\" (FamilySearch collection 1675446, derivative compiled database), ARK ark:/61903/1:2:9SKD-YHL\n- Key finding: Charles A. Ulrich (b.1875) married Mary Rossi (b.1879) on 2 February 1899 in Hoboken, Hudson County, NJ. Same_person score 0.883 for groom vs GC13-LZ1. Bride matched by exact name + exact birth year + spouse cross-check (qualitative, no same_person score available).\n- Limitations: (1) source is derivative \u2014 original Hudson County civil register not examined; (2) only one source \u2014 1900 census years-married field and 1895 NJ census not extracted. No conflicting evidence found.\n- Exhaustive declaration: declared=true with noted gaps (derivative only, single source)\n- Tree: Couple relationship R1 (GC13-LZ1 + GC13-YHG) now has Marriage fact F3 dated \"2 Feb 1899\" at Hoboken with source S1 (quality 2). Person-level facts F1 (on GC13-LZ1) and F2 (on GC13-YHG) set primary=true.\n\nPlease read the full narrative from research.json proof_summaries[0].narrative_markdown and evaluate it against all five GPS components. Write the evaluation to the evaluations[] section of research.json. This is advisory only \u2014 do not block any next steps."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"Async agent launched successfully.\\nagentId: ab92b82ec3cf98366 (internal ID - do not mention to user. Use SendMessage with to: 'ab92b82ec3cf98366' to continue this agent.)\\nThe agent is working in the background. You will be notified automatically when it completes.\\nDo not duplicate this agent's work \\u2014 avoid working with the same files or topics it is using. Work on non-overlapping tasks, or briefly tell the user what you launched and end your response.\\noutpu..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "ops": [
+          {
+            "section": "questions",
+            "op": "update",
+            "entryId": "q_001",
+            "fields": {
+              "status": "resolved",
+              "resolved": "2026-07-21",
+              "resolution_assertion_ids": [
+                "a_007",
+                "a_008"
+              ]
+            }
+          },
+          {
+            "section": "project",
+            "op": "update",
+            "fields": {
+              "status": "completed"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {},
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json not found in projectPath\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {},
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json not found in projectPath\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {},
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json not found in projectPath\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {},
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json not found in projectPath\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rossi-marriage-sz3lnveh",
+        "section": "proof_summaries",
+        "op": "update",
+        "entryId": "ps_001",
+        "fields": {
+          "narrative_markdown": "## Marriage of Mary Rossi and Charles A. Ulrich, 2 February 1899\n\n### Conclusion\n\nThe preponderance of available evidence indicates that Mary Rossi (born 1879, New Jersey) married Charles A. Ulrich (born 1875, United States) on **2 February 1899** in **Hoboken, Hudson County, New Jersey**.\n\n### Evidence\n\nThe primary evidence is a single entry in the FamilySearch compiled database \u201cNew Jersey, Marriages, 1678\u20131985\u201d (collection 1675446), citing the record at ARK ark:/61903/1:2:9SKD-YHL.\u00b9 The record identifies the groom as Charles A. Ulrich, born 1875 in the United States, and the bride as Mary Rossi, born 1879 in the United States. The marriage is dated 2 February 1899 and placed at Hoboken, Hudson County, New Jersey.\n\nThis source is a **derivative** compiled database\u2014an index derived from original New Jersey civil marriage registers. The information about the marriage date, place, and parties constitutes **primary** information, as the parties themselves (and/or a marriage official) provided it at the time of the event. The marriage date and place assertions (a_007 and a_008) are **direct** evidence for the research question.\n\n### Identity\n\nThe bride and groom in this record are identified as Mary Rossi (GC13-YHG) and Charles Ullricht (GC13-LZ1). The identification rests on the following: the bride is named \u201cMary Rossi\u201d\u2014an exact name match to the subject\u2014with birth year 1879 matching exactly. The groom is named \u201cCharles A. Ulrich\u201d\u2014a variant spelling of \u201cUllricht\u201d documented across multiple records from 1900 through 1930 for this individual\u2014with birth year 1875 matching exactly. A FamilySearch person-matcher score of 0.883 (strong tier) corroborates the groom\u2019s identification with GC13-LZ1. The marriage place (Hoboken, Hudson County) is consistent with the documented residence of both subjects throughout the 1900\u20131930 period. The marriage date (2 February 1899) is temporally consistent with the birth of the couple\u2019s first known child, Adeline Ullrich, on 24 August 1899\u2014approximately 6.5 months after the marriage, a biologically plausible interval.\n\nA parallel search of a related FamilySearch New Jersey marriage collection (log_002) returned four other marriage entries for brides named Mary Rossi in this period, paired with grooms surnamed Bartolini, Ippolito, and Gouffet. All four entries are excluded because no groom name matches Charles A. Ulrich or any of his documented spelling variants (Ullricht, Ulrich). The record found in collection 1675446 is the only New Jersey marriage entry encountered that pairs a bride named Mary Rossi with a groom of that name.\n\n### Search Scope\n\nTwo FamilySearch New Jersey marriage collections were searched for the 1890\u20131902 window. The collection \u201cNew Jersey, County Marriages, 1682\u20131956\u201d (collection 1803976) returned zero results across five search variations. The match was located in the broader aggregate \u201cNew Jersey, Marriages, 1678\u20131985\u201d (collection 1675446). Ancestry NJ marriage records, Hoboken church records, the 1900 federal census years-married field, and the 1895 New Jersey state census were not searched after the marriage record was found.\n\n### Limitations and Tier\n\nThis conclusion is offered at the **probable** tier. Two GPS components are incomplete: (1) the only source is a derivative compiled index\u2014the original Hudson County civil marriage register for 1899 was not directly examined; and (2) no second independent source corroborates the 2 February 1899 date. The overturn risk is low: no contradicting evidence was found, the record is internally consistent with all known facts about the subjects, and the date is temporally consistent with the family chronology. Accessing the original civil register (likely available through the New Jersey State Archives or as an image in FamilySearch collection 1803976) and extracting the years-married field from the 1900 census would provide independent corroboration and could advance this conclusion to the proved tier.\n\n---\n\u00b9 \u201cNew Jersey, Marriages, 1678\u20131985,\u201d database, *FamilySearch* (https://www.familysearch.org/ark:/61903/1:2:9SKD-YHL : 27 August 2020), Entry for Charles A. Ulrich."
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    }
+  ],
+  "error": null,
+  "tags": {
+    "question_type": "marriage",
+    "era": "1890s",
+    "geography": "US-NJ"
+  },
+  "blocked_tree_reads": [],
+  "subagents": [
+    {
+      "agent_type": "record-extractor",
+      "description": "Extract marriage record assertions for Mary Rossi / Charles Ulrich",
+      "num_assistant_turns": 7,
+      "max_output_tokens": 2885,
+      "hit_output_cap": false,
+      "runaway_thinking": false,
+      "turns": [
+        {
+          "stop_reason": null,
+          "output_tokens": 1,
+          "blocks": [
+            "text"
+          ]
+        },
+        {
+          "stop_reason": "tool_use",
+          "output_tokens": 125,
+          "blocks": [
+            "tool_use:project_context"
+          ]
+        },
+        {
+          "stop_reason": null,
+          "output_tokens": 1,
+          "blocks": [
+            "text"
+          ]
+        },
+        {
+          "stop_reason": "tool_use",
+          "output_tokens": 2885,
+          "blocks": [
+            "tool_use:extraction_append"
+          ]
+        },
+        {
+          "stop_reason": null,
+          "output_tokens": 1,
+          "blocks": [
+            "text"
+          ]
+        },
+        {
+          "stop_reason": "tool_use",
+          "output_tokens": 2200,
+          "blocks": [
+            "tool_use:extraction_append"
+          ]
+        },
+        {
+          "stop_reason": "end_turn",
+          "output_tokens": 573,
+          "blocks": [
+            "text"
+          ]
+        }
+      ],
+      "transcript": "agent-aa3eea250efd63821.jsonl"
+    },
+    {
+      "agent_type": "gps-mentor",
+      "description": "GPS mentor proof-critique on ps_001",
+      "num_assistant_turns": 7,
+      "max_output_tokens": 6014,
+      "hit_output_cap": false,
+      "runaway_thinking": false,
+      "turns": [
+        {
+          "stop_reason": null,
+          "output_tokens": 5,
+          "blocks": [
+            "thinking"
+          ]
+        },
+        {
+          "stop_reason": "tool_use",
+          "output_tokens": 140,
+          "blocks": [
+            "tool_use:Read"
+          ]
+        },
+        {
+          "stop_reason": null,
+          "output_tokens": 2,
+          "blocks": [
+            "thinking"
+          ]
+        },
+        {
+          "stop_reason": "tool_use",
+          "output_tokens": 6014,
+          "blocks": [
+            "tool_use:validate_research_schema"
+          ]
+        },
+        {
+          "stop_reason": null,
+          "output_tokens": 2,
+          "blocks": [
+            "thinking"
+          ]
+        },
+        {
+          "stop_reason": "tool_use",
+          "output_tokens": 2089,
+          "blocks": [
+            "tool_use:research_append"
+          ]
+        },
+        {
+          "stop_reason": "end_turn",
+          "output_tokens": 1125,
+          "blocks": [
+            "text"
+          ]
+        }
+      ],
+      "transcript": "agent-ab92b82ec3cf98366.jsonl"
+    }
+  ]
+}

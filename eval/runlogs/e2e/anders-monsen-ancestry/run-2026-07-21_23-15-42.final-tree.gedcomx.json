@@ -1,0 +1,387 @@
+{
+  "persons": [
+    {
+      "id": "LKFW-9XH",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "n-anders-1",
+          "given": "Anders",
+          "surname": "Monsen",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "anders-birth-1",
+          "type": "Birth",
+          "date": "1759",
+          "standard_date": "1759",
+          "place": "H\u00e5tuft, Frekhaug, Hordaland, Norway",
+          "standard_place": "H\u00e5tuft, Meland, Hordaland, Norway"
+        },
+        {
+          "id": "anders-christening-1",
+          "type": "Christening",
+          "date": "7 April 1759",
+          "standard_date": "7 Apr 1759",
+          "place": "Hamre kirke, Hamre, Oster\u00f8y, Hordaland, Norway",
+          "standard_place": "Hamre Kyrkje, Oster\u00f8y, Hordaland, Norway"
+        },
+        {
+          "id": "anders-death-1",
+          "type": "Death",
+          "date": "1821",
+          "standard_date": "1821",
+          "place": "\u00c5seb\u00f8, Rad\u00f8y, Hordaland, Norway",
+          "standard_place": "\u00c5seb\u00f8, Manger, Hordaland, Norway"
+        },
+        {
+          "id": "anders-burial-1",
+          "type": "Burial",
+          "date": "8 January 1821",
+          "standard_date": "8 Jan 1821",
+          "place": "Manger kirkeg\u00e5rd, Rad\u00f8y, Alver, Hordaland, Norway",
+          "standard_place": "Manger Kyrkjegard, Rad\u00f8y, Hordaland, Norway"
+        },
+        {
+          "id": "F1",
+          "type": "Residence",
+          "date": "1801",
+          "place": "Manger, Hordaland, Norway",
+          "standard_place": "Manger, Hordaland, Norway",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Birth",
+          "date": "~1756",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "LKFW-9ML",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "n-mons-1",
+          "given": "Mons",
+          "surname": "Monsen",
+          "suffix": "Qvamme"
+        }
+      ],
+      "facts": [
+        {
+          "id": "mons-birth-1",
+          "type": "Birth",
+          "date": "1724",
+          "standard_date": "1724",
+          "place": "Nedre Kvamme, Lind\u00e5s, Hordaland, Norway",
+          "standard_place": "Nedre Kvamme, Lind\u00e5s, Hordaland, Norway"
+        },
+        {
+          "id": "mons-christening-1",
+          "type": "Christening",
+          "date": "1 October 1724",
+          "standard_date": "1 Oct 1724",
+          "place": "Hamre kirke, Hamre, Oster\u00f8y, Hordaland, Norway",
+          "standard_place": "Hamre Kyrkje, Oster\u00f8y, Hordaland, Norway"
+        },
+        {
+          "id": "mons-death-1",
+          "type": "Death",
+          "date": "1779",
+          "standard_date": "1779",
+          "place": "\u00c5seb\u00f8, Meland, Hordaland, Norway",
+          "standard_place": "\u00c5seb\u00f8, Manger, Hordaland, Norway"
+        }
+      ]
+    },
+    {
+      "id": "LKFW-9QR",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "n-anna-1",
+          "given": "Anna",
+          "surname": "Andersdatter"
+        }
+      ],
+      "facts": [
+        {
+          "id": "anna-birth-1",
+          "type": "Birth",
+          "date": "1739",
+          "standard_date": "1739",
+          "place": "Bj\u00f8rnestad, Meland, Hordaland, Norway",
+          "standard_place": "Bj\u00f8rnestad, Hammer, Hordaland, Norway"
+        },
+        {
+          "id": "anna-christening-1",
+          "type": "Christening",
+          "date": "5 April 1739",
+          "standard_date": "5 Apr 1739",
+          "place": "Meland, Hordaland, Norway",
+          "standard_place": "Meland, Hordaland, Norway"
+        },
+        {
+          "id": "anna-death-1",
+          "type": "Death",
+          "date": "1805",
+          "standard_date": "1805",
+          "place": "\u00c5seb\u00f8, Meland, Hordaland, Norway",
+          "standard_place": "\u00c5seb\u00f8, Manger, Hordaland, Norway"
+        }
+      ]
+    },
+    {
+      "id": "KZHH-VTX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "n-unna-1",
+          "given": "Unna",
+          "surname": "Halsteinsdatter"
+        },
+        {
+          "id": "N1",
+          "type": "BirthName",
+          "given": "Ingebor",
+          "surname": "Nielsdatter",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N2",
+          "type": "BirthName",
+          "given": "Udna",
+          "surname": "Halstensdatter",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "unna-birth-1",
+          "type": "Birth",
+          "date": "May 1745",
+          "standard_date": "May 1745",
+          "place": "Hestdal, Meland, Hordaland, Norway",
+          "standard_place": "Hestdal, Hammer, Hordaland, Norway",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "unna-christening-1",
+          "type": "Christening",
+          "date": "27 May 1745",
+          "standard_date": "27 May 1745",
+          "place": "Hamre, Hordaland, Norway",
+          "standard_place": "Hamre, Hordaland, Norway"
+        },
+        {
+          "id": "unna-death-1",
+          "type": "Death"
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1801",
+          "place": "Manger, Hordaland, Norway",
+          "standard_place": "Manger, Hordaland, Norway",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N3",
+          "type": "BirthName",
+          "given": "J\u00f8rgen",
+          "surname": "Andersen",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1801",
+          "place": "Manger, Hordaland, Norway",
+          "standard_place": "Manger, Hordaland, Norway",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Birth",
+          "date": "~1796",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Ingebor",
+          "surname": "Nielsdatter",
+          "id": "N4",
+          "preferred": true
+        }
+      ],
+      "id": "I2",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "~1765",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "id": "F7"
+        },
+        {
+          "type": "Residence",
+          "date": "1801",
+          "place": "Manger, Hordaland, Norway",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "id": "F8",
+          "standard_place": "Manger, Rathbran, County Wicklow, Ireland"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-anders-unna",
+      "type": "Couple",
+      "person1": "LKFW-9XH",
+      "person2": "KZHH-VTX"
+    },
+    {
+      "id": "rel-mons-anders",
+      "type": "ParentChild",
+      "parent": "LKFW-9ML",
+      "child": "LKFW-9XH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-anna-anders",
+      "type": "ParentChild",
+      "parent": "LKFW-9QR",
+      "child": "LKFW-9XH",
+      "subtype": "Biological"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "LKFW-9XH",
+      "child": "I1",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZHH-VTX",
+      "child": "I1",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R2"
+    }
+  ],
+  "sources": [
+    {
+      "id": "Q292-Q1N",
+      "title": "Anders Monsen Death and Burial Record - Manger Parish, Hordaland",
+      "citation": "Norwegian Church book, Manger Parish Deaths, 1816-1824 (1261P), page 102, entry 203, reference #SAB/A-76801/H/Haa; digital images, www.myheritage.com, accessed 16 December 2023."
+    },
+    {
+      "id": "QKQ1-3QH",
+      "title": "Anders Monsen Christening - Maland, Hamre, Hordaland, Norway",
+      "citation": "Den norske kirke, Hamre parish, (Hordaland county) \"Ministerialbok, 1750-1761,\" D\u00f8bte (Christened), page 103, entry 24, Anders, 7 April 1759; digital images, Arkivverket.no, (www.Digitalarkivet.no : accessed 13 December 2023); Statsarkivet (State Archive) in Bergen, Norway.",
+      "url": "https://www.familysearch.org/photos/artifacts/186975195"
+    },
+    {
+      "id": "MQ62-MQX",
+      "title": "Anders, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NCJT-Q8X : 3 June 2024), Anders, 1759.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NCJT-Q8X"
+    },
+    {
+      "id": "S1",
+      "title": "Norway, Census, 1801 \u2014 Household of Ingebor Nielsdatter, Manger, Hordaland",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4HXX-9H6Z"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Diagnostic run: exposed the mentor-gate doctrine bug fixed later this branch (project.status went to 'completed' with evaluations[] empty — the mandatory proof-critique gate never ran). Lydia's recovery itself is correct and cleanly sourced (name/date/place/relationships), same restraint on unattested day-precision as other runs. Proof_quality held at 2 not for an unresolved conflict in the classic sense (the narrative's Hannah Grice/Hannah Grace identity note reads as narratively settled) but because (1) that identity conclusion has zero backing hypotheses/conflicts entry — conflicts:0, hypotheses:0 — the exact gap Fix C targets, caught here in its pre-fix state, and (2) a proof that completes with no mentor review on record can't be certified sound regardless of how it reads; soundness implies the safety net actually ran. Compare directly against run-2026-07-22_19-18-50 (same fixture, post-doctrine-fix, scored 3) for a clean before/after calibration pair."
+  }
+}

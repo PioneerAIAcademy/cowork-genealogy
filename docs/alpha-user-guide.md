@@ -1,0 +1,216 @@
+# Alpha Guide — researching with the Genealogy Workbench
+
+> **For our alpha testers** — the senior genealogists trying the workbench on
+> real research. You do your own research in a browser, and when something goes
+> wrong you tell us.
+
+**Where it lives:** <https://genealogy-workbench.fly.dev>
+
+## Your job, and ours
+
+| You | Us |
+|---|---|
+| Research real questions and judge the work as a genealogist. | Read every piece of feedback. |
+| Tell us when the agent gets it wrong — or gets it right badly. | Reproduce it, fix it, and write a test so it stays fixed. |
+| Say what it *should* have done. | Ship the fix and tell you what changed. |
+
+You are the only person who can tell us whether the reasoning is sound. Wrong
+answers are useful; **plausible-looking wrong answers are the most useful thing
+you can find**, because those are what would quietly corrupt a real tree.
+
+---
+
+## Signing in
+
+Sign in with your **FamilySearch account**. That one sign-in does two jobs: it
+gets you into the app, and it gives the agent the FamilySearch access it needs to
+search records on your behalf. 
+
+> ⚠️ **We allowlist the email on your FamilySearch account.** 
+> If you get a page saying your address isn't permitted, 
+> it will name the address it saw. Send us that address and we'll add it. 
+> If you get a page saying FamilySearch did not return an email for your account,
+> please go into your FamilySearch account and add your email.
+
+---
+
+## Your first session
+
+Click **+ New research session**. The agent opens by asking what you'd like to
+research.
+
+### Choosing what to work on
+
+Don't hand it your hardest brick wall. 
+What we need instead is a **research objective that tests a specific ability** and
+whose answer is available by accessing FamilySearch records, full-text, or images.
+There are two ways to set one up, and they behave differently.
+
+#### Path A — your own research, not on FamilySearch
+
+Use this when the answer lives in your files rather than in the FamilySearch tree.
+You supply the starting point and the target, and the agent builds a local tree
+from what you type.
+
+In your first message, give it:
+
+- **The starting point** — names, dates, places, and relationships you're confident
+  in. This is what it reasons *from*.
+- **The objective** — the specific question to answer. "Identify Mary Corrigan's
+  parents"; "establish whether the John Byrne in the 1880 census is the same man as
+  the one in the 1885 land record".
+- **What you've already ruled out**, and why.
+
+You know the answer; the agent has no way to look it up in the tree. That makes
+this the cleanest test of whether it can actually *research*.
+
+#### Path B — a FamilySearch person, with something removed
+
+Use this when the case you want to test is already well documented on FamilySearch.
+Give it a **PID**, and tell it **what to forget**:
+
+> "Research PID KWZX-1AB. Forget who his parents were and see if you can find them
+> from records."
+
+It removes that information from the project's copy of the tree, shows you how many records 
+were removed from the project's copy, and researches from what's left. Three things to know:
+
+- **Check the count before you say go.** Removing a *person* also removes their
+  other links — forgetting a father can cut the siblings attached to him. Look at
+  what would go before agreeing.
+- **It won't be listed back to you.** The agent deliberately doesn't repeat what it
+  removed; that would put the answer straight back in front of it. Confirm the gap
+  in the viewer instead.
+- **Live FamilySearch still holds the answer**, so it's also instructed not to look
+  it up. That rule holds because it follows it, not because anything enforces it.
+  If you catch it peeking, **that's a great piece of feedback.**
+
+If you give a PID and remove *nothing*, the agent will often just read the answer
+off the tree and you'll learn very little.
+
+### Also tell it about you
+
+Whichever path you take, include these two — the setup runs in **one pass**, so it
+won't come back and ask:
+
+- **Your experience level** — just starting out / some research / experienced /
+  professional.
+- **Your subscriptions** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
+  GenealogyBank, FindAGrave-Plus, or none.
+
+Skip them and it quietly assumes "intermediate" and "none", which changes how much
+it explains as it works. You can correct it later, but it's easier up front.
+
+### Bringing in a document
+
+Click the **📎** button beside the message box to upload a document or image —
+a scan from another site, a county PDF, a photo of a family bible page. It lands
+in the project and the agent reads it.
+
+You'll need this for anything **not** on FamilySearch. FamilySearch's own record
+images the agent fetches by itself; you don't need to upload those.
+
+Anything you upload travels with your feedback by default, so a report about a
+document arrives with the document attached. You can untick **"Include media
+files"** on the feedback form if you'd rather not send it.
+
+### Watching it work
+
+The viewer fills in live beside the chat — research log, sources, assertions,
+conflicts, timelines. Interrupt whenever you like. Some of the most valuable
+things you can ask:
+
+- *"Why did you search there first?"*
+- *"Why is that direct evidence rather than indirect?"*
+- *"What would change your mind about this conclusion?"*
+- *"You haven't looked at probate — why not?"*
+
+The **cost of the session so far** shows in the header. It's there so nothing
+surprises you. (It counts from when the page loaded, so a refresh restarts it.)
+
+---
+
+## Sending feedback
+
+Click **Send Feedback** in the viewer header. It bundles the project state and
+your notes and sends them to us privately.
+
+1. **What you asked the agent to do.**
+2. **What the agent did.** What actually happened.
+3. **What it should have done.** This is the one that turns a complaint into a
+   fix.
+4. **If it reached a wrong conclusion: the correct answer and its evidence.**
+   Optional, and only relevant when the *answer* was wrong rather than the
+   method. Fill it in and we can build a test from your case without coming back
+   to ask you. Leave it blank when the problem was how it worked, not what it
+   concluded.
+
+There's also your email, and a free-text **Notes** box for anything that
+doesn't fit the four.
+
+**Send feedback while it's fresh**, in the session where it happened — the
+bundle captures that project's state, which is how we reproduce it.
+
+> **What gets sent**, and the two checkboxes at the bottom of the form:
+>
+> - **Your project files** — always.
+> - **"Include Claude Code session log"** — **ticked by default.** Your prompts,
+>   the agent's replies and its internal reasoning, and every tool call with its
+>   results. The reasoning is the single most useful part for diagnosing *why* it
+>   went wrong. Untick it if a session contains anything you'd rather not share.
+> - **"Include media files"** — **ticked by default.** Documents and images you
+>   uploaded, so a report about a document arrives with the document. Untick it
+>   to leave them out. Very large bundles are trimmed automatically, largest
+>   files first.
+>
+> Everything goes to a private Drive folder only the Pioneer Academy team can
+> read.
+
+### What makes a report we can act on
+
+Small and specific beats broad. "The citation for the 1900 census had no page or
+line number, so I couldn't find the record again" is worth more than "citations
+are weak." One problem per submission.
+
+---
+
+## What doesn't work yet
+
+Being straight with you, so you don't waste time:
+
+- **The cost figure restarts when you reload the page.** It's per page-load, not
+  per session.
+- **You can't reset a project.** To start over, create a new session.
+- **Living people:** please don't enter information about anyone living. Nothing
+  is encrypted yet.
+- **Sessions are private to you.** No sharing or collaboration.
+
+---
+
+## When something goes wrong
+
+| What you see | What's happening |
+|---|---|
+| "Your address isn't permitted" | We allowlisted a different address. Send us the one on the page — it's the email on your FamilySearch account. |
+| The agent says it can't reach FamilySearch | Its access may have gone stale on an older session. Start a new session; tell us if it keeps happening. |
+| It stops mid-research | Say "continue". If it stalls again, that's worth reporting. |
+| It's slow | Real research is genuinely slow — it reads records one at a time. Minutes is normal. |
+| It asks who you want to research after you already said | It missed your first message. Repeat it with the details. |
+| Something looks wrong genealogically | **That's the point — submit feedback.** |
+
+Anything else, or anything alarming: send feedback and describe it. There is no
+wrong report.
+
+---
+
+## What happens to your feedback
+
+We unpack your case, open your project, and **continue the research from exactly
+where you submitted the feedback** so we can watch the same thing happen. 
+Then we fix the cause and
+write a regression test so it can't come back silently. That test is the durable
+result of your report — which is why "what it should have done" matters so much.
+
+If you're curious what happens on our side, one report is followed end to end
+in [`alpha-feedback-guide.md`](alpha-feedback-guide.md) — written for our
+developers, but readable, and the case it follows is a genealogical one.

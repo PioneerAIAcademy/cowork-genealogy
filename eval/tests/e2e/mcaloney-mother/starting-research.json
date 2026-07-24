@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_mcaloney_mother",
+    "objective": "What evidence identifies the mother of Charles Kingsley McAloney?",
+    "subject_person_ids": [
+      "99KY-ZQW"
+    ],
+    "status": "active",
+    "created": "2026-07-21",
+    "updated": "2026-07-21"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

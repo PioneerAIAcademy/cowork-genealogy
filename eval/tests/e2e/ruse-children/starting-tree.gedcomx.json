@@ -1,0 +1,238 @@
+{
+  "persons": [
+    {
+      "id": "L87N-ZCW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Mary L.",
+          "surname": "Ruse"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f8be86f0-23a3-4b9d-951c-5a176392071e",
+          "type": "Birth",
+          "date": "       1855",
+          "standard_date": "1855",
+          "place": "Usa",
+          "standard_place": "United States"
+        },
+        {
+          "id": "2ca09e15-7a31-4fa7-8a2d-b9157de7c3ea",
+          "type": "Death",
+          "date": "       1915",
+          "standard_date": "1915"
+        },
+        {
+          "id": "4e764c85-f474-4424-a55c-cd61290cc83c",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Loudon, Seneca, Ohio, United States",
+          "standard_place": "Loudon Township, Seneca, Ohio, United States"
+        },
+        {
+          "id": "cfc36533-23c6-4433-b25d-7a7e9bd55f98",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Loudon, Seneca, Ohio, United States",
+          "standard_place": "Loudon Township, Seneca, Ohio, United States"
+        },
+        {
+          "id": "db1fac56-e847-4fcb-b7b4-6eb7015ebbea",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Fostoria Ward 4, Seneca, Ohio, United States",
+          "standard_place": "Fostoria, Seneca, Ohio, United States"
+        },
+        {
+          "id": "38f1ee1b-0dbe-46f6-9761-e47826ab5368",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Fostoria, Seneca, Ohio, United States",
+          "standard_place": "Fostoria, Seneca, Ohio, United States"
+        },
+        {
+          "id": "feaf2ec2-dde0-494f-9001-6f3f355f8fb5",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "26ecf3cd-266a-43db-bc5e-a95c0a12f3ed",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Logan Township, Auglaize, Ohio, United States",
+          "standard_place": "Logan Township, Auglaize, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "LRFN-SRL",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Albert",
+          "surname": "Raney"
+        }
+      ],
+      "facts": [
+        {
+          "id": "53f4f3d8-4d70-439b-aff7-ac0ccb061b08",
+          "type": "Birth",
+          "date": "29 June 1850",
+          "standard_date": "29 Jun 1850",
+          "place": "Seneca Township, Seneca, Ohio, United States",
+          "standard_place": "Seneca Township, Seneca, Ohio, United States"
+        },
+        {
+          "id": "7f58bae1-795d-4cb8-8ad0-03d802371944",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Loudon Township, Seneca, Ohio, United States",
+          "standard_place": "Loudon Township, Seneca, Ohio, United States"
+        },
+        {
+          "id": "3d4247c9-9985-439c-bf05-968b532f56cb",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Louden Township, Seneca, Ohio, United States",
+          "standard_place": "Louden, Franklin Township, Adams, Ohio, United States"
+        },
+        {
+          "id": "c7611e92-4420-4609-86fb-ea771de843b9",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "821a0b49-2bb2-4fff-a89a-bba7260065d5",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Loudon, Seneca, Ohio, United States",
+          "standard_place": "Loudon Township, Seneca, Ohio, United States"
+        },
+        {
+          "id": "e757ac50-f66f-40ac-b656-b9d43d6fb823",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Loudon, Seneca, Ohio, United States",
+          "standard_place": "Loudon Township, Seneca, Ohio, United States"
+        },
+        {
+          "id": "b3ecd5da-b8fa-4a02-a752-61ccc25e7f62",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Fostoria Ward 4, Seneca, Ohio, United States",
+          "standard_place": "Fostoria, Seneca, Ohio, United States"
+        },
+        {
+          "id": "3c2a6df1-2c2d-49ed-98db-62b066821520",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Fostoria, Seneca, Ohio, United States",
+          "standard_place": "Fostoria, Seneca, Ohio, United States"
+        },
+        {
+          "id": "bba54517-494b-4bcb-97a0-455fdc5627e1",
+          "type": "Death",
+          "date": "18 July 1934",
+          "standard_date": "18 Jul 1934",
+          "place": "Fostoria, Seneca, Ohio, United States",
+          "standard_place": "Fostoria, Seneca, Ohio, United States"
+        },
+        {
+          "id": "85a58632-cf61-45e1-8741-a99b415e09bb",
+          "type": "Burial",
+          "date": "21 July 1934",
+          "standard_date": "21 Jul 1934",
+          "place": "Seneca, Ohio, United States",
+          "standard_place": "Seneca, Ohio, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LRFN-SRL",
+      "person2": "L87N-ZCW",
+      "facts": [
+        {
+          "id": "6ab1e260-e5ae-4c6f-95d2-d2802c936b0d",
+          "type": "Marriage",
+          "date": "1878",
+          "standard_date": "1878",
+          "place": "Seneca, Ohio, United States",
+          "standard_place": "Seneca, Ohio, United States"
+        },
+        {
+          "id": "c132901e-9bbb-420e-9410-dd5425b91818",
+          "type": "Marriage",
+          "date": "27 October 1878",
+          "standard_date": "27 Oct 1878",
+          "place": "Loudon Township, Seneca, Ohio, United States",
+          "standard_place": "Loudon Township, Seneca, Ohio, United States"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "9K13-YRJ",
+      "title": "Mary L Raney in household of Albert Raney, \"United States Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ML8N-3X3 : Wed Aug 13 19:03:03 UTC 2025), Entry for Albert Raney and Mary L Raney, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ML8N-3XQ"
+    },
+    {
+      "id": "9K1Q-SP4",
+      "title": "Mary L Rainey in household of Albert Rainey, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8SP-2VN : Fri Aug 01 20:31:25 UTC 2025), Entry for Albert Rainey and Mary L. Rainey, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8SP-2VJ"
+    },
+    {
+      "id": "9K13-1M2",
+      "title": "M Lavina Raney in household of Albert Raney, \"United States Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X4CN-7VY : Thu Mar 07 04:50:20 UTC 2024), Entry for Albert Raney and M Lavina Raney, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X4CN-7VB"
+    },
+    {
+      "id": "MDJN-YKC",
+      "title": "Mary L. Ruse in entry for Albert Raney, \"Ohio, Marriages, 1800-1958\"",
+      "citation": "\"Ohio, Marriages, 1800-1958\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XDKH-Z5C : 25 March 2020), Mary L. Ruse in entry for Albert Raney, 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XDKH-Z5C"
+    },
+    {
+      "id": "9K13-BF7",
+      "title": "Mary L Raney in household of Albert Raney, \"United States Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MD5J-B2S : Tue Oct 21 14:06:29 UTC 2025), Entry for Albert Raney and Mary L Raney, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MD5J-B23"
+    },
+    {
+      "id": "7SPF-NNC",
+      "title": "Mary L. Ruse, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XDLH-FSW : Sat Mar 09 23:35:33 UTC 2024), Entry for Albert Raney and Mary L. Ruse, 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XDLH-FS4"
+    }
+  ]
+}

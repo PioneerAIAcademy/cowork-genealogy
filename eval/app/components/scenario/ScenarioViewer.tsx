@@ -17,8 +17,7 @@ import tokenStyles from './scenario-tokens.module.css';
 
 /**
  * Read-only research-project viewer for the score-review screen. Lifted from
- * the cowork-genealogy-ui desktop app (see
- * docs/plan/eval-scoring-scenario-context.md). Renders the whole project as
+ * the cowork-genealogy-ui desktop app. Renders the whole project as
  * one vertical stack of sections so a genealogist can see what has been
  * researched while judging the LLM's scores.
  *

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_thomas_seaver_other_wife",
+    "objective": "Thomas Seaver married Rachel Wilkins in Salem, Massachusetts in 1811 and had eight children with her, but did he separate from her and remarry another woman before his death in March 1837?",
+    "subject_person_ids": [
+      "M38B-2K8"
+    ],
+    "status": "active",
+    "created": "2026-07-20",
+    "updated": "2026-07-20"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

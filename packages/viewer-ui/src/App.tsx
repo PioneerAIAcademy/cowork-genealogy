@@ -9,6 +9,7 @@ import ProjectOverview from './components/sections/ProjectOverview'
 import KnownInformationSection from './components/sections/KnownInformationSection'
 import QuestionsSection from './components/sections/QuestionsSection'
 import PlansSection from './components/sections/PlansSection'
+import LocalitiesSection from './components/sections/LocalitiesSection'
 import ResearchLogSection from './components/sections/ResearchLogSection'
 import SourcesSection from './components/sections/SourcesSection'
 import AssertionsSection from './components/sections/AssertionsSection'
@@ -25,6 +26,7 @@ const sectionComponents: Record<string, React.ComponentType> = {
   known_holdings: KnownInformationSection,
   questions: QuestionsSection,
   plans: PlansSection,
+  localities: LocalitiesSection,
   log: ResearchLogSection,
   sources: SourcesSection,
   assertions: AssertionsSection,

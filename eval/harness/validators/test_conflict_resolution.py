@@ -3,7 +3,6 @@
 conflict-resolution keeps its `rubric.md` — all three dimensions
 (Source independence analysis, Evidence weighing, Resolution
 completeness) are pure GPS craft and stay graded by the LLM judge.
-See docs/plan/criteria-demotion-and-rubric-opt-in.md.
 
 These check structural invariants that should hold for every
 conflict-resolution test, regardless of the specific test case, plus

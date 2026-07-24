@@ -3,7 +3,7 @@
 convert-dates keeps its `rubric.md` — the three dimensions (Conversion
 accuracy, Ambiguity handling, Genealogical presentation) all require
 reading narrative output for genealogical judgment and stay graded by
-the LLM judge. See docs/plan/criteria-demotion-and-rubric-opt-in.md.
+the LLM judge.
 
 This file holds the mechanical checks: tool-allowlist enforcement for
 positive tests. State-shape checks for specific dates are intentionally

@@ -141,6 +141,8 @@ cd ..
 echo.
 set /p APIKEY="Paste your Anthropic API key: "
 echo ANTHROPIC_API_KEY=%APIKEY%> .env
+set /p ORKEY="Paste your OpenRouter API key (from https://openrouter.ai/keys, for image_transcribe OCR): "
+echo OPENROUTER_API_KEY=%ORKEY%>> .env
 
 echo.
 echo === Setup complete! ===

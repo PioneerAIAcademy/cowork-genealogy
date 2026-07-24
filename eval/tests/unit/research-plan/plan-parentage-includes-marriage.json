@@ -5,11 +5,18 @@
     "name": "First parentage plan includes the parents' marriage record",
     "type": "positive",
     "description": "flynn-first-plan: q_001 (who were Patrick Flynn's parents?) has no plan yet, and the only lead is Thomas as father from 1850 co-residence (indirect). A sound first plan for a parentage question must include a search for the PARENTS' marriage record — not just records about the child — because the marriage establishes the couple as a unit, supplies the mother's maiden name (which census and death records omit), and by its date relative to Patrick's ~1845 birth corroborates paternity (though a couple's marriage does not by itself establish that Patrick is their child). Pennsylvania marriage collections are available (collections-search-pennsylvania surfaces County/Civil/Compiled Marriages). Guards the record-type-guide 'Identify parents' improvement.",
-    "tags": ["planning", "parentage", "marriage-record", "record-type-selection", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
+    "tags": [
+      "planning",
+      "parentage",
+      "marriage-record",
+      "record-type-selection",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status"
+    ]
   },
   "input": {
     "user_message": "Create the first research plan for q_001 — who were Patrick Flynn's parents?",
-    "scenario": "flynn-first-plan"
+    "scenario": "flynn-first-plan-surveyed"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",

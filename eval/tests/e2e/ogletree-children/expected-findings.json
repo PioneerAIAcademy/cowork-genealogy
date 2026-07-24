@@ -1,0 +1,92 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Annie B. Ogletree (born 1908 in Georgia) was a daughter of Lewis Washington Ogletree and his wife Mattie Pearcy.",
+      "details": {
+        "subject_person": "Lewis Washington Ogletree (GW4W-DTG)",
+        "relation": "child",
+        "target_person": {
+          "name": "Annie B. Ogletree",
+          "birth": "1908, Georgia"
+        }
+      },
+      "supporting_sources": [
+        "1910 U.S. Census, District 1065, Spalding County, Georgia — household of L W & Mattie Ogletree, with Annie enumerated as their daughter."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Girard W. Ogletree (born 1909 in Georgia) was a son of Lewis Washington Ogletree and his wife Mattie Pearcy.",
+      "details": {
+        "subject_person": "Lewis Washington Ogletree (GW4W-DTG)",
+        "relation": "child",
+        "target_person": {
+          "name": "Girard W. Ogletree",
+          "birth": "1909, Georgia"
+        }
+      },
+      "supporting_sources": [
+        "1910 U.S. Census, Spalding County, Georgia — enumerated (indexed as 'Guyson') as a son of L W & Mattie Ogletree.",
+        "1930 U.S. Census, Chicago, Cook County, Illinois — present in the Ogletree sibling household.",
+        "Illinois (Cook County) death record naming his father as Lewis Ogletree and mother as Mattie."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Louise C. Ogletree (born 1910 in Georgia) was a daughter of Lewis Washington Ogletree and his wife Mattie Pearcy.",
+      "details": {
+        "subject_person": "Lewis Washington Ogletree (GW4W-DTG)",
+        "relation": "child",
+        "target_person": {
+          "name": "Louise C. Ogletree",
+          "birth": "1910, Georgia"
+        }
+      },
+      "supporting_sources": [
+        "1930 U.S. Census, Chicago, Cook County, Illinois — present in the Ogletree sibling household alongside Girard.",
+        "1940 and 1950 U.S. Censuses, Chicago, Illinois."
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "Willa Mae Ogletree (born 1912 in Georgia) was a daughter of Lewis Washington Ogletree and his wife Mattie Pearcy.",
+      "details": {
+        "subject_person": "Lewis Washington Ogletree (GW4W-DTG)",
+        "relation": "child",
+        "target_person": {
+          "name": "Willa Mae Ogletree",
+          "birth": "1912, Georgia"
+        }
+      },
+      "supporting_sources": [
+        "1930 U.S. Census, Chicago, Cook County, Illinois — enumerated (indexed as 'Willie M') in the Ogletree sibling household alongside Girard."
+      ],
+      "required": true
+    },
+    {
+      "id": "f5",
+      "type": "relationship",
+      "description": "Lewis Washington Ogletree Jr. (born 1914 in Georgia) was a son of Lewis Washington Ogletree and his wife Mattie Pearcy. Bonus: his name is identical to his father's, so an agent may reasonably struggle to distinguish him.",
+      "details": {
+        "subject_person": "Lewis Washington Ogletree (GW4W-DTG)",
+        "relation": "child",
+        "target_person": {
+          "name": "Lewis Washington Ogletree Jr.",
+          "birth": "1914, Georgia"
+        }
+      },
+      "supporting_sources": [
+        "1930 U.S. Census, Chicago, Cook County, Illinois — enumerated (indexed as 'Lewis W', age ~14) in the Ogletree sibling household alongside Girard."
+      ],
+      "required": false
+    }
+  ]
+}

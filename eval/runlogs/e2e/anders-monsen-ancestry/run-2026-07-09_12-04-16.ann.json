@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Marriage fact (date 25 Jun 1786, place 'Hamre, Hordaland, Norway') is attached to Anders Monsen's own facts array (F1), not to the Couple relationship's facts array (which is empty) -- content matches the finding despite the unconventional attachment point. standard_place also resolved to 'Hamre, Troms, Norway', a different county than the raw place -- a place-standardization slip, not a finding-recall issue.",
+    "f2": "Source present in tree.sources (id S1, title 'Norway, Marriages, 1660-1926 (FamilySearch)') and in research.json sources/assertions citing record ark:/61903/1:1:NW44-PM2 -- matches the expected collection. Proof-quality scored thin (2) rather than sound (3): the narrative reasons soundly about the single-source (pre-1875 civil registration) limitation and the Urna/Unna name-variant, but asserts the digital church-book image is 'accessible' at the image ARK without the search-tool output in the log confirming image availability -- an overclaim similar to the one proof-conclusion's fix #1 was written to prevent."
+  },
+  "annotator": "EdmondOware"
+}

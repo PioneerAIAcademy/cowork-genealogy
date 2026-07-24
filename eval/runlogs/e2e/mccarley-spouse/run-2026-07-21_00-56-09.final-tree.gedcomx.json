@@ -1,0 +1,926 @@
+{
+  "persons": [
+    {
+      "id": "L7P6-3TT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Moses J",
+          "surname": "McCarley",
+          "suffix": "Sr"
+        },
+        {
+          "id": "N15",
+          "type": "BirthName",
+          "given": "Moses",
+          "surname": "McCarley",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "17 January 1767",
+          "standard_date": "17 Jan 1767",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "9 April 1844",
+          "standard_date": "9 Apr 1844",
+          "place": "Owen, Indiana, United States",
+          "standard_place": "Owen, Indiana, United States"
+        },
+        {
+          "id": "bb426d94-7797-4067-9404-a5972da68288",
+          "type": "Land Purchases in Jessamine Co., KY",
+          "date": "May and December 1807",
+          "standard_date": "Dec 1807",
+          "value": "2 parcels see documents"
+        },
+        {
+          "id": "a99f5574-6faa-4f5f-b7ce-5a918a5f0ce7",
+          "type": "Testify to Personal Property",
+          "date": "December 1807",
+          "standard_date": "Dec 1807",
+          "place": "Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States",
+          "value": "Bill of Sale for Colt"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "1844",
+          "standard_date": "1844",
+          "place": "Montgomery Township, Owen, Indiana, United States",
+          "standard_place": "Montgomery Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "24 Jul 1792",
+          "place": "Lincoln, Kentucky, United States",
+          "standard_place": "Lincoln, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "LHD2-QCN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Sophia",
+          "surname": "McCarley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "19 April 1792",
+          "standard_date": "19 Apr 1792",
+          "place": "Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States"
+        },
+        {
+          "id": "6e30f732-050d-4e87-96de-fdfed8b7c511",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Washington, Owen, Indiana, United States",
+          "standard_place": "Washington Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "2d659c6d-074b-4b8e-ab20-7aa9d006ac43",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Indiana, United States",
+          "standard_place": "Indiana, United States"
+        },
+        {
+          "id": "988efe1a-16d1-4553-a866-3461d034f670",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Washington, Owen, Indiana, United States",
+          "standard_place": "Washington Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "8 February 1883",
+          "standard_date": "8 Feb 1883",
+          "place": "Owen, Indiana, United States",
+          "standard_place": "Owen, Indiana, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "1883",
+          "standard_date": "1883",
+          "place": "Owen Township, Warrick, Indiana, United States",
+          "standard_place": "Owen Township, Warrick, Indiana, United States"
+        }
+      ]
+    },
+    {
+      "id": "L5VP-VVJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "James",
+          "surname": "McCarley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6fe56fe3-7c94-4527-8c84-ead2c3d3e05b",
+          "type": "Birth",
+          "date": "about 1793",
+          "standard_date": "Abt 1793",
+          "place": "Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States"
+        },
+        {
+          "id": "49286d6b-5a22-4e4c-8a16-ed81e160abb4",
+          "type": "Death",
+          "date": "before 1844",
+          "standard_date": "Bef 1844"
+        }
+      ]
+    },
+    {
+      "id": "M6M6-LLW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Moses",
+          "surname": "McCarley",
+          "suffix": "Jr.",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "9 November 1797",
+          "standard_date": "9 Nov 1797",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States"
+        },
+        {
+          "id": "7cd77a4d-dbbf-464d-94a3-a38be2e07f19",
+          "type": "Residence",
+          "date": "1820",
+          "standard_date": "1820",
+          "place": "Garrard, Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Clay, Kentucky, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Garrard county, Garrard, Kentucky",
+          "standard_place": "Garrard, Kentucky, United States"
+        },
+        {
+          "id": "83e55612-2204-496e-940f-53fcd29460b3",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": ", Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States"
+        },
+        {
+          "id": "fc797baf-1af2-4a3b-a25f-271f4c2d468d",
+          "type": "Burial",
+          "date": "April 1874",
+          "standard_date": "Apr 1874",
+          "place": "Lancaster Cemetery, Lancaster, Garrard, Kentucky, United States",
+          "standard_place": "Lancaster Cemetery, Lancaster, Garrard, Kentucky, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "21 April 1874",
+          "standard_date": "21 Apr 1874",
+          "place": "Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States"
+        },
+        {
+          "id": "F3",
+          "type": "Marriage",
+          "date": "21 Nov 1817",
+          "place": "Jessamine County, Kentucky",
+          "standard_place": "Jessamine, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "KF2W-F45",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Nancy B.",
+          "surname": "McCarley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "11 May 1804",
+          "standard_date": "11 May 1804",
+          "place": "Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States"
+        },
+        {
+          "id": "ec752871-6569-4b10-9845-4058781c3028",
+          "type": "Residence",
+          "date": "1840",
+          "standard_date": "1840",
+          "place": "Jessamine, Kentucky, United States",
+          "standard_place": "Jessamine, Kentucky, United States"
+        },
+        {
+          "id": "4875fb68-dbe3-43f4-8440-10f94b44d5a9",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Washington Township, Owen, Indiana, United States",
+          "standard_place": "Washington Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "6f8535b9-1bb9-4ea0-9010-08cf13d30dd3",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "June 1868",
+          "standard_date": "Jun 1868",
+          "place": "Spencer, Owen, Indiana, United States",
+          "standard_place": "Spencer, Washington Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "de5649b7-1747-4d51-ac4a-a4876223657c",
+          "type": "Burial",
+          "date": "1868",
+          "standard_date": "1868",
+          "place": "Spencer, Owen, Indiana, United States of America",
+          "standard_place": "Spencer, Washington Township, Owen, Indiana, United States"
+        }
+      ]
+    },
+    {
+      "id": "L5VP-2Y7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "James",
+          "surname": "McCarley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b66ca5ff-d60a-4012-acb1-0a1ca266c200",
+          "type": "Birth",
+          "date": "1735",
+          "standard_date": "1735",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "aa91888b-5fa6-4018-89c0-ea10c992cb1c",
+          "type": "Death",
+          "date": "after December 1807",
+          "standard_date": "Aft Dec 1807",
+          "place": "Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States"
+        }
+      ]
+    },
+    {
+      "id": "L7P6-H65",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Susan",
+          "surname": "McCarley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1805",
+          "standard_date": "1805",
+          "place": "Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "Abt 1848",
+          "standard_date": "Abt 1848",
+          "place": "Owen, Indiana, United States",
+          "standard_place": "Owen, Indiana, United States"
+        }
+      ]
+    },
+    {
+      "id": "L5Y6-CZ9",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "James",
+          "surname": "Mccarley",
+          "prefix": "Mrs."
+        }
+      ],
+      "facts": [
+        {
+          "id": "4cb9faad-9a25-4453-b8be-eeb5a70093d2",
+          "type": "Birth",
+          "date": "about 1738",
+          "standard_date": "Abt 1738",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "801fe4cf-404e-49c3-900d-13480db26098",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KPHY-36B",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Samuel",
+          "surname": "McCarley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "about 1802",
+          "standard_date": "Abt 1802",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States"
+        },
+        {
+          "id": "9516ff4d-5ae6-477c-883c-7523935d7962",
+          "type": "Marriage+bond",
+          "date": "7 July 1824",
+          "standard_date": "7 Jul 1824",
+          "value": "Marriage bond between Samuel McCarley and William Harris "
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "before 17 August 1946",
+          "standard_date": "Bef 17 Aug 1946",
+          "place": "Nicholasville, Jessamine, Kentucky, United States",
+          "standard_place": "Nicholasville, Jessamine, Kentucky, United States"
+        }
+      ]
+    },
+    {
+      "id": "KF27-BHH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Sabina",
+          "surname": "McCarley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "9 December 1808",
+          "standard_date": "9 Dec 1808",
+          "place": "Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States"
+        },
+        {
+          "id": "968e933c-974a-47d1-9b3e-a29d196d7c12",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Washington, Owen, Indiana, United States",
+          "standard_place": "Washington Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "79eb083b-21bd-4054-994c-479377984e50",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Layfayett Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "b4501688-64f2-4682-b691-468bea85b3de",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Indiana, United States",
+          "standard_place": "Indiana, United States"
+        },
+        {
+          "id": "46b1afed-e1aa-4d13-8a03-75fc4efd3832",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Washington Township, Owen, Indiana, United States",
+          "standard_place": "Washington Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "11 March 1878",
+          "standard_date": "11 Mar 1878",
+          "place": "Owen, Indiana, United States",
+          "standard_place": "Owen, Indiana, United States"
+        },
+        {
+          "id": "8b99761f-a805-4435-9e77-653c47e264dd",
+          "type": "Burial",
+          "place": "Alverson Cemetery #1, Carp, Montgomery Township, Owen, Indiana, United States",
+          "standard_place": "Alverson Cemetery #1, Carp, Montgomery Township, Owen, Indiana, United States"
+        }
+      ]
+    },
+    {
+      "id": "M6M6-LYT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Margaret",
+          "surname": "McCarley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "23 February 1807",
+          "standard_date": "23 Feb 1807",
+          "place": "Garrard, Kentucky, United States",
+          "standard_place": "Garrard, Kentucky, United States"
+        },
+        {
+          "id": "f35a1394-aa8a-46c2-b82d-ca92bc56554c",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Montgomery Township, Owen, Indiana, United States",
+          "standard_place": "Montgomery Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "96ebc250-dc46-414e-9abf-4fbf1ffcd2c5",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Montgomery Township, Owen, Indiana, United States",
+          "standard_place": "Montgomery Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "75149680-2524-4ac0-80d1-88cd5ed3b16b",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Indiana, United States",
+          "standard_place": "Indiana, United States"
+        },
+        {
+          "id": "591ff2e7-fed5-4807-b146-32f3f7fd6044",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Montgomery, Owen, Indiana, United States",
+          "standard_place": "Montgomery Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "80b2ddb2-defa-4e07-970e-f6da2616d6d1",
+          "type": "Death",
+          "date": "1884",
+          "standard_date": "1884"
+        },
+        {
+          "id": "0432378e-0b69-42a5-99a0-b282cd48b0ab",
+          "type": "Burial",
+          "date": "1884",
+          "standard_date": "1884",
+          "place": "Carp, Owen, Indiana, United States",
+          "standard_place": "Carp, Montgomery Township, Owen, Indiana, United States"
+        }
+      ]
+    },
+    {
+      "id": "KPHY-3LG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "Elizabeth",
+          "surname": "McCarley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "9 November 1802",
+          "standard_date": "9 Nov 1802",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States"
+        },
+        {
+          "id": "363afa44-2475-4fef-903f-e1ad0a48a765",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Washington Township, Owen, Indiana, United States",
+          "standard_place": "Washington Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "618c633b-ecf6-4ef5-aa4f-b2c5ef8a24b2",
+          "type": "Burial",
+          "date": "October 1868",
+          "standard_date": "Oct 1868",
+          "place": "Ellettsville, Richland Township, Monroe, Indiana, United States",
+          "standard_place": "Ellettsville, Richland Township, Monroe, Indiana, United States"
+        },
+        {
+          "id": "21435e2f-d1bc-46b2-9c10-a8c7f28e5d1f",
+          "type": "Death",
+          "date": "17 October 1868",
+          "standard_date": "17 Oct 1868"
+        }
+      ]
+    },
+    {
+      "id": "K63K-2B2",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N14",
+          "given": "Sarah E",
+          "surname": "McCarley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "December 1798",
+          "standard_date": "Dec 1798",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States"
+        },
+        {
+          "id": "b0016d74-6407-4ed0-a568-739d69e5ffc8",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Washington, Owen, Indiana, United States",
+          "standard_place": "Washington Township, Owen, Indiana, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "April 1853",
+          "standard_date": "Apr 1853",
+          "place": "Edgar, Illinois, United States",
+          "standard_place": "Edgar, Illinois, United States"
+        },
+        {
+          "id": "a34c02c2-548a-466b-b1af-a88ac36d3186",
+          "type": "Burial",
+          "date": "1853",
+          "standard_date": "1853",
+          "place": "Kansas, Edgar, Illinois, United States",
+          "standard_place": "Kansas, Edgar, Illinois, United States"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N16",
+          "type": "BirthName",
+          "given": "Elizabeth",
+          "surname": "Patt",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Marriage",
+          "date": "24 Jul 1792",
+          "place": "Lincoln, Kentucky, United States",
+          "standard_place": "Lincoln, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N17",
+          "type": "BirthName",
+          "given": "Betsy",
+          "surname": "Lawson",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Marriage",
+          "date": "21 Nov 1817",
+          "place": "Jessamine County, Kentucky",
+          "standard_place": "Jessamine, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "L5VP-2Y7",
+      "person2": "L5Y6-CZ9"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L5VP-2Y7",
+      "child": "L7P6-3TT"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "L5Y6-CZ9",
+      "child": "L7P6-3TT"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "L7P6-3TT",
+      "child": "LHD2-QCN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "L7P6-3TT",
+      "child": "L5VP-VVJ"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "L7P6-3TT",
+      "child": "M6M6-LLW",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "L7P6-3TT",
+      "child": "K63K-2B2",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "L7P6-3TT",
+      "child": "KPHY-36B",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "L7P6-3TT",
+      "child": "KPHY-3LG",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "L7P6-3TT",
+      "child": "KF2W-F45",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "L7P6-3TT",
+      "child": "L7P6-H65",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "L7P6-3TT",
+      "child": "M6M6-LYT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "L7P6-3TT",
+      "child": "KF27-BHH",
+      "subtype": "Biological"
+    },
+    {
+      "type": "Couple",
+      "person1": "L7P6-3TT",
+      "person2": "I1",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R25",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "24 Jul 1792",
+          "standard_date": "24 Jul 1792",
+          "place": "Lincoln, Kentucky, United States",
+          "standard_place": "Lincoln, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1"
+            }
+          ],
+          "id": "F5",
+          "primary": true
+        }
+      ]
+    },
+    {
+      "type": "Couple",
+      "person1": "M6M6-LLW",
+      "person2": "I2",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R26",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "21 Nov 1817",
+          "standard_date": "21 Nov 1817",
+          "place": "Jessamine, Kentucky, United States",
+          "standard_place": "Jessamine, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S2"
+            }
+          ],
+          "id": "F6"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "MMM2-6KS",
+      "title": "Moses Mccarley, \"United States Census, 1810\"",
+      "citation": "\"United States, Census, 1810\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH2C-M9T : Sat Jul 13 09:00:07 UTC 2024), Entry for Moses Mccarley, 1810.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XH2C-M9T"
+    },
+    {
+      "id": "MMLG-KFY",
+      "title": "Legacy NFS Source: Moses J McCarley - Published information: birth: about January 1767; Pendleton, Anderson, South Carolina, United States"
+    },
+    {
+      "id": "9NMT-YDW",
+      "title": "Moses McCarley, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVG3-8WK7 : Wed Apr 02 09:20:48 UTC 2025), Entry for Moses McCarley, 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVG3-8WK7"
+    },
+    {
+      "id": "S1",
+      "title": "Entry for Moses McCarley and Elizabeth Patt, \"Kentucky, County Marriages, 1786-1965\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q28D-NHWN",
+      "citation": "\"Kentucky, County Marriages, 1786-1965,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q28D-NHWN : accessed 20 July 2026), entry for Moses McCarley and Elizabeth Patt, 24 Jul 1792, Lincoln County, Kentucky."
+    },
+    {
+      "id": "S2",
+      "title": "Entry for Moses McCarley and Betsy Lawson, \"Kentucky, County Marriages, 1786-1965\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q28D-N9C1"
+    }
+  ]
+}

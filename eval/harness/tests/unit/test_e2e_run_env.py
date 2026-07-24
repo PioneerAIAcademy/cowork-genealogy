@@ -7,8 +7,10 @@ authenticate and every run comes back verdict=skipped.
 
 from __future__ import annotations
 
+import json
 import os
 
+from e2e.env import stage_openrouter_key
 from e2e.run_e2e import load_env_file
 
 
@@ -32,3 +34,36 @@ def test_missing_file_is_noop(tmp_path, monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     load_env_file(tmp_path / "absent.env")
     assert "ANTHROPIC_API_KEY" not in os.environ
+
+
+def test_stage_openrouter_key_writes_when_set(tmp_path, monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-abc123")
+    cfg = tmp_path / "config.json"
+    stage_openrouter_key(cfg)
+    assert (
+        json.loads(cfg.read_text(encoding="utf-8"))["openRouterApiKey"]
+        == "sk-or-abc123"
+    )
+
+
+def test_stage_openrouter_key_noop_when_unset(tmp_path, monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    cfg = tmp_path / "config.json"
+    stage_openrouter_key(cfg)
+    assert not cfg.exists()
+
+
+def test_stage_openrouter_key_preserves_other_keys(tmp_path, monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-new")
+    cfg = tmp_path / "config.json"
+    cfg.write_text(
+        json.dumps({"wikiApiUrl": "http://x", "openRouterModel": "qwen/y"}),
+        encoding="utf-8",
+    )
+    stage_openrouter_key(cfg)
+    data = json.loads(cfg.read_text(encoding="utf-8"))
+    assert data == {
+        "wikiApiUrl": "http://x",
+        "openRouterModel": "qwen/y",
+        "openRouterApiKey": "sk-or-new",
+    }

@@ -197,6 +197,12 @@ export function ResearchDataProvider({
     [transport]
   )
 
+  const getSourceImage = useMemo(
+    () =>
+      transport.getSourceImage ? (f: string) => transport.getSourceImage!(f) : undefined,
+    [transport]
+  )
+
   const openSidecar = useCallback(
     (logId: string, focusPersonaId?: string) => {
       // Idempotent: opening the same already-loaded sidecar only updates
@@ -248,7 +254,8 @@ export function ResearchDataProvider({
       closeSidecar,
       clearFocusPersona,
       submitFeedback,
-      getFeedbackContext
+      getFeedbackContext,
+      getSourceImage
     }),
     [
       research,
@@ -266,7 +273,8 @@ export function ResearchDataProvider({
       closeSidecar,
       clearFocusPersona,
       submitFeedback,
-      getFeedbackContext
+      getFeedbackContext,
+      getSourceImage
     ]
   )
 

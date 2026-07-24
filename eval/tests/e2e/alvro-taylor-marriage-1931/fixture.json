@@ -1,0 +1,19 @@
+{
+  "id": "alvro-taylor-marriage-1931",
+  "name": "Alvro Bair Taylor",
+  "genre": "strip",
+  "source_pid": "KWJZ-ZNT",
+  "captured": "2026-07-13",
+  "researcher_question": "Whom did Alvro Bair Taylor marry, and when and where did the marriage take place?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1930s",
+    "geography": "US-OR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Starting tree is the subject plus both parents (spouse stripped). The subject's own sources (1940 census, 1940 obituaries, Find A Grave, Oregon death records) point to a surviving widow, but the marriage event itself must be recovered from an Oregon marriage record. Snapshot carries a harmless cross-person duplicate fact id (Birth 248eaba5 on subject+both parents; Death 9381f219 on subject+father) that is per-holder unique so validate passes; likely a snapshot normalizer quirk worth a look."
+}

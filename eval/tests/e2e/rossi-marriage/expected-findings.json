@@ -1,0 +1,20 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Mary Rossi married Charles A. Ulrich (Ullricht) on 2 February 1899 in Hoboken, Hudson County, New Jersey. The marriage date is the answer.",
+      "details": {
+        "subject_person": { "name": "Mary Rossi" },
+        "fact_type": "Marriage",
+        "date": "2 February 1899",
+        "place": "Hoboken, Hudson, New Jersey, United States"
+      },
+      "supporting_sources": [
+        "New Jersey, Marriages, 1678-1985 — entry for Charles A. Ulrich and Mary/Maria Rossi, 2 Feb 1899, Hoboken, Hudson County, New Jersey.",
+        "New York, New York City Marriage Records, 1829-1938 — Mary Rossi marriage."
+      ],
+      "required": true
+    }
+  ]
+}

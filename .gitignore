@@ -39,7 +39,7 @@ eval/runlogs/unit/*/scratch_*.ann.json
 # In-progress partial run logs — rewritten after each completed test so a
 # Ctrl-C or crash mid-run keeps the tests that finished. Deleted on a clean
 # finish; promoted to scratch_* on interrupt. The .tmp is the atomic-write
-# staging file. See docs/plan/eval-harness-stop-early.md.
+# staging file.
 eval/runlogs/unit/*/.partial_*.json
 eval/runlogs/unit/*/.partial_*.json.tmp
 

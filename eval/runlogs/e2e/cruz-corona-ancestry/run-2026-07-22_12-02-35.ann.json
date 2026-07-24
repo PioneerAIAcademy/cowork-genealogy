@@ -1,0 +1,18 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "false",
+    "f5": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Recovered — Mauro Cruz Corona born 22 November 1910, La Unión, Mexico (date exact; place recorded as 'La Unión, México', the key locality present).",
+    "f2": "Recovered — father Sóstenes Cruz linked as Mauro's parent.",
+    "f3": "Recovered — mother Apolinar Corona linked as Mauro's parent.",
+    "f4": "Bonus not recovered — paternal grandparents (Jesús Cruz + Donaciana Basurto) not linked in the tree this run.",
+    "f5": "Bonus not recovered — maternal grandparents (Miguel Corona + Jesús Mercado) not linked in the tree this run."
+  },
+  "annotator": "ernest"
+}

@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Marriage date recovered exactly — 2 Feb 1899, Hoboken, Hudson County, NJ — and encoded as a Marriage fact on the couple relationship, from the NJ marriage index (found after widening past the Ulrich/Ullricht spelling-variant nil) and independently corroborated by the 1900 census. Proof tier 'proved'; no blocked tree-reads."
+  },
+  "annotator": "ernest"
+}

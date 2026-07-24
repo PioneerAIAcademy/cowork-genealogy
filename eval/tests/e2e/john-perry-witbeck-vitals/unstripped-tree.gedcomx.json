@@ -1,0 +1,1143 @@
+{
+  "persons": [
+    {
+      "id": "MGRB-VP2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "John Perry",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a99998b2-5c26-4a32-a637-4d4443c68591",
+          "type": "Birth",
+          "date": "10 Mar 1775",
+          "standard_date": "10 Mar 1775",
+          "place": "Albany, Albany, New York, United States",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "548652f1-ac14-4146-998a-0c5203e00397",
+          "type": "Death",
+          "date": "28 Feb 1819",
+          "standard_date": "28 Feb 1819",
+          "place": "Niskayuna, Schenectady, New York, United States",
+          "standard_place": "Niskayuna, Niskayuna, Schenectady, New York, United States"
+        },
+        {
+          "id": "261dedb8-4df6-41e9-a733-5b1c38191634",
+          "type": "Christening",
+          "date": "15 Mar 1775",
+          "standard_date": "15 Mar 1775",
+          "place": "Albany, Albany, New York, United States",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "aafbe123-e2c5-4618-bd5c-64f769cafe16",
+          "type": "Burial",
+          "place": "Niskayuna Reformed Church Cemetery Schenectady County, New York, USA",
+          "standard_place": "Niskayuna Reformed Church Cemetery, Niskayuna, Schenectady, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "LCCV-YCQ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Thomas",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "28Sep1817",
+          "standard_date": "28 Sep 1817",
+          "place": "Niskayuna, Albany, New York",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "625b9d6f-fc44-4bd1-ab9b-40838c73db76",
+          "type": "Christening",
+          "date": "02 NOV 1817",
+          "standard_date": "2 Nov 1817",
+          "place": "Protestant Reformed Dutch Church,Niskayuna,Schenectady,New York",
+          "standard_place": "Niskayuna, Niskayuna, Schenectady, New York, United States"
+        },
+        {
+          "id": "d3fc711e-15a3-44a1-9ae2-177e14e6fb20",
+          "type": "Residence",
+          "date": "1855",
+          "standard_date": "1855",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "d625c797-e183-4e80-bede-f12b482e2982",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "f823d27b-97ec-48a8-98df-48a3a3cb64c0",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "District 06, Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "881897ed-c27f-4f36-8302-11fc89880cf1",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "2a129134-b135-4b80-8b7b-fe51ce184e06",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "f9c16bbf-fa39-43cf-bed2-8d4ba02387cd",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "f4c9b076-9649-45c9-a2f0-0cd6ae86bd8e",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Colonie, Albany, New York, United States",
+          "standard_place": "Colonie, Albany, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "1901",
+          "standard_date": "1901"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "place": "Niskayuna Reformed Church Cemetery Schenectady County, New York, USA",
+          "standard_place": "Niskayuna Reformed Church Cemetery, Niskayuna, Schenectady, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "KHMQ-3ZB",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Martinus",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "       1806",
+          "standard_date": "1806",
+          "place": "Protestant Reformed Dutch Church,Niskayuna,Schenectady,New York",
+          "standard_place": "Niskayuna, Niskayuna, Schenectady, New York, United States"
+        },
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "4 Dec 1806",
+          "standard_date": "4 Dec 1806",
+          "place": "Niskayuna, Albany, New York",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KZBL-CBZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Rebecca",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "25 Aug 1810",
+          "standard_date": "25 Aug 1810",
+          "place": "Niskayuna, Albany, N. Y.",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "21 OCT 1810",
+          "standard_date": "21 Oct 1810",
+          "place": "Protestant Reformed Dutch Church,Niskayuna,Schenectady,New York",
+          "standard_place": "Niskayuna, Niskayuna, Schenectady, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LCTS-L3S",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Emmettie",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "453dddf0-cce9-4ea8-bf89-7f0161420bc3",
+          "type": "Christening",
+          "date": "1804",
+          "standard_date": "1804",
+          "place": "Albany, Albany, New York, United States",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "28 OCT 1804",
+          "standard_date": "28 Oct 1804",
+          "place": "First Dutch Reformed Church,Albany,Albany,New York",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "bf055bd8-32ce-4d9c-aa99-34e9b053fb81",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "2bd46423-e8a6-417a-bf4b-1f2827733a07",
+          "type": "Residence",
+          "date": "1855",
+          "standard_date": "1855",
+          "place": "E.D. 6, Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "03f03783-b40c-4e1e-9448-2d3d0827dbc2",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Town of Watervliet, Albany, New York, United States",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "65d185a2-0610-4f1b-bbad-3f855f3fd837",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "District 06, Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "12 Apr 1892",
+          "standard_date": "12 Apr 1892"
+        },
+        {
+          "id": "9c275256-a5ab-463a-99e1-39cb2c3d6e8e",
+          "type": "FamilySearch Id",
+          "value": "KT4K-P49"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "place": "Niskayuna Reformed Church Cemetery Schenectady County, New York, USA",
+          "standard_place": "Niskayuna Reformed Church Cemetery, Niskayuna, Schenectady, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "K8RZ-QHP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Abraham",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "11 Nov 1815",
+          "standard_date": "11 Nov 1815",
+          "place": "Niskayuna, Albany, N. Y.",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "10 DEC 1815",
+          "standard_date": "10 Dec 1815",
+          "place": "Protestant Reformed Dutch Church,Niskayuna,Schenectady,New York",
+          "standard_place": "Niskayuna, Niskayuna, Schenectady, New York, United States"
+        },
+        {
+          "id": "9ceae56c-739b-4458-bf20-82452f42234f",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "District 01, Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "779ea7e9-6113-4476-9a6b-d415e3264ccd",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "West Troy, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "6dc92d57-6784-46a1-8c5e-1f898450949d",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "df778120-ba0a-4400-ae4b-c1518df3f75e",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "West Troy, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KZL4-YCD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Sarah",
+          "surname": "Cragier"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7c595f61-efad-47a3-ae9b-3752ba4675c7",
+          "type": "Birth",
+          "date": "10 APR 1780",
+          "standard_date": "10 Apr 1780",
+          "place": "Albany, Albany, New York",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "4 March 1849",
+          "standard_date": "4 Mar 1849"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "place": "Niskayuna, Schenectady, New York, United States",
+          "standard_place": "Niskayuna, Niskayuna, Schenectady, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "M59T-VKP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Garrett",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "05 MAY 1799",
+          "standard_date": "5 May 1799",
+          "place": "Protestant Reformed Dutch Church,Niskayuna,Schenectady,New York",
+          "standard_place": "Niskayuna, Niskayuna, Schenectady, New York, United States"
+        },
+        {
+          "id": "2f111268-5942-4239-82ab-c67b010f86b2",
+          "type": "Birth",
+          "date": "1799",
+          "standard_date": "1799"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "1849",
+          "standard_date": "1849",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "06c36d84-1c65-4340-80e4-ea08c4771d74",
+          "type": "Burial",
+          "place": "Niskayuna, Schenectady, New York, United States",
+          "standard_place": "Niskayuna, Niskayuna, Schenectady, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "KGS2-5LC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Emmetje",
+          "surname": "Perry"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "07 NOV 1752",
+          "standard_date": "7 Nov 1752",
+          "place": "First Dutch Reformed Church,Albany,Albany,New York",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "       1753",
+          "standard_date": "1753",
+          "place": "Of,,,Ny",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LR6X-5HW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Gertrude",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ce6f203c-aa80-4977-96ef-3a3259c05832",
+          "type": "Birth",
+          "date": "10 JAN 1803",
+          "standard_date": "10 Jan 1803",
+          "place": "Albany, Albany, New York, United States",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "6e65a235-417d-42cf-9e26-05bb28882b5b",
+          "type": "Christening",
+          "date": "1803",
+          "standard_date": "1803",
+          "place": "First Dutch Reformed Church, Albany, Albany, New York",
+          "standard_place": "Dutchess, New York, United States"
+        },
+        {
+          "id": "71913f72-987c-47cb-b34c-a2c8e4c08567",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Clifton Park, Saratoga, New York, United States",
+          "standard_place": "Clifton Park, Saratoga, New York, United States"
+        },
+        {
+          "id": "1c24a0e2-0096-4f0f-b03c-5bac1457e1ae",
+          "type": "Residence",
+          "date": "1855",
+          "standard_date": "1855",
+          "place": "E.D. 1-2, Clifton Park, Saratoga, New York, United States",
+          "standard_place": "Clifton Park, Saratoga, New York, United States"
+        },
+        {
+          "id": "c399591c-2bd2-4a9f-bc0a-e738cd78c703",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Clifton Park, Saratoga, New York, United States",
+          "standard_place": "Clifton Park, Saratoga, New York, United States"
+        },
+        {
+          "id": "09c9b622-c0c6-4e04-ae98-54de59df04e5",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "District 01, Clifton Park, Saratoga, New York, United States",
+          "standard_place": "Clifton Park, Saratoga, New York, United States"
+        },
+        {
+          "id": "74da9b74-0e78-4166-930b-d1d6acbfcab7",
+          "type": "Death",
+          "date": "11 August 1866",
+          "standard_date": "11 Aug 1866",
+          "place": "Saratoga, New York, United States",
+          "standard_place": "Saratoga, New York, United States"
+        },
+        {
+          "id": "52c55af3-219f-4fe1-abed-d2006ed7649d",
+          "type": "Burial",
+          "place": "Vischer Ferry Cemetery, Vischer Ferry, Saratoga, New  York, United States",
+          "standard_place": "Vischer Ferry Cemetery, Vischer Ferry, Saratoga, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "GS32-R5S",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Elizabeth",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "380b2184-a142-4fa0-949f-0455f1278717",
+          "type": "Birth",
+          "date": "1807",
+          "standard_date": "1807"
+        },
+        {
+          "id": "6b01a560-f51f-45f2-b425-a0c60a10df02",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "4th Ward Villiage West Troy, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "9f36996a-a38e-4be8-b22b-cba4cdde04bb",
+          "type": "Death",
+          "date": "9 Nov 1869",
+          "standard_date": "9 Nov 1869"
+        },
+        {
+          "id": "aa6af69b-1135-44a4-80ec-1e668abdbcba",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "KZ5J-P6H",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "Catharina",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "26 February 1800",
+          "standard_date": "26 Feb 1800",
+          "place": "Saratoga, New York, Usa",
+          "standard_place": "Saratoga, New York, United States"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "1801",
+          "standard_date": "1801",
+          "place": "Reformed Dutch, Church, Albany, NY",
+          "standard_place": "Dutchess, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "8 August 1848",
+          "standard_date": "8 Aug 1848",
+          "place": "Saratoga, New York, United States",
+          "standard_place": "Saratoga, New York, United States"
+        },
+        {
+          "id": "ec94cfa3-bc41-41fa-9390-c53285a2db70",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Clifton Park, Saratoga, New York, United States",
+          "standard_place": "Clifton Park, Saratoga, New York, United States"
+        },
+        {
+          "id": "123f7f00-b053-4dff-8890-396334786825",
+          "type": "Burial",
+          "place": "Vischer Ferry Cemetery, Vischer Ferry, Saratoga, New York, U nited States",
+          "standard_place": "Vischer Ferry Cemetery, Vischer Ferry, Saratoga, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "273X-JZK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N13",
+          "given": "Gerrit L.",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "18 March 1750",
+          "standard_date": "18 Mar 1750",
+          "place": "Albany, Albany, Colony of New York, British Colonial America",
+          "standard_place": "Albany, Albany, New York Colony, British Colonial America"
+        },
+        {
+          "id": "7c6b92bd-442b-4178-a552-b52ba13bf1ee",
+          "type": "Residence",
+          "date": "1790",
+          "standard_date": "1790",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "19a2ca0f-6a63-4076-b512-cdb933340faa",
+          "type": "Residence",
+          "date": "1800",
+          "standard_date": "1800",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "13 December 1807",
+          "standard_date": "13 Dec 1807",
+          "place": "Albany, Albany, New York, United States",
+          "standard_place": "Albany, Albany, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "M59T-LYW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N14",
+          "given": "Anne",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "94461359-56f6-4ce3-b35c-86e778d441eb",
+          "type": "Birth",
+          "date": "12 May 1813",
+          "standard_date": "12 May 1813",
+          "place": "Niskayuna, Albany, N. Y.",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "060a5ffe-0116-4120-8537-742efce88577",
+          "type": "Christening",
+          "date": "7 Jun 1813",
+          "standard_date": "7 Jun 1813",
+          "place": "Niskayuna, Schenectady, New York, United States",
+          "standard_place": "Niskayuna, Niskayuna, Schenectady, New York, United States"
+        },
+        {
+          "id": "5ab1ab86-fb6b-477a-805c-73f6e6e3ad3d",
+          "type": "Residence",
+          "date": "1855",
+          "standard_date": "1855",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "c9053c6d-e817-4bef-a451-47b385c39067",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Town of Watervliet, Albany, New York, United States",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "66b3bef8-dfed-407d-b13b-cb244415b097",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "4ae1e4a8-5449-4f93-a58e-3b9fa4d4d7c7",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "716e17b3-ad6b-4296-a79a-5704b6bd2645",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "16a5d0ae-e3eb-4d39-8556-24f05038dcd4",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "8 March 1893",
+          "standard_date": "8 Mar 1893",
+          "place": "Watervliet, Albany, New York, United States",
+          "standard_place": "Watervliet, Albany, New York, United States"
+        },
+        {
+          "id": "0a2e382c-a53a-4c0b-9dd6-7c15b586a794",
+          "type": "Burial",
+          "place": "Niskayuna Reformed Church Cemetery Schenectady County, New York, USA",
+          "standard_place": "Niskayuna Reformed Church Cemetery, Niskayuna, Schenectady, New York, United States"
+        },
+        {
+          "id": "876aec67-a941-4dbd-89db-db8a0ecf9a51",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "KCPW-FKV",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N15",
+          "given": "Lucas",
+          "surname": "Witbeck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "abt.1808",
+          "standard_date": "Abt 1808",
+          "place": "Niskayuna, Albany, N.Y.",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "26 FEB 1809",
+          "standard_date": "26 Feb 1809",
+          "place": "Protestant Reformed Dutch Church,Niskayuna,Schenectady,New York",
+          "standard_place": "Niskayuna, Niskayuna, Schenectady, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "MGRB-VP2",
+      "person2": "KZL4-YCD",
+      "facts": [
+        {
+          "id": "d2e7b841-0bd2-4839-aa53-328f43ea9959",
+          "type": "Marriage",
+          "date": "8 Sep 1788",
+          "standard_date": "8 Sep 1788"
+        },
+        {
+          "id": "2d7d4e38-f6e9-43f4-b62f-20494e102a5a",
+          "type": "Marriage",
+          "date": "8 Sep 1798",
+          "standard_date": "8 Sep 1798",
+          "place": "Boght Reformed, Church",
+          "standard_place": "Boght Corners, Colonie, Albany, New York, United States"
+        },
+        {
+          "id": "d17dcec0-d8d9-4c2e-a4c7-fb9c909ce562",
+          "type": "Marriage",
+          "date": "8 Sep 1798",
+          "standard_date": "8 Sep 1798"
+        },
+        {
+          "id": "9cc3d057-7b48-4e1c-8230-87bdaa85d5de",
+          "type": "Marriage",
+          "date": "8 SEP 1798",
+          "standard_date": "8 Sep 1798",
+          "place": "Boght Reformed,Church",
+          "standard_place": "Boght Corners, Colonie, Albany, New York, United States"
+        },
+        {
+          "id": "c6413b6b-0621-411c-8b0c-636e447bb2fd",
+          "type": "Marriage",
+          "date": "8 Sep 1798",
+          "standard_date": "8 Sep 1798",
+          "place": "Boght, New York",
+          "standard_place": "Boght Corners, Colonie, Albany, New York, United States"
+        },
+        {
+          "id": "b804b199-4f39-4132-8574-c8821bf2058a",
+          "type": "Marriage",
+          "date": "8Sep1798",
+          "standard_date": "8 Sep 1798",
+          "place": "Bought, Albany, N. Y.",
+          "standard_place": "Bought, New Castle, Delaware, United States"
+        },
+        {
+          "id": "7bd06248-1d7b-45a2-982d-5c76023cd3df",
+          "type": "Marriage",
+          "date": "08 SEP 1798",
+          "standard_date": "8 Sep 1798",
+          "place": "Boght-Becker Dutch Reformed Church,Colonie,Albany,New York",
+          "standard_place": "Colonie, Colonie, Albany, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "273X-JZK",
+      "person2": "KGS2-5LC",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "29 May 1774",
+          "standard_date": "29 May 1774",
+          "place": "Albany, Albany, N. Y.",
+          "standard_place": "Albany, Albany, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "273X-JZK",
+      "child": "MGRB-VP2",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KGS2-5LC",
+      "child": "MGRB-VP2",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "MGRB-VP2",
+      "child": "M59T-VKP",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KZL4-YCD",
+      "child": "M59T-VKP",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "MGRB-VP2",
+      "child": "KZ5J-P6H",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "KZL4-YCD",
+      "child": "KZ5J-P6H",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "MGRB-VP2",
+      "child": "LR6X-5HW",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "KZL4-YCD",
+      "child": "LR6X-5HW",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "MGRB-VP2",
+      "child": "LCTS-L3S",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "KZL4-YCD",
+      "child": "LCTS-L3S",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "MGRB-VP2",
+      "child": "KHMQ-3ZB",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "KZL4-YCD",
+      "child": "KHMQ-3ZB",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "MGRB-VP2",
+      "child": "GS32-R5S"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "KZL4-YCD",
+      "child": "GS32-R5S"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "MGRB-VP2",
+      "child": "KCPW-FKV",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "KZL4-YCD",
+      "child": "KCPW-FKV",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "MGRB-VP2",
+      "child": "KZBL-CBZ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "KZL4-YCD",
+      "child": "KZBL-CBZ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "MGRB-VP2",
+      "child": "M59T-LYW",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "KZL4-YCD",
+      "child": "M59T-LYW",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "MGRB-VP2",
+      "child": "K8RZ-QHP",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "KZL4-YCD",
+      "child": "K8RZ-QHP",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "MGRB-VP2",
+      "child": "LCCV-YCQ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "KZL4-YCD",
+      "child": "LCCV-YCQ",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "MZLV-HN9",
+      "title": "John Wilbeck in entry for Catalina Wilbeck, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FD5J-HHZ : 14 February 2020), John Wilbeck in entry for Catalina Wilbeck, 1801.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FD5J-HHZ"
+    },
+    {
+      "id": "MZGW-25R",
+      "title": "John Perry Witbeek, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDB6-ZV3 : 17 February 2023), John Perry Witbeek, 1775.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDB6-ZV3"
+    },
+    {
+      "id": "9XY1-SQC",
+      "title": "John Perry Witbeck, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK1X-K5G8 : Mon Jul 13 03:09:06 UTC 2026), Entry for John Perry Witbeck.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK1X-K5G8"
+    },
+    {
+      "id": "STNL-87X",
+      "title": "John Perry Witbeck, \"New York, Church Records, 1660-1954\"",
+      "citation": "\"New York, Church Records, 1660-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGRS-XB9Z : Thu Mar 07 21:10:24 UTC 2024), Entry for Gertrude Witbeck and John Perry Witbeck, 10 January 1803.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGRS-XB98"
+    },
+    {
+      "id": "MZSL-BNP",
+      "title": "John Perry Witbeck in entry for Emmitie Witbeck, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FD5J-WJN : 14 February 2020), John Perry Witbeck in entry for Emmitie Witbeck, 1804.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FD5J-WJN"
+    },
+    {
+      "id": "MZ81-7JN",
+      "title": "John P. Witbeck in entry for Anne Witbeck, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V2CQ-S1V : 17 February 2023), John P. Witbeck in entry for Anne Witbeck, 1813.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V2CQ-S1V"
+    },
+    {
+      "id": "MZXJ-K97",
+      "title": "John P. Witbeek in entry for Gerrit Witbeek, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V2CQ-XJQ : 17 February 2023), John P. Witbeek in entry for Gerrit Witbeek, 1799.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V2CQ-XJQ"
+    },
+    {
+      "id": "MZXJ-L4X",
+      "title": "John P. Witbeck in entry for Lucas Witbeck, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V2CQ-XVQ : 17 February 2023), John P. Witbeck in entry for Lucas Witbeck, 1809.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V2CQ-XVQ"
+    },
+    {
+      "id": "MZJF-7K7",
+      "title": "John P. Witbeck in entry for Thomas Witbeck, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V2CQ-WFC : 17 February 2023), John P. Witbeck in entry for Thomas Witbeck, 1817.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V2CQ-WFC"
+    },
+    {
+      "id": "M81Y-4XF",
+      "title": "John P. Witbeek, \"New York, Marriages, 1686-1980\"",
+      "citation": "\"New York, Marriages, 1686-1980\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F63M-G92 : 21 January 2020), John P. Witbeek, 1798.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F63M-G92"
+    },
+    {
+      "id": "MZ98-5CX",
+      "title": "John P. Witbeck in entry for Rebecca Witbeck, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V2CQ-VFW : 17 February 2023), John P. Witbeck in entry for Rebecca Witbeck, 1810.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V2CQ-VFW"
+    },
+    {
+      "id": "MZ48-PJL",
+      "title": "John P. Witbeck in entry for Abraham Witbeck, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V2CQ-43X : 17 February 2023), John P. Witbeck in entry for Abraham Witbeck, 1815.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V2CQ-43X"
+    },
+    {
+      "id": "MZHN-3BK",
+      "title": "John Perrey Witbeek in entry for Martinus Witbeek, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V2CQ-HP4 : 17 February 2023), John Perrey Witbeek in entry for Martinus Witbeek, 1806.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V2CQ-HP4"
+    },
+    {
+      "id": "MZZH-TZT",
+      "title": "John Perry Witbeck in entry for Gertrude Witbeck, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FD5J-ZV9 : 14 February 2020), John Perry Witbeck in entry for Gertrude Witbeck, 1803.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FD5J-ZV9"
+    }
+  ]
+}

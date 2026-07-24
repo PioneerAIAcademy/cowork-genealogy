@@ -1,0 +1,203 @@
+{
+  "project": {
+    "id": "rp_anders_unna_marriage_proof",
+    "objective": "When and where did Anders Monsen marry Unna Halsteinsdatter, and what does the marriage record show?",
+    "subject_person_ids": ["LKFW-9XH"],
+    "status": "active",
+    "created": "2026-07-09",
+    "updated": "2026-07-09"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Anders Monsen (LKFW-9XH) marry Unna Halsteinsdatter (KZHH-VTX), and what does the marriage record show?",
+      "rationale": "The couple appears in the tree with no marriage date or place recorded.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-09",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "The primary indexed collection (FamilySearch Norway, Marriages, 1660-1926) was searched and a direct marriage record was found and confirmed: Hamre prestegjeld church book entry, 25 Jun 1786, groom Anders Monsen, bride indexed as 'Urna Halsteinsdr' (Unna Halsteinsdatter). For 1786 Norwegian marriages, the church book is the sole contemporaneous record type -- no civil registration existed until 1875 -- so the single-source limitation reflects the historical record landscape, not an unsearched gap.",
+        "log_entry_ids": ["log_001"],
+        "stop_criteria": {
+          "goal_alignment": "Yes. The Hamre prestegjeld church book entry (25 Jun 1786, Hamre, Hordaland, Norway) directly answers date, place, and record content.",
+          "repository_breadth": "FamilySearch Norway, Marriages, 1660-1926 (collection 1468080) -- the principal indexed source for 18th-century Norwegian church marriages -- was searched and the record found.",
+          "original_substitution": "The FamilySearch database is a derivative index citing the Hamre prestegjeld kirkeboker; no separate digital image was returned by record_search or confirmed by record_read.",
+          "independent_verification": "Single source (Hamre prestegjeld church book). For 1786 Norway, civil marriage registration did not exist; the parish register is the sole contemporaneous record type for marriages.",
+          "evidence_class": "Original church book entry recorded by the officiating minister or parish clerk on official duty -- primary information for date, place, and parties' names.",
+          "conflict_resolution": "No conflicting evidence found. Consistent with Unna's existing Couple relationship to LKFW-9XH.",
+          "overturn_risk": "Low. No alternative documentary source (civil record, newspaper, state register) existed for 1786 Norwegian marriages that could plausibly name a different date or place."
+        }
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-09",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamre prestegjeld, Hordaland, Norway",
+          "date_range": "1770-1800",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1468080 'Norway, Marriages, 1660-1926' is an indexed database of Norwegian church-book marriage entries.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-09T11:48:21.223Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Marriages, 1660-1926 (1468080)",
+        "surname": "Monsen",
+        "givenName": "Anders",
+        "recordType": "marriage"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 58,
+      "notes": "Positive match: record ark:/61903/1:1:NW44-PM2. Groom Anders Monsen, bride indexed as 'Urna Halsteinsdr' (variant of Unna Halsteinsdatter), married 25 Jun 1786 at Hamre, Hordaland, Norway. The record_search response contained no imageId/artifacts field for this hit -- no imageCount or digitized-image reference was returned, and record_read was not called to check for one before this log entry was written."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Norway, Marriages, 1660-1926,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:1:NW44-PM2 : 9 July 2026), entry for Anders Monsen, married 25 June 1786, Hamre, Hordaland, Norway; citing Hamre prestegjeld parish register.",
+      "citation_detail": {
+        "who": "Parish clerk, Hamre prestegjeld",
+        "what": "Marriage register entry, Hamre prestegjeld kirkeboker (church books)",
+        "when_created": "25 Jun 1786",
+        "when_accessed": "2026-07-09",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Collection: Norway, Marriages, 1660-1926 (1468080)"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-09",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NW44-PM2",
+      "url_archived": null,
+      "notes": "Index-only entry: the record_search response for this hit carried no imageId/artifacts field, no imageCount was reported for the collection, and record_read was never called to check for a digitized image. The URL above is the record-level ARK (1:1:...), not a confirmed image ARK -- do not describe a digital image as accessible unless a later record_read confirms one.",
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:NW44-PM2",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Anders Monsen",
+      "structured_value": { "given": "Anders", "surname": "Monsen" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "primary",
+      "informant": "Anders Monsen (groom)",
+      "informant_proximity": "self",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:NW44-PM2",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Urna Halsteinsdr",
+      "structured_value": { "given": "Urna", "surname": "Halsteinsdr" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "primary",
+      "informant": "Urna Halsteinsdr (bride) -- indexed variant of Unna Halsteinsdatter",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Bride's name appears in the FamilySearch index as 'Urna Halsteinsdr' -- a transcription variant of 'Unna Halsteinsdatter'. Her christening record (27 May 1745, Hamre) independently corroborates the name as 'Unna Halsteinsdatter'.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:NW44-PM2",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "25 Jun 1786, Hamre, Hordaland, Norway",
+      "date": "25 Jun 1786",
+      "date_certainty": "exact",
+      "place": "Hamre, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "officiating minister or parish clerk, Hamre prestegjeld",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "rationale": "Groom persona 'Anders Monsen' matches LKFW-9XH exactly: same full name, Male, married 25 Jun 1786 at Hamre, Hordaland -- the same parish where he was christened in 1759.",
+      "match_score": null,
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "rationale": "Bride persona 'Urna Halsteinsdr' is a transcription variant of Unna Halsteinsdatter, matching KZHH-VTX's surname and the existing Couple relationship to LKFW-9XH.",
+      "match_score": null,
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "rationale": "Marriage event assertion linking to LKFW-9XH as groom.",
+      "match_score": null,
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "rationale": "Marriage event assertion linking to KZHH-VTX as bride, corroborating the existing Couple relationship rel-anders-unna.",
+      "match_score": null,
+      "created": "2026-07-09"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

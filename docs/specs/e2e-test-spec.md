@@ -31,6 +31,8 @@ proof separately. What remains only *sampled*, not guaranteed, is the
 agent's **restraint from over-claiming** — see negative fixtures (§3.4).
 Read together, the benchmark is a strong capability signal; it is not a
 certification that the agent does fully sound, verifiable GPS research.
+**Do not describe it as the latter to stakeholders** — read this before
+quoting a number to anyone outside the team.
 
 ### What the test fixture contains
 
@@ -70,6 +72,7 @@ eval/tests/e2e/smith-parents-1850/
   expected-findings.json
   README.md
   unstripped-tree.gedcomx.json   (optional; see below)
+  provided-documents/            (optional; see §6.2)
 ```
 
 Slug convention: `<surname>-<topic>-<year>` where helpful, but any
@@ -150,15 +153,43 @@ them. See §6.
 A pre-populated `research.json` per `research-schema-spec.md`. At
 minimum:
 
-- `project.objective` set to the researcher question
-- `project.subject_person_ids` populated
+- `project.id`, `project.objective` (set to the researcher question),
+  `project.subject_person_ids`, `project.created`, `project.updated`
 - `project.status` = `active` (the `project_status` enum is
   `active` / `paused` / `completed` — there is no `in_progress`)
-- `researcher_profile.narration_guidance` pinned to `"concise"` (so
+- `researcher_profile.experience_level`, `researcher_profile.subscriptions`,
+  and `researcher_profile.narration_guidance` pinned to `"concise"` (so
   the agent's narration style doesn't vary across runs)
-- No prior `log`, `sources`, `assertions`, `person_evidence`,
-  `conflicts`, `hypotheses`, `timelines`, or `proof_summaries`
-  entries — the test starts from "objective declared, no work done"
+- **Every** remaining top-level array present and empty — `questions`,
+  `plans`, `log`, `sources`, `assertions`, `person_evidence`, `conflicts`,
+  `hypotheses`, `timelines`, `proof_summaries`, `evaluations`. The test
+  starts from "objective declared, no work done"; a missing array is a
+  schema failure, not an implied empty.
+
+`/author-e2e-fixture` writes a schema-valid file. The enumeration above
+matters when hand-authoring:
+
+```json
+{
+  "project": {
+    "id": "rp_smith_parents",
+    "objective": "Who were John Smith's parents?",
+    "subject_person_ids": ["ABCD-123"],
+    "status": "active",
+    "created": "2026-05-26T00:00:00Z",
+    "updated": "2026-05-26T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [], "plans": [], "log": [], "sources": [],
+  "assertions": [], "person_evidence": [], "conflicts": [],
+  "hypotheses": [], "timelines": [], "proof_summaries": [],
+  "evaluations": []
+}
+```
 
 ### 3.3 `starting-tree.gedcomx.json`
 
@@ -171,6 +202,22 @@ answer information removed. Typical stripping patterns:
 
 The author of the fixture decides what to strip, calibrated to the
 research question.
+
+**Derive it, don't hand-edit it.** `e2e.author strip` always reads the
+committed `unstripped-tree.gedcomx.json` and writes the starting tree, never
+the reverse, so re-running with a different selector set is free:
+
+```bash
+cd eval/harness && uv run python -m e2e.author strip --slug <slug> \
+  --persons <ids> --relationships <ids> --facts <owner>:<fact-id> --sources <ids>
+```
+
+**Cascade semantics** (enforced by `e2e/author.py`):
+
+- Removing a **person cascades** to every relationship that touches them.
+- **Sources never cascade.** Whether a given source attests the stripped
+  fact is an author judgment call, so the tool leaves them alone — strip
+  them explicitly with `--sources`.
 
 ### 3.4 `expected-findings.json`
 
@@ -275,6 +322,11 @@ Human notes. Required content:
 - What was removed from the starting tree and why
 - The author's expected difficulty and any notes that would help
   someone reviewing a failed run
+- **A dated changelog of behavior shifts.** When a fixture's behavior
+  changes meaningfully — it starts failing, FS drifts under it, a finding
+  becomes unrecoverable — append a dated line saying what shifted. The
+  committed run logs are the audit trail; this is the human-readable
+  summary the next person reads before re-running (§15).
 
 ### 3.6 Record-hint fixtures (`genre: "record-hint"`)
 
@@ -348,6 +400,12 @@ here:
 
 ## 6. Execution Pipeline
 
+**There is no full-suite flag and no tag sweep, by design.** `run_e2e.py`
+requires `--test <fixture-id>` and runs exactly that one fixture. Runs are
+expensive enough (§12) that an accidental sweep is a real cost event; driving a
+batch needs an explicit shell loop and a budget decision, not a one-word flag.
+(A `--tag` sweep existed until 2026-07 and was removed for this reason.)
+
 1. Harness loads fixture, builds a fresh temp project directory.
 2. Copies `starting-research.json` and `starting-tree.gedcomx.json`
    into the temp dir. Mirrors `packages/engine/plugin/skills/` into
@@ -372,7 +430,7 @@ here:
    | Wall-clock cap | `timeout` | **Active** (monotonic) elapsed time > `caps.wall_clock_seconds` |
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls` |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
-   | Cost cap | `cost_cap` | Cumulative cost > `caps.max_cost_usd` |
+   | Cost cap | `cost_cap` | Final cost > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
    | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress) — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
 
@@ -381,6 +439,19 @@ here:
    fixture, not authored per-fixture. A turn-cap hit the SDK reports as an
    error result (rather than a clean `max_turns`) is reclassified to
    `max_turns`.
+
+   **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
+   `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
+   the message that arrives once the run has *already finished* and the money
+   is already spent. Every `cost_cap` run in the corpus ended with the SDK's
+   own `end_turn` and `is_error: false`; none was interrupted. Two things
+   block real enforcement, so it was left as-is rather than half-built: there
+   is no per-model price table for agent models (a run spans the parent plus
+   each subagent on its own `.md` pin), and subagent tokens never appear in
+   the main message stream at all — so an in-flight estimate would
+   systematically under-count and a `$15` cap would fire somewhere north of
+   `$15` by an unknown margin. Treat `max_cost_usd` as a reporting threshold.
+   Tracked in `docs/TODOs.md`.
 
    **Continue-nudge on premature yield.** An autonomous `/research` run
    must end at `project.status == "completed"`; instead the agent
@@ -510,9 +581,9 @@ normally has the tool) and keep the list minimal — blocking a tool the
 answer does NOT leak through just handicaps the benchmark.
 
 **Consequence for authoring:** a fixture is only valid if its answer is
-recoverable *from records alone*. The fixture-validity gate (§14) proves
-this — a real run can only pass with these tools blocked, so an
-answer reachable only via the tree will fail and the fixture can't land.
+recoverable *from records alone*. A real validity run (§14) proves
+this — a run can only pass with these tools blocked, so an
+answer reachable only via the tree will fail and the fixture won't validate.
 
 ### 6.2 Provided documents (bundled external evidence)
 
@@ -639,6 +710,13 @@ as an *agent* failure to act on, not a judge bug to ignore.
 | `verdict` | `pass` if all required matched; `partial` if some required matched (or matched/partial); `fail` if none |
 | `rationale` | Free-text summary |
 
+A fourth verdict value, **`skipped`**, is written by the *harness* rather
+than the judge: the judge never ran, either because the agent crashed before
+producing a tree or because `--skip-judge` was passed. It is not a grade —
+a `skipped` run has nothing to grade and is exempt from the §7.4 grading
+gate, and its artifacts are written with the gitignored `scratch_` prefix
+(§8).
+
 When the §3.4.1 avoid-guard fires, the persisted `judge_output`
 additionally carries `avoid_guard.forced_false` (which findings the
 harness overrode, and the matching final-tree person ids), the affected
@@ -650,6 +728,43 @@ findings' `notes` gain an `[avoid-guard]` annotation, and
 Single run per test. Pass rates will jitter run-to-run from LLM
 non-determinism; do not over-interpret small deltas in aggregate
 trends.
+
+Two variance sources hide behind that sentence. The **agent run** is the
+dominant one — long-horizon research against live FamilySearch, different
+every time. The **judge** contributes separately, and is the one we can
+actually measure, because `calibrate_judge` replays fixed recorded inputs
+(the committed `final-tree` / `final-research` siblings), so anything that
+moves between two sweeps is the judge alone.
+
+**Measured judge noise floor** — 2026-07-16, 41 annotations / 107 findings,
+`claude-opus-4-8`, two back-to-back sweeps over identical inputs:
+
+| | Sweep A | Sweep B |
+|---|---|---|
+| Per-finding agreement (gating) | 86% (92/107) | 85% (91/107) |
+| Proof-quality (advisory) | 62% (21/34) | 68% (23/34) |
+| Verdict | MEETS | MEETS |
+
+Two findings out of 107 changed judge label, both borderline `true`/`partial`
+calls. Practical reading: **treat per-finding agreement deltas of ≲2 points as
+noise**, and treat the advisory proof-quality axis as noisy enough (6 points
+across two sweeps at n=34, where one finding is worth ~3) that only large
+moves carry signal. The gate holds 5–6 points of margin over the ≥80% target,
+so this jitter does not threaten the verdict. Caveat: two sweeps give a point
+estimate of the noise, not a bound — re-measure before trusting a small delta
+to justify a decision.
+
+**The e2e judge is deliberately not temperature-pinned, and cannot be.**
+Sampling parameters are removed on the Opus 4.7/4.8 family: sending
+`temperature` returns a 400 (`` `temperature` is deprecated for this model ``).
+Pinning would mean freezing this judge on a 4.5/4.6-era model, and the
+measurement above is why that trade isn't worth taking — 1 point of judge
+self-inconsistency sits an order of magnitude below the ~20 points of human
+inter-rater disagreement the ≥80% target is itself set to approximate
+(`calibrate_judge.py::PER_FINDING_TARGET`), and it lands on exactly the
+borderline calls where humans disagree with each other too. The *unit* judge is
+pinned (`harness/judge.py::JUDGE_TEMPERATURE`); its model still accepts the
+parameter.
 
 Before the suite grows beyond the first fixture, sanity-check the
 judge prompt against the first run trace: if the judge's verdict
@@ -710,6 +825,29 @@ grading gate (§14). Contributors run only `/grade-e2e-run`; the **maintainer**
 runs `uv run python -m e2e.calibrate_judge` periodically (`--dry-run` lints
 without API calls) — contributors never do.
 
+**Collecting grades before the judge is calibrated is the intended bootstrap.**
+You do not need a calibrated judge to start grading; the grades are what makes
+calibration possible. Contributors run and grade from day one.
+
+### Reading the calibration output
+
+The headline percentage is the least useful number in it.
+
+- **The disagreements are the signal.** A *systematic* miss — the judge always
+  under-calling a date-variation match, say — is a judge-prompt fix. A scatter
+  of one-off disagreements is noise. `calibrate_judge` lists every disagreement
+  with its annotator note; read those before the aggregate.
+- **Per-finding agreement is the gate; per-run verdict agreement is computed but
+  deliberately not printed.** Per-run verdicts are dominated by easy passes, and
+  the verdict is derived from `per_finding` (§7.2) rather than independently
+  authored, so agreeing on it proves little.
+- **Trust the proof-quality axis only once the set holds hard proof cases** — a
+  genuinely strong proof, a single-source over-claim, a missing conflict
+  resolution. Until then it is the noisier axis and does not gate.
+- **Watch the per-slug breakdown for one fixture dominating the number.** If a
+  single slug starts carrying the aggregate, that is the trigger to switch to a
+  per-slug macro-average.
+
 ---
 
 ## 8. Result Artifacts
@@ -718,7 +856,7 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics |
+| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; **`usage_source`** — `result_message` when the SDK's `ResultMessage` arrived (authoritative), or `streamed_fallback` when it did not. Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts the stream before that message, which used to leave `usage` with no turns, duration or tokens at all — blinding exactly the runs worth investigating. The fallback reconstructs the block from the streamed assistant messages: token counts are **exact** (deduplicated by message id — the SDK re-emits one message per content block, each copy repeating that message's cumulative usage, so summing on arrival multiplies the totals), `duration_ms` comes from the monotonic clock, and the distinct-message count is reported as `assistant_messages`. `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** in a fallback block rather than synthesized — the SDK counts turns differently from distinct assistant messages, only it knows the API/local split, and a run spans several models so one price lookup would be wrong. Never compare a `streamed_fallback` cost against a clean run's; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
 | `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
@@ -741,8 +879,10 @@ record-visibility changes show up directly.
 
 ## 9. Roll-up Report
 
-At the end of a multi-fixture `run_e2e.py --tag <tag>` invocation,
-the harness prints a console summary covering the runs:
+At the end of a `run_e2e.py` invocation the harness prints a console summary of
+the run. The roll-up is shaped to aggregate across fixtures — grouping by the
+`tags` dimensions — because it also serves a shell loop that runs several
+fixtures back to back (§6: there is no built-in sweep):
 
 ```
 E2E suite: 7/10 passed, 2 partial, 1 fail
@@ -764,6 +904,14 @@ All fixtures use deceased-person data only. FamilySearch's terms
 permit this for FS-sponsored work, which covers this project. Each
 fixture's `README.md` states the PID and confirms the person is
 deceased. No additional anonymization for v1.
+
+**This is mechanically enforced, not just a documentation convention.**
+`e2e/author.py`'s `living_gate()` refuses to snapshot a person marked
+`living: true` — **and** refuses when the `living` field is *absent*, on the
+rule that absent is not deceased. `--drop-living` is the deliberate escape
+hatch: it drops the offending persons rather than bypassing the check. A
+fixture that reaches CI has therefore already passed the gate; the README
+line records the author's confirmation, it does not substitute for it.
 
 ---
 
@@ -789,11 +937,11 @@ acting.
 
 - Mocking MCP for e2e tests — live calls only
 - Full GPS-proof grading with human verification — the proof-quality
-  axis (§7) is a single rubric-graded score, not the multi-layer
-  human-verified grading of `gps-test-spec.md`
+  axis (§7) is a single rubric-graded score, not a multi-layer
+  human-verified grade
 - CI integration of the *live run* — e2e runs are too expensive to gate
-  PRs. (Cheap artifact checks do run in CI — a blocking grading gate plus an
-  advisory fixture-validity report; see §14.)
+  PRs. (One cheap artifact check runs in CI — a blocking grading gate;
+  fixture validity is a non-CI authoring practice, see §14.)
 - Multi-run statistical scoring (N=3) — single run, accepted noise.
   **At project start this is a deliberate "good enough to catch the big
   issues" call, not a permanent one.** Because N=1 + live-FS drift
@@ -812,14 +960,13 @@ acting.
 | Spec | Relationship |
 |------|--------------|
 | `unit-test-spec.md` | Complementary: unit tests cover skills in isolation with mocked MCP; e2e covers the full autonomous flow with live MCP |
-| `gps-test-spec.md` | Different testing approach for the same goal: tests derived from published GPS proof statements, with multi-layer grading and human verification. Held for future work; not active in v1 |
 | `research-schema-spec.md` | Defines the shape of `starting-research.json` |
 | `simplified-gedcomx-spec.md` | Defines the shape of `starting-tree.gedcomx.json` |
 | `eval/CLAUDE.md` | Eval-framework conventions; this spec is the e2e layer |
 
 ---
 
-## 14. Fixture Validity Gate
+## 14. Fixture Validity (recommended, not CI-gated)
 
 A fixture that the agent can never solve is worthless: every failure is
 a false negative on agent capability. Stripping completeness (the
@@ -833,23 +980,69 @@ log under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** For a
 fixture that is *entirely* negative findings (`polarity: "avoid"`),
 "pass" still means the agent behaved correctly — it declined the wrong
 candidates — so the same standard holds. This is the bar for a fixture to
-count as solvable; it is **not** a CI merge blocker (see below), so a
-draft fixture can land with its validity run still owed.
+count as solvable; it is a **recommended authoring practice, not a CI
+merge blocker**, so a draft fixture can land with its validity run still
+owed.
 
-This is surfaced two ways:
+It is a **documentation requirement**, not a CI check: the author runs the
+fixture for real and commits the passing run log alongside it (testing guide
+§5, first-time-setup step 6). PID-less fixtures authored without FamilySearch
+access (`author-e2e-fixture`'s PID-less path) can only be validated later on
+an FS-enabled host, and land unvalidated in the meantime. CI does **not**
+flag an unvalidated fixture — an earlier advisory `check-e2e-fixtures`
+warning was removed because it re-flagged every un-run fixture in the repo on
+every e2e PR (pure noise).
 
-- **Documentation requirement** — the author runs the fixture for real
-  and commits the passing run log alongside it (testing guide §5,
-  first-time-setup step 6).
-- **CI artifact report** (cheap, no live run) — the `check-e2e-fixtures`
-  workflow runs two checks. Its **fixture-validity** check is **advisory /
-  non-blocking**: it flags any committed `eval/tests/e2e/<slug>/` lacking a
-  committed `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a
-  warning annotation, so a draft fixture can land with its validity run still
-  owed — notably PID-less fixtures authored without FamilySearch access
-  (`author-e2e-fixture`'s PID-less path) whose validity run can only happen on an
-  FS-enabled host. Run it with `--strict` for a hard exit locally. The **same
-  workflow also runs a blocking grading gate** (§7.4): a run log *added in the
-  PR* that produced a final tree must ship its `run-<ts>.ann.json` in the same
-  PR (a treeless crash/skip run is exempt). Both checks read only committed
-  files and do **not** trigger a live e2e run (those stay out of CI per §12).
+The `check-e2e-fixtures` workflow instead runs only the **blocking grading
+gate** (§7.4): a run log *added in the PR* that produced a final tree must
+ship its `run-<ts>.ann.json` in the same PR (a treeless crash/skip run is
+exempt). It reads only committed files and does **not** trigger a live e2e
+run (those stay out of CI per §12).
+
+---
+
+## 15. Failure Attribution
+
+When a fixture fails, or a previously-passing one regresses, the question is
+*which layer moved*. These five causes are alternatives — pick one before
+changing anything, because the fix differs completely by cause.
+
+| Cause | What it looks like | Where the fix goes |
+|---|---|---|
+| **Agent reasoning regression** | Different decisions on the same evidence. `tool_calls` diff shows different choices from the same starting state. | Agent/model — usually not actionable here |
+| **`/research` skill regression** | A GPS step skipped, or the wrong sub-skill invoked. | `research/SKILL.md` routing cues |
+| **Sub-skill regression** | The right sub-skill ran but produced worse output. | That sub-skill's `SKILL.md` — via the unit-test loop, not a direct edit |
+| **FS data drift** | FS returned different records or hint counts. The agent behaved correctly against changed inputs. See §11. | The fixture, or nothing |
+| **Single-run jitter** | Small deltas, one finding flipping `matched`/`partial`. See §7.3, §12. | Nothing — re-run before concluding |
+
+### Evidence to read, in order
+
+1. **`run-<ts>.transcript.md`** — the agent's reasoning and tool calls in
+   order. Most failures are obvious here: it stopped, looped, or made the
+   wrong call.
+2. **`run-<ts>.final-tree.gedcomx.json`** — what the agent actually built,
+   compared against `expected-findings.json`. Note that an answer recorded
+   *only* outside the tree is an **agent failure**, not a judge miss (§7.1).
+3. **`stop_reason`** — `inactivity` / `timeout` means the agent stalled;
+   the transcript shows where. `tool_cap` / `max_turns` means it may be
+   looping — look for repeated similar tool calls near the end.
+4. **For a regression, diff `run-<ts>.json::tool_calls` against the last
+   passing run.** Each entry carries `tool`, `args`, and `response_summary`:
+   - different collection IDs touched → the agent took a different path;
+   - different hit counts on the same search → FS may have reindexed;
+   - **same calls, different `response_summary` → likely an agent or skill
+     regression.**
+
+### The run log has no `skills_invoked` field
+
+Unlike the unit-test run log, the e2e run log records no structured list of
+which sub-skills ran. To reconstruct the chain, scan the transcript for
+`Skill` tool-use blocks. Stated here because an absence cannot be inferred
+from §8's field enumeration.
+
+### Recording what you learned
+
+When a fixture's behavior changes meaningfully, add a dated line to the
+fixture's `README.md` saying what shifted. The committed run logs are the
+audit trail; the README is the human-readable summary, and it is what the
+next person reads before re-running.

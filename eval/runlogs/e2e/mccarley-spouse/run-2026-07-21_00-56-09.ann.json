@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Recovered. Moses J McCarley (L7P6-3TT) is linked as a couple to Elizabeth Patt (I1) — 'Patt' is a variant of the expected 'Patton' — recovering the stripped spouse identity. Her birth (~1761 KY) and death (1832 Owen Co, IN) vitals were not added to the tree, but the stripped answer (the spouse) is recovered and linked.",
+    "f2": "Recovered exactly. The Moses–Elizabeth couple relationship carries Marriage 24 Jul 1792, Lincoln, Kentucky — matching the required date and county. Proof is single-source (marriage index), so proof_quality 2."
+  },
+  "annotator": "ernest"
+}

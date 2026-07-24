@@ -1,7 +1,5 @@
 """Tests for the partial (in-progress) run-log helpers — the Ctrl-C safety
 net that keeps completed tests when a harness run is stopped part-way.
-
-See docs/plan/eval-harness-stop-early.md.
 """
 
 import json

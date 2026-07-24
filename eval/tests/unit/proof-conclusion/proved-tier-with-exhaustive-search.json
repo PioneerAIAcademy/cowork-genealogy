@@ -19,6 +19,7 @@
   ],
   "judge_reads_files": true,
   "execution": {
+    "max_turns": 30,
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
   }

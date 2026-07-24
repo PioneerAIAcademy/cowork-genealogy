@@ -23,7 +23,17 @@ def sandbox_secret(sandbox_id: str) -> str:
     return hmac.new(key.encode(), sandbox_id.encode(), hashlib.sha256).hexdigest()
 
 
-def mint_token(sandbox_id: str, ttl_seconds: int = 3600) -> str:
+# The token TTL MUST exceed the sandbox running-timeout (E2BProvider's
+# _RUNNING_TIMEOUT_S, 3600s with on_timeout=pause). Both clocks start at the same
+# /connect, so when they were equal the pause that forced a reconnect expired the
+# token needed to make one — every retry then failed `bad/expired token` forever
+# and the UI spun on a turn it could never receive the end of. The client also
+# re-mints per reconnect now (makeSessionConnection), which is the real fix; this
+# margin keeps the failure non-degenerate if that path ever regresses.
+DEFAULT_TTL_SECONDS = 14400  # 4h — comfortably above the 1h sandbox timeout
+
+
+def mint_token(sandbox_id: str, ttl_seconds: int = DEFAULT_TTL_SECONDS) -> str:
     secret = sandbox_secret(sandbox_id)
     exp = str(int(time.time()) + ttl_seconds)
     sig = hmac.new(secret.encode(), exp.encode(), hashlib.sha256).hexdigest()

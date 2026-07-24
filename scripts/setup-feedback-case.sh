@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Set up a feedback case directory from a submitted zip.
-# Contract: docs/specs/feedback-case-spec.md §11.
+# Contract: docs/specs/feedback-case-spec.md §3.
 set -euo pipefail
 
 usage() {
@@ -17,7 +17,7 @@ Arguments:
                           <slug> is the zip basename without `.zip`.
   --force                 Overwrite an existing non-empty dest-dir.
 
-See docs/specs/feedback-case-spec.md §11 for the full contract.
+See docs/specs/feedback-case-spec.md §3 for the full contract.
 EOF
 }
 
@@ -150,4 +150,4 @@ fi
 echo
 echo "Then: /compare-state --against=what-went-wrong"
 echo
-echo "Full workflow: docs/specs/feedback-case-spec.md §3"
+echo "Full workflow: docs/alpha-feedback-guide.md"

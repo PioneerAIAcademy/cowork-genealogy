@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_reese_children",
+    "objective": "Who were the children of Benjamin Franklin Reese (1878-1938) of Navarro and Hill Counties, Texas?",
+    "subject_person_ids": [
+      "L4X1-2RB"
+    ],
+    "status": "active",
+    "created": "2026-07-16",
+    "updated": "2026-07-16"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

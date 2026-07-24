@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.removeAllListeners('project:sidecar-updated')
   },
   readSidecar: (logId: string) => ipcRenderer.invoke('project:read-sidecar', logId),
+  readImage: (filename: string) => ipcRenderer.invoke('project:read-image', filename),
   getSessionLog: () => ipcRenderer.invoke('session:get-log'),
   selectFolder: () => ipcRenderer.invoke('project:select-folder'),
   getState: () => ipcRenderer.invoke('project:get-state'),
@@ -34,6 +35,7 @@ contextBridge.exposeInMainWorld('api', {
     userPrompt: string
     agentDid: string
     agentShouldHave: string
+    correctAnswer?: string
     notes?: string
   }) => ipcRenderer.invoke('feedback:submit', payload)
 })

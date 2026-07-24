@@ -32,7 +32,11 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
   const [sessionLogSize, setSessionLogSize] = useState(0)
   const [hasSessionLog, setHasSessionLog] = useState(false)
 
-  const [includeMedia, setIncludeMedia] = useState(false)
+  // On by default: a report about an uploaded document is useless without it,
+  // and when the project has no media the flag is a no-op (the checkbox is
+  // disabled at mediaCount === 0). Oversize bundles are handled downstream —
+  // the web path drops the largest files and reports them.
+  const [includeMedia, setIncludeMedia] = useState(true)
   const [includeSessionLog, setIncludeSessionLog] = useState(true)
   const [showFileList, setShowFileList] = useState(false)
 
@@ -46,6 +50,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
   const [userPrompt, setUserPrompt] = useState('')
   const [agentDid, setAgentDid] = useState('')
   const [agentShouldHave, setAgentShouldHave] = useState('')
+  const [correctAnswer, setCorrectAnswer] = useState('')
   const [notes, setNotes] = useState('')
 
   const [sendState, setSendState] = useState<SendState>('idle')
@@ -87,12 +92,13 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
       ['What you asked', userPrompt],
       ['What the agent did', agentDid],
       ['What it should have done', agentShouldHave],
+      ['The correct answer', correctAnswer],
       ['Notes', notes]
     ]
     return fields
       .filter(([, value]) => value.trim().length > MAX_FIELD_CHARS)
       .map(([label]) => label)
-  }, [userPrompt, agentDid, agentShouldHave, notes])
+  }, [userPrompt, agentDid, agentShouldHave, correctAnswer, notes])
   const canSend =
     emailValid &&
     userPrompt.trim().length > 0 &&
@@ -117,6 +123,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
         userPrompt: userPrompt.trim(),
         agentDid: agentDid.trim(),
         agentShouldHave: agentShouldHave.trim(),
+        correctAnswer: correctAnswer.trim() || undefined,
         notes: notes.trim() || undefined
       })
       setSendState('success')
@@ -222,6 +229,26 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
           </div>
 
           <div className={styles.field}>
+            <label className={styles.fieldLabel} htmlFor="feedback-answer">
+              If the agent reached a <em>wrong conclusion</em>: what is the correct answer, and
+              what evidence supports it? <span className={styles.optional}>(optional)</span>
+            </label>
+            <textarea
+              id="feedback-answer"
+              className={styles.textarea}
+              placeholder="e.g. His father was Robert Smith (b. ~1820, Augusta Co., VA) — 1850 census, Robert's household, and the 1872 probate naming John as heir."
+              value={correctAnswer}
+              onChange={(e) => setCorrectAnswer(e.target.value)}
+              disabled={sendState === 'sending'}
+            />
+            <div className={styles.fieldHint}>
+              Skip this if the problem was how the agent worked rather than the answer it
+              reached. When you do fill it in, we can turn this case into a regression test
+              without coming back to ask you.
+            </div>
+          </div>
+
+          <div className={styles.field}>
             <label className={styles.fieldLabel} htmlFor="feedback-notes">
               Notes <span className={styles.optional}>(optional)</span>
             </label>
@@ -311,9 +338,11 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
 
           <div className={styles.privacy}>
             Send packages your project folder as a zip and uploads it to a private Google Drive
-            folder accessible only to the Pioneer Academy team. Audio and image files are excluded
-            unless you check &ldquo;Include media.&rdquo; The session log includes tool calls and
-            their results but not Claude&apos;s internal thinking.
+            folder accessible only to the Pioneer Academy team. Documents and images you uploaded
+            are included &mdash; untick &ldquo;Include media files&rdquo; to leave them out. The
+            session log includes your prompts, Claude&apos;s replies and internal reasoning, and
+            every tool call with its results &mdash; the reasoning is what lets us diagnose why the
+            agent did what it did.
           </div>
         </div>
 

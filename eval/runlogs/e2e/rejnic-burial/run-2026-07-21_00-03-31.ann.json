@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Recovered. Maria Rejnic (L86H-T8G) has a Burial fact 'Kennedy Township, Allegheny, Pennsylvania, United States' in the final tree, with death 18 June 1967 Pittsburgh — matching the required finding. Proof rests on a single derivative source (Find A Grave index), so proof_quality 2 (thin/single-source) for a defensible 'probable' burial conclusion. Re-run on post-weekend main; result consistent with the prior run — nothing regressed."
+  },
+  "annotator": "ernest"
+}

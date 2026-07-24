@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { App as ViewerApp } from '@genealogy/viewer-ui'
 import { api, type SessionSummary } from '../api'
 import { useAlpha } from '../lib/alpha'
+import { useChatWidth } from '../lib/chatWidth'
 import { makeSessionConnection } from '../transport/makeSessionConnection'
 import type { SessionConnection } from '../transport/SessionConnection'
 import { WsResearchTransport } from '../transport/WsResearchTransport'
@@ -26,7 +27,13 @@ export default function SessionView({
   const [session, setSession] = useState<SessionSummary | null>(null)
   const [conn, setConn] = useState<SessionConnection | null>(null)
   const [logs, setLogs] = useState<{ ws: string; agent: string } | null>(null)
+  // The user's FamilySearch grant expired (FS caps it at 24h, so a tab left open
+  // overnight hits this while the 30-day app session is still valid). /connect
+  // reports it on every reconnect, so it clears itself once the user reconnects
+  // FamilySearch and the tab re-establishes its socket.
+  const [fsExpired, setFsExpired] = useState(false)
   const { alpha, setAlpha } = useAlpha()
+  const { width: chatWidth, dragging, dividerProps } = useChatWidth()
 
   // Running cost for this session connection — operator/sponsor signal during
   // alpha (per-turn usage summed from the agent event stream). Resets on
@@ -73,7 +80,7 @@ export default function SessionView({
     // A stale/shared `#/s/:id` link can point at a session that no longer
     // exists — fall back to the list rather than hang on "Loading…".
     void api.resumeSession(sessionId).then(setSession).catch(() => onBack())
-    void makeSessionConnection(sessionId).then((c) => {
+    void makeSessionConnection(sessionId, (fs) => setFsExpired(fs === 'expired')).then((c) => {
       if (cancelled) {
         c.close()
         return
@@ -99,8 +106,28 @@ export default function SessionView({
 
   const costLabel = `${cost.estimated ? '~' : ''}$${cost.usd.toFixed(cost.usd >= 1 ? 2 : 4)}`
 
+  // Return here after reconnecting, not to the session list. The hash is the
+  // SPA route (App.readRoute); `#` must be percent-encoded so it survives as a
+  // query value rather than being read as the URL fragment.
+  const reconnectHref = `/auth/familysearch/login?next=${encodeURIComponent(`#/s/${sessionId}`)}`
+
   return (
-    <div className="sessionShell">
+    <div
+      className="sessionShell"
+      data-dragging={dragging ? 'true' : undefined}
+      style={{ '--chat-w': `${chatWidth}px` } as React.CSSProperties}
+    >
+      {fsExpired && (
+        <div className="fsExpiredBanner" role="alert">
+          <span>
+            Your FamilySearch sign-in has expired. Reconnect to keep searching records —
+            your research is safe and stays open.
+          </span>
+          <a className="btnPrimary" href={reconnectHref}>
+            Reconnect FamilySearch
+          </a>
+        </div>
+      )}
       <aside className="chatPane">
         <header className="chatHeader">
           <button className="btnGhost" onClick={onBack} title="Back to sessions" aria-label="Back to sessions">
@@ -108,10 +135,11 @@ export default function SessionView({
           </button>
           <span className="chatTitle">{session?.title ?? 'Loading…'}</span>
 
-          {/* Operator/dev affordances — hidden for normal users, shown only when
-              alpha mode is on (visit /?alpha=1). Removable after the alpha test. */}
-          {alpha && (
-            <span className="alphaCluster">
+          {/* The cost chip is shown to everyone — alpha testers asked to see what
+              they are spending. The ALPHA tag and Logs button stay operator-only
+              (visit /?alpha=1) and are removable after the alpha test. */}
+          <span className="alphaCluster">
+            {alpha && (
               <button
                 className="alphaTag"
                 onClick={() => setAlpha(false)}
@@ -119,28 +147,31 @@ export default function SessionView({
               >
                 ALPHA
               </button>
-              <span
-                className="costChip"
-                title={`${cost.turns} turn${cost.turns === 1 ? '' : 's'} · ${cost.inTok.toLocaleString()} in / ${cost.outTok.toLocaleString()} out tokens${cost.estimated ? ' · mock estimate' : ''}`}
-              >
-                {costLabel}
-              </span>
+            )}
+            <span
+              className="costChip"
+              title={`${cost.turns} turn${cost.turns === 1 ? '' : 's'} · ${cost.inTok.toLocaleString()} in / ${cost.outTok.toLocaleString()} out tokens${cost.estimated ? ' · mock estimate' : ''} · counted since this page loaded`}
+            >
+              {costLabel}
+            </span>
+            {alpha && (
               <button className="btnGhost" onClick={() => void viewLogs()} title="Sandbox WS + agent logs">
                 Logs
               </button>
-            </span>
-          )}
+            )}
+          </span>
 
           <ThemeToggle />
         </header>
         {conn ? (
-          <ChatPane conn={conn} isNew={isNew} onUsage={onUsage} />
+          <ChatPane conn={conn} sessionId={sessionId} isNew={isNew} onUsage={onUsage} />
         ) : (
           <div className="chatBody">
             <div className="chatPlaceholder muted">Connecting…</div>
           </div>
         )}
       </aside>
+      <div {...dividerProps} />
       <section className="viewerPane">
         {/* The web shell provides its own theme toggle in the chat header, so
             tell the embedded viewer to hide its (redundant) sidebar one.

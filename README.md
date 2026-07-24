@@ -23,7 +23,7 @@ has to live in the server.
 > runs under the Claude Agent SDK in a per-user sandbox; the viewer is shared
 > with the Electron app via `packages/viewer-ui`). It runs fully on mocks with
 > `make install && make server-mock && make web-dev` — no E2B/Anthropic/OAuth needed.
-> See **`docs/plan/hosted-web-workbench-POC-status.md`** for the run guide,
+> See **`DEVELOPMENT.md`** and **`docs/plan/realtime-rearch-status.md`** for the run guide,
 > what-works table, and provisioning checklist, and `make help` for commands.
 
 The plugin manages two project files:
@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 31 tools.
+The MCP server exposes 33 tools.
 
 ### FamilySearch records and places
 
@@ -95,7 +95,9 @@ The MCP server exposes 31 tools.
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata | OAuth |
+| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. The `image-reader-opus` subagent's reader — not called directly by any skill. | OAuth |
+| `image_transcribe` | OCR a FamilySearch image by imageId or ark host-side (Qwen3-VL via OpenRouter) and return **text** — no bytes cross the MCP transport, so it handles scans of any size. The `image-reader` subagent's reader. | OAuth + OpenRouter |
+| `configure_openrouter` | Save the user's OpenRouter API key to `~/.familysearch-mcp/config.json` (`openRouterApiKey`) so `image_transcribe` can run; returns a masked preview. Direct-invocation — Claude calls it when `image_transcribe` reports a missing/rejected key. | None |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
@@ -120,12 +122,23 @@ tool runs RAG retrieval over the FamilySearch Wiki. Both call hosted
 sidecar APIs (Pop Stats and `wiki-query-api`); no local setup required
 for end users.
 
+The `image_transcribe` tool OCRs page scans host-side via OpenRouter
+(default model `qwen/qwen3-vl-235b-a22b-instruct`). It needs an
+OpenRouter API key in `~/.familysearch-mcp/config.json` (`openRouterApiKey`);
+in Cowork, if the key is missing or rejected the workflow asks the user
+for one and saves it via `configure_openrouter`. The e2e harness and the
+hosted web server bridge the key from their own environment (see
+CLAUDE.md).
+
 Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 28 skills covering the full GPS research cycle. Skills
+The plugin ships 27 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
+For a plain-language account of the research method itself — the GPS
+cycle, the judgment made at each stage, and what to expect from a
+session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 
 ### Starting and resuming
 
@@ -134,6 +147,7 @@ are listed in roughly the order you'd use them in a research project.
 | **init-project** | Creates a new project from a FamilySearch person ID. If no ID is known, searches the Family Tree by name using `person_search` to find the right person first. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" / "Start a project for Patrick Flynn, born 1845 Ireland — I don't have his ID" |
 | **project-status** | Summarizes project progress with GPS state + conversational narrative. Recommends the next step. | "Where are we?" / "What's next?" / "Status" |
 | **research** | Drives the full GPS workflow on a research objective, invoking the right sub-skills based on `research.json` state and iterating until the question is resolved. For beginners who don't know which sub-skill to invoke when. The `--autonomous` flag exists only for end-to-end automated testing of the workflow; it is not intended as a way to let the AI do your family history for you. Genealogy requires *your* judgment on evidence, conflicts, and conclusions — see "A note on responsibility" above. | "/research find John Smith's parents" / "Research who Patrick Flynn's father was" |
+| **forget-and-rederive** | Sets up a practice run: strips information you already have out of the project tree so it has to be re-derived from records. Always dry-runs first and reports only redacted counts. Requires you to also not look the answer back up — the FamilySearch tree still has it, so the FS tree-reading tools are off-limits for those people afterward. | "Forget what you know about Patrick's parents and find them again" / "Hide his parents and see if you can re-derive them" |
 
 ### Planning the research
 
@@ -149,7 +163,7 @@ are listed in roughly the order you'd use them in a research project.
 |-------|-------------|----------|
 | **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. | "Full-text search for Flynn in Schuylkill County deeds" |
-| **search-images** | Browses FamilySearch digitized image volumes page-by-page when a record set is digitized but unindexed and not full-text searchable. Finds the volume (`volume_search`), lists its images (`image_search`), and views pages (`image_read`). | "Browse the unindexed Schuylkill County probate films" |
+| **search-images** | Browses FamilySearch digitized image volumes page-by-page when a record set is digitized but unindexed and not full-text searchable. Finds the volume (`volume_search`), lists its images (`image_search`), and views pages by delegating to the `image-reader` subagent. | "Browse the unindexed Schuylkill County probate films" |
 | **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com. Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
 
 ### Analyzing evidence
@@ -203,9 +217,9 @@ end-to-end benchmark. These two skills are **not** part of the Cowork
 plugin — they are tooling for the internal genealogist+developer benchmark
 teams and live in [`.claude/skills/`](./.claude/skills/) (loaded by Claude
 Code in this checkout), alongside the other dev skills `compare-state` and
-`draft-unit-test`. The implementation plan is at
-[docs/plan/e2e-skills.md](./docs/plan/e2e-skills.md); the usage playbook is
-[docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md).
+`mine-unit-test`. The usage playbook is
+[docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md); the fixture format is
+specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
@@ -215,14 +229,17 @@ Code in this checkout), alongside the other dev skills `compare-state` and
 
 ## Agents
 
-The plugin ships one Cowork agent. Unlike skills, an agent runs in
-fresh context and is invoked by the Cowork orchestrator — or by
-`/research` at GPS checkpoints — when its description matches; you
+The plugin ships four Cowork agents. Unlike skills, an agent runs in
+fresh context and is invoked by the Cowork orchestrator, by `/research`
+at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
 
 | Agent | What it does | Say this |
 |-------|-------------|----------|
-| **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. `/research` calls it automatically before the exhaustiveness gate, before the proof conclusion, and after a conclusion is written. | "Review my work" / "Is this defensible?" / "Am I ready to conclude?" |
+| **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. `/research` calls it once per proof, after a conclusion is written; its verdict is advisory and never blocks or re-opens a resolved question. You can also ask for a review at any time. | "Review my work" / "Is this defensible?" / "Am I ready to conclude?" |
+| **record-extractor** | Extracts every assertion from **one** record — the source entry, atomic per-fact assertions, and their GPS evidence classifications — in a single validated write. The `record-extraction` skill delegates one of these per record; classifications are set here and are final. | (not invoked directly — `record-extraction` delegates) |
+| **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Qwen3-VL OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
+| **image-reader-opus** | Re-reads **one** FamilySearch image scan using its own (Opus) vision, for a page the fast reader handled poorly (faded ink, difficult handwriting, Kurrentschrift). Slower and far more expensive than `image-reader` — invoked only on an explicit request for a higher-accuracy re-read, never as a default. | "Re-read this page with Opus" / "The fast OCR garbled this — try harder" |
 
 ## Recommended workflow
 
@@ -460,8 +477,10 @@ What's shipped:
   and guardrails (validate-schema, check-warnings, convert-dates). The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **1 Cowork agent.** `gps-mentor` — a BCG-style senior-genealogist
-  review, invoked by `/research` at GPS checkpoints and on demand.
+- **4 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
+  invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
+  (per-record assertion extraction), `image-reader` (fast/cheap page OCR),
+  and `image-reader-opus` (explicit-only, higher-accuracy re-read).
 - **Researcher profile.** `init-project` captures experience level and
   paid subscriptions in two questions; every skill adapts narration
   density to the answer.
@@ -469,17 +488,39 @@ What's shipped:
 
 ## Developer and contributor docs
 
+### First, install the git hooks
+
+Once per clone (not once per branch), run:
+
+```bash
+make install-hooks          # Windows: double-click eval\InstallHooks.bat
+```
+
+This installs two hooks: `post-checkout` auto-links shared gitignored files
+(`node_modules`, `eval/.env`, `apps/server/.env`) into new worktrees, and
+`commit-msg` warns — never blocks — when a commit is missing a human
+`Co-authored-by:` trailer. It's safe to re-run, and refuses rather than
+clobbering a hook it didn't write. Details in
+[DEVELOPMENT.md → Git hooks](./DEVELOPMENT.md#git-hooks).
+
+
+### Where to read next
+
 - [DEVELOPMENT.md](./DEVELOPMENT.md) — building, testing, smoke-tests,
   adding tools and skills, running the eval harness.
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — what kinds of contributions
   are welcome, constraints, and how to submit.
 - [CLAUDE.md](./CLAUDE.md) — architecture and conventions Claude reads
   when editing the code.
-- [docs/feedback-workflow.md](./docs/feedback-workflow.md) — how to
+- [docs/alpha-feedback-guide.md](./docs/alpha-feedback-guide.md) — how to
   triage a user feedback submission, fix the bug, and lock it in
-  with a regression test. Start here when a feedback zip lands.
+  with a regression test, walked through as one worked story. Start
+  here when a feedback zip lands.
+- [docs/skill-lifecycle.md](./docs/skill-lifecycle.md) — the shared loop
+  every fix goes through: mine a test, run it, annotate, improve, gate,
+  release. Ends with a worked example of the whole loop.
 - [eval/README.md](./eval/README.md) — eval harness for skill
   regression testing: how to run it, add cases, and interpret results.
-- [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) — end-to-end
-  testing playbook covering the full plugin + MCP server flow.
+- [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) — authoring and
+  running the end-to-end research benchmark.
 

@@ -372,14 +372,80 @@ button {
 .sessionShell {
   height: 100vh;
   display: grid;
-  grid-template-columns: minmax(300px, 380px) 1fr;
+  /* --chat-w is set inline by SessionView (drag state, persisted per browser). */
+  grid-template-columns: var(--chat-w, 380px) auto 1fr;
+  /* Row 1 (auto) is the FamilySearch-expired banner; it collapses to 0 when the
+     banner isn't rendered, so the panes keep filling the viewport as before.
+     The panes are pinned to row 2 so they never drift into the banner row. */
+  grid-template-rows: auto 1fr;
+}
+.sessionShell > .chatPane,
+.sessionShell > .paneDivider,
+.sessionShell > .viewerPane {
+  grid-row: 2;
+}
+/* Amber, from the viewer's badge palette so it tracks both themes. */
+.fsExpiredBanner {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  background: var(--badge-amber-bg);
+  color: var(--badge-amber-text);
+  border-bottom: 1px solid var(--accent-gold-strong);
+  font-size: 14px;
+  text-align: center;
+}
+.fsExpiredBanner .btnPrimary {
+  flex: none;
+  width: auto;
+  padding: 6px 14px;
+  font-size: 13px;
 }
 .chatPane {
   display: flex;
   flex-direction: column;
   min-height: 0;
   background: var(--bg-elev);
-  border-right: 1px solid var(--line);
+}
+/* Drag handle between the chat and the viewer. The visible line is the 1px
+   ::before; the element itself is a wider invisible hit area so the drag is
+   grabbable without hunting for a hairline. */
+.paneDivider {
+  position: relative;
+  width: 7px;
+  flex: none;
+  cursor: col-resize;
+  background: none;
+  border: 0;
+  padding: 0;
+  touch-action: none; /* let pointermove drive the drag on touch/pen */
+}
+.paneDivider::before {
+  content: '';
+  position: absolute;
+  inset: 0 3px;
+  background: var(--line);
+  transition: background 120ms ease;
+}
+.paneDivider:hover::before,
+.paneDivider:focus-visible::before,
+.paneDivider[data-dragging='true']::before {
+  background: var(--accent);
+  inset: 0 2px;
+}
+.paneDivider:focus-visible {
+  outline: none;
+}
+/* Keep the resize cursor (and kill text selection) across both panes for the
+   whole drag, not just while the pointer is over the 7px handle. */
+.sessionShell[data-dragging='true'] {
+  cursor: col-resize;
+  user-select: none;
 }
 .chatHeader {
   display: flex;
@@ -591,4 +657,45 @@ button {
 }
 .chatSend:disabled {
   opacity: 0.5;
+}
+/* Replaces Send while a turn is running (interrupt). Muted rather than accented
+   so it reads as a secondary "abort", not the primary action. */
+.chatStop {
+  align-self: stretch;
+  background: var(--bg-card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 16px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+.chatStop:hover {
+  border-color: var(--accent-soft);
+  color: var(--accent);
+}
+/* Attach a document/image for the agent to read (uploads/ in the project). */
+.chatAttach {
+  align-self: stretch;
+  background: var(--bg-card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.chatAttach:hover:not(:disabled) {
+  border-color: var(--accent-soft);
+}
+.chatAttach:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.chatUploadError {
+  padding: 0 10px 8px;
+  font-size: 12px;
+  color: var(--danger, #c0392b);
 }
