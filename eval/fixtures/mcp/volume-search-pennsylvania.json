@@ -1,0 +1,60 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — statewide digitized image groups (browse-only films) covering Pennsylvania, 1840–1910. State-level companion to volume-search-schuylkill: matches a state-scoped standardPlace ('Pennsylvania, United States') so a skill that widens from county to state after the county search still gets results rather than fixture_not_found (in production a state-level volume_search returns real image groups). Order it AFTER volume-search-schuylkill (~Schuylkill) in a test's mcp_fixtures so a county-scoped call still resolves to the county fixture first.",
+  "args": {
+    "standardPlace": "~Pennsylvania"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Pennsylvania, United States"
+    },
+    "totalResults": 3,
+    "results": [
+      {
+        "imageGroupNumber": "008120441",
+        "imageGroupPrefix": "008120441",
+        "imageCount": 1180,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Pennsylvania, United States",
+            "dateRange": "1683–1994",
+            "recordType": "Probate Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008120442",
+        "imageGroupPrefix": "008120442",
+        "imageCount": 674,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Pennsylvania, United States",
+            "dateRange": "1852–1968",
+            "recordType": "Death Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008120443",
+        "imageGroupPrefix": "008120443",
+        "imageCount": 351,
+        "recordSearchablePercent": 15,
+        "fulltextSearchable": false,
+        "languages": ["en", "de"],
+        "coverages": [
+          {
+            "place": "Pennsylvania, United States",
+            "dateRange": "1790–1915",
+            "recordType": "Naturalization Records"
+          }
+        ]
+      }
+    ]
+  }
+}
