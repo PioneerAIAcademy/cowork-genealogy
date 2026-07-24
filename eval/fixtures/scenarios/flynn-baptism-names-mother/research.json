@@ -1,0 +1,118 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the mother of Patrick Flynn (b. ~1845, Clare, Ireland; son of Thomas Flynn) from his parish baptismal register.",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-06",
+    "updated": "2026-05-06"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was Patrick Flynn's mother?",
+      "rationale": "Patrick is in the tree with his father Thomas (I2) but no mother. His Kilrush baptismal register names the mother directly, which should resolve the maternal identity.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-06",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-05-06T10:00:00Z",
+      "tool": "record_read",
+      "query": {
+        "collection": "Ireland, Catholic Parish Registers",
+        "record": "Kilrush baptisms, Patrick Flynn"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Kilrush RC baptismal register: Patrick Flynn, son of Thomas Flynn and Bridget Doyle. Mother named directly in the register.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S2",
+      "citation": "Kilrush parish (Diocese of Killaloe, Ireland), baptismal register, entry for Patrick Flynn, son of Thomas Flynn and Bridget Doyle; digital image, FamilySearch.org, accessed 6 May 2026.",
+      "citation_detail": {
+        "who": "Officiating priest",
+        "what": "Catholic parish baptismal register entry",
+        "when_created": "1845",
+        "when_accessed": "2026-05-06",
+        "where": "FamilySearch.org",
+        "where_within": "Patrick Flynn baptism entry"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:BAPT-K1Q",
+      "url_archived": null,
+      "notes": "Register names both parents. Mother: Bridget Doyle.",
+      "transcription": null,
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:BAPT-K1Q",
+      "record_role": "child",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Patrick Flynn, baptized at Kilrush, named as son of Thomas Flynn and Bridget Doyle",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother",
+        "related_person_name": "Bridget Doyle"
+      },
+      "information_quality": "primary",
+      "informant": "Officiating priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:BAPT-K1Q",
+      "record_role": "mother",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Bridget Doyle",
+      "structured_value": {
+        "given": "Bridget",
+        "surname": "Doyle"
+      },
+      "information_quality": "primary",
+      "informant": "Officiating priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
