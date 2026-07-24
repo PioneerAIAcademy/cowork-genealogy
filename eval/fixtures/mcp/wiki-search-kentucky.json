@@ -1,0 +1,34 @@
+{
+  "tool": "wiki_search",
+  "description": "wiki_search catch-all for Kentucky research queries — surfaces the 1911 registration start and the probate alternative for pre-1911 deaths.",
+  "args": {
+    "query": "~"
+  },
+  "response": {
+    "query": "Kentucky death records genealogy research",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.9,
+        "chunk_text": "Kentucky Vital Records: statewide registration of births and deaths began 1 January 1911. Earlier county-level death registers were kept 1852-1859 and 1874-1910 with significant gaps — many counties have no surviving death registers for the 1860s-1870s. For a death before 1911 that the registers do not cover, use probate records, church burial registers, cemetery records, and mortality schedules instead of certificates.",
+        "page_title": "Kentucky Vital Records",
+        "page_url": "https://www.familysearch.org/en/wiki/Kentucky_Vital_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.86,
+        "chunk_text": "Kentucky Probate Records: administered by the county court — wills, administrator and executor bonds, estate settlements, inventories, and guardianships. When a person died intestate, the court appointed an administrator (often the widow or an adult son) and the bond, settlements, and register entries bracket the death date. Probate is the primary death evidence for pre-1911 Kentucky deaths not covered by county registers.",
+        "page_title": "Kentucky Probate Records",
+        "page_url": "https://www.familysearch.org/en/wiki/Kentucky_Probate_Records"
+      },
+      {
+        "rank": 3,
+        "relevance_score": 0.8,
+        "chunk_text": "Kentucky Church and Cemetery Records: church minute books and burial registers, and county cemetery transcriptions, supplement civil sources for death dates and places, especially for the 1850s-1900s where civil registration is incomplete.",
+        "page_title": "Kentucky Church Records",
+        "page_url": "https://www.familysearch.org/en/wiki/Kentucky_Church_Records"
+      }
+    ]
+  }
+}

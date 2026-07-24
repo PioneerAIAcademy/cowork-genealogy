@@ -1,0 +1,17 @@
+{
+  "tool": "place_population",
+  "description": "place_population — Muhlenberg County, Kentucky population context.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "place": "Muhlenberg, Kentucky, United States",
+    "data": [
+      { "year": 1850, "population": 9809 },
+      { "year": 1860, "population": 10725 },
+      { "year": 1870, "population": 12638 },
+      { "year": 1880, "population": 15098 }
+    ],
+    "notes": "Rural western-Kentucky farming county; several extended Wilkins families resided there through the late 19th century."
+  }
+}

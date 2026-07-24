@@ -1,0 +1,235 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Determine when and where Elijah Wilkins (b. c.1814, Muhlenberg County, Kentucky) died",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-07-17",
+    "updated": "2026-07-17"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Elijah Wilkins (b. c.1814, Muhlenberg County, Kentucky) die?",
+      "rationale": "Primary objective. Census trail ends after 1870; no Kentucky death certificate is expected (statewide registration began 1911), so the county estate administration is the key evidence.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-17",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-17",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Kentucky",
+          "date_range": "1875-1911",
+          "repository": "FamilySearch",
+          "rationale": "Check the Kentucky statewide death collections for a certificate.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "probate",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1870-1890",
+          "repository": "FamilySearch",
+          "rationale": "With no certificate expected pre-1911, the estate administration brackets the death.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-17T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wilkins",
+        "given": "Elijah",
+        "collection": "Kentucky Deaths"
+      },
+      "outcome": "negative",
+      "results_examined": 12,
+      "notes": "No death certificate for the subject in the Kentucky statewide death collections. Kentucky statewide death registration began 1911; the subject (last documented 1870, born c.1814) died decades earlier, so NO Kentucky death certificate exists for him. This is a documented negative, not an unsearched gap.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-17T10:30:00Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Wilkins +Elijah +estate",
+        "recordPlace": "Muhlenberg, Kentucky"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "notes": "Muhlenberg County estate administration: Jesse Wilkins named administrator of the estate of Elijah Wilkins, deceased, intestate (1885 term). Establishes the subject was deceased by 1885. No exact death date stated in the index.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "Muhlenberg County, Kentucky, Court Order Books, administration of the estate of Elijah Wilkins, deceased, intestate, Jesse Wilkins administrator, 1885 term; digital images, FamilySearch.org.",
+      "citation_detail": {
+        "who": "Muhlenberg County Court",
+        "what": "Estate administration (order book entry)",
+        "when_created": "1885",
+        "when_accessed": "2026-07-17",
+        "where": "FamilySearch.org (Kentucky Probate Records, 1727-1990)",
+        "where_within": "Muhlenberg County order book, 1885 term"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-17",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:WILK-ESTB",
+      "url_archived": null,
+      "notes": "Full-text index of the order-book page; original order book not separately imaged in this search.",
+      "log_entry_id": "log_002"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:WILK-ESTB",
+      "record_role": "principal",
+      "fact_type": "death",
+      "value": "Deceased by 1885 — estate administered (intestate)",
+      "structured_value": {
+        "bound": "before 1885"
+      },
+      "date": "before 1885",
+      "date_certainty": "estimated",
+      "place": "Muhlenberg County, Kentucky",
+      "information_quality": "secondary",
+      "informant": "County court clerk recording the administration grant",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The administration record establishes the subject was dead by the 1885 term but does not state a death date; the death is bracketed, not dated. Indirect evidence of death timing.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:WILK-ESTB",
+      "record_role": "principal",
+      "fact_type": "name",
+      "value": "Elijah Wilkins",
+      "structured_value": {
+        "given": "Elijah",
+        "surname": "Wilkins"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "secondary",
+      "informant": "County court clerk",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Name of the decedent as recorded in the administration grant.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:WILK-ESTB",
+      "record_role": "administrator",
+      "fact_type": "relationship",
+      "value": "Jesse Wilkins, administrator of Elijah Wilkins's estate",
+      "structured_value": {
+        "relationship_type": "administrator",
+        "related_person_role": "decedent"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Muhlenberg County, Kentucky",
+      "information_quality": "secondary",
+      "informant": "County court clerk",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Jesse Wilkins (the subject's documented son) served as administrator — the kin relationship anchors the decedent's identity to the subject.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "The intestate estate administered in 1885 Muhlenberg County, with the subject's documented son Jesse as administrator, is the subject's estate — bracketing his death to before 1885.",
+      "match_score": null,
+      "created": "2026-07-17",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Jesse-as-administrator ties the estate to the subject via the documented father-son relationship.",
+      "match_score": null,
+      "created": "2026-07-17",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Elijah Wilkins died after the 1870 census and before the 1885 estate administration, in Muhlenberg County, Kentucky; no death certificate exists (statewide registration began 1911).",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Bounded conclusion: alive at the 1870 census, deceased by the 1885 administration. Exact date not recoverable from surviving records; the documented negative (no KY certificate pre-1911) is part of the answer.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
