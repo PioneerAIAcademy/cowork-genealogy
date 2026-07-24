@@ -1,0 +1,450 @@
+{
+  "project": {
+    "id": "rp_wilkins_death_kentucky",
+    "objective": "Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins of Kentucky, and what information in the certificate confirms his identity?",
+    "subject_person_ids": [
+      "97YZ-J3D"
+    ],
+    "status": "completed",
+    "created": "2026-07-14",
+    "updated": "2026-07-16"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What were the date and place of death of Elijah Wilkins of Kentucky, and what information in his Kentucky death certificate confirms his identity?",
+      "rationale": "The objective directly targets this single event \u2014 finding Elijah Wilkins's death as recorded in Kentucky death certificates (available from 1911 forward). Kentucky death certificates routinely contain date, county, and township of death, age, occupation, birthplace, parents' names, and informant \u2014 all identity-confirming data. This is the only question needed to answer the objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-16",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_005"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All primary planned searches are complete: (1) Kentucky Deaths 1911-1967 (pli_001) \u2014 positive, record found and extracted; (2) Kentucky Deaths and Burials 1843-1970 (pli_002) \u2014 negative, no additional entry. Fallback pli_003 skipped (pli_001 confirmed the record exists). External corroboration items pli_004 (FindAGrave, external site) and pli_005 (probate) skipped; both would add corroboration but not additional certificate content. FAN search pli_006 completed through pli_001 extraction (Ivy Wilkins and Polly Shover death certs captured). The original death certificate image was unreadable (two format attempts); identity is confirmed by collateral death certs. Declaring direct evidence phase exhaustive.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002"
+        ],
+        "stop_criteria": "Death date, place, and identity established at probable tier from index + collateral records. Original image unreadable; full certificate fields unavailable."
+      },
+      "created": "2026-07-16"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-16",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Kentucky, United States",
+          "date_range": "1911-1967",
+          "repository": "FamilySearch",
+          "rationale": "Kentucky, Deaths, 1911-1967 (collection 1417491) is the primary indexed death-certificate collection on FamilySearch with 1.7M records and images. Kentucky began mandatory statewide death registration in 1911; this collection is the most direct route to Elijah Wilkins's death certificate and the identity-confirming fields (age, birthplace, parents, informant) it contains.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Kentucky, United States",
+          "date_range": "1843-1970",
+          "repository": "FamilySearch",
+          "rationale": "Kentucky, Deaths and Burials, 1843-1970 (collection 1674848) is a broader complementary collection (588K records) that aggregates extracted death and burial entries from multiple sources. It may surface the entry under variant name spellings or if the death falls outside the main certificate series.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Kentucky, United States",
+          "date_range": "1911-1999",
+          "repository": "FamilySearch",
+          "rationale": "Kentucky, Vital Record Indexes, 1911-1999 (collection 2531527) is the most comprehensive index at 9.8M records; it covers the full post-registration period. No images are linked, but a positive hit confirms the record exists and provides date/county to retrieve the certificate image from pli_001.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "cemetery",
+          "jurisdiction": "Kentucky, United States",
+          "date_range": "1880-1960",
+          "repository": "other",
+          "rationale": "FindAGrave.com (and BillionGraves) aggregates transcribed and photographed Kentucky tombstone inscriptions. Cemetery records corroborate the date and place of death from the certificate, and may add burial location and surviving family members named in the memorial \u2014 further identity-confirming data.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "probate",
+          "jurisdiction": "Kentucky, United States",
+          "date_range": "1880-1960",
+          "repository": "FamilySearch",
+          "rationale": "Kentucky, Probate Records, 1727-1990 (collection 1875188) held on FamilySearch contains wills and estate administrations. A probate filing for Elijah Wilkins would independently document his death date and county, name heirs (identity confirmation), and may name a spouse or children who could corroborate identity.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Kentucky, United States",
+          "date_range": "1911-1967",
+          "repository": "FamilySearch",
+          "rationale": "FAN search: the tree contains named relatives (William Jackson Wilkins, Jesse Wilkins, James Wilkins, George Addison Wilkins, Ivy Wilkins). Their Kentucky death certificates may name parents or siblings \u2014 providing indirect identity-confirming data for Elijah Wilkins if his own certificate is ambiguous or not found. Search FamilySearch Kentucky Deaths, 1911-1967 for each of these individuals.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-16T20:11:14.138Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wilkins",
+        "givenName": "Elijah",
+        "collectionId": "1417491",
+        "recordType": "death",
+        "recordCountry": "United States",
+        "recordSubdivision": "Kentucky",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 175,
+      "notes": "175 total matches. Top principal-subject candidates: N9YP-FBF (Elijah Wilkins, died 1918, Paducah, McCracken KY) and NSMS-XXQ (Elijah Wilkins, died 1940, Central City, Muhlenberg KY). NSJP-9QL (Eligah Wilkins on Polly Shover record) and NS5C-JQ3 (Elija Wilkins on Fry Wilkins record) already attached to subject. Reading all candidates before extraction."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-16T20:34:16.510Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wilkins",
+        "givenName": "Elijah",
+        "collectionId": "1674848",
+        "recordType": "death",
+        "recordCountry": "United States",
+        "recordSubdivision": "Kentucky",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 36,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 36,
+      "notes": "36 results returned, none matching Elijah Wilkins of McCracken County ca. 1918. Top hits are James E. Wilkins (Jefferson 1913), Eliza/Charles/Catherine E. Wilkins (all Jefferson). This aggregated collection does not carry Elijah's death entry; pli_001 (Kentucky Deaths 1911-1967) remains the only indexed record."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-16T20:43:22.853Z",
+      "tool": "image_read",
+      "query": {
+        "imageId": "ark:/61903/1:2:M68N-R23",
+        "looking_for": "Elijah Wilkins death certificate, McCracken County Kentucky, 1918 \u2014 all certificate fields"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Final image read attempt (3rd total). Image is 4.31 MB; transport ceiling is 700 KB. NOT READ is a permanent file-size barrier, not a transient network error. The original certificate image cannot be transcribed in this automated context. Certificate fields (age, birthplace, parents, informant) remain unavailable from this source. Future access via browser or alternate repository (Ancestry, KDLA) is the only resolution path."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Kentucky, Deaths, 1911-1967\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:N9YP-FBF : accessed 2026-07-16), Entry for Elijah Wilkins, 1918.",
+      "citation_detail": "Entry for Elijah Wilkins, 1918; Paducah, McCracken County, Kentucky.",
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:M68N-R23",
+      "log_entry_id": "log_001",
+      "notes": "Original Kentucky death certificate image was not readable (two image-reader attempts returned NOT READ). Extraction is from the FamilySearch index entry only. Full identity fields (age, birthplace, parents' names, informant) were not captured.",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Kentucky, Deaths, 1911-1967\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NS5C-JQ3 : accessed 2026-07-16), Entry for Ivy Wilkins and Elija Wilkins, 11 April 1923.",
+      "citation_detail": "Entry for Ivy Wilkins (Fry Wilkins) and Elija Wilkins, 11 April 1923; McCracken County, Kentucky.",
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:M6ZX-K98",
+      "log_entry_id": "log_001",
+      "notes": "Ivy Wilkins death certificate. Elijah Wilkins (subject 97YZ-J3D) appears as non-principal father of the deceased. The same county (McCracken) as Elijah's own death certificate (src_001), supporting geographic identity link.",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "repository": "FamilySearch",
+      "citation": "\"Kentucky, Deaths, 1911-1967\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NSJP-9QL : accessed 2026-07-16), Entry for Polly Shover and Eligah [Elijah] Wilkins, 30 November 1935.",
+      "citation_detail": "Entry for Polly Shover (n\u00e9e Wilkins) and Eligah [Elijah] Wilkins, 30 November 1935; Bremen, Muhlenberg County, Kentucky.",
+      "source_classification": "derivative",
+      "access_date": "2026-07-16",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:M6ZB-MBJ",
+      "log_entry_id": "log_001",
+      "notes": "Polly Shover (n\u00e9e Wilkins) death certificate, 1935, Bremen, Muhlenberg County. Elijah Wilkins (subject) appears as non-principal (father). Corroborates Elijah's name and wife 'Sallie Millard' from Ivy Wilkins's 1923 cert (src_002). Polly born 1848 \u2014 Elijah must have been born no later than ~1830.",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:N9YP-FBF",
+      "record_role": "deceased",
+      "record_persona_id": "p_11710805355",
+      "fact_type": "Death",
+      "value": "Died 1918 in Paducah, McCracken County, Kentucky",
+      "date": "1918",
+      "date_certainty": "approximate",
+      "place": "Paducah, McCracken, Kentucky, United States",
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "standard_place": "Paducah, McCracken, Kentucky, United States"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:NS5C-JQ3",
+      "record_role": "non_principal_father",
+      "record_persona_id": "p_11732298423",
+      "fact_type": "ParentChild",
+      "value": "Father of Ivy Wilkins (born 1851, died 11 April 1923, McCracken County, Kentucky)",
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:NS5C-JQ3",
+      "record_role": "non_principal_father",
+      "record_persona_id": "p_11732298423",
+      "fact_type": "Marriage",
+      "value": "Married Sarah Millard",
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:NS5C-JQ3",
+      "record_role": "deceased",
+      "record_persona_id": "p_11732298422",
+      "fact_type": "Death",
+      "value": "Died 11 April 1923, McCracken, Kentucky",
+      "date": "11 April 1923",
+      "date_certainty": "exact",
+      "place": "McCracken, Kentucky, United States",
+      "information_quality": "primary",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002",
+      "standard_place": "McCracken, Kentucky, United States"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:NSJP-9QL",
+      "record_role": "non_principal_father",
+      "record_persona_id": "p_11726992041",
+      "fact_type": "ParentChild",
+      "value": "Father of Polly Shover n\u00e9e Wilkins (born 1848, died 30 November 1935, Bremen, Muhlenberg County, Kentucky)",
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:NSJP-9QL",
+      "record_role": "deceased",
+      "record_persona_id": "p_11726992040",
+      "fact_type": "Death",
+      "value": "Died 30 November 1935, Bremen, Muhlenberg, Kentucky",
+      "date": "30 November 1935",
+      "date_certainty": "exact",
+      "place": "Bremen, Muhlenberg, Kentucky, United States",
+      "information_quality": "primary",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003",
+      "standard_place": "Bremen, Muhlenberg, Kentucky, United States"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "97YZ-J3D",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The search was targeted directly at Elijah Wilkins in the Kentucky Deaths 1911\u20131967 collection; this result is the principal (deceased) entry for 'Elijah Wilkins' dying in 1918 in Paducah, McCracken County, KY. The same county (McCracken) is independently confirmed by two collateral death certificates \u2014 his children Ivy Wilkins (died 1923, McCracken) and Polly Shover (died 1935, Muhlenberg) \u2014 both of which name 'Elija/Eligah Wilkins' as their father. No competing Elijah Wilkins with the correct kin network was found in McCracken County. Confident identification.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "97YZ-J3D",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Ivy Wilkins's 1923 McCracken County death certificate names her father as 'Elija Wilkins' and her mother as 'Sarah Millard.' Tree person 97YZ-J3D is Elijah Wilkins, married to Sally (n\u00e9e Millard) Wilkins; his death 5 years earlier in the same county (McCracken) aligns chronologically and geographically. Name variant 'Elija' for 'Elijah' is a routine spelling variant. Information is secondary (reported by an informant not present at Elijah's birth). Probable confidence \u2014 secondary information, but consistent with all other evidence.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_002",
+      "person_id": "L7WM-ZMY",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The assertion's ParentChild fact concerns the parent\u2013child pair. The child side is Ivy Wilkins, deceased on record NS5C-JQ3, born 1851, died 11 April 1923, McCracken County, KY. Tree person L7WM-ZMY is Ivy Wilkins, born 10 July 1850, died 11 April 1923, McCracken County \u2014 the death date and county match exactly. The FamilySearch log notes this record was already attached to subject 97YZ-J3D as Elijah's child. Confident identification of L7WM-ZMY as the child on this ParentChild assertion.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "97YZ-J3D",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The marriage assertion (Married Sarah Millard) comes from the non-principal-father role on Ivy Wilkins's 1923 death certificate. Tree person 97YZ-J3D (Elijah Wilkins) is recorded as married to K2BS-YMD 'Sally Wilkins' in Muhlenberg County Dec 1834 \u2014 Sally/Sarah is a common variant pair, and 'Millard' is Sally's maiden name (she appears as Sally Wilkins in censuses after marriage). The Polly Shover cert (src_003) corroborates 'Sallie Millard' as mother, making the identification consistent across two independent death certificates. Probable: indirect evidence from secondary information.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_003",
+      "person_id": "K2BS-YMD",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The marriage assertion names Elijah Wilkins's wife as 'Sarah Millard.' Tree person K2BS-YMD is listed as 'Sally Wilkins' born ~1818 Muhlenberg KY \u2014 Sally and Sarah are routine name variants; Millard is her maiden name before she took the Wilkins surname. Two independent Kentucky death certificates (Ivy's 1923 and Polly's 1935) consistently name the mother as 'Sarah/Sallie Millard,' matching K2BS-YMD's birth location (Muhlenberg) and the recorded marriage to Elijah in Dec 1834 Muhlenberg County. Probable confidence: name variants are well-attested; the maiden-name / married-name distinction explains the apparent discrepancy.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "L7WM-ZMY",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The deceased on record NS5C-JQ3 is Ivy Wilkins (also indexed as 'Fry Wilkins'), died 11 April 1923, McCracken County, KY. Tree person L7WM-ZMY is Ivy Wilkins with a death fact of 11 April 1923, McCracken County \u2014 exact match on date and county. This record is already attached in FamilySearch to the subject (97YZ-J3D) family cluster. No alternate Ivy Wilkins with matching date/place was found. Confident identification.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "97YZ-J3D",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Polly Shover's 1935 Bremen, Muhlenberg County death certificate names her father as 'Eligah Wilkins' and her mother as 'Sallie Millard.' Tree person 97YZ-J3D is Elijah Wilkins married to Sally n\u00e9e Millard; the 'Eligah' spelling is a routine variant. Polly was born 1848 in Muhlenberg \u2014 consistent with Elijah being born ~1814 in Muhlenberg (reasonable ~34-year parent\u2013child gap). This corroborates the same parentage named on Ivy Wilkins's 1923 cert. Probable: secondary information reported by an informant of unknown proximity.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_005",
+      "person_id": "27HB-Z94",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The child on this ParentChild assertion is Polly Shover n\u00e9e Wilkins, born 1848, died 30 November 1935, Bremen, Muhlenberg County. Tree person 27HB-Z94 has a Death fact of 30 November 1935, Bremen, Muhlenberg \u2014 exact match on date and place. The record is already attached in FamilySearch to the subject (97YZ-J3D) family cluster. Confident identification of 27HB-Z94 as the child on this ParentChild assertion.",
+      "created": "2026-07-16"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_006",
+      "person_id": "27HB-Z94",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The deceased on record NSJP-9QL is Polly Shover n\u00e9e Wilkins, died 30 November 1935, Bremen, Muhlenberg County. Tree person 27HB-Z94 carries a Death fact of 30 November 1935, Bremen, Muhlenberg \u2014 exact match on date and place. The record is already attached in FamilySearch to the subject's cluster. No competing Polly Shover with matching date/place found. Confident identification.",
+      "created": "2026-07-16"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "argument",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_005"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched (1) Kentucky, Deaths, 1911-1967 (FS collection 1417491, pli_001) \u2014 positive, ark:/61903/1:1:N9YP-FBF identified and extracted; original image NOT READ after two format attempts. (2) Kentucky, Deaths and Burials, 1843-1970 (collection 1674848, pli_002) \u2014 negative, no entry for Elijah Wilkins in McCracken County ca. 1918. FAN searches for children Ivy Wilkins and Polly Shover completed via pli_001 extraction. Broader vital-record index (pli_003) skipped as redundant to the positive pli_001 result. Cemetery corroboration (pli_004, FindAGrave) and probate (pli_005) skipped \u2014 both would add corroboration but not certificate content; image limitation is the binding constraint.",
+      "narrative_markdown": "## Research question\n\nWhat were the date and place of death of Elijah Wilkins of Kentucky, and what information in his Kentucky death certificate confirms his identity?\n\n## Conclusion\n\nElijah Wilkins (FamilySearch ID 97YZ-J3D) died in **1918** in **Paducah, McCracken County, Kentucky**. His identity on the death record is confirmed by geographic consistency and by two independent collateral Kentucky death certificates that name him as father with the same spouse.\n\n## Evidence\n\n### The death certificate index entry (src_001)\n\nFamilySearch index entry ark:/61903/1:1:N9YP-FBF in \"Kentucky, Deaths, 1911-1967\" (collection 1417491) records an Elijah Wilkins dying in 1918 in Paducah, McCracken County, Kentucky. This is a derivative source; it supplies the decedent's name, death year, and county of death \u2014 primary information to the extent the originating informant had personal knowledge of the event. The original certificate image (ark:/61903/1:2:M68N-R23) could not be read after two format attempts; accordingly, the additional identity fields a Kentucky death certificate normally contains \u2014 age, birthplace, parents' names, occupation, and informant \u2014 are not available from this source.\n\n### Collateral confirmation: Ivy Wilkins death certificate, 1923 (src_002)\n\nIvy Wilkins died 11 April 1923 in McCracken County. Her death certificate (ark:/61903/1:1:NS5C-JQ3) \u2014 in the same collection, the same county, five years after Elijah's recorded death \u2014 names her father as \"Elija Wilkins\" and her mother as \"Sarah Millard.\" Tree person L7WM-ZMY (Ivy Wilkins, born c. 1850\u20131851, died 11 April 1923 McCracken County) matches the deceased exactly by name, date, and place. The subject Elijah Wilkins (97YZ-J3D) is recorded in the tree as married to K2BS-YMD \"Sally Wilkins\" n\u00e9e Millard \u2014 the same person as \"Sarah Millard\" (Sally/Sarah are common variants; Millard is the maiden name before marriage). This certificate was already attached in FamilySearch to the subject's family cluster before this project began.\n\n### Collateral confirmation: Polly Shover death certificate, 1935 (src_003)\n\nPolly Shover (n\u00e9e Wilkins), born 1848, died 30 November 1935 in Bremen, Muhlenberg County. Her death certificate (ark:/61903/1:1:NSJP-9QL) names her father as \"Eligah Wilkins\" and her mother as \"Sallie Millard\" \u2014 the same parent pair as Ivy's certificate, drawn from a different county twelve years later. Tree person 27HB-Z94 (Polly, born 9 June 1848 Muhlenberg County, died 30 November 1935 Bremen Muhlenberg County) matches exactly. The variant spellings \"Elija\" and \"Eligah\" for \"Elijah\" are routine nineteenth-century orthographic variants.\n\n### Exclusion of competing Elijah Wilkins\n\nA second candidate, NSMS-XXQ (Elijah Wilkins, died 1940, Central City, Muhlenberg County), was positively excluded: that record names parents Ison Wilkins and Ann Holland \u2014 a different family with no connection to the Sarah Millard kin network.\n\n## Analysis\n\nThe two children's certificates, independent in county and year, agree on both the father's name (Elijah/Elija/Eligah Wilkins) and the mother's maiden name (Sarah/Sallie Millard). No other Elijah Wilkins in the searched Kentucky death records bears this kin network. The geographic match (McCracken County, where the subject's family was concentrated in the 1920s) corroborates the index entry. The 1918 death predates Ivy's 1923 death by five years in the same county, making the timeline coherent.\n\n## Limitations\n\n1. **Approximate date.** The index records only the year 1918; the exact day and month are unknown because the original certificate image was unreadable.\n2. **Certificate fields not captured.** Because the image could not be read, the identity fields on the certificate itself (age, birthplace, parents' names, informant) are not available. Identity is established from the index entry plus collateral corroboration, not from the certificate's own internal fields.\n\n## GPS tier\n\n**Probable.** Direct evidence from a derivative source (the index entry) establishes date and place of death. Two independent collateral death certificates corroborate identity. No conflicting evidence was found. The original certificate image remains unexamined \u2014 a limitation that keeps the conclusion below the \"proved\" tier. Access to the original image, if it becomes readable, could confirm the certificate's own identity fields and potentially elevate the conclusion to \"proved.\""
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001-20260716.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-16T20:42:13.504Z"
+    }
+  ]
+}

@@ -187,6 +187,18 @@ table and contextual factors checklist.
 **Key selection principles:**
 - Apply topical breadth (BCG Standard 14) — do not limit the plan
   to census and vital records.
+- **A record type named in the question is a lead, not a scope limit.**
+  When the question presupposes a specific record type ("using the
+  death certificates…", "find the census entry…"), plan that type
+  first — but still apply Standard 14 breadth: include the other
+  primary types for the goal from `references/record-type-guide.md`
+  (for a death question: probate/estate records, church burials,
+  cemetery records alongside death certificates). If the locality
+  survey shows the presupposed type **cannot cover the subject's place
+  and era** (e.g. the death predates the jurisdiction's civil
+  registration), say so in a plan-item rationale and lean on the
+  alternatives — never satisfy the premise by stretching to the
+  nearest same-named match inside the presupposed collection.
 - **For a parentage question, always add a dedicated plan item for the
   candidate parents' marriage to *each other*** — not the subject's own
   marriage, and not folded into a generic "church records" item. The

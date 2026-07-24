@@ -844,6 +844,91 @@ describe("research_append (project singleton section)", () => {
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/requires a .?fields/);
   });
+
+  // ── Completed-gate: unresolved blocking conflicts refuse the transition ──
+  // (wilkins-death-kentucky e2e finding: an agent logged an unresolved
+  // identity conflict and completed the project anyway. The gate makes the
+  // GPS Component 4 rule deterministic at the status transition.)
+
+  const conflictBase = () => ({
+    id: "c_001",
+    conflict_type: "identity",
+    description: "Certificate birth year contradicts the profile by 43 years.",
+    competing_assertion_ids: ["a_001", "a_002"],
+    status: "unresolved",
+    blocks_question_ids: [],
+  });
+  const withConflict = (conflict: any) => {
+    const r = baseResearch();
+    r.assertions.push(validAssertion("a_002"));
+    (r.conflicts as any[]).push(conflict);
+    return r;
+  };
+  const complete = () =>
+    researchAppend({ projectPath: dir, section: "project", op: "update", fields: { status: "completed" } });
+
+  it("refuses completed while an unresolved identity conflict exists (even with empty blocks_question_ids)", async () => {
+    await writeProject(withConflict({ ...conflictBase(), identity_question: true }));
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/cannot set project\.status/);
+    expect(msg).toMatch(/c_001/);
+    expect(msg).toMatch(/conflict-resolution/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active"); // nothing written
+  });
+
+  it("refuses completed while an unresolved conflict blocks a question", async () => {
+    await writeProject(withConflict({ ...conflictBase(), blocks_question_ids: ["q_001"] }));
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/unresolved blocking conflict/);
+  });
+
+  it("allows completed once the blocking conflict is resolved", async () => {
+    await writeProject(
+      withConflict({
+        ...conflictBase(),
+        identity_question: true,
+        status: "resolved",
+        independence_analysis: "The two records have independent informants.",
+        weighing_analysis: "The original register outweighs the derivative index.",
+        resolution_rationale: "The 1857 candidate is a different person; link rejected.",
+        preferred_assertion_id: "a_001",
+      }),
+    );
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows completed when the blocking conflict is moot", async () => {
+    await writeProject(
+      withConflict({
+        ...conflictBase(),
+        identity_question: true,
+        status: "moot",
+        resolution_rationale: "Superseded: the certificate was re-attributed to the correct person.",
+      }),
+    );
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows completed with an unresolved but non-blocking conflict (fact-type, empty blocks)", async () => {
+    await writeProject(
+      withConflict({
+        ...conflictBase(),
+        conflict_type: "fact",
+        disputed_attribute: "birth_date",
+        description: "Minor date variance between two censuses; does not bear on any open question.",
+      }),
+    );
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
 });
 
 // ─── Batch ops ───────────────────────────────────────────────────────────────

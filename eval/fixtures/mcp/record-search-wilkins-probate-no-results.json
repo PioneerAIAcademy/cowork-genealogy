@@ -1,0 +1,11 @@
+{
+  "tool": "record_search",
+  "description": "record_search returns zero for Elijah Wilkins in the Kentucky probate collection — not because no estate record exists, but because the collection is ~1% record-indexed (browse-only images). Drives the low-index → full-text-pivot test.",
+  "args": {
+    "surname": "Wilkins"
+  },
+  "response": {
+    "results": [],
+    "total": 0
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all — Muhlenberg County with representations (catch-all for this Kentucky scenario).",
+  "args": {
+    "placeName": "~"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Muhlenberg, Kentucky, United States",
+        "type": "County",
+        "dateRange": "+1798/",
+        "latitude": 37.22,
+        "longitude": -87.14,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Muhlenberg&focusedId=305245",
+        "representations": [
+          {
+            "repId": "305245",
+            "partOf": "Kentucky, United States",
+            "dateRange": "+1798/",
+            "notes": "Formed 1798 from Christian and Logan counties."
+          }
+        ]
+      }
+    ]
+  }
+}

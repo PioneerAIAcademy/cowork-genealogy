@@ -324,6 +324,38 @@ score should pull a tentative Strong back to Moderate. But:
   assertions, or a search with no sidecar), correlation analysis stands
   alone — the table above applies unchanged.
 
+**Autonomous mode (no user to pause with).** This resolution applies
+**only** to an autonomous run where no user can ever confirm (an
+autonomous `/research` run). **When a user is present** — a request that
+names an assertion to link, an interactive session — the pause rows
+above apply unchanged: present the evidence, disclose the score and the
+conflict, and create the `speculative` link or leave it for the user's
+confirmation. A high score capped at `speculative` by a qualitative
+conflict is still a pause-for-user, **not** a no-link — do not convert
+it into a hard rejection when a user can adjudicate. In an autonomous
+run, by contrast, the two pause rows resolve **downward, never upward**:
+a **Weak** match — or any match whose correlation caps confidence at
+`speculative` — becomes a **no-link**. Do
+not create the pe_ entry. State the rejection explicitly in your
+returned summary — the candidate, the score, and exactly what
+conflicted — and recommend `hypothesis-tracking` as the follow-up if
+the rejected identity is worth persisting as a hypothesis (this skill
+writes only the `person_evidence` section; the rejection note itself
+belongs in your summary, never in `hypotheses` or `log`, which other
+skills own). A **Moderate** match may link at `probable` only when the
+correlation genuinely meets the Moderate bar, evidenced in the
+rationale. The absence of a user NEVER upgrades confidence or converts
+a pause-for-confirmation into a link — an unconfirmable weak identity
+is a research gap to keep working, not a link opportunity. (This rule
+exists because an autonomous run linked a death certificate scored
+0.026 at `probable` — a different person's death entered the tree as
+the subject's.)
+
+**Disclose the score.** Whenever a `same_person` score was computed for
+a link decision, state it in the pe_ entry's rationale (e.g. "score
+0.32; linked on strong non-name correlation") — an undisclosed score
+hides exactly the number a reviewer needs to audit the decision.
+
 For reference, `same_person` scores broadly track the strength
 tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak, the same bands
 search-records uses for triage. Treat that as corroboration of the

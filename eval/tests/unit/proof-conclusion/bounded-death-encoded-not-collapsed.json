@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_018",
+    "skill": "proof-conclusion",
+    "name": "A bounded/documented-negative death is tiered and ENCODED, not collapsed to not_proved",
+    "type": "positive",
+    "description": "wilkins-bounded-death: the exact death date is unrecoverable, but the conclusion 'Elijah died after the 1870 census and before the 1885 estate administration, in Muhlenberg County; no Kentucky death certificate exists (statewide registration began 1911)' is well-supported (alive 1870 per tree fact F2; deceased-by-1885 estate administration a_001/a_003 with son Jesse as administrator). The skill must tier this BOUNDED conclusion at the level its evidence supports (probable) and ENCODE it as a Death fact on I1 with the bracket as the date — NOT collapse the whole finding to not_proved and leave the tree silent. Guards the proof-conclusion SKILL.md §2/§6 'bounded/documented-negative conclusion' doctrine (issue #657: run 9 left the tree with no death fact despite sound bounded reasoning).",
+    "tags": ["proof-conclusion", "bounded-conclusion", "documented-negative", "death", "tier-selection", "tree-encoding"]
+  },
+  "input": {
+    "user_message": "Write the proof conclusion for the death question (q_001).",
+    "scenario": "wilkins-bounded-death"
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "This is a POSITIVE test for the bounded/documented-negative doctrine. The exact death date is genuinely unrecoverable, but a BOUNDED conclusion is well-supported: alive at the 1870 census (tree fact F2), deceased by the 1885 Muhlenberg County estate administration (a_001, a_003) with the subject's documented son Jesse as administrator, and no Kentucky death certificate exists because statewide registration began 1911 (documented negative, log_001).",
+    "PASS requires BOTH: (1) the proof_summaries entry tiers the bounded conclusion at a positive tier its evidence supports — probable is expected (possible is acceptable); it must NOT be not_proved, and (2) a Death fact is ENCODED on person I1 in tree.gedcomx.json carrying the bracket as its date (e.g. 'after 1870, before 1885' or 'before 1885' or '1870s-1880s') — the tree must not be left silent on the death.",
+    "FAIL (Correctness 1) if the skill tiers the finding not_proved / writes no death conclusion, OR writes the proof narrative but encodes NO Death fact on I1 (the found-but-lost failure). Collapsing a well-supported bounded conclusion to not_proved because the exact date is unreachable is the specific error this test guards.",
+    "Recognizing and recording the documented negative ('no Kentucky death certificate exists; statewide registration began 1911') in the narrative strengthens the answer and should be credited, but the hard gate is the bounded tier + the encoded bounded Death fact. Encoding an exact/false death date (e.g. a specific day) is NOT expected — the bracket is the correct value."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
