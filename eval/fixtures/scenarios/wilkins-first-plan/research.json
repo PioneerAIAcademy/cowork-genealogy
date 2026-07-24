@@ -1,0 +1,46 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Using Kentucky death certificates, determine the date and place of death of Elijah Wilkins of Muhlenberg County, Kentucky (born c. 1814), and what information confirms his identity",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-07-15",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins (b. c. 1814, Muhlenberg County, Kentucky)?",
+      "rationale": "Primary research objective. The census trail (last residence fact 1870, Muhlenberg County) goes cold after 1870, suggesting a death in the 1870s-1880s — but the question presupposes death certificates, and the survey must establish whether Kentucky certificates even cover that era.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-15",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
