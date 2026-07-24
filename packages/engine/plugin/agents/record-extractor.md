@@ -459,6 +459,21 @@ the "who answered" record that would justify it.
   observed it" argument — the certificate does not establish
   observation, and occupation/marital status are reported biography,
   not witnessed events.
+  **Evidence type for these facts, not just proximity:** `name`,
+  `occupation`, and `marital status` are `direct` — a spouse/family
+  informant lived alongside the decedent and knows these firsthand, no
+  inference required. `age`, birth date/place, and parents' names are
+  `indirect` — the informant was not present at the decedent's birth (or
+  at the parents'), so knowledge of them is necessarily secondhand,
+  however precisely the certificate states it. **"Age: 63 years, 2
+  months, 10 days" is still indirect evidence of the birth date —
+  precision is not the same as firsthand knowledge; do not label the raw
+  age fact `direct` just because a specific figure is printed on the
+  certificate.** This is the same reasoning as the census
+  birth-year-computed-from-age rule above, extended one step further:
+  there it's the *derived* birth-year fact that's indirect; here the
+  *age fact itself* is indirect too, for the identical reason — the
+  informant wasn't there.
 - **Funeral director:** informant for burial date/location, proximity
   `official_duty`.
 
