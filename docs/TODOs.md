@@ -270,21 +270,60 @@ Deferred at wrap; see
   production** — or Cowork grants a broader set and **the router can crash a real
   user's run**. Settling it needs one live Cowork run against an image ARK, not a
   repo read. See plan §5.
-- [ ] **Does `search-images` have the same base64 crash exposure?** Two shipped
-  claims contradict each other and both can't be right. `record-extraction/SKILL.md:70-73`
-  and `agents/image-reader.md:13-16` say accumulated `image_read` base64 overflows
-  the transport's ~1 MiB per-turn buffer and **crashes the whole run**, which is why
-  that skill delegates to a throwaway subagent. But `search-images` declares
-  `image_read` itself (`SKILL.md:20`) and browses a volume **page-by-page in its own
-  main-session context** (`§4 Browse with image_read`) — the accumulation pattern the
-  warning describes, only more so. Either search-images is exposed to the same crash
-  (and should delegate per-page, or the reader should), or the crash needs conditions
-  beyond "more than one image" and the record-extraction rationale is overstated.
-  Worth settling because the answer changes the per-context guard's scope: today it
-  exempts search-images purely because the skill declared the tool
-  (`harness/context_policy.py`, plan §4.1), which encodes "declared = intended", not
-  "declared = safe". Surfaced 2026-07-16 while implementing
-  `docs/plan/image-read-context-policy.md`; NOT investigated.
+  **The same live run should also settle the transport ceiling itself**
+  (surfaced 2026-07-24 testing `image-reader-opus`): the "~1 MiB" figure is not
+  a fixed protocol wall — it's `claude_agent_sdk`'s configurable
+  `ClaudeAgentOptions.max_buffer_size` (`_DEFAULT_MAX_BUFFER_SIZE = 1024*1024`,
+  `subprocess_cli.py:30`). `eval/harness/e2e/orchestrator.py:752` already
+  overrides it to 10 MiB, explicitly for this exact class of crash — but its
+  own comment says so "since this is eval-harness-only config; it does not
+  change production Cowork behavior or the tool's own inline-image ceiling."
+  `apps/server/app/agent/real_agent.py` sets no override (still the 1 MiB
+  default), and **Cowork/Desktop production doesn't run through this Python
+  SDK transport at all** — a different, closed-source client, real ceiling
+  unverified. So before ever raising `MAX_INLINE_IMAGE_BYTES`
+  (`image-read.ts`) past 700 KB, confirm what Cowork's client actually
+  enforces; don't infer it from the e2e harness's own override.
+- [ ] **Should `image-reader`/`image-reader-opus` compress non-matching pages
+  during a `search-images` browse?** Raised while designing
+  `docs/plan/image-reader-opus-agent-plan.md`: for a browse with a
+  `looking_for` target, only relay the full transcription for a likely-matching
+  page and a one-line verdict for the rest, so a ten-page browse doesn't
+  accumulate ten full transcriptions in the calling skill's context. **This is
+  the same shape as `docs/plan/search-images-base64-accumulation.md`'s "Option
+  B", which was explicitly rejected on 2026-07-17 for a correctness reason, not
+  cost** — asking the reader to judge relevance and shorten its output was
+  found to encourage hallucination, whereas the current contract (always full,
+  faithful OCR, never slanted) avoids it. `image-reader-opus-agent-plan.md` §7
+  offers one candidate distinction (gate compression on `image_transcribe`'s
+  own deterministic `FOUND`/`NOT FOUND` field, from a forced always-full pass,
+  rather than a fresh relevance judgment by the relaying agent) but does not
+  resolve it. Needs the same genealogist scrutiny Option B got before building
+  anything — NOT investigated.
+- [ ] **`image-reader-opus` is capped out of most real scans by `image_read`'s
+  700 KB ceiling — confirmed across 7 live attempts, not one sample.**
+  Live-tested 2026-07-24: **6 of 7** real FamilySearch scans exceeded 700 KB
+  (1.2–1.5 MB) and `image_read` refused outright — two different German
+  civil/church register volumes (`004764543_00001`/`00271` and
+  `ark:/61903/3:2:77P1-FRQ`/`77T6-B33`), plus a fifth from a different
+  collection (`3Q9M-CSS8-G345-B`, 0.8 MB). Only 2 succeeded, both smaller
+  single-sheet US documents (an old printed newspaper column, 419 KB; a 1947
+  Army discharge certificate, 384 KB) — neither a genuine hard-handwriting
+  case. Pattern: **format/collection matters more than legibility** — bound
+  European register books scanned as full high-DPI pages run consistently
+  over the cap regardless of how hard the handwriting actually is, while
+  single-sheet US-style documents tend to land well under it. This page
+  wasn't even dense running Kurrentschrift, just a tabular index; a genuinely
+  harder page is likely larger still.
+  **Decision (Dallan, 2026-07-24): leave the cap as-is for now** — the agent's
+  `NOT READ` path already points back to `image_transcribe` — and decide
+  whether to raise the cap, give the agent its own larger ceiling, or explore
+  a downscale-before-read path once there's more usage data. **Any raise must
+  first resolve the transport-ceiling item above** (this repo can raise
+  `MAX_INLINE_IMAGE_BYTES` past 700 KB only as far as the actual deployed
+  `max_buffer_size` allows, and that's unverified for Cowork production and
+  not yet configured for the hosted web workbench). See
+  `docs/specs/image-reader-opus-agent-spec.md` §9.
 
 ## Tree materialization (#701) — deferred from implementation
 Deferred during the #701 build.

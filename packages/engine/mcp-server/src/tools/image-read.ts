@@ -3,45 +3,30 @@ import {
   fetchFsImageBytes,
   type FsImageInput,
 } from "../utils/fs-image-fetch.js";
+import { saveSourceImage } from "../utils/image-store.js";
 
-// FLOOR on the raw image bytes we base64-encode inline. This is NOT the
-// primary defense against overflow — it only stops a SINGLE image whose
-// base64 alone is so large it can't fit in one message. 700 KB raw →
-// ~933 KB base64; above this we throw an actionable error instead of the
-// bytes.
-//
-// The real failure mode is *accumulation*, and it is NOT a single MCP
-// response frame overflowing. Each image_read response adds a base64
-// content block to the calling agent's conversation, and the WHOLE
-// conversation is re-serialized and re-sent every turn. So the per-turn
-// payload grows with each image read, and eventually one re-serialized
-// message carrying all the accumulated blobs exceeds the ~1 MiB
-// (1,048,576-byte) buffer and crashes the *entire session* — an
-// uncatchable error — even when every individual image is well under this
-// ceiling. (Observed: an e2e run made 17 image_read calls, each ≤458 KB
-// raw, then crashed on the accumulated pile, not on any one response.)
-//
-// This is why the fix is the `image-reader` subagent
-// (packages/engine/plugin/agents/image-reader.md): it absorbs the base64
-// in an isolated context and returns only text, so the bytes never enter
-// the main conversation to accumulate. It is also why that agent reads
-// exactly ONE image per invocation — two large scans (~458 KB raw →
-// ~610 KB base64 each) already sum past the buffer inside the subagent's
-// own re-serialized conversation. This per-image ceiling is only a floor
-// protecting a single response — main or subagent.
-//
-// For scans OVER this floor the transcription path is `image_transcribe`,
-// which OCRs the image host-side and returns text (the bytes never cross
-// the MCP transport, so no cap applies) — see
-// docs/specs/image-transcribe-tool-spec.md.
+// The MCP transport between this server and the calling agent caps a single
+// response near 1 MiB. Base64 inflates raw bytes by ~33%, so this floor on
+// the RAW bytes (700 KB raw → ~933 KB base64) keeps one image_read response
+// under that ceiling. Scans over this floor should use image_transcribe
+// instead, which OCRs host-side and returns text — no bytes cross the
+// transport, so no cap applies.
 const MAX_INLINE_IMAGE_BYTES = 700_000;
 
-export type ImageReadInput = FsImageInput;
+export interface ImageReadInput extends FsImageInput {
+  /** Absolute project-folder path. When given, the fetched JPEG is saved
+   *  under images/<key>.jpg and its project-relative path returned as
+   *  `imageRef`, mirroring image_transcribe's save behavior. */
+  projectPath?: string;
+}
 
 export interface ImageReadResult {
   url: string;
   mimeType: string;
   sizeBytes: number;
+  /** Project-relative path of the saved scan (images/<key>.jpg), present only
+   *  when projectPath was supplied and the save succeeded. */
+  imageRef?: string;
 }
 
 export async function imageReadTool(input: ImageReadInput): Promise<{
@@ -72,12 +57,28 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
   }
   const imageData = btoa(binary);
 
+  // Persist the scan for a retained source, mirroring image_transcribe's save
+  // (best-effort: a save failure omits imageRef rather than losing the read).
+  let imageRef: string | undefined;
+  if (input.projectPath) {
+    try {
+      imageRef = await saveSourceImage({
+        projectPath: input.projectPath,
+        imageKey: label,
+        bytes,
+      });
+    } catch {
+      imageRef = undefined;
+    }
+  }
+
   return {
     imageData,
     metadata: {
       url,
       mimeType: contentType,
       sizeBytes,
+      ...(imageRef ? { imageRef } : {}),
     },
   };
 }
@@ -109,6 +110,14 @@ export const imageReadToolSchema = {
           "`id`), a bare 3:1:.../3:2:... id, a full resolver URL for one, " +
           "or an already-resolved DeepZoomCloud (ending in /$dist) or DGS " +
           "(dgs:.../dist.jpg) distribution URL.",
+      },
+      projectPath: {
+        type: "string",
+        description:
+          "Optional absolute path to the project folder. When set, the fetched " +
+          "page scan is saved under images/ and its project-relative path is " +
+          "returned as imageRef, so a retained source can cite it (image_filename) " +
+          "for viewer display.",
       },
     },
   },

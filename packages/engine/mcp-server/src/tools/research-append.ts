@@ -507,6 +507,37 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   }
 }
 
+/** Assertions with `evidence_type: "negative"` must set `record_role` to the
+ *  exact string `"absent"` (research-schema-spec.md §5.6), and vice versa —
+ *  the two fields are not independent judgment calls, `record_role: "absent"`
+ *  is a mechanical corollary of the evidence_type decision, so this REJECTS
+ *  rather than silently coercing. Silently overwriting `record_role` would
+ *  risk masking an assertion whose `value` also failed to differentiate the
+ *  person — observed live: three negative-evidence assertions on three
+ *  different people sharing one generic `value` string ("preceded Harold
+ *  Dean Whitaker in death"), with `record_role` as their only distinguishing
+ *  field. No-op for a non-assertion entry (only assertions carry
+ *  `evidence_type`) or a non-string `evidence_type`. */
+function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
+  if (typeof entry.evidence_type !== "string") return;
+  const isNegative = entry.evidence_type === "negative";
+  const roleIsAbsent = entry.record_role === "absent";
+  if (isNegative && !roleIsAbsent) {
+    throw new ResearchAppendError(
+      `assertion has evidence_type "negative" but record_role '${entry.record_role}' ` +
+        `— negative evidence always uses the literal record_role "absent". Keep the ` +
+        `person's identity in \`value\` instead (e.g. "Walter Whitaker preceded Harold ` +
+        `Dean Whitaker in death", not a generic value shared across multiple people).`,
+    );
+  }
+  if (roleIsAbsent && !isNegative) {
+    throw new ResearchAppendError(
+      `assertion has record_role "absent" but evidence_type '${entry.evidence_type}' ` +
+        `— record_role "absent" is reserved for negative evidence (evidence_type: "negative").`,
+    );
+  }
+}
+
 function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<string>): AppliedOp {
   const section = op.section;
   const config = SECTIONS[section];
@@ -624,6 +655,7 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
     normalizeDateFields(newEntry);
     normalizeAccessDate(newEntry);
     canonicalizeAssertionLabels(newEntry);
+    validateNegativeEvidenceRole(newEntry);
     const stamp = config.stampTimestamp;
     if (stamp && newEntry[stamp.field] === undefined) {
       newEntry[stamp.field] = stamp.kind === "date" ? today() : now();
@@ -687,6 +719,7 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
     normalizeDateFields(existing);
     normalizeAccessDate(existing);
     canonicalizeAssertionLabels(existing);
+    validateNegativeEvidenceRole(existing);
     entryId = op.entryId;
     resultEntry = existing;
   } else {
