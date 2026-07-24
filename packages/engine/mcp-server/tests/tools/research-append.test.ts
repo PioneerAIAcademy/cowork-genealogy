@@ -6,15 +6,19 @@ import { tmpdir } from "os";
 // Stub the network place resolver so the composite place-lever tests are
 // offline and deterministic. The wrong-geocode mapping (England → Cameroon)
 // reproduces the silent-wrong-standard_place theme the country guard catches.
-vi.mock("../../src/utils/place-resolver.js", () => ({
-  resolveStandardPlace: vi.fn(async (text: string) => {
-    if (text === "Schuylkill County, Pennsylvania") return "Schuylkill, Pennsylvania, United States";
-    if (text === "West Bromwich, England") return "Bamenda, Mezam, Northwest Region, Cameroon";
-    if (text === "West Bromwich, Staffordshire, England")
-      return "West Bromwich, Staffordshire, England, United Kingdom";
-    return null;
-  }),
-}));
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
+  return {
+    ...actual,
+    resolveStandardPlace: vi.fn(async (text: string) => {
+      if (text === "Schuylkill County, Pennsylvania") return "Schuylkill, Pennsylvania, United States";
+      if (text === "West Bromwich, England") return "Bamenda, Mezam, Northwest Region, Cameroon";
+      if (text === "West Bromwich, Staffordshire, England")
+        return "West Bromwich, Staffordshire, England, United Kingdom";
+      return null;
+    }),
+  };
+});
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
 import { __testing } from "../../src/tools/research-append-examples.js";

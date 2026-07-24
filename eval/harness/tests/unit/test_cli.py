@@ -897,3 +897,106 @@ def test_ctrl_c_keeps_completed_tests_as_scratch_and_exits_130(tmp_path, monkeyp
     assert list(out_dir.glob("v*.json")) == []
     # The in-progress dotfile was moved, not left behind.
     assert list(out_dir.glob(".partial_*")) == []
+
+
+# --- Judge preflight -------------------------------------------------------
+
+
+def _preflight_tree(tmp_path, types: list[str]) -> Path:
+    """A skill dir whose tests have the given `type` values."""
+    import json
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    for i, t in enumerate(types):
+        body = {
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                     "type": t, "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }
+        if t == "negative":
+            body["negative"] = {"correct_skill": [], "explanation": "why"}
+        (skill_dir / f"t{i}.json").write_text(json.dumps(body), encoding="utf-8")
+    return root
+
+
+def _stub_keyless_auth(monkeypatch):
+    from harness.auth import AuthConfig
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="subscription", api_key=None, detail="stub"),
+    )
+
+
+def test_preflight_aborts_when_judge_key_missing(tmp_path, monkeypatch, capsys):
+    """No API key + any positive test must exit 2 before running anything —
+    a positive test cannot pass without judge dimensions, so the run would
+    burn the whole suite and then fail every one of them."""
+    root = _preflight_tree(tmp_path, ["positive", "positive", "negative"])
+    _stub_keyless_auth(monkeypatch)
+    ran = {"n": 0}
+    monkeypatch.setattr(run_tests, "run_one_test",
+                        lambda *a, **k: ran.__setitem__("n", ran["n"] + 1))
+
+    rc = run_tests.main(["--skill", "skill-a", "--tests-dir", str(root)])
+
+    assert rc == 2
+    assert ran["n"] == 0, "preflight must abort before any test executes"
+    err = capsys.readouterr().err
+    assert "Judge preflight failed" in err
+    assert "2 of 3" in err
+    assert "make worktree-link" in err
+
+
+def test_preflight_allows_negative_only_selection(tmp_path, monkeypatch, capsys):
+    """Negative tests are graded on routing, so a keyless run of only negative
+    tests is still meaningful — warn, don't abort."""
+    root = _preflight_tree(tmp_path, ["negative"])
+    _stub_keyless_auth(monkeypatch)
+    monkeypatch.setattr(run_tests, "run_one_test",
+                        lambda spec, **k: _stub_log(spec.id, spec.skill, "pass"))
+    monkeypatch.setattr(run_tests, "write_run_log",
+                        lambda log, *, runlogs_root, filename: Path(runlogs_root) / filename)
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / f".partial_{timestamp}.json",
+    )
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+
+    rc = run_tests.main([
+        "--skill", "skill-a", "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+    ])
+
+    assert rc == 0
+    assert "no ANTHROPIC_API_KEY" in capsys.readouterr().err
+
+
+def test_preflight_override_flag_proceeds(tmp_path, monkeypatch):
+    """--allow-missing-judge is the deliberate escape hatch."""
+    root = _preflight_tree(tmp_path, ["positive"])
+    _stub_keyless_auth(monkeypatch)
+    monkeypatch.setattr(run_tests, "run_one_test",
+                        lambda spec, **k: _stub_log(spec.id, spec.skill, "pass"))
+    monkeypatch.setattr(run_tests, "write_run_log",
+                        lambda log, *, runlogs_root, filename: Path(runlogs_root) / filename)
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / f".partial_{timestamp}.json",
+    )
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+
+    rc = run_tests.main([
+        "--skill", "skill-a", "--allow-missing-judge",
+        "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+    ])
+
+    assert rc == 0

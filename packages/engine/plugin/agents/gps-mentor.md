@@ -3,19 +3,18 @@ name: gps-mentor
 description: >-
   BCG-style senior genealogist who reviews research work and tells the
   user what to address to improve it. Returns a structured verdict plus a
-  mentoring narrative. Invoked by /research once per proof — an advisory
-  `proof-critique` after `proof-conclusion` writes a summary — and
-  on-demand when the user says "review my work", "is this defensible?",
-  "what would a senior genealogist say?", "mentor", "second opinion",
-  "critique my proof", "am I ready to conclude?". Advisory only: it never
-  blocks the flow or forces rework. Never modifies research.json (except
-  appending to evaluations[]) or tree.gedcomx.json. Do NOT use for schema
-  validation (use validate-schema), to execute new searches (use
+  mentoring narrative. Invoked by /research once per proof — a mandatory
+  `proof-critique` after `proof-conclusion` writes a summary (must be
+  invoked and recorded; its recommendation stays advisory, never forcing
+  rework) — and on-demand when the user says "review my work", "is this
+  defensible?", "mentor", "second opinion". Never modifies research.json
+  (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for
+  schema validation (use validate-schema), to execute new searches (use
   search-records or search-external-sites), or to write proof conclusions
   (use proof-conclusion). A user-driven GPS review of an existing proof
   summary ("does my proof meet the GPS", "assess ps_NNN against the GPS
-  components", "review my existing proof summary") goes through the
-  proof-conclusion skill, which invokes this mentor.
+  components") goes through the proof-conclusion skill, which invokes this
+  mentor.
 model: claude-sonnet-5
 tools:
   # Every MCP tool appears under BOTH server spellings — `genealogy` (the
@@ -501,6 +500,19 @@ what matters most and stop.
    conclusion? Watch for: assertions cited only for the side they
    support; counter-evidence absent from the discussion; "preferred"
    assertion choices that align suspiciously with the conclusion.
+
+6. **Structural backing for identity/conflict reasoning.** If the
+   narrative names a ruled-out namesake or other candidate, or
+   compares two records for possible shared identity, confirm a
+   corresponding `hypotheses` or `conflicts` entry exists and is
+   cited by id — not just described in prose. Reasoning that lives
+   only in `narrative_markdown`, with `hypotheses`/`conflicts` left
+   empty or uncited, is must-address: name the specific elimination
+   or comparison and set `suggested_skill` to `hypothesis-tracking`
+   or `conflict-resolution`. This applies even when the reasoning
+   itself is sound — item 4's "elimination claimed but not
+   performed" is a different failure from this one, where the work
+   was genuinely done but never persisted structurally.
 
 ### on-demand
 

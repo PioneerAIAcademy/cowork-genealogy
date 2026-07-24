@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Recovered via the christening record (8 Aug 1878, primary) plus a separately-sourced census-derived birth estimate (~1879) — correctly does not assert the fixture's own unattested '10 July 1878' contributor estimate. No tier inflation this run (mentor confirmed the agent capped at probable on its own). Structural conflict-resolution work (6 conflicts, 3 resolved with real independence analysis, 3 honestly deferred) replaces the narrative-only reasoning seen in the prior run. Minor craft nitpick unrelated to this label: R16 cites the 1891 census (S5) as corroboration even though a separate unresolved conflict (c_001) questions whether that census's 'Hannah' is the same person as Hannah Earnest — not load-bearing since S3+S4 (pre-1888) already carry the relationship, but worth a future citation-hygiene note."
+  }
+}

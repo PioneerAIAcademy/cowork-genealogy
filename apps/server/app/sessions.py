@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 from . import agent_secrets, fs_oauth
-from .auth import get_current_user
+from .auth import fresh_fs_token, get_current_user
 from .config import get_settings
 from .db import get_session
 from .models import FamilySearchToken, Project, User, utcnow
@@ -133,6 +133,34 @@ def _maybe_backfill_title(session: Session, project: Project, research: object) 
         session.refresh(project)
 
 
+async def sync_fs_token(session: Session, user: User, sandbox) -> str:
+    """Refresh the user's FamilySearch grant if needed and (re-)inject it into
+    `sandbox`. Returns the state the client renders: `ok` | `expired` | `none`.
+
+    **Why on every connect and not just at create.** FS caps a grant at 8h idle
+    / 24h absolute, so the token baked in at sandbox-create is dead by the next
+    day no matter how diligently the in-sandbox MCP self-refreshes. Re-injecting
+    here is also the only path by which a *fresh* front-door login reaches a
+    sandbox that already exists — which is what makes the "Reconnect
+    FamilySearch" banner actually able to fix anything.
+
+    `none` (the user never had a grant — dev-login / mock mode) is deliberately
+    distinct from `expired`: only the latter is worth interrupting someone over.
+
+    On `expired` the sandbox's own tokens.json is left ALONE rather than
+    cleared. The in-sandbox MCP refreshes on its own schedule, so its copy can
+    outlive the control plane's by a few minutes; clobbering it would turn a
+    stale-but-working session into a broken one.
+    """
+    if session.get(FamilySearchToken, user.id) is None:
+        return "none"
+    row = await fresh_fs_token(session, user.id)
+    if row is None:
+        return "expired"
+    await fs_oauth.write_tokens(sandbox, row.access_token, row.refresh_token, row.expires_at)
+    return "ok"
+
+
 async def create_project(
     *,
     session: Session,
@@ -170,18 +198,15 @@ async def create_project(
             fs_oauth.expires_at_from(token_json),
         )
     else:
-        row = session.get(FamilySearchToken, user.id)
-        if row is not None:
-            await fs_oauth.write_tokens(
-                sandbox, row.access_token, row.refresh_token, row.expires_at
-            )
-    # Provision the OpenRouter key into the sandbox's ~/.familysearch-mcp/config.json
-    # so the in-sandbox image_transcribe tool can OCR scans. Config-only (the MCP
-    # server never reads env); see image-transcribe-tool-spec.md §6.5.
-    if settings.openrouter_api_key:
-        await fs_oauth.write_config(
-            sandbox, {"openRouterApiKey": settings.openrouter_api_key}
-        )
+        # Refreshes first if the stored grant is stale — creating a session hours
+        # after signing in must not hand the sandbox an already-dead token.
+        await sync_fs_token(session, user, sandbox)
+    # Provision the sandbox's ~/.familysearch-mcp/config.json. `hosted` tells the
+    # in-sandbox MCP it is running in the VM, where the desktop `login` tool's
+    # loopback OAuth flow can never complete — see fs_oauth.hosted_config().
+    # Always written (not just when a key exists), because that marker is what
+    # keeps the login tool from claiming a browser tab opened on a headless VM.
+    await fs_oauth.write_config(sandbox, fs_oauth.hosted_config(settings.openrouter_api_key))
     # The Anthropic key the Agent SDK runs on. Written here AND on every connect
     # (the env copy injected at create() can never be updated afterwards, so it
     # goes stale the moment the key is rotated). See app/agent_secrets.py.
@@ -430,12 +455,19 @@ async def connect_session(
     # Refresh the operator secrets BEFORE the agent can be handed a turn, so a
     # rotated Anthropic key reaches sandboxes created under the old one.
     await agent_secrets.write_secrets(sandbox)
+    # Same reasoning for the user's FamilySearch grant, which expires far faster
+    # (24h absolute) than the 30-day app session cookie — so the app looks
+    # signed in long after FamilySearch has stopped answering. `familysearch`
+    # tells the client whether to show the "Reconnect" banner. Every reconnect
+    # lands here (WsSessionConnection re-fetches credentials per attempt), which
+    # is what makes a tab left open overnight recover on its own.
+    fs_state = await sync_fs_token(session, user, sandbox)
     conn = await sandbox.expose_port(SANDBOX_WS_PORT)
     token = mint_token(project.sandbox_id)
     project.last_active = utcnow()
     session.add(project)
     session.commit()
-    return {"wssUrl": conn.url, "token": token}
+    return {"wssUrl": conn.url, "token": token, "familysearch": fs_state}
 
 
 @router.delete("/{session_id}")

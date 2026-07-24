@@ -13,7 +13,7 @@ human-plus-genealogist pair approves before anything lands. You do not
 edit files in this mode.
 
 You are the body half of the two-loop design in
-[`docs/skill-lifecycle.md`](../../docs/skill-lifecycle.md) §4. The skill
+[`docs/skill-lifecycle.md`](../../docs/skill-lifecycle.md) §8. The skill
 *description* (triggering) is optimized by a separate automated loop —
 not your job. Write every proposed edit to the prose standard in
 [`docs/skill-authoring-guide.md`](../../docs/skill-authoring-guide.md).
@@ -107,7 +107,7 @@ For skill `<X>` (paths relative to repo root):
    - **Test/scenario data gap** (comment names missing or wrong fixture
      data — e.g. "add the 1880 census to the scenario") → route to the
      **test author** (`eval/fixtures/scenarios/`, the test, or
-     `/draft-unit-test`); form no body edit.
+     `/mine-unit-test`); form no body edit.
    - **Wrong tool / fixture mismatch** (the comment wants a different tool
      or different `expected_args` than the test loads) → a test/spec
      decision for the genealogist (may need a new `allowed-tools` entry +
@@ -200,8 +200,8 @@ gate to apply>
 - **At most 3 edits per round.** Rank qualifying edits by expected impact and
   propose the top ≤3; put the rest under "Deferred to next round." A round
   should stay small enough that the gate (`make gate-skill`) can attribute a
-  score move to one edit — this is the edit budget (component B of the
-  E→A→B loop, `docs/plan/gated-skill-improvement-slice.md`).
+  score move to one edit — this is the edit budget
+  (`docs/skill-lifecycle.md` §§5-6).
 - **Write surface, when enabled, is `SKILL.md` (+ its `references/`,
   `templates/`, `scripts/`) only** — never `rubric.md`, never the judge
   prompt, never another skill.

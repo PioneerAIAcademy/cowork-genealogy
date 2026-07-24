@@ -1,0 +1,18 @@
+{
+  "id": "william-ferber-parents",
+  "name": "William H. Ferber's Parents",
+  "source_pid": "G7JB-YH6",
+  "captured": "2026-07-21",
+  "researcher_question": "Who were William H. Ferber's parents?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1860s",
+    "geography": "US-OH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Well-documented German-immigrant Cincinnati family. The answer (Gerhard Ferber and Eva Engermann) is directly recoverable via an 1870 census household listing (young William enumerated with parents Gerhard and Eva Faerber) and William's own 1903 Ohio death record, which names Gerhard Ferber alongside him -- likely as informant. Straightforward record chase with minimal ambiguity; a good baseline/easy fixture."
+}

@@ -42,7 +42,7 @@ import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useSelectedSkill } from '@/lib/useSelectedSkill';
-import type { SkillInfo, UnitTestFile, UnitTestListEntry } from '@/lib/types';
+import type { ExpectedOutcome, SkillInfo, UnitTestFile, UnitTestListEntry } from '@/lib/types';
 
 interface TestFormProps {
   mode: 'create' | 'edit';
@@ -85,6 +85,11 @@ function hasGradingRelevantChange(before: UnitTestFile, after: UnitTestFile): bo
   // judge_reads_files likewise survives normalization and changes what the
   // judge sees — toggling it invalidates the content hash.
   if ((before.judge_reads_files ?? false) !== (after.judge_reads_files ?? false)) return true;
+  // expected_outcome / xfail_reason survive normalization too, and
+  // expected_outcome changes how the harness labels the result — so a run
+  // log taken under the old marking no longer describes the test.
+  if ((before.test.expected_outcome ?? 'pass') !== (after.test.expected_outcome ?? 'pass')) return true;
+  if ((before.test.xfail_reason ?? '') !== (after.test.xfail_reason ?? '')) return true;
   return false;
 }
 
@@ -99,6 +104,13 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
         skill: (v) => (v?.trim() ? null : 'Skill is required'),
         name: (v) => (v?.trim() ? null : 'Name is required'),
         description: (v) => (v?.trim() ? null : 'Description is required'),
+        // The schema makes xfail_reason conditionally required (see
+        // unit-test.schema.json's if/then). Nothing validates the file
+        // server-side, so this form is the enforcement point.
+        xfail_reason: (v, values) =>
+          values.test.expected_outcome === 'xfail' && !(v ?? '').trim()
+            ? 'A reason is required when the expected outcome is xfail'
+            : null,
       },
       input: {
         user_message: (v) => (v?.trim() ? null : 'user_message is required'),
@@ -188,6 +200,7 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
   }, [form.values, initialValues, mode]);
 
   const isNegative = form.values.test.type === 'negative';
+  const isXfail = form.values.test.expected_outcome === 'xfail';
 
   const onSubmit = form.onSubmit(async (values) => {
     const payload = deepClone(values);
@@ -208,6 +221,15 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
     // true so tests that never opt in keep their content hash unchanged.
     if (payload.judge_reads_files) payload.judge_reads_files = true;
     else delete payload.judge_reads_files;
+    // expected_outcome defaults to "pass" — same treatment. xfail_reason is
+    // only meaningful alongside `xfail`, so drop it when the test is back to
+    // pass rather than leaving a stale reason in the file.
+    if (payload.test.expected_outcome === 'xfail') {
+      payload.test.xfail_reason = (payload.test.xfail_reason ?? '').trim();
+    } else {
+      delete payload.test.expected_outcome;
+      delete payload.test.xfail_reason;
+    }
     // Empty string scenarios → null so the API/file shape matches the schema.
     if (payload.input.scenario === '') payload.input.scenario = null;
     if (payload.input.scenario_notes === '') payload.input.scenario_notes = null;
@@ -302,6 +324,36 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
                   checked={!!form.values.judge_reads_files}
                   onChange={(e) => form.setFieldValue('judge_reads_files', e.currentTarget.checked)}
                 />
+                <Select
+                  label="Expected outcome"
+                  description="Mark a test xfail when you know it fails for a documented reason and you don't want that failure read as a regression. Its failures report as xfail instead of fail; if it starts passing, the harness reports xpass so you know to investigate and remove the marker."
+                  data={[
+                    { value: 'pass', label: 'pass — the test should pass' },
+                    { value: 'xfail', label: 'xfail — known failure, not a regression' },
+                  ]}
+                  value={form.values.test.expected_outcome ?? 'pass'}
+                  onChange={(v) => {
+                    const next = (v as ExpectedOutcome) ?? 'pass';
+                    form.setFieldValue('test.expected_outcome', next);
+                    // Seed the reason so the Textarea below is controlled from
+                    // its first render — getInputProps on an absent path hands
+                    // back `undefined`, which React reads as uncontrolled.
+                    if (next === 'xfail' && form.values.test.xfail_reason == null) {
+                      form.setFieldValue('test.xfail_reason', '');
+                    }
+                  }}
+                />
+                {isXfail ? (
+                  <Textarea
+                    label="Why is this expected to fail?"
+                    description="Required. Say what's broken and what would let you remove the marker — ideally with an issue or PR link."
+                    placeholder="Skill drops the source citation on multi-page records — #712. Remove once that ships."
+                    autosize
+                    minRows={2}
+                    required
+                    {...form.getInputProps('test.xfail_reason')}
+                  />
+                ) : null}
               </Stack>
             </Card>
 

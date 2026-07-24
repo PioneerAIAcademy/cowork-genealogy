@@ -8,8 +8,8 @@
 // here as independently unit-tested utils rather than being reimplemented per
 // tool. Spec: docs/specs/validate-project-refactor-spec.md §10.
 
-import { writeFile, rename, mkdir, unlink, copyFile, access } from "fs/promises";
-import { dirname, resolve, relative, isAbsolute } from "path";
+import { writeFile, readFile, rename, mkdir, unlink, copyFile, access } from "fs/promises";
+import { dirname, join, resolve, relative, isAbsolute } from "path";
 import { randomUUID } from "node:crypto";
 
 /**
@@ -40,6 +40,41 @@ export function assertInsideProject(projectPath: string, ref: string): string {
 /** Serialize an object to pretty JSON, matching the on-disk project format. */
 function serialize(obj: unknown): string {
   return JSON.stringify(obj, null, 2);
+}
+
+/**
+ * Read and parse one of the project's JSON documents, with the two error
+ * messages every writer tool phrases identically. Throws a plain Error; the
+ * caller maps it onto its own `{ ok: false, errors }` shape.
+ *
+ * Five tools predate this and carry their own private copy (see docs/TODOs.md);
+ * new callers use this one.
+ */
+export async function readProjectJson(projectPath: string, filename: string): Promise<any> {
+  let text: string;
+  try {
+    text = await readFile(join(projectPath, filename), "utf-8");
+  } catch {
+    throw new Error(`${filename} not found in projectPath`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`${filename} is not valid JSON`);
+  }
+}
+
+/**
+ * True if `path` exists. Exposed because the restore-file semantics in
+ * `tree_forget` turn on "already there?" rather than on an overwrite.
+ */
+export async function fileExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

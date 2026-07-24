@@ -1,0 +1,80 @@
+{
+  "persons": [
+    {
+      "id": "G7JB-YH6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        { "id": "N1", "preferred": true, "given": "William H", "surname": "Ferber", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "December 1869", "standard_date": "Dec 1869", "place": "Ohio, United States", "standard_place": "Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F2", "type": "Residence", "date": "1870", "standard_date": "1870", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F3", "type": "Residence", "date": "1900", "standard_date": "1900", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S3", "quality": 1 }] },
+        { "id": "F4", "type": "Death", "date": "11 March 1903", "standard_date": "11 Mar 1903", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F5", "type": "Residence", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F6", "type": "Burial", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S4", "quality": 1 }, { "ref": "S5", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "G7JB-2T6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Emma", "surname": "Becker", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F7", "type": "Birth", "date": "25 March 1870", "standard_date": "25 Mar 1870", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F8", "type": "Residence", "date": "1900", "standard_date": "1900", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F9", "type": "Residence", "date": "1903", "standard_date": "1903", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F10", "type": "Death", "date": "7 December 1948", "standard_date": "7 Dec 1948", "place": "Dayton, Campbell, Kentucky, United States", "standard_place": "Dayton, Campbell, Kentucky, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F11", "type": "Burial", "date": "10 December 1948", "standard_date": "10 Dec 1948", "place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States", "standard_place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "G7JB-Y46",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        { "id": "N3", "preferred": true, "given": "Charles Hubert", "surname": "Ferber", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F12", "type": "Birth", "date": "22 June 1891", "standard_date": "22 Jun 1891", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F13", "type": "Death", "date": "12 December 1967", "standard_date": "12 Dec 1967", "place": "Fort Lauderdale, Broward, Florida, United States", "standard_place": "Fort Lauderdale, Broward, Florida, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G7JB-YH6",
+      "person2": "G7JB-2T6",
+      "facts": [
+        { "id": "F14", "type": "Marriage", "date": "10 September 1890", "standard_date": "10 Sep 1890", "place": "Hamilton, Ohio, United States", "standard_place": "Hamilton, Ohio, United States", "sources": [{ "ref": "S2", "quality": 1 }] }
+      ],
+      "sources": [{ "ref": "S2", "quality": 1 }]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "G7JB-YH6",
+      "child": "G7JB-Y46",
+      "sources": [{ "ref": "S1", "quality": 1 }]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "G7JB-2T6",
+      "child": "G7JB-Y46",
+      "sources": [{ "ref": "S1", "quality": 1 }]
+    }
+  ],
+  "sources": [
+    { "id": "S1", "title": "FamilySearch Family Tree", "url": "https://www.familysearch.org/tree/person/details/G7JB-YH6" },
+    { "id": "S2", "title": "Ohio, County Marriages, 1789-2016 -- Wm. H. Ferber and Emma Becker, 1890", "url": "https://familysearch.org/ark:/61903/1:1:XZR1-JZP" },
+    { "id": "S3", "title": "United States, Census, 1900 -- William Ferber and Emma Ferber", "url": "https://familysearch.org/ark:/61903/1:1:MM88-DGG" },
+    { "id": "S4", "title": "Cincinnati, Ohio, U.S., Spring Grove Cemetery Index, 1845-2012", "url": "https://search.ancestry.com/collections/9246/records/81391" },
+    { "id": "S5", "title": "U.S., Find a Grave Index -- William H Ferber", "url": "https://familysearch.org/ark:/61903/1:1:QV2R-MD6H" }
+  ]
+}

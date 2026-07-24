@@ -1,7 +1,7 @@
 """Gate a candidate SKILL.md edit against its step-4 baseline, mock-backed.
 
-Component **A** of the E->A->B gated skill-improvement loop
-(`docs/plan/gated-skill-improvement-slice.md`). This is a
+The verify step of the gated skill-improvement loop
+(`docs/skill-lifecycle.md` §6). This is a
 **measurement-and-surfacing tool, not an automated accept/reject oracle**:
 given an n=1 non-deterministic judge, it reports per-dimension evidence and a
 coarse advisory signal; a human decides and adopts.

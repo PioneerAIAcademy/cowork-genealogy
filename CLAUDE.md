@@ -208,8 +208,9 @@ fails any `select:mcp__…` in a plugin body.
 ## Handling user feedback submissions
 
 When a user submits a feedback zip via the Cowork viewer, the workflow
-to triage it lives at `docs/alpha-feedback-guide.md` (walked through as a
-worked story in `docs/alpha-feedback-example.md`). The underlying spec
+to triage it lives at `docs/alpha-feedback-guide.md` (a worked story,
+start to finish). The skill-improvement half it hands off to is
+`docs/skill-lifecycle.md`. The underlying spec
 (rationale, contracts, lints) is at
 `docs/specs/feedback-case-spec.md`. Point the user at the workflow
 doc first; only reach for the spec when they're modifying the

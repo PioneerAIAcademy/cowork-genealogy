@@ -27,6 +27,102 @@ const ZIP_CAP_BYTES = 35 * 1024 * 1024
 // prepend a truncation note rather than dropping the log.
 const SESSION_LOG_CAP_BYTES = 20 * 1024 * 1024
 
+// Living-person redaction. Mirrors apps/server/app/feedback.py
+// (`_redact_living`) so a bundle built here and one built in the hosted app
+// contain the same thing.
+const TREE_FILENAME = 'tree.gedcomx.json'
+const LIVING_GIVEN = 'Living'
+const LIVING_SURNAME_FALLBACK = 'Unknown'
+
+/**
+ * Whether a tree person must be treated as living.
+ *
+ * Same rule as the e2e fixture gate (eval/harness/e2e/author.py::living_gate):
+ * **absent is not deceased.** `living` is optional in simplified GedcomX, and
+ * defaulting a missing flag to "probably dead" is exactly the wrong bet for a
+ * bundle that is about to leave the user's machine.
+ */
+function isLiving(person: Record<string, unknown>): boolean {
+  return person.living !== false
+}
+
+/**
+ * Reduce a living person to structure: no given name, dates, places, or ark.
+ *
+ * Keeps `id` (relationships reference it, so dropping the person would dangle
+ * every edge) and `gender`. The schema requires `id`/`gender`/`names`, and a
+ * name requires `id`/`given`/`surname` with `minItems: 1` on `names`, so the
+ * placeholder has to carry a surname rather than omit it. Surname is retained
+ * deliberately: it is already inferable from the deceased relatives around
+ * them, and "Living Spriggs" is the convention FamilySearch itself displays,
+ * so a triager reads it as redaction rather than as corrupt data.
+ */
+function redactPerson(person: Record<string, unknown>): Record<string, unknown> {
+  const names = Array.isArray(person.names) ? (person.names as Record<string, unknown>[]) : []
+  const first = names[0] ?? {}
+  const out: Record<string, unknown> = {
+    id: person.id,
+    living: true,
+    names: [
+      {
+        id: first.id ?? `${person.id ?? 'unknown'}-name-1`,
+        given: LIVING_GIVEN,
+        surname: first.surname ?? LIVING_SURNAME_FALLBACK
+      }
+    ],
+    facts: []
+  }
+  if ('gender' in person) out.gender = person.gender
+  return out
+}
+
+/**
+ * Redact living persons out of the bundled tree, in place, before it is zipped.
+ *
+ * FamilySearch's terms forbid sharing living people's details, and a feedback
+ * bundle is a capture of a real family. Doing this at capture time (rather than
+ * at triage) means the data never leaves the machine at all.
+ *
+ * Also clears `facts` on any Couple relationship touching a living person — a
+ * marriage date/place is as identifying as a birth. Returns the number of
+ * persons redacted. Unparseable or unexpectedly-shaped trees are left untouched:
+ * this is a privacy filter, not a validator, and it must never be the reason a
+ * report fails to send.
+ */
+function redactLivingPersons(selected: { relativePath: string; buf: Buffer }[]): number {
+  const entry = selected.find((s) => s.relativePath === TREE_FILENAME)
+  if (!entry) return 0
+  try {
+    const tree = JSON.parse(entry.buf.toString('utf-8')) as Record<string, unknown>
+    const persons = tree.persons
+    if (!Array.isArray(persons)) return 0
+
+    const livingIds = new Set<unknown>()
+    let redacted = 0
+    tree.persons = persons.map((p) => {
+      if (p && typeof p === 'object' && isLiving(p as Record<string, unknown>)) {
+        livingIds.add((p as Record<string, unknown>).id)
+        redacted++
+        return redactPerson(p as Record<string, unknown>)
+      }
+      return p
+    })
+
+    const relationships = Array.isArray(tree.relationships) ? tree.relationships : []
+    for (const rel of relationships) {
+      if (!rel || typeof rel !== 'object') continue
+      const r = rel as Record<string, unknown>
+      if (!('facts' in r)) continue
+      if (livingIds.has(r.person1) || livingIds.has(r.person2)) r.facts = []
+    }
+
+    entry.buf = Buffer.from(JSON.stringify(tree, null, 2), 'utf-8')
+    return redacted
+  } catch {
+    return 0
+  }
+}
+
 export const MAX_FIELD_CHARS = 10_000
 export const FEEDBACK_SCHEMA_VERSION = 1
 
@@ -250,6 +346,8 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
     }
   }
 
+  const redactedLiving = redactLivingPersons(selected)
+
   for (const s of selected) zip.file(s.relativePath, s.buf)
   const fileCount = selected.length
 
@@ -271,7 +369,8 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
       projectFolder: folderResolved,
       viewerVersion,
       sessionLogIncluded,
-      skipped
+      skipped,
+      redactedLiving
     })
   )
 
@@ -332,8 +431,17 @@ function renderFeedbackMarkdown(args: {
   viewerVersion: string
   sessionLogIncluded: boolean
   skipped: string[]
+  redactedLiving?: number
 }): string {
-  const { fields, timestamp, projectFolder, viewerVersion, sessionLogIncluded, skipped } = args
+  const {
+    fields,
+    timestamp,
+    projectFolder,
+    viewerVersion,
+    sessionLogIncluded,
+    skipped,
+    redactedLiving = 0
+  } = args
 
   const sections = [
     '# Feedback',
@@ -370,6 +478,19 @@ function renderFeedbackMarkdown(args: {
       '## Session log',
       '',
       "See `_feedback/session-log.jsonl` for the Claude Code conversation transcript (tool calls, results, and the agent's reasoning)."
+    )
+  }
+
+  if (redactedLiving > 0) {
+    sections.push(
+      '',
+      '## Living people redacted',
+      '',
+      `${redactedLiving} person(s) in \`${TREE_FILENAME}\` are living or not marked ` +
+        `deceased, so their given names, dates and places were replaced with ` +
+        `\`${LIVING_GIVEN} <Surname>\` before this bundle was created. Their ids and ` +
+        `relationships are intact, so the case still reproduces. This is expected — ` +
+        `not corrupt data.`
     )
   }
 

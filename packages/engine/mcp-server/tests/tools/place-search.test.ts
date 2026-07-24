@@ -250,7 +250,7 @@ describe("searchPlace", () => {
     const result = await searchPlace("England");
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://api.familysearch.org/platform/places/search?q=name:England",
+      "https://api.familysearch.org/platform/places/search?q=name:%22England%22",
       expect.objectContaining({
         headers: expect.objectContaining({
           Accept: "application/x-gedcomx-atom+json",
@@ -451,7 +451,7 @@ describe("getPlaceRepIds", () => {
 describe("placeSearch (internal)", () => {
   it("narrows to matches whose fullName contains the context name", async () => {
     routeByUrl([
-      { match: "search?q=name:Paris", json: parisSearchResponse },
+      { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
       {
         match: "description/100",
         json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
@@ -472,7 +472,7 @@ describe("placeSearch (internal)", () => {
 
   it("keeps the unfiltered list when nothing matches the context name", async () => {
     routeByUrl([
-      { match: "search?q=name:Paris", json: parisSearchResponse },
+      { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
       {
         match: "description/100",
         json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
@@ -491,7 +491,7 @@ describe("placeSearch (internal)", () => {
 
   it("caches results so a repeat call does not re-fetch", async () => {
     routeByUrl([
-      { match: "search?q=name:Paris", json: parisSearchResponse },
+      { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
       {
         match: "description/100",
         json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
@@ -509,7 +509,7 @@ describe("placeSearch (internal)", () => {
 
   it("falls back to search-entry data when a description 404s", async () => {
     routeByUrl([
-      { match: "search?q=name:Paris", json: parisSearchResponse },
+      { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
       { match: "description/100", ok: false, status: 404 },
       { match: "attributes", ok: false, status: 404 },
     ]);
@@ -529,7 +529,7 @@ describe("placeSearch (internal)", () => {
 describe("placeSearchTool", () => {
   it("returns simplified fields with the FamilySearch WIKIPEDIA_LINK and no identifiers", async () => {
     routeByUrl([
-      { match: "search?q=name:Paris", json: parisSearchResponse },
+      { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
       {
         match: "description/100",
         json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
@@ -572,7 +572,7 @@ describe("placeSearchTool", () => {
 
   it("omits wikipediaUrl when the place has no WIKIPEDIA_LINK attribute", async () => {
     routeByUrl([
-      { match: "search?q=name:Paris", json: parisSearchResponse },
+      { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
       {
         match: "description/100",
         json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
@@ -604,7 +604,7 @@ describe("placeSearchTool", () => {
 describe("placeSearchAllTool", () => {
   it("expands each pid to all rep IDs and returns simplified, ID-free results", async () => {
     routeByUrl([
-      { match: "search?q=name:Paris", json: parisSearchResponse },
+      { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
       {
         match: "description/100",
         json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),
@@ -643,7 +643,7 @@ describe("placeSearchAllTool", () => {
 
   it("drops rep IDs whose description lookup 404s", async () => {
     routeByUrl([
-      { match: "search?q=name:Paris", json: parisSearchResponse },
+      { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
       {
         match: "description/100",
         json: description("100", "Paris, Bear Lake, Idaho, United States", "9001"),

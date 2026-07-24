@@ -217,9 +217,9 @@ end-to-end benchmark. These two skills are **not** part of the Cowork
 plugin — they are tooling for the internal genealogist+developer benchmark
 teams and live in [`.claude/skills/`](./.claude/skills/) (loaded by Claude
 Code in this checkout), alongside the other dev skills `compare-state` and
-`draft-unit-test`. The implementation plan is at
-[docs/plan/e2e-skills.md](./docs/plan/e2e-skills.md); the usage playbook is
-[docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md).
+`mine-unit-test`. The usage playbook is
+[docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md); the fixture format is
+specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
@@ -511,12 +511,11 @@ clobbering a hook it didn't write. Details in
   when editing the code.
 - [docs/alpha-feedback-guide.md](./docs/alpha-feedback-guide.md) — how to
   triage a user feedback submission, fix the bug, and lock it in
-  with a regression test. Start here when a feedback zip lands;
-  [docs/alpha-feedback-example.md](./docs/alpha-feedback-example.md) walks
-  the same flow as one worked story.
+  with a regression test, walked through as one worked story. Start
+  here when a feedback zip lands.
 - [docs/skill-lifecycle.md](./docs/skill-lifecycle.md) — the shared loop
   every fix goes through: mine a test, run it, annotate, improve, gate,
-  release.
+  release. Ends with a worked example of the whole loop.
 - [eval/README.md](./eval/README.md) — eval harness for skill
   regression testing: how to run it, add cases, and interpret results.
 - [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) — authoring and
