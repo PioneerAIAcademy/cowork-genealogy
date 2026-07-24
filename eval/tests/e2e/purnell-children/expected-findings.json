@@ -1,0 +1,111 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Elizabeth Purnell (christened 6 August 1823 at Trowbridge, Wiltshire) was a daughter of Thomas Purnell and Amy Newman. Her baptism names BOTH parents (Thomas and Amy) - direct evidence.",
+      "details": {
+        "subject_person": "Thomas Purnell (K2X7-2KZ)",
+        "relation": "child",
+        "target_person": {
+          "name": "Elizabeth Purnell",
+          "birth": "~1820/1823, Trowbridge, Wiltshire, England"
+        }
+      },
+      "supporting_sources": [
+        "Parish baptism 6 Aug 1823, Trowbridge (England Births & Christenings 1538-1975 / England Wiltshire Church Records 1518-1990) - names father Thomas AND mother Amy."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Thomas Purnell (Jr) (christened 6 August 1823 at Trowbridge, Wiltshire; married Hannah Sims 1844) was a son of Thomas Purnell and Amy Newman. His baptism names BOTH parents (Thomas and Amy) - direct evidence. Baptised the same day as his sister Elizabeth (siblings baptised together).",
+      "details": {
+        "subject_person": "Thomas Purnell (K2X7-2KZ)",
+        "relation": "child",
+        "target_person": {
+          "name": "Thomas Purnell (Jr)",
+          "birth": "1823, Trowbridge, Wiltshire, England"
+        }
+      },
+      "supporting_sources": [
+        "Parish baptism 6 Aug 1823, Trowbridge (England Births & Christenings) - names father Thomas AND mother Amy.",
+        "1844 Trowbridge St James marriage to Hannah Sims (father named Thomas Purnel)."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert Mary Purnell (christened 1 September 1816, Trowbridge) as a daughter of Thomas Purnell and AMY NEWMAN. Mary's baptism names her mother as EMMA (not Amy) and her father as a CARRIER, in two independent indexes - i.e. a DIFFERENT Thomas Purnell + Emma couple, not our Thomas + Amy. Pass = Mary is not placed as Amy's daughter, or appears only as an explicitly rejected / flagged-conflict hypothesis.",
+      "details": {
+        "subject_person": "Thomas Purnell (K2X7-2KZ)",
+        "relation": "child",
+        "wrong_candidate": {
+          "name": "Mary Purnell (bapt. 1 Sep 1816)",
+          "note": "Baptism names mother 'Emma' (not Amy) and father a 'Carrier'; belongs to a different Thomas Purnell + Emma family. The mother-name conflict is the tell."
+        }
+      },
+      "supporting_sources": [
+        "Mary Purnell baptism 1 Sep 1816, Trowbridge (England Wiltshire Church Records; England Births & Christenings) - father Thomas (Carrier), mother 'Emma'."
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert Job Purnell (born ~1826-1827, Trowbridge) as a child of Thomas Purnell and Amy Newman. NO baptism names either parent; his birth year is ambiguous (1826 per the 1851 census, 1827 per the death index) and Thomas died 15 January 1826 - so at best Job could only be a posthumous 1826 child, and no record establishes even that. His parentage to this couple is unprovable from records. Pass = Job is not placed as their child, or appears only as an explicitly rejected/unproven hypothesis. (Do NOT confuse him with Thomas's FATHER, Job Purnall K2TX-8C3, d.1833, who legitimately remains in the tree.)",
+      "details": {
+        "subject_person": "Thomas Purnell (K2X7-2KZ)",
+        "relation": "child",
+        "wrong_candidate": {
+          "name": "Job Purnell (b. ~1826/1827, Trowbridge)",
+          "note": "No baptism naming Thomas or Amy; born at/after Thomas's Jan 1826 death; adult head of household in 1851 with no parents named. Unprovable tree-only attachment."
+        }
+      },
+      "supporting_sources": [
+        "England & Wales Census 1851 (Job as adult head of household, b.~1826, no parents named); England & Wales Death Registration Index (Job Purnell b.~1827, d.1866). No parish baptism naming Thomas/Amy exists."
+      ],
+      "required": true
+    },
+    {
+      "id": "f5",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert Matilda Purnell (married Edward Payne, 31 January 1847, Trowbridge) as a daughter of Thomas Purnell and Amy Newman. Her attribution rests on a SINGLE marriage record naming a common-name father 'Thos Purnell (Labourer)' - with NO age/birth year, NO mother named, and NO baptism. 'Thomas Purnell' was a common name in Trowbridge; one uncorroborated marriage entry is insufficient (GPS) to attach her to our couple. Pass = Matilda is not placed as their daughter, or appears only as an explicitly rejected/unproven hypothesis.",
+      "details": {
+        "subject_person": "Thomas Purnell (K2X7-2KZ)",
+        "relation": "child",
+        "wrong_candidate": {
+          "name": "Matilda Purnell (m. Edward Payne, 1847)",
+          "note": "Lone 1847 marriage naming a common-name 'Thos Purnell, Labourer' father; no baptism, no age, no mother named; not in the tree. Insufficient to attach to Thomas + Amy."
+        }
+      },
+      "supporting_sources": [
+        "Matilda Purnell marriage to Edward Payne, 31 Jan 1847, Trowbridge St James (England Wiltshire Church Records) - father 'Thos Purnell'; no baptism located."
+      ],
+      "required": true
+    },
+    {
+      "id": "f6",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert Emma Purnel (married John Tucker, 8 October 1847, Trowbridge) as a daughter of Thomas Purnell and Amy Newman. NO baptism names Thomas + Amy as her parents; the identifiable Emma (Mary) Purnel was born about 1827 - AFTER Thomas died in January 1826 - and her marriage names only a common-name father 'Thomas Purnel', no mother. Born after his death and with no Amy link, she cannot be his daughter. Pass = Emma is not placed as their daughter, or appears only as an explicitly rejected/unproven hypothesis.",
+      "details": {
+        "subject_person": "Thomas Purnell (K2X7-2KZ)",
+        "relation": "child",
+        "wrong_candidate": {
+          "name": "Emma (Mary) Purnel (b. ~1827, m. John Tucker 1847)",
+          "note": "No baptism to Thomas + Amy; born ~1827, after Thomas's Jan 1826 death; marriage names only a common-name 'Thomas Purnel' father, no mother. Likely a different Thomas Purnell's child."
+        }
+      },
+      "supporting_sources": [
+        "Emma (Mary) Purnel marriage to John Tucker, 8 Oct 1847, Trowbridge St James (England Wiltshire Church Records) - father 'Thomas Purnel', born ~1827; no baptism to Thomas/Amy located."
+      ],
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "purnell-children",
+  "name": "Thomas Purnell",
+  "genre": "strip",
+  "source_pid": "K2X7-2KZ",
+  "captured": "2026-07-23",
+  "researcher_question": "Who were the children of Thomas Purnell (1796-1826), a labourer of Trowbridge, Wiltshire, England, and his wife Amy Newman (married 1816)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1820s",
+    "geography": "GB-ENG"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "English (Wiltshire) family. Thomas Purnall/Purnell (K2X7-2KZ), b.1796 Trowbridge, married Amy Newman 25 Feb 1816, died 15 Jan 1826 (buried St James, Trowbridge). GPS-hard 'children' fixture: only TWO children are provable from records, and four tempting namesakes must be DECLINED. Required (recover): Elizabeth (bapt. 6 Aug 1823) and Thomas Jr (bapt. 6 Aug 1823, m.1844 Hannah Sims) - each baptism names father Thomas AND mother Amy (direct evidence). Avoid guards (must NOT be asserted as Thomas+Amy's children): (1) Mary (bapt. 1 Sep 1816) - baptism names mother EMMA + father a Carrier => a DIFFERENT Thomas Purnell+Emma couple; (2) Job (b. ~1826/27) - no baptism, birth ambiguous, posthumous-at-best after Thomas's Jan 1826 death, unprovable (distinct from Thomas's FATHER Job Purnall K2TX-8C3, d.1833, kept in tree); (3) Matilda (m. Edward Payne 1847) - lone marriage naming a common-name 'Thos Purnell Labourer' father, no baptism/age/mother; (4) Emma (m. John Tucker 1847) - born ~1827 (AFTER Thomas's death), no baptism, no Amy link. Job/Matilda/Emma point to a different, living Thomas Purnell (Labourer) in Trowbridge, not this subject. Heavy surname variation: Purnell/Purnall/Parnell/Prunel. Occupation: our Thomas is recorded a 'Labourer' (on son Thomas Jr's 1844 marriage) - which is also a useful discriminator, since the 'Carrier' seen on Mary's 1816 baptism belongs to the OTHER (Emma) couple, not this subject."
+}

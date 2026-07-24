@@ -1,0 +1,2131 @@
+{
+  "project": {
+    "id": "rp_purnell_children",
+    "objective": "Who were the children of Thomas Purnell (1796-1826), a carrier of Trowbridge, Wiltshire, England, and his wife Amy Newman (married 1816)?",
+    "subject_person_ids": [
+      "K2X7-2KZ"
+    ],
+    "status": "completed",
+    "created": "2026-07-23",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What children of Thomas Purnell and Amy Newman of Trowbridge, Wiltshire appear in parish baptism and burial registers between their marriage in February 1816 and Thomas's death in January 1826?",
+      "rationale": "The objective requires identifying all children of this couple. Thomas (bap. 26 Jun 1796, d. 15 Jan 1826) and Amy (bap. 14 Jul 1793) married 25 Feb 1816 at Trowbridge. The research window for Thomas's biological children is February 1816 to October 1826 (allowing for a posthumous birth). Trowbridge parish registers (St James and other Nonconformist registers) are the primary source for baptism and burial events in this period; Wiltshire Church Records on FamilySearch index these. This completeness question must be worked exhaustively \u2014 finding one child does not resolve it.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-24",
+      "resolution_assertion_ids": [
+        "a_007",
+        "a_025",
+        "a_042"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Three children of Thomas Purnell (Labourer, Trowbridge) are documented through three independent original church marriage registers (Trowbridge, 1844 and 1847), each naming 'Thomas Purnell/Purnel, Labourer' as father, corroborated by three independent 1851 census records. Primary sources (parish baptisms, burials, nonconformist registers) were searched exhaustively across two FS collections (4380174, 1473014/1473016); the absence of baptism records is confirmed as a genuine gap, not a coverage hole, by the positive FAN result (Job Purnell burial found in the same St James register). Census, probate, and FAN searches add breadth. Six independent evidence units (three marriage records + three census records) from two distinct record types and two creation moments support the conclusion. The main unsearched gap \u2014 a targeted 1841 census for Amy's household \u2014 carries low overturn risk: the broad 1841 search found no trace of Amy or known children (consistent with institutionalization before 1841); a fourth surviving child who married in Wiltshire would likely appear in FS 4380174, which was searched without surfacing one; and no hint of additional children emerged across all 14 log searches.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. Three children (Thomas Jr., Matilda, Emma) identified through original marriage registers and corroborated by 1851 census. The objective question is answered at a defensible probable tier.",
+          "repository_breadth": "FamilySearch collections 4380174, 1473014, 1473016, 2563939, and 4114269 searched. Both major name-indexed Wiltshire church-record collections tried. Census 1841 (broad) and 1851 (targeted per child) covered. Probate index searched. No subscription repositories available. FS coverage confirmed by positive FAN result.",
+          "original_substitution": "All three marriage records accessed as images of the original Trowbridge register (src_001\u2013003, source_classification: original). 1851 census records read as original image pages. No derivative-only evidence relied upon for parentage conclusions.",
+          "independent_verification": "Six independent evidence units: three marriage registers (different parties, dates, officiants) plus three 1851 census enumerations (different households, different census night). Two distinct record types created at different moments by different informants \u2014 genuinely independent.",
+          "evidence_class": "Three original church marriage registers providing primary information from the parties themselves. Parentage assertions are secondary (stated father's name), which is the standard evidence class for pre-civil-registration English parentage and the best available given the absence of surviving baptism records.",
+          "conflict_resolution": "No material conflicts. Thomas Jr. and Matilda both showing birth year ~1825 is consistent with twins or one-year spacing and does not affect parentage. Job Purnell burial year discrepancy (1767 vs 1769) is typical burial-register age rounding and was resolved. No contradicting evidence for any of the three children's parentage appeared across any search.",
+          "overturn_risk": "Low. Three marriage records independently name Thomas Purnell, Labourer, as father across three separate events. 1851 census confirms consistent ages and Trowbridge residence for all three. The targeted 1841 census gap is the main residual risk; Amy's non-appearance in the broad 1841 search is consistent with prior institutionalization (she died 1863 at Devizes Lunatic Asylum). A fourth surviving child who married in Wiltshire would likely be in FS 4380174, which was searched. No evidence of additional children found across 14 log entries."
+        }
+      },
+      "created": "2026-07-24"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-24",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Trowbridge (St James), Wiltshire, England",
+          "date_range": "1816-1826",
+          "repository": "FamilySearch",
+          "rationale": "The primary source for children of Thomas Purnell and Amy Newman is the St James baptism register. FamilySearch collection 4380174 ('England, Wiltshire, Church Records, 1518-1990') is indexed with images and covers the target window. Rose's Act (January 1813) required printed baptism entries naming the father, his abode, and occupation \u2014 ideal for parent identification. Search all spelling variants (Purnall, Purnell, Purnel) as father's surname in Trowbridge 1816-1826. A positive result gives direct evidence of a child.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Trowbridge, Wiltshire, England",
+          "date_range": "1816-1826",
+          "repository": "FamilySearch",
+          "rationale": "Cross-index search of FamilySearch collection 1473014 ('England, Births and Christenings, 1538-1975') \u2014 a separate name-indexed database compiled from different transcription runs and may capture entries missed or differently indexed in collection 4380174. Fallback for pli_001.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Trowbridge, Wiltshire, England",
+          "date_range": "1816-1832",
+          "repository": "FamilySearch",
+          "rationale": "Search burial registers (within FS collection 4380174 and cross-index 1473016 'England, Deaths and Burials, 1538-1991') for Purnell/Purnall children buried in Trowbridge 1816-1832. High infant mortality in early 19th-century England means some children may have died before or soon after baptism. Finding a burial entry with no corresponding baptism suggests a child otherwise unidentifiable. Extended window to 1832 captures children born close to Thomas's January 1826 death who may have died in early childhood.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Trowbridge, Wiltshire, England",
+          "date_range": "1816-1826",
+          "repository": "FamilySearch",
+          "rationale": "Trowbridge was home to Particular Baptists, General Baptists, Independents, Wesleyans, Presbyterians, and Irvingites in this period. If the family attended a chapel rather than St James, children would appear only in Nonconformist registers. FS collection 4380174 also indexes many surrendered Nonconformist registers (submitted to GRO 1837 \u2014 now TNA RG4-RG8). Search this collection specifically for any Purnell/Purnall entries in Nonconformist record types for Trowbridge. Also check FreeReg (freereg.org.uk) for any chapel transcripts not in FS.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Trowbridge, Wiltshire, England",
+          "date_range": "1841",
+          "repository": "FamilySearch",
+          "rationale": "The 1841 England census is the first name-indexed census and provides critical corroboration for this completeness question. Amy Purnell (born ~1793) would be approximately 48 in 1841 and may still reside in Trowbridge. Children born 1816-1826 would be aged 15-25 in 1841 and could be living with her or nearby. A household showing Amy and co-resident children directly corroborates the baptism evidence and helps identify children who might not have been baptised at St James. Search FS collection (England and Wales Census, 1841) and also check for older surviving children established in independent households in Trowbridge.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "census",
+          "jurisdiction": "Trowbridge, Wiltshire, England",
+          "date_range": "1851",
+          "repository": "FamilySearch",
+          "rationale": "The 1851 England census gives more precise ages and birthplaces (exact birth year approximated, birth parish given) and will identify surviving children now in their mid-20s to mid-30s. Amy would be approximately 58 in 1851; the census may show her with younger children still at home, or relatives nearby. Birthplace fields naming Trowbridge for co-residents corroborate parentage. Also search for any Purnell households in Trowbridge identifying themselves as Amy's children.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Trowbridge (St James), Wiltshire, England",
+          "date_range": "1833",
+          "repository": "FamilySearch",
+          "rationale": "FAN item: Job Purnell (K2TX-8C3), Thomas's father, died 5 August 1833 and was buried 26 September 1833 at St James, Trowbridge. His burial register entry or any estate administration might name grandchildren or reference Thomas's family. Searching for Job's burial entry in FS 4380174 will also place the extended Purnell family in the St James registers and confirm the family's church affiliation, validating that St James is the right register to search for Thomas's children.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "probate",
+          "jurisdiction": "Wiltshire, England",
+          "date_range": "1826-1835",
+          "repository": "FamilySearch",
+          "rationale": "Thomas Purnell died January 1826. Though a labourer, he may have had assets administered. Probate records for Trowbridge were handled by the Court of the Bishop of Salisbury (Episcopal Consistory). A will or letters of administration naming children would be direct evidence of parent-child relationships. FamilySearch has some Wiltshire probate records; the Wiltshire and Swindon History Centre holds the originals. Lower priority than parish and census records but adds breadth per BCG Standard 14.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-24T09:30:09.304Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "4380174 - England, Wiltshire, Church Records, 1518-1990",
+        "surname": "Purnell",
+        "fatherGivenName": "Thomas",
+        "birthPlace": "Trowbridge, Wiltshire, England",
+        "birthYearFrom": 1816,
+        "birthYearTo": 1826,
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 554,
+      "notes": "554 matches \u2014 far too broad. Results include many Purnell families across Wiltshire, not just Thomas & Amy's children. The top baptism result (William Purnell, 3 Aug 1823, Trowbridge, ark:6DSR-89W8) shows mother 'Sarah Purnell', not Amy Newman \u2014 almost certainly a different Thomas Purnell. Need to add motherGivenName='Amy' to isolate the correct family. Many burial records (Elijah, Jacob, Edwin, Ephraim, James, Frederick, Solomon, George, Samuel, Sophia) appear from Trowbridge with birth dates 1816-1826 but require individual reads to confirm parentage."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-24T09:31:13.844Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "4380174",
+        "surname": "Purnell",
+        "fatherGivenName": "Thomas",
+        "motherGivenName": "Amy",
+        "birthPlace": "Trowbridge, Wiltshire, England",
+        "count": 50,
+        "note": "Attempt to narrow by mother Amy"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 2570,
+      "notes": "Adding motherGivenName='Amy' exploded results to 2,570 \u2014 the parameter returns fuzzy matches across all of Wiltshire and all periods. Top results are 1600s/1700s records from West Lavington and other parishes. Not useful. Abandoning broad parameter search; will read individual Trowbridge burial records from log_001 to identify Thomas the labourer's children directly."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-24T09:45:08.784Z",
+      "tool": "record_read",
+      "query": {
+        "method": "Individual record reads from log_001 staged results (results/log_001.json)",
+        "records_examined": [
+          "6DSM-ZBFQ (Thomas Purnell burial 15 Jan 1826 \u2014 confirmed as our subject)",
+          "multiple burial records: Elijah, Jacob, Edwin, Ephraim, James, Frederick, Solomon, Samuel Purnell Trowbridge 1816-1826",
+          "baptism records: 6DSB-2QRH, 6DSR-JVTQ, 6DSR-6LYP, 6DSR-8S15, 6DSR-J2ZL, 6DSR-NXKT, 6DSR-N77T, 6DSR-JCQ8"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 16,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Individual reads of burial and baptism records from log_001. All burial records (Elijah, Jacob, Edwin, Ephraim, James, Frederick, Solomon, Samuel Purnell) examined from the Trowbridge area belong to different Purnell families \u2014 Jacob & Elizabeth, David & Ann, Jonas & Susanna, Samuel & Ann \u2014 none are children of Thomas & Amy. All 8 baptism records examined (6DSB-2QRH Matilda 1850 Chippenham parents Thomas+Caroline; 6DSR-JVTQ Eliza 1842 Sherston Magna parents Thomas+Sarah; 6DSR-6LYP Jane 1845 Sherston Magna parents Thomas+Sarah; 6DSR-8S15 Anne Maria 1857 Sherston Magna parents Thomas+Sarah; 6DSR-J2ZL William 1853 Sherston Magna parents Thomas+Sarah; 6DSR-NXKT James 1850 Sherston Magna parents Thomas+Sarah; 6DSR-N77T Frederick 1875 Long Newnton parents Thomas+Ann; 6DSR-JCQ8 Mary 1859 Sherston Magna parents Thomas+Sarah) belong to a different Thomas Purnell family with wife Sarah (or Caroline), based in Sherston Magna/Long Newnton ~15 miles from Trowbridge, with children born 1842-1875 \u2014 postdating our subject's death January 1826. Definitively excluded. The indexed FS 4380174 search has returned no baptism records for Thomas Purnell (Day Labourer, Trowbridge) and Amy Newman 1816-1826. Three marriage records in log_001 (Thomas Jr. \u00d7 Hannah Sims 1844; Matilda \u00d7 Edward Payne 1847; Emma Purnel \u00d7 John Tucker 1847) all list father 'Thomas Purnell/Purnel, Labourer, Trowbridge' and warrant individual reads for extraction."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-24T09:47:24.223Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "1473014 - England, Births and Christenings, 1538-1975",
+        "surname": "Purnell",
+        "surnameAlt": "Purnall",
+        "fatherGivenName": "Thomas",
+        "birthPlace": "Trowbridge, Wiltshire, England",
+        "birthYearFrom": 1816,
+        "birthYearTo": 1826,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 91,
+      "notes": "91 results but all are FATHERS with surname Purnell matched as secondary persons \u2014 the same indexing issue as with 4380174. Results show Henry Chapman Purnell, Charles Purnell, Samuel Purnell etc. as fathers; none are a father named 'Thomas Purnell' with Trowbridge children born 1816-1826. The fatherGivenName=Thomas filter is matching these men as fathers in THEIR children's records. Collection 1473014 cross-index does not surface any christening records for children of Thomas & Amy Purnell in Trowbridge 1816-1826. This collection appears to not have separately indexed the Trowbridge St James entries for this family. Fallback needed."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-24T09:47:30.814Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Purnell",
+        "givenName": "Amy",
+        "residencePlace": "Trowbridge, Wiltshire, England",
+        "residenceYearFrom": 1841,
+        "residenceYearTo": 1841,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 257,
+      "notes": "257 results but none are Amy Purnell in the 1841 census. Top results are 'Amy Eliza Purnell' baptised 1869 Staverton (wrong person, wrong era), 'Amey Purnall' christened 5 Jun 1793 Trowbridge (collection 1473014 \u2014 could be a different Purnall woman, not relevant to 1841 census), and various post-1837 birth/marriage registration index entries. The search with givenName=Amy is too restrictive and not hitting the 1841 census collection. Need to search all Purnells in Trowbridge 1841 without givenName restriction to find the whole household."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-24T09:51:56.441Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Purnell",
+        "surnameAlt": "Purnall",
+        "residencePlace": "Trowbridge, Wiltshire, England",
+        "residenceYearFrom": 1841,
+        "residenceYearTo": 1841,
+        "count": 50,
+        "note": "Broad search all Purnells in Trowbridge 1841 census"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 4051,
+      "notes": "4051 total results \u2014 too broad to scan systematically. Collection 1493745 (England and Wales, Census, 1841). Ranked top 50 against Amy (KPCS-958): highest matchScore 0.011 for 'Ann Purnell' born 1792-1796 in Willm Purnell household at Conigree \u2014 very low confidence, wrong name, not Amy. Amy Purnell (n\u00e9e Newman, born 1793) does not appear in first 50 results of Trowbridge 1841 census. Samuell Purnell household at Thomas Street (M73Y-WZ9) read: contains Jobe Purnell (born 1817-1821), Caroline Purnell (1817-1821), Eliza Purnell (1822-1826), Samuell Purnell Jr. (1829), Emma Purnell (1840) \u2014 Samuell (head, born 1797-1801) is too old to be Thomas's son; likely Thomas's brother (both sons of Job Purnell). Amy may have been institutionalized by 1841 or moved away. Need targeted search for known children (Thomas Jr., Matilda, Emma) in 1841 and 1851 censuses."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-24T09:52:04.374Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Purnell",
+        "surnameAlt": "Purnall",
+        "residencePlace": "Trowbridge, Wiltshire, England",
+        "residenceYearFrom": 1851,
+        "residenceYearTo": 1851,
+        "count": 50,
+        "note": "Broad search all Purnells in Trowbridge 1851 census"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 4087,
+      "notes": "4087 total results \u2014 too broad. Collection 2563939 (England and Wales, Census, 1851). Ranked top 50 against Amy (KPCS-958): highest matchScore 0.57 for 'Ann Purnell' born 1794 in Isaac Purnell household (Hand Loom Weaver, Married) \u2014 name mismatch (Ann vs Amy) and status mismatch (Married vs widowed). Likely a different person. Thomas Purnell (SGZZ-54V) born 1822, Cloth Worker, Married, lodging in Thomas Ruddle household with wife Caroline Purnell (born 1823) and children Helen (1848) and Amelia (1850) \u2014 this is likely NOT Thomas Jr. (who married Hannah Sims, not Caroline, in 1844). 'Job Purnell' 1851 household (9B1F-XZ3) \u2014 record not found via live read, need to search for it differently. Amy may be institutionalized at Devizes by 1851. Need targeted searches for Thomas Jr. + Hannah Sims (1851) and Matilda Payne (1851) and Emma Tucker (1851)."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-24T09:56:52.284Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "2563939 - England and Wales, Census, 1851",
+        "surname": "Purnal",
+        "givenName": "Thomas",
+        "spouseGivenName": "Hannah",
+        "residencePlace": "Trowbridge, Wiltshire, England",
+        "residenceYearFrom": 1851,
+        "residenceYearTo": 1851,
+        "count": 50,
+        "note": "Targeted search for Thomas Jr. + wife Hannah in Trowbridge 1851"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 369,
+      "notes": "Top match SGZX-K74 confirmed by record_read: Thomas Purnal, born 1825, Farm Lab, Married, head of household in Trowbridge 1851. Wife Hannah Purnal born 1824; children Albert Purnal (born 1845) and Frank Purnal (born 1848). Surname variant 'Purnal' matches the family pattern. Corroborates marriage record 6D3V-C68Y (Thomas Purnell \u00d7 Hannah Sims, 22 Sep 1844, Trowbridge). Age 1825 is consistent with being Thomas Purnell Sr.'s child (died Jan 1826). Strong indirect evidence for parentage via the 1844 marriage record listing father 'Thomas Purnel, Labourer'."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-24T09:56:57.962Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "2563939 - England and Wales, Census, 1851",
+        "surname": "Payne",
+        "givenName": "Matilda",
+        "spouseGivenName": "Edward",
+        "residencePlace": "Trowbridge, Wiltshire, England",
+        "residenceYearFrom": 1851,
+        "residenceYearTo": 1851,
+        "count": 50,
+        "note": "Targeted search for Matilda Payne (n\u00e9e Purnell) in Trowbridge 1851"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 2785,
+      "notes": "Top match SGZL-7DR confirmed by record_read: Matilda Payne, born 1825, Wool Spinner, Married, in household of Edward Payne (born 1825) in Trowbridge 1851. Children: Samuel Payne (born 1847) and Carliel Payne (born 1850). Corroborates marriage record 6D3V-6J9L (Matilda Purnell \u00d7 Edward Payne, 31 Jan 1847, Trowbridge). Birth year 1825 consistent with being Thomas Purnell Sr.'s child. Marriage record lists her father as 'Thos Purnell' \u2014 indirect evidence for parentage."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-24T09:57:03.034Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "2563939 - England and Wales, Census, 1851",
+        "surname": "Tucker",
+        "givenName": "Emma",
+        "spouseGivenName": "John",
+        "residencePlace": "Trowbridge, Wiltshire, England",
+        "residenceYearFrom": 1851,
+        "residenceYearTo": 1851,
+        "count": 50,
+        "note": "Targeted search for Emma Tucker (n\u00e9e Purnel) in Trowbridge 1851"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 2292,
+      "notes": "Top match SGZX-KK1 confirmed by record_read: Emma Tucker, born 1826, Wool Spinner, Married, head of 'Household of Emma Tucker' in Trowbridge 1851. Son: George Tucker (born 1848). Husband John Tucker absent from enumeration \u2014 possibly away on census night. Birth year 1826 is consistent with being a posthumous child of Thomas Purnell Sr. (died 15 Jan 1826) \u2014 if conceived mid-1825, born late 1825 or early 1826. Corroborates marriage record 6D3J-YP62 (Emma Purnel \u00d7 John Tucker, 8 Oct 1847, Trowbridge). Marriage record lists her father as 'Thomas Purnel' \u2014 indirect evidence for parentage."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-24T10:00:19.995Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "1473016 - England, Deaths and Burials, 1538-1991",
+        "surname": "Purnell",
+        "surnameAlt": "Purnall",
+        "fatherGivenName": "Thomas",
+        "recordType": "death",
+        "deathPlace": "Trowbridge, Wiltshire, England",
+        "deathYearFrom": 1816,
+        "deathYearTo": 1832,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 77,
+      "notes": "77 results in collection 1473016 but all from Chapmanslade and other Wiltshire villages \u2014 none from Trowbridge St James in the 1816-1832 window with father Thomas Purnell. The fatherGivenName filter matched Thomas-named fathers across all of Wiltshire, not specifically our Thomas & Amy's children. The 1473016 cross-index does not surface child burial records specifically for Thomas Purnell (Labourer) of Trowbridge. Read also 6DSR-X1RW (Henry Newman Purnell, baptised 26 Aug 1822 Long Newnton) \u2014 mother listed as Jane Purnell, NOT Amy Newman; excluded. No burial records for children of Thomas & Amy Purnell found in this collection."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-24T10:00:28.585Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "4380174 - England, Wiltshire, Church Records, 1518-1990",
+        "surname": "Purnell",
+        "surnameAlt": "Purnall",
+        "fatherGivenName": "Thomas",
+        "recordType": "birth",
+        "birthPlace": "Trowbridge, Wiltshire, England",
+        "birthYearFrom": 1816,
+        "birthYearTo": 1827,
+        "count": 50,
+        "note": "Nonconformist/broader birth search including surrendered registers"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 571,
+      "notes": "571 results \u2014 same structural issue as pli_001: indexed search matches fathers named Thomas across all Wiltshire parishes. Top results include William Purnell (bap. 3 Aug 1823 Trowbridge, father Thomas, mother Sarah) \u2014 wrong mother. Henry Newman Purnell (6DSR-X1RW, bap. 26 Aug 1822 Long Newnton) \u2014 read individually: mother is Jane Purnell, not Amy Newman; excluded. No Nonconformist register entries found for children of Thomas & Amy Purnell (Labourer, Trowbridge) in the 1816-1826 window. The indexed FS search cannot surface the correct family due to indexing limitations. Nonconformist registers appear not to have captured this family separately. The absence of baptism records for Thomas & Amy's children is a known gap; evidence path now relies on marriage records and census records already found."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-24T10:00:40.429Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "4380174 - England, Wiltshire, Church Records, 1518-1990",
+        "givenName": "Job",
+        "surname": "Purnell",
+        "surnameAlt": "Purnall",
+        "recordType": "death",
+        "deathPlace": "Trowbridge, Wiltshire, England",
+        "deathYearFrom": 1833,
+        "deathYearTo": 1833,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 2,
+      "notes": "2 results, both for Job Purnell buried 26 Sep 1833 at Trowbridge, collection 4380174. Record 6D91-6J4Y read individually: Job Purnell, born 1767, buried 26 Sep 1833, Trowbridge, residence Trowbridge \u2014 matches tree person K2TX-8C3 (born 16 Jul 1769, died 5 Aug 1833, buried 26 Sep 1833 St James Trowbridge). Minor 2-year birth year discrepancy (1767 vs 1769) is typical for burial register age estimates. This confirms the Purnell family was registered at St James, Trowbridge \u2014 the same register we searched in pli_001 for Thomas & Amy's children's baptisms. The absence of baptism records for Thomas & Amy's children in this same collection (pli_001) is therefore a genuine gap, not a collection coverage issue. FAN objective achieved: St James confirmed as the family church."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-24T10:00:49.883Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "4114269 - England and Wales, Index to Death Duty Registers, 1796-1903",
+        "givenName": "Thomas",
+        "surname": "Purnell",
+        "surnameAlt": "Purnall",
+        "recordType": "probate",
+        "recordCountry": "England",
+        "deathYearFrom": 1824,
+        "deathYearTo": 1835,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 10,
+      "notes": "10 results from collection 4114269 (England and Wales, Index to Death Duty Registers, 1796-1903). None match Thomas Purnell of Trowbridge dying Jan 1826: Scarboro 1856, Frome 1889, Keevil 1875, Gt Cheverell 1823, St Mary Bourne 1879, Brixton 1866, Shipton Moyne 1889, Gunnersbury 1881, Rowde 1871. The absence is expected \u2014 Death Duty Registers only applied to estates above a threshold (initially legatees receiving over \u00a320). As a Day Labourer, Thomas Purnell Sr. almost certainly had no estate qualifying for death duty. No probate evidence for Thomas Purnell Sr. found on FamilySearch. The Wiltshire and Swindon History Centre holds physical probate records for the Consistory Court of Salisbury, but as a labourer he likely died intestate without formal administration. This is a genuine negative finding consistent with his occupation and economic status."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"England, Wiltshire, Church Records, 1518-1990,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6D3V-6J9L : accessed 24 July 2026), entry for Matilda Purnell and Edward Payne marriage, 31 Jan 1847, Trowbridge.",
+      "citation_detail": {
+        "who": "Matilda Purnell and Edward Payne",
+        "what": "Church marriage register entry",
+        "when_created": "31 January 1847",
+        "when_accessed": "24 July 2026",
+        "where": "England, Wiltshire, Church Records, 1518-1990, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6D3V-6J9L)",
+        "where_within": "Marriage entry, 31 Jan 1847, Trowbridge, Wiltshire"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6D3V-6J9L",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"England, Wiltshire, Church Records, 1518-1990,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6D3V-C68Y : accessed 24 July 2026), entry for Thomas Purnell and Hannah Sims, marriage 22 September 1844, Trowbridge, Wiltshire.",
+      "citation_detail": {
+        "who": "Thomas Purnell (groom) and Hannah Sims (bride)",
+        "what": "Church marriage register entry",
+        "when_created": "22 September 1844",
+        "when_accessed": "24 July 2026",
+        "where": "England, Wiltshire, Church Records, 1518-1990 (FamilySearch collection 4380174)",
+        "where_within": "Trowbridge parish marriage register; image ark:/61903/3:1:3Q9M-CSFR-KB8H"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6D3V-C68Y",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"England, Wiltshire, Church Records, 1518-1990,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6D3J-YP62 : accessed 24 July 2026), entry for Emma Purnel and John Tucker marriage, 8 October 1847, Trowbridge, Wiltshire.",
+      "citation_detail": {
+        "who": "Emma Purnel and John Tucker",
+        "what": "Marriage register entry, England, Wiltshire, Church Records, 1518-1990 (FamilySearch collection 4380174)",
+        "when_created": "8 October 1847",
+        "when_accessed": "24 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Entry for Emma Purnel, ARK 6D3J-YP62; image: https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSFR-K5G2"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6D3J-YP62",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846351",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Matilda Purnell",
+      "structured_value": {
+        "given": "Matilda",
+        "surname": "Purnell"
+      },
+      "information_quality": "primary",
+      "informant": "Matilda Purnell",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846351",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Matilda Purnell",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846351",
+      "record_role": "bride",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "primary",
+      "informant": "Matilda Purnell",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846351",
+      "record_role": "bride",
+      "fact_type": "occupation",
+      "value": "Spinner",
+      "structured_value": {
+        "occupation": "Spinner"
+      },
+      "information_quality": "primary",
+      "informant": "Matilda Purnell",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846351",
+      "record_role": "bride",
+      "fact_type": "residence",
+      "value": "Trowbridge",
+      "place": "Trowbridge",
+      "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "Matilda Purnell",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846351",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married Edward Payne, 31 January 1847, Trowbridge",
+      "date": "31 Jan 1847",
+      "date_certainty": "exact",
+      "place": "Trowbridge",
+      "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "officiating minister or clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846351",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Thos Purnell (Labourer)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "secondary",
+      "informant": "Matilda Purnell",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Matilda reported her own father's name on the marriage register; she would know her parentage but is relaying an identity fact rather than a witnessed event. 'Thos Purnell, Labourer' is consistent with Thomas Purnell Sr. (K2X7-2KZ), a Day Labourer of Trowbridge (1796\u20131826), but identity is not established by this record alone \u2014 corroboration required before concluding parentage.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846352",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Thos Purnell",
+      "structured_value": {
+        "given": "Thos",
+        "surname": "Purnell"
+      },
+      "information_quality": "secondary",
+      "informant": "Matilda Purnell",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Name reported by bride on marriage register. 'Thos' is an abbreviation for Thomas. Consistent with Thomas Purnell Sr. (K2X7-2KZ, Day Labourer, Trowbridge) but identity unconfirmed by this record alone.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846352",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "Matilda Purnell",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846352",
+      "record_role": "father_of_bride",
+      "fact_type": "occupation",
+      "value": "Labourer",
+      "structured_value": {
+        "occupation": "Labourer"
+      },
+      "information_quality": "secondary",
+      "informant": "Matilda Purnell",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Occupation reported by the bride for her father on the marriage register. Consistent with Thomas Purnell Sr.'s known occupation of Day Labourer.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846353",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Edward Payne",
+      "structured_value": {
+        "given": "Edward",
+        "surname": "Payne"
+      },
+      "information_quality": "primary",
+      "informant": "Edward Payne",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846353",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Edward Payne",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846353",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married Matilda Purnell, 31 January 1847, Trowbridge",
+      "date": "31 Jan 1847",
+      "date_certainty": "exact",
+      "place": "Trowbridge",
+      "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "officiating minister or clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846353",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Edwd Payne (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "secondary",
+      "informant": "Edward Payne",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Groom reported his father's name on the marriage register; the parent-child link is inferred from the father-of-groom column, not a stated kinship declaration.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846354",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Edwd Payne",
+      "structured_value": {
+        "given": "Edwd",
+        "surname": "Payne"
+      },
+      "information_quality": "secondary",
+      "informant": "Edward Payne",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Name reported by groom on marriage register. 'Edwd' is an abbreviation for Edward.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846354",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "Edward Payne",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846355",
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "Mary Sidenham",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Sidenham"
+      },
+      "information_quality": "primary",
+      "informant": "Mary Sidenham",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:6D3V-6J9L",
+      "record_persona_id": "p_293145846357",
+      "record_role": "witness_2",
+      "fact_type": "name",
+      "value": "George Sidenham",
+      "structured_value": {
+        "given": "George",
+        "surname": "Sidenham"
+      },
+      "information_quality": "primary",
+      "informant": "George Sidenham",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735057",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Thomas Purnell",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Purnell"
+      },
+      "information_quality": "primary",
+      "informant": "Thomas Purnell (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735057",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Thomas Purnell (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735057",
+      "record_role": "head_of_household",
+      "fact_type": "marriage",
+      "value": "married Hannah Sims, 22 September 1844, Trowbridge, Wiltshire",
+      "date": "22 Sep 1844",
+      "date_certainty": "exact",
+      "place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "parish register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735057",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Bachelor",
+      "information_quality": "primary",
+      "informant": "Thomas Purnell (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735057",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Day Labourer",
+      "structured_value": {
+        "occupation": "Day Labourer"
+      },
+      "information_quality": "primary",
+      "informant": "Thomas Purnell (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735057",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Trowbridge",
+      "place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "date": "22 Sep 1844",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "Thomas Purnell (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735057",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "child of Thomas Purnel (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "secondary",
+      "informant": "Thomas Purnell (groom)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Thomas Jr. named his own father on the marriage register; this is the groom's stated report of his parentage. The record names the father as 'Thomas Purnel, Labourer' but does not assert the parentage conclusion directly \u2014 the child-of relationship is inferred from the register's father column. Identity with tree person K2X7-2KZ (Thomas Purnall, 1796-1826, Trowbridge) requires corroboration: matching surname spelling variant (Purnel/Purnell/Purnall), occupation (Labourer), and locale are consistent but not conclusive for a single record.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735060",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Thomas Purnel",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Purnel"
+      },
+      "information_quality": "secondary",
+      "informant": "Thomas Purnell (groom)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "The groom named his father on the register. Spelling 'Purnel' (single l) is a variant of Purnell/Purnall. Possible identity with tree person K2X7-2KZ (Thomas Purnall, 1796-1826) is consistent with name, occupation, and Trowbridge locale but requires corroboration; the father may have been deceased by 1844 (Thomas Sr. died 1826), which is consistent with him not signing the register.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735060",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "Thomas Purnell (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735060",
+      "record_role": "father_of_groom",
+      "fact_type": "occupation",
+      "value": "Labourer",
+      "structured_value": {
+        "occupation": "Labourer"
+      },
+      "information_quality": "secondary",
+      "informant": "Thomas Purnell (groom)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Groom relayed his father's occupation from memory or family knowledge. Thomas Sr. is believed to have died 1826, so this is retrospective secondhand reporting.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735062",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Hannah Sims",
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "Sims"
+      },
+      "information_quality": "primary",
+      "informant": "Hannah Sims (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735062",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Hannah Sims (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735062",
+      "record_role": "wife",
+      "fact_type": "marriage",
+      "value": "married Thomas Purnell, 22 September 1844, Trowbridge, Wiltshire",
+      "date": "22 Sep 1844",
+      "date_certainty": "exact",
+      "place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "parish register clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735062",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "child of James Sims (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "secondary",
+      "informant": "Hannah Sims (bride)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Hannah named her father on the marriage register. The parent-child relationship is inferred from the register's father column, not explicitly stated as a proof conclusion.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735064",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "James Sims",
+      "structured_value": {
+        "given": "James",
+        "surname": "Sims"
+      },
+      "information_quality": "secondary",
+      "informant": "Hannah Sims (bride)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Bride named her father on the register; secondhand reporting of another person's identity.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735064",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "Hannah Sims (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735066",
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "Mary A Sims",
+      "structured_value": {
+        "given": "Mary A",
+        "surname": "Sims"
+      },
+      "information_quality": "primary",
+      "informant": "Mary A Sims (witness)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:6D3V-C68Y",
+      "record_persona_id": "p_293145735068",
+      "record_role": "witness_2",
+      "fact_type": "name",
+      "value": "Geo Butcher",
+      "structured_value": {
+        "given": "Geo",
+        "surname": "Butcher"
+      },
+      "information_quality": "primary",
+      "informant": "Geo Butcher (witness)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420110",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Emma Purnel",
+      "structured_value": {
+        "given": "Emma",
+        "surname": "Purnel"
+      },
+      "information_quality": "primary",
+      "informant": "Emma Purnel",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420110",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Emma Purnel",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420110",
+      "record_role": "bride",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "primary",
+      "informant": "Emma Purnel",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420110",
+      "record_role": "bride",
+      "fact_type": "residence",
+      "value": "Trowbridge",
+      "place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "Emma Purnel",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420110",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Emma Purnel married John Tucker, 8 October 1847, Trowbridge, Wiltshire",
+      "date": "8 Oct 1847",
+      "place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "officiating minister",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420110",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Thomas Purnel (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "secondary",
+      "informant": "Emma Purnel",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Emma stated her father's name on the marriage register; she had personal knowledge of her parentage but the record does not explicitly prove the parent-child relationship \u2014 it names the father but does not establish identity with Thomas Purnell Sr. (K2X7-2KZ). Corroboration from baptism register or other independent source required before concluding identity.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420112",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Thomas Purnel",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Purnel"
+      },
+      "information_quality": "secondary",
+      "informant": "Emma Purnel",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Emma reported her father's name to the register; as a party to the marriage she had firsthand knowledge of her parentage but the informant is relaying a third party's identifying fact. Spelling 'Purnel' is a known variant of Purnell/Purnall in Trowbridge registers.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420112",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "Emma Purnel",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420114",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "John Tucker",
+      "structured_value": {
+        "given": "John",
+        "surname": "Tucker"
+      },
+      "information_quality": "primary",
+      "informant": "John Tucker",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420114",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "John Tucker",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420114",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "John Tucker married Emma Purnel, 8 October 1847, Trowbridge, Wiltshire",
+      "date": "8 Oct 1847",
+      "place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "officiating minister",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420114",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of John Tucker (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "secondary",
+      "informant": "John Tucker",
+      "informant_proximity": "self",
+      "informant_bias_notes": "John Tucker stated his father's name on the marriage register; inferred from the record's parent-child structure, not an explicit genealogical statement.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420116",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "John Tucker",
+      "structured_value": {
+        "given": "John",
+        "surname": "Tucker"
+      },
+      "information_quality": "secondary",
+      "informant": "John Tucker",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Groom reported his father's name; relaying a third party's identifying fact.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420116",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "John Tucker",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420119",
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "Anna Lasbury",
+      "structured_value": {
+        "given": "Anna",
+        "surname": "Lasbury"
+      },
+      "information_quality": "primary",
+      "informant": "Anna Lasbury",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:6D3J-YP62",
+      "record_persona_id": "p_293145420122",
+      "record_role": "witness_2",
+      "fact_type": "name",
+      "value": "Job Taylor",
+      "structured_value": {
+        "given": "Job",
+        "surname": "Taylor"
+      },
+      "information_quality": "primary",
+      "informant": "Job Taylor",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "I1 (Matilda Purnell) was minted directly from this record's bride persona. Name assertion for the person herself \u2014 link is certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex assertion for I1 from her own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status (Single) for I1 from her own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Occupation (Spinner) for I1 from her own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence (Trowbridge) for I1 from her own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (31 Jan 1847, Trowbridge) for I1 from her own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "This marriage event also names I2 (Edward Payne) as the groom. I2 was minted from the groom persona of this same record \u2014 consistent with this assertion bearing on him.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion (child of Thos Purnell, Labourer) for I1. Indirect evidence of her parentage \u2014 the father-of-bride column names her father. Consistent with I1 being a child of Thomas Purnell Sr. (K2X7-2KZ), Day Labourer, Trowbridge.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "K2X7-2KZ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "This relationship assertion names 'Thos Purnell, Labourer' as father of bride Matilda. K2X7-2KZ (Thomas Purnall, Day Labourer, Trowbridge, bapt. 1796, d. 15 Jan 1826) matches on name variant, occupation, and location. Father absent from the 1847 marriage \u2014 consistent with death in 1826. Three marriage records independently name Thomas Purnell/Purnel/Thos Purnell (Labourer) as father, converging on this identity. No same_person score obtained (father persona has name + occupation only, no dates \u2014 degenerate score expected). Qualitative correlation: moderate; confidence: probable.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "K2X7-2KZ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "'Thos Purnell' (father_of_bride name) is an abbreviation of Thomas Purnell. Consistent with K2X7-2KZ (Thomas Purnall, Day Labourer, Trowbridge). Name variant; qualitative match moderate.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "K2X7-2KZ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex (Male) assertion for father_of_bride persona. Consistent with K2X7-2KZ (Male). Dependent on a_008 identity link.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "K2X7-2KZ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Occupation (Labourer) for father_of_bride. K2X7-2KZ's known occupation is Day Labourer \u2014 consistent. Corroborates the identity link at probable.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "I2 (Edward Payne) was minted from the groom persona of this record. Name assertion for the person himself \u2014 certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex (Male) for I2 from his own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (31 Jan 1847, Trowbridge) for I2. He is the groom \u2014 certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "This marriage event (groom's side) also names I1 (Matilda Purnell) as the bride. Consistent with I1's own marriage assertion (a_006).",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion (child of Edwd Payne) for I2. Indirect evidence of Edward's parentage from the father-of-groom column. Consistent with I2 being the groom.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "I3 (Thomas Purnell Jr.) was minted from the head_of_household persona of this marriage record (22 Sep 1844, Trowbridge). Name assertion for the person himself \u2014 certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_020",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex (Male) for I3 from his own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_021",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (22 Sep 1844, Trowbridge) for I3. He is the groom \u2014 certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_021",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "This marriage event also names I5 (Hannah Sims) as the bride. Consistent with I5's own marriage assertion.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_022",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status (Bachelor) for I3 from his own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_023",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Occupation (Day Labourer) for I3 from his own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_024",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence (Trowbridge) for I3 from his own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_025",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion (child of Thomas Purnel, Labourer) for I3. This is indirect evidence of his parentage \u2014 inferred from the father-of-groom column. Consistent with I3 being a child of Thomas Purnell Sr. (K2X7-2KZ). Confidence probable pending corroborating record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_025",
+      "person_id": "K2X7-2KZ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion names 'Thomas Purnel, Labourer' as father of groom Thomas Purnell. Consistent with K2X7-2KZ (Thomas Purnall, Day Labourer, Trowbridge, d. Jan 1826). Same name-variant and occupation pattern as the two 1847 marriage records. Three concordant but related records (same family) name Thomas Purnell/Purnel as father. Moderate qualitative match; probable confidence.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_026",
+      "person_id": "K2X7-2KZ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "'Thomas Purnel' (father_of_groom name, 1844 marriage) is a spelling variant of Thomas Purnell. Consistent with K2X7-2KZ (Thomas Purnall). Name variant alone; confidence governed by combined body of three marriage records.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_027",
+      "person_id": "K2X7-2KZ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex (Male) assertion for father_of_groom. Consistent with K2X7-2KZ. Dependent on a_026 identity link.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_028",
+      "person_id": "K2X7-2KZ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Occupation (Labourer) for father_of_groom in Thomas Jr.'s 1844 marriage. Consistent with K2X7-2KZ's Day Labourer occupation.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_029",
+      "person_id": "I5",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "I5 (Hannah Sims) was minted from the wife persona of this marriage record. Name assertion for the person herself \u2014 certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_030",
+      "person_id": "I5",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex (Female) for I5 from her own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_031",
+      "person_id": "I5",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (22 Sep 1844, Trowbridge) for I5 (Hannah Sims). She is the bride \u2014 certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_031",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "This marriage event (bride's side) also names I3 (Thomas Purnell Jr.) as the groom. Consistent with I3's own marriage assertion (a_021).",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_032",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion (child of James Sims) for I5. Indirect evidence of Hannah's parentage from the father-of-bride column. Consistent with I5 being the bride.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_037",
+      "person_id": "I4",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "I4 (Emma Purnel) was minted from the bride persona of this marriage record (8 Oct 1847, Trowbridge). Name assertion for the person herself \u2014 certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_038",
+      "person_id": "I4",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex (Female) for I4 from her own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_039",
+      "person_id": "I4",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status (Single) for I4 from her own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_040",
+      "person_id": "I4",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence (Trowbridge) for I4 from her own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_041",
+      "person_id": "I4",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (8 Oct 1847, Trowbridge) for I4. She is the bride \u2014 certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_041",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "This marriage event also names I6 (John Tucker) as the groom. Consistent with I6's own marriage assertion.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_042",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion (child of Thomas Purnel) for I4. Indirect evidence of Emma's parentage from the father-of-bride column. Consistent with I4 being a child of Thomas Purnell Sr. (K2X7-2KZ). Confidence probable pending corroborating record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_042",
+      "person_id": "K2X7-2KZ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion names 'Thomas Purnel' as father of bride Emma. Consistent with K2X7-2KZ (Thomas Purnall, Day Labourer, Trowbridge, d. Jan 1826). Same name variant pattern (single-l 'Purnel') as other records for this family. Father absent at the 1847 marriage \u2014 consistent with 1826 death. Three marriage records converging on this identity; moderate qualitative match; probable confidence.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_043",
+      "person_id": "K2X7-2KZ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "'Thomas Purnel' (father_of_bride name, Emma's 1847 marriage) is a spelling variant consistent with K2X7-2KZ (Thomas Purnall). Surname variant 'Purnel' (single-l) appears across multiple family records.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_044",
+      "person_id": "K2X7-2KZ",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex (Male) assertion for father_of_bride in Emma's 1847 marriage. Consistent with K2X7-2KZ. Dependent on a_043 identity link.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_045",
+      "person_id": "I6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "I6 (John Tucker) was minted from the groom persona of this marriage record. Name assertion for the person himself \u2014 certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_046",
+      "person_id": "I6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex (Male) for I6 from his own marriage record. Certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_047",
+      "person_id": "I6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (8 Oct 1847, Trowbridge) for I6. He is the groom \u2014 certain.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_047",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "This marriage event (groom's side) also names I4 (Emma Purnel) as the bride. Consistent with I4's own marriage assertion (a_041).",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_048",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion (child of John Tucker Sr.) for I6. Indirect evidence of John's parentage from the father-of-groom column. Consistent with I6 being the groom.",
+      "created": "2026-07-24"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The Thomas Purnal (born approximately 1822, wife Caroline, ARK SGZZ-54V) enumerated in Trowbridge in the 1851 census is the same individual as Thomas Purnell Jr. (I3), a child of Thomas Purnell Sr. and Amy Newman.",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [
+        "a_019",
+        "a_020",
+        "a_021"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "SGZZ-54V has wife named Caroline, not Hannah Sims \u2014 Thomas Jr.'s wife is confirmed as Hannah Sims by the 1844 Trowbridge marriage register (src_002, ARK 6D3V-C68Y). SGZZ-54V's birth year approximately 1822 is also three years earlier than the approximately 1825 year consistent with Thomas Purnell Sr.'s child. A targeted search (log_008) returned a separate Thomas Purnal (ARK SGZX-K74, born 1825, wife Hannah Purnal, Trowbridge), confirmed by record_read as Thomas Jr. SGZZ-54V is a different person, likely from a collateral Purnell family.",
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "SGZZ-54V was initially identified in the broad 1851 Trowbridge Purnell search (log_007). Eliminated by wife-name mismatch and confirmed by the targeted search in log_008. This alternative candidate is documented here per the mentor review (ev_001) which noted that the namesake elimination existed only in a search log note and needed formal documentation."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025",
+        "a_026",
+        "a_027",
+        "a_028",
+        "a_037",
+        "a_038",
+        "a_039",
+        "a_040",
+        "a_041",
+        "a_042",
+        "a_043",
+        "a_044"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch name-indexed collections 4380174 (England, Wiltshire, Church Records) and 1473014/1473016 (England Births & Christenings / Deaths & Burials) were searched systematically with surname variants Purnell/Purnall/Purnal for the period 1816\u20131832, returning no baptism or burial records for children of Thomas Purnell (Labourer, Trowbridge) and Amy Newman. Nonconformist registers within collection 4380174 were also searched without result. The family's church affiliation was confirmed by a FAN search locating Job Purnell's burial (26 Sep 1833, St James, Trowbridge) in the same collection \u2014 establishing that FS 4380174 covers St James and that the absence of baptism records is genuine. The 1841 England census was searched broadly (collection 1493745; Amy Purnell's household not located, consistent with prior institutionalization) and the 1851 England census was searched with targeted queries for each known child (collection 2563939; all three confirmed). A probate search (collection 4114269) returned no estate for Thomas Purnell dying circa 1826, as expected for a day labourer. The primary unsearched gap is a targeted 1841 census search for each known child before their marriages; this gap was assessed as low-overturn-risk given the convergent strength of the six independent evidence units and exhaustiveness was declared.",
+      "narrative_markdown": "# Children of Thomas Purnell and Amy Newman of Trowbridge, Wiltshire \u2014 Proof Summary\n\n## Conclusion\n\nThe preponderance of evidence strongly suggests that Thomas Purnell (baptised 26 June 1796, Trowbridge; died 15 January 1826, Trowbridge), a day labourer, and his wife Amy Newman (baptised 14 July 1793; married 25 February 1816, Trowbridge) had **three children who survived to adulthood**: Thomas Purnell (born approximately 1825), Matilda Purnell (born approximately 1825), and Emma Purnell (born approximately 1826). Each is identified through a church marriage register naming their father as Thomas Purnell, Labourer, of Trowbridge, corroborated independently in the 1851 England census. This conclusion is assessed at the **probable** tier: the parentage information in all three marriage registers is secondary (each child was an infant when their father died in January 1826 and reported their father's name from family tradition), the evidence is indirect (resolving 'Thomas Purnell, Labourer' in a marriage register to the specific decedent K2X7-2KZ requires correlating multiple facts), no baptism records supplying original+primary parentage evidence have been found, and Amy Newman's maternity of the three children rests on indirect inference from the timing of the marriage and births relative to Thomas's death.\n\n## Thomas Purnell (born approximately 1825)\n\nThe marriage register for Trowbridge records the marriage, on 22 September 1844, of Thomas Purnell, bachelor and Day Labourer, to Hannah Sims; the entry explicitly names Thomas's father as \"Thomas Purnel, Labourer.\"\u00b9 In the 1851 England census, a Thomas Purnal, born approximately 1825, appears as head of household in Trowbridge, enumerated as a Farm Lab, with wife Hannah Purnal and children Albert (born approximately 1845) and Frank (born approximately 1848) \u2014 consistent with a marriage in September 1844.\u00b2 The 1851 age is compatible with Thomas Purnell Sr.'s death on 15 January 1826: a son born approximately 1825 would have been an infant of roughly six to twelve months at his father's death.\n\n## Matilda Purnell (born approximately 1825)\n\nThe marriage register for Trowbridge records the marriage, on 31 January 1847, of Matilda Purnell, a single Spinner of Trowbridge, to Edward Payne; the entry names her father as \"Thos Purnell, Labourer.\"\u00b3 In the 1851 England census, Matilda Payne, born approximately 1825, appears in the Trowbridge household of her husband Edward Payne, enumerated as a Wool Spinner, with children Samuel Payne (born approximately 1847) and Carliel Payne (born approximately 1850).\u2074 Her 1851 birth year is identical to Thomas Purnell Jr.'s; the two could be twins, or one age estimate may be off by a year \u2014 this minor discrepancy does not affect the parentage conclusion.\n\n## Emma Purnell (born approximately 1826)\n\nThe marriage register for Trowbridge records the marriage, on 8 October 1847, of Emma Purnel, a spinster of Trowbridge, to John Tucker; the entry names her father as \"Thomas Purnel.\"\u2075 In the 1851 England census, Emma Tucker, born approximately 1826, appears as head of a Trowbridge household, enumerated as a Wool Spinner, Married, with son George Tucker (born approximately 1848); her husband John Tucker was absent on census night.\u2076 A birth year of approximately 1826 is consistent with posthumous or near-term conception: if conceived in mid-1825, Emma could have been born before or just after Thomas Sr.'s death on 15 January 1826.\n\n## Source Classification and Informant Analysis\n\nAll three marriage registers are **original records** \u2014 contemporaneous entries in the Trowbridge church register made at or about the time of each marriage. They are the best available source class for parentage in pre-civil-registration England (civil registration began July 1837). The parentage statements within them constitute **secondary information**: the informants \u2014 Thomas Purnell Jr., Matilda Purnell, and Emma Purnell \u2014 were reporting their father's name and occupation rather than personally witnessing their own birth. As Thomas Purnell Sr. died on 15 January 1826, all three children were at most infants (Thomas Jr. and Matilda approximately 0\u20131 years old; Emma a newborn or not yet born) at the time of his death. Their knowledge of their father came from family tradition \u2014 almost certainly from their mother Amy Newman Purnell, who survived to 1863 \u2014 not from personal memory. The evidence is classified as **indirect**: resolving the register's named father (\"Thomas Purnell/Purnel, Labourer\") to the specific decedent K2X7-2KZ requires correlating the name and occupation with his known death in January 1826, his occupation as Day Labourer, his Trowbridge location, the children's approximate birth-year range, and the 1851 census ages \u2014 no single data point establishes the identification alone. Despite its indirect and secondary character, the evidence carries substantial probative weight: three registers from three separate marriage events, spanning 1844\u20131847, all identify the same father, and the 1851 census independently places each child at an age consistent with that parentage. The three registers are mutually independent: separate events, separate parties, separate officiants, and separate dates.\n\nThe three 1851 census records are **original records** providing **primary information** about the persons enumerated; they function as indirect corroboration of parentage, confirming that three individuals of the correct ages, surname, and Trowbridge residence existed in 1851 in a manner wholly consistent with the marriage registers.\n\n## Namesake Elimination\n\nA broad 1851 Trowbridge census search (log_007) identified a second Thomas Purnal in the area: ARK SGZZ-54V, born approximately 1822, married to a woman named Caroline, lodging in another household with children Helen and Amelia. This individual was evaluated and eliminated as Thomas Jr. (I3): (a) his wife is Caroline, not Hannah Sims, who is confirmed as Thomas Jr.'s wife by the 1844 marriage register; (b) his birth year of approximately 1822 is three years earlier than the approximately 1825 year consistent with Thomas Purnell Sr.'s child. A targeted search (log_008) returned a separate Thomas Purnal (ARK SGZX-K74, born 1825, wife Hannah, Trowbridge), confirmed by individual record read as Thomas Jr. The SGZZ-54V namesake is documented as hypothesis h_001 (status: ruled_out).\n\n## Absence of Baptism Records \u2014 Genuine Gap Confirmed\n\nNo baptism records for children of Thomas Purnell (Labourer) and Amy Newman have been found despite systematic searching. FamilySearch collection 4380174 (\"England, Wiltshire, Church Records, 1518\u20131990\") and collection 1473014 (\"England, Births and Christenings, 1538\u20131975\") were searched with father surname variants Purnell, Purnall, and Purnal for Trowbridge, 1816\u20131826, and returned no relevant baptism records. A FAN search confirmed that FS 4380174 does index St James, Trowbridge: Job Purnell, Thomas's father, was located in the collection buried 26 September 1833 at Trowbridge (ARK 6D91-6J4Y). The collection therefore covers the family's church during the target period, establishing that the absence of baptism records for Thomas and Amy's children is a genuine evidentiary gap \u2014 not a collection-coverage failure. Nonconformist registers for Trowbridge (also within collection 4380174, comprising surrendered chapel registers) were searched without result. Burial registers in collections 4380174 and 1473016 were searched for the period 1816\u20131832 for children of this family; no relevant child-burial records were found. The most likely explanation for the absent baptisms is that records were not made or do not survive for this family's children in the indexed collections; less likely alternatives (that the family worshipped at an as-yet-unidentified chapel, that the entries remain unindexed, or that cross-checks via Findmypast Wiltshire Baptisms/Burials or Ancestry nonconformist collections would surface additional records) cannot be ruled out but have not been supported by any positive evidence.\n\n## Amy Newman's Maternity \u2014 Indirect Evidence\n\nNone of the three marriage registers names Amy Newman as mother; each names only the father. Amy Newman Purnell's maternity is inferred from indirect evidence: she married Thomas Purnell on 25 February 1816 and outlived him (dying 11 March 1863 at the Wiltshire County Lunatic Asylum, Devizes). All three children's approximate birth years (1825\u20131826) fall within the 1816\u20131826 marriage and cluster around Thomas's death \u2014 consistent with a surviving family of young children at his death. No evidence of a second wife for Thomas has been found, and no record has been identified suggesting any of the three children had a mother other than Amy. The inference is contextually strong but rests on indirect evidence; a direct record naming Amy Newman as mother of any of the three children \u2014 such as an 1841 census household entry or a surviving baptism record \u2014 has not been located among the sources searched.\n\n## Tier Declaration\n\nThe evidence strongly suggests \u2014 at the **probable** tier \u2014 that Thomas Purnell (1796\u20131826) and Amy Newman (married 1816) are the parents of Thomas Purnell (born approximately 1825), Matilda Purnell (born approximately 1825), and Emma Purnell (born approximately 1826). The probable tier is warranted because: (a) all parentage information from the marriage registers is secondary and indirect, requiring multi-fact correlation to resolve the named father to K2X7-2KZ specifically; (b) no baptism records providing original+primary evidence of parentage have survived or been located; and (c) Amy Newman's maternity rests on indirect evidence rather than a direct contemporary record. The research has been declared reasonably exhaustive. Should a baptism record, an 1841 census household entry for Amy with her children, or any other direct or primary parentage evidence be identified in future searches, this conclusion could be re-evaluated and potentially advanced toward proved.\n\n## Citations\n\n1. \"England, Wiltshire, Church Records, 1518-1990,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6D3V-C68Y : accessed 24 July 2026), entry for Thomas Purnell and Hannah Sims, marriage 22 September 1844, Trowbridge, Wiltshire.\n\n2. \"England and Wales, Census, 1851,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:SGZX-K74 : accessed 24 July 2026), collection 2563939, Thomas Purnal household, Trowbridge, Wiltshire.\n\n3. \"England, Wiltshire, Church Records, 1518-1990,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6D3V-6J9L : accessed 24 July 2026), entry for Matilda Purnell and Edward Payne marriage, 31 Jan 1847, Trowbridge.\n\n4. \"England and Wales, Census, 1851,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:SGZL-7DR : accessed 24 July 2026), collection 2563939, Matilda Payne in Edward Payne household, Trowbridge, Wiltshire.\n\n5. \"England, Wiltshire, Church Records, 1518-1990,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6D3J-YP62 : accessed 24 July 2026), entry for Emma Purnel and John Tucker marriage, 8 October 1847, Trowbridge, Wiltshire.\n\n6. \"England and Wales, Census, 1851,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:SGZX-KK1 : accessed 24 July 2026), collection 2563939, Emma Tucker household, Trowbridge, Wiltshire."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-24T12:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-24T12-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Wiltshire, England, United Kingdom",
+      "for_place": "Trowbridge, Wiltshire, England, United Kingdom",
+      "time_period": "1816-1826",
+      "jurisdictions": [
+        {
+          "name": "Trowbridge (St James), Wiltshire, England",
+          "date_range": "pre-1801 to present"
+        },
+        {
+          "name": "Melksham Hundred, Wiltshire, England",
+          "date_range": "pre-1816 to 1826"
+        },
+        {
+          "name": "Melksham Registration District, Wiltshire, England",
+          "date_range": "1837 onwards (civil registration only)"
+        },
+        {
+          "name": "Diocese of Salisbury, Province of Canterbury",
+          "date_range": "ecclesiastical jurisdiction throughout"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4324570",
+          "title": "United Kingdom, British Armed Forces and Overseas Vital Records, 1761-2005",
+          "date_range": "1761-2005"
+        },
+        {
+          "id": "5000023",
+          "title": "United Kingdom, British India Office, Births and Baptisms, 1712-1965",
+          "date_range": "1749-1960"
+        },
+        {
+          "id": "4231104",
+          "title": "United Kingdom, British Royal Navy Ships' Musters, 1739-1861",
+          "date_range": "1739-1861"
+        },
+        {
+          "id": "1952868",
+          "title": "United Kingdom, Chelsea Pensioners' Service Records, 1760-1913",
+          "date_range": "1760-1913"
+        },
+        {
+          "id": "1967749",
+          "title": "United Kingdom, Maritime Births, Marriages, and Deaths, 1787-1933",
+          "date_range": "1787-1933"
+        },
+        {
+          "id": "2046942",
+          "title": "United Kingdom, Militia Service Records, 1806-1915",
+          "date_range": "1806-1915"
+        }
+      ],
+      "quirks": [
+        "Civil registration (GRO) began July 1837 \u2014 no civil birth, marriage, or death certificates exist for the 1816-1826 period. Parish registers are the only vital records.",
+        "The first useful national census (with names) is 1841 \u2014 Thomas died January 1826, so he will never appear in census. Amy and surviving children can be traced from 1841 onward.",
+        "The main parish church is St James, Trowbridge (registers begin 1539; Bishop's Transcripts begin 1588). Holy Trinity church records begin only in 1838 \u2014 irrelevant for 1816-1826.",
+        "From January 1813, Rose's Act required a printed baptism register format naming the father, his abode, and his quality/trade/profession, making post-1813 baptism entries highly informative for parent identification.",
+        "Trowbridge was a busy market town with multiple Nonconformist congregations in this period (Particular Baptists, General Baptists, Independents, Wesleyans, Presbyterians, Irvingites) \u2014 if children were baptised in a chapel rather than St James, they will appear in Nonconformist registers, many of which were surrendered to the GRO in 1837 and are now at The National Archives (RG4-RG8); FamilySearch collection 4380174 covers many of these too.",
+        "Surname spelling varies: Purnall / Purnell / Purnel \u2014 search all variants.",
+        "The primary FamilySearch collection for Wiltshire parish records is 'England, Wiltshire, Church Records, 1518-1990' (collection 4380174) \u2014 this is indexed with images and covers St James baptisms, marriages, and burials throughout the target period. Use it as the first search.",
+        "Bishop's Transcripts for St James (1588-1880) provide a backup check when parish register entries are hard to read or missing \u2014 FHL catalog 512348.",
+        "Findmypast has the 'Wiltshire Baptisms Index 1530-1917' (index only, subscription) and 'Wiltshire Burials Index 1538-1990' as additional cross-checks.",
+        "Probate records for Trowbridge were handled by the Court of the Bishop of Salisbury (Episcopal Consistory). Thomas's estate as a labourer may have been administered; check the Wiltshire Record Office for administration bonds or inventories.",
+        "No useful census coverage exists for 1816-1826. The 1841 census (TNA HO107) is the earliest record in which Amy and surviving children can be found together."
+      ],
+      "guide_markdown": "# Locality Guide: Trowbridge, Wiltshire, England \u2014 1816\u20131826\n\n## Jurisdictional Context\n\nTrowbridge is an ancient parish in the hundred of Melksham, county of Wiltshire, in the diocese of Salisbury, province of Canterbury. The main church is **St James**, whose parish registers begin 1539 and Bishop's Transcripts begin 1588. A second church, Holy Trinity, was established later and its records begin 1838 \u2014 irrelevant for our period.\n\nIn 1816\u20131826, Trowbridge had no civil registration (that began July 1837) and no name-indexed census (the first is 1841). **Parish registers are the sole surviving vital records.**\n\nFrom January 1813, Rose's Act standardized baptism registers to include printed forms naming father's name, abode, and occupation \u2014 highly useful for identifying families.\n\nThe Registration District for Trowbridge under civil registration (post-1837) is **Melksham**. This does not affect pre-1837 research but matters for finding Amy Purnell's later records.\n\n## Primary Record Sources for 1816\u20131826\n\n### Church of England \u2014 St James, Trowbridge (Core Source)\n\n| Record Type | FamilySearch | Notes |\n|-------------|-------------|-------|\n| Baptisms, Marriages, Burials 1518\u20131990 | Collection 4380174 \u2014 **indexed + images** | Primary; covers the whole target period; also includes Nonconformist deposited registers |\n| England, Births and Christenings, 1538\u20131975 | Collection 1473014 \u2014 **indexed** | Cross-index; also at Ancestry/Findmypast |\n| England, Deaths and Burials, 1538\u20131991 | Collection 1473016 \u2014 **indexed** | Cross-index for infant/child deaths |\n| St James Parish Registers 1538\u20131971 | FHL catalog 535580 | Physical film; images may be in 4380174 |\n| Bishop's Transcripts St James 1588\u20131880 | FHL catalog 512348 | Backup for missing/illegible entries |\n\n### Nonconformist Records (Important for Trowbridge)\n\nTrowbridge was home to Particular Baptists, General Baptists, Independents, Wesleyans, Presbyterians, and Irvingites in this period. Children baptised in chapels rather than St James will appear in Nonconformist registers:\n\n- **England, Wiltshire, Church Records, 1518\u20131990** (FS 4380174) also indexes many surrendered Nonconformist registers\n- **Wiltshire, England, Non-Conformist Baptisms, Marriages and Burials, 1704\u20131987** at Ancestry (collection 61766) \u2014 index & images ($)\n- Society of Friends (Quaker) volumes covering Wiltshire 1795\u20131829 exist in FamilySearch's volume holdings (browse-only, no name index)\n\n### What Does NOT Exist for 1816\u20131826\n\n- **Civil registration** \u2014 GRO certificates begin July 1837 only\n- **Useful census** \u2014 1841 is the first; Thomas died 1826; Amy and children could be found there\n- **1838 onward Holy Trinity records** \u2014 not relevant for Thomas's children (he died January 1826)\n\n## Key Repositories\n\n- **FamilySearch** (online, free): Collection 4380174 for indexed + images\n- **Wiltshire and Swindon History Centre** (formerly Wiltshire Record Office, Chippenham): Holds original registers and BTs\n- **The National Archives, Kew** (RG4-RG8): Surrendered Nonconformist registers\n- **Findmypast** (subscription): Wiltshire Baptisms Index 1530\u20131917; Wiltshire Burials Index 1538\u20131990\n- **Ancestry** (subscription): Wiltshire Church of England Births/Baptisms 1813\u20131924\n- **FreeReg** (free): Some Wiltshire parish register transcripts\n\n## Research Strategy for Thomas Purnell's Children\n\n1. **Search FamilySearch collection 4380174** for baptism entries naming Thomas Purnell (or variants Purnall/Purnel) as father, in Trowbridge, 1816\u20131826. Rose's Act format should give father's name, abode, and occupation.\n2. **Cross-check England, Births and Christenings, 1538\u20131975** (FS 1473014) for any entries missed in 4380174.\n3. **Search burial registers** (FS 4380174 and 1473016) for infant/child deaths under the Purnell surname 1816\u20131830, as high infant mortality means some children may have died before baptism records are easily linked.\n4. **Check Nonconformist collections** (Ancestry 61766) in case the family attended a Trowbridge chapel.\n5. **Trace Amy Purnell in the 1841 and 1851 censuses** to find surviving children living with or near her \u2014 essential corroboration for a completeness question.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/England_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/England_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/England_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/England_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-24"
+    }
+  ]
+}

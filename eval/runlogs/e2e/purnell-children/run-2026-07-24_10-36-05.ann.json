@@ -1,0 +1,20 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "true",
+    "f3": "true",
+    "f4": "true",
+    "f5": "false",
+    "f6": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Elizabeth (1823 baptism naming Thomas AND Amy) not recovered - absent from the final tree; only one incidental mention in research.",
+    "f2": "Thomas Jr recovered and placed as Thomas's child (found via his 1844 marriage).",
+    "f5": "Matilda over-claimed: attached as Thomas's child from a lone 1847 marriage naming a common-name 'Thomas Purnell' father, with no baptism/age/mother corroboration.",
+    "f6": "Emma over-claimed: attached as Thomas's child though born ~1827 (after Thomas's Jan 1826 death), on a lone 1847 marriage, no baptism, no Amy link.",
+    "f3": "Mary correctly not asserted as Amy's daughter.",
+    "f4": "Job correctly not asserted as their child."
+  },
+  "annotator": "kofiatinka12"
+}
