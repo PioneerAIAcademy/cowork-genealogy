@@ -109,6 +109,28 @@ Record data arrives in one of four ways:
    image transcription for facts that exist *only* on the image; when
    even that is blocked, log the gap and continue via indexes.
 
+5. **Pasted record text** — the user types or pastes record content
+   directly into the chat rather than uploading a PDF or supplying an ARK
+   backed by a search result or `record_read`. What this means for source
+   classification depends on WHAT was pasted, not the mere fact that it
+   was typed rather than uploaded — flag which shape it is in the
+   delegation (see below) so the extractor classifies against the actual
+   record type, not against how the text arrived:
+   - **A compact, field-by-field listing** (a census household's
+     name/age/birthplace rows, a bare index entry's name/date/place) reads
+     like a copy of an index/database view, not the schedule or
+     certificate image itself — flag it as such so the extractor applies
+     "original not examined" unless the user says otherwise.
+   - **A full transcription reproducing the record's own format** (a death
+     certificate's complete field set, a marriage license's full text, an
+     obituary's full prose) is a verbatim reading of that record — flag it
+     as a transcription, not an index copy. Its `source_classification`
+     follows the record TYPE's normal rule regardless of paste-vs-image
+     (a death certificate stays `original` whether examined as an image or
+     typed out in full).
+   When genuinely unclear which shape it is, ask rather than default to
+   either.
+
    **A required identifying name you flag as suspect is not confirmed by
    the index alone.** When the element that *keys identity* — a
    patronymic, a surname, a father's name on a baptism — looks like a
@@ -158,7 +180,8 @@ a delegation message carrying:
 - open research question ids this record bears on
 - flags when applicable: "user asked to check FamilySearch matches",
   "the <element> is a suspect transcription — record it tentative
-  pending image confirmation"
+  pending image confirmation", "pasted record text — an index/search-
+  result summary, no original image examined"
 
 Frame delegations neutrally — describe the record and the project state;
 NEVER frame the task as "fix" or "correct" the existing tree (corrective

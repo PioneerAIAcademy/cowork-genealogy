@@ -134,8 +134,17 @@ classification.
 (closed set — exactly these three values):
 - **original** — first recording or earliest surviving version of the
   event itself. Digital images/microfilm of originals count. Census
-  schedules, marriage licenses, deeds: original. A contemporaneous
-  **death certificate** (the record itself or its image) is ORIGINAL —
+  schedules, marriage licenses, deeds: original — **but only when what
+  you examined is the schedule/register/certificate itself** (its image,
+  a verbatim transcript of it, or a `record_read` pull of the actual
+  record). A household roster or record's fields typed or pasted into
+  the delegation message — a name/age/birthplace listing with no
+  accompanying image — is FamilySearch's **indexed transcription** of
+  the schedule, not the schedule: classify it `derivative` and apply
+  "Original not examined" below, even though the underlying event (a
+  census enumeration, a marriage) is the kind of thing that's usually
+  original. A contemporaneous **death certificate** (the record itself or
+  its image) is ORIGINAL —
   it is the first recording of both the death and the informant's
   statements. The informant's secondhand knowledge is captured at the
   information/evidence layers (`family_not_present`, `indirect`), never
@@ -187,7 +196,18 @@ List every person mentioned and assign a `record_role`:
   unspecified relationship (parent, sibling, or in-law of either spouse
   could surface a maiden name) and flag it in your summary for
   hypothesis-tracking. Never assert a specific relationship without
-  evidence; report ambiguity rather than resolving it silently.
+  evidence; report ambiguity rather than resolving it silently. **The
+  fabrication ban is scoped to the CROSS-surname link only** — it does
+  not suppress ordinary intra-family inference within a same-surname
+  sub-group enumerated under that head. Still assert `spouse_inferred` /
+  `child_inferred` relationships among the sub-family exactly as you
+  would if they were the enumerated head's own household (proximity
+  `researcher`, evidence `indirect` on a pre-1880 census), and still role
+  them by their position within that sub-family — never invent a
+  `boarder_N` role for them absent the record itself stating boarder or
+  lodger status. "Don't assert kinship the record doesn't support"
+  applies to the head↔sub-family link, not to relationships already
+  evident from the sub-family's own household position.
 - **Obituaries — read the survivor list precisely.** A name with a
   parenthetical follows one of two conventions; disambiguate by *what is in
   the parens*:
@@ -303,7 +323,14 @@ is a hard error.
 
 **`value`** — human-readable, what the record says, not your
 interpretation: "age 5", not "born 1845". `[?]` for uncertain readings,
-`[illegible]`/`[torn]` for damage. **One fact only, no reasoning prose**
+`[illegible]`/`[torn]` for damage. **Never expand an abbreviation or
+initial the record didn't spell out** — "Wm. H. Ferber" stays "Wm. H.
+Ferber" (`structured_value.given: "Wm. H."`), never silently expanded to
+"William H."; a guessed full form is exactly the "guess missing data"
+GPS foundation forbids, even when the expansion seems obvious. Record the
+abbreviated form as stated, and use `informant_bias_notes` — never
+`value` — to note a plausible full-name hypothesis if one is worth
+tracking. **One fact only, no reasoning prose**
 — the justification for an inferred relationship or a doubted reading
 belongs in `informant_bias_notes`, never inside `value`. For an inferred
 **relationship** assertion the whole `value` is the bare claim plus a
@@ -469,8 +496,16 @@ the "who answered" record that would justify it.
   A marriage-record party reporting their OWN parents' names is
   proximity `self` (`family_not_present` is death-certificate doctrine).
 - **Officiant / clerk:** informant for the marriage event itself (date,
-  place, ceremony). Proximity `official_duty` (officiant) or `witness`
-  (clerk who recorded the signed return).
+  place, ceremony) **only when the record actually names or otherwise
+  identifies that person** (a named minister/officiant, or the record is
+  itself a clerk's signed return). Proximity `official_duty` (officiant)
+  or `witness` (clerk who recorded the signed return). **Never invent an
+  unnamed "clerk or officiant" as informant** — a bare index/license entry
+  that states only the marriage date and place, with no officiant or
+  clerk identified anywhere in the record content, has no such person to
+  attribute: the marriage event's informant defaults to the parties
+  themselves (`self`), who were present at their own wedding and can
+  attest date and place same as their other facts.
 - **Witnesses:** note as FAN associates; extract their identifying facts
   only unless a question targets them. A witness attests the ceremony they
   watched — for that attestation the informant is the witness at proximity
@@ -489,6 +524,30 @@ the "who answered" record that would justify it.
 - The **child's** own name/birth facts on the register are
   `household_member` (a parent supplied them) — never `self` (a christened
   infant cannot report), and never the officiant.
+
+**Burial / cemetery index informants.** A bare burial/cemetery index
+entry (name, death date, burial date, cemetery — no certifying party
+named) has NO identifiable informant, unlike a death certificate's named
+physician/personal-informant/undertaker: index compilers are never the
+informant (same rule as any derivative — look through to the original
+provider, and here none is recorded). Use `informant: "unknown"`,
+`informant_proximity: "unknown"`, `information_quality: "indeterminate"`
+for every fact on the entry, including the death/burial date and place —
+"stated-vs-inferred, not who reported it" still applies, so an unknown
+informant does not make a stated fact `indirect` or demote it off
+`direct`. This includes a named associated person (a spouse noted on the
+entry): their name is stated content, exactly like the deceased's own
+name, so it stays `direct` even though who supplied it is unknown —
+`unknown` informant answers WHO reported it, never WHETHER it was
+reported. **Only the deceased's own PARENTS are the exception**, per the
+same narrow death-certificate convention as `ut_record_extraction_009`
+(a decedent cannot be the informant for their own parentage, so it is
+always relayed secondhand by someone else, known or not): `evidence_type:
+indirect` for the deceased's parents specifically, same `informant:
+"unknown"` / `informant_proximity: "unknown"` when the index names no
+personal informant. Do not extend this exception to any other named
+party on the entry — a spouse, sibling, or witness's stated name is
+`direct`.
 
 When the informant is named on the record, use their name.
 
@@ -536,6 +595,31 @@ are all `indirect` (informant-knowledge test). Prefer not to compute
 exact birth dates from death-cert age arithmetic at all — a year is
 enough.
 
+**Approximate ≠ indirect — evidence type and certainty are orthogonal.**
+A record that itself states an approximate value ("Birth: about 1887,
+Cincinnati, Ohio" on a marriage record where the party is self-reporting)
+is `evidence_type: direct` with `date_certainty: approximate` — the
+record's own imprecision belongs in `date_certainty`, never a reason to
+downgrade `evidence_type`. Reserve `indirect` for a value YOU derive by
+inference from a different stated fact — a birth year computed from a
+stated age is the canonical case, not a birth year the record states
+outright as approximate. The test: did the record state this value
+(however imprecisely), or did you calculate/infer it from something else
+the record stated?
+
+**A computed/derived assertion INHERITS its `informant_proximity` from
+the stated fact it was derived from — never `researcher`.** A birth year
+computed from a stated age is a 1:1 transform of that age's own report,
+not a researcher conclusion with no informant (`researcher` is reserved
+for facts with NO record informant at all — negative evidence,
+structure-inferred relationships). Carry the SAME `informant` /
+`informant_proximity` the underlying age assertion used — `household_member`
+on a census, `self` on a marriage/civil-registration record where the
+party self-reported their age, `family_not_present` on a death
+certificate — onto the computed birth-year assertion too. Only
+`evidence_type` changes to `indirect` for the computed assertion; the
+informant chain does not break just because you did the arithmetic.
+
 **Pre-1880 census relationships are always `indirect`** — the 1850/1860
 census have no relationship column; relationships are inferred from
 household position. Even when the gedcomx carries a `ParentChild` or
@@ -575,6 +659,20 @@ misreadings to avoid, in both directions:
   — the informant-knowledge test governs, not record-subject status.
   Marking a decedent's stated `age` `direct` "because the certificate is
   about them" is the other error.
+
+**A relationship assertion INHERITS the `evidence_type` of the parent-name
+assertion it is built from — it does not default to `direct` just because
+the relationship field itself is populated.** A decedent's parents named
+on a death certificate or burial index are `indirect` (secondhand relay,
+per the scope rule above); the resulting `child of <parent> (inferred)`
+relationship assertion rests on that same secondhand claim, so it is
+`indirect` too — classifying the name `indirect` but its relationship
+`direct` is inconsistent, since the relationship has no sturdier
+evidentiary basis than the name it depends on. Contrast a marriage/
+civil-registration record where the party states their OWN parents' names
+at proximity `self`: there the name assertion is `direct` and the derived
+relationship inherits `direct` too. Same rule either direction — the
+relationship's `evidence_type` matches the parent-name assertion's.
 
 **Evidence independence (GPS Standard 4):** when two or more assertions
 share the SAME informant — even across different sources — they form one
