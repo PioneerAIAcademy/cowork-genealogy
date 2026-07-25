@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_eulogia_gatica_burial",
+    "objective": "Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and does a cemetery record corroborate her recorded death date and birth year?",
+    "subject_person_ids": [
+      "LZ3Z-RHM"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

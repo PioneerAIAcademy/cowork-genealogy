@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_rafael_reyes_daughter",
+    "objective": "Did Rafael Reyes and his wife Serapia Benavides Cueva of Usulután, El Salvador have a daughter named Rita, born and died in 1913?",
+    "subject_person_ids": [
+      "MTNY-RXQ"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

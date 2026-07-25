@@ -1,0 +1,19 @@
+{
+  "id": "manoel-oliveira-daughter",
+  "name": "Manoel Melquiades de Oliveira — additional daughter Josefa (m. 1926)",
+  "genre": "record-hint",
+  "source_pid": "GHJ6-2WV",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Manoel Melquiades de Oliveira and his wife Cândida Damasceno de Oliveira of Rio Grande do Norte, Brazil have a daughter named Josefa, married 1926, in addition to their known children Abel and Maria Lila (b. 1901)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1900s",
+    "geography": "BR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 8, flag adds_daughter, confidence 3). Draft transcribed from a Brazilian Catholic marriage record; unverified."
+}

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_santiago_gonzalez_son",
+    "objective": "Did Santiago Gonzalez and his wife Petra Tumbaco of Guayaquil, Ecuador have a son named Manuel de Jesus, born 1915, in addition to their two known daughters (b. 1921 and 1934)?",
+    "subject_person_ids": [
+      "G6MR-VHF"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Katalin Horák (recorded in the hint as Káti Liskovics) and István Banyári had a son, János Banyári, baptized 1 September 1844 in Kľak, Nová Baňa, close in time to the tree's existing son István (christened 15 April 1846).",
+      "details": {
+        "subject_person": "Katalin Horák (LDSJ-SXL)",
+        "relation": "child",
+        "target_person": {
+          "name": "János Banyári",
+          "birth": "baptized 1 September 1844, Kľak, Nová Baňa, Slovakia"
+        }
+      },
+      "supporting_sources": [
+        "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry, 1 Sep 1844, Kľak, Nová Baňa, naming parents István Banyári and Káti Liskovics"
+      ],
+      "required": true
+    }
+  ]
+}

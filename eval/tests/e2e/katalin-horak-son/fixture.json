@@ -1,0 +1,19 @@
+{
+  "id": "katalin-horak-son",
+  "name": "Katalin Horák — additional son János (b. 1844)",
+  "genre": "record-hint",
+  "source_pid": "LDSJ-SXL",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Katalin Horák and her husband István Banyári of Kľak, Nová Baňa, Slovakia have a son named János, baptized 1 September 1844?",
+  "tags": {
+    "question_type": "children",
+    "era": "1840s",
+    "geography": "SK"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 20, flag adds_son, confidence 3). Draft transcribed from a Slovak church/synagogue record; unverified."
+}

@@ -1,0 +1,19 @@
+{
+  "id": "antonio-lucas-spouse",
+  "name": "Antonio Fernandes Lucas — a second wife, Antonia de Jesus?",
+  "genre": "record-hint",
+  "source_pid": "GK89-82B",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Antonio Fernandes Lucas of Funchal, Madeira have a wife named Antonia de Jesus, distinct from his tree-recorded wife Maria Joana (m. 1890), and a daughter named Maria who died young?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1890s",
+    "geography": "PT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 27, flags adds_spouse/adds_daughter, confidence 3). Draft transcribed from a Portuguese civil death record; unverified."
+}

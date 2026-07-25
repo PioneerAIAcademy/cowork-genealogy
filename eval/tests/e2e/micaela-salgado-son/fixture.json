@@ -1,0 +1,19 @@
+{
+  "id": "micaela-salgado-son",
+  "name": "Micaela Salgado — additional son Guillermo (b. 1889)",
+  "genre": "record-hint",
+  "source_pid": "9XGG-PW4",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Micaela Salgado of Tegucigalpa, Honduras have a son named Guillermo, baptized 1889, in addition to her two known daughters (b. 1874 and 1884)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1880s",
+    "geography": "HN"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 18, flag adds_son, confidence 3). Draft transcribed from a Honduran parish baptismal record; unverified."
+}

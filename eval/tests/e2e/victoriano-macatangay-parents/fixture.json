@@ -1,0 +1,19 @@
+{
+  "id": "victoriano-macatangay-parents",
+  "name": "Victoriano Macatangay — parents and additional son Miguel (b. 1915)",
+  "genre": "record-hint",
+  "source_pid": "GV6J-VZC",
+  "captured": "2026-07-24",
+  "researcher_question": "Who were the parents of Victoriano Macatangay of Batangas, Philippines, and did he and his wife Gabina Sisquinto have a son named Miguel, born 1915, in addition to their six known children?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1910s",
+    "geography": "PH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 26, flags adds_father/adds_mother/adds_son, confidence 3). Draft transcribed from a Philippine Catholic church record; unverified."
+}

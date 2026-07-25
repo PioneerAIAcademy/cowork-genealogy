@@ -1,0 +1,19 @@
+{
+  "id": "wasyl-kapach-birth",
+  "name": "Wasyl Kapach — birth in Ukraine and immigration to Canada",
+  "genre": "record-hint",
+  "source_pid": "L17M-W4Q",
+  "captured": "2026-07-24",
+  "researcher_question": "When and where in Ukraine was Wasyl Kapach born, and when did he immigrate to Canada?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1880s",
+    "geography": "CA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 32, flags adds_daughter/adds_birth, confidence 3). Draft transcribed from a 1926 Canadian census record; unverified."
+}

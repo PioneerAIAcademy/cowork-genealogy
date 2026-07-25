@@ -1,0 +1,55 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Victoriano Macatangay's father was José, per a 1915 christening record for his son Miguel.",
+      "details": {
+        "subject_person": "Victoriano Macatangay (GV6J-VZC)",
+        "relation": "parent",
+        "target_person": {
+          "name": "José",
+          "birth": "unknown, likely Batangas, Philippines"
+        }
+      },
+      "supporting_sources": [
+        "Philippines, Catholic Church Records, 1520-2014 — christening entry for Miguel Macatangay Sisquinto, 16 Oct 1915, Batangas City, naming grandparents"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Victoriano Macatangay's mother was Bernardina Cabrera, per the same christening record.",
+      "details": {
+        "subject_person": "Victoriano Macatangay (GV6J-VZC)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Bernardina Cabrera",
+          "birth": "unknown, likely Batangas, Philippines"
+        }
+      },
+      "supporting_sources": [
+        "Philippines, Catholic Church Records, 1520-2014 — christening entry for Miguel Macatangay Sisquinto, 16 Oct 1915, Batangas City"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Victoriano Macatangay and Gabina Sisquinto had a son, Miguel Macatangay Sisquinto, born 28 September 1915 and christened 16 October 1915 in Batangas City, in addition to their six children already in the tree (b. 1904-1929).",
+      "details": {
+        "subject_person": "Victoriano Macatangay (GV6J-VZC)",
+        "relation": "child",
+        "target_person": {
+          "name": "Miguel Macatangay Sisquinto",
+          "birth": "28 September 1915, Batangas City, Batangas, Philippines"
+        }
+      },
+      "supporting_sources": [
+        "Philippines, Catholic Church Records, 1520-2014 — christening entry, 16 Oct 1915, Batangas City, naming parents Victorino Macatangay and Gabina Sisquinto"
+      ],
+      "required": true
+    }
+  ]
+}
