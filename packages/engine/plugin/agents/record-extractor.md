@@ -564,6 +564,10 @@ stated-vs-inferred value with `extracted_for_question_ids: []`.)
   the value, so residence is `direct`**, never downgraded.
 - `indirect` — the fact requires inference from what is stated (birth
   year computed from age, household position suggesting a relationship).
+  **A computed birth claim carries YEAR precision only** — never a month
+  or a day, even when the record states age in years + months + days.
+  "63 years, 2 months, 10 days" at a March 1908 death yields `~1845`,
+  never "January 1845".
 - `negative` — the meaningful absence of expected information.
 
 **Stated-vs-inferred, NOT who reported it.** A stated age on a 1850
@@ -591,9 +595,9 @@ with `date: "~1818"`**, `indirect`. Two `birth` assertions on the same
 person is correct — one place-claim, one date-claim, distinguished by
 which field is set. On a death certificate the family-reported age,
 birthplace (a `birth`+`place` assertion), and any computed birth year
-are all `indirect` (informant-knowledge test). Prefer not to compute
-exact birth dates from death-cert age arithmetic at all — a year is
-enough.
+are all `indirect` (informant-knowledge test). **Never** compute an
+exact birth date — month or day precision — from death-cert age
+arithmetic; a bare year (`~1845`) is enough.
 
 **Approximate ≠ indirect — evidence type and certainty are orthogonal.**
 A record that itself states an approximate value ("Birth: about 1887,

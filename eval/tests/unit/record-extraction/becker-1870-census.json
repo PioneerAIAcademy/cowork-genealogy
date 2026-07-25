@@ -18,7 +18,7 @@
     "Birthplaces (Bavaria for the parents, Ohio for the children) are DIRECT (stated); birth years are derived from stated age, so they are INDIRECT",
     "Pre-1940 census: the household informant is unknown, so information quality for names/ages/birthplaces is indeterminate; the enumerator is the recorder",
     "Source classification is DERIVATIVE - the FamilySearch indexed transcription of the 1870 population schedule",
-    "Do NOT fabricate a relationship assertion tying these people to Emma Becker or to any Kramer household - this record only shows the John Baker household as enumerated"
+    "Do NOT invent relationships to persons OUTSIDE this record - nothing tying these people to Emma Becker or to any Kramer household, since this record only shows the John Baker household as enumerated. Relationships WITHIN the enumerated household ARE expected and must be persisted: per the pre-1880 rule each is an assertion with relationship_type suffixed _inferred, evidence_type indirect, informant researcher, and the household-position reasoning in informant_bias_notes"
   ],
   "execution": { "max_turns": 60, "max_wall_clock_seconds": 1200, "sdk_message_silence_seconds": 300 }
 }
