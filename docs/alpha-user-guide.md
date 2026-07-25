@@ -6,6 +6,11 @@
 
 **Where it lives:** <https://genealogy-workbench.fly.dev>
 
+> This guide is for testers using the hosted browser app. Testing through
+> **Cowork** instead? See
+> [`alpha-user-guide-cowork.md`](alpha-user-guide-cowork.md) — setup and
+> feedback work differently there.
+
 ## Your job, and ours
 
 | You | Us |
