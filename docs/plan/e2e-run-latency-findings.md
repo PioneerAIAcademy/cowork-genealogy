@@ -62,12 +62,29 @@ scan to it after a fixed number of attempts — so the reader still thrashes.
    tuning. This overlaps `research-latency-reduction-plan.md` Phase 2; defer to it
    rather than duplicate.
 
-## 4. Proposed first experiment
+## 4. Experiment 1 — bounded image-reader — RESULT
 
-Prototype **Lever 1** (bounded image-reader re-read + one-shot opus escalation),
-then re-run an image-heavy e2e fixture and compare wall-clock + subagent time
-against this baseline, checking the finding recall does **not** regress (the point
-is faster *equally-accurate* reads, not fewer findings).
+Implemented Lever 1 (`image-reader.md`: one `image_transcribe` call, no re-read
+thrash, flag hard scans for caller-driven opus escalation) and re-ran
+`john-perry-witbeck-vitals` live.
+
+| Metric | Baseline run 2 `17-13-01` | **Lever 1 run `23-52-08`** |
+|---|---|---|
+| Verdict | pass | **pass** (recall preserved) |
+| Image-reader turns/spawn | **[56, 41, 5, 3, 2×7]** | **[2]** — thrash gone |
+| Subagent time | 55.9 min | **11.2 min** (−44.7 min) |
+| Wall clock | 116.3 min | **82.2 min** (−29%) |
+
+**Clean, attributable win:** the worst image-reader spawn dropped from **56 turns
+to 2**, subagent time collapsed **55.9 → 11.2 min**, verdict stayed pass. Caveat —
+n=1 each side and the runs took different research paths (this one read 1 image +
+more mentor calls), so the −34 min wall-clock carries single-run noise; the
+rock-solid claim is the thrash elimination.
+
+**Not attributable to Lever 1:** a separate `wilkins-death-kentucky` run on this
+branch passed 3/3 — but that case had *no thrash* (2 short reads), and its pass is
+driven by the #657 fixes now on main, not by this lever. Noted here only to record
+that Lever 1 does not *hurt* an already-lean image path (reads stayed [3, 2]).
 
 ## 5. References
 - `docs/plan/research-latency-reduction-plan.md` — the model-generation plan (Phase 0 re-measure, Phase 1 tool-coverage, Phase 2 behavior tuning).
