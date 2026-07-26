@@ -144,6 +144,11 @@ choosing:
 > `source_pid` you resolve before landing. `/author-e2e-fixture` covers it;
 > everything below applies unchanged.
 
+> **Assigned a GitHub issue titled "test `<slug>`"** (numbered among
+> #852–883, or similar)? You're not authoring a fixture — one already
+> exists, drafted from an unverified FamilySearch record hint, and your job
+> is to adjudicate it. Skip Steps 1–2 and go to **Step 1B** below.
+
 ## Step 2 — Match the question to what you strip 🤖 Claude Code
 
 The research question is what the agent receives. The stripping decides what it
@@ -178,6 +183,77 @@ concluding from insufficient evidence, which is the failure that matters most
 in genealogy, because a wrong parent silently corrupts an entire upstream tree.
 Aim for the suite as a whole to cover both, across a spread of question types,
 eras and geographies. Details: spec §3.4.1.
+
+## Step 1B — Adjudicating an assigned draft record-hint fixture 🤖 Claude Code
+
+Skip this unless you were assigned one of these issues. If you were, skip
+Steps 1–2 — the fixture already exists — and rejoin the guide at Step 3 once
+you're done here.
+
+**What this is.** A `genre: "record-hint"` fixture (spec §3.6) inverts the
+normal shape: nothing was stripped, because the answer was never in the
+FamilySearch tree to begin with. It lives in a historical record that
+FamilySearch's own hinting matched to the tree person with *unverified*
+confidence. `filtered-list-samples.csv` — a batch of such hints — seeded 32
+of these fixtures (issues #852–883) plus two earlier ones (#637, #638), each
+one's README saying **DRAFT PENDING ADJUDICATION**. Adjudicating one means
+doing the actual genealogical work to decide whether the hint is true, then
+making `expected-findings.json` state the truth instead of the raw,
+unverified hint.
+
+**Start from the GitHub issue, not the fixture folder.** Unlike every other
+fixture in the repo, the source you're checking — a clickable
+`familysearch.org/ark:/...` URL to the specific hint record — lives *only* in
+the issue body. The fixture's own README paraphrases the hint as prose, with
+no link. Open the issue first.
+
+**Do the research.** Read the fixture's README "Notes for reviewers" section
+for what the original author already found (the tree's existing sources, the
+match-strength argument for and against). Then verify it yourself: open the
+hint record at the issue's URL, and use `record_search`/`record_read` (via the
+scratch workspace, Step 4 below, or by hand on familysearch.org) to check for
+corroborating or contradicting evidence the same way you would for any
+genealogical proof. You're doing the human GPS work the benchmark exists to
+measure — there's no shortcut command for this part.
+
+**Encode one of three outcomes in `expected-findings.json`:**
+
+1. **True match** — leave the findings as transcribed.
+2. **Answerable, but differently** — edit `expected-findings.json` to the
+   correct answer (different date, different record, different person).
+3. **False match, no findable substitute** — replace the findings with a
+   `"polarity": "avoid"` finding naming the claim the agent must **not**
+   assert, paired with a `required: true` finding that the agent's report
+   documented the negative conclusion. This is already spelled out correctly
+   in `/author-e2e-fixture`'s own "Record-hint fixtures" section, and
+   `thomas-seaver-other-wife` is the one already-adjudicated fixture in the
+   repo showing exactly what this looks like end to end — read it before you
+   write outcome 3.
+
+> **Ignore any issue text that tells you to write `"expectation":
+> "not_found"`.** That field does not exist — it isn't read by the judge, the
+> validator, or anywhere else, so a finding written that way silently grades
+> as an ordinary, never-satisfied recall finding instead of the restraint
+> test it's supposed to be. It shipped in the original issue text for
+> #852–883 by mistake. `make e2e-validate` now hard-fails on it (and on any
+> other unrecognized finding field) instead of staying silent — if you see
+> that error, it means an old copy of the issue instructions, not the guide.
+> Use outcome 3's `polarity: "avoid"` shape instead.
+
+**Guardrails:**
+
+- **Don't touch `starting-tree.gedcomx.json` or `starting-research.json`.**
+  This task only edits `expected-findings.json`, the README, and
+  `fixture.json`'s `notes`. The rest of the guide assumes you're building
+  those files; here they're already correct and immutable.
+- **Record your reasoning in the README's "Notes for reviewers"** — replace
+  "DRAFT PENDING ADJUDICATION" with what you concluded and why, following the
+  level of detail in `thomas-seaver-other-wife`'s or `heinrich-dewus-children-death`'s
+  README.
+
+Once `expected-findings.json` and the README reflect your adjudication,
+continue at **Step 3** — but read its record-hint note below first, since
+`make e2e-validate`'s checks differ slightly for this genre.
 
 ## Step 3 — Prove the answer is findable ⌨️ Terminal
 
@@ -239,6 +315,19 @@ file, a schema violation, a dangling relationship endpoint or source `ref`.
 Suspects are warn-only, by design — they're for the author to judge.
 
 Omit `TEST=` to lint every fixture.
+
+> **Coming from Step 1B (a record-hint fixture)?** Nothing was stripped, so
+> "is the answer still present" doesn't apply — `validate` instead enforces
+> that `starting-tree.gedcomx.json` and `unstripped-tree.gedcomx.json` are
+> byte-identical, and skips the presence check entirely (spec §3.6). The
+> name-overlap linter above still runs, though, and it's polarity-agnostic:
+> since the subject person is fully present in that (never-stripped) starting
+> tree, a `WARN` naming your own finding's subject is common and *expected*
+> here, not a sign something's wrong — `heinrich-dewus-children-death`'s
+> README documents exactly this. Judge each WARN on its merits rather than
+> trying to make it disappear. A hard `ERROR` is different: it means a
+> structural problem, now including an unrecognized field in
+> `expected-findings.json` (see Step 1B's note on `"expectation": "not_found"`).
 
 Field tables, the hand-authoring path, cascade rules, and `provided-documents/`
 detail: spec §§2–3, §6.2.
@@ -478,6 +567,14 @@ confirm `pass`, and commit that run log under `eval/runlogs/e2e/<slug>/`.
 > above. Landing an unproven fixture is a judgment call you should be able to
 > defend in review, not something the machine will stop.
 
+> **Adjudicated a record-hint fixture to a false-match/`avoid` outcome (Step
+> 1B)?** "Confirm `pass`" doesn't mean anything for a fixture whose answer is
+> "the agent should NOT conclude X" — there's no fact to recover. The
+> equivalent proof here is a run where the agent searches, comes up empty (or
+> finds the same contradicting evidence you did), and documents the negative
+> conclusion instead of asserting the hint's claim. Read the transcript for
+> restraint, not recall, before committing the run log.
+
 ---
 
 ## Cheat sheet
@@ -487,6 +584,7 @@ confirm `pass`, and commit that run log under `eval/runlogs/e2e/<slug>/`.
 | 0 Branch | `git checkout -b <short-task-name>` | ⌨️ Terminal |
 | 1 Author | `/author-e2e-fixture` — pick a deceased, well-sourced person | 🤖 Claude Code |
 | 2 Scope | one question, 1–5 findings; keep the search anchors | 🤖 Claude Code |
+| 1B Adjudicate *(assigned issue only)* | start from the GitHub issue (not the folder); verify the hint; encode true/different/false-match in `expected-findings.json` | 🤖 Claude Code |
 | 3 Validate | check the answer is findable; `make e2e-validate TEST=<slug>` | ⌨️ Terminal |
 | 4 Debug live | `make e2e-project`, then `/research` in Cowork with the Viewer open | 🖥️ Cowork + Viewer |
 | 5 Run | `make e2e-run TEST=<slug>` — one fixture, 20–60 min, $3–10 | ⌨️ Terminal |

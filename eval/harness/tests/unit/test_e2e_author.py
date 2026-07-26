@@ -872,6 +872,18 @@ def test_validate_rejects_an_unknown_genre(fixtures_root, tree, capsys):
     assert "unknown genre" in capsys.readouterr().err
 
 
+def test_validate_rejects_the_expectation_not_found_mistake(fixtures_root, tree, capsys):
+    # The record-hint adjudication batch (issues #852-883) instructed authors
+    # to encode a false match with `"expectation": "not_found"` — not a real
+    # field. `cmd_validate` must catch it the same way `lint_fixture` does, so
+    # the mistake can't ship through the authoring gate either.
+    finding = _finding("f1", "Nowhere Nobody")
+    finding["expectation"] = "not_found"
+    _write_record_hint_fixture(fixtures_root, "rh7", tree, findings={"findings": [finding]})
+    assert author.main(["validate", "--slug", "rh7"]) == 2
+    assert "expectation" in capsys.readouterr().err
+
+
 # --- drift audit (relationships, sources, values) ----------------------------
 
 
