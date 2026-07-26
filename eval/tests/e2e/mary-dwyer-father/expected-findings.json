@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Mary Dwyer's father was Patrick Dwyer, per a Massachusetts marriage record naming Mary Dwyer (b. 1832, Ireland) marrying Michael Dwyer (b. 1831, Ireland) on 21 April 1854 in Chicopee, Hampden, Massachusetts.",
+      "details": {
+        "subject_person": "Mary Dwyer (MNFL-T24)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Patrick Dwyer",
+          "birth": "unknown, Ireland"
+        }
+      },
+      "supporting_sources": [
+        "Massachusetts, State Vital Records, 1638-1927 — marriage entry, 21 Apr 1854, Chicopee, Hampden, Massachusetts, for Michael Dwyer (son of John Dwyer) and Mary Dwyer (daughter of Patrick Dwyer)"
+      ],
+      "required": true
+    }
+  ]
+}

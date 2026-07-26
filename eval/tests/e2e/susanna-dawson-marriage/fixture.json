@@ -1,0 +1,19 @@
+{
+  "id": "susanna-dawson-marriage",
+  "name": "Susanna Dawson Kneale — marriage and father John Dawson",
+  "genre": "record-hint",
+  "source_pid": "9KNQ-8YB",
+  "captured": "2026-07-24",
+  "researcher_question": "When and where did Susanna Dawson marry John Kneale, and who was her father?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1860s",
+    "geography": "IM"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 21, flags adds_father/adds_marriage, confidence 3). Draft transcribed from an Isle of Man parish marriage record; unverified."
+}

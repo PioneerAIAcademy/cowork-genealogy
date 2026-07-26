@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "place_search — Muhlenberg County, Kentucky.",
+  "args": {
+    "placeName": "~Muhlenberg"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Muhlenberg, Kentucky, United States",
+        "type": "County",
+        "dateRange": "+1798/",
+        "latitude": 37.22,
+        "longitude": -87.14,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Muhlenberg&focusedId=305245"
+      }
+    ]
+  }
+}

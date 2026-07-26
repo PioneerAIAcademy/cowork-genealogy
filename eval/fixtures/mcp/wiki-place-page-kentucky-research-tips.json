@@ -1,0 +1,14 @@
+{
+  "tool": "wiki_place_page",
+  "description": "wiki_place_page research_tips for Kentucky — strategy page naming the 1911 registration boundary and the probate path for earlier deaths.",
+  "args": {
+    "standardPlace": "~",
+    "section": "research_tips"
+  },
+  "response": {
+    "place": "Kentucky, United States",
+    "section": "research_tips",
+    "content": "## Kentucky Research Strategies\n\n### Vital records boundary\nStatewide death certificates begin **1 January 1911**. County death registers exist for 1852-1859 and 1874-1910 with major gaps (many counties lack 1860s-1870s registers entirely). For a death before 1911, do not expect a certificate — bracket the death with **probate records** (administrator bonds, estate settlements, probate registers at the county court), church burials, cemetery records, and the disappearance from censuses and tax lists.\n\n### Probate strategy\nAn intestate death produces an administrator's bond (often naming a widow or adult son), periodic settlements, and register entries — together these bracket the death date within months and localize it to the county. Muhlenberg County's court records survive well for the 1870s.\n\n### Identity discipline\nSame-named men recur across Kentucky counties; confirm identity via family context (spouse, children, parents) and age consistency, never by name spelling alone.",
+    "page_url": "https://www.familysearch.org/en/wiki/Kentucky_Genealogy"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_concepcion_alegre_parents",
+    "objective": "When and where was Concepción Alegre of Altos, Cordillera, Paraguay born, who were her parents, and when did she marry Vicente Figueredo?",
+    "subject_person_ids": [
+      "G384-ZCZ"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

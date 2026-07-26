@@ -1,0 +1,27 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search — FS-curated third-party links for Kentucky death research.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Muhlenberg, Kentucky, United States"
+    },
+    "totalForPlace": 3,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/1222/",
+        "linkText": "Kentucky, U.S., Death Records, 1852-1965 (Ancestry)"
+      },
+      {
+        "url": "https://kdla.ky.gov/researchers/Pages/default.aspx",
+        "linkText": "Kentucky Department for Libraries and Archives — county court and probate originals"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery/browse?location=Muhlenberg+County",
+        "linkText": "Find a Grave — Muhlenberg County cemeteries"
+      }
+    ]
+  }
+}

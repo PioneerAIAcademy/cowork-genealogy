@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "place_search catch-all for Kentucky-jurisdiction lookups. Listed after the Muhlenberg fixture so county queries hit the narrower one first.",
+  "args": {
+    "placeName": "~"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Kentucky, United States",
+        "type": "State",
+        "dateRange": "+1792/",
+        "latitude": 37.5,
+        "longitude": -85.3,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Kentucky&focusedId=329"
+      }
+    ]
+  }
+}

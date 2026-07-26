@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Friedrich Carl Weber and Catharina Carell had a daughter, Anna Maria Eva Weber, born 26 February 1870 in Höchst, Hesse-Nassau — the couple's first known child, eleven months after their 7 February 1869 marriage.",
+      "details": {
+        "subject_person": "Friedrich Carl Weber (GTDL-981)",
+        "relation": "child",
+        "target_person": {
+          "name": "Anna Maria Eva Weber",
+          "birth": "26 February 1870, Höchst, Hesse-Nassau, Prussia, Germany"
+        }
+      },
+      "supporting_sources": [
+        "Deutschland, Hesse-Nassau, Diözese Limburg, Katholische Kirchenbücher, 1601-1919 — baptismal entry naming parents Karl Weber and Katharina Karell"
+      ],
+      "required": true
+    }
+  ]
+}

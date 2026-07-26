@@ -1,0 +1,136 @@
+{
+  "persons": [
+    {
+      "id": "MTNY-RXQ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Rafael",
+          "surname": "Reyes"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MTNY-RFX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Serapia",
+          "surname": "Benavides Cueva"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MTNY-RF1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Cipriano",
+          "surname": "Reyes"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MTNY-RNH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Fermina",
+          "surname": "Lozano"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "MTNY-RXQ",
+      "person2": "MTNY-RFX",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "19 JAN 1860",
+          "standard_date": "19 Jan 1860",
+          "place": "Santa Catarina,Usulutan,Usulutan,El Salvador",
+          "standard_place": "Usulután, Usulután, El Salvador"
+        },
+        {
+          "id": "e82ae229-a9f4-4ca2-911a-21c2569ec968",
+          "type": "Marriage",
+          "date": "19 Jan 1860",
+          "standard_date": "19 Jan 1860",
+          "place": "Santa Catarina de Alejandria, Usulután, Usulután, El Salvador",
+          "standard_place": "Santa Catarina de Alejandría, Usulután, Usulután Este, Usulután, El Salvador"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "MTNY-RF1",
+      "person2": "MTNY-RNH"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "MTNY-RF1",
+      "child": "MTNY-RXQ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "MTNY-RNH",
+      "child": "MTNY-RXQ",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "71KV-X3T",
+      "title": "Rafael Reyes Lozano, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6N9V-VMQL : Wed Dec 17 03:18:40 UTC 2025), Entry for Rafael Reyes Lozano and Cipriano Reyes, 19 Jan 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6N9V-VMQL"
+    },
+    {
+      "id": "9QFY-NSB",
+      "title": "Rafael Reyes, \"El Salvador, Marriages, 1810-1930\"",
+      "citation": "\"El Salvador matrimonios, 1810-1930\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FGY7-TCL : 16 December 2025), Rafael Reyes, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FGY7-TCL"
+    }
+  ]
+}

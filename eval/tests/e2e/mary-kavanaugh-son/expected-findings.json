@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Mary E. Kavanaugh and Charles H. Williston had a son, James A. Welliston, born 1872 and died 1876 in Cohasset, Massachusetts, in addition to the four children already in the tree (Mary Augusta b. 1877, William F. b. 1878, James B. b./d. 1880, Fredrick L. b. 1880).",
+      "details": {
+        "subject_person": "Mary E. Kavanaugh (G95C-GFP)",
+        "relation": "child",
+        "target_person": {
+          "name": "James A. Welliston",
+          "birth": "1872, Cohasset, Massachusetts",
+          "death": "1876, Cohasset, Massachusetts"
+        }
+      },
+      "supporting_sources": [
+        "Massachusetts, State Vital Records, 1638-1927 — death entry for James A. Welliston, 1876, naming parents Charles H. Welliston and Mary Kavanagh"
+      ],
+      "required": true
+    }
+  ]
+}

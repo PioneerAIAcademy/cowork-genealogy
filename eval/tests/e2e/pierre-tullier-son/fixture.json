@@ -1,0 +1,19 @@
+{
+  "id": "pierre-tullier-son",
+  "name": "Pierre Albert Tullier — additional son Pierre Jacques Dominique (b. 1796)",
+  "genre": "record-hint",
+  "source_pid": "GPX7-28P",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Pierre Albert Tullier and his wife Constance Dorothé Leys have a son, Pierre Jacques Dominique, born 1796, in addition to their five children recorded from 1805 onward?",
+  "tags": {
+    "question_type": "children",
+    "era": "1790s",
+    "geography": "FR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 6, flag adds_son, confidence 3). Draft transcribed from a French parish/civil register; unverified."
+}

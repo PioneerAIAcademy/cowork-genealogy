@@ -26,6 +26,14 @@ export interface FSTokenResponse {
 }
 
 export interface AppConfig {
+  /**
+   * Set by the hosted control plane when it provisions a sandbox. Marks a
+   * runtime where the loopback OAuth `login` flow cannot complete, so the auth
+   * errors must send the user to the web app's "Reconnect FamilySearch" button
+   * instead of to the `login` tool. Absent on the desktop `.mcpb`, where
+   * loopback login is the correct path.
+   */
+  hosted?: boolean;
   wikiApiUrl?: string;
   popStatsUrl?: string;
   learningCenterDir?: string;

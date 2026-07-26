@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_mary_dwyer_father",
+    "objective": "Who was the father of Mary Dwyer, wife of Michael Dwyer of South Windsor, Connecticut?",
+    "subject_person_ids": [
+      "MNFL-T24"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

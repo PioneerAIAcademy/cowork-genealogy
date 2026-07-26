@@ -1,0 +1,19 @@
+{
+  "id": "joseph-david-daughter",
+  "name": "Joseph David — a different Joseph Davies household? (1901 census)",
+  "genre": "record-hint",
+  "source_pid": "GNR6-VWS",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Joseph David and his wife Hannah David of Clydach, Glamorgan, Wales have a daughter named Elizabeth A., born 1899, in addition to their three known children (b. 1897-1908)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1900s",
+    "geography": "GB"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 33, flag adds_daughter, confidence 3). Draft transcribed from an England & Wales 1901 census household; unverified."
+}

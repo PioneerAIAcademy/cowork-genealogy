@@ -1,0 +1,19 @@
+{
+  "id": "friedrich-weber-daughter",
+  "name": "Friedrich Carl Weber — daughter Anna Maria Eva (b. 1870)",
+  "genre": "record-hint",
+  "source_pid": "GTDL-981",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Friedrich Carl Weber and his wife Catharina Carell of Sindlingen, Hesse-Nassau have a daughter named Anna Maria Eva, born 1870?",
+  "tags": {
+    "question_type": "children",
+    "era": "1870s",
+    "geography": "DE"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 14, flag adds_daughter, confidence 3). Draft transcribed from a German Catholic baptismal record; unverified."
+}

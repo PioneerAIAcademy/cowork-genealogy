@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_sebastiano_mingazzini_son",
+    "objective": "Did Sebastiano Mingazzini and his wife Lucia Silvestrini of Castel Bolognese, Ravenna, Italy have a son named Simone, born 1860, in addition to their three known children (b. 1849-1853)?",
+    "subject_person_ids": [
+      "GQSW-B3V"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

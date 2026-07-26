@@ -65,8 +65,16 @@ help: ## Show this menu
 
 # ── Setup ────────────────────────────────────────────────────────
 .PHONY: install
-install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install EVERYTHING: pnpm workspace, server venv, engine build, eval-ui deps
-	@echo "✓ install complete (pnpm workspace + server venv + engine build + eval-ui deps)"
+install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install EVERYTHING: pnpm workspace, server venv, engine build, eval-ui deps, git hooks
+	@# Leading `-`: a clone whose hooks belong to other tooling makes install-hooks
+	@# exit 1 by design (it refuses to clobber). That must not fail the whole
+	@# install — it just means this clone opts out and uses `make worktree-link`
+	@# by hand. Wired in because the hook being absent is silent until it costs a
+	@# run: a worktree without eval/.env has no ANTHROPIC_API_KEY, so every
+	@# positive test in a harness run fails on a judge error after the suite has
+	@# already been paid for.
+	-@$(MAKE) --no-print-directory install-hooks
+	@echo "✓ install complete (pnpm workspace + server venv + engine build + eval-ui deps + git hooks)"
 
 .PHONY: server-install
 server-install: ## Create the server venv and install FastAPI deps (uv)

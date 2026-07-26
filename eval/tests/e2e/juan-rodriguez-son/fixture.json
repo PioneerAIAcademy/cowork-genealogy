@@ -1,0 +1,19 @@
+{
+  "id": "juan-rodriguez-son",
+  "name": "Juan Rodríguez Martínez — additional son Juan (b./d. 1801)",
+  "genre": "record-hint",
+  "source_pid": "9634-PS9",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Juan Rodríguez Martínez and his wife Marcelina Garcia of Pozuelo, Albacete, Spain have a son also named Juan, who died in infancy in 1801, in addition to their eight known children (b. 1799-1822)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1800s",
+    "geography": "ES"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 31, flag adds_son, confidence 3). Draft transcribed from a Spanish diocesan parish record; unverified."
+}

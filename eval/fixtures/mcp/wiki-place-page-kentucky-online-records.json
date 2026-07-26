@@ -1,0 +1,14 @@
+{
+  "tool": "wiki_place_page",
+  "description": "wiki_place_page online_records for Kentucky.",
+  "args": {
+    "standardPlace": "~",
+    "section": "online_records"
+  },
+  "response": {
+    "place": "Kentucky, United States",
+    "section": "online_records",
+    "content": "## Kentucky Online Records\n\n- **Kentucky Deaths, 1911-1967** (FamilySearch) — statewide certificates from 1911 only.\n- **Kentucky, Deaths and Burials, 1843-1970** (FamilySearch) — county register index; 1860s-1870s coverage partial.\n- **Kentucky Probate Records, 1727-1990** (FamilySearch) — browse-only county court volumes: wills, bonds, settlements.\n- **Kentucky, County Marriages, 1797-1954** (FamilySearch).\n- **Kentucky Death Records, 1852-1965** (Ancestry) — subscription index including some county-register entries FamilySearch lacks.\n- **Kentucky Department for Libraries and Archives (KDLA)** — county court order books and original probate.",
+    "page_url": "https://www.familysearch.org/en/wiki/Kentucky_Online_Genealogy_Records"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "true",
+    "f5": "true",
+    "f6": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f6": "Right person and correctly identified as a half-sibling via the confirmed father, which is the core claim. But the maternal link (KP3V-5CY, 'Sidney'/'Liddy') is sourced at quality:1 and is purely inferred from birth-year chronology -- no record actually names Sidney as his mother, and the 1870 census the fixture points to as the recovery path came back negative. The conflict entry resolving this (c_002) is also marked 'resolved' with preferred_assertion_id: null, which shouldn't be possible per the conflict-resolution schema's own rules -- labeled true on the strength of the father-side relationship, but this is the most borderline call of the six."
+  },
+  "annotator": "Ikennaya1"
+}

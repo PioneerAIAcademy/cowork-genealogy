@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Rozál Sármán (recorded in the hint as Rozal Szaz) and Istvan Juhasz had a daughter, Viktoria Juhász, baptized about 1892 in Kiszombor, Torontál, in addition to their daughter Ágnes already in the tree (b. 1894).",
+      "details": {
+        "subject_person": "Sármán Rozál (P873-TWP)",
+        "relation": "child",
+        "target_person": {
+          "name": "Viktoria Juhász",
+          "birth": "baptized about 1892, Kiszombor, Torontál, Hungary"
+        }
+      },
+      "supporting_sources": [
+        "Hungary, Catholic Church Records, 1636-1895 — baptismal entry, Kiszombor, Torontál, naming parents Istvan Juhasz and Rozal Szaz"
+      ],
+      "required": true
+    }
+  ]
+}

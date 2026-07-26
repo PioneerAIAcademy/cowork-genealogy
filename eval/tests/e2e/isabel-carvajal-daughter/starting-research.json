@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_isabel_carvajal_daughter",
+    "objective": "Did Isabel Carvajal Chinchilla and her husband Emilio Martínez of Santander, Colombia have a daughter named Juana, married 1929, in addition to their six known children (b. 1881-1895)?",
+    "subject_person_ids": [
+      "LR2Y-X3H"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

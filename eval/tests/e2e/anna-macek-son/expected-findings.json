@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Anna Macek and Václav Jičinský had a son, František, baptized 26 June 1867 in Rohovládova Bělá, Pardubice. The tree currently records no children for Anna Macek.",
+      "details": {
+        "subject_person": "Anna Macek (PW3W-LJN)",
+        "relation": "child",
+        "target_person": {
+          "name": "František Jičinský",
+          "birth": "26 June 1867, Rohovládova Bělá, Pardubice, Czechia"
+        }
+      },
+      "supporting_sources": [
+        "Czech Republic, Church Books, 1552-1981 — baptismal entry, 26 Jun 1867, Rohovládova Bělá, Pardubice, naming parents Váčlav Jičinsky and Anna"
+      ],
+      "required": true
+    }
+  ]
+}
