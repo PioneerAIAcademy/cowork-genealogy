@@ -54,6 +54,12 @@ Did the skill identify the actual informant (not just "census") and assess their
 
 Do not score the skill down for attributing death date/place to the physician rather than the named personal informant — that attribution is the intended doctrine.
 
+**Burial / cemetery index or register — no informant is identified:**
+
+- A cemetery register or burial index entry **names no informant**. Unlike a death certificate it has no informant field at all, so informant is `unknown` and information quality `indeterminate`. Do **not** apply the funeral-director rule above — that is scoped to a death certificate's burial facts — and do **not** name the index compiler or the cemetery with `official_duty`: a compiler transcribing a register is a **recorder**, not an informant.
+- The stated **death and burial dates** are still `direct` evidence (the register records the interment it performed). It is the informant and information-quality columns that are `unknown` / `indeterminate`, not the evidence type.
+- **Parents named on a burial entry are `indirect`** — the register is recording a relationship reported to it, not one it observed.
+
 ## Evidence type accuracy
 
 Were direct, indirect, and negative evidence types assigned correctly? A relationship inferred from household position in the 1850 or 1860 census (no relationship column — explicit relationship columns were not introduced until 1880) is indirect evidence. A relationship stated in an 1880+ census (explicit column) is direct evidence.
