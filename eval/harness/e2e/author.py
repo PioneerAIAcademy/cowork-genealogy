@@ -67,6 +67,7 @@ from e2e.validate_fixture import (
     REPO_ROOT,
     check_stripping,
     finding_name_tokens,
+    finding_shape_errors,
     finding_type_token,
     format_suspect,
     index_tree,
@@ -1318,6 +1319,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
     errors += [f"{STARTING_RESEARCH}: {e}" for e in validate_research_json(research)]
     errors += [f"{STARTING_TREE}: {e}" for e in _schema_errors_for_tree(starting)]
     errors += tree_integrity_errors(starting, STARTING_TREE)
+    errors += finding_shape_errors(findings)
 
     # The engine's runtime cross-file check requires every subject_person_id
     # to name a tree person; a typo'd `scaffold --pid` (or a forgotten
