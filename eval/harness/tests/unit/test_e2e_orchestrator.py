@@ -18,6 +18,7 @@ from e2e.orchestrator import (
     _fallback_usage,
     _render_user_message,
     _summarize_tool_response,
+    _timeline_tool_label,
     build_workspace,
     load_fixture,
     provided_documents,
@@ -354,6 +355,31 @@ def test_summarize_tool_response_truncates_long_content():
     out = _summarize_tool_response(long)
     assert len(out) <= 500
     assert out.endswith("...")
+
+
+# --- timeline tool labeling ---------------------------------------------------
+# Regression cover for the per-skill wall-clock gap: usage.timeline carried
+# elapsed time + message kind but no tool identity, so a Skill-phase
+# breakdown could only be reconstructed from the raw session.jsonl (gitignored,
+# not reliably present for other contributors' PRs). _timeline_tool_label is
+# what timeline.append now calls to tag each entry.
+
+
+def test_timeline_tool_label_skill_call_names_the_skill():
+    assert _timeline_tool_label("Skill", {"skill": "person-evidence"}) == "Skill:person-evidence"
+
+
+def test_timeline_tool_label_skill_call_missing_skill_arg():
+    assert _timeline_tool_label("Skill", {}) == "Skill:?"
+    assert _timeline_tool_label("Skill", None) == "Skill:?"
+
+
+def test_timeline_tool_label_mcp_tool_strips_prefix():
+    assert _timeline_tool_label("mcp__genealogy__record_search", {}) == "record_search"
+
+
+def test_timeline_tool_label_non_mcp_tool_passthrough():
+    assert _timeline_tool_label("Read", {"file_path": "x"}) == "Read"
 
 
 # --- streamed-usage fallback -------------------------------------------------
