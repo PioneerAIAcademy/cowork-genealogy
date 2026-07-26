@@ -1,0 +1,19 @@
+{
+  "id": "eulogia-gatica-burial",
+  "name": "Eulojia del Carmen Gatica Alfaro — burial record (Santiago, 1908)",
+  "genre": "record-hint",
+  "source_pid": "LZ3Z-RHM",
+  "captured": "2026-07-24",
+  "researcher_question": "Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and does a cemetery record corroborate her recorded death date and birth year?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1900s",
+    "geography": "CL"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 9, flags adds_birth/adds_burial, confidence 3). Draft transcribed from a Chilean cemetery record; unverified."
+}

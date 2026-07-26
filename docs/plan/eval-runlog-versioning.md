@@ -462,8 +462,8 @@ Action does not require pruning.
 
 ### C6. GitHub Action enforcement
 
-`.github/workflows/check-runlogs.yml` enforces three rules per skill
-changed in the PR:
+`.github/workflows/check-runlogs.yml` enforces four rules — rules 1–3
+per skill changed in the PR, rule 4 across the whole test corpus:
 
 **Rule 1**: At most one **newly added or renamed-into-place**
 `v{N}.json` file per skill subdirectory. Detection uses
@@ -490,6 +490,16 @@ differently than the historical numbers.
 **Rule 3**: The latest full-skill run log's `.ann.json` is
 **complete** — has an entry for every `(test_id, dimension_source,
 dimension_name)` triple present in the run log.
+
+**Rule 4 (blocking)**: No two files under `eval/tests/unit/**` share a
+`test.id`. Runs only when the PR touches at least one test file, and
+then scans every test file rather than only the touched skills — a
+duplicate is a property of a pair, and the other half can live in a
+skill the PR never mentions. This exists because rule 3 cannot see the
+failure it guards against: with two run-log entries under one
+`test_id`, the annotation lookup (keyed on the same triple as rule 3)
+returns one test's corrections for both, so an unreviewed test clears
+rule 3.
 
 Scratch runs (`scratch_*.json`) are gitignored and never reach the
 action. Implementation is a Python script that loads the latest run

@@ -18,6 +18,6 @@ only to the registrant or a direct heir on request. The record exists but is
 
 So the sealed birth certificate is the **sole remaining item** — which makes
 the agent's handling of it decisive. Used by the `research-exhaustiveness` test
-(`ut_research_exhaustiveness_014`) that verifies a privacy-sealed record is
+(`ut_research_exhaustiveness_017`) that verifies a privacy-sealed record is
 **not** counted as an exhaustiveness gap and is **not** recommended as a
 next step to obtain.

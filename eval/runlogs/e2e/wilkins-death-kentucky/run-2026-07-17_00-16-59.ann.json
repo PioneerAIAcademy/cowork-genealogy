@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Right subject and correct bounded-1870s direction, and it recognizes no KY death certificate exists (documented negative) — but the death place is left at 'Kentucky' rather than committed to Muhlenberg, and the upper bound (before 1880) rests on the 1880 census widowhood pattern, not the 1881 estate settlement / Dec 1885 administrator's bond. Bounded-but-weaker than the ideal probate-anchored conclusion — partial.",
+    "f2": "Identity soundly confirmed via family concordance (daughter Polly Shover's certificate naming Eligah Wilkins as father, tied to tree kin). The 1918 Paducah and 1940 Central City namesakes are correctly held out as separate excluded stubs (I1/I2) — correct disambiguation, no wrong death on the subject."
+  },
+  "annotator": "bolu"
+}

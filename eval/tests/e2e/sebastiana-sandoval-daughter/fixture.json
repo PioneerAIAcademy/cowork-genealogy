@@ -1,0 +1,19 @@
+{
+  "id": "sebastiana-sandoval-daughter",
+  "name": "Sebastiana Sandoval — additional daughter Juana (b. 1876, d. 1879)",
+  "genre": "record-hint",
+  "source_pid": "K2GV-D61",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Sebastiana Sandoval and her husband Jose Aguilar of Oaxaca, Mexico have a daughter named Juana, born 1876 and died 1879, in addition to their four known children (b. 1877-1885)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1870s",
+    "geography": "MX"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 23, flag adds_daughter, confidence 3). Draft transcribed from a Mexican civil registration death record; unverified."
+}

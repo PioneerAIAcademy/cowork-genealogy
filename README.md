@@ -95,7 +95,7 @@ The MCP server exposes 33 tools.
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata | OAuth |
+| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. The `image-reader-opus` subagent's reader — not called directly by any skill. | OAuth |
 | `image_transcribe` | OCR a FamilySearch image by imageId or ark host-side (Qwen3-VL via OpenRouter) and return **text** — no bytes cross the MCP transport, so it handles scans of any size. The `image-reader` subagent's reader. | OAuth + OpenRouter |
 | `configure_openrouter` | Save the user's OpenRouter API key to `~/.familysearch-mcp/config.json` (`openRouterApiKey`) so `image_transcribe` can run; returns a masked preview. Direct-invocation — Claude calls it when `image_transcribe` reports a missing/rejected key. | None |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
@@ -163,7 +163,7 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 |-------|-------------|----------|
 | **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. | "Full-text search for Flynn in Schuylkill County deeds" |
-| **search-images** | Browses FamilySearch digitized image volumes page-by-page when a record set is digitized but unindexed and not full-text searchable. Finds the volume (`volume_search`), lists its images (`image_search`), and views pages (`image_read`). | "Browse the unindexed Schuylkill County probate films" |
+| **search-images** | Browses FamilySearch digitized image volumes page-by-page when a record set is digitized but unindexed and not full-text searchable. Finds the volume (`volume_search`), lists its images (`image_search`), and views pages by delegating to the `image-reader` subagent. | "Browse the unindexed Schuylkill County probate films" |
 | **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com. Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
 
 ### Analyzing evidence
@@ -229,7 +229,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships three Cowork agents. Unlike skills, an agent runs in
+The plugin ships four Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -238,7 +238,8 @@ don't load it explicitly.
 |-------|-------------|----------|
 | **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. `/research` calls it once per proof, after a conclusion is written; its verdict is advisory and never blocks or re-opens a resolved question. You can also ask for a review at any time. | "Review my work" / "Is this defensible?" / "Am I ready to conclude?" |
 | **record-extractor** | Extracts every assertion from **one** record — the source entry, atomic per-fact assertions, and their GPS evidence classifications — in a single validated write. The `record-extraction` skill delegates one of these per record; classifications are set here and are final. | (not invoked directly — `record-extraction` delegates) |
-| **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription. Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
+| **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Qwen3-VL OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
+| **image-reader-opus** | Re-reads **one** FamilySearch image scan using its own (Opus) vision, for a page the fast reader handled poorly (faded ink, difficult handwriting, Kurrentschrift). Slower and far more expensive than `image-reader` — invoked only on an explicit request for a higher-accuracy re-read, never as a default. | "Re-read this page with Opus" / "The fast OCR garbled this — try harder" |
 
 ## Recommended workflow
 
@@ -476,8 +477,10 @@ What's shipped:
   and guardrails (validate-schema, check-warnings, convert-dates). The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **1 Cowork agent.** `gps-mentor` — a BCG-style senior-genealogist
-  review, invoked by `/research` at GPS checkpoints and on demand.
+- **4 Cowork agents.** `gps-mentor` (BCG-style senior-genealogist review,
+  invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
+  (per-record assertion extraction), `image-reader` (fast/cheap page OCR),
+  and `image-reader-opus` (explicit-only, higher-accuracy re-read).
 - **Researcher profile.** `init-project` captures experience level and
   paid subscriptions in two questions; every skill adapts narration
   density to the answer.

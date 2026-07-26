@@ -72,6 +72,13 @@ Record data arrives in one of four ways:
    raw image never enters your context (accumulated base64 overflows the
    transport's ~1 MiB buffer and crashes the run).
 
+   If the returned transcription comes back heavy with `[illegible]` marks or
+   otherwise looks unreliable (faded ink, difficult handwriting,
+   Kurrentschrift), a higher-accuracy but slower and far more expensive
+   re-read is available: `@plugin:image-reader-opus`, invoked the same way,
+   one image at a time. Use it only when there's a real reason to expect a
+   better read — never as the default.
+
    **`looking_for` is a search key, not the answer.** Phrase it as *who
    or what* to locate — "the christening entry for a Christina born ~Jan
    1783", "any entry naming a Clark" — never the expected result. Do not

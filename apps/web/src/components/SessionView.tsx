@@ -27,6 +27,11 @@ export default function SessionView({
   const [session, setSession] = useState<SessionSummary | null>(null)
   const [conn, setConn] = useState<SessionConnection | null>(null)
   const [logs, setLogs] = useState<{ ws: string; agent: string } | null>(null)
+  // The user's FamilySearch grant expired (FS caps it at 24h, so a tab left open
+  // overnight hits this while the 30-day app session is still valid). /connect
+  // reports it on every reconnect, so it clears itself once the user reconnects
+  // FamilySearch and the tab re-establishes its socket.
+  const [fsExpired, setFsExpired] = useState(false)
   const { alpha, setAlpha } = useAlpha()
   const { width: chatWidth, dragging, dividerProps } = useChatWidth()
 
@@ -75,7 +80,7 @@ export default function SessionView({
     // A stale/shared `#/s/:id` link can point at a session that no longer
     // exists — fall back to the list rather than hang on "Loading…".
     void api.resumeSession(sessionId).then(setSession).catch(() => onBack())
-    void makeSessionConnection(sessionId).then((c) => {
+    void makeSessionConnection(sessionId, (fs) => setFsExpired(fs === 'expired')).then((c) => {
       if (cancelled) {
         c.close()
         return
@@ -101,12 +106,28 @@ export default function SessionView({
 
   const costLabel = `${cost.estimated ? '~' : ''}$${cost.usd.toFixed(cost.usd >= 1 ? 2 : 4)}`
 
+  // Return here after reconnecting, not to the session list. The hash is the
+  // SPA route (App.readRoute); `#` must be percent-encoded so it survives as a
+  // query value rather than being read as the URL fragment.
+  const reconnectHref = `/auth/familysearch/login?next=${encodeURIComponent(`#/s/${sessionId}`)}`
+
   return (
     <div
       className="sessionShell"
       data-dragging={dragging ? 'true' : undefined}
       style={{ '--chat-w': `${chatWidth}px` } as React.CSSProperties}
     >
+      {fsExpired && (
+        <div className="fsExpiredBanner" role="alert">
+          <span>
+            Your FamilySearch sign-in has expired. Reconnect to keep searching records —
+            your research is safe and stays open.
+          </span>
+          <a className="btnPrimary" href={reconnectHref}>
+            Reconnect FamilySearch
+          </a>
+        </div>
+      )}
       <aside className="chatPane">
         <header className="chatHeader">
           <button className="btnGhost" onClick={onBack} title="Back to sessions" aria-label="Back to sessions">

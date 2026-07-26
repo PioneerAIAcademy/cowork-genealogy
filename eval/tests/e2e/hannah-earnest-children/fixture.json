@@ -14,7 +14,8 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "caps": {
-    "wall_clock_seconds": 10800
+    "wall_clock_seconds": 10800,
+    "max_turns": 300
   },
   "difficulty": "moderate",
   "notes": "Hannah Earnest's overall FamilySearch record is thinner than the guide's ideal well-researched bar: only 7 attached sources total, spanning just two record types (census + church/baptism records) — no marriage or death record for Hannah herself is attached. Her marriage to Edwin Grice has no recorded date/place on FamilySearch. The stripped child, Lydia Grice, has a directly attesting 1878 christening record naming her among the family, which is the intended recovery path."

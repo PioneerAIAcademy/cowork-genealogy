@@ -1,0 +1,38 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Antonio Fernandes Fernandes Lucas's wife was Antonia de Jesus de Jesus — a different name from the tree's recorded wife, Maria Joana (married 1890).",
+      "details": {
+        "subject_person": "Antonio Fernandes Lucas (GK89-82B)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Antonia de Jesus de Jesus",
+          "birth": "unknown, likely Santo António, Funchal, Madeira, Portugal"
+        }
+      },
+      "supporting_sources": [
+        "Portugal, Registro Civil, 1437-2023 — death registration for Maria (b. Jul 1894), naming parents Antonio Fernandes Fernandes Lucas and Antonia de Jesus de Jesus"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Antonio Fernandes Fernandes Lucas and Antonia de Jesus de Jesus had a daughter, Maria, born July 1894 and who died young, per the same death registration.",
+      "details": {
+        "subject_person": "Antonio Fernandes Lucas (GK89-82B)",
+        "relation": "child",
+        "target_person": {
+          "name": "Maria",
+          "birth": "July 1894, Santo António, Funchal, Madeira, Portugal"
+        }
+      },
+      "supporting_sources": [
+        "Portugal, Registro Civil, 1437-2023 — death registration for Maria, b. Jul 1894, Santo António, Funchal, Madeira"
+      ],
+      "required": false
+    }
+  ]
+}

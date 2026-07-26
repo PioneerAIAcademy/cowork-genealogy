@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Tree records the subject's death as 1918, Paducah, McCracken County; narrative concludes a 1918 Paducah death. That is a different Elijah. No bounded mid-to-late 1870s Muhlenberg conclusion, and the run never recognizes that no KY death certificate exists for him.",
+    "f2": "Conflation — the 1918 Paducah death is attached as a fact directly on subject 97YZ-J3D (not held out as a separate namesake). This is the explicit f2 disqualifier."
+  },
+  "annotator": "bolu"
+}

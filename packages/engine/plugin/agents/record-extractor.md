@@ -486,6 +486,21 @@ the "who answered" record that would justify it.
   observed it" argument — the certificate does not establish
   observation, and occupation/marital status are reported biography,
   not witnessed events.
+  **Evidence type for these facts, not just proximity:** `name`,
+  `occupation`, and `marital status` are `direct` — a spouse/family
+  informant lived alongside the decedent and knows these firsthand, no
+  inference required. `age`, birth date/place, and parents' names are
+  `indirect` — the informant was not present at the decedent's birth (or
+  at the parents'), so knowledge of them is necessarily secondhand,
+  however precisely the certificate states it. **"Age: 63 years, 2
+  months, 10 days" is still indirect evidence of the birth date —
+  precision is not the same as firsthand knowledge; do not label the raw
+  age fact `direct` just because a specific figure is printed on the
+  certificate.** This is the same reasoning as the census
+  birth-year-computed-from-age rule above, extended one step further:
+  there it's the *derived* birth-year fact that's indirect; here the
+  *age fact itself* is indirect too, for the identical reason — the
+  informant wasn't there.
 - **Funeral director:** informant for burial date/location, proximity
   `official_duty`.
 
@@ -825,6 +840,33 @@ certificate"` negative assertion for an unrecorded optional field — that
 is over-extraction, not thoroughness, and it is not the meaningful absence
 this section is for. A negative assertion always concerns a *person*
 (`record_role: "absent"`), never an absent attribute of a present person.
+
+**A second, equally common pattern: the person IS named in the source, but
+the finding is that they predeceased the subject.** An obituary saying "he
+was preceded in death by his wife, Ruth, and by his parents" is negative
+evidence about three people's vital status — each was dead by the obituary
+date — not about their appearance in this record; they ARE named. Being
+textually present does not change the rule: `record_role` is still the
+literal `"absent"` for each of them, because the analytical finding is their
+absence from among the living, not their absence from the text. Do **not**
+tag them with their familial role (`father_of_deceased`, `spouse_1`, etc.)
+instead — that relational fact belongs in `value`'s prose and in
+person-evidence's later tree linkage, not in `record_role`.
+
+**Multi-person negative evidence needs one assertion PER PERSON, each with a
+`value` that NAMES that specific person — never a shared generic value
+across the batch.** "Preceded in death by his wife, Ruth, and by his
+parents, Walter and Edith" is three assertions:
+- `value: "Ruth Ann Baxter Whitaker preceded Harold Dean Whitaker in death"`
+- `value: "Walter Whitaker preceded Harold Dean Whitaker in death"`
+- `value: "Edith Whitaker preceded Harold Dean Whitaker in death"`
+
+never three assertions sharing one undifferentiated
+`value: "preceded Harold Dean Whitaker in death"` with only `record_role`
+distinguishing them — `record_role` is `"absent"` on all three, so it
+cannot also do the job of telling them apart. If you can't tell from
+`value` alone which specific person an assertion is about, the value is
+too generic.
 
 ## Match checking (only when asked)
 

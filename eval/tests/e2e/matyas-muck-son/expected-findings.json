@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Mátyás Muck and Erzsébet Farkas (recorded in the tree as Erzsébet Wolf — Farkas is the Hungarian translation of the German surname Wolf) had a second son named András, baptized about 1881 in Bogyiszló, Pest-Pilis-Solt-Kis-Kun — a necronym for their first son András, who died in infancy in 1873 (also already in the tree).",
+      "details": {
+        "subject_person": "Mátyás Muck (97M5-6H8)",
+        "relation": "child",
+        "target_person": {
+          "name": "András Muck",
+          "birth": "about 1881, Bogyiszló, Pest-Pilis-Solt-Kis-Kun, Hungary"
+        }
+      },
+      "supporting_sources": [
+        "Hungary, Reformed Church Christenings, 1624-1895 — baptismal entry for András Muck, naming parents Mátyás Muck and Erzsébet Farkas"
+      ],
+      "required": true
+    }
+  ]
+}

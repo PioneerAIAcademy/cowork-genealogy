@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Santiago Gonzalez and Petra Tumbaco had a son, Manuel de Jesus Gonzalez Tumbaco, born 1915 and died 5 December 1985 in Ecuador, in addition to their two daughters already in the tree (Maria Angela b. 1921, Maria Bartola b. 1934).",
+      "details": {
+        "subject_person": "Santiago Gonzalez (G6MR-VHF)",
+        "relation": "child",
+        "target_person": {
+          "name": "Manuel de Jesus Gonzalez Tumbaco",
+          "birth": "1915, Ecuador",
+          "death": "5 December 1985, Ecuador"
+        }
+      },
+      "supporting_sources": [
+        "Ecuador, Cemetery Records, 1862-2020 — burial entry for Manuel de Jesus Gonzalez Tumbaco, naming parents Santiago Gonzalez and Petita Tumbaco"
+      ],
+      "required": true
+    }
+  ]
+}

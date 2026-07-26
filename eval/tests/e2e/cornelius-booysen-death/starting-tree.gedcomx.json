@@ -1,0 +1,234 @@
+{
+  "persons": [
+    {
+      "id": "GWDS-CKP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Cornelius Hermanus Zacharias",
+          "surname": "Booysen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "dc475aed-2f4c-49c2-bde0-7ed96202513d",
+          "type": "Birth",
+          "date": "1906",
+          "standard_date": "1906"
+        },
+        {
+          "id": "6b5345b8-a777-45ef-857e-eb57813f4374",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PSJ3-PZC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Daniel Jacobus",
+          "surname": "Bester"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fa78e4e7-2f59-46fb-b961-28de576447ff",
+          "type": "Birth",
+          "date": "1908",
+          "standard_date": "1908"
+        },
+        {
+          "id": "ebdcc903-54a8-4f69-b1e8-1d7987ea0457",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PSJ3-8YY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Katrina Johanna",
+          "surname": "Booysen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fd7d3c70-47c3-487d-972d-71f89ddfb497",
+          "type": "Birth",
+          "date": "1933",
+          "standard_date": "1933"
+        },
+        {
+          "id": "8a779c6c-725b-4059-84b5-4775b64e4346",
+          "type": "Death",
+          "date": "19 December 1933",
+          "standard_date": "19 Dec 1933",
+          "place": "Pretoria, Transvaal, South Africa",
+          "standard_place": "Pretoria, Transvaal, South Africa"
+        }
+      ]
+    },
+    {
+      "id": "GWDS-71V",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Jan Jonathan",
+          "surname": "Booysen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebcb7700-e1ce-41c1-905e-db0abafae3b1",
+          "type": "Birth",
+          "date": "21 October 1879",
+          "standard_date": "21 Oct 1879",
+          "place": "Heidelberg, Transvaal, South Africa",
+          "standard_place": "Heidelberg, Lydenburg, Transvaal, South Africa"
+        },
+        {
+          "id": "0c3e56c2-9e2f-430d-917e-bfc20079929b",
+          "type": "Baptism",
+          "date": "7 December 1879",
+          "standard_date": "7 Dec 1879",
+          "place": "Heidelberg, Transvaal, South Africa",
+          "standard_place": "Heidelberg, Lydenburg, Transvaal, South Africa"
+        },
+        {
+          "id": "2364ec0e-4799-4038-b4d8-f08e5d5db545",
+          "type": "Probate",
+          "date": "1931",
+          "standard_date": "1931",
+          "place": "Transvaal, South Africa",
+          "standard_place": "Transvaal, South Africa"
+        },
+        {
+          "id": "bfdc5cfd-5825-4b3e-8f4e-7c811bb590d6",
+          "type": "Death",
+          "date": "15 October 1931",
+          "standard_date": "15 Oct 1931",
+          "place": "Pretoria, Transvaal, South Africa",
+          "standard_place": "Pretoria, Pretoria, Transvaal, South Africa"
+        }
+      ]
+    },
+    {
+      "id": "GWDS-HSV",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Catharina Johanna",
+          "surname": "Deysel"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3b07e425-cfa2-47b3-9283-e0270ff22b13",
+          "type": "Birth",
+          "date": "25 November 1885",
+          "standard_date": "25 Nov 1885"
+        },
+        {
+          "id": "ac99c712-375b-4756-beb7-a999733ae61a",
+          "type": "Death",
+          "date": "4 March 1948",
+          "standard_date": "4 Mar 1948",
+          "place": "Pretoria, Transvaal, South Africa",
+          "standard_place": "Pretoria, Pretoria, Transvaal, South Africa"
+        },
+        {
+          "id": "5034a296-40a2-4f77-bc65-9bedecf353c5",
+          "type": "Probate",
+          "date": "1948",
+          "standard_date": "1948",
+          "place": "Transvaal, South Africa",
+          "standard_place": "Transvaal, South Africa"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GWDS-CKP",
+      "person2": "PSJ3-PZC",
+      "facts": [
+        {
+          "id": "42b2f3b1-4597-4183-87e4-67a9b5bd9322",
+          "type": "Marriage",
+          "date": "31 December 1930",
+          "standard_date": "31 Dec 1930",
+          "place": "Pretoria, Transvaal, South Africa",
+          "standard_place": "Pretoria, Transvaal, South Africa"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GWDS-71V",
+      "person2": "GWDS-HSV",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "16 May 1905",
+          "standard_date": "16 May 1905",
+          "place": "Standerton, Transvaal, South Africa",
+          "standard_place": "Standerton, Standerton, Transvaal, South Africa"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GWDS-71V",
+      "child": "GWDS-CKP"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GWDS-HSV",
+      "child": "GWDS-CKP"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GWDS-CKP",
+      "child": "PSJ3-8YY"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "PSJ3-PZC",
+      "child": "PSJ3-8YY"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7VDX-DGP",
+      "title": "Cornelius Hermanus Zacharius Booysen, \"South Africa, Transvaal, Civil Marriages, 1870-1931\"",
+      "citation": "\"South Africa, Transvaal, Civil Marriages, 1870-1931\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPWJ-CF3V : Sat Mar 09 17:09:34 UTC 2024), Entry for Cornelius Hermanus Zacharius Booysen and Daniel Jacobus Bester, 31 December 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPWJ-CF3V"
+    },
+    {
+      "id": "7VDF-1LK",
+      "title": "Cornelius Hermanus Booysen, \"South Africa, Transvaal, Civil Death, 1869-1954\"",
+      "citation": "\"South Africa, Transvaal, Civil Death, 1869-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:74MD-BDT2 : Thu Jan 16 14:57:10 UTC 2025), Entry for Katrina Johanna Booysen and Cornelius Hermanus Booysen, 19 Dec 1933.",
+      "url": "https://familysearch.org/ark:/61903/1:1:74MD-BDPZ"
+    }
+  ]
+}

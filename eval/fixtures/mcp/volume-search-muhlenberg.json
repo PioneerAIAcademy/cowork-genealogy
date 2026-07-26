@@ -1,0 +1,60 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized image groups for Muhlenberg County: browse-only probate/court volumes covering the 1870s.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Muhlenberg, Kentucky, United States"
+    },
+    "totalResults": 3,
+    "results": [
+      {
+        "imageGroupNumber": "007834412",
+        "imageGroupPrefix": "007834412",
+        "imageCount": 612,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Muhlenberg, Kentucky, United States",
+            "dateRange": "1858–1889",
+            "recordType": "Probate Records (administrator bonds, settlements)"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007834430",
+        "imageGroupPrefix": "007834430",
+        "imageCount": 488,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Muhlenberg, Kentucky, United States",
+            "dateRange": "1799–1901",
+            "recordType": "Court Order Books"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007991103",
+        "imageGroupPrefix": "007991103",
+        "imageCount": 240,
+        "recordSearchablePercent": 4,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Muhlenberg, Kentucky, United States",
+            "dateRange": "1852–1910",
+            "recordType": "County Death Registers (gappy; little 1860s-1870s coverage)"
+          }
+        ]
+      }
+    ]
+  }
+}

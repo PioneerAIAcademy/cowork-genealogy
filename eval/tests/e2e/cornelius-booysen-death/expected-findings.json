@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Cornelius Hermanus Zacharias Booysen died in the Transvaal, South Africa, per a probate record from the Master of the Supreme Court. The record's extracted data carries no specific date — the underlying probate file would need to be consulted for an exact death date.",
+      "details": {
+        "subject_person": "Cornelius Hermanus Zacharias Booysen (GWDS-CKP)",
+        "fact_type": "Death",
+        "date": "unknown (probate record gives no date in the indexed extract)",
+        "place": "Transvaal, South Africa"
+      },
+      "supporting_sources": [
+        "South Africa, Transvaal, Probate Records from the Master of the Supreme Court, 1869-1961 — entry for Cornelis Hermanus Zacharias Booysen"
+      ],
+      "required": true
+    }
+  ]
+}

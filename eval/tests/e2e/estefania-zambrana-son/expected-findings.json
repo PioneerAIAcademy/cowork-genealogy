@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Estefania Zambrana and Antonio Beisaga (recorded in the hint as Veizaga) had a son, Ricardo Veizaga Zambrana, baptized 3 April 1874 in Santo Domingo, Cochabamba, Bolivia, in addition to their two children already in the tree (Fructuosa b. 1867, Geronimo b. 1877).",
+      "details": {
+        "subject_person": "Estefania Zambrana (9QTV-KDZ)",
+        "relation": "child",
+        "target_person": {
+          "name": "Ricardo Veizaga Zambrana",
+          "birth": "baptized 3 April 1874, Santo Domingo, Cochabamba, Bolivia"
+        }
+      },
+      "supporting_sources": [
+        "Bolivia, Catholic Church Records, 1566-2020 — baptismal entry, 3 Apr 1874, Santo Domingo, Cochabamba, naming parents Antonio Veizaga and Estefania Zambrana"
+      ],
+      "required": true
+    }
+  ]
+}

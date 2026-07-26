@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Manoel Melquiades de Oliveira and Cândida de Oliveira had a daughter, Josefa Dias Da Conceição, who married Elfridio Justino Da Silva on 12 March 1926 in Natal, Rio Grande do Norte, in addition to their children Abel and Maria Lila already in the tree.",
+      "details": {
+        "subject_person": "Manoel Melquiades de Oliveira (GHJ6-2WV)",
+        "relation": "child",
+        "target_person": {
+          "name": "Josefa Dias Da Conceição",
+          "birth": "unknown, likely Rio Grande do Norte, Brazil",
+          "marriage": "12 March 1926, Natal, Rio Grande do Norte, to Elfridio Justino Da Silva"
+        }
+      },
+      "supporting_sources": [
+        "Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019 — marriage registration, 12 Mar 1926, Natal, naming the bride's parents as Manuel Melchiades de Oliveira and Candida de Oliveira"
+      ],
+      "required": true
+    }
+  ]
+}
