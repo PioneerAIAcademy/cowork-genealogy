@@ -1,0 +1,30 @@
+{
+  "run_log": "v1_2026-07-25_01-25-11.json",
+  "annotator": "83524248+taiwo-stack@users.noreply.github.com",
+  "corrections": [
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    }
+  ]
+}
