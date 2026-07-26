@@ -410,11 +410,13 @@ e2e-calibrate: ## Run judge calibration against committed run annotations (maint
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-latency
-e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table
+e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown
 	# Pure analysis over committed run JSONs — no live run, no API. Answers
 	# "how much of wall-clock is model generation vs tool execution?" (the
 	# Phase 0 gate). See docs/plan/research-latency-reduction-plan.md.
-	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,)
+	# BY_SKILL needs a run committed after 2026-07-26 (timeline tool-name tagging);
+	# older runs report "no skill-phase data" rather than crashing.
+	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,)
 
 .PHONY: skill-latency
 skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json

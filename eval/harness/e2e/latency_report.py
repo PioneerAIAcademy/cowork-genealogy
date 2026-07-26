@@ -13,9 +13,17 @@ committed result JSON (see e2e/result.py):
   - ``usage.duration_api_ms``  — cumulative time awaiting the model API
   - ``usage.num_turns``        — assistant turns
   - ``usage.usage.output_tokens`` (and input / cache counters)
-  - ``usage.timeline``         — ``[[elapsed_s, kind], ...]`` per SDK message,
-                                 kind ∈ {assistant, tool_result, system:*, result}
-                                 (added after 2026-06; older runs lack it)
+  - ``usage.timeline``         — ``[[elapsed_s, kind, tool_names], ...]`` per SDK
+                                 message, kind ∈ {assistant, tool_result, system:*,
+                                 result}. ``tool_names`` (added 2026-07-26) is the
+                                 list of ``_timeline_tool_label``-formatted names
+                                 for any tool call in that message — a Skill call
+                                 is labeled ``"Skill:<skill-name>"`` rather than
+                                 the bare "Skill", so a run's Skill-phase
+                                 boundaries are readable directly off the
+                                 timeline. Runs from before that date have 2-element
+                                 rows (no ``tool_names``); ``--by-skill`` degrades
+                                 to "no data" rather than crashing on those.
 
 This module is pure analysis on top of that — it adds **no** instrumentation to
 a run. ``analyze_result`` is a pure function (unit-tested without a live run);
@@ -25,6 +33,7 @@ CLI (from eval/harness/):
   uv run python -m e2e.latency_report --test kenneth-quass-death
   uv run python -m e2e.latency_report --all
   uv run python -m e2e.latency_report --all --markdown > table.md
+  uv run python -m e2e.latency_report --test kenneth-quass-death --by-skill
   uv run python -m e2e.latency_report path/to/run-<ts>.json [more.json ...]
 
 Two independent decompositions are reported so they corroborate:
@@ -34,6 +43,14 @@ Two independent decompositions are reported so they corroborate:
      (``assistant`` + ``system:*``) is non-tool (model generation, plus any
      stall/resume idle — not separable within one session). Wall-clock beyond the
      timeline span is flagged separately as stall/idle.
+
+A third, optional decomposition — ``--by-skill`` — segments the run into
+per-Skill-invocation phases (e.g. how long ``person-evidence`` vs.
+``proof-conclusion`` ran) using the ``tool_names`` tags above. This used to
+require the raw SDK ``session.jsonl`` (gitignored, and only reliably present
+by accident — see ``docs/plan/tree-materialization-batching-plan.md`` §1.2);
+now every run committed after the tags were added carries what's needed, from
+any contributor's normal PR, with no extra step.
 """
 
 from __future__ import annotations
@@ -114,6 +131,11 @@ class LatencyBreakdown:
     # model deliberations.
     slowest_gen_gaps: list[tuple[float, float]] = field(default_factory=list)
 
+    # Per-Skill-invocation phases (--by-skill), from the timeline's tool_names
+    # tags (see _skill_phase_breakdown). Empty for a run committed before the
+    # tags existed, or a run with no Skill tool-use at all — never an error.
+    skill_phases: list[dict[str, Any]] = field(default_factory=list)
+
 
 def _timeline_decomposition(timeline: list[list[Any]]) -> dict[str, Any]:
     """Split inter-message wall-clock gaps into tool-execution vs everything-else.
@@ -159,6 +181,49 @@ def _timeline_decomposition(timeline: list[list[Any]]) -> dict[str, Any]:
         "tool_time_pct": (tool / total) if total > 0 else None,
         "slowest_gen_gaps": gen_gaps[:5],
     }
+
+
+def _skill_phase_breakdown(timeline: list[list[Any]]) -> list[dict[str, Any]]:
+    """Segment a run into per-Skill-invocation phases using the timeline's
+    ``tool_names`` tags (orchestrator.py's ``_timeline_tool_label``).
+
+    A ``"Skill:<name>"`` tag marks a context switch, not a call-and-return —
+    the skill's actual work happens in the turns that follow, until the next
+    Skill invocation (or the run's end). So a phase's span is
+    [this Skill tag's elapsed_s, the NEXT Skill tag's elapsed_s (or the
+    timeline's last point)], not the gap to its own tool_result.
+
+    Runs committed before the tags existed have 2-element timeline rows (or
+    a 3rd element that's always ``[]``) and no ``"Skill:"``-prefixed names
+    anywhere — this returns ``[]`` for those, never raises. A run with a
+    tagged timeline but genuinely no Skill tool-use (crashed before routing)
+    also returns ``[]``.
+    """
+    boundaries: list[tuple[float, str]] = []
+    last_t = 0.0
+    for entry in timeline:
+        t = float(entry[0])
+        last_t = t
+        names = entry[2] if len(entry) > 2 else []
+        if not isinstance(names, list):
+            continue
+        for name in names:
+            if isinstance(name, str) and name.startswith("Skill:"):
+                boundaries.append((t, name[len("Skill:"):]))
+    if not boundaries:
+        return []
+    phases: list[dict[str, Any]] = []
+    for i, (start, skill) in enumerate(boundaries):
+        end = boundaries[i + 1][0] if i + 1 < len(boundaries) else last_t
+        phases.append(
+            {
+                "skill": skill,
+                "start_s": round(start, 1),
+                "end_s": round(end, 1),
+                "duration_s": round(max(0.0, end - start), 1),
+            }
+        )
+    return phases
 
 
 def analyze_result(result: dict[str, Any], source_file: str | None = None) -> LatencyBreakdown:
@@ -218,6 +283,7 @@ def analyze_result(result: dict[str, Any], source_file: str | None = None) -> La
         # Wall-clock beyond the timeline span is stall/resume/judge idle.
         if bd.timeline_span_s is not None:
             bd.stall_s = round(max(0.0, bd.wall_clock_s - bd.timeline_span_s), 1)
+        bd.skill_phases = _skill_phase_breakdown(timeline)
 
     return bd
 
@@ -286,6 +352,24 @@ def format_markdown_table(bds: list[LatencyBreakdown]) -> str:
     return "\n".join([header, *rows])
 
 
+def format_skill_phases(bd: LatencyBreakdown) -> str:
+    """A per-run block: how long each Skill invocation ran, in order."""
+    if not bd.skill_phases:
+        return (
+            f"=== {bd.test_id} — no skill-phase data "
+            "(run predates timeline tool-name tagging, or made no Skill tool-use) ==="
+        )
+    lines = [f"=== {bd.test_id} — per-skill phase breakdown ==="]
+    for p in bd.skill_phases:
+        share = (p["duration_s"] / bd.wall_clock_s * 100) if bd.wall_clock_s else None
+        share_str = f"{share:.0f}%" if share is not None else "n/a"
+        lines.append(
+            f"  {p['skill']:<28} {_fmt_min(p['duration_s']):>7}  "
+            f"({p['start_s']:.0f}s → {p['end_s']:.0f}s, {share_str} of wall-clock)"
+        )
+    return "\n".join(lines)
+
+
 # --- Run discovery + CLI ----------------------------------------------------
 
 def _is_result_json(p: Path) -> bool:
@@ -330,6 +414,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--test", help="latest committed run for this fixture slug")
     ap.add_argument("--all", action="store_true", help="latest run per fixture")
     ap.add_argument("--markdown", action="store_true", help="emit a Markdown table")
+    ap.add_argument(
+        "--by-skill",
+        action="store_true",
+        help="per-skill wall-clock phase breakdown instead of the whole-run summary "
+        "(needs a run committed after 2026-07-26's timeline tool-name tagging)",
+    )
     args = ap.parse_args(argv)
 
     paths: list[Path] = [Path(f) for f in args.files]
@@ -347,7 +437,11 @@ def main(argv: list[str] | None = None) -> int:
 
     bds = [_load(p) for p in paths]
 
-    if args.markdown:
+    if args.by_skill:
+        for bd in bds:
+            print(format_skill_phases(bd))
+            print()
+    elif args.markdown:
         print(format_markdown_table(bds))
     else:
         for bd in bds:
