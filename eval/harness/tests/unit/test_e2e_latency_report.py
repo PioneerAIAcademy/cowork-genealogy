@@ -12,6 +12,8 @@ from e2e.latency_report import (
     analyze_result,
     format_breakdown,
     format_markdown_table,
+    format_skill_phases,
+    _skill_phase_breakdown,
     _timeline_decomposition,
 )
 
@@ -146,4 +148,66 @@ def test_markdown_table_has_row_per_run():
     table = format_markdown_table(bds)
     assert table.count("\n") == 3  # header + separator + 2 rows
     assert "morris" in table
-    assert "kenneth-quass-death" in table
+
+
+# --- --by-skill (timeline tool-name tags, added 2026-07-26) ------------------
+
+_SKILL_TIMELINE = [
+    [0.0, "assistant", ["Skill:question-selection"]],
+    [5.0, "tool_result", []],
+    [8.0, "assistant", ["Skill:research-plan"]],
+    [15.0, "tool_result", []],
+    [20.0, "assistant", ["Skill:person-evidence"]],
+    [45.0, "tool_result", ["record_search"]],
+    [50.0, "assistant", []],
+]
+
+
+def test_skill_phase_breakdown_segments_by_skill_boundary():
+    phases = _skill_phase_breakdown(_SKILL_TIMELINE)
+    assert [p["skill"] for p in phases] == [
+        "question-selection",
+        "research-plan",
+        "person-evidence",
+    ]
+    # Each phase runs from its own Skill tag to the NEXT one's (not to its own
+    # tool_result) — the final phase runs to the timeline's last point.
+    assert phases[0] == {"skill": "question-selection", "start_s": 0.0, "end_s": 8.0, "duration_s": 8.0}
+    assert phases[1] == {"skill": "research-plan", "start_s": 8.0, "end_s": 20.0, "duration_s": 12.0}
+    assert phases[2] == {"skill": "person-evidence", "start_s": 20.0, "end_s": 50.0, "duration_s": 30.0}
+
+
+def test_skill_phase_breakdown_empty_for_legacy_timeline_rows():
+    """2-element rows (pre-2026-07-26, no tool_names at all) -> no crash, []."""
+    assert _skill_phase_breakdown(_result()["usage"]["timeline"]) == []
+
+
+def test_skill_phase_breakdown_empty_when_tagged_but_no_skill_calls():
+    """3-element rows present, but nothing is a Skill call (e.g. a run that
+    crashed before routing to any skill) -> []. not an error."""
+    timeline = [[0.0, "assistant", []], [3.0, "tool_result", ["record_search"]]]
+    assert _skill_phase_breakdown(timeline) == []
+
+
+def test_analyze_result_populates_skill_phases():
+    bd = analyze_result(_result(usage={**_result()["usage"], "timeline": _SKILL_TIMELINE}))
+    assert [p["skill"] for p in bd.skill_phases] == [
+        "question-selection",
+        "research-plan",
+        "person-evidence",
+    ]
+
+
+def test_format_skill_phases_renders_each_phase():
+    bd = analyze_result(_result(usage={**_result()["usage"], "timeline": _SKILL_TIMELINE}))
+    text = format_skill_phases(bd)
+    assert "question-selection" in text
+    assert "research-plan" in text
+    assert "person-evidence" in text
+
+
+def test_format_skill_phases_no_data_message_for_legacy_run():
+    bd = analyze_result(_result())  # legacy 2-element timeline, no tags
+    text = format_skill_phases(bd)
+    assert "no skill-phase data" in text
+    assert "kenneth-quass-death" in text
