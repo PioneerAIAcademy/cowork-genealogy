@@ -24,7 +24,7 @@
     {
       "id": "f2",
       "type": "relationship",
-      "description": "Mary Mallalieu (married name Richardson) was the mother of John Richardson. Born 16 September 1806 in Chorley, Lancashire, England; died 9 March 1846 in Nauvoo, Hancock County, Illinois — before the family reached Utah, so she is absent from every later Utah record. Recovering her requires early Nauvoo community records and English (Chorley) parish registers.",
+      "description": "Mary Mallalieu (married name Richardson) was the mother of John Richardson. She married Thomas Richardson on 12 November 1826 at Walton-le-Dale, Lancashire, England, and died 9 March 1846 in Nauvoo, Hancock County, Illinois — before the family reached Utah, so she is absent from every later Utah record. Recover her via the Nauvoo community records (which name her, variant-spelled Millenew / Mallalew) and the 1826 Lancashire marriage. Her birth was 16 September 1802 (per the Find a Grave index; the year is debated in the tree). The tree's 16 September 1806 Chorley christening is a MISATTRIBUTED record for a different Mary Mallalieu who died in 1812, so a precise birth date is not required for this finding.",
       "details": {
         "subject_person": {
           "name": "John Richardson",
@@ -33,12 +33,13 @@
         "relation": "mother",
         "target_person": {
           "name": "Mary Mallalieu",
-          "birth": "16 September 1806, Chorley, Lancashire, England"
+          "birth": "16 September 1802, Lancashire, England (per Find a Grave; year debated) — NOT the misattributed 16 Sep 1806 Chorley christening, which is a different Mary Mallalieu who died 1812"
         }
       },
       "supporting_sources": [
-        "Nauvoo Community Project (BYU Center for Family History and Genealogy) — Mary (Mallalieu) Richardson's residence and 1846 death at Nauvoo, Hancock County, Illinois.",
-        "England, Births and Christenings — christening of Mary Mallalieu, Chorley, Lancashire, 1806."
+        "Illinois, Hancock County, Nauvoo Community Project, 1839-1846 (BYU Center for Family History and Genealogy) — indexed into FamilySearch (e.g. ark:/61903/1:1:QL3Z-KSQX); names John's mother as Mary Millenew/Mallalieu, resident at Nauvoo, died there 1846.",
+        "England Marriages, 1538-1973 / England, Lancashire, Parish Registers 1538-1910 — marriage of Thomas Richardson and Mary Mallalieu, 12 November 1826, Walton-le-Dale, Lancashire (ark:/61903/1:1:QJDD-R1CZ; indexed copies spelled Mallaein / Mallaleiw).",
+        "Find a Grave Index — Mary Mallalieu Richardson, died 1846 (ark:/61903/1:1:QVK8-FSS5)."
       ],
       "required": true
     }
