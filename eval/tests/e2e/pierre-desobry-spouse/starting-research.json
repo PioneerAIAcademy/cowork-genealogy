@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_pierre_desobry_spouse",
+    "objective": "Who was the wife of Pierre Henri Désobry of Pecquencourt, France, and did they have a son named Julien who died in infancy in 1809?",
+    "subject_person_ids": [
+      "L6L3-BB8"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

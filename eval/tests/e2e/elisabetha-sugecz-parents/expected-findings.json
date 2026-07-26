@@ -1,0 +1,38 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Elisabetha Sugecz's father was Thomas Sugecz, per a baptismal record dated 14 August 1786 in Madžarevo, Varaždin, Croatia.",
+      "details": {
+        "subject_person": "Elisabetha Sugecz (G4C9-Y6C)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Thomas Sugecz",
+          "birth": "unknown, likely Madžarevo, Varaždin, Croatia"
+        }
+      },
+      "supporting_sources": [
+        "Croatia, Church Books, 1516-1994 — baptismal entry, 14 Aug 1786, Madžarevo, Varaždin, naming parents Thomæ Sugecz and Susanæ Petrich"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Elisabetha Sugecz's mother was Susanna Petrich, per the same baptismal record.",
+      "details": {
+        "subject_person": "Elisabetha Sugecz (G4C9-Y6C)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Susanna Petrich",
+          "birth": "unknown, likely Madžarevo, Varaždin, Croatia"
+        }
+      },
+      "supporting_sources": [
+        "Croatia, Church Books, 1516-1994 — baptismal entry, 14 Aug 1786, Madžarevo, Varaždin"
+      ],
+      "required": true
+    }
+  ]
+}

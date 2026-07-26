@@ -1,0 +1,121 @@
+{
+  "persons": [
+    {
+      "id": "L17M-W4Q",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Wasyl",
+          "surname": "Kapach"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4f5a7841-26b1-47c5-b4d4-aa4a5ebbcbf8",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LVFX-1PX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Andrew",
+          "surname": "Kapach"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "20 December 1916",
+          "standard_date": "20 Dec 1916"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "13 April 1984",
+          "standard_date": "13 Apr 1984"
+        }
+      ]
+    },
+    {
+      "id": "L1K5-ZC3",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Tekla",
+          "surname": "Doliney Kapach"
+        }
+      ],
+      "facts": [
+        {
+          "id": "796b71b9-f635-462b-83c7-4d0f80af945f",
+          "type": "Death",
+          "date": "November 8, 1915",
+          "standard_date": "8 Nov 1915",
+          "place": "Vegreville, Alberta, Canada",
+          "standard_place": "Vegreville, County of Minburn No. 27, Alberta, Canada"
+        },
+        {
+          "id": "c19a5ccd-fad3-40f4-9caf-84a09f70c07b",
+          "type": "Birth",
+          "place": "Ukraine, Province Of Galicia",
+          "standard_place": "Ukraine"
+        }
+      ]
+    },
+    {
+      "id": "L17M-72G",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Mary",
+          "surname": "Antosko"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7a6b5819-6c5d-4460-8148-a66b43180469",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "L17M-W4Q",
+      "person2": "L17M-72G"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "L1K5-ZC3",
+      "child": "L17M-W4Q"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "L17M-W4Q",
+      "child": "LVFX-1PX"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L17M-72G",
+      "child": "LVFX-1PX"
+    }
+  ],
+  "sources": []
+}

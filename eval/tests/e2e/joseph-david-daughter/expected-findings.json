@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Joseph Davies and Hannah Davies had a daughter, Elizabeth A. Davies, born 1899 in Treharris, Glamorganshire, per the 1901 census household in Merthyr Tydfil — in addition to the subject's three children already in the tree (Ethel b. 1897, Illiam G. b. 1900, Enid b. 1908).",
+      "details": {
+        "subject_person": "Joseph David (GNR6-VWS)",
+        "relation": "child",
+        "target_person": {
+          "name": "Elizabeth A Davies",
+          "birth": "1899, Treharris, Glamorganshire, Wales"
+        }
+      },
+      "supporting_sources": [
+        "England and Wales, Census, 1901 — household of Joseph Davies and Hannah Davies, Merthyr Tydfil, Glamorgan"
+      ],
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_katalin_horak_son",
+    "objective": "Did Katalin Horák and her husband István Banyári of Kľak, Nová Baňa, Slovakia have a son named János, baptized 1 September 1844?",
+    "subject_person_ids": [
+      "LDSJ-SXL"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

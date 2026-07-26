@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_rozal_sarman_daughter",
+    "objective": "Did Rozál Sármán and her husband István Juhász of Torontál, Hungary have a daughter named Viktoria, baptized about 1892, in addition to their known daughter Ágnes (b. 1894)?",
+    "subject_person_ids": [
+      "P873-TWP"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

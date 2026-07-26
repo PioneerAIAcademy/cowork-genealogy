@@ -1,0 +1,19 @@
+{
+  "id": "concepcion-alegre-parents",
+  "name": "Concepción Alegre — birth, marriage and parents (Paraguay)",
+  "genre": "record-hint",
+  "source_pid": "G384-ZCZ",
+  "captured": "2026-07-24",
+  "researcher_question": "When and where was Concepción Alegre of Altos, Cordillera, Paraguay born, who were her parents, and when did she marry Vicente Figueredo?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1910s",
+    "geography": "PY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 25, flags adds_father/adds_mother/adds_birth/adds_marriage, confidence 3). Draft transcribed from a Paraguayan parish record; unverified."
+}

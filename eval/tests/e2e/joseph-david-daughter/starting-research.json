@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_joseph_david_daughter",
+    "objective": "Did Joseph David and his wife Hannah David of Clydach, Glamorgan, Wales have a daughter named Elizabeth A., born 1899, in addition to their three known children (b. 1897-1908)?",
+    "subject_person_ids": [
+      "GNR6-VWS"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -24,11 +24,21 @@ If you get stuck mid-flow, ask for help.
 
 | Icon | Place | What it is | Used for |
 |---|---|---|---|
-| 🌐 | **The workbench** | <https://genealogy-workbench.fly.dev> in a browser. Where alpha testers research. | *Noticing* the problem and *reporting* it. |
+| 🌐 | **The workbench** | <https://genealogy-workbench.fly.dev> in a browser, or **Cowork + the Research Viewer** side by side (Claude Desktop's Cowork tab for research, the Electron Viewer for watching and for Send Feedback). Where alpha testers research and submit — either surface, depending on which one that tester has. | *Noticing* the problem and *reporting* it. |
 | 🤖 | **Claude Code** | The **Code tab** of the Claude desktop app, or `claude` in a terminal — opened sometimes on your repo checkout, sometimes on the unpacked case folder (see below). The Code tab is the usual Windows path. | *Reproducing*, *classifying*, *capturing the test*, *improving the skill*. |
 | ⌨️ | **Terminal** | A plain shell for `make …` (Windows: the matching `.bat`). | *Unpacking* the case, *running tests*, *gating*. One `make` target opens a 🌐 browser tab — the grading UI. |
 
 Alpha testers only ever touch the first one. Everything else is us.
+
+**Two source guides, one downstream flow.** Testers on the hosted app follow
+[`alpha-user-guide.md`](alpha-user-guide.md); testers on Cowork follow
+[`alpha-user-guide-cowork.md`](alpha-user-guide-cowork.md), which pairs Cowork
+with the Research Viewer for watching the research live and for **Send
+Feedback** — Cowork itself has no feedback UI. Both surfaces ultimately submit
+through the same `feedback:submit` path and produce the same zip shape
+(`_feedback/feedback.json` alongside the project files), so **Steps 1–10
+below are identical** regardless of which guide the tester followed. The only
+step with a source-specific detail is Step 0, covered below.
 
 Steps 3 and 7 also want the **Research Viewer** (Electron, `make electron`)
 open, which is how you read the research log, assertions and conflicts the agent
@@ -100,7 +110,8 @@ silently corrupts everything upstream of it.
 
 ## Step 0 — Notice it 🌐 The workbench
 
-Marta clicks **Send Feedback** in the same session and writes:
+Marta writes up her Did/What/Should note — the same three-part shape whether
+she's on the hosted app or Cowork:
 
 > **What I asked:** Find John Schuster's parents (b. ~1845, Augusta Co., VA).
 >
@@ -118,6 +129,18 @@ Marta leaves the fourth box empty, and that's the right call: **the answer isn't
 known to be wrong — it's unproven.** That box is for when the agent reached a
 *wrong conclusion* and you can supply the right one. Here the defect is the
 reasoning, so the third box carries the whole report.
+
+If Marta is on the **hosted app**, she clicks **Send Feedback** in the same
+session, and this note is one of four boxes in that form — the zip is
+assembled and sent for her.
+
+If Marta is on **Cowork**, she clicks **Send Feedback** in the **Research
+Viewer**, open on the same project folder — Cowork itself has no feedback UI,
+which is why the Viewer runs alongside it (see
+[`alpha-user-guide-cowork.md`](alpha-user-guide-cowork.md#sending-feedback)).
+The same four boxes, the same submission path, the same zip shape land in the
+Drive folder either way, which is why Step 2 onward doesn't need to know
+which surface she used.
 
 That three-part note is the most valuable thing produced all day. Everything
 below is mechanics.
@@ -593,7 +616,11 @@ this page is one flow for a reason.
 
 - [`skill-lifecycle.md`](skill-lifecycle.md) — the improvement loop Steps 6
   hands off to, and the reference for every stage of it
-- [`alpha-user-guide.md`](alpha-user-guide.md) — what the alpha tester sees
+- [`alpha-user-guide.md`](alpha-user-guide.md) — what a hosted-app alpha
+  tester sees
+- [`alpha-user-guide-cowork.md`](alpha-user-guide-cowork.md) — what a Cowork
+  alpha tester sees; they submit through the Research Viewer's Send Feedback,
+  not through Cowork itself, but it's the same zip Step 2 expects
 - [`e2e-testing-guide.md`](e2e-testing-guide.md) — authoring and running a
   benchmark fixture
 - [`specs/feedback-case-spec.md`](specs/feedback-case-spec.md) — why the case

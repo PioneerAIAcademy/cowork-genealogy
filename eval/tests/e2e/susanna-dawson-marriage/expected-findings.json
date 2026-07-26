@@ -1,0 +1,36 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Susanna Dawson married John Kneale on 21 October 1860 in Lezayre, Isle of Man — eleven months before their first child Thomas was born (1861). The tree currently records this couple with no marriage date.",
+      "details": {
+        "subject_person": "Susanna Dawson Kneale (9KNQ-8YB)",
+        "fact_type": "Marriage",
+        "date": "21 October 1860",
+        "place": "Lezayre, Isle of Man"
+      },
+      "supporting_sources": [
+        "Isle of Man, Parish Registers, 1598-2009 — marriage entry, 21 Oct 1860, Lezayre, for John Kneale (son of Thomas Kneale) and Susanna Dawson (daughter of John Dawson)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Susanna Dawson Kneale's father was John Dawson, per the same marriage record.",
+      "details": {
+        "subject_person": "Susanna Dawson Kneale (9KNQ-8YB)",
+        "relation": "parent",
+        "target_person": {
+          "name": "John Dawson",
+          "birth": "unknown, likely Isle of Man"
+        }
+      },
+      "supporting_sources": [
+        "Isle of Man, Parish Registers, 1598-2009 — marriage entry, 21 Oct 1860, Lezayre"
+      ],
+      "required": true
+    }
+  ]
+}

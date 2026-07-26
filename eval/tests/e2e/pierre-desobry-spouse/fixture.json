@@ -1,0 +1,19 @@
+{
+  "id": "pierre-desobry-spouse",
+  "name": "Pierre Henri DESOBRY — wife Clemence Sauselle and son Julien",
+  "genre": "record-hint",
+  "source_pid": "L6L3-BB8",
+  "captured": "2026-07-24",
+  "researcher_question": "Who was the wife of Pierre Henri Désobry of Pecquencourt, France, and did they have a son named Julien who died in infancy in 1809?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1800s",
+    "geography": "FR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 17, flags adds_spouse/adds_son, confidence 3). Draft transcribed from a French parish register; unverified."
+}

@@ -1,0 +1,34 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Eulogia Gatica Alfaro was buried 30 May 1908 in Santiago, Chile, one day after the death date (29 May 1908) already recorded in the tree.",
+      "details": {
+        "subject_person": "Eulojia del Carmen Gatica Alfaro (LZ3Z-RHM)",
+        "fact_type": "Burial",
+        "date": "30 May 1908",
+        "place": "Santiago, Chile"
+      },
+      "supporting_sources": [
+        "Chile, Cemetery Records, 1701-2021 — burial entry, 30 May 1908, Santiago, for Eulogia Gatica Alfaro"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "The cemetery record estimates Eulogia Gatica Alfaro's birth year as 1865 — three years later than the christening date (2 October 1862) already recorded in the tree. Bonus credit only, since it conflicts with an already-established date.",
+      "details": {
+        "subject_person": "Eulojia del Carmen Gatica Alfaro (LZ3Z-RHM)",
+        "fact_type": "Birth",
+        "date": "1865 (estimated)",
+        "place": "unknown"
+      },
+      "supporting_sources": [
+        "Chile, Cemetery Records, 1701-2021 — burial entry, 30 May 1908, Santiago, for Eulogia Gatica Alfaro"
+      ],
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "susanna-szljacsan-spouse",
+  "name": "Susanna Szljacsan — husband Joannes Janeczky and daughter Susanna",
+  "genre": "record-hint",
+  "source_pid": "LDK6-6SH",
+  "captured": "2026-07-24",
+  "researcher_question": "Who did Susanna Szljacsan of Lisková, Ružomberok, Slovakia marry, and did she have a daughter named Susanna, baptized about 1884?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1880s",
+    "geography": "SK"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 29, flags adds_spouse/adds_daughter, confidence 3). Draft transcribed from a Slovak church/synagogue record; unverified."
+}
