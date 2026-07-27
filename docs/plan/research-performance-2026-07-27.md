@@ -566,6 +566,66 @@ this good and this cheap, the reason to make it automatic is stronger, not
 weaker. The counter-arguments there (batching, atomicity, blast radius) are
 unchanged — but "the ranker might not work" is no longer among them.
 
+## 5.2 The adoption gap is compaction eating the doctrine
+
+With §5.1 establishing that the ranker works, the remaining question was why it
+ran 14 times against 128 eligible searches. Plotting `record_search` and
+`rank_search_matches` against the 23 compaction events answers it:
+
+| segment (between compactions) | searches | rank calls |
+|---|---|---|
+| 0 (before the first compaction) | 2 | 2 |
+| 1 | 4 | 4 |
+| 2 | 7 | 4 |
+| **3 – 14** | **88** | **0** |
+| 15 | 8 | 3 |
+| 16 – 19 | 24 | 0 |
+| 20 | 5 | 1 |
+| 21 – 23 | 2 | 0 |
+
+**Compliance in segments 0–2 was 10 of 13 searches (77%). From segment 3 on it
+is 4 of 118 (3%).** The behavior did not drift — it fell off a cliff at a
+specific point, and that point is compaction.
+
+The mechanism: **`search-records` was invoked exactly once, at 19:09, and never
+again.** Its body is 41.6 KB (~10k tokens). A skill enters context once, via the
+Skill tool; nothing re-loads it. Successive compactions evicted it, and with it
+`SKILL.md:171` — *"**Always** call `rank_search_matches` after any search that
+returns one or more results."*
+
+The decisive detail: **15 of the 23 compaction summaries name
+`rank_search_matches`**, but the string "Always call" appears in **zero** of the
+session's last 400 records. Compaction preserved the *narrative* ("we used a
+ranking tool") and dropped the *rule* ("you must use it every time"). The agent
+knew the tool existed; it no longer knew it was mandatory.
+
+**This is systemic, not specific to this skill.** Every behavioral instruction in
+every SKILL.md degrades the same way over a long session — silently, with no
+error, and invisibly to any test that runs a skill once in a fresh context. The
+unit suite cannot see it by construction.
+
+Four responses, in rough order of leverage:
+
+1. **A tool contract cannot be compacted away — prose can.** This is now the
+   strongest argument for the deferred fold (§6): make ranking part of what
+   `record_search` *does* when a subject is supplied, rather than a rule the
+   model has to remember. It converts a doctrine-retention problem into an API.
+2. **C1 and C6 buy instruction lifetime, not just tokens.** Fewer compactions
+   means doctrine survives longer. Their measured 698k → 391k on search payload
+   directly extends the window in which a skill body is still resident. This is
+   a *behavioral* justification for changes that looked purely economic.
+3. **Re-invoke the skill per plan item**, not once per session. The `research`
+   orchestrator already loops; re-entering `search-records` on each plan item
+   would reload the body. Costs ~10k tokens per reload — cheap against a
+   compaction cycle, and far cheaper than 114 unranked searches.
+4. **Shrink the skill body.** 41.6 KB is a lot to hold, and a smaller body both
+   survives longer and costs less to reload. Out of scope here; flagged for the
+   skill stewards.
+
+The order matters: (1) and (2) are already in flight, (3) is a small orchestrator
+change with a real cost model, and (4) is prose work that should follow the
+measurement rather than lead it.
+
 ## 5.1a Superseded — the starved-subject reading
 
 Run `dev/probe-rank-enrichment.ts --project <case> --subject I1 --results
