@@ -1,0 +1,17 @@
+{
+  "tool": "rank_search_matches",
+  "description": "The thin-subject branch of `subjectResolvable: false`. The tree subject carries a name and nothing else — no dated or placed fact — so FamilySearch's matcher cannot discriminate it from any same-named person and every candidate scores at or below the degenerate floor (0.01). The tool therefore WITHHOLDS the ranking entirely (`matches: []`, `returnedCount: 0`) rather than returning a ranked-looking list that is really FamilySearch search order, and explains what is missing in `diagnostic`. Correct skill response: thicken the subject (extract or link one dated/placed assertion) or narrow the query — NOT hand-triage the pool, and NOT fall back to `same_person` against the same starved subject, which fails identically. Pairs with a record_search fixture that returns candidates. Matched on subjectId; independent of the stagedResultsRef handle (a per-run uuid).",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 12,
+    "returnedCount": 0,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "subjectResolvable": false,
+    "diagnostic": "Subject 'I1' carries no fact with a date or place, so FamilySearch's matcher cannot discriminate it from any same-named person and every candidate scored at or below 0.01. The ranking would be search order wearing match scores, so it is withheld. Give the subject at least one dated or placed fact — record it on the tree person, or extract and link an assertion via person_evidence — then rank again. Meanwhile, narrow the search (collection, place, date range) rather than triaging this pool by hand.",
+    "matches": []
+  }
+}

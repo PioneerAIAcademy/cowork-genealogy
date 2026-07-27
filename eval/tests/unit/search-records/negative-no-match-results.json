@@ -22,7 +22,7 @@
     "If the collectionId retry also returns mismatched results, the skill should log both attempts as outcome='partial' and stop — no further searches needed.",
     "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
     "The core pass criteria: (1) outcome='partial' (not 'negative') for the 1850 mismatch, (2) sidecar written, (3) mismatch explained in notes, (4) NO variant surname searches executed after the mismatch, (5) next-step suggestions point to a different source or collection filter (not to Flinn/Flyn variants).",
-    "IMPORTANT — How file writes work: The skill uses baseline Write/Edit (not MCP) to write log entries and sidecars. results/ sidecars are newly created files — they do NOT appear in the file-change diff. Score Sidecar correctness 3 if the skill text mentions writing results/<log_id>.json. Do NOT score Sidecar=1 because the file does not appear in the MCP tool calls or file-change diff."
+    "IMPORTANT — How file writes work: `research_log_append` writes the log entry AND the results/ sidecar host-side from the staged handle; the skill does not hand-write either. Sidecars are newly created files, so they never appear in the file-change diff — their absence from it is not evidence of anything."
   ],
   "execution": {
     "max_turns": 15
