@@ -16,7 +16,7 @@
  * - When editing, a hash-change warning surfaces if any grading-relevant
  *   field changed (spec §3 / plan §2.4).
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Alert,
@@ -183,20 +183,14 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerSkill]);
 
-  const [hashWarning, setHashWarning] = useState<string | null>(null);
-
-  // Watch grading-relevant fields against the initialValues snapshot.
-  useEffect(() => {
-    if (mode !== 'edit' || !initialValues) {
-      setHashWarning(null);
-      return;
-    }
-    const changed = hasGradingRelevantChange(initialValues, form.values);
-    setHashWarning(
-      changed
-        ? 'This edit changes the test\'s content hash — it will be excluded from cross-PR comparison for one PR.'
-        : null,
-    );
+  // Watch grading-relevant fields against the initialValues snapshot. Pure
+  // derivation of the current form values — computed during render rather than
+  // mirrored into state via an effect.
+  const hashWarning = useMemo(() => {
+    if (mode !== 'edit' || !initialValues) return null;
+    return hasGradingRelevantChange(initialValues, form.values)
+      ? 'This edit changes the test\'s content hash — it will be excluded from cross-PR comparison for one PR.'
+      : null;
   }, [form.values, initialValues, mode]);
 
   const isNegative = form.values.test.type === 'negative';
