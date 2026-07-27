@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_joseph_gioiello_birth",
+    "objective": "What evidence supports the birth date and birthplace of Joseph Gioiello (GCT1-Z84)?",
+    "subject_person_ids": [
+      "GCT1-Z84"
+    ],
+    "status": "active",
+    "created": "2026-07-27",
+    "updated": "2026-07-27"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,19 @@
+{
+  "id": "joseph-gioiello-birth",
+  "name": "Joseph Gioiello",
+  "genre": "strip",
+  "source_pid": "GCT1-Z84",
+  "captured": "2026-07-27",
+  "researcher_question": "What evidence supports the birth date and birthplace of Joseph Gioiello (GCT1-Z84)?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1890s",
+    "geography": "US-OH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "The Birth fact (1898, South America) is currently unsourced in the tree. Two independent original census records (1940, 1950), already cited in the tree, corroborate it exactly -- recovery is a sourcing exercise, not fact-discovery. 'South America' as a birthplace is unusually vague (a continent, not a country) but is what both records genuinely state; do not expect or require a more specific country/city unless a new record actually supplies one."
+}

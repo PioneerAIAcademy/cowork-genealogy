@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Joseph Gioiello was born about 1898 in South America. Two independent U.S. federal census enumerations (1940 and 1950) both give this same birth year and birthplace.",
+      "details": {
+        "target_person": {
+          "name": "Joseph Gioiello",
+          "pid": "GCT1-Z84"
+        },
+        "fact_type": "Birth",
+        "date": "1898",
+        "place": "South America"
+      },
+      "supporting_sources": [
+        "United States, Census, 1940 -- household of Joseph Gioiello, Niles, Weathersfield Township, Trumbull, Ohio (age consistent with birth about 1898, birthplace South America)",
+        "United States, Census, 1950 -- household of Joseph Gioiello, Niles, Weathersfield Township, Trumbull, Ohio (age consistent with birth about 1898, birthplace South America)"
+      ],
+      "required": true
+    }
+  ]
+}
