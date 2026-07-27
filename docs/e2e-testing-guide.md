@@ -159,11 +159,12 @@ the fixture files, and validates the result. The three outcomes:
    turns the fixture into a restraint test: the agent must *not* assert the
    wrong claim, and must document the negative conclusion.
 
-`thomas-seaver-other-wife` and `heinrich-dewus-children-death` are the worked
-examples in the repo — read one alongside your own.
-
 Once the skill hands off, go straight to **Step 4** — Steps 2 and 3 don't apply
 here (nothing was stripped, and the skill already validated).
+
+> No fixture of this genre has been resolved and run end to end yet, so there's
+> no finished one to copy. You are working an unexercised path: if a step doesn't
+> behave the way this page says, that's worth reporting, not working around.
 
 ## Step 1b — Pick a person and author a new fixture 🤖 Claude Code
 
@@ -285,18 +286,18 @@ what you see, and save the headless run for the verdict.
    This is the step that costs an hour when it's skipped:
 
    ```bash
-   make mcpb                       # Windows: eval\BuildMcpb.bat
-   make plugin                     # Windows: eval\BuildPlugin.bat
+   make cowork-install             # Windows: eval\CoworkInstall.bat
    ```
 
-   Install the `.mcpb` in Claude Desktop → Settings → Extensions → Advanced
-   Settings → Install extension (straight over the old copy — no uninstall
-   needed). Then **remove any existing Genealogy Research plugin** in Cowork →
-   Customize and upload the new `.zip` via Add → Upload Plugin, from the
-   **Cowork** tab rather than the Code tab — they keep separate plugin lists.
-   **Fully quit and reopen** Claude Desktop. Redo both after any MCP-server or
-   skill change; without them `/research` degrades to guessing, which is a
-   missing install, not a `/research` bug. (Full rules:
+   It builds both and prints where to install each: the `.mcpb` in Claude
+   Desktop → Settings → Extensions → Advanced Settings → Install extension
+   (straight over the old copy — no uninstall needed), and the `.zip` in Cowork
+   → Customize, **removing any existing Genealogy Research plugin first**, via
+   Add → Upload Plugin — from the **Cowork** tab rather than the Code tab, since
+   they keep separate plugin lists. Then **fully quit and reopen** Claude
+   Desktop. Redo this after any MCP-server or skill change; without it
+   `/research` degrades to guessing, which is a missing install, not a
+   `/research` bug. (Full rules:
    [`skill-lifecycle.md`](skill-lifecycle.md#rebuilding-and-reinstalling).)
 
 2. Seed an editable project from the fixture's starting state:
@@ -468,8 +469,9 @@ it from that folder; each prompts for what it needs instead of taking
 |---|---|
 | `make e2e-preflight` | `eval\CheckSetup.bat` |
 | `make e2e-login` | `eval\Login.bat` |
-| `make mcpb` | `eval\BuildMcpb.bat` |
-| `make plugin` | `eval\BuildPlugin.bat` |
+| `make cowork-install` | `eval\CoworkInstall.bat` |
+| `make mcpb` *(one artifact only)* | `eval\BuildMcpb.bat` |
+| `make plugin` *(one artifact only)* | `eval\BuildPlugin.bat` |
 | `make e2e-validate TEST=<slug>` | `eval\ValidateFixture.bat` |
 | `make e2e-project TEST=<slug>` | `eval\SeedProject.bat` |
 | `make e2e-run TEST=<slug>` | `eval\RunE2E.bat` |

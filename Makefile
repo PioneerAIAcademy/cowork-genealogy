@@ -481,6 +481,23 @@ mcpb: ## Build the .mcpb desktop extension
 plugin: ## Build the Cowork plugin .zip
 	node scripts/package-plugin.mjs
 
+.PHONY: cowork-install
+cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-path (Windows: eval\CoworkInstall.bat)
+	# One target because installing only one of the two is the most common way
+	# to spend an hour debugging a `/research` that is really just stale. The
+	# click-path is printed rather than automated: both installs are Claude
+	# Desktop UI actions with no CLI.
+	@printf '\n=== Built. Now install BOTH, then fully quit and reopen Claude Desktop ===\n\n'
+	@printf '1. MCP server (.mcpb):  Claude Desktop -> Settings -> Extensions ->\n'
+	@printf '   Advanced Settings -> Install extension -> releases/genealogy-mcp.mcpb\n'
+	@printf '   (install straight over the old copy -- no uninstall needed)\n\n'
+	@printf '2. Plugin (.zip):  Claude Desktop -> COWORK tab -> Customize ->\n'
+	@printf '   REMOVE any existing Genealogy Research plugin, then Add -> Upload\n'
+	@printf '   Plugin -> releases/genealogy-plugin.zip\n'
+	@printf '   (the Cowork tab and the Code tab keep separate plugin lists)\n\n'
+	@printf '3. Fully QUIT and reopen Claude Desktop.\n\n'
+	@ls -l releases/genealogy-mcp.mcpb releases/genealogy-plugin.zip 2>/dev/null || true
+
 # Marker recording the commit `make sandbox-image` last built the E2B template
 # from, so `deploy-preflight` can warn when in-sandbox agent code changed since.
 # Gitignored local build state, like the .make-installed dep stamps above.
