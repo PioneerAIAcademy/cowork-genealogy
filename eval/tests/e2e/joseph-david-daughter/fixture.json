@@ -11,7 +11,7 @@
     "geography": "GB"
   },
   "model": {
-    "agent": "claude-opus-4-8",
+    "agent": "claude-sonnet-4-6",
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
