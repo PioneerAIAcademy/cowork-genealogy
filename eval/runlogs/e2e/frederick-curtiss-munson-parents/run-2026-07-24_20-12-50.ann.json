@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "True: exact name 'Jared Howes Munson' with a ParentChild link to Frederick (9WMW-SVC, R3), corroborated by the two sources the answer key names — the NYC birth index (src_001) and the 1900 census (src_002, 'Jared H Munson', head). Birth recorded as year+state ('July 1835, N.Y.') rather than the fixture's '30 Jul 1836, Richfield' — the exact town is not present in the accessible indexed records, so the relationship finding is fully recovered and not penalized on birth precision.",
+    "f2": "True: 'Kathrine Seguine' (the Seguine/Saguine variant the fixture flags, handled correctly) with a ParentChild link to Frederick (R4), corroborated by the birth index and the 1900 census (as 'Cathrine V Munson', wife). Maiden->married name change and Kathrine/Cathrine spelling resolved. Birth year matches (1857); place is state-only vs the fixture's 'Richmond, New York' — again not in the accessible records, so not penalized."
+  },
+  "annotator": "edesonchristopher@gmail.com"
+}

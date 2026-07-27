@@ -205,6 +205,36 @@ load path there. Search by bare tool name — `query: "+research_append"` —
 which matches whatever prefix the session exposes. The same packaging test
 fails any `select:mcp__…` in a plugin body.
 
+**No playbook/reference files for agents — an agent body is self-contained.**
+Everything an agent needs at runtime lives inline in its `.md`. Do **not**
+split per-topic reference material (e.g. per-record-type extraction tables)
+into sibling files for the agent to `Read` on demand, and do **not** assemble
+them into the body at build time. Decided 2026-07-27 after measuring both;
+tried on `record-extractor` (issue #702, closed) and reverted.
+
+*Why not on-demand `Read`:* it is unreliable in a way nothing catches. Across
+a full `record-extraction` suite run with the files provably reachable, the
+agent read the playbook on some tests, ignored it on others (every assertion
+fell back to `informant_proximity: "unknown"`), and over-applied it on others
+(`witness` on all 16) — pass rate 6/19 against a 12–14/19 baseline, fails up
+from 0–1 to 6. Every one of those modes is silent: no error, and the unit
+harness only records MCP tool calls (`skill_runner.py` filters on `mcp__`),
+so a skipped `Read` leaves no trace at all. This is behavioral, not
+environmental — it persisted after the harness was made to load the plugin
+the way both production paths do.
+
+*Why not build-time assembly:* it works mechanically but splits the reviewed
+artifact from the executed one. In this repo the prompt **is** the product —
+whoever edits a fragment must be able to see the whole body it lands in
+(contradictions 400 lines up, the total context budget). Seeing the real size
+is also the pressure that produces a smaller prompt; hiding it removes the
+incentive.
+
+*What this costs, knowingly:* there is no per-record-type ownership surface,
+so a probate specialist edits the same file as everyone else. That need is
+declined, not disproven — revisit only with a mechanism that cannot silently
+skip, and re-read this note first.
+
 ## Handling user feedback submissions
 
 When a user submits a feedback zip via the Cowork viewer, the workflow

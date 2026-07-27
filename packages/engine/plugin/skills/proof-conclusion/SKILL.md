@@ -18,6 +18,7 @@ description: Writes GPS-conformant proof conclusions — selects the tier
   classify evidence (use record-extraction, which owns classification).
 allowed-tools:
   - research_append
+  - research_query
   - tree_edit
   - tree_correct
   - merge_tree_persons
@@ -98,6 +99,31 @@ regardless of exhaustiveness tier.
 ### 1. Gather evidence from research.json
 
 All assertions linked to the question via `extracted_for_question_ids`, their person_evidence entries, resolved conflicts, related hypotheses, the exhaustive declaration, and the timeline for the subject.
+
+**Use `research_query`, not a raw `Read` of research.json, to gather this.**
+research.json grows for the whole session — by the time a question reaches
+proof-conclusion, reading (and, once it's large, paginating through) the
+whole file to find one question's evidence is the single biggest reclaimable
+cost in this skill. Scope every lookup to the question/persons at hand:
+
+- `research_query({ section: "assertions", questionId })` — every assertion
+  linked via `extracted_for_question_ids`.
+- `research_query({ section: "person_evidence", personId })` — per person the
+  question concerns (one call per person; `person_evidence` has no
+  `questionId` filter, so key off the persons the assertions above name).
+- `research_query({ section: "conflicts", questionId })` — conflicts blocking
+  this question (`blocks_question_ids`); check `status` for which are
+  already resolved.
+- `research_query({ section: "hypotheses", questionId })` — related
+  hypotheses.
+- `research_query({ section: "questions", questionId })` — the question
+  entry itself, including its `exhaustive_declaration`.
+- `research_query({ section: "timelines", personId })` — the subject's
+  timeline, if one exists.
+
+Each call returns only what matches — no offset/pagination guessing, and no
+cost growth as research.json accumulates more questions and records over the
+session.
 
 ### 2. Select the confidence tier
 

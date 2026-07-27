@@ -1,0 +1,41 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Christiana Clark migrated from Coshocton County, Ohio to Green County, Wisconsin, where she was present by 1847-1848 (dying there in 1848). The agent should conclude, from records, that she left Ohio and lived/died in Wisconsin - not that she remained in Ohio.",
+      "details": {
+        "target_person": {
+          "name": "Christiana (Schreck) Clark",
+          "pid": "GP3R-215"
+        },
+        "fact_type": "Residence",
+        "place": "Green County, Wisconsin, United States"
+      },
+      "supporting_sources": [
+        "U.S. Bureau of Land Management Tract Books - 'Christiana Clark', Wisconsin, 1847 (the parcel/land description confirms the Wisconsin location; readable via image_transcribe).",
+        "Wisconsin marriage of her son Joseph Clark (1854), placing the family in Green County, Wisconsin.",
+        "1849-1850 census enumerations of her sons Joseph and William Clark in Green County, Wisconsin."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Christiana Clark died on 27 December 1848 at Monroe, Green County, Wisconsin (her remains were returned to the family plot at West Carlisle Cemetery, Coshocton County, Ohio, for burial). The exact death locality is bonus: it is documented on the off-FamilySearch Find a Grave memorial page and the tree, whereas the FamilySearch-indexed Find a Grave record shows only the Ohio burial.",
+      "details": {
+        "target_person": {
+          "name": "Christiana (Schreck) Clark",
+          "pid": "GP3R-215"
+        },
+        "fact_type": "Death",
+        "date": "27 December 1848",
+        "place": "Monroe, Green, Wisconsin, United States"
+      },
+      "supporting_sources": [
+        "Find a Grave memorial (ID 154768466) - death place given as Monroe, Green County, Wisconsin; burial at West Carlisle Cemetery, Coshocton, Ohio."
+      ],
+      "required": false
+    }
+  ]
+}

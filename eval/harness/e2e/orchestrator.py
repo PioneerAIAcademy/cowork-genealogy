@@ -404,6 +404,28 @@ def _summarize_tool_response(content: Any) -> str:
     return text
 
 
+def _timeline_tool_label(tool: str, args: dict | None) -> str:
+    """Human-legible label for a `timeline` entry's tool-names list.
+
+    `tool_calls` already has the bare name (and, for Skill, the skill it
+    launched, in `args["skill"]`) — but no timestamp. `timeline` has the
+    timestamp — but until this label existed, no tool identity, so a
+    per-skill wall-clock breakdown (e2e.latency_report --by-skill) could
+    only be reconstructed from the raw SDK session transcript, which is
+    gitignored and normally discarded once the run's tempdir is cleaned up
+    (not a reliable source for other contributors' PRs). Labeling the
+    timeline directly means every committed run carries it for free.
+
+    A Skill call is labeled with the skill it launches (e.g.
+    "Skill:person-evidence") rather than the bare "Skill" — that is the
+    actual phase-boundary signal callers need; the bare tool name alone
+    would require a second join against `tool_calls` to recover it.
+    """
+    if tool == "Skill":
+        return f"Skill:{(args or {}).get('skill', '?')}"
+    return _bare_tool_name(tool)
+
+
 _USAGE_FIELDS = (
     "input_tokens",
     "output_tokens",
@@ -526,9 +548,14 @@ async def _run_agent(
 
     run_started = time.monotonic()
 
-    # Per-message timeline for forensics: [elapsed_seconds, kind]. Lets a later
-    # analysis split a run into structural vs stall time and pinpoint a
-    # no-progress gap WITHOUT a session.jsonl (which isn't reliably copied).
+    # Per-message timeline for forensics: [elapsed_seconds, kind, tool_names].
+    # Lets a later analysis split a run into structural vs stall time, pinpoint
+    # a no-progress gap, AND segment a run by Skill-phase boundaries — all
+    # WITHOUT a session.jsonl (which isn't reliably copied, and is gitignored
+    # even when it is — see _timeline_tool_label). tool_names is the list of
+    # `_timeline_tool_label`-formatted names for any ToolUseBlock/ToolResultBlock
+    # in this message ([] for assistant messages with no tool call, and always
+    # [] for system:*/result kinds).
     timeline: list[list[Any]] = []
     # Stall detection tracks time since the last PROGRESS message (assistant
     # text, a tool call, or a tool result) — not since any message, because the
@@ -807,6 +834,7 @@ async def _run_agent(
                 progressed = False
 
                 if isinstance(message, AssistantMessage):
+                    assistant_tool_names: list[str] = []
                     for block in message.content:
                         if isinstance(block, TextBlock):
                             transcript.append(f"\n**assistant:** {block.text}\n")
@@ -822,6 +850,9 @@ async def _run_agent(
                             }
                             tool_calls.append(entry)
                             pending_tool_uses[block.id] = entry
+                            assistant_tool_names.append(
+                                _timeline_tool_label(block.name, block.input)
+                            )
                             args_short = _summarize_tool_response(block.input)
                             transcript.append(
                                 f"\n**tool_use** `{block.name}` — args: {args_short}\n"
@@ -834,10 +865,13 @@ async def _run_agent(
                     # Record before the timeline append so a message that
                     # arrives moments before a timeout still counts.
                     _accumulate_usage(streamed, message)
-                    timeline.append([round(now - run_started, 1), "assistant"])
+                    timeline.append(
+                        [round(now - run_started, 1), "assistant", assistant_tool_names]
+                    )
                 elif isinstance(message, UserMessage):
                     # Tool results return as UserMessages with ToolResultBlock content.
                     content = message.content
+                    tool_result_names: list[str] = []
                     if isinstance(content, list):
                         for block in content:
                             if isinstance(block, ToolResultBlock):
@@ -845,9 +879,14 @@ async def _run_agent(
                                 summary = _summarize_tool_response(block.content)
                                 if entry is not None:
                                     entry["response_summary"] = summary
+                                    tool_result_names.append(
+                                        _timeline_tool_label(entry["tool"], entry.get("args"))
+                                    )
                                 transcript.append(f"\n**tool_result:** {summary}\n")
                                 progressed = True
-                    timeline.append([round(now - run_started, 1), "tool_result"])
+                    timeline.append(
+                        [round(now - run_started, 1), "tool_result", tool_result_names]
+                    )
                 elif isinstance(message, SystemMessage):
                     # Init / config / hint messages. Capture the session id (for
                     # resume) and the CLI version (for the runlog); neither counts
@@ -860,10 +899,10 @@ async def _run_agent(
                     if ver:
                         cli_version["v"] = ver
                     timeline.append(
-                        [round(now - run_started, 1), f"system:{message.subtype}"]
+                        [round(now - run_started, 1), f"system:{message.subtype}", []]
                     )
                 elif isinstance(message, ResultMessage):
-                    timeline.append([round(now - run_started, 1), "result"])
+                    timeline.append([round(now - run_started, 1), "result", []])
                     usage = {
                         "duration_ms": message.duration_ms,
                         "duration_api_ms": message.duration_api_ms,
