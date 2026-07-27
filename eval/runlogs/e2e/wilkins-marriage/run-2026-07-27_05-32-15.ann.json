@@ -1,0 +1,12 @@
+{
+  "annotator": "claude-non-blind-2026-07-27",
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Couple relationship R22 links 97YZ-J3D (Elijah) and I1, whose names include preferred 'Sarah Wilkins' and alternate 'Sarah Mullard'. Birth ~1817-1821 matches 'about 1818'. Documented as his wife in 1850/1860/1870 censuses, 'Widowed' in 1880.",
+    "f2": "No Marriage fact (date/place) exists anywhere on relationship R22 or on either person. The only Marriage fact in the whole tree (R2, 1 Feb 1808) belongs to a different couple (Elijah's parents). The proof narrative states explicitly 'No original marriage record for the couple has been located' and the tier is capped at 'probable' for exactly this reason. The judge scored this finding matched:true anyway via circumstantial census co-residence inference, despite its own rationale acknowledging 'The tree does not include a specific Marriage fact with date/place... No explicit marriage date or place fact is recorded in the tree.' Flagged as a judge over-recall candidate: the finding specifically asks for the December 1834 Kentucky marriage to be recovered, and it was not."
+  }
+}
