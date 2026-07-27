@@ -68,32 +68,20 @@ On demand, load:
 | Plan item record_type | MCP tool | When to use |
 |----------------------|----------|-------------|
 | `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `record_search` | Structured searches by person attributes |
-| `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** Use when: searching obituaries/marriage announcements, searching for a person as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records |
-| Parish registers where the target is **unindexed** — an emigrant's origin, a compound-surname parentage, any baptism/marriage/burial reachable only by transcript text | — | **Delegate to search-full-text skill.** When indexed `record_search` on the surname has returned only noise (the person is not name-indexed), the answer is usually in the AI-transcribed page text — reachable by a full-text co-occurrence search on the surnames, not by more indexed queries. |
-| `probate`, `court`, `land` (and other county-court series) in a **browse-only / barely-indexed** collection — `record_search` returns ~0 not because the record is absent but because the collection is mostly un-indexed images (low `recordSearchablePercent`) | `record_search` **then** — | Try `record_search` first. **If it returns nil/near-nil AND the locality survey said this collection covers the place+period, do NOT log negative — the record is un-indexed, not absent.** Pivot to the search-full-text skill on that collection's volumes (probate administration bonds, estate settlements, order books, and deeds are typically full-text-searchable page images even at ~1% record-index coverage), and `search-images` to browse. This is the pre-1911-death path (no death certificate exists — a county estate administration brackets the death), and the general path for any court series that answers a question but isn't name-indexed. |
+| `newspaper`, or any witness/FAN mention search | — | **Not this skill's job — report and stop.** Full-text is the caller's call to make, not a pivot to take mid-search. Say full-text is needed and why, then hand back. Applies when: searching obituaries/marriage announcements, searching for a person as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records |
+| Parish registers where the target is **unindexed** — an emigrant's origin, a compound-surname parentage, any baptism/marriage/burial reachable only by transcript text | — | **Not this skill's job — report and stop.** Full-text is the caller's call to make, not a pivot to take mid-search. When indexed `record_search` on the surname has returned only noise (the person is not name-indexed), the answer is usually in the AI-transcribed page text — reachable by a full-text co-occurrence search on the surnames, not by more indexed queries. |
+| `probate`, `court`, `land` (and other county-court series) in a **browse-only / barely-indexed** collection — `record_search` returns ~0 not because the record is absent but because the collection is mostly un-indexed images (low `recordSearchablePercent`) | `record_search` **then** — | Try `record_search` first. **If it returns nil/near-nil AND the locality survey said this collection covers the place+period, do NOT log negative — the record is un-indexed, not absent.** Log the nil as **not-absence**, say the collection is browse-only and that full-text (and possibly image browsing) is the next step, and hand back — invoking those is the caller's decision, not this skill's. (Probate administration bonds, estate settlements, order books and deeds are typically full-text-searchable page images even at ~1% record-index coverage.) This is the pre-1911-death path (no death certificate exists — a county estate administration brackets the death), and the general path for any court series that answers a question but isn't name-indexed. |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
 
 Additional tools: `rank_search_matches` (the primary triage tool — host-side match-ranking of a staged result set against the subject; folds in match scoring **and** the attachment check); `same_person` / `source_attachments` (fallback for a thin/unresolvable subject, or per-record checks).
 
-**If you run `fulltext_search` yourself instead of delegating** (a quick
-check from the main loop), two rules decide success or failure — the
-`search-full-text` skill carries the full version, but at minimum:
-
-- **Compound (Iberian / Latin-American) surnames → co-occurrence, not a
-  phrase.** For a subject named `Given Paterno Materno` (e.g. "Francisco
-  **Naveda Somarriba**"), require the two surnames as separate terms:
-  `+Naveda +Somarriba`. **Never** the adjacent phrase `+"Naveda
-  Somarriba"` — in the parents' own records the father carries the
-  paternal surname and the mother the maternal one, so the two words sit
-  on different people and are never adjacent; the phrase only matches the
-  child's own written-out name and misses every parentage record.
-- **Do not scope a full-text search to a record `collectionId`.** The FTS
-  corpus is partitioned into its own auto-generated collections; a
-  `collectionId` borrowed from `record_search` or a collections survey
-  routinely excludes the FTS volume that holds the answer and the search
-  returns zero. Search the whole corpus first; narrow with
-  `recordPlace*` / `recordType` / year filters (or a known
-  `imageGroupNumber`) only after you have hits.
+**This skill does not run `fulltext_search`, and does not delegate to
+`search-full-text`.** It executes indexed FamilySearch record searches. When
+the evidence says the answer is in un-indexed page text, that is a finding to
+report — log it honestly, leave the plan item `in_progress`, name full-text as
+the next step, and stop. The caller decides what runs next; the full-text craft
+(compound-surname co-occurrence, never scoping FTS to a record `collectionId`)
+lives in `search-full-text`, which owns that tool.
 
 ## Steps
 
@@ -104,12 +92,20 @@ the current question. If you already hold the active plan and its item
 statuses in context from the same run (e.g. research-plan just wrote it
 and you have its compact return), work from that — don't re-read
 `research.json` "to be safe"; the writer tools validate the whole project
-on every write, so the in-context view can't be silently stale. When you
-*do* need it — entering this skill cold, or a sub-skill/the user changed
-the plan since you last saw it — fetch `plans[]` with **`research_query`**,
-not a whole-file `Read` and never a `grep`. The file grows all run, and a
-long search phase re-reads it many times; `research_query` returns just the
-plan items and their statuses. If the user
+on every write, so the in-context view can't be silently stale.
+
+**If you need project state you do not already have, fetch it with
+`research_query` — never a whole-file `Read`, never a `grep`.** `research.json`
+grows all run, so a whole-file read costs more context every time.
+
+**At most one such call per invocation, and only when you are actually missing
+something.** Ask for `plans` — the plan item you are executing and its status —
+and nothing else. Do not also pull `questions`: the question is already in the
+plan item and in your instructions. Do not re-query between searches; the plan
+does not change while you are searching it. If the plan item arrived in your
+prompt, in a hand-off, or from `research-plan` earlier in this same run, you
+already have it — issue no query at all. Every query is a turn, and a search
+phase has few to spare. If the user
 specifies a particular search, match it to a plan item or create an
 ad-hoc search (with `plan_item_id: null` in the log).
 
@@ -263,7 +259,28 @@ candidates; you still confirm the top ones:
   because "the other number was only an estimate anyway." Present this pattern
   to the user as `needs-review — possible namesake`, not as a "Top Match," and
   do not phrase the conclusion as "almost certainly the right person" with the
-  date reduced to a footnote.
+  date reduced to a footnote. **Nor as "highly promising," "very likely ours,"
+  or any other warm framing** — the specific words matter less than the posture:
+  a disqualifying conflict makes the record *probably someone else*, and your
+  summary has to say so.
+  **Do not offer extraction as a next step — not even as a question.** "Shall I
+  proceed with extraction?" hands the judgment back to a user who is trusting
+  you to have made it, and a user who says yes has just adopted a namesake's
+  parents. When the cross-check disqualifies, the conclusion is *stated*, not
+  put to a vote: say this is very likely a different same-named person, say
+  which anchor would settle it (a baptism in the expected year window, a
+  matching spouse or child, a later residence), and propose **that narrower
+  search** as the next step. Extraction becomes available again only once an
+  independent anchor confirms identity — until then it is not on the menu.
+- **Cite `matchScore`, never `results[].score` — they are different numbers.**
+  Every raw search stub carries a `score` (and a `confidence`): that is
+  FamilySearch's own *search relevance*, the unreliable ordering the match-ranker
+  exists to replace — a live probe found its top 21 hits sharing one identical
+  value. `matchScore` on a `ranked.matches[]` entry is the content match against
+  your subject. Quoting a stub's `score` as though it were a match score is a
+  reasoning error, not a wording slip: it means the triage rests on the ordering
+  you were supposed to discard. If you are about to cite a number, check which
+  array you read it from.
 - **Needs-review band.** A genuinely *different* same-name/same-place person can
   land inside the match band, and sparse/dateless records score unstably. When the
   top scores don't clearly separate, or a candidate is a thin/dateless stub, treat
@@ -390,7 +407,7 @@ Never treat an index entry as equivalent to examining the original record.
    (c) the subject should have appeared based on known facts.
    State each condition clearly. If all three hold, note in the log and suggest record-extraction create a negative assertion. If the collection is incomplete or the subject may have been absent, note this as a limitation rather than a conclusion.
 5. **Distinguish "not found" from "does not exist."** A nil result may mean the record is undigitized, unindexed, or indexed under a variant. Note which applies.
-   **Low index coverage → pivot to full-text, do not conclude absent.** When the nil is on a collection the locality survey flagged as covering this place+period but whose index coverage is very low (browse-only image volumes — probate, court order books, land/deeds, many pre-1900 registers; `recordSearchablePercent` near 0), the record is almost certainly present as an **un-indexed page image**, not absent. Before logging `negative`, delegate to the **search-full-text** skill on that collection's volumes (a co-occurrence search — surname plus a distinguishing term like an heir/administrator's name or `deceased`/`estate`) and, if needed, `search-images` to browse. Only after full-text/browse also comes up empty may absence be called. Example: a pre-1911 Kentucky death (no statewide certificate exists) is established from the county **estate administration** — the administrator's bond and settlement, full-text-searchable in the probate image volumes — which `record_search` on the 1%-indexed probate collection will never surface.
+   **Low index coverage → pivot to full-text, do not conclude absent.** When the nil is on a collection the locality survey flagged as covering this place+period but whose index coverage is very low (browse-only image volumes — probate, court order books, land/deeds, many pre-1900 registers; `recordSearchablePercent` near 0), the record is almost certainly present as an **un-indexed page image**, not absent. Do not log `negative`. Log the nil with an `outcome` and `notes` that say the collection is browse-only and the record is very likely present as un-indexed page text, keep the plan item `in_progress`, and report that a full-text search of that collection's volumes (a co-occurrence search — surname plus a distinguishing term like an heir/administrator's name or `deceased`/`estate`), and possibly image browsing, is the next step. **Do not run or delegate that search yourself** — the caller owns that decision. Absence may only be called after full-text/browse has also come up empty. Example: a pre-1911 Kentucky death (no statewide certificate exists) is established from the county **estate administration** — the administrator's bond and settlement, full-text-searchable in the probate image volumes — which `record_search` on the 1%-indexed probate collection will never surface.
    **Zero results is NOT "service unavailability."** If `record_search` returns `totalMatches: 0` with no error, the search completed — do not attribute this to service issues.
    **Prior log entries finding the record do NOT override current nil results.** A nil with different parameters documents that those query shapes fail. Log each nil honestly as evidence of which query shapes fail.
    ❌ WRONG: "Log_001 found Patrick Flynn, so the current nil with the Flinn variant is not meaningful."

@@ -97,6 +97,12 @@ time, regardless of how directly the request named the destination.
    counts. Reach for `Read` only when you genuinely need a full entry body
    that `research_query` cannot project.
 
+   **Query what the routing decision needs and no more.** Each call is a turn.
+   Pull the one section that answers the question in front of you rather than
+   surveying several, and don't re-query state you fetched earlier in the same
+   routing pass — sub-skills report what they wrote, so trust their return
+   instead of re-reading after every step.
+
    **Build the log-vs-assertion cross-reference explicitly — do not
    eyeball it.** For every `log[]` entry with `outcome: "positive"` or
    `"partial"`, check whether at least one `assertions[]` entry's
