@@ -523,6 +523,15 @@ button {
 }
 
 /* ── Chat ─────────────────────────────────────────────── */
+/* Positioning context for the jump-to-latest button, so it floats just above
+   the composer regardless of how tall the composer has grown. */
+.chatScrollArea {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 .chatMessages {
   flex: 1;
   overflow-y: auto;
@@ -530,6 +539,44 @@ button {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+.chatJumpLatest {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-elev);
+  color: var(--ink-soft);
+  cursor: pointer;
+  box-shadow: var(--shadow, 0 2px 8px rgb(0 0 0 / 0.18));
+  animation: jumpLatestIn 120ms ease-out;
+}
+.chatJumpLatest:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+@keyframes jumpLatestIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chatJumpLatest {
+    animation: none;
+  }
 }
 .msgUser {
   align-self: flex-end;
