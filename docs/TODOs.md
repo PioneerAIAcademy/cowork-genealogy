@@ -585,6 +585,45 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   the way both harnesses do). Worth doing if/when one of the four skills is
   converted to an agent; not worth it standalone. Decide after the plan's
   caller-id hook ships and its practical gaps, if any, are known.
+- [ ] **Research-guardrail-bypass fix (docs/plan/research-guardrail-bypass-plan.md)
+  does not cover the hosted/production path.** The caller-id `PreToolUse`
+  hook (§4.1), the `Write`/`Edit` lockdown (§4.3), and the two hard-fail
+  checks (§4.4) are all e2e-harness-only (`eval/harness/e2e/orchestrator.py`).
+  `apps/server/app/agent/real_agent.py` still runs `bypassPermissions` with
+  no equivalent guard, so the exact bypass the plan documents (and the live
+  `bagley-father-1884` run confirmed) remains fully reachable in Cowork and
+  the hosted web workbench. The plan explicitly deferred this pending the
+  eval-side mechanism proving out first; it hasn't been ported yet.
+- [ ] **Whether `Skill`-tool content injection survives compaction is
+  unverified — and there's now real reason to suspect it doesn't.**
+  `docs/plan/research-guardrail-bypass-plan.md` §6 flagged this as an open
+  question (proof-conclusion/research-exhaustiveness/person-evidence/
+  conflict-resolution all do an on-demand `Read` of their own
+  `references/*.md`, unverified for reliability). The `feedback-2026-07-27-perf`
+  branch's compaction audit (commits `3455ce84`/`f05757ef`,
+  `docs/plan/research-performance-2026-07-27.md`) independently measured the
+  general mechanism: an unanchored prose rule's compliance decays from
+  ~100% to 3-45% once its skill body is evicted from context by compaction,
+  while tool-validated/output-coupled rules hold at 100%. A guardrail
+  skill's own reference-doc reads are exactly this shape (prose-anchored,
+  no tool validation) — worth the same before/after-compaction segment
+  analysis their audit used, applied to the four guardrail skills
+  specifically, before assuming the reference reads hold up in long runs.
+- [ ] **`gps-mentor`'s proof-critique gate may be as skippable as the four
+  guardrail skills — undetermined.** `find_missing_mentor_verdicts`
+  (`harness/skill_invocation.py`) detects a missing verdict after the fact
+  but does nothing to prevent the orchestrator from silently skipping the
+  `@plugin:gps-mentor` invocation under the same context-pressure conditions
+  that caused the other four skips. No runlog evidence has been checked
+  either way (`docs/plan/research-guardrail-bypass-plan.md` §6).
+- [ ] **`research-append.ts`'s batch-ordering was only audited for one
+  TOCTOU case.** The §4.2 fix (tier vs. `exhaustive_declaration`, checked
+  against pre-call state) closes the specific same-batch establish-and-
+  consume hole found during adversarial review. Other same-batch orderings
+  that could similarly self-satisfy a precondition within one atomic write
+  (e.g. adding a `person_evidence` link and consuming it for an assertion in
+  the same batch) were not exhaustively checked — flagged, not audited, in
+  the plan's §6.
 - **MCP tool-name prefix differs between Cowork and the harnesses — agent
   `tools:` lists do not bind in Cowork.** Every plugin agent declares
   `mcp__genealogy__*`, correct for the unit + e2e harnesses. A live Cowork
