@@ -544,13 +544,10 @@ the "who answered" record that would justify it.
 entry (name, death date, burial date, cemetery — no certifying party
 named) has NO identifiable informant, unlike a death certificate's named
 physician/personal-informant/undertaker: index compilers are never the
-informant, so look through the index to whoever supplied the fact on the
-original. **That look-through is what decides the answer — being
-derivative never settles it by itself.** A burial register records
-nobody, so the answer is `unknown`; a marriage index records the parties
-stating their own facts, so they are the informants at proximity `self` —
-the bare-index case in the marriage-record rule above, which this
-paragraph does not override. Use `informant: "unknown"`,
+informant, and this entry records no one else. **Being derivative is not
+what produces that `unknown` — do not carry this paragraph to any other
+index type.** A marriage index is governed by the marriage-record rule
+above, which this paragraph does not override. Use `informant: "unknown"`,
 `informant_proximity: "unknown"`, `information_quality: "indeterminate"`
 for every fact on the entry, including the death/burial date and place —
 "stated-vs-inferred, not who reported it" still applies, so an unknown
