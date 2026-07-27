@@ -1,0 +1,10 @@
+{
+  "annotator": "claude-non-blind-2026-07-27",
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Tree fact F1 on 2BLL-3JS: Birth, 17 Mar 1865, Dundee, Forfarshire (=Angus), primary:true, sourced to the Scotland civil registration entry (quality 3) plus 1871 census corroboration (quality 2). Narrative cites the actual civil-registration image and matching parents. Exact, well-sourced match."
+  }
+}
