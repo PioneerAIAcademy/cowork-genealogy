@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_wasyl_kapach_birth",
+    "objective": "When and where in Ukraine was Wasyl Kapach born, and when did he immigrate to Canada?",
+    "subject_person_ids": [
+      "L17M-W4Q"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

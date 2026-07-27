@@ -1,0 +1,318 @@
+{
+  "persons": [
+    {
+      "id": "KN19-Q19",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Gertrudis",
+          "surname": "Hoffmans"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "ABT 1677",
+          "standard_date": "Abt 1677",
+          "place": "Wanrooij, Noord-Brabant, Nederland",
+          "standard_place": "Brabant, Netherlands"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9MPM-R82",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Joannes",
+          "surname": "Jansen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "11 DEC 1709",
+          "standard_date": "11 Dec 1709",
+          "place": "Wanrooi,Noord Brabant,Netherlands",
+          "standard_place": "North Brabant, Netherlands"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "99MT-PHH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Jennekskn Hendricks",
+          "surname": "Dircks"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fe890ce3-ee40-4635-8afb-f3bff2f44b6b",
+          "type": "Birth",
+          "date": "ABT 1646",
+          "standard_date": "Abt 1646",
+          "place": "Wanrooij, Noord-Brabant, Nederland",
+          "standard_place": "Brabant, Netherlands"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KN19-QB1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Petrus",
+          "surname": "Jansen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "ABT 1680",
+          "standard_date": "Abt 1680",
+          "place": "Wanrooij, Noord-Brabant, Nederland",
+          "standard_place": "Brabant, Netherlands"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LZ6D-XC4",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Gerrit Gerrits",
+          "surname": "Hoffmans"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "ABT 1641",
+          "standard_date": "Abt 1641",
+          "place": "Wanrooij, Noord-Brabant, Nederland",
+          "standard_place": "Brabant, Netherlands"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9MPM-RD2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Joannes",
+          "surname": "Jansen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "12 NOV 1717",
+          "standard_date": "12 Nov 1717",
+          "place": "Wanrooi,Noord Brabant,Netherlands",
+          "standard_place": "North Brabant, Netherlands"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9MPM-JTL",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Gerardus",
+          "surname": "Jansen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "06 AUG 1711",
+          "standard_date": "6 Aug 1711",
+          "place": "Wanrooi,Noord Brabant,Netherlands",
+          "standard_place": "North Brabant, Netherlands"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KN19-QB1",
+      "person2": "KN19-Q19",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "1705",
+          "standard_date": "1705",
+          "place": "Wanroij, Brabant, Nederland",
+          "standard_place": "Wanroij, Brabant, Netherlands"
+        },
+        {
+          "id": "c2548be5-44c9-49c5-ae5a-d0a959a813e6",
+          "type": "Marriage",
+          "date": "ABT 1708",
+          "standard_date": "Abt 1708",
+          "place": "Wanrooij, Noord-Brabant, Nederland",
+          "standard_place": "Brabant, Netherlands"
+        },
+        {
+          "id": "2ae6c12d-c6af-4919-801e-0558316bf2c9",
+          "type": "Marriage",
+          "date": "5 februari 1709",
+          "standard_date": "5 Feb 1709",
+          "place": "Wanroij, Noord-Brabant, Nederland",
+          "standard_place": "Wanroij, North Brabant, Netherlands"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LZ6D-XC4",
+      "person2": "99MT-PHH",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "ABT 1666",
+          "standard_date": "Abt 1666",
+          "place": "Wanrooij, Noord-Brabant, Nederland",
+          "standard_place": "Brabant, Netherlands"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LZ6D-XC4",
+      "child": "KN19-Q19",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "99MT-PHH",
+      "child": "KN19-Q19",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KN19-QB1",
+      "child": "9MPM-R82",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KN19-Q19",
+      "child": "9MPM-R82",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KN19-QB1",
+      "child": "9MPM-JTL",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "KN19-Q19",
+      "child": "9MPM-JTL",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KN19-QB1",
+      "child": "9MPM-RD2",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "KN19-Q19",
+      "child": "9MPM-RD2",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7JL3-L4V",
+      "title": "Geertrudis Hoffmans, \"Netherlands, Archival Indexes, Vital Records, 1600-2000\"",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL69-7YLJ : Tue Mar 25 01:45:30 UTC 2025), Entry for Gerardus Jansen and Petrus Jansen, 06 Aug 1711.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL69-7NPG"
+    },
+    {
+      "id": "7YSN-34G",
+      "title": "Geertrudis Gerits Hoffmans, \"Netherlands, Archival Indexes, Vital Records, 1600-2000\"",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLR1-11VM : Tue Mar 25 18:24:51 UTC 2025), Entry for Petrus Jansen and Geertrudis Gerits Hoffmans, 5 Feb 1709.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLR1-11VK"
+    },
+    {
+      "id": "7JL3-LFN",
+      "title": "Geertrudis Gerits Hoffmans, \"Netherlands, Archival Indexes, Vital Records, 1600-2000\"",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL6M-GX2F : Tue Mar 25 01:28:03 UTC 2025), Entry for Joannes Jansen and Petrus Jansen, 11 Dec 1709.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL6M-GXPW"
+    },
+    {
+      "id": "7JL3-LR6",
+      "title": "Geertrudis Hoffmans, \"Netherlands, Archival Indexes, Vital Records, 1600-2000\"",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL69-RR68 : Tue Mar 25 01:17:23 UTC 2025), Entry for Joannes Jansen and Petrus Jansen, 12 Nov 1717.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL69-RRNJ"
+    }
+  ]
+}

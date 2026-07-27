@@ -1,0 +1,39 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Pierre Henri Désobry's wife was Clemence Sauselle. The tree currently records no spouse for him, though it records two children (Philibert b. 1800, Jean Baptiste Aimé b. 1813).",
+      "details": {
+        "subject_person": "Pierre Henri DESOBRY (L6L3-BB8)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Clemence Sauselle",
+          "birth": "unknown"
+        }
+      },
+      "supporting_sources": [
+        "France, Nord, Parish and Civil Registration, 1524-1893 — death registration, 8 Sep 1809, Pecquencourt, for Julien Désobri, naming parents Pierre Henri Désobri and Clemence Sauselle"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Pierre Henri Désobry and Clemence Sauselle had a son, Julien Désobri, born 1808 and died in infancy 7 September 1809 in Pecquencourt — between the tree's two known children (Philibert b. 1800, Jean Baptiste Aimé b. 1813).",
+      "details": {
+        "subject_person": "Pierre Henri DESOBRY (L6L3-BB8)",
+        "relation": "child",
+        "target_person": {
+          "name": "Julien Désobri",
+          "birth": "1808, Pecquencourt, Nord, France",
+          "death": "7 September 1809, Pecquencourt, Nord, France"
+        }
+      },
+      "supporting_sources": [
+        "France, Nord, Parish and Civil Registration, 1524-1893 — death registration, 8 Sep 1809, Pecquencourt"
+      ],
+      "required": true
+    }
+  ]
+}

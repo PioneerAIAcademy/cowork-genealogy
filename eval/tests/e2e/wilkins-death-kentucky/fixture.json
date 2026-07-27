@@ -1,0 +1,19 @@
+{
+  "id": "wilkins-death-kentucky",
+  "name": "Elijah Wilkins",
+  "genre": "strip",
+  "source_pid": "97YZ-J3D",
+  "captured": "2026-07-14",
+  "researcher_question": "Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins of Kentucky, and what information in the certificate confirms his identity?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1870s",
+    "geography": "US-KY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Death record indexed under name variants (Eligie/Elizah/Eligah); several other Wilkins relatives in the same tree share similar names/places, so identity confirmation (spouse Sally/K2BS-YMD, parents James/Margaret) matters for disambiguation. Recalibrated 2026-07-14 after the first live validation run: no Kentucky death certificate exists for Elijah (statewide registration began 1911; he died ~1875) and the exact 30 Nov 1875 date lives only in an Ancestry-only index unreachable via FamilySearch tools — f1 accepts a bounded probate-derived conclusion (Muhlenberg County, mid-to-late 1870s, bounded by the 1881 settlement / Dec 1885 administrator's bond), and f2 accepts any sound identity mechanism including the administrator-son Jesse Wilkins linkage. See README 'Recalibration'."
+}

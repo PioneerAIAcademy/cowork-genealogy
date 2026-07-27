@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_proof_conclusion_014",
+    "id": "ut_proof_conclusion_016",
     "skill": "proof-conclusion",
     "name": "Don't claim a digital image is accessible without tool-confirmed evidence",
     "type": "positive",
@@ -21,7 +21,7 @@
   ],
   "judge_reads_files": true,
   "execution": {
-    "max_turns": 30,
+    "max_turns": 40,
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
   }

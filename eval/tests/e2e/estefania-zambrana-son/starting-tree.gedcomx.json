@@ -1,0 +1,132 @@
+{
+  "persons": [
+    {
+      "id": "9QTV-KDZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Estefania",
+          "surname": "Zambrana"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9QTV-KD3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Antonio",
+          "surname": "Beisaga"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9QTV-K8P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Geronimo",
+          "surname": "Beisaga"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "30 SEP 1877",
+          "standard_date": "30 Sep 1877",
+          "place": "Cochabamba,Cochabamba,Bolivia",
+          "standard_place": "Cochabamba, Cochabamba, Cercado, Cochabamba, Bolivia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P89Y-ZJK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Fructuosa",
+          "surname": "Beisaga Zambrana"
+        }
+      ],
+      "facts": [
+        {
+          "id": "bdc63b76-3739-449f-8756-e6fa80a4c265",
+          "type": "Birth",
+          "date": "1867",
+          "standard_date": "1867"
+        },
+        {
+          "id": "88a63feb-32f5-4042-8c8b-a9f0efa7dd5a",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "9QTV-KD3",
+      "person2": "9QTV-KDZ"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "9QTV-KD3",
+      "child": "P89Y-ZJK"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "9QTV-KDZ",
+      "child": "P89Y-ZJK"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "9QTV-KD3",
+      "child": "9QTV-K8P",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "9QTV-KDZ",
+      "child": "9QTV-K8P",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "WW25-GT6",
+      "title": "Estefania Zambrana, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:4FC5-7B3Z : Sun Mar 10 15:12:49 UTC 2024), Entry for Lauriano Torrico and Mariano Torrico, 30 Mar 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4FC5-7BMM"
+    }
+  ]
+}

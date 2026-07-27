@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Micaela Salgado had a son, Guillermo Salgado, baptized 20 October 1889 in San Miguel, Tegucigalpa, Francisco Morazán — no father is named in the record, consistent with the tree not recording a spouse for Micaela — in addition to her two daughters already in the tree (Raimunda b. 1874, Maria Norberta b. 1884).",
+      "details": {
+        "subject_person": "Micaela Salgado (9XGG-PW4)",
+        "relation": "child",
+        "target_person": {
+          "name": "Guillermo Salgado",
+          "birth": "baptized 20 October 1889, San Miguel, Tegucigalpa, Francisco Morazán, Honduras"
+        }
+      },
+      "supporting_sources": [
+        "Honduras, Catholic Church Records, 1633-1978 — baptismal entry, 20 Oct 1889, San Miguel, Tegucigalpa, naming mother Micaila Salgado, no father recorded"
+      ],
+      "required": true
+    }
+  ]
+}

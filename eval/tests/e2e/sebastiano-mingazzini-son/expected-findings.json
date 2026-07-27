@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Sebastiano Mingazzini and Lucia Silvestri (recorded in the tree as Silvestrini) had a son, Simone Mingazzini, born 1860 in Faenza and died 4 January 1933 in Solarolo, Ravenna, in addition to their three children already in the tree (Giuseppe b. 1849, Giovanni b. 1852, Francesca b. 1853).",
+      "details": {
+        "subject_person": "Sebastiano Mingazzini (GQSW-B3V)",
+        "relation": "child",
+        "target_person": {
+          "name": "Simone Mingazzini",
+          "birth": "1860, Faenza, Ravenna, Italy",
+          "death": "4 January 1933, Solarolo, Ravenna, Italy"
+        }
+      },
+      "supporting_sources": [
+        "Italy, Ravenna, Ravenna, Civil Registration (Tribunale), 1866-1943 — record naming parents Sebastiano and Lucia Silvestri"
+      ],
+      "required": true
+    }
+  ]
+}

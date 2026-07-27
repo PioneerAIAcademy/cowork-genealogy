@@ -181,9 +181,15 @@ conventions.
 
 Derive a short kebab-case `<slug>` from the issue (e.g.
 `citation-missing-locator`). The test id is
-`ut_<skill_with_underscores>_<NNN>`, where `<NNN>` is the next unused
-integer for that skill — scan `$REPO/eval/tests/unit/<skill>/*.json`, take
-the highest, increment, zero-pad to three digits.
+`ut_<skill_with_underscores>_<xxx>`, where `<xxx>` is a **random**
+three-character suffix drawn from lowercase alphanumerics minus `0`, `o`, `1`
+and `l` (e.g. `ut_citation_k3f`). Random rather than sequential: a
+`max(N)+1` scan collides whenever two people add a test to the same skill in
+parallel, and a duplicate id makes the harness emit two run-log entries under
+one `test_id`, silently merging the two tests' annotations. Scan
+`$REPO/eval/tests/unit/<skill>/*.json` only to confirm the id you generated is
+unused — regenerate if it collides. Legacy numeric ids (`ut_citation_019`)
+stay as they are.
 
 ### 5. Carve the mid-flow scenario — the hard step
 
@@ -272,7 +278,7 @@ reference test you read in Step 3:
 ```json
 {
   "test": {
-    "id": "ut_<skill_with_underscores>_<NNN>",
+    "id": "ut_<skill_with_underscores>_<xxx>",
     "skill": "<skill>",
     "name": "<one-line summary of the Should>",
     "type": "positive",

@@ -14,8 +14,10 @@ from __future__ import annotations
 
 import hmac
 import html
+import re
 import secrets
 import uuid
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, Security
@@ -86,9 +88,9 @@ def _upsert_user(session: Session, email: str, familysearch_id: str | None = Non
     return user
 
 
-def _persist_fs_token(session: Session, user_id: str, token_json: dict) -> None:
+def _persist_fs_token(session: Session, user_id: str, token_json: dict) -> FamilySearchToken:
     """Upsert the user's control-plane copy of the FS token (the source the
-    sandbox-create injection reads). Refresh token is kept across refreshes when
+    sandbox injection reads). Refresh token is kept across refreshes when
     a new response omits it."""
     expires_at = fs_oauth.expires_at_from(token_json)
     row = session.get(FamilySearchToken, user_id)
@@ -107,6 +109,40 @@ def _persist_fs_token(session: Session, user_id: str, token_json: dict) -> None:
         row.updated = utcnow()
     session.add(row)
     session.commit()
+    session.refresh(row)
+    return row
+
+
+# Refresh when the access token has less than this left. The in-sandbox MCP
+# self-refreshes too, so anything comfortably live can be injected as-is; this
+# only has to cover the gap until the sandbox takes over.
+_FS_REFRESH_MARGIN = timedelta(minutes=10)
+
+
+async def fresh_fs_token(session: Session, user_id: str) -> FamilySearchToken | None:
+    """The user's FamilySearch token, refreshed if it is at/near expiry.
+
+    Returns None when there is nothing usable — no stored grant, no refresh
+    token, or FamilySearch refused the refresh. That is **not** an error: FS
+    caps a grant at 8h idle / 24h absolute, so every user's grant dies daily and
+    the only cure is another front-door round-trip. Callers surface that to the
+    UI (`familysearch: "expired"`) rather than failing the request — a dead FS
+    grant must not stop someone reading their existing research.
+    """
+    row = session.get(FamilySearchToken, user_id)
+    if row is None:
+        return None
+    expires_at = row.expires_at
+    if expires_at.tzinfo is None:  # SQLite hands back naive datetimes
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at - _FS_REFRESH_MARGIN > datetime.now(timezone.utc):
+        return row
+    if not row.refresh_token:
+        return None
+    token_json = await fs_oauth.refresh_tokens(row.refresh_token)
+    if token_json is None:
+        return None
+    return _persist_fs_token(session, user_id, token_json)
 
 
 def decode_session_token(token: str | None) -> str | None:
@@ -228,12 +264,22 @@ def logout(response: Response) -> dict:
 
 
 # ── FamilySearch app login (active only when configured) ─────────
+# Where the callback may send the user afterwards. Deliberately only a hash
+# route of our own SPA (`#/s/prj_…`) — the value rides a cookie the user
+# controls, so anything else would be an open redirect.
+_SAFE_NEXT_RE = re.compile(r"^#/[A-Za-z0-9/_-]{0,120}$")
+
+
 @router.get("/familysearch/login")
-def familysearch_login() -> RedirectResponse:
-    """Start the FamilySearch OAuth round-trip (a full-page redirect — login
-    precedes any sandbox, so there is no live session/WS to preserve and no
-    sessionId to carry). PKCE verifier + state are stashed in a short-lived
-    signed cookie that the top-level /callback reads back."""
+def familysearch_login(next: str | None = None) -> RedirectResponse:
+    """Start the FamilySearch OAuth round-trip (a full-page redirect).
+
+    `next` is an optional SPA hash route to return to. The front-door login has
+    none (it precedes any sandbox), but the *re-connect* path does: FS caps a
+    grant at 24h absolute, so a user mid-research gets bounced through here
+    daily and must land back on the session they were reading, not the list.
+    It rides the same short-lived signed cookie as the PKCE verifier + state,
+    which the top-level /callback reads back."""
     s = get_settings()
     if not s.familysearch_configured:
         raise HTTPException(
@@ -256,7 +302,10 @@ def familysearch_login() -> RedirectResponse:
         "code_challenge_method": "S256",
     })
     resp = RedirectResponse(f"{fs_oauth.FS_AUTHORIZE_URL}?{params}")
-    signed = fs_oauth.fs_serializer().dumps({"verifier": verifier, "state": state})
+    payload = {"verifier": verifier, "state": state}
+    if next and _SAFE_NEXT_RE.match(next):
+        payload["next"] = next
+    signed = fs_oauth.fs_serializer().dumps(payload)
     resp.set_cookie(
         fs_oauth.FS_OAUTH_COOKIE, signed, max_age=600, httponly=True,
         samesite="lax", secure=cookie_secure(), path="/",
@@ -312,9 +361,16 @@ async def familysearch_callback(
     user = _upsert_user(session, email, familysearch_id=identity.get("id"))
     _persist_fs_token(session, user.id, token_json)
 
+    # Re-validate `next` on the way out: it came back on a client-held cookie,
+    # so trusting the inbound check alone would let a tampered value through.
+    nxt = data.get("next")
+    target = get_settings().web_origin
+    if isinstance(nxt, str) and _SAFE_NEXT_RE.match(nxt):
+        target = f"{target}/{nxt}" if not target.endswith("/") else f"{target}{nxt}"
+
     # Build the redirect FIRST, then set the cookie on it (set_session_cookie
     # mutates the passed response; a Depends-injected one would be lost here).
-    resp = RedirectResponse(get_settings().web_origin)
+    resp = RedirectResponse(target)
     set_session_cookie(resp, user.id)
     resp.delete_cookie(fs_oauth.FS_OAUTH_COOKIE, path="/")
     return resp

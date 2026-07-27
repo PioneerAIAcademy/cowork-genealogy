@@ -1,0 +1,311 @@
+{
+  "persons": [
+    {
+      "id": "MNFL-T24",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Mary",
+          "surname": "Dwyer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "207c832c-53a8-427c-8a37-3b45253d5229",
+          "type": "Birth",
+          "date": "May 1840",
+          "standard_date": "May 1840",
+          "place": "Ireland",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        },
+        {
+          "id": "6c91fe28-3d2c-4441-b8e9-42e46d914c58",
+          "type": "Immigration",
+          "date": "1856",
+          "standard_date": "1856"
+        },
+        {
+          "id": "0504a34a-3a2a-41ed-853e-61dbedb5f612",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "South Windsor, Hartford, Connecticut, United States",
+          "standard_place": "South Windsor, Hartford, Connecticut, United States"
+        }
+      ]
+    },
+    {
+      "id": "MNFL-TKV",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Michael",
+          "surname": "Dwyer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "851fb39e-12dc-46e2-b7f2-c23256a09652",
+          "type": "Birth",
+          "date": "1837",
+          "standard_date": "1837",
+          "place": "Ireland",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "3bde05ae-9fab-4aca-ab33-df6950218fa3",
+          "type": "Immigration",
+          "date": "1856",
+          "standard_date": "1856"
+        },
+        {
+          "id": "be17d602-a21e-4b3b-9238-681e42f689f3",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "South Windsor, Hartford, Connecticut, United States",
+          "standard_place": "South Windsor, Hartford, Connecticut, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G2X4-PKP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Edward F",
+          "surname": "Dwyer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e2ad07f1-64b8-4187-8fec-5c398476199f",
+          "type": "Birth",
+          "date": "February 1878",
+          "standard_date": "Feb 1878",
+          "place": "Massachusetts, United States",
+          "standard_place": "Massachusetts, United States"
+        },
+        {
+          "id": "d4af8910-e482-4d34-a5b7-10add6af07b4",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "South Windsor, Hartford, Connecticut, United States",
+          "standard_place": "South Windsor, Hartford, Connecticut, United States"
+        },
+        {
+          "id": "00446f5c-9464-43df-96c2-74ac3f1b1438",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G2XH-CFT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Ellen E",
+          "surname": "Dwyer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f3d4e4af-9c2f-4da8-9aec-7b36fe98082d",
+          "type": "Birth",
+          "date": "March 1869",
+          "standard_date": "Mar 1869",
+          "place": "Connecticut, United States",
+          "standard_place": "Connecticut, United States"
+        },
+        {
+          "id": "2874aa9b-8fe5-4d80-aec7-3f97aacfff99",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "South Windsor, Hartford, Connecticut, United States",
+          "standard_place": "South Windsor, Hartford, Connecticut, United States"
+        },
+        {
+          "id": "ad69f8e9-4901-4231-b773-55d6e91ce28a",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GTRF-K4G",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "John Ralph",
+          "surname": "Dwyer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b7764bdf-074d-4500-9d14-b2d65e165652",
+          "type": "Birth",
+          "date": "1882",
+          "standard_date": "1882",
+          "place": "Massachusetts, United States",
+          "standard_place": "Massachusetts, United States"
+        },
+        {
+          "id": "8d4dc44a-e1e4-4a66-996d-4915c63594bb",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "South Windsor, Hartford, Connecticut, United States",
+          "standard_place": "South Windsor, Hartford, Connecticut, United States"
+        },
+        {
+          "id": "4c75969c-a3dd-4ba6-8e1c-670190a82584",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Manchester, Hartford, Connecticut, United States",
+          "standard_place": "Manchester, Hartford, Connecticut, United States"
+        },
+        {
+          "id": "1e6009a0-e0d8-41eb-8480-798279c317f8",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hartford, Connecticut, United States",
+          "standard_place": "Hartford, Connecticut, United States"
+        },
+        {
+          "id": "981736d4-d032-42d7-a89a-fa27773b9075",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Manchester, Hartford, Connecticut, United States",
+          "standard_place": "Manchester, Hartford, Connecticut, United States"
+        },
+        {
+          "id": "bbed8c53-66a8-4174-a173-aa6220fb1749",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place"
+        },
+        {
+          "id": "64f5c0e9-4453-48d8-b098-8422de9c0659",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Manchester, Hartford, Connecticut, United States",
+          "standard_place": "Manchester, Hartford, Connecticut, United States"
+        },
+        {
+          "id": "9b30c0c5-35e3-4734-8008-0d5548064ee1",
+          "type": "Death",
+          "date": "1963",
+          "standard_date": "1963"
+        },
+        {
+          "id": "6d724af4-2eb1-4cc9-a5bd-e6ab60de732f",
+          "type": "Marital Status",
+          "value": "Widowed"
+        },
+        {
+          "id": "2b54c6e3-91b2-40da-a905-9fe50fdcff97",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "33e9ea34-40f6-44ef-896d-ba89ff6f579f",
+          "type": "Burial",
+          "place": "Manchester, Hartford, Connecticut, United States",
+          "standard_place": "Manchester, Hartford, Connecticut, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "MNFL-TKV",
+      "person2": "MNFL-T24",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "20 APR 1854",
+          "standard_date": "20 Apr 1854",
+          "place": "Greenfield,Franklin,Massachusetts",
+          "standard_place": "Greenfield, Franklin, Massachusetts, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "MNFL-TKV",
+      "child": "G2XH-CFT"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "MNFL-T24",
+      "child": "G2XH-CFT"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "MNFL-TKV",
+      "child": "G2X4-PKP"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "MNFL-T24",
+      "child": "G2X4-PKP"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "MNFL-TKV",
+      "child": "GTRF-K4G"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "MNFL-T24",
+      "child": "GTRF-K4G"
+    }
+  ],
+  "sources": [
+    {
+      "id": "MWFQ-MFS",
+      "title": "Mary Dwyer, \"Massachusetts, State Vital Records, 1638-1927\"",
+      "citation": "\"Massachusetts, State Vital Records, 1638-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FC61-HMS : Thu May 23 00:30:37 UTC 2024), Entry for Michael Dwyer and Mary Dwyer, 20 Apr 1854.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FC61-HM9"
+    },
+    {
+      "id": "Q8HW-NV3",
+      "title": "Mary J Dwyer, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9QT-WW5 : Wed Jan 22 14:32:13 UTC 2025), Entry for Michael Dwyer and Mary J Dwyer, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M9QT-WWR"
+    }
+  ]
+}

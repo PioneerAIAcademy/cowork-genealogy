@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Gertrudis Hoffmans (recorded in the hint as Geertrudis Gerits) and Petrus Jansen had a daughter, Elisabeth Jansen, baptized 30 March 1713 in Wanroij, North Brabant — between their sons Joannes (christened 1709) and Gerardus (christened 1711) / Joannes (christened 1717).",
+      "details": {
+        "subject_person": "Gertrudis Hoffmans (KN19-Q19)",
+        "relation": "child",
+        "target_person": {
+          "name": "Elisabeth Jansen",
+          "birth": "baptized 30 March 1713, Wanroij, North Brabant, Netherlands"
+        }
+      },
+      "supporting_sources": [
+        "Netherlands, Archival Indexes, Vital Records, 1600-2000 — baptismal entry, 30 Mar 1713, Wanroij, naming parents Petrus Jansen and Geertrudis Gerits"
+      ],
+      "required": true
+    }
+  ]
+}

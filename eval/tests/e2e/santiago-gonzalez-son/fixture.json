@@ -1,0 +1,19 @@
+{
+  "id": "santiago-gonzalez-son",
+  "name": "Santiago Gonzalez — additional son Manuel (b. 1915)",
+  "genre": "record-hint",
+  "source_pid": "G6MR-VHF",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Santiago Gonzalez and his wife Petra Tumbaco of Guayaquil, Ecuador have a son named Manuel de Jesus, born 1915, in addition to their two known daughters (b. 1921 and 1934)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1910s",
+    "geography": "EC"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 15, flag adds_son, confidence 3). Draft transcribed from an Ecuadorian cemetery record; unverified."
+}

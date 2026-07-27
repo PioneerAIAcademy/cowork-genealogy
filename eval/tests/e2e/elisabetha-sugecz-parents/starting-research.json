@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_elisabetha_sugecz_parents",
+    "objective": "Who were the parents of Elisabetha Sugecz, wife of Thomas Pofuk-Harmicar of Madžarevo, Varaždin, Croatia?",
+    "subject_person_ids": [
+      "G4C9-Y6C"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

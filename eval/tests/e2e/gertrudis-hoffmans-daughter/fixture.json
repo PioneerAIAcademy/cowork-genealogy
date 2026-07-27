@@ -1,0 +1,19 @@
+{
+  "id": "gertrudis-hoffmans-daughter",
+  "name": "Gertrudis Hoffmans — additional daughter Elisabeth (b. 1713)",
+  "genre": "record-hint",
+  "source_pid": "KN19-Q19",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Gertrudis Hoffmans and her husband Petrus Jansen of Wanroij, North Brabant, Netherlands have a daughter named Elisabeth, baptized 1713, in addition to their three known sons (christened 1709-1717)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1710s",
+    "geography": "NL"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 24, flag adds_daughter, confidence 3). Draft transcribed from a Dutch archival vital-records index; unverified."
+}

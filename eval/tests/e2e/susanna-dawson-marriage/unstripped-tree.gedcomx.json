@@ -1,0 +1,708 @@
+{
+  "persons": [
+    {
+      "id": "9KNQ-8YB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Susanna",
+          "surname": "Dawson Kneale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fb1277e7-d27c-481a-b158-aa13b3c7192d",
+          "type": "Birth",
+          "date": "1840",
+          "standard_date": "1840",
+          "place": "Lezayre, Isle of Man",
+          "standard_place": "Lezayre, Isle of Man"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "f8e9c1ca-a1ce-4d27-a383-905a0563be40",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "a4ace172-687f-458c-988b-a658b271b017",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Maughold, Isle of Man",
+          "standard_place": "Maughold, Isle of Man"
+        },
+        {
+          "id": "98e3766c-7a41-445c-9afd-40bf24be42db",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "England, United Kingdom",
+          "standard_place": "England, United Kingdom"
+        },
+        {
+          "id": "aff172f9-e444-4081-bd98-c44bfdf39941",
+          "type": "Marital Status",
+          "value": "Married"
+        }
+      ]
+    },
+    {
+      "id": "9KNQ-8YD",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "John",
+          "surname": "Kneale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3dc100f0-2568-4015-a99e-537b61012221",
+          "type": "Birth",
+          "date": "1839",
+          "standard_date": "1839",
+          "place": "Andreas, Isle of Man",
+          "standard_place": "Andreas, Isle of Man"
+        },
+        {
+          "id": "148008bf-96ed-425b-9fa0-769f799665e5",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "ab7f11c0-8b82-40d4-8895-45b7721a5f0a",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Maughold, Isle of Man",
+          "standard_place": "Maughold, Isle of Man"
+        },
+        {
+          "id": "63479506-e5d4-46c4-9a7a-8c67bc9e0254",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "England, United Kingdom",
+          "standard_place": "England, United Kingdom"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "bf820ef7-8b57-48c4-b937-a113799fffa4",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "19d0f2e7-ed2a-422c-a35e-15185a167814",
+          "type": "Occupation",
+          "value": "SHOEMAKER JOURNEYMAN"
+        },
+        {
+          "id": "33ac1e89-a8b5-4228-9da2-e8055df97fef",
+          "type": "Occupation",
+          "value": "Shoemaker"
+        },
+        {
+          "id": "4ec40f61-e6d7-4f85-b054-bc5dae842bb1",
+          "type": "Occupation",
+          "value": "Boat Maker"
+        }
+      ]
+    },
+    {
+      "id": "GBSL-3WT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Thomas",
+          "surname": "Kneale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "61670deb-1e01-49ff-a233-664f7251d1e5",
+          "type": "Birth",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Lezayre, Isle of Man",
+          "standard_place": "Lezayre, Isle of Man"
+        },
+        {
+          "id": "88999a15-7b13-4e70-b722-72b2d75599ad",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "b37fb4bc-96a4-4468-b9cc-4550e4f6a3f5",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Maughold, Isle of Man",
+          "standard_place": "Maughold, Isle of Man"
+        },
+        {
+          "id": "b26675f8-484f-467c-92cd-99ef8508d48f",
+          "type": "Death"
+        },
+        {
+          "id": "5d0bd916-6217-4da4-b6c4-580c6ed75082",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "4e7349dc-102a-4bd0-8402-9ed3f341934a",
+          "type": "Occupation",
+          "value": "Shoemaker"
+        },
+        {
+          "id": "88daeb3f-c7d1-4cb2-aa05-a29805cf8b59",
+          "type": "Occupation",
+          "value": "Scholar"
+        }
+      ]
+    },
+    {
+      "id": "GBSS-G4Z",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Lenora M",
+          "surname": "Kneale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "cb99a426-c435-4cf6-ab5c-d79cae7a237c",
+          "type": "Birth",
+          "date": "1877",
+          "standard_date": "1877",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "361e83d2-ba6d-47ae-9b1f-d581b39e3fd5",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "England, United Kingdom",
+          "standard_place": "England, United Kingdom"
+        },
+        {
+          "id": "faa60387-133a-496b-bdc1-4aba921f2c61",
+          "type": "Death"
+        },
+        {
+          "id": "df5484b2-c571-4d8d-9063-227d2906108f",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "5da535b3-6da8-4e76-9e66-2dd02b1fdcec",
+          "type": "Occupation",
+          "value": "MILLINER ASSISTANT"
+        }
+      ]
+    },
+    {
+      "id": "GBSS-56D",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Edward D",
+          "surname": "Kneale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0d595efa-6876-4d7c-aa77-6af2d118f06e",
+          "type": "Birth",
+          "date": "1874",
+          "standard_date": "1874",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "8f908f76-7df6-479e-b9d3-dc7d85d8ec71",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Maughold, Isle of Man",
+          "standard_place": "Maughold, Isle of Man"
+        },
+        {
+          "id": "444c7a4e-3987-4749-8d5d-3fc1e0b723f8",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "England, United Kingdom",
+          "standard_place": "England, United Kingdom"
+        },
+        {
+          "id": "3e93e372-f1a0-46a7-a8b8-7af9654caadc",
+          "type": "Death"
+        },
+        {
+          "id": "de3e4c1e-019d-4331-8559-7ed750e8c282",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "d26a0531-3dca-4ec3-b77c-9fcc11b57a4d",
+          "type": "Occupation",
+          "value": "CARPENTER JOURNEYMAN"
+        },
+        {
+          "id": "e2b59406-1ba6-4f10-a017-b60fb0cb8671",
+          "type": "Occupation",
+          "value": "Scholar"
+        }
+      ]
+    },
+    {
+      "id": "GBSS-HQJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Jane",
+          "surname": "Kneale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5cfe3491-c8dc-4d1e-aa71-4fdf3a70c211",
+          "type": "Birth",
+          "date": "1866",
+          "standard_date": "1866",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "8cc56d81-dafb-4c7f-ba56-f7aa2575b285",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "36177d04-6ad9-4663-82e0-7c1725a911f7",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Maughold, Isle of Man",
+          "standard_place": "Maughold, Isle of Man"
+        },
+        {
+          "id": "b5dd0e9d-27f2-47ad-abb3-550b63f3666c",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "England, United Kingdom",
+          "standard_place": "England, United Kingdom"
+        },
+        {
+          "id": "75028e21-fde4-4a20-a278-701a844f263e",
+          "type": "Death"
+        },
+        {
+          "id": "c1fcaf3b-a79b-49c6-be6c-ec91ed7c678f",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "8ace0790-0d11-4976-a188-8be89f4ff5bc",
+          "type": "Occupation",
+          "value": "DRESSMAKER"
+        },
+        {
+          "id": "3d5e8d09-30c4-4d31-b4fb-019b9e1c195e",
+          "type": "Occupation",
+          "value": "Scholar"
+        }
+      ]
+    },
+    {
+      "id": "GBSS-99Q",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Louisa",
+          "surname": "Kneale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5c9ee662-d31b-4276-9bba-2cd0d1db77e5",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "4c0bd1b8-6af1-4b8c-bb47-2f27a9d76b6f",
+          "type": "Birth",
+          "date": "1872",
+          "standard_date": "1872",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "74c5d974-1c16-4a60-9bbc-15d5b2dbf143",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Maughold, Isle of Man",
+          "standard_place": "Maughold, Isle of Man"
+        },
+        {
+          "id": "bbaf8c21-b988-463b-a7f1-124da2c948a2",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "England, United Kingdom",
+          "standard_place": "England, United Kingdom"
+        },
+        {
+          "id": "189a82c0-f53b-4268-8885-55fd1608f7fc",
+          "type": "Death"
+        },
+        {
+          "id": "dc3d3b86-e4e1-4cce-b74e-88899ca59845",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "3fd53805-40fb-48d8-a554-874576113a17",
+          "type": "Occupation",
+          "value": "DRESSMAKER"
+        },
+        {
+          "id": "f91b6551-df96-4f58-b449-71568316c18d",
+          "type": "Occupation",
+          "value": "Scholar"
+        }
+      ]
+    },
+    {
+      "id": "GBSL-4KM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Mary",
+          "surname": "Kneale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8dd16a84-ec60-4c20-adcc-437d67deafd3",
+          "type": "Birth",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "c415e7b7-6bb7-45fc-a553-a7c8529dbf8e",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Maughold, Isle of Man",
+          "standard_place": "Maughold, Isle of Man"
+        },
+        {
+          "id": "baa2defa-a607-4e1f-93cb-407327b89fbd",
+          "type": "Death"
+        },
+        {
+          "id": "d9d98c61-ed28-4fa4-bfe0-380f7ad15df3",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "6efc8df3-5bc3-4faf-bc08-117d83efdc90",
+          "type": "Occupation",
+          "value": "Scholar"
+        }
+      ]
+    },
+    {
+      "id": "GBSL-M1Y",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Susannah",
+          "surname": "Kneale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2efb40dd-2bd0-428c-97c7-1ae5ec98368c",
+          "type": "Birth",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "c98efcfd-cbd0-4b1f-a09a-e19fc9c6ea72",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "0c191f9b-2a27-413b-9170-f58b561bceda",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Maughold, Isle of Man",
+          "standard_place": "Maughold, Isle of Man"
+        },
+        {
+          "id": "4c5e15bc-0cc6-4e47-835b-b98ed63f5745",
+          "type": "Death"
+        },
+        {
+          "id": "99e31768-cd1c-46a8-9f98-76417066e0ed",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "03956eea-1dac-47b0-97f0-14a67c26f9a8",
+          "type": "Occupation",
+          "value": "No Occupation"
+        },
+        {
+          "id": "0c96c9fd-c1fb-4702-aca9-61239f6d1f89",
+          "type": "Occupation",
+          "value": "Scholar"
+        }
+      ]
+    },
+    {
+      "id": "9KNQ-8T4",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "William",
+          "surname": "Kneale"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "19 Oct 1878",
+          "standard_date": "19 Oct 1878",
+          "place": "Ramsey, Isle of Man",
+          "standard_place": "Ramsey, Isle of Man"
+        },
+        {
+          "id": "25d22f0e-8808-4764-9f9a-c6cc65a6f84b",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Maughold, Isle of Man",
+          "standard_place": "Maughold, Isle of Man"
+        },
+        {
+          "id": "fea46157-0ea1-409d-bc64-ee8790e2a272",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "England, United Kingdom",
+          "standard_place": "England, United Kingdom"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        },
+        {
+          "id": "776159d5-4750-453f-9975-84b9beca377b",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "37f27274-9d3d-4018-a27c-6e1328e2e295",
+          "type": "Occupation",
+          "value": "DRAPER'S ASSISTANT"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "9KNQ-8YD",
+      "person2": "9KNQ-8YB"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YD",
+      "child": "GBSL-3WT"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YB",
+      "child": "GBSL-3WT"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YD",
+      "child": "GBSL-M1Y"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YB",
+      "child": "GBSL-M1Y"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YD",
+      "child": "GBSS-HQJ"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YB",
+      "child": "GBSS-HQJ"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YD",
+      "child": "GBSS-99Q"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YB",
+      "child": "GBSS-99Q"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YD",
+      "child": "GBSS-56D"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YB",
+      "child": "GBSS-56D"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YD",
+      "child": "GBSL-4KM"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YB",
+      "child": "GBSL-4KM"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YD",
+      "child": "GBSS-G4Z"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YB",
+      "child": "GBSS-G4Z"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YD",
+      "child": "9KNQ-8T4",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "9KNQ-8YB",
+      "child": "9KNQ-8T4",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7QXM-QMJ",
+      "title": "Susannah Kneale, \"England and Wales, Census, 1881\"",
+      "citation": "\"England and Wales, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2WS-L64C : Tue Mar 05 17:54:12 UTC 2024), Entry for John Kneale and Susannah Kneale, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2WS-L6HW"
+    },
+    {
+      "id": "7QNS-CDK",
+      "title": "Susannah Kneale, \"England and Wales, Census, 1871\"",
+      "citation": "\"England and Wales, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VFTR-GNX : Tue Oct 08 14:36:48 UTC 2024), Entry for John Kneale and Susannah Kneale, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VFTR-GNF"
+    },
+    {
+      "id": "7QD4-YBC",
+      "title": "Susanna Kneale, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91V-6GY : Thu Feb 13 05:49:41 UTC 2025), Entry for John Kneale and Susanna Kneale, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91V-6GB"
+    },
+    {
+      "id": "M65Q-4P6",
+      "title": "Susanna Dawson Kneale in entry for William Kneale, \"Isle of Man, Births and Baptisms, 1607-1910\"",
+      "citation": "\"Isle of Man, Births and Baptisms, 1607-1910\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:X5PH-6S7 : 6 February 2020), Susanna Dawson Kneale in entry for William Kneale, 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X5PH-6S7"
+    },
+    {
+      "id": "937C-Z2F",
+      "title": "Susanna Dawson Kneale in entry for William Kneale, \"Isle of Man, Births and Baptisms, 1607-1910\"",
+      "citation": "\"Isle of Man, Births and Baptisms, 1607-1910\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:J33R-GB5 : 6 February 2020), Susanna Dawson Kneale in entry for William Kneale, 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:J33R-GB5"
+    }
+  ]
+}

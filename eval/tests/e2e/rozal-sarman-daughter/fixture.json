@@ -1,0 +1,19 @@
+{
+  "id": "rozal-sarman-daughter",
+  "name": "Sármán Rozál — additional daughter Viktoria (b. abt. 1892)",
+  "genre": "record-hint",
+  "source_pid": "P873-TWP",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Rozál Sármán and her husband István Juhász of Torontál, Hungary have a daughter named Viktoria, baptized about 1892, in addition to their known daughter Ágnes (b. 1894)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1890s",
+    "geography": "HU"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 28, flag adds_daughter, confidence 3). Draft transcribed from a Hungarian Catholic church record; unverified."
+}

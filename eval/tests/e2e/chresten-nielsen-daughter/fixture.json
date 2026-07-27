@@ -1,0 +1,19 @@
+{
+  "id": "chresten-nielsen-daughter",
+  "name": "Chresten Nielsen — additional daughter Birte (b. 1805)",
+  "genre": "record-hint",
+  "source_pid": "KN3K-9Q3",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Chresten Nielsen and his wife Birte Kirstine Sørensdatter of Tyrsted, Vejle, Denmark have a daughter named Birte, born 1805, in addition to their nine known children (b. 1791-1801)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1800s",
+    "geography": "DK"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 13, flag adds_daughter, confidence 3). Draft transcribed from a Danish baptismal record; unverified."
+}

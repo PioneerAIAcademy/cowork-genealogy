@@ -65,8 +65,16 @@ help: ## Show this menu
 
 # ── Setup ────────────────────────────────────────────────────────
 .PHONY: install
-install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install EVERYTHING: pnpm workspace, server venv, engine build, eval-ui deps
-	@echo "✓ install complete (pnpm workspace + server venv + engine build + eval-ui deps)"
+install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install EVERYTHING: pnpm workspace, server venv, engine build, eval-ui deps, git hooks
+	@# Leading `-`: a clone whose hooks belong to other tooling makes install-hooks
+	@# exit 1 by design (it refuses to clobber). That must not fail the whole
+	@# install — it just means this clone opts out and uses `make worktree-link`
+	@# by hand. Wired in because the hook being absent is silent until it costs a
+	@# run: a worktree without eval/.env has no ANTHROPIC_API_KEY, so every
+	@# positive test in a harness run fails on a judge error after the suite has
+	@# already been paid for.
+	-@$(MAKE) --no-print-directory install-hooks
+	@echo "✓ install complete (pnpm workspace + server venv + engine build + eval-ui deps + git hooks)"
 
 .PHONY: server-install
 server-install: ## Create the server venv and install FastAPI deps (uv)
@@ -402,11 +410,13 @@ e2e-calibrate: ## Run judge calibration against committed run annotations (maint
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-latency
-e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table
+e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown
 	# Pure analysis over committed run JSONs — no live run, no API. Answers
 	# "how much of wall-clock is model generation vs tool execution?" (the
 	# Phase 0 gate). See docs/plan/research-latency-reduction-plan.md.
-	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,)
+	# BY_SKILL needs a run committed after 2026-07-26 (timeline tool-name tagging);
+	# older runs report "no skill-phase data" rather than crashing.
+	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,)
 
 .PHONY: skill-latency
 skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json
@@ -470,6 +480,23 @@ mcpb: ## Build the .mcpb desktop extension
 .PHONY: plugin
 plugin: ## Build the Cowork plugin .zip
 	node scripts/package-plugin.mjs
+
+.PHONY: cowork-install
+cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-path (Windows: eval\CoworkInstall.bat)
+	# One target because installing only one of the two is the most common way
+	# to spend an hour debugging a `/research` that is really just stale. The
+	# click-path is printed rather than automated: both installs are Claude
+	# Desktop UI actions with no CLI.
+	@printf '\n=== Built. Now install BOTH, then fully quit and reopen Claude Desktop ===\n\n'
+	@printf '1. MCP server (.mcpb):  Claude Desktop -> Settings -> Extensions ->\n'
+	@printf '   Advanced Settings -> Install extension -> releases/genealogy-mcp.mcpb\n'
+	@printf '   (install straight over the old copy -- no uninstall needed)\n\n'
+	@printf '2. Plugin (.zip):  Claude Desktop -> COWORK tab -> Customize ->\n'
+	@printf '   REMOVE any existing Genealogy Research plugin, then Add -> Upload\n'
+	@printf '   Plugin -> releases/genealogy-plugin.zip\n'
+	@printf '   (the Cowork tab and the Code tab keep separate plugin lists)\n\n'
+	@printf '3. Fully QUIT and reopen Claude Desktop.\n\n'
+	@ls -l releases/genealogy-mcp.mcpb releases/genealogy-plugin.zip 2>/dev/null || true
 
 # Marker recording the commit `make sandbox-image` last built the E2B template
 # from, so `deploy-preflight` can warn when in-sandbox agent code changed since.

@@ -93,6 +93,8 @@ Form fields mapped to the unit test JSON schema (see `docs/specs/unit-test-spec.
 | description | Text area | |
 | tags | Tag input (autocomplete from existing tags) | |
 | holdout | Switch | Reserves the test as a skill-improver generalization check (schema default `false`). Off by default; only persisted when on. See `docs/skill-lifecycle.md`. |
+| expected_outcome | Dropdown: pass / xfail | Schema default `pass`; only persisted when `xfail`. Marks a known-failing test so its failures report as `xfail` rather than `fail`, and a recovery reports as `xpass`. |
+| xfail_reason | Text area | Shown and **required** only when expected_outcome = `xfail` (the schema makes it conditionally required and nothing validates the file server-side, so the form is the enforcement point). Cleared from the file when the test goes back to `pass`. |
 | user_message | Text area | |
 | scenario | Dropdown + "Create new" button | Shows scenario README description on hover/select |
 | scenario_notes | Text area (collapsible) | Shown when scenario doesn't exactly match |
@@ -103,7 +105,7 @@ Form fields mapped to the unit test JSON schema (see `docs/specs/unit-test-spec.
 
 The form displays the skill's rubric dimensions (from rubric.md) in a sidebar or info panel so the genealogist knows what's already covered and can write additional_criteria that don't duplicate the rubric.
 
-**Hash-change warning on edit.** When the junior edits an existing test and changes a grading-relevant field (`user_message`, `scenario`, `mcp_fixtures`, `additional_criteria`, `negative`, `holdout`), the UI shows an inline warning: "This edit changes the test's content hash — it will be excluded from cross-PR comparison for one PR. Continue?" Cosmetic edits (`name`, `description`, `tags`) don't trigger the warning. The warning is advisory only — the junior may proceed. The senior reviewing the PR sees the diff and decides whether to ask for a revert. Per plan §2.4.
+**Hash-change warning on edit.** When the junior edits an existing test and changes a grading-relevant field (`user_message`, `scenario`, `mcp_fixtures`, `additional_criteria`, `negative`, `holdout`, `expected_outcome`, `xfail_reason`), the UI shows an inline warning: "This edit changes the test's content hash — it will be excluded from cross-PR comparison for one PR. Continue?" Cosmetic edits (`name`, `description`, `tags`) don't trigger the warning. The warning is advisory only — the junior may proceed. The senior reviewing the PR sees the diff and decides whether to ask for a revert. Per plan §2.4.
 
 ### Validation
 
@@ -165,7 +167,7 @@ Per the per-PR review workflow (`docs/plan/per-pr-review-workflow.md`), the team
 
 The Results section opens to a dashboard with two panels:
 
-- **Recent run logs widget.** Top 5–10 run logs across all skills, sorted by timestamp descending. Each row shows: skill, model, timestamp, weighted-mean score, annotation status (annotated / unannotated). Color-coded outcome (green = pass, yellow = partial, red = fail/aborted). Click a row to jump to the run detail view. This is the junior's primary "is there new work?" landing.
+- **Recent run logs widget.** Top 5–10 run logs across all skills, sorted by timestamp descending. Each row shows: skill, model, timestamp, weighted-mean score, annotation status (annotated / unannotated). Color-coded outcome (green = pass, yellow = partial, red = fail/aborted, gray = xfail, orange = xpass — xfail is neutral because it is a declared, non-regressing failure, and xpass is flagged because it means the marker is likely stale). Click a row to jump to the run detail view. This is the junior's primary "is there new work?" landing.
 - **Filter + full list** below the widget — same filters as before (skill, model version, date range, annotation status).
 
 **Refresh-on-focus.** When the browser tab regains focus (e.g., the junior alt-tabs from a terminal where `RunTests.bat` just finished), the Results section auto-refreshes its run-log list. Implemented via `visibilitychange` event listener — when the document becomes visible, refetch the run-log index. This closes the "did my run finish?" loop without polling.

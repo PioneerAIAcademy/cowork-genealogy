@@ -1,0 +1,132 @@
+{
+  "persons": [
+    {
+      "id": "LDK6-6SH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Susanna",
+          "surname": "Szljacsan"
+        }
+      ],
+      "facts": [
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        },
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "05 Mar 1850",
+          "standard_date": "5 Mar 1850",
+          "place": "Lisková, Ružomberok, Slovakia",
+          "standard_place": "Lisková, Ružomberok, Slovakia"
+        },
+        {
+          "id": "c5650e22-d1cd-424c-b35a-0c1788e102b7",
+          "type": "Baptism",
+          "date": "05 Mar 1850",
+          "standard_date": "5 Mar 1850",
+          "place": "Lisková, Ružomberok, Slovakia",
+          "standard_place": "Lisková, Ružomberok, Slovakia"
+        }
+      ]
+    },
+    {
+      "id": "LDKF-RZK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Maria",
+          "surname": "Munka"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LDKF-RZV",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "János",
+          "surname": "Szljacsan"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LDK6-6SZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Maria",
+          "surname": "Boron Munka"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LDKF-RZV",
+      "person2": "LDKF-RZK"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LDKF-RZV",
+      "person2": "LDK6-6SZ"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LDKF-RZV",
+      "child": "LDK6-6SH"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LDK6-6SZ",
+      "child": "LDK6-6SH"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LDKF-RZK",
+      "child": "LDK6-6SH"
+    }
+  ],
+  "sources": [
+    {
+      "id": "SG4J-XT3",
+      "title": "Susanna Szljacsan, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHQN-KC7 : Mon Mar 11 01:33:08 UTC 2024), Entry for Susanna Szljacsan and Joannes Szljacsan, 05 Mar 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KHQN-KC7"
+    }
+  ]
+}

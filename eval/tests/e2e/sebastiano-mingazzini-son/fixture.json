@@ -1,0 +1,19 @@
+{
+  "id": "sebastiano-mingazzini-son",
+  "name": "Sebastiano Mingazzini — additional son Simone (b. 1860)",
+  "genre": "record-hint",
+  "source_pid": "GQSW-B3V",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Sebastiano Mingazzini and his wife Lucia Silvestrini of Castel Bolognese, Ravenna, Italy have a son named Simone, born 1860, in addition to their three known children (b. 1849-1853)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1860s",
+    "geography": "IT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 22, flag adds_son, confidence 3). Draft transcribed from an Italian civil registration record; unverified."
+}

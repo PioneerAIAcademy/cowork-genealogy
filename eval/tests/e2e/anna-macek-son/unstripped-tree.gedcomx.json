@@ -1,0 +1,154 @@
+{
+  "persons": [
+    {
+      "id": "PW3W-LJN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Anna",
+          "surname": "Macek"
+        }
+      ],
+      "facts": [
+        {
+          "id": "53c8a2cd-4ecd-47de-a283-9ab15bed100a",
+          "type": "Birth",
+          "date": "1851",
+          "standard_date": "1851"
+        },
+        {
+          "id": "7f25be0b-4680-4802-b3e6-bbdf0aa9ceaf",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PW34-KKV",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Jan",
+          "surname": "Macek"
+        }
+      ],
+      "facts": [
+        {
+          "id": "50728405-e381-4f46-bd92-35a4d9d2bc3f",
+          "type": "Death"
+        },
+        {
+          "id": "02dbf661-c696-432a-9931-cd47a8567a30",
+          "type": "Birth",
+          "place": "Rohoznice, Pardubice, Czechia",
+          "standard_place": "Rohoznice, Pardubice, Czechia"
+        }
+      ]
+    },
+    {
+      "id": "PW34-KK8",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Václav",
+          "surname": "Jičinský"
+        }
+      ],
+      "facts": [
+        {
+          "id": "302c08d7-3e9f-4332-b0e4-7824fa3f5e98",
+          "type": "Birth",
+          "date": "1844",
+          "standard_date": "1844",
+          "place": "Rohovládova Bělá, Pardubice, Czechia",
+          "standard_place": "Rohovládova Bělá, Pardubice, Czechia"
+        },
+        {
+          "id": "aa61679d-e252-45a3-a540-11950cd6229d",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PW34-H3N",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Kateřina",
+          "surname": "Doležal"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1b60d844-f3e7-4b3a-9da5-cee400711319",
+          "type": "Death"
+        },
+        {
+          "id": "c85e1e5f-ae7e-4168-9b13-ec748477592d",
+          "type": "Birth",
+          "place": "Rohoznice, Pardubice, Czechia",
+          "standard_place": "Rohoznice, Pardubice, Czechia"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "PW34-KK8",
+      "person2": "PW3W-LJN",
+      "facts": [
+        {
+          "id": "e10411a3-48f1-4867-8b61-2d51bfc6cd16",
+          "type": "Marriage",
+          "date": "7 February 1871",
+          "standard_date": "7 Feb 1871",
+          "place": "Křičeň, Pardubice, Čechy, Rakousko ",
+          "standard_place": "Křičeň, Bezirk Pardubitz, Bohemia, Manchester, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "a6298941-d207-492a-abdf-697e0e2628c4",
+          "type": "Marriage",
+          "date": "7 Feb 1871",
+          "standard_date": "7 Feb 1871",
+          "place": "Křičeň, Pardubice, Čechy, Rakousko",
+          "standard_place": "Křičeň, Bezirk Pardubitz, Bohemia, Manchester, Lancashire, England, United Kingdom"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "PW34-KKV",
+      "person2": "PW34-H3N"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "PW34-KKV",
+      "child": "PW3W-LJN"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "PW34-H3N",
+      "child": "PW3W-LJN"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7Y8G-D3W",
+      "title": "Anna Macek, \"Czech Republic, Church Books, 1552-1981\"",
+      "citation": "\"Czech Republic, Church Books, 1552-1981\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PFD-Q43C : Tue Sep 03 17:49:48 UTC 2024), Entry for Václav Jičinský and Františka Jičinský, 7 Feb 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6PFD-Q43D"
+    }
+  ]
+}

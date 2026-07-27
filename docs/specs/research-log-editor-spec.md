@@ -91,6 +91,20 @@ research_log_append({
 })
 ```
 
+**Batch form (`ops[]`, added 2026-07-26).** Pass `ops: [{ tool, query, outcome,
+resultsExamined, ... }, ...]` instead of the top-level fields to log several
+searches in one validate-once/write-once call, mirroring `research_append`/
+`tree_edit`/`materialize_facts`'s `ops[]` convention: one `research.json` read,
+every op applied to the same in-memory document (log ids assigned in order),
+one final `validateParsed`, one atomic write. All-or-nothing: any op's failure
+writes nothing and is reported as `ops[i]: <msg>`. The one thing this tool's
+batching does differently from its siblings: finalizing a staged sidecar is a
+**real file write** that happens as each op is applied, not a pure in-memory
+mutation held until the final commit — so a batch call tracks every sidecar it
+creates and unlinks all of them (not just the failing op's) on any later
+failure, extending the single-call path's existing orphan-cleanup rather than
+introducing a new invariant.
+
 **camelCase at the boundary; snake_case on disk.** The tool renames on persist
 (`planItemId → plan_item_id`, `resultsExamined → results_examined`,
 `resultsAvailable → results_available`, `externalSite → external_site` with

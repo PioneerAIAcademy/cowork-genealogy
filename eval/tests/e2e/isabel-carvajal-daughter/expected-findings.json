@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Isabel Carvajal Chinchilla and Emilio Martínez had a daughter, Juana Martinez, who married Ismael Alvarez on 9 October 1929 in Matanza, Santander, Colombia, in addition to their six children already in the tree (b. 1881-1895).",
+      "details": {
+        "subject_person": "Isabel Carvajal Chinchilla (LR2Y-X3H)",
+        "relation": "child",
+        "target_person": {
+          "name": "Juana Martinez",
+          "birth": "unknown, likely Santander, Colombia, c. 1900-1910",
+          "marriage": "9 October 1929, Matanza, Santander, to Ismael Alvarez"
+        }
+      },
+      "supporting_sources": [
+        "Colombia, Catholic Church Records, 1576-2019 — marriage entry, 9 Oct 1929, Matanza, Santander, naming the bride's parents as Emilio and Isabel Carvajal"
+      ],
+      "required": true
+    }
+  ]
+}

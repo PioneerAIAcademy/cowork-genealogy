@@ -1,0 +1,273 @@
+{
+  "persons": [
+    {
+      "id": "GQSW-B3V",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Sebastiano",
+          "surname": "Mingazzini"
+        }
+      ],
+      "facts": [
+        {
+          "id": "dae0f327-22e8-48b7-af81-3efc253ddc00",
+          "type": "Birth",
+          "date": "1826",
+          "standard_date": "1826",
+          "place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italia",
+          "standard_place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy"
+        },
+        {
+          "id": "f91497ba-0f77-4e63-a037-9da9e73463c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GQS4-DYG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Teresa",
+          "surname": "Liverani"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f8b3e084-fedd-4bb9-a61b-5b7fcdc4076f",
+          "type": "Birth",
+          "date": "circa 1790",
+          "standard_date": "Abt 1790",
+          "place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italia",
+          "standard_place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy"
+        },
+        {
+          "id": "5123317b-6ae2-4ddd-9d47-df54602f68cf",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GQSW-B2K",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Battista",
+          "surname": "Mingazzini"
+        }
+      ],
+      "facts": [
+        {
+          "id": "256f9bbc-38de-4fc7-95fa-f3d9a8ba603d",
+          "type": "Birth",
+          "date": "1801",
+          "standard_date": "1801",
+          "place": "Faenza, Ravenna, Emilia-Romagna, Italia",
+          "standard_place": "Faenza, Ravenna, Emilia-Romagna, Italy"
+        },
+        {
+          "id": "5c295253-7c3e-4f25-9788-51d0ece952bf",
+          "type": "Death",
+          "date": "7 ottobre 1868",
+          "standard_date": "7 Oct 1868",
+          "place": "Faenza, Ravenna, Emilia-Romagna, Italia",
+          "standard_place": "Faenza, Ravenna, Emilia-Romagna, Italy"
+        }
+      ]
+    },
+    {
+      "id": "GQS4-MGR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Giuseppe",
+          "surname": "Mingazzini"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8ad82d4b-f0e9-4048-af5e-61a99e27ad63",
+          "type": "Birth",
+          "date": "1849",
+          "standard_date": "1849",
+          "place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italia",
+          "standard_place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy"
+        },
+        {
+          "id": "043d9df7-75e8-42d0-8093-f96fc8321b2b",
+          "type": "Death",
+          "date": "18 dicembre 1924",
+          "standard_date": "18 Dec 1924",
+          "place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italia",
+          "standard_place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy"
+        }
+      ]
+    },
+    {
+      "id": "GQS4-95W",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Lucia",
+          "surname": "Silvestrini"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c95be337-1d5b-4eec-babc-ac87f6b71937",
+          "type": "Birth",
+          "date": "circa 1830",
+          "standard_date": "Abt 1830",
+          "place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italia",
+          "standard_place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy"
+        },
+        {
+          "id": "13fb19ec-b787-4aae-b030-07ebaa112591",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GQSW-TJW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Francesca",
+          "surname": "Mingazzini"
+        }
+      ],
+      "facts": [
+        {
+          "id": "18f9453e-0669-4f95-83c3-4790213e559e",
+          "type": "Birth",
+          "date": "1853",
+          "standard_date": "1853",
+          "place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italia",
+          "standard_place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy"
+        },
+        {
+          "id": "938653c4-f5f0-4b2e-85c8-71708823ac6b",
+          "type": "Death",
+          "date": "6 luglio 1938",
+          "standard_date": "6 Jul 1938",
+          "place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italia",
+          "standard_place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy"
+        },
+        {
+          "id": "75baaaaf-36c0-457c-8792-93043062fea6",
+          "type": "Occupation",
+          "value": "Contadina"
+        }
+      ]
+    },
+    {
+      "id": "GQSW-B77",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Giovanni",
+          "surname": "Mingazzini"
+        }
+      ],
+      "facts": [
+        {
+          "id": "58f8367f-911c-40ad-b2ed-3f920054d941",
+          "type": "Birth",
+          "date": "26 febbraio 1852",
+          "standard_date": "26 Feb 1852",
+          "place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italia",
+          "standard_place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy"
+        },
+        {
+          "id": "d8012573-801c-4b3a-8598-e1ff8d69dabd",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GQSW-B3V",
+      "person2": "GQS4-95W"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GQSW-B2K",
+      "person2": "GQS4-DYG"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GQSW-B2K",
+      "child": "GQSW-B3V"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GQS4-DYG",
+      "child": "GQSW-B3V"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GQSW-B3V",
+      "child": "GQS4-MGR"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GQS4-95W",
+      "child": "GQS4-MGR"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GQSW-B3V",
+      "child": "GQSW-B77"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GQS4-95W",
+      "child": "GQSW-B77"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GQSW-B3V",
+      "child": "GQSW-TJW"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "GQS4-95W",
+      "child": "GQSW-TJW"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7Y4G-PCY",
+      "title": "Sebastiano, “Italia, Ravenna, Ravenna, Stato Civile (Tribunale), 1866-1943”",
+      "citation": "\"Italia, Ravenna, Ravenna, Stato Civile (Tribunale), 1866-1943\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JPZ-J7PF : Thu Apr 11 14:23:07 UTC 2024), Entry for Francesca Mingazzini and Sebastiano, 6 Jul 1938.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JPZ-J7PN"
+    }
+  ]
+}
