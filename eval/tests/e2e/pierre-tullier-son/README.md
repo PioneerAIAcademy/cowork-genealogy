@@ -38,3 +38,20 @@ What decided it:
 - **Common names.** "Pierre"/"Constance" and the Tuilier/Tullier + Ley/Leys spelling variants are common in Bambecque, so a same-named different couple is the parsimonious reading.
 
 What was searched and came up empty: no birth/baptism record ties a 1796 Pierre Jacques Dominique specifically to Pierre Albert Tuilier + Constance Dorothé Ley, and the tree person carries no attached sources corroborating the hint. Accordingly `expected-findings.json` is a `polarity: "avoid"` guard (the agent must not attach the 1796 son to this couple) paired with a `required` documented-negative-conclusion finding.
+
+**On the 1799 Houtkerque record (pre-empting a re-run's counter-evidence).**
+A run of this fixture surfaced a birth record in Houtkerque, Nord (2 Nov 1799,
+ark `61903/1:1:DPJ5-4QW2`) for a "Pierre Jacques Dominique Tuiller" naming a
+father "Pierre Tuilier" said to be a native of Stavele and a mother "Constance
+Ley," with a "Marguerite Leys" recorded as the child's maternal aunt. Although
+the agent identified this 1799 record as father "Pierre Tuilier" from Stavele
+and mother "Constance Ley," this evidence was not considered sufficient to
+overturn the fixture's adjudicated false-match verdict. The record does not
+explicitly identify the parents as Pierre Albert Tullier and Constance Dorothé
+Leys, and the apparent similarities in names and locations are not enough to
+establish identity in a region where these names and spelling variants
+(Tuilier/Tullier, Ley/Leys) are common. Furthermore, the fixture's expected
+outcome requires the 1825 marriage hint to be rejected, and the agent did not
+provide evidence strong enough to disprove that adjudication. Therefore the
+1799 Houtkerque record is treated as an unresolved alternative hypothesis
+rather than confirmation that the groom belongs to the tree couple.
