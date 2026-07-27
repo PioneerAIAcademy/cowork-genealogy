@@ -18,6 +18,7 @@ description: >-
   after proof-conclusion).
 allowed-tools:
   - research_append
+  - research_query
   - tree_edit
   - same_person
   - materialize_facts
@@ -178,9 +179,19 @@ Find the assertions that have no corresponding `person_evidence` entry
 in this same continuous run and you already hold the new `a_` ids and the
 current `person_evidence` set in context, work from that — don't re-read
 `research.json` "to be safe"; the writer tools validate the whole project
-on every write, so the in-context view can't be silently stale. Re-read
-`research.json` when you're entering this skill cold, or when a sub-skill
-or the user changed assertions/links since you last saw them.
+on every write, so the in-context view can't be silently stale.
+
+When you *do* need to look — entering this skill cold, or a sub-skill or
+the user changed assertions/links since you last saw them — use
+**`research_query`, not a whole-file `Read`** of research.json (which
+grows all session):
+
+- `research_query({ section: "assertions", recordId, recordRole })` — the
+  personas you're about to link, one call per persona.
+- `research_query({ section: "person_evidence", assertionId })` — whether a
+  given `a_` is already linked (an empty result IS the answer: unlinked).
+- `research_query({ section: "person_evidence", personId })` — the existing
+  links for a candidate person, when checking for revisions.
 
 An assertion is "unlinked" if no `pe_` entry references its `a_` ID.
 Group unlinked assertions by `record_id` + `record_role` — all
