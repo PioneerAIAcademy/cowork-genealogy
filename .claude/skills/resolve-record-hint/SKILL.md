@@ -27,9 +27,13 @@ Get a GitHub issue number/URL or a fixture slug from the user; ask if you have
 neither.
 
 - Given an issue: `gh issue view <n> --json title,body`. Pull the slug (from
-  the title, `test <slug>`) and the hint record's `familysearch.org/ark:/...`
-  URL — that URL lives **only** in the issue body, never in the fixture
-  folder.
+  the title, `test <slug>`) and **both** links in the body: the tree person
+  (`familysearch.org/tree/person/details/<PID>`) and the hint record
+  (`familysearch.org/ark:/...`). The record URL lives **only** in the issue
+  body, never in the fixture folder. If either link is missing from the issue,
+  say so and stop — the genealogist can't do the research without them, and
+  `fixture.json`'s `source_pid` is the tree person's PID if you need to
+  reconstruct that half.
 - Read `eval/tests/e2e/<slug>/README.md`'s "Notes for reviewers" — what the
   original author already found (the tree's existing sources, the
   match-strength argument for and against).
@@ -37,13 +41,19 @@ neither.
 
 ## Step 2 — Send the genealogist to do the research
 
-Tell them to open the hint record at the issue's URL on **familysearch.org**,
-by hand, and look for corroborating or contradicting evidence the same way
-they would for any genealogical proof — reading the attached sources,
-searching independently for the person, checking dates and places against
-what the tree already has. This is the actual GPS work the benchmark exists
-to measure; there is no tool shortcut for it, and this skill does not fetch
-the record for them.
+Give them the two URLs from the issue and tell them to work in this order, by
+hand on **familysearch.org**:
+
+1. **The tree person first** — read the sources already attached to them. That
+   is the baseline the hint has to be consistent with, and it is how they catch
+   a hint that is only a re-indexing of a source the person already has.
+2. **The hint record** — look for corroborating or contradicting evidence the
+   same way they would for any genealogical proof: searching independently for
+   the person, checking dates, places and family members against what the tree
+   already has.
+
+This is the actual GPS work the benchmark exists to measure; there is no tool
+shortcut for it, and this skill does not fetch either page for them.
 
 If the call is borderline, tell them to ask a genealogist for a second
 opinion rather than guess alone.
@@ -72,9 +82,11 @@ becomes the README's new "Notes for reviewers."
     `supporting_sources` to the corrected answer.
   - Outcome 3: replace the findings with a `"polarity": "avoid"` finding
     naming the wrong claim, paired with a `required: true` finding
-    documenting the negative conclusion. Follow
-    `eval/tests/e2e/thomas-seaver-other-wife/expected-findings.json` as the
-    worked shape.
+    documenting the negative conclusion. Copy the JSON *shape* from
+    `eval/tests/e2e/thomas-seaver-other-wife/expected-findings.json` — that
+    file is a valid instance of the pair. (Its README is not a model for
+    yours: that fixture was authored in this shape from the start, not
+    resolved from a hint.)
 
   Only use the fields spec §3.4 defines: `id`, `type`, `description`,
   `details`, `polarity`, `supporting_sources`, `required`. **Never write
@@ -83,9 +95,12 @@ becomes the README's new "Notes for reviewers."
   it anyway.
 
 - **`README.md`** — replace the "DRAFT PENDING ADJUDICATION" paragraph under
-  "Notes for reviewers" with the genealogist's conclusion and reasoning.
-  Match the level of detail in `thomas-seaver-other-wife`'s or
-  `heinrich-dewus-children-death`'s README.
+  "Notes for reviewers" with the genealogist's conclusion and reasoning. No
+  fixture has been resolved yet, so there is no example to imitate; write the
+  paragraph so the next person can re-derive the call without redoing the
+  research — the verdict, what evidence decided it, and what was searched and
+  came up empty. Remove the marker text itself: it is the only signal that
+  distinguishes a resolved fixture from a draft.
 
 - **`fixture.json`** — update `notes` if it still describes the fixture as
   an unverified draft.

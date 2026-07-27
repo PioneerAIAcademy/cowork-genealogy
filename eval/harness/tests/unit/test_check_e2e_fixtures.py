@@ -87,6 +87,54 @@ def test_git_added_filters_to_primary_e2e_runlogs(monkeypatch):
     ]
 
 
+# --- Unresolved-draft check (warn only) -----------------------------------
+
+
+def _write_fixture_readme(repo_root: Path, slug: str, *, draft: bool) -> None:
+    d = repo_root / "eval" / "tests" / "e2e" / slug
+    d.mkdir(parents=True, exist_ok=True)
+    marker = "**DRAFT PENDING ADJUDICATION.** Transcribed from an unverified hint."
+    body = f"# {slug}\n\n## Notes for reviewers\n\n"
+    (d / "README.md").write_text(
+        body + (marker if draft else "Resolved: the hint is a true match."),
+        encoding="utf-8",
+    )
+
+
+def test_draft_fixture_with_committed_run_warns(tmp_path, monkeypatch):
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    rel = _make_e2e_run(tmp_path, "smith", "2026-06-15_10-00-00", tree=True, ann=True)
+    _write_fixture_readme(tmp_path, "smith", draft=True)
+    warnings = check_e2e_fixtures.check_added_runlogs_resolved([rel])
+    assert len(warnings) == 1
+    assert "smith" in warnings[0]
+    assert check_e2e_fixtures.DRAFT_MARKER in warnings[0]
+
+
+def test_resolved_fixture_does_not_warn(tmp_path, monkeypatch):
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    rel = _make_e2e_run(tmp_path, "smith", "2026-06-15_10-00-00", tree=True, ann=True)
+    _write_fixture_readme(tmp_path, "smith", draft=False)
+    assert check_e2e_fixtures.check_added_runlogs_resolved([rel]) == []
+
+
+def test_missing_fixture_readme_does_not_warn(tmp_path, monkeypatch):
+    """A run log with no fixture dir (renamed/removed) is silent, not a crash."""
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    rel = _make_e2e_run(tmp_path, "smith", "2026-06-15_10-00-00", tree=True, ann=True)
+    assert check_e2e_fixtures.check_added_runlogs_resolved([rel]) == []
+
+
+def test_two_runs_of_one_draft_fixture_warn_once(tmp_path, monkeypatch):
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    rels = [
+        _make_e2e_run(tmp_path, "smith", "2026-06-15_10-00-00", tree=True, ann=True),
+        _make_e2e_run(tmp_path, "smith", "2026-06-15_18-00-00", tree=True, ann=True),
+    ]
+    _write_fixture_readme(tmp_path, "smith", draft=True)
+    assert len(check_e2e_fixtures.check_added_runlogs_resolved(rels)) == 1
+
+
 # --- main() exit-code behavior --------------------------------------------
 
 
@@ -109,3 +157,14 @@ def test_main_skips_without_pr_context(monkeypatch):
     """No PR env (BASE_SHA/HEAD_SHA unset) → gate is skipped, exit 0."""
     monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: None)
     assert check_e2e_fixtures.main() == 0
+
+
+def test_main_draft_warning_does_not_fail_the_job(tmp_path, monkeypatch, capsys):
+    """An unresolved-draft fixture warns but must never change the exit code —
+    20 people working drafts in parallel can't have this blocking their PRs."""
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    rel = _make_e2e_run(tmp_path, "smith", "2026-06-15_10-00-00", tree=True, ann=True)
+    _write_fixture_readme(tmp_path, "smith", draft=True)
+    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
+    assert check_e2e_fixtures.main() == 0
+    assert "::warning::" in capsys.readouterr().out
