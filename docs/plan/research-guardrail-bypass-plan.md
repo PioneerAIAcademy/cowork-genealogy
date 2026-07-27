@@ -421,3 +421,50 @@ found (§6); content-level validation of `stop_criteria`/`log_entry_ids`
 skill's own nested references, an assumption the *current* architecture
 already depends on, not one this plan introduces (§6); whether `gps-mentor`'s
 own gate is itself skippable (§6).
+
+## 9. First live run — `bagley-father-1884` (2026-07-27)
+
+The `eval/tests/e2e/bagley-father-1884` fixture (§ authored to exercise this
+plan) surfaced a real instance of the exact bug this plan targets, on its
+first run, before any of §4.1's shadow logging had a chance to be tuned:
+
+- At tool call index 86 the orchestrator wrote a single 26-op `research_append`
+  batch directly — creating a brand-new tree person (the father) and linking
+  13 assertions to him — never through `person-evidence`. The tell: a raw
+  `Read` of `person-evidence/SKILL.md` at index 77, immediately before, the
+  same read-and-improvise shape found in the `wilkins-death-kentucky` runlog
+  while writing this plan. `person-evidence` was invoked as a `Skill` 52 tool
+  calls later, but only for a separately-extracted, later record — never for
+  the write at index 86. `same_person` was called **zero times in the entire
+  run**.
+- §4.4's "invoked anywhere" hard-fail did not catch this — `person-evidence`
+  *was* invoked somewhere in the run, just not for this write. Only §4.1's
+  shadow-mode recency-window check caught it (one clean hit, no false
+  positive on the legitimate person-evidence write 3 calls after its proper
+  invocation at index 138).
+- The judge scored the run `pass` (proof_quality 3/3). The blind human
+  annotation independently downgraded it: `f1: partial`, proof_quality 2 —
+  "David Bagley added as a new person... but the person is not pinned to an
+  identity — no birth fact, no death fact — and the agent's own narrative
+  surfaces a co-resident 'David Bagley Jr.' in Topsham, so the tree as
+  written does not distinguish which David Bagley was named." This is
+  independent, content-level corroboration (a genealogist grading the
+  research quality, with no visibility into the orchestration-bypass
+  detection) that skipping identity scoring had a real, non-theoretical
+  consequence here — not just a missed formality.
+
+**Added as a result:** `find_person_evidence_missing_same_person` in
+`harness/skill_invocation.py` — every brand-new tree person that receives a
+`person_evidence` link must have been the subject of at least one
+`same_person` call somewhere in the run. Deliberately whole-run-scope like
+§4.4's other checks, not windowed like §4.1: `same_person` is a required
+tool call, not a proximity heuristic, so "was it called for this person" is
+a fact, not a heuristic — no shadow period needed, wired straight into the
+hard-fail path alongside `find_effects_without_invocation` and
+`find_missing_mentor_verdicts`. It does not generalize to the other three
+guardrail skills — none has an equivalently unambiguous required-tool
+fingerprint the way identity-linking has `same_person` — so those stay on
+§4.1's windowed, shadow-mode path.
+
+This run is the first real calibration data point for §4.1's recency window
+and is worth keeping (graded, not discarded) for that purpose.

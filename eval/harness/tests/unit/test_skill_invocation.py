@@ -8,6 +8,7 @@ from harness.skill_invocation import (
     GUARDRAIL_SKILLS,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
+    find_person_evidence_missing_same_person,
     find_unguarded_protected_writes,
     owning_skills,
     recently_succeeded,
@@ -363,3 +364,125 @@ def test_does_not_flag_a_proof_summary_on_an_unresolved_question():
 def test_empty_research_has_no_violations():
     assert find_missing_mentor_verdicts({}) == []
     assert find_missing_mentor_verdicts(None) == []
+
+
+# --- find_person_evidence_missing_same_person --------------------------------
+
+
+def _same_person_call(primary_id1=None, primary_id2=None, is_error=False):
+    args = {"gedcomx1": {}, "gedcomx2": {}}
+    if primary_id1 is not None:
+        args["primaryId1"] = primary_id1
+    if primary_id2 is not None:
+        args["primaryId2"] = primary_id2
+    entry = {"tool": "mcp__genealogy__same_person", "args": args}
+    if is_error:
+        entry["is_error"] = True
+    return entry
+
+
+def test_flags_a_new_person_linked_with_zero_same_person_calls():
+    """The bagley-father-1884 case: person-evidence invoked, but not for
+    this link, and same_person never called for the new person at all."""
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    calls = [_skill_call("person-evidence")]  # invoked, but irrelevant here
+    violations = find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []})
+    assert len(violations) == 1
+    assert "I1" in violations[0]
+
+
+def test_does_not_flag_when_same_person_was_called_as_primaryId1():
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    calls = [_same_person_call(primary_id1="I1", primary_id2="p_260268760900")]
+    assert find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []}) == []
+
+
+def test_does_not_flag_when_same_person_was_called_as_primaryId2():
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    calls = [_same_person_call(primary_id1="p_260268760900", primary_id2="I1")]
+    assert find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []}) == []
+
+
+def test_a_same_person_call_for_a_different_person_does_not_clear_the_flag():
+    """The crude 'was same_person called at all' version would wrongly clear
+    this — this is exactly the precision gap that version was rejected for."""
+    tree = {
+        "persons": [
+            {"id": "I1", "names": [{"given": "David"}]},
+            {"id": "I2", "names": [{"given": "Someone Else"}]},
+        ]
+    }
+    research = {
+        "person_evidence": [
+            {"id": "pe_001", "person_id": "I1"},
+            {"id": "pe_002", "person_id": "I2"},
+        ]
+    }
+    # same_person is called, but only for I2 -- I1 is still unscored.
+    calls = [_same_person_call(primary_id1="p_999", primary_id2="I2")]
+    violations = find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []})
+    assert len(violations) == 1
+    assert "I1" in violations[0]
+
+
+def test_an_errored_same_person_call_does_not_count_as_scoring():
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    calls = [_same_person_call(primary_id1="I1", primary_id2="p_999", is_error=True)]
+    violations = find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []})
+    assert len(violations) == 1
+
+
+def test_does_not_flag_a_person_already_in_the_starting_tree():
+    """Only BRAND-NEW persons are in scope -- an already-known person
+    (e.g. the research subject) confirming their own identity again is not
+    what this check is for; find_effects_without_invocation's coarser
+    unlinked-person check covers the general case."""
+    seed = {"id": "MJDL-Q8B", "names": [{"given": "William"}]}
+    tree = {"persons": [seed]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "MJDL-Q8B"}]}
+    calls = []  # no same_person call anywhere
+    assert find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": [seed]}) == []
+
+
+def test_does_not_flag_a_new_person_with_no_person_evidence_link_at_all():
+    """No link yet -> nothing for this check to flag (find_effects_without_
+    invocation's unlinked-person check is the one that covers this case)."""
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": []}
+    assert find_person_evidence_missing_same_person([], research, tree, starting_tree={"persons": []}) == []
+
+
+def test_multiple_new_persons_only_unscored_ones_flagged():
+    tree = {
+        "persons": [
+            {"id": "I1", "names": [{"given": "David"}]},
+            {"id": "I2", "names": [{"given": "Sarah"}]},
+        ]
+    }
+    research = {
+        "person_evidence": [
+            {"id": "pe_001", "person_id": "I1"},
+            {"id": "pe_002", "person_id": "I2"},
+        ]
+    }
+    calls = [_same_person_call(primary_id1="p_1", primary_id2="I1")]  # only I1 scored
+    violations = find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []})
+    assert len(violations) == 1
+    assert "I2" in violations[0]
+
+
+def test_no_starting_tree_treats_every_current_person_as_new():
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    # Best-effort with no baseline: still flags an unscored link.
+    violations = find_person_evidence_missing_same_person([], research, tree)
+    assert len(violations) == 1
+
+
+def test_empty_tree_and_research_have_no_violations():
+    assert find_person_evidence_missing_same_person([], {}, {}) == []
+    assert find_person_evidence_missing_same_person([], None, None) == []

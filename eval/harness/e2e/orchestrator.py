@@ -44,6 +44,7 @@ from harness.context_policy import (
 from harness.skill_invocation import (
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
+    find_person_evidence_missing_same_person,
     find_unguarded_protected_writes,
 )
 
@@ -1250,9 +1251,23 @@ async def run_e2e_test(
         # check, this only looks at whether the skill ran AT ALL across the
         # whole run, so it's far less prone to false positives and safe to
         # hard-fail on immediately rather than roll out in shadow mode first.
-        guardrail_effects_without_invocation = find_effects_without_invocation(
-            tool_calls, final_research, final_tree, starting_tree=starting_tree
-        ) + find_missing_mentor_verdicts(final_research)
+        #
+        # find_person_evidence_missing_same_person is a separate, also-hard,
+        # also-non-windowed check added after the first real run of
+        # bagley-father-1884 showed the gap in "invoked anywhere": that run
+        # linked a brand-new person across 13 person_evidence entries with
+        # zero same_person calls in the whole run, while person-evidence
+        # ITSELF was invoked 52 tool calls later for unrelated work — passing
+        # the "invoked anywhere" bar while still skipping the identity-scoring
+        # doctrine entirely. This checks the specific required tool for the
+        # specific person instead of the skill's mere presence in the run.
+        guardrail_effects_without_invocation = (
+            find_effects_without_invocation(tool_calls, final_research, final_tree, starting_tree=starting_tree)
+            + find_missing_mentor_verdicts(final_research)
+            + find_person_evidence_missing_same_person(
+                tool_calls, final_research, final_tree, starting_tree=starting_tree
+            )
+        )
         if guardrail_effects_without_invocation:
             verdict = "fail"
             judge_output = {

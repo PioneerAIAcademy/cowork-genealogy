@@ -349,3 +349,82 @@ def find_missing_mentor_verdicts(research: dict[str, Any] | None) -> list[str]:
         "'proof-critique' evaluations[] verdict on record (the mandatory gps-mentor gate)"
         for ps_id in missing
     ]
+
+
+def find_person_evidence_missing_same_person(
+    tool_calls: list[dict[str, Any]],
+    research: dict[str, Any] | None,
+    tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[str]:
+    """Every BRAND-NEW tree person (not present in `starting_tree`) that
+    receives a `person_evidence` link must have been the subject of at least
+    one `same_person` call somewhere in the run — research/SKILL.md's own
+    doctrine ("scores every cross-record link with `same_person` before it
+    links").
+
+    This is a deliberately different, narrower question than
+    `find_effects_without_invocation`'s "was `person-evidence` invoked
+    anywhere" check: it asks whether the specific REQUIRED TOOL ran for THIS
+    specific person, so it catches the case that check cannot — a new
+    identity linked with zero scoring, even when `person-evidence` *was*
+    properly invoked elsewhere in the same run for unrelated work. Confirmed
+    live: the `bagley-father-1884` run linked a brand-new person (the
+    father) across 13 `person_evidence` entries with zero `same_person`
+    calls anywhere in the run, while `person-evidence` itself was invoked 52
+    tool calls later for a different, later-extracted record — invisible to
+    the "invoked anywhere" check, caught by this one.
+
+    `same_person` takes two RECORD-PERSONA arguments (`primaryId1`/
+    `primaryId2`), not a tree `person_id` — but when one side of a call IS
+    the tree, that side's `primaryId` is documented to equal a `persons[].id`
+    in its `gedcomx`, which for a tree-side call is the tree person id
+    itself (confirmed against a live example — a committed
+    `anders-monsen-ancestry` run calls `same_person` with `primaryId2:
+    "LKFW-9XH"`, a literal FamilySearch tree person id). So this is a flat
+    string match against `primaryId1`/`primaryId2` — no need to join through
+    assertions/records.
+
+    Whole-run, no proximity window — same false-positive profile as
+    `find_effects_without_invocation`'s other checks, deliberately not the
+    windowed heuristic `find_unguarded_protected_writes` uses.
+    """
+    research = research or {}
+    tree = tree or {}
+    persons = tree.get("persons") if isinstance(tree.get("persons"), list) else []
+    starting_persons = (
+        (starting_tree or {}).get("persons") if isinstance((starting_tree or {}).get("persons"), list) else []
+    )
+    starting_ids = {p.get("id") for p in starting_persons if isinstance(p, dict)}
+    # No baseline: best-effort, treat every current person as new (may
+    # over-flag) — same convention find_effects_without_invocation documents.
+    new_person_ids = {p.get("id") for p in persons if isinstance(p, dict) and p.get("id") not in starting_ids}
+
+    person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
+    linked_new_person_ids = {
+        pe.get("person_id")
+        for pe in person_evidence
+        if isinstance(pe, dict) and pe.get("person_id") in new_person_ids
+    }
+    if not linked_new_person_ids:
+        return []
+
+    scored_ids: set[str] = set()
+    for entry in tool_calls:
+        if entry.get("is_error") is True:
+            continue
+        if bare_tool_name(entry.get("tool", "")) != "same_person":
+            continue
+        args = entry.get("args") or {}
+        for key in ("primaryId1", "primaryId2"):
+            v = args.get(key)
+            if isinstance(v, str):
+                scored_ids.add(v)
+
+    missing = sorted(pid for pid in linked_new_person_ids if pid not in scored_ids)
+    return [
+        f"tree person '{pid}' is new this run and has a person_evidence link, but 'same_person' "
+        "was never called for it anywhere in the run — the identity was asserted, never scored"
+        for pid in missing
+    ]
