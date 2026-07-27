@@ -468,3 +468,59 @@ fingerprint the way identity-linking has `same_person` — so those stay on
 
 This run is the first real calibration data point for §4.1's recency window
 and is worth keeping (graded, not discarded) for that purpose.
+
+## 10. Retroactive corpus scan and its two follow-on issues
+
+`eval/harness/e2e/guardrail_shadow_report.py` replays
+`find_unguarded_protected_writes` against every already-committed e2e
+runlog's persisted `tool_calls` — no new API spend, no need to wait for new
+live runs to accumulate a calibration sample (§4.1's window can be tuned
+against history; new runs are a validation set on top of that, not the
+primary source). Run against the full corpus (99 committed results, all
+fixtures):
+
+| window | violations | runs affected | by skill |
+|---|---|---|---|
+| 10 | 723 | 93/99 | conflict-resolution=81, person-evidence=277, proof-conclusion=301, research-exhaustiveness=64 |
+| 20 | 610 | 90/99 | conflict-resolution=79, person-evidence=203, proof-conclusion=268, research-exhaustiveness=60 |
+| 40 | 530 | 87/99 | conflict-resolution=79, person-evidence=138, proof-conclusion=258, research-exhaustiveness=55 |
+| 80 | 462 | 83/99 | conflict-resolution=79, person-evidence=85, proof-conclusion=254, research-exhaustiveness=44 |
+| 150 | 430 | 81/99 | conflict-resolution=79, person-evidence=56, proof-conclusion=251, research-exhaustiveness=44 |
+
+The count barely drops from window=10 to window=150 — most of these are not
+"the window was a little tight." Spot-checked 3 of the ~700+ flagged
+violations before trusting the scale of this:
+
+- **`alvro-taylor-marriage-1931` (2026-07-15) — confirmed genuine, and worse
+  than `bagley-father-1884`.** The entire 95-tool-call run invokes only
+  `question-selection`/`research-plan`/`search-records`, then does
+  everything else inline: 27 `person_evidence` appends, a `tree_edit`
+  relationship, an `exhaustive_declaration` write, and a `proof_summaries`
+  append. Zero invocations of any of the four guardrail skills, ever, in the
+  whole run. Verdict: **pass**.
+- **`anders-monsen-ancestry` (2026-07-09) — real signal, but noisy.** Its
+  Skill list includes `assertion-classification`/`check-warnings` — names
+  that don't exist in the current four-skill architecture. Old enough that
+  direct comparison to today's routing table isn't clean; a real caveat for
+  the corpus (older runs used a different skill decomposition, which will
+  read as false-signal noise until filtered out or excluded).
+
+Only 3 samples in, not enough to pick a window size or to say what fraction
+of the 430-723 corpus-wide count is genuine vs. old-skill-naming noise. Two
+GitHub issues track the two different things this scan surfaced, deliberately
+kept separate because they have different audiences and different urgency:
+
+- [**#911**](https://github.com/PioneerAIAcademy/cowork-genealogy/issues/911) —
+  calibrate the §4.1 window before graduating it from shadow-mode logging to
+  actual denial. An engineering task: finish the spot-checking, tune the
+  window, collect ~10-15 new live runs across diverse question types to
+  validate against current (not historical) skill behavior, then graduate.
+- [**#913**](https://github.com/PioneerAIAcademy/cowork-genealogy/issues/913) —
+  the `alvro-taylor-marriage-1931` finding on its own terms: a confirmed
+  historical **pass** verdict that bypassed every GPS guardrail skill
+  entirely, undetectable by the judge or any existing eval gate. This is a
+  question about whether past e2e verdicts can be trusted, not about tuning
+  anything — its suggested next step is running the two *non-windowed* §4.4
+  checks (`find_effects_without_invocation`, `find_missing_mentor_verdicts`)
+  retroactively across the corpus for a precise count, since those need no
+  window-size judgment call at all.
