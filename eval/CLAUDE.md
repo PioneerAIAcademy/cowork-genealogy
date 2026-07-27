@@ -64,7 +64,8 @@ eval/
 > validates every correction against `ann.schema.json` before saving. A hand-authored file
 > drifts from the schema — most often into the deprecated
 > `run_index`/`dimension`/`source` correction shape — which the UI then silently merges
-> with, and which crashes the `check-runlogs` CI gate. If an annotation needs fixing, open
+> with, and which crashes the `check-runlogs` CI gate. The same goes for run-log `.json`
+> files: the **harness** writes those, never a human. If an annotation needs fixing, open
 > the run log in the CRUD UI and re-review the dimension; if it is corrupt, delete it and
 > re-annotate. The only correct way to produce either file is to run the tooling.
 >
