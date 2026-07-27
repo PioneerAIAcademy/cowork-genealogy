@@ -565,6 +565,26 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `record-extraction/SKILL.md`. The instrument if it recurs is a
   `context_policy` PreToolUse rule keyed on `agent_id` — eval-only, so it
   would not cover Cowork or the hosted path.
+- [ ] **Investigate giving each of the four GPS guardrail skills its own
+  write tool** (`proof_conclusion_append` / `exhaustiveness_declare` /
+  `person_evidence_link` / `conflict_resolve`, splitting `research_append`'s
+  `proof_summaries`/`exhaustive_declaration`/`person_evidence`/`conflicts`
+  sections off the same way `extraction_append` split off record-extraction,
+  #695). Raised during the PR #893 orchestration-bypass investigation — see
+  `docs/plan/research-guardrail-bypass-plan.md` §3/§5. Splitting doesn't
+  attribute a call to a skill by itself in a shared session (a split tool is
+  exactly as callable by the main thread as the section-branch version is
+  today), but it (a) turns a caller-tracking `PreToolUse` hook into a flat
+  tool-name lookup instead of parsing `ops[]`/`section` out of args, and (b)
+  is close to a prerequisite for ever giving one of these four skills a hard
+  `agent_id`/`disallowedTools` boundary, since that enforcement is tool-name-
+  granular only — a shared `research_append` can't be partially denied.
+  Cost: real multi-file scaffolding (schema/handler/tests/manifest/
+  `mock_mcp.py`/lint scripts) × 4, plus a permanent increase in Cowork's
+  up-front tool-schema count (Cowork does not defer schemas via `ToolSearch`
+  the way both harnesses do). Worth doing if/when one of the four skills is
+  converted to an agent; not worth it standalone. Decide after the plan's
+  caller-id hook ships and its practical gaps, if any, are known.
 - **MCP tool-name prefix differs between Cowork and the harnesses — agent
   `tools:` lists do not bind in Cowork.** Every plugin agent declares
   `mcp__genealogy__*`, correct for the unit + e2e harnesses. A live Cowork

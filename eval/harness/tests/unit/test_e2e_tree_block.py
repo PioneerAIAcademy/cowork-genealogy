@@ -127,3 +127,42 @@ def test_non_turn_cap_errors_not_reclassified():
     assert not is_turn_cap_error("some other SDK error")
     assert not is_turn_cap_error(None)
     assert not is_turn_cap_error("")
+
+
+# --- direct project-file write block (research-guardrail-bypass-plan.md §4.3) --
+
+def test_direct_write_to_research_json_is_blocked():
+    from e2e.orchestrator import direct_project_file_write
+    assert direct_project_file_write("Write", {"file_path": "/tmp/proj/research.json"}) == "research.json"
+
+
+def test_direct_edit_to_tree_gedcomx_is_blocked():
+    from e2e.orchestrator import direct_project_file_write
+    assert (
+        direct_project_file_write("Edit", {"file_path": "/tmp/proj/tree.gedcomx.json"})
+        == "tree.gedcomx.json"
+    )
+
+
+def test_relative_path_still_matches_on_basename():
+    from e2e.orchestrator import direct_project_file_write
+    assert direct_project_file_write("Write", {"file_path": "research.json"}) == "research.json"
+
+
+def test_write_to_an_unrelated_file_is_not_blocked():
+    from e2e.orchestrator import direct_project_file_write
+    assert direct_project_file_write("Write", {"file_path": "/tmp/proj/notes.md"}) is None
+
+
+def test_non_write_edit_tools_are_never_matched():
+    from e2e.orchestrator import direct_project_file_write
+    assert direct_project_file_write("Read", {"file_path": "/tmp/proj/research.json"}) is None
+    assert direct_project_file_write(
+        "mcp__genealogy__research_append", {"file_path": "/tmp/proj/research.json"}
+    ) is None
+
+
+def test_missing_file_path_does_not_crash():
+    from e2e.orchestrator import direct_project_file_write
+    assert direct_project_file_write("Write", {}) is None
+    assert direct_project_file_write("Write", None) is None
