@@ -24,11 +24,17 @@ identical to it so `snapshot --check` can audit upstream drift.
 
 ## Expected difficulty
 
-hard — see "Notes for reviewers" below for the reviewer's read on
-match strength.
+hard — a false-match adjudication (the answer is that the hint is wrong);
+see "Notes for reviewers" below for the evidence that decided it.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 6, flag `adds_son`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — France, Nord, Parish and Civil Registration, 1524-1893: marriage entry, 21 June 1825, Bambecque, for Pierre Jacques Dominique Tuilier (son of Pierre Tuilier and Constance Ley) and Constance Victoire Depuydt. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming the 1796 Pierre Jacques Dominique Tuilier birth, plus a `required` finding that the report documents the rejection.
+**Resolved (issue #856): FALSE MATCH.** The hint — France, Nord, Parish and Civil Registration, 1524-1893: marriage entry, 21 June 1825, Bambecque, for Pierre Jacques Dominique Tuilier (b. 1796; parents named as "Pierre Tuilier" and "Constance Ley") and Constance Victoire Depuydt — does **not** establish a son of Pierre Albert Tullier and Constance Dorothé Leys. The 1796 groom is most consistent with a *different* Pierre-Tuilier/Constance-Ley couple in the same parish.
 
-Points a reviewer should weigh **against** the match: the tree records Pierre Albert Tullier's marriage to Constance Dorothé Leys as 24 September 1800 — but a son born in 1796 would predate that marriage by four years, which either means the couple had a child before their recorded marriage date, the tree's marriage date is wrong, or this is a different Pierre Tuilier/Tullier and Constance Leys/Ley pairing in the same small Bambecque parish ("Pierre" and "Constance" are common regional names, and "Tuilier"/"Tullier" is a spelling variant pair already present elsewhere in the tree, e.g. the subject's own name). In favor: same given names for both parents, and the same parish (Bambecque, Nord).
+What decided it:
+- **Timing conflict.** Pierre Albert Tullier married Constance Dorothé Leys on 24 September 1800; a son born 1796 predates that marriage by four years. Their own documented childbearing in Bambecque runs 1801–1816.
+- **The couple's own children name the parents in full.** Their birth registrations (same France, Nord collection) record the parents as "Pierre Albert Tuilier" and "Constance Dorothé Ley" — e.g. François Cornil Albert (b. 16 Nov 1801, not yet in the tree), Barbe Henriete Constance (1805), Reine Sophie (1808), Pierre Jacques Louis (1816). The 1825 marriage names the groom's parents only as bare "Pierre"/"Constance" — no "Albert," no "Dorothé."
+- **Demographics.** A groom born 1796 implies parents married in the early 1790s; Pierre Albert (b. 1777) was 19 and unmarried in 1796.
+- **Common names.** "Pierre"/"Constance" and the Tuilier/Tullier + Ley/Leys spelling variants are common in Bambecque, so a same-named different couple is the parsimonious reading.
+
+What was searched and came up empty: no birth/baptism record ties a 1796 Pierre Jacques Dominique specifically to Pierre Albert Tuilier + Constance Dorothé Ley, and the tree person carries no attached sources corroborating the hint. Accordingly `expected-findings.json` is a `polarity: "avoid"` guard (the agent must not attach the 1796 son to this couple) paired with a `required` documented-negative-conclusion finding.
