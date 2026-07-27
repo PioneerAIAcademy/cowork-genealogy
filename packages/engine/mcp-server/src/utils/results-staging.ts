@@ -101,7 +101,16 @@ export async function finalizeStagedResults(args: {
   stagedResultsRef: string;
   logId: string;
   expectedTool: string;
-}): Promise<{ resultsRef: string; returnedCount: number }> {
+}): Promise<{
+  resultsRef: string;
+  returnedCount: number;
+  /** The producing tool's own echo of its query, when the staged payload
+   *  carries one (`record_search` sets it via `echoQuery`). Lets
+   *  `research_log_append` fill `query` host-side so the model never
+   *  re-serializes an ARK-dense object it can only get wrong. Undefined when
+   *  the payload has no `query`. */
+  payloadQuery?: Record<string, unknown>;
+}> {
   const { projectPath, stagedResultsRef, logId, expectedTool } = args;
 
   // 1. Path-traversal guard, then require the ref to live under results/.staging/.
@@ -156,7 +165,16 @@ export async function finalizeStagedResults(args: {
   // 6. Consume the staged file (best-effort; a lost race is harmless).
   await unlink(abs).catch(() => {});
 
-  return { resultsRef, returnedCount };
+  // The producer's echoed query, if it recorded one. Guarded on a plain object
+  // so a malformed payload degrades to "no default" rather than persisting a
+  // string or array into a field the schema types as an object.
+  const rawQuery = (payload as { query?: unknown }).query;
+  const payloadQuery =
+    rawQuery !== null && typeof rawQuery === "object" && !Array.isArray(rawQuery)
+      ? (rawQuery as Record<string, unknown>)
+      : undefined;
+
+  return { resultsRef, returnedCount, payloadQuery };
 }
 
 async function pruneStale(stagingDir: string): Promise<void> {
