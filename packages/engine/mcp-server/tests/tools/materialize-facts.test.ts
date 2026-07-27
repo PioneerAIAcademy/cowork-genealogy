@@ -423,4 +423,256 @@ describe("materialize_facts", () => {
     const p = findPerson(await readTree(), "I2");
     expect((p.facts ?? []).length).toBe(0);
   });
+
+  // ── Batch form (`ops[]`) — mirrors tree-edit.test.ts's own batch suite ────────
+
+  it("(14) batch: multiple personas materialize in one validate-once/write-once call", async () => {
+    const stub = { id: "I3", gender: "Female", names: [{ id: "N3", given: "Ann", surname: "Doe" }] };
+    await writeProject(
+      tree({ persons: [stub] }),
+      research({
+        sources: [S1],
+        assertions: [
+          ...enrichPersona(), // REC-SON / child -> new person
+          assertion("a_010", { record_id: "REC14", record_role: "principal", fact_type: "birth", date: "1852" }),
+        ],
+      }),
+    );
+    const before = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+
+    const result = await materializeFacts({
+      projectPath: dir,
+      ops: [
+        { personId: "I2", recordId: "REC-SON", recordRole: "child" },
+        { personId: "I3", recordId: "REC14", recordRole: "principal" },
+      ],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("results" in result)) return;
+    expect(result.results).toHaveLength(2);
+    expect(result.results[0]).toMatchObject({ personId: "I2", created: true, factsAdded: 1, namesAdded: 1 });
+    expect(result.results[1]).toMatchObject({ personId: "I3", created: false, factsAdded: 1 });
+    expect(result.filesWritten).toEqual(["tree.gedcomx.json"]);
+
+    const t = await readTree();
+    expect(findPerson(t, "I2")).toBeTruthy();
+    expect(findPerson(t, "I3").facts).toHaveLength(1);
+    // Exactly one write cycle: the .bak captures the pre-batch state, not an
+    // intermediate one between the two ops.
+    expect(await readFile(join(dir, "tree.gedcomx.json.bak"), "utf-8")).toBe(before);
+  });
+
+  it("(15) batch all-or-nothing: op[1] failing writes NOTHING, not even op[0]'s facts", async () => {
+    await writeProject(
+      tree(), // tree.sources has only S1
+      research({
+        sources: [S1, source("src_099", "S99")],
+        assertions: [
+          ...enrichPersona(), // REC-SON / child, resolves fine via S1
+          assertion("a_099", {
+            source_id: "src_099",
+            record_id: "REC15",
+            record_role: "principal",
+            fact_type: "birth",
+            date: "1860",
+          }),
+        ],
+      }),
+    );
+    const before = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+
+    const result = await materializeFacts({
+      projectPath: dir,
+      ops: [
+        { personId: "I2", recordId: "REC-SON", recordRole: "child" },
+        { personId: "I3", recordId: "REC15", recordRole: "principal" }, // S99 has no tree S-entry
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors[0]).toMatch(/^ops\[1\]:/);
+    expect(result.errors.join(" ")).toMatch(/S99/);
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(before); // op[0]'s facts also rolled back
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+  });
+
+  it("(16) batch id-allocator continuity: two create-or-enrich ops (personId omitted) mint DISTINCT ids", async () => {
+    await writeProject(
+      tree(), // only I1 present
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_020", { record_id: "REC16A", record_role: "child", fact_type: "name", value: "Alice Smith" }),
+          assertion("a_021", { record_id: "REC16A", record_role: "child", fact_type: "birth", date: "1851" }),
+          assertion("a_022", { record_id: "REC16B", record_role: "child", fact_type: "name", value: "Bea Smith" }),
+          assertion("a_023", { record_id: "REC16B", record_role: "child", fact_type: "birth", date: "1853" }),
+        ],
+      }),
+    );
+
+    const result = await materializeFacts({
+      projectPath: dir,
+      ops: [
+        { recordId: "REC16A", recordRole: "child" }, // personId omitted
+        { recordId: "REC16B", recordRole: "child" }, // personId omitted
+      ],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("results" in result)) return;
+    expect(result.results).toHaveLength(2);
+    expect(result.results[0].created).toBe(true);
+    expect(result.results[1].created).toBe(true);
+    expect(result.results[0].personId).toBe("I2");
+    expect(result.results[1].personId).toBe("I3"); // must not collide with I2
+
+    const t = await readTree();
+    expect(findPerson(t, "I2").names[0].given).toBe("Alice");
+    expect(findPerson(t, "I3").names[0].given).toBe("Bea");
+  });
+
+  it("(17) batch: conflicts_surfaced is scoped to the op that authored it, not leaked across ops", async () => {
+    const stub3 = { id: "I3", gender: "Female", names: [{ id: "N3", given: "Clean", surname: "One" }] };
+    await writeProject(
+      tree({ persons: [stub3] }),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_029", { record_id: "REC17A", record_role: "principal", fact_type: "name", value: "Conflict Vital" }),
+          assertion("a_030", { record_id: "REC17A", record_role: "principal", fact_type: "birth", date: "1850", place: "Nauvoo, Illinois, United States" }),
+          assertion("a_031", { record_id: "REC17A", record_role: "principal", fact_type: "birth", date: "1888", place: "Ogden, Utah, United States" }),
+          assertion("a_032", { record_id: "REC17B", record_role: "principal", fact_type: "birth", date: "1852" }),
+        ],
+      }),
+    );
+
+    const result = await materializeFacts({
+      projectPath: dir,
+      ops: [
+        { personId: "I2", recordId: "REC17A", recordRole: "principal" }, // new person, conflicting births
+        { personId: "I3", recordId: "REC17B", recordRole: "principal" }, // existing stub, clean birth
+      ],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("results" in result)) return;
+    expect(result.results[0].conflicts_surfaced).toHaveLength(1);
+    expect(result.results[0].conflicts_surfaced[0].personId).toBe("I2");
+    expect(result.results[1].conflicts_surfaced).toHaveLength(0); // I3's clean birth is not contaminated by I2's conflict
+  });
+
+  it("(18) batch: the same persona listed twice in one call is idempotent (second occurrence is a no-op)", async () => {
+    await writeProject(tree(), research({ sources: [S1], assertions: enrichPersona() }));
+
+    const result = await materializeFacts({
+      projectPath: dir,
+      ops: [
+        { personId: "I2", recordId: "REC-SON", recordRole: "child" },
+        { personId: "I2", recordId: "REC-SON", recordRole: "child" }, // duplicate within the same batch
+      ],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("results" in result)) return;
+    expect(result.results[0].created).toBe(true);
+    expect(result.results[0].factsAdded).toBe(1);
+    expect(result.results[1].created).toBe(false); // person now exists (minted by op 0, same batch)
+    expect(result.results[1].factsAdded).toBe(0);
+    expect(result.results[1].namesAdded).toBe(0);
+    expect(result.results[1].refsAttached).toBe(0);
+
+    const p = findPerson(await readTree(), "I2");
+    expect(p.facts).toHaveLength(1);
+    expect(p.facts[0].sources).toHaveLength(1); // no duplicate ref
+    expect(p.names).toHaveLength(1);
+  });
+
+  // ── String-coercion: the model sometimes serializes a large `ops` batch as a
+  // JSON *string* (see coerce-json-arg.ts). The tool recovers it rather than
+  // rejecting it into a slow one-op-per-call fallback.
+  it("(19) a JSON-stringified `ops` array is coerced", async () => {
+    await writeProject(tree(), research({ sources: [S1], assertions: enrichPersona() }));
+
+    const opsArray = [{ personId: "I2", recordId: "REC-SON", recordRole: "child" }];
+    const result = await materializeFacts({ projectPath: dir, ops: JSON.stringify(opsArray) as any });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("results" in result)) return;
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]).toMatchObject({ personId: "I2", created: true, factsAdded: 1 });
+  });
+
+  it("(20) rejects an empty ops array", async () => {
+    await writeProject(tree(), research({ sources: [S1], assertions: [] }));
+    const result = await materializeFacts({ projectPath: dir, ops: [] });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/non-empty/);
+  });
+
+  // ── `marriage` is a Couple-relationship event, never a person-level fact
+  // (ut_person_evidence_022 regression: an existing spouse's persona whose only
+  // assertion was `marriage` got materialized straight onto that person, leaving
+  // the Couple relationship itself factless — tree_edit add_relationship owns it) ──
+
+  it("(21) a `marriage` assertion is skipped — never materialized as a person-level fact", async () => {
+    const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] };
+    await writeProject(
+      tree({ persons: [stub] }),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_005", {
+            record_id: "REC-MARR",
+            record_role: "principal",
+            fact_type: "marriage",
+            date: "12 May 1843",
+            place: "Schuylkill County, Pennsylvania, United States",
+          }),
+        ],
+      }),
+    );
+
+    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-MARR", recordRole: "principal" });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.factsAdded).toBe(0); // never a correct person-level write
+    expect(result.factsEnriched).toBe(0);
+    expect(result.refsAttached).toBe(0);
+
+    const p = findPerson(await readTree(), "I2");
+    expect((p.facts ?? []).length).toBe(0); // the Couple relationship + fact is tree_edit's job
+  });
+
+  it("(22) a persona's OTHER assertions still materialize when a `marriage` assertion is mixed in", async () => {
+    const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] };
+    await writeProject(
+      tree({ persons: [stub] }),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_005", { record_id: "REC-MARR", record_role: "principal", fact_type: "marriage", date: "12 May 1843" }),
+          assertion("a_006", {
+            record_id: "REC-MARR",
+            record_role: "principal",
+            fact_type: "residence",
+            value: "Schuylkill County, Pennsylvania, United States",
+          }),
+        ],
+      }),
+    );
+
+    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-MARR", recordRole: "principal" });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.factsAdded).toBe(1); // only Residence — the skip is scoped to the one assertion
+
+    const p = findPerson(await readTree(), "I2");
+    expect(p.facts).toHaveLength(1);
+    expect(p.facts[0].type).toBe("Residence");
+  });
 });

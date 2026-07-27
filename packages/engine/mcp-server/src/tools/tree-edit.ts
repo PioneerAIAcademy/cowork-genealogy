@@ -34,6 +34,7 @@ import { atomicWriteJson, backupIfExists } from "../utils/project-io.js";
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
 import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { resolveSourceRef } from "../utils/source-ref-resolver.js";
 
 export type TreeEditOperation =
   | "add_fact"
@@ -97,6 +98,12 @@ export interface TreeEditOp {
   ark?: string;
   /** Auto-resolve standard_place when a place is set (default true). */
   resolveStandardPlace?: boolean;
+  /** add_relationship only: resolve the edge's (and any inline Couple fact's)
+   *  source-ref from this research.json `relationship`-type assertion instead
+   *  of supplying a literal `relationship.sources` — mirrors
+   *  materialize_facts's resolver (tree-materialization-spec §8). Mutually
+   *  exclusive with a literal ref on `relationship`. */
+  sourceAssertionId?: string;
 }
 
 export interface TreeEditInput extends Partial<TreeEditOp> {
@@ -162,6 +169,21 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
     return JSON.parse(text);
   } catch {
     throw new TreeEditError(`${filename} is not valid JSON`);
+  }
+}
+
+/** Resolve `sourceAssertionId` into a source-ref, wrapped so a missing
+ *  provenance hop surfaces as a TreeEditError (see utils/source-ref-resolver.ts
+ *  for the shared walk, also used by materialize_facts). */
+function resolveRelationshipRef(
+  assertion: any,
+  research: any,
+  tree: SimplifiedGedcomX,
+): SimplifiedSourceReference {
+  try {
+    return resolveSourceRef(assertion, research, tree);
+  } catch (e) {
+    throw new TreeEditError((e as Error).message);
   }
 }
 
@@ -277,6 +299,7 @@ interface AppliedOperation {
 
 async function applyOperation(
   tree: SimplifiedGedcomX,
+  research: any,
   input: TreeEditInput,
 ): Promise<AppliedOperation> {
   const assignedIds: AssignedIds = {};
@@ -456,11 +479,39 @@ async function applyOperation(
       if (!input.relationship) throw new TreeEditError("add_relationship requires a `relationship`");
       if (input.relationship.id) throw new TreeEditError("add_relationship `relationship` must not carry an id");
       const rel: SimplifiedRelationship = { ...input.relationship, id: nextId(tree, "R") };
+
+      // Resolve the edge's source-ref from a research.json `relationship`-type
+      // assertion instead of requiring the caller to hand-walk the provenance
+      // chain (tree-materialization-spec §8: "the same resolver
+      // materialize_facts uses"). A literal `relationship.sources` alongside
+      // it is rejected as ambiguous — pick one.
+      if (input.sourceAssertionId !== undefined) {
+        if (hasNonNullRef(rel)) {
+          throw new TreeEditError(
+            "add_relationship: supply `sourceAssertionId` OR a literal `relationship.sources`, not both",
+          );
+        }
+        const assertion = (Array.isArray(research.assertions) ? research.assertions : []).find(
+          (a: any) => a && a.id === input.sourceAssertionId,
+        );
+        if (!assertion) {
+          throw new TreeEditError(
+            `add_relationship: sourceAssertionId '${input.sourceAssertionId}' not found in research.json assertions`,
+          );
+        }
+        if (assertion.fact_type !== "relationship") {
+          throw new TreeEditError(
+            `add_relationship: sourceAssertionId '${input.sourceAssertionId}' is a '${assertion.fact_type}' ` +
+              "assertion, not a 'relationship' assertion — the edge's provenance must come from the " +
+              "relationship-establishing assertion",
+          );
+        }
+        rel.sources = [resolveRelationshipRef(assertion, research, tree)];
+      }
+
       // The newly-authored edge carries a non-null source-ref (§6/§8): a census
       // etc. establishing a parent-child/spousal edge is evidence from that
-      // record. The relationship object already carries `sources[]`
-      // (TREE_COUPLE_FIELDS / TREE_PARENT_CHILD_FIELDS), so the caller supplies
-      // the ref resolved from the relationship assertion's source_id.
+      // record.
       assertNodeHasRef(rel, "the added relationship edge", "add_relationship");
       tree.relationships = [...(tree.relationships ?? []), rel];
       // Facts supplied on a new relationship (e.g. a Marriage on a Couple) are
@@ -478,6 +529,16 @@ async function applyOperation(
         for (const f of rel.facts) {
           if (f.id) throw new TreeEditError("add_relationship facts must not carry ids — the tool assigns them");
           requireFactShape(f, "add_relationship");
+          // A Couple fact (e.g. Marriage) with no ref of its own inherits the
+          // edge's resolved ref — but ONLY when that ref came from
+          // `sourceAssertionId` (the marriage record IS typically the source
+          // for both the edge and the fact). A literal `relationship.sources`
+          // is NOT auto-inherited onto facts — each still needs its own ref,
+          // unchanged pre-existing behavior (a caller supplying a literal ref
+          // manually is not asking for auto-propagation).
+          if (!hasNonNullRef(f) && input.sourceAssertionId !== undefined && rel.sources) {
+            f.sources = rel.sources.map((s) => ({ ...s }));
+          }
           assertNodeHasRef(f, "each Couple fact", "add_relationship");
           f.id = nextId(tree, "F");
           await maybeResolvePlace(f, f.standard_place !== undefined);
@@ -593,7 +654,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
         const op = input.ops[i];
         try {
           gateOperation(op?.operation, gate);
-          const applied = await applyOperation(tree, { ...op, projectPath });
+          const applied = await applyOperation(tree, research, { ...op, projectPath });
           opWarnings.push(...applied.warnings);
           const r: PerOpResult = { operation: op.operation };
           if (Object.keys(applied.assignedIds).length > 0) r.assignedIds = applied.assignedIds;
@@ -629,7 +690,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       return { ok: false, errors: ["provide either `ops` (batch) or `operation` (single)"] };
     }
     gateOperation(input.operation, gate);
-    const applied = await applyOperation(tree, input);
+    const applied = await applyOperation(tree, research, input);
     const { assignedIds, warnings } = applied;
 
     const validation = await validateParsed(research, tree, { projectPath });
@@ -671,6 +732,14 @@ export const treeEditSchema = {
     "never duplicated onto each spouse. Use materialize_facts to write a record " +
     "persona's sourced facts onto a tree person, or merge_tree_persons to collapse " +
     "duplicate persons (this tool never deletes a person).\n" +
+    "\n" +
+    "add_relationship requires a non-null source-ref on the edge. Prefer " +
+    "`sourceAssertionId` (the research.json `relationship`-type assertion this " +
+    "edge comes from) over a literal `relationship.sources` — the tool resolves " +
+    "assertion.source_id -> research source -> tree S-entry itself (the same " +
+    "resolver materialize_facts uses), so you never hand-walk the chain. Any inline " +
+    "Couple fact (e.g. Marriage) with no ref of its own inherits the same resolved " +
+    "ref. Supply one or the other, not both.\n" +
     "\n" +
     "Pick the `operation` and supply the content (snake_case simplified-GedcomX " +
     "fields) WITHOUT ids — the tool assigns the next F/N/I/R/S id, swaps the " +
@@ -738,6 +807,14 @@ export const treeEditSchema = {
         type: "object",
         description: "The relationship to add (no id). Use `parent`/`child` for ParentChild, `person1`/`person2` for Couple; endpoints must be existing person ids.",
       },
+      sourceAssertionId: {
+        type: "string",
+        description:
+          "add_relationship only: the research.json `relationship`-type assertion this edge comes " +
+          "from. The tool resolves its source-ref itself (assertion.source_id -> research source -> " +
+          "tree S-entry) instead of you supplying a literal `relationship.sources` — mutually " +
+          "exclusive with one.",
+      },
       source: {
         type: "object",
         description: "The source description to add (full, no id — the tool assigns the next S id). Fields: `title` (required), optional `author`, `url`, `citation` — a plain top-level entry, so no place resolution or primary/preferred handling applies. This is the lightweight tree sources[] entry, distinct from the rich research.json source. To refine an existing S entry, use tree_correct's update_source.",
@@ -772,6 +849,7 @@ export const treeEditSchema = {
             name: { type: "object" },
             person: { type: "object" },
             relationship: { type: "object" },
+            sourceAssertionId: { type: "string" },
             source: { type: "object" },
             resolveStandardPlace: { type: "boolean" },
           },

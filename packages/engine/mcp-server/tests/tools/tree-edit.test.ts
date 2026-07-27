@@ -1110,3 +1110,224 @@ describe("tree_edit (batch ops)", () => {
     expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(before);
   });
 });
+
+// ─── add_relationship: sourceAssertionId resolution (tree-materialization-spec
+// §8 — the same resolver materialize_facts uses) ───────────────────────────────
+describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "tree-edit-source-assertion-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(tree: any, research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+
+  const twoPersons = () => ({
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "Thomas", surname: "Flynn", preferred: true }] },
+      { id: "I2", gender: "Male", names: [{ id: "N2", given: "Patrick", surname: "Flynn", preferred: true }] },
+    ],
+    relationships: [],
+    sources: [{ id: "S1", title: "1850 Census" }],
+  });
+
+  function source(over: Record<string, unknown> = {}) {
+    return {
+      id: "src_001",
+      gedcomx_source_description_id: "S1",
+      citation: "Test citation",
+      citation_detail: { who: "", what: "", when_created: "", when_accessed: "", where: "", where_within: "" },
+      source_classification: "original",
+      repository: "Test Repository",
+      access_date: "2026-01-01",
+      ...over,
+    };
+  }
+
+  function relationshipAssertion(over: Record<string, unknown> = {}) {
+    return {
+      id: "a_001",
+      source_id: "src_001",
+      record_id: "REC1",
+      record_role: "child",
+      record_persona_id: null,
+      fact_type: "relationship",
+      value: "",
+      structured_value: { relationship_type: "child", related_person_role: "head_of_household" },
+      date: null,
+      place: null,
+      standard_place: null,
+      information_quality: "primary" as const,
+      informant: "unknown",
+      informant_proximity: "official_duty" as const,
+      evidence_type: "direct" as const,
+      extracted_for_question_ids: [] as string[],
+      ...over,
+    };
+  }
+
+  function research(assertions: any[]) {
+    return {
+      project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+      questions: [],
+      plans: [],
+      log: [],
+      sources: [source()],
+      assertions,
+      person_evidence: [],
+      conflicts: [],
+      hypotheses: [],
+      timelines: [],
+      proof_summaries: [],
+      evaluations: [],
+    };
+  }
+
+  it("resolves the edge's source-ref from the relationship assertion, no literal ref needed", async () => {
+    await writeProject(twoPersons(), research([relationshipAssertion()]));
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2" } as any,
+      sourceAssertionId: "a_001",
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const rel = (await readTree()).relationships[0];
+    expect(rel.sources).toEqual([{ ref: "S1", quality: 3 }]);
+  });
+
+  it("indirect evidence resolves a lower ref quality (2), not 3", async () => {
+    await writeProject(twoPersons(), research([relationshipAssertion({ evidence_type: "indirect" })]));
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2" } as any,
+      sourceAssertionId: "a_001",
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const rel = (await readTree()).relationships[0];
+    expect(rel.sources).toEqual([{ ref: "S1", quality: 2 }]);
+  });
+
+  it("rejects a sourceAssertionId that is not a 'relationship' assertion", async () => {
+    await writeProject(
+      twoPersons(),
+      research([relationshipAssertion({ id: "a_002", fact_type: "birth" })]),
+    );
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2" } as any,
+      sourceAssertionId: "a_002",
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/is a 'birth' assertion, not a 'relationship' assertion/);
+  });
+
+  it("rejects an unknown sourceAssertionId", async () => {
+    await writeProject(twoPersons(), research([relationshipAssertion()]));
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2" } as any,
+      sourceAssertionId: "a_999",
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/a_999.*not found/);
+  });
+
+  it("a missing tree S-entry is an ERROR (mirrors materialize_facts, never a silent null ref)", async () => {
+    const tree = twoPersons();
+    (tree as any).sources = []; // S1 absent
+    await writeProject(tree, research([relationshipAssertion()]));
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2" } as any,
+      sourceAssertionId: "a_001",
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/S1/);
+  });
+
+  it("rejects sourceAssertionId supplied alongside a literal relationship.sources — ambiguous", async () => {
+    await writeProject(twoPersons(), research([relationshipAssertion()]));
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] } as any,
+      sourceAssertionId: "a_001",
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/not both/);
+  });
+
+  it("a Couple Marriage fact with no ref of its own inherits the resolved edge ref", async () => {
+    await writeProject(
+      twoPersons(),
+      research([relationshipAssertion({ id: "a_003", structured_value: { relationship_type: "spouse" } })]),
+    );
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        facts: [{ type: "Marriage", date: "1843" }], // no sources[] of its own
+      } as any,
+      sourceAssertionId: "a_003",
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const rel = (await readTree()).relationships[0];
+    expect(rel.sources).toEqual([{ ref: "S1", quality: 3 }]);
+    expect(rel.facts[0].sources).toEqual([{ ref: "S1", quality: 3 }]);
+  });
+
+  it("composes with the ops[] batch form", async () => {
+    await writeProject(twoPersons(), research([relationshipAssertion()]));
+
+    const r = await treeEdit({
+      projectPath: dir,
+      ops: [
+        {
+          operation: "add_relationship",
+          relationship: { type: "ParentChild", parent: "I1", child: "I2" },
+          sourceAssertionId: "a_001",
+        },
+      ],
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.results[0].assignedIds?.relationship).toBe("R1");
+    const rel = (await readTree()).relationships[0];
+    expect(rel.sources).toEqual([{ ref: "S1", quality: 3 }]);
+  });
+});

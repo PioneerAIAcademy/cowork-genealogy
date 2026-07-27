@@ -350,4 +350,106 @@ describe("research_log_append", () => {
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
+
+  // ── Batch form (`ops[]`) — mirrors materialize-facts.test.ts/tree-edit.test.ts's batch suites ──
+
+  it("(batch) logs multiple entries in one validate-once/write-once call", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { results: [{ recordId: "A" }] },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        { tool: "record_search", query: { surname: "Flynn" }, outcome: "negative", resultsExamined: 0 },
+        {
+          tool: "record_search",
+          query: { surname: "Smith" },
+          outcome: "positive",
+          resultsExamined: 1,
+          stagedResultsRef: handle!.resultsRef,
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("results" in result)) return;
+    expect(result.results).toHaveLength(2);
+    expect(result.results[0]).toMatchObject({ logId: "log_001", resultsRef: null });
+    expect(result.results[1]).toMatchObject({ logId: "log_002", resultsRef: "results/log_002.json" });
+    expect(result.filesWritten).toEqual(["research.json", "results/log_002.json"]);
+
+    const research = await readJson("research.json");
+    expect(research.log).toHaveLength(2);
+    expect(research.log[1].results_ref).toBe("results/log_002.json");
+    expect((await validateProject(dir)).valid).toBe(true);
+  });
+
+  it("(batch) all-or-nothing: op[1] failing writes NOTHING and cleans up op[0]'s sidecar", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { results: [{ recordId: "A" }] },
+    });
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        {
+          tool: "record_search",
+          query: {},
+          outcome: "positive",
+          resultsExamined: 1,
+          stagedResultsRef: handle!.resultsRef,
+        }, // op 0: stages a real sidecar
+        { tool: "record_search", query: {}, outcome: "not-a-real-outcome", resultsExamined: 0 }, // op 1: invalid outcome
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors[0]).toMatch(/^ops\[1\]:/);
+    // Nothing written to research.json...
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    // ...and op 0's sidecar (already written to disk before op 1 ran) is cleaned up too —
+    // not just "the failing op's own" sidecar.
+    expect(await exists("results/log_001.json")).toBe(false);
+  });
+
+  it("(batch) id-allocator continuity: three entries in one call get sequential ids", async () => {
+    await writeProject(baseResearch([logEntry(1)]));
+    const result = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        { tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 },
+        { tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 },
+        { tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("results" in result)) return;
+    expect(result.results.map((r) => r.logId)).toEqual(["log_002", "log_003", "log_004"]);
+  });
+
+  it("(batch) a JSON-stringified `ops` array is coerced", async () => {
+    await writeProject(baseResearch());
+    const opsArray = [{ tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 }];
+    const result = await researchLogAppend({ projectPath: dir, ops: JSON.stringify(opsArray) as any });
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("results" in result)) return;
+    expect(result.results).toHaveLength(1);
+  });
+
+  it("(batch) rejects an empty ops array", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({ projectPath: dir, ops: [] });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/non-empty/);
+  });
 });
