@@ -800,3 +800,37 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   is retained only because it is free and can add nothing the project does not
   already hold. If it ever acquires a cost — a slow read, a correctness risk —
   delete it rather than defend it.
+
+- **`docs/plan/research-performance-2026-07-27.md` is kept deliberately, against
+  the "delete a plan once the work ships" convention** — because C0 (the
+  reasoning-effort A/B, the largest remaining lever) has not shipped. C1–C7 have,
+  and their rationale is in the tool specs, but three things in that plan belong
+  in neither a spec nor a commit message: §1 (the session decomposition and the
+  output-tokens/wall-clock equation), §5.1 (the live probe that refuted this
+  plan's own F2 — the ranker works; the low scores were correct negatives), and
+  §5.3 (the rule audit showing only unanchored SKILL.md prose decays under
+  compaction). Delete or trim it once C0 is decided, and fold those three
+  findings somewhere durable rather than losing them with the file.
+
+- **Nothing prevents the eval corpus drifting behind a tool contract again** —
+  it happened twice unnoticed. `search-records`' rubric was TWO contracts stale
+  (still failing runs for not calling `same_person`/`source_attachments`, folded
+  into `rank_search_matches` months earlier and into `record_search` this PR),
+  and 14 test files' `judge_context` was one contract stale. The corpus was
+  marking the skill down for doing the right thing, and only a regression run
+  surfaced it. A cheap lint would catch both: flag any tool name appearing in a
+  skill's `rubric.md` or per-test `judge_context` that is absent from that
+  skill's `allowed-tools`. That single rule would have fired on
+  `same_person`/`source_attachments` in the rubric the day they were folded away.
+  Same shape as the existing places-guidance byte-lint and the enum-drift lint
+  already queued above.
+
+- **Eval annotation signal is concentrated in three reviewers** — surfaced by the
+  rubric-critic audit of `search-records`. 14 of 19 `.ann.json` files contain
+  **zero** divergences across 116–164 corrections each, and all 16 divergences in
+  the skill's entire history come from three annotators (11 / 3 / 1). So the
+  headline "96%+ judge–human agreement" is substantially "Agree with all" rather
+  than verified concordance, and absence of divergence on a quiet dimension is
+  weak evidence the judge is right there. Process observation, not a code change:
+  worth deciding whether "Agree with all" should be distinguishable from
+  per-dimension review in the CRUD UI's output.

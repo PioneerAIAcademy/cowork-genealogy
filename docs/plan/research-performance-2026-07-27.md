@@ -480,8 +480,18 @@ did 64 of them do not mention it once. Add the pointer to `search-records` and t
 | 4 | C3 — `query` defaulted from staged payload | — | 1 |
 | 5 | C1 — payload diet | — | 1 |
 | 6 | **C2 — subject enrichment + honest degradation** | — | 1 |
-| 7 | unit-harness effort pin | — | eval |
-| 8 | **C0 — effort A/B** | 1–7, re-baseline | eval |
+| 7 | **C7 — fold ranking into `record_search`; couple the `count` default** | C2 | 1 |
+| 8 | unit-harness effort pin | — | eval |
+| 9 | **C0 — effort A/B** | 1–8, re-baseline | eval |
+
+**C7 shipped** after C2's live probe cleared the "does the ranker even work"
+question (§5.1: a confirmed record at rank 1 of 20, 33× clear). `record_search`
+gained `subjectId`; supplying it ranks the staged pool host-side and returns
+`ranked`. `count` defaults to 50 only when `subjectId` is present, so a deep pool
+is fetched only when something will cut it back. **Ranking only — not the log
+write** (§6). Verified in the e2e run: 7 of 7 eligible searches ranked, zero
+`rankingError`, and the count split visible in the data (50 with a subject, 20
+without).
 
 Steps 1–5 are independent and parallel. C0 is last by construction.
 
@@ -748,8 +758,14 @@ Consequences for the plan:
 
 ## 6. Deliberately excluded
 
-- **Folding search + rank + log into one `record_search` call — deferred, not
-  refused; revisit after C2 (§4).** It reverses a documented owner decision
+- **Folding the LOG WRITE into `record_search` — still excluded.** Note the
+  split: **ranking was folded and shipped** as C7 (§3), on the owner's decision
+  after C2 cleared. The log write was not, and the reasons below are exactly why —
+  every one of them is an objection to the *write*, not to ranking. Ranking is
+  read-only scoring, so it introduces none of them. Original entry, still
+  current for the log half:
+
+  It reverses a documented owner decision
   (`record-search-compaction-scope.md:110-113`, *"Owner chose separate"*), and
   one of that decision's three stated reasons is now measurably stale: *"composable
   — re-rank a logged search later"* has **never been exercised** (all 14 rank calls
