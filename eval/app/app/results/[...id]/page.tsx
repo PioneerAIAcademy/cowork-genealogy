@@ -1138,6 +1138,13 @@ export default function RunLogDetailPage({
     localAnnRef.current = localAnn;
   }, [localAnn]);
 
+  // Seed the locally-edited annotation from the fetched run log. Deliberately
+  // re-seeds on every change of `query.data` identity, which includes the
+  // refetch `persist` triggers after a successful save — the server copy is
+  // authoritative once it round-trips. Expressing that without an effect means
+  // React's render-phase state adjustment, which is harder to read than the
+  // effect and easy to get subtly wrong on the annotator's main workflow.
+  /* eslint-disable react-hooks/set-state-in-effect -- rationale above */
   useEffect(() => {
     if (query.data) {
       const filename = runLogId.split('/').pop() + '.json';
@@ -1157,6 +1164,7 @@ export default function RunLogDetailPage({
       });
     }
   }, [query.data, runLogId]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const persist = useCallback(
     (next: AnnotationFile) => {
