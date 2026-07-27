@@ -70,7 +70,8 @@
     { "name": "rank_search_matches" },
     { "name": "project_context" },
     { "name": "materialize_facts" },
-    { "name": "extraction_append" }
+    { "name": "extraction_append" },
+    { "name": "research_query" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],

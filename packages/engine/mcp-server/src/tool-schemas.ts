@@ -54,6 +54,7 @@ import { rankSearchMatchesSchema } from "./tools/rank-search-matches.js";
 import { projectContextSchema } from "./tools/project-context.js";
 import { materializeFactsSchema } from "./tools/materialize-facts.js";
 import { extractionAppendSchema } from "./tools/extraction-append.js";
+import { researchQuerySchema } from "./tools/research-query.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -102,4 +103,5 @@ export const allToolSchemas = [
   projectContextSchema,
   materializeFactsSchema,
   extractionAppendSchema,
+  researchQuerySchema,
 ];

@@ -16,9 +16,9 @@ export interface ConflictSurfaced {
   values: string[];
 }
 
-export interface MaterializeFactsInput {
-  /** Absolute path to the project directory (tree.gedcomx.json + research.json). */
-  projectPath: string;
+/** One persona reference — the body of a single call, or one element of a
+ *  batch `ops`. */
+export interface MaterializeFactsOp {
   /** Target tree person. May name a person that does not yet exist — the tool
    *  mints it from the persona's name/gender assertions (create-or-enrich).
    *  Omit to let the tool allocate the next `I` id for a brand-new person. */
@@ -29,23 +29,45 @@ export interface MaterializeFactsInput {
   recordRole: string;
 }
 
+export interface MaterializeFactsInput extends Partial<MaterializeFactsOp> {
+  /** Absolute path to the project directory (tree.gedcomx.json + research.json). */
+  projectPath: string;
+  // Batch form — supply ops; when present the single-op fields above are
+  // ignored. Every op applies to one in-memory tree; the tool validates once
+  // and writes once (all-or-nothing). Ids assigned earlier in the batch are
+  // visible to later ops (the allocator rescans the live tree).
+  ops?: MaterializeFactsOp[];
+}
+
+/** The per-persona result payload — the body of a single call's success, or
+ *  one element of a batch `results`. */
+export interface MaterializeFactsOpResult {
+  personId: string;
+  /** true when the person was minted this call (create-or-enrich). */
+  created: boolean;
+  /** Facts newly authored on the person this call. */
+  factsAdded: number;
+  /** Pre-existing facts that gained a source-ref or a merged field this call. */
+  factsEnriched: number;
+  /** Names newly authored on the person this call. */
+  namesAdded: number;
+  /** Source-refs newly attached to any fact/name this call. */
+  refsAttached: number;
+  /** Competing single-valued/vital facts that now coexist (§4.4). */
+  conflicts_surfaced: ConflictSurfaced[];
+}
+
 /** Compact summary — never an echo of the written tree JSON (§4.1). */
 export type MaterializeFactsResult =
+  | ({
+      ok: true;
+      filesWritten: string[];
+      validation: { valid: true; warnings: string[] };
+    } & MaterializeFactsOpResult)
   | {
       ok: true;
-      personId: string;
-      /** true when the person was minted this call (create-or-enrich). */
-      created: boolean;
-      /** Facts newly authored on the person this call. */
-      factsAdded: number;
-      /** Pre-existing facts that gained a source-ref or a merged field this call. */
-      factsEnriched: number;
-      /** Names newly authored on the person this call. */
-      namesAdded: number;
-      /** Source-refs newly attached to any fact/name this call. */
-      refsAttached: number;
-      /** Competing single-valued/vital facts that now coexist (§4.4). */
-      conflicts_surfaced: ConflictSurfaced[];
+      /** One entry per `ops[]` element, in order — the batch form. */
+      results: MaterializeFactsOpResult[];
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
     }
