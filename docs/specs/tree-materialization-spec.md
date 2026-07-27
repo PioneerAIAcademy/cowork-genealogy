@@ -272,7 +272,18 @@ structural cure for symptoms (1) and (2).
 
 Never sets `primary`/`preferred`; never resolves conflicts; never collapses
 or merges persons; never writes relationships (those are `tree_edit`
-`add_relationship`, see §8).
+`add_relationship`, see §8); never materializes a `marriage` assertion as a
+person-level fact (added 2026-07-27, `SKIP_TYPES` in `materialize-facts.ts`).
+A marriage is a Couple-relationship event — per `tree_edit`'s own convention
+("a Marriage/Divorce fact lives on the Couple, never duplicated onto each
+spouse"), it can never be a correct person-level write, not just usually a
+wrong one, so the tool silently skips it rather than relying on caller
+discipline. Guards the exact mistake a person-evidence regression test
+(`ut_person_evidence_022`) caught live: an already-existing spouse's persona
+whose only assertion was `marriage` got materialized straight onto that
+person, leaving the Couple relationship itself factless. The marriage's
+date/place belongs on the Couple via `tree_edit` `add_relationship`'s
+`facts`, sourced with the same assertion through `sourceAssertionId` (§8).
 
 ---
 

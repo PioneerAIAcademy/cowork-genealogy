@@ -611,4 +611,68 @@ describe("materialize_facts", () => {
     if (result.ok) return;
     expect(result.errors.join(" ")).toMatch(/non-empty/);
   });
+
+  // ── `marriage` is a Couple-relationship event, never a person-level fact
+  // (ut_person_evidence_022 regression: an existing spouse's persona whose only
+  // assertion was `marriage` got materialized straight onto that person, leaving
+  // the Couple relationship itself factless — tree_edit add_relationship owns it) ──
+
+  it("(21) a `marriage` assertion is skipped — never materialized as a person-level fact", async () => {
+    const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] };
+    await writeProject(
+      tree({ persons: [stub] }),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_005", {
+            record_id: "REC-MARR",
+            record_role: "principal",
+            fact_type: "marriage",
+            date: "12 May 1843",
+            place: "Schuylkill County, Pennsylvania, United States",
+          }),
+        ],
+      }),
+    );
+
+    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-MARR", recordRole: "principal" });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.factsAdded).toBe(0); // never a correct person-level write
+    expect(result.factsEnriched).toBe(0);
+    expect(result.refsAttached).toBe(0);
+
+    const p = findPerson(await readTree(), "I2");
+    expect((p.facts ?? []).length).toBe(0); // the Couple relationship + fact is tree_edit's job
+  });
+
+  it("(22) a persona's OTHER assertions still materialize when a `marriage` assertion is mixed in", async () => {
+    const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] };
+    await writeProject(
+      tree({ persons: [stub] }),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_005", { record_id: "REC-MARR", record_role: "principal", fact_type: "marriage", date: "12 May 1843" }),
+          assertion("a_006", {
+            record_id: "REC-MARR",
+            record_role: "principal",
+            fact_type: "residence",
+            value: "Schuylkill County, Pennsylvania, United States",
+          }),
+        ],
+      }),
+    );
+
+    const result = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-MARR", recordRole: "principal" });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.factsAdded).toBe(1); // only Residence — the skip is scoped to the one assertion
+
+    const p = findPerson(await readTree(), "I2");
+    expect(p.facts).toHaveLength(1);
+    expect(p.facts[0].type).toBe("Residence");
+  });
 });

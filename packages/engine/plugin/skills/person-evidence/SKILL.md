@@ -514,14 +514,20 @@ hands a merge set to proof-conclusion to fold. For a household record:
      signal that doesn't fully cohere) does not block; note it in the
      affected `pe_` rationale and proceed.
 3. **Materialize every member in ONE batched call.** Only after the gate
-   clears the error tier: collect every persona that needs
+   clears the error tier: collect every persona that **needs**
    materializing — the subject *and* each sibling/spouse — as one `ops`
    entry `{ personId?, recordId, recordRole }` per persona, and issue a
    single `materialize_facts({ ops: [...] })` call rather than one call
    per persona. For a persona **matched** to an existing tree person,
    supply its `personId`; for a **new** member, create-or-enrich mints it
    WITH its facts (never a name-only stub) — pass a not-yet-existing
-   `personId`, or omit it and the tool allocates one. The call returns
+   `personId`, or omit it and the tool allocates one. **"Needs
+   materializing" excludes a matched persona whose assertions are
+   entirely relationship-implying** (`marriage`, `relationship`) — the
+   tool silently skips those fact_types (they belong on the Couple/edge,
+   never a person), so a persona with nothing else to contribute has
+   nothing to materialize; skip the call for it and go straight to its
+   `pe_` link (Step 4). The call returns
    `results: [...]`, one entry per persona in the same order you listed
    them — read each persona's `personId` from there to create its `pe_`
    link (Step 4). **Batch this; do not loop one call per persona** — a

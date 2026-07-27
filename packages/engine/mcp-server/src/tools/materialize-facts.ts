@@ -64,10 +64,19 @@ class MaterializeFactsError extends Error {}
 /** Assertion fact_types handled as NON-facts: names, gender, and the ones this
  *  tool deliberately does not materialize (relationship edges are `tree_edit`
  *  add_relationship's job, §4.5; `age` is indirect evidence feeding a birth-year
- *  inference, not a standalone tree fact). */
+ *  inference, not a standalone tree fact; `marriage` is a Couple-relationship
+ *  event — per tree-edit.ts's own convention, "a Marriage/Divorce fact lives
+ *  on the Couple, never duplicated onto each spouse" — so it can never be a
+ *  correct PERSON-level write, structurally, not just usually. A caller
+ *  wanting the marriage's date/place on the tree writes it via `tree_edit`
+ *  `add_relationship`'s Couple `facts`, sourced with the same assertion via
+ *  `sourceAssertionId`). Guards the exact mistake ut_person_evidence_022
+ *  regression-tests: a `marriage` assertion on an already-existing spouse's
+ *  persona getting materialized straight onto that person, leaving the
+ *  relationship itself factless. */
 const NAME_TYPES: ReadonlySet<string> = new Set(["name"]);
 const GENDER_TYPES: ReadonlySet<string> = new Set(["gender", "sex"]);
-const SKIP_TYPES: ReadonlySet<string> = new Set(["relationship", "age"]);
+const SKIP_TYPES: ReadonlySet<string> = new Set(["relationship", "age", "marriage"]);
 
 /** Tree fact types whose `value` is null (events + place/duration attributes) —
  *  the qualifier `value` field is meaningful only for value-bearing types
@@ -533,7 +542,10 @@ export const materializeFactsSchema = {
     "\n" +
     "materialize_facts NEVER sets primary/preferred (only proof-conclusion does), " +
     "never resolves conflicts, never writes relationships (use tree_edit " +
-    "add_relationship), and never writes research.json. If a persona's source has no " +
+    "add_relationship), never writes research.json, and silently skips `marriage` " +
+    "assertions (a Couple-relationship event — never a correct person-level fact; " +
+    "put it on the Couple via tree_edit add_relationship's facts, sourced with the " +
+    "same assertion via sourceAssertionId). If a persona's source has no " +
     "tree S-entry, the call errors — materialize the record's source first (via " +
     "research_append's composite sourceDescription). Returns a compact summary " +
     "{ personId, created, factsAdded, factsEnriched, namesAdded, refsAttached, " +
