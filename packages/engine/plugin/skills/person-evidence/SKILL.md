@@ -502,23 +502,41 @@ hands a merge set to proof-conclusion to fold. For a household record:
    - **Warning tier is advisory.** A softer flag (e.g. a shared-census
      signal that doesn't fully cohere) does not block; note it in the
      affected `pe_` rationale and proceed.
-3. **Materialize every member, per persona.** Only after the gate clears
-   the error tier: for each persona — the subject *and* each
-   sibling/spouse — call
-   `materialize_facts({ personId, recordId, recordRole })` to write that
-   persona's assertions as sourced facts/names onto its tree person, and
-   create the `pe_` link (Step 4). For a persona **matched** to an
-   existing tree person you already have the `personId`; for a **new**
-   member, create-or-enrich mints it WITH its facts (never a name-only
-   stub) — pass a not-yet-existing `personId`, or omit it and the tool
-   allocates one, then link to the id it returns.
-4. **Write the edges.** Write the parent-child and spouse-spouse
-   relationships this record establishes via `tree_edit`
-   `add_relationship`, each edge carrying a source-ref resolved from the
-   relationship assertion's `source_id`. A pre-1880 census parent-child
-   edge is *indirect* evidence (a headship/co-residence inference, not a
-   stated relationship); it still carries a ref, at a **lower ref
-   quality** reflecting the weaker evidence class.
+3. **Materialize every member in ONE batched call.** Only after the gate
+   clears the error tier: collect every persona that needs
+   materializing — the subject *and* each sibling/spouse — as one `ops`
+   entry `{ personId?, recordId, recordRole }` per persona, and issue a
+   single `materialize_facts({ ops: [...] })` call rather than one call
+   per persona. For a persona **matched** to an existing tree person,
+   supply its `personId`; for a **new** member, create-or-enrich mints it
+   WITH its facts (never a name-only stub) — pass a not-yet-existing
+   `personId`, or omit it and the tool allocates one. The call returns
+   `results: [...]`, one entry per persona in the same order you listed
+   them — read each persona's `personId` from there to create its `pe_`
+   link (Step 4). **Batch this; do not loop one call per persona** — a
+   household's members share one validate-once/write-once call instead of
+   paying a full round-trip per persona (this per-persona loop was a
+   measured driver of e2e wall-clock regressions on marriage/vitals/
+   family-reconstitution questions).
+4. **Write the edges in ONE batched call.** Collect the parent-child and
+   spouse-spouse relationships this record establishes and issue a single
+   `tree_edit({ ops: [...] })` call — one
+   `{ operation: "add_relationship", relationship: {...}, sourceAssertionId }`
+   entry per edge — rather than one `tree_edit` call per edge. Pass
+   **`sourceAssertionId`** (the `id` of the `relationship`-type assertion
+   this edge comes from) — do **not** hand-walk `assertion.source_id →
+   research source → tree S-entry` and supply a literal
+   `relationship.sources` yourself; the tool resolves it for you (the same
+   resolver `materialize_facts` uses), including the direct/indirect quality
+   distinction, and rejects the call clearly if the assertion or its source
+   doesn't resolve — cheaper to fix than a silent wrong ref, and removes the
+   chain-walking mistake that used to cost a retry. A pre-1880 census
+   parent-child edge is *indirect* evidence (a headship/co-residence
+   inference, not a stated relationship) — its assertion's `evidence_type`
+   already reflects that, so the resolved ref quality follows automatically.
+   `tree_edit`'s `ops[]` form is validate-once/write-once/all-or-nothing, so
+   a household's edges land atomically — none of them, or all of them,
+   never a partial household.
 
 Every household persona ends up **paired** — matched to an existing tree
 person, or minted via create-or-enrich — with none left dangling.

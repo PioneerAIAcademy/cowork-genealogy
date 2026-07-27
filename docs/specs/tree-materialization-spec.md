@@ -169,6 +169,9 @@ other's job.
 ```
 materialize_facts({ projectPath, personId, recordId, recordRole })
   -> compact summary
+
+materialize_facts({ projectPath, ops: [{ personId?, recordId, recordRole }, ...] })
+  -> { results: [compact summary, ...] }   // batch form
 ```
 
 - The caller passes **references**, not data. The tool reads the persona's
@@ -181,6 +184,21 @@ materialize_facts({ projectPath, personId, recordId, recordRole })
   backup, and returns a **compact** summary (person id, facts
   added/enriched, refs attached, conflicts surfaced) — never an echo of the
   written JSON.
+- **Batch form.** Pass `ops: [{ personId?, recordId, recordRole }, ...]`
+  instead of the top-level fields to materialize several personas — a
+  household's members, typically — in one validate-once/write-once call:
+  one `sanitizeTree` + `research.json` read, every op applied to the same
+  in-memory tree (an id an earlier op mints is visible to later ops, since
+  the allocator rescans the live document), one `validateParsed`, one
+  atomic write. All-or-nothing: any op's failure writes nothing, identified
+  as `ops[i]: <msg>`. Mirrors the `ops[]` convention `research_append` and
+  `tree_edit` already have — added 2026-07-26 (`docs/plan/
+  tree-materialization-batching-plan.md`) after per-persona calls were
+  measured as a driver of e2e wall-clock regressions on fixtures
+  materializing many personas per research question. Simpler than
+  `tree_edit`'s batching: since `materialize_facts` never writes
+  relationships (§4.5), ops in a batch have no cross-op *data* dependency —
+  only the shared mutable tree + id-allocator state.
 
 ### 4.2 Behavior, per assertion
 
@@ -402,7 +420,16 @@ that record. **Newly written** relationship edges (`tree_edit`
 `add_relationship`) **carry a non-null source-ref** under the delta-scoped §6
 rule, resolved from the relationship assertion's `source_id` (the same
 resolver `materialize_facts` uses), or relationships become the next
-provenance leak. `add_household_children` **retires** (§9); person-evidence
+provenance leak. **The tool does this resolution itself**: pass
+`sourceAssertionId` (the research.json `relationship`-type assertion the edge
+comes from) rather than a hand-walked literal ref — `tree_edit` resolves
+`assertion.source_id → research source → tree S-entry` via the shared
+`utils/source-ref-resolver.ts` (`docs/specs/tree-edit-tool-spec.md`, the
+`add_relationship` entry). Added 2026-07-26 after the model was observed
+getting the hand-walked chain wrong on its first attempt, costing a retry
+(`docs/plan/tree-materialization-batching-plan.md` Phase 3) — a literal
+`relationship.sources` remains available but is no longer how person-evidence
+supplies it. `add_household_children` **retires** (§9); person-evidence
 mints household members via `materialize_facts` create-or-enrich and writes
 their edges via `add_relationship`. Pre-existing legacy edges are tolerated
 (they are not re-authored). `materialize_facts` writes facts/names only;
@@ -596,10 +623,17 @@ Each phase is independently reviewable; the suite stays green between them.
   (this spec makes the tool's *inputs* clean but does not wire the "these two
   tree persons are the same" detector). If not addressed in the PR, → a
   `docs/TODOs.md` entry (§9).
-- **`materialize_facts` input shape** — `(personId, recordId, recordRole)` is
-  the recommendation (references only, tool reads assertions). An
-  `assertionIds[]` variant is possible if a caller ever needs to materialize a
-  strict subset of a persona's assertions; deferred until a real need.
+- **`materialize_facts` input shape — RESOLVED (batch axis).**
+  `(personId, recordId, recordRole)` per persona, as recommended, plus a
+  batch `ops[]` form added 2026-07-26 once a real need arrived: e2e runlogs
+  showed 8-44 unbatched `materialize_facts` calls per run on
+  marriage/vitals/family-reconstitution fixtures, correlating with wall-clock
+  regressions up to +92% (see §4.1, `docs/plan/
+  tree-materialization-batching-plan.md`). This is a **different axis** from
+  the `assertionIds[]` variant floated here originally — that would narrow
+  *one* persona's assertions; the real need was batching *many* personas in
+  one call. `assertionIds[]` remains unbuilt, still deferred until its own
+  real need shows up.
 - **Synthesized-conclusion facts — DECIDED (additive path).** A
   `proof-conclusion` value that no single record asserts (a calculated/inferred
   conclusion, e.g. three census ages → "abt 1805") materializes via `tree_edit`

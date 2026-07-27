@@ -327,13 +327,20 @@ Deferred at wrap; see
 
 ## Tree materialization (#701) — deferred from implementation
 Deferred during the #701 build.
-- [ ] **Batch `add_relationship`** — person-evidence now writes a household's
-  parent-child + spouse edges as N separate `tree_edit add_relationship` calls
-  (Phase 3A, Option 1: tools encode the write, the skill handles matching). A
-  batch mode (multiple edges in one validated write) would make a household's
-  edges atomic and cut tool round-trips for the common census-child case (~7-9
-  edges). Latency/atomicity only — per-edge writes are correct today. Surfaced
-  2026-07-18 while implementing Phase 3A.
+- [x] **Batch `add_relationship` — DONE.** Turned out to need no tool change:
+  `tree_edit`'s existing `ops[]` batch mechanism already accepts multiple
+  `add_relationship` edges in one validated, atomic call (proven by
+  `tests/tools/tree-edit.test.ts:950,1012,1020,1037`, which already batch
+  relationship ops). The actual gap was that `person-evidence/SKILL.md` §7
+  step 4 never instructed collecting a household's edges into one call — it
+  issued N separate `tree_edit` calls, one per edge (~7-9 for a census
+  household). Fixed by rewriting step 4 to batch (docs/plan/
+  tree-materialization-batching-plan.md Phase 2). Also batched
+  `materialize_facts` itself (step 3, same plan Phase 1) — that one *did*
+  need a tool change (`MaterializeFactsInput` gained an `ops[]` form), since
+  it shipped 2026-07-18 without the batch convention `research_append`/
+  `tree_edit` already had, which was the dated e2e latency regression's
+  proximate cause.
 
 ## Eval framework
 - [ ] **Adopt a run-log retention rule — `eval/runlogs/` is 147MB tracked and ~85%
