@@ -1,0 +1,482 @@
+{
+  "persons": [
+    {
+      "id": "97M5-6H8",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Mátyás",
+          "surname": "Muck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "25 AUG 1844",
+          "standard_date": "25 Aug 1844",
+          "place": "Bikacs,Tolna,Hungary",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "31 December 1921",
+          "standard_date": "31 Dec 1921",
+          "place": "Bikács, Tolna, Hungary",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "a5fe4330-b89f-478b-9daf-db948a0523d1",
+          "type": "Christening",
+          "date": "1844. augusztus 25.",
+          "standard_date": "25 1844",
+          "place": "Bikács, Tolna, Magyarország",
+          "standard_place": "Bikács, Tolna, Hungary"
+        }
+      ]
+    },
+    {
+      "id": "KZ89-SYT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Rosina",
+          "surname": "Blaser"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "11 JAN 1814",
+          "standard_date": "11 Jan 1814",
+          "place": "Bikacs,Tolna,Hungary",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1814. január 11.",
+          "standard_date": "11 Jan 1814",
+          "place": "Bikács, Tolna, Magyarország",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LZX9-R6W",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Éva",
+          "surname": "Muck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "20fda514-259e-4267-ad99-aef2f834ca60",
+          "type": "Birth",
+          "date": "1874. január 20.",
+          "standard_date": "20 Jan 1874",
+          "place": "Bikács, Tolna, Magyarország",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "21 Jan 1874",
+          "standard_date": "21 Jan 1874",
+          "place": "Bogyiszló, Pest-Pilis-Solt-Kis-Kun, Hungary",
+          "standard_place": "Bogyiszló, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "82519556-945e-495a-822c-5daadf09df13",
+          "type": "Baptism",
+          "date": "21 Jan 1874",
+          "standard_date": "21 Jan 1874",
+          "place": "Bogyiszló, Pest-Pilis-Solt-Kis-Kun, Hungary",
+          "standard_place": "Bogyiszló, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "1942. június 18.",
+          "standard_date": "18 1942",
+          "place": "Bikács, Tolna, Magyarország",
+          "standard_place": "Bikács, Tolna, Hungary"
+        }
+      ]
+    },
+    {
+      "id": "L6TX-ZXD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Erzsébet",
+          "surname": "Stamp"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fdfedcdb-ce17-44db-8469-41b2896e1919",
+          "type": "Birth",
+          "date": "1856. szeptember 8.",
+          "standard_date": "8 1856",
+          "place": "Paks, Tolna, Magyarország",
+          "standard_place": "Paks, Tolna, Hungary"
+        },
+        {
+          "id": "1e83d2d6-2594-44a8-9558-267ca40f51a6",
+          "type": "Christening",
+          "date": "09 Sep 1856",
+          "standard_date": "9 Sep 1856",
+          "place": "Paks, Tolna, Hungary",
+          "standard_place": "Paks, Tolna, Hungary"
+        },
+        {
+          "id": "4fc8c82a-e9bb-4ae6-bf26-0a0a2bb969a1",
+          "type": "Marriage Registration",
+          "date": "1905. május 11.",
+          "standard_date": "11 1905",
+          "place": "Paks, Tolna, Magyarország",
+          "standard_place": "Paks, Tolna, Hungary"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "1928. augusztus 4.",
+          "standard_date": "4 1928"
+        }
+      ]
+    },
+    {
+      "id": "L8WW-KBJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Matyas",
+          "surname": "Muck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1 Abril 1879",
+          "standard_date": "1 Apr 1879",
+          "place": "Bikács, Tolna, Hungría",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "5a0adb92-6ca0-420b-bebd-8c4be27bbb9c",
+          "type": "Christening",
+          "date": "2 de abril de 1879",
+          "standard_date": "2 Apr 1879",
+          "place": "Bogyiszló, Pest-Pilis-Solt-Kiskun, Hungria",
+          "standard_place": "Bogyiszló, Pest-Pilis-Solt-Kiskun, Hungary"
+        },
+        {
+          "id": "f5c31ed1-1ded-40f5-bcc8-0940d7699173",
+          "type": "Marriage Registration",
+          "date": "4 de fevereiro de 1904",
+          "standard_date": "4 Feb 1904",
+          "place": "Hungria",
+          "standard_place": "Hungary"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "before 1906",
+          "standard_date": "Bef 1906",
+          "place": "Bikács, Tolna, Hungary",
+          "standard_place": "Bikács, Tolna, Hungary"
+        }
+      ]
+    },
+    {
+      "id": "LZX9-R6H",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Erzsébet",
+          "surname": "Wolf"
+        }
+      ],
+      "facts": [
+        {
+          "id": "75f4ea28-21ae-402b-9783-f9fd81ac75f8",
+          "type": "Birth",
+          "date": "1848. március 8.",
+          "standard_date": "8 1848",
+          "place": "Bikács, Tolna, Hungary",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "0a3773c3-3456-433f-9812-bdd7e3b1bcc3",
+          "type": "Baptism",
+          "date": "1848. március 8.",
+          "standard_date": "8 1848",
+          "place": "Bikács, Tolna, Magyarország",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "1900. július 3.",
+          "standard_date": "3 1900",
+          "place": "Bikács, Tolna, Magyarország",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "dcde45e2-55b0-43b7-b59e-edc9aad5756e",
+          "type": "Death Registration",
+          "date": "1900. július 4.",
+          "standard_date": "4 1900",
+          "place": "Magyarország",
+          "standard_place": "Hungary"
+        }
+      ]
+    },
+    {
+      "id": "GP8V-B53",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "András",
+          "surname": "Muck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "29ca0878-7fbb-42e0-a75a-35acd0800648",
+          "type": "Birth",
+          "date": "1873. február 5.",
+          "standard_date": "5 Feb 1873",
+          "place": "Bikács, Tolna, Magyarország",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "07520aba-0b83-4de2-888e-bbd720e8b9b3",
+          "type": "Death",
+          "date": "1873. április 1.",
+          "standard_date": "1 1873",
+          "place": "Bikács, Tolna, Magyarország",
+          "standard_place": "Bikács, Tolna, Hungary"
+        }
+      ]
+    },
+    {
+      "id": "KCQX-DZ6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Paulus",
+          "surname": "Muck"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "21 JAN 1811",
+          "standard_date": "21 Jan 1811",
+          "place": "Bikacs,Tolna,Hungary",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "625b9d6f-fc44-4bd1-ab9b-40838c73db76",
+          "type": "Christening",
+          "date": "21 JAN 1811",
+          "standard_date": "21 Jan 1811",
+          "place": "Bikacs,Tolna,Hungary",
+          "standard_place": "Bikács, Tolna, Hungary"
+        },
+        {
+          "id": "1365cf01-dcde-4c49-80df-8bd67e2543eb",
+          "type": "Death",
+          "date": "04 NOV 1899",
+          "standard_date": "4 Nov 1899"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "97M5-6H8",
+      "person2": "LZX9-R6H",
+      "facts": [
+        {
+          "id": "905cc378-bd79-40ec-9cbc-f86a9be34616",
+          "type": "Marriage",
+          "date": "16 January 1866",
+          "standard_date": "16 Jan 1866",
+          "place": "Bikács, Tolna, Hungary",
+          "standard_place": "Bikács, Tolna, Hungary"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "97M5-6H8",
+      "person2": "L6TX-ZXD",
+      "facts": [
+        {
+          "id": "92ca5d6c-1d70-4c21-8a9f-2a156de9ab8a",
+          "type": "Marriage",
+          "date": "1905. május 11.",
+          "standard_date": "11 1905",
+          "place": "Paks, Tolna, Magyarország",
+          "standard_place": "Paks, Tolna, Hungary"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "KCQX-DZ6",
+      "person2": "KZ89-SYT",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "22 Nov 1831",
+          "standard_date": "22 Nov 1831",
+          "place": "Bikats,Tolna,Hungary",
+          "standard_place": "Tolna, Hungary"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KCQX-DZ6",
+      "child": "97M5-6H8",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KZ89-SYT",
+      "child": "97M5-6H8",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "97M5-6H8",
+      "child": "GP8V-B53"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LZX9-R6H",
+      "child": "GP8V-B53"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "97M5-6H8",
+      "child": "LZX9-R6W"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "LZX9-R6H",
+      "child": "LZX9-R6W"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "97M5-6H8",
+      "child": "L8WW-KBJ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LZX9-R6H",
+      "child": "L8WW-KBJ",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "QLPL-T3L",
+      "title": "Muck Éva szül. anyakönyv",
+      "citation": "\"Hungary, Reformed Church Christenings, 1624-1895,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/3:1:9392-9ZKJ-F?cc=1858355 : 24 May 2019),  > image 1 of 1; Országos Leveltár, Budapest (Hungary National Archives, Budapest).",
+      "url": "https://familysearch.org/ark:/61903/3:1:9392-9ZKJ-F?view=explore"
+    },
+    {
+      "id": "Q171-5HD",
+      "title": "Mük Mátyós, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VY1-S1HS : Sun Mar 10 05:04:58 UTC 2024), Entry for Stumpt Erzsébet and Mük Mátyós, 5 Aug 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6VY1-S1H4"
+    },
+    {
+      "id": "SL2S-3W8",
+      "title": "Mátyás Muck, \"Hungary, Reformed Church Christenings, 1624-1895\"",
+      "citation": "\"Hungary, Reformed Church Christenings, 1624-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VJRW-T78 : Wed Jul 24 01:32:51 UTC 2024), Entry for Éva Muck and Mátyás Muck, 21 Jan 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VJRW-T7C"
+    },
+    {
+      "id": "QPFV-HJM",
+      "title": "Muck Mátyás, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JYB-B4NH : Fri Mar 08 22:55:22 UTC 2024), Entry for Wolf Erzsébet and Wolf János, 4 Jul 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JYB-B4NV"
+    },
+    {
+      "id": "Q171-X4C",
+      "title": "Muck Mátyás, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VBM-VRM9 : Sat Mar 09 02:28:50 UTC 2024), Entry for Muck Mátyás and Muck Pál, 11 May 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6VBM-VRM9"
+    },
+    {
+      "id": "Q171-6KF",
+      "title": "Muk Máttyás, \"Hungary, Church Books, 1624-1950\"",
+      "citation": "\"Hungary, Church Books, 1624-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NSP-WMTK : Sun Mar 10 20:31:57 UTC 2024), Entry for Muk Máttyás and Muk Páll, 25 Aug 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NSP-WMTK"
+    },
+    {
+      "id": "Q171-PRQ",
+      "title": "Mük Mátyás, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VBM-7ZGJ : Fri Mar 08 06:49:19 UTC 2024), Entry for Stúmpf Erzsébet and Mük Mátyás, 5 Aug 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6VBM-7ZGL"
+    },
+    {
+      "id": "Q171-P1J",
+      "title": "Muk Mátyás, \"Hungary, Civil Registration, 1895-1980\"",
+      "citation": "\"Hungary, Civil Registration, 1895-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VY1-RVM7 : Fri Mar 08 23:42:12 UTC 2024), Entry for Stumpf Erzsébet and Muk Mátyás, 5 Aug 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6VY1-RVMH"
+    },
+    {
+      "id": "7MJN-CKQ",
+      "title": "Mátyás Muck, \"Hungary, Reformed Church Christenings, 1624-1895\"",
+      "citation": "\"Hungary, Reformed Church Christenings, 1624-1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VJRW-NT1 : Sat Mar 09 00:45:07 UTC 2024), Entry for Mátyás Muck and Mátyás Muck, 02 Apr 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VJRW-NTY"
+    }
+  ]
+}

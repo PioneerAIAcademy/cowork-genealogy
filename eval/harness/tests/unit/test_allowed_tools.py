@@ -125,3 +125,24 @@ def test_referenced_but_missing_agent_is_ignored(tmp_path):
     tools = compute_allowed_tools("router", skills, agents_dir=agents)
     assert "mcp__genealogy__record_search" in tools
     assert not any(t == "mcp__genealogy__ghost" for t in tools)
+
+
+# --- image-reader-opus: the union must actually pick up the real files -----
+#
+# docs/plan/image-reader-opus-agent-plan.md's first draft put the
+# discoverability pointer in agents/image-reader.md (an agent body), which
+# compute_allowed_tools never scans — only a SKILL.md is scanned for
+# @plugin:<name> references. That placement bug would have made
+# image-reader-opus's image_read grant unreachable in the unit harness while
+# looking correct on a read-through. These tests exercise the union against
+# the real repo files rather than trusting the placement was right.
+
+
+def test_record_extraction_unions_image_reader_opus_image_read():
+    tools = compute_allowed_tools("record-extraction", PLUGIN_SKILLS)
+    assert "mcp__genealogy__image_read" in tools
+
+
+def test_search_images_unions_image_reader_opus_image_read():
+    tools = compute_allowed_tools("search-images", PLUGIN_SKILLS)
+    assert "mcp__genealogy__image_read" in tools

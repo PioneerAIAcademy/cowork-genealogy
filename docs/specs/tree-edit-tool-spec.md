@@ -205,6 +205,24 @@ tree_edit({
   `person1` on a `ParentChild`) are enforced by the final whole-tree validation pass
   (§4.3, §5), not by an inline check in the apply step — so within a batch an endpoint
   added by an earlier op is accepted.
+  - **`sourceAssertionId` (source-ref resolution).** The edge requires a
+    non-null source-ref (§6/§8 of `tree-materialization-spec.md`). Rather than
+    the caller hand-walking `assertion.source_id → research source → tree
+    S-entry` and supplying a literal `relationship.sources`, pass
+    `sourceAssertionId` naming the research.json `relationship`-type assertion
+    this edge comes from; the tool resolves the ref itself via the same
+    resolver `materialize_facts` uses (`utils/source-ref-resolver.ts`),
+    including the direct/indirect quality distinction (§7.1). Rejected if: the
+    assertion id doesn't exist; its `fact_type` isn't `"relationship"`; its
+    source has no matching tree S-entry (mirrors `materialize_facts`'s
+    missing-S-entry error); or a literal `relationship.sources` is *also*
+    supplied (ambiguous — pick one). A Couple fact (e.g. Marriage) with no
+    `sources` of its own inherits the resolved ref — but only when it came
+    from `sourceAssertionId`; a literal edge ref is never auto-propagated onto
+    facts (unchanged: each still needs its own ref). Added 2026-07-26 to
+    close the retry tax observed when the model hand-resolved the chain and
+    got it wrong on the first attempt (`docs/plan/
+    tree-materialization-batching-plan.md` Phase 3).
 - **`add_source`** `{ source }` — append `source` to the tree's `sources`, assigning
   the next `S` id above the tree max (top-level, like `add_relationship` — no person
   scope, no place resolution, no primary swap). A caller-supplied `id` is rejected.

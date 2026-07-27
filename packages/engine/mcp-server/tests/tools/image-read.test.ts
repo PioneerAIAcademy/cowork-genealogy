@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { mkdtemp, rm, readFile } from "fs/promises";
+import { tmpdir } from "os";
+import { join } from "path";
 
 vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
@@ -80,6 +83,28 @@ describe("imageReadTool — imageId input", () => {
 
     expect(result.metadata.sizeBytes).toBe(699_999);
     expect(result.imageData.length).toBeGreaterThan(0);
+  });
+
+  it("saves the scan under images/ and returns imageRef when projectPath is given", async () => {
+    mockImageResponse(new Uint8Array([1, 2, 3]));
+    const dir = await mkdtemp(join(tmpdir(), "imgr-"));
+    try {
+      const result = await imageReadTool({
+        imageId: "004884748_02613",
+        projectPath: dir,
+      });
+      expect(result.metadata.imageRef).toBe("images/004884748_02613.jpg");
+      const saved = await readFile(join(dir, "images", "004884748_02613.jpg"));
+      expect(saved.length).toBe(3); // the 3 mocked fetch bytes
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("omits imageRef when projectPath is not given", async () => {
+    mockImageResponse();
+    const result = await imageReadTool({ imageId: "004884748_02613" });
+    expect(result.metadata.imageRef).toBeUndefined();
   });
 
   it.each([

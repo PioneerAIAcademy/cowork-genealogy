@@ -82,6 +82,7 @@ import {
 } from "./tools/convert-calendar.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
 import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
+import { treeForget, type TreeForgetInput } from "./tools/tree-forget.js";
 import {
   researchAppend,
   type ResearchAppendInput,
@@ -95,6 +96,10 @@ import {
 import { extractionAppend } from "./tools/extraction-append.js";
 import { materializeFacts } from "./tools/materialize-facts.js";
 import type { MaterializeFactsInput } from "./types/materialize-facts.js";
+import {
+  researchQuery,
+  type ResearchQueryInput,
+} from "./tools/research-query.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -656,6 +661,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
+  if (request.params.name === "tree_forget") {
+    try {
+      const args = request.params.arguments as unknown as TreeForgetInput;
+      const result = await treeForget(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
   if (request.params.name === "extraction_append") {
     try {
       // Lane scoping lives inside extractionAppend, not here — see
@@ -692,6 +707,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ProjectContextInput;
       const result = await projectContext(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "research_query") {
+    try {
+      const args = request.params.arguments as unknown as ResearchQueryInput;
+      const result = await researchQuery(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

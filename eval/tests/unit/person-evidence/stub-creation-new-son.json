@@ -19,7 +19,7 @@
     "probable confidence is appropriate — a brand-new person rests on the single will record with no independent corroboration yet; confident would over-claim (both the skill's stub-confidence rule and the rubric cap a single-source link at probable)"
   ],
   "execution": {
-    "max_wall_clock_seconds": 600,
+    "max_wall_clock_seconds": 900,
     "sdk_message_silence_seconds": 600
   }
 }

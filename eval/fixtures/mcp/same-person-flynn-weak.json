@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person — very low score (0.05): the record persona and the tree candidate share little beyond the surname; identifiers conflict. Companion to same-person-flynn-conflict/variant for the weak-match/no-link boundary.",
+  "args": {
+    "primaryId1": "~",
+    "primaryId2": "~"
+  },
+  "response": {
+    "matched": false,
+    "confidence": 1,
+    "score": 0.05,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:CFLT-9K2",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/4:1:KWCJ-RN4",
+    "apiTitle": "Matches for ark:/61903/1:1:CFLT-9K2",
+    "updated": "2026-05-21T00:00:00Z"
+  }
+}

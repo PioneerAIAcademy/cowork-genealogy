@@ -37,8 +37,9 @@ eval/
   ScratchResearch.bat     Windows: set up a throwaway dir to debug /research by hand
   SeedProject.bat         Windows: seed an editable Cowork project from a fixture (debug /research live)
   Viewer.bat              Windows: launch the Research Viewer (Electron)
-  BuildMcpb.bat           Windows: build the .mcpb desktop extension (for the Cowork debug loop)
-  BuildPlugin.bat         Windows: build the Cowork plugin .zip (for the Cowork debug loop)
+  CoworkInstall.bat       Windows: build BOTH artifacts + print the install click-path (start here)
+  BuildMcpb.bat           Windows: build only the .mcpb desktop extension
+  BuildPlugin.bat         Windows: build only the Cowork plugin .zip
   RunCalibration.bat      Windows: run judge calibration (maintainer only)
 ```
 
@@ -62,6 +63,8 @@ the e2e benchmark; see
   ANTHROPIC_API_KEY=sk-ant-...
   ```
   Or set it in your shell. The **skill runner** prefers your Claude Code subscription (`~/.claude/`) when one is available, billing it rather than the metered key, and only falls back to the API key when no subscription session is found. The judge always uses the key regardless. See `eval/harness/harness/auth.py` for resolution rules.
+
+  **In a git worktree:** `eval/.env` is gitignored, so a fresh worktree does not have it and the judge cannot run there. `make install-hooks` (now part of `make install`) makes every *new* worktree link it automatically; for a worktree that already exists, run `make worktree-link` inside it. The harness refuses to start without a judge key when any selected test is positive, so a missing link fails in a second rather than after a paid-for suite — override with `--allow-missing-judge` if you deliberately want an ungraded run.
 
 ## Running manually (macOS / Linux)
 
@@ -329,16 +332,16 @@ for debugging *why* the agent did or didn't do something, and it keeps the
 test-improve loop fast: you watch the fix work in minutes instead of waiting
 20–60 min for a headless verdict.
 
-**First time (and after any skill or MCP-server change):** build and install
-the two artifacts so Cowork has the genealogy tools — `eval\BuildMcpb.bat`
-(`make mcpb`), then install the `.mcpb` in Claude Desktop → Settings →
-Extensions → Advanced Settings → Install extension (over the old copy — no
-uninstall needed); and `eval\BuildPlugin.bat` (`make plugin`), then **remove any
-existing Genealogy Research plugin** in Cowork → Customize and upload the new
-one via Add → Upload Plugin. Upload it from the **Cowork** tab, not the Code tab
-— they keep separate plugin lists. **Fully quit and reopen** Claude Desktop
-after installing. The headless `RunE2E.bat` path doesn't use these (it runs the
-compiled engine directly), so this is only for the live Cowork loop.
+**First time (and after any skill or MCP-server change):** run
+`eval\CoworkInstall.bat` (`make cowork-install`). It builds **both** artifacts
+and prints where each one goes — install the `.mcpb` in Claude Desktop →
+Settings → Extensions → Advanced Settings → Install extension (over the old copy
+— no uninstall needed), and the `.zip` in Cowork → Customize, **removing any
+existing Genealogy Research plugin first**, via Add → Upload Plugin. Upload it
+from the **Cowork** tab, not the Code tab — they keep separate plugin lists.
+**Fully quit and reopen** Claude Desktop after installing. The headless
+`RunE2E.bat` path doesn't use these (it runs the compiled engine directly), so
+this is only for the live Cowork loop.
 
 1. `eval\SeedProject.bat` → enter the slug (`make e2e-project TEST=<slug>`).
    Copies the fixture's starting state into `eval\e2e-project\<slug>\` as a

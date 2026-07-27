@@ -1,0 +1,162 @@
+{
+  "persons": [
+    {
+      "id": "GHJ6-2WV",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Manoel Melquiades",
+          "surname": "de Oliveira"
+        }
+      ],
+      "facts": [
+        {
+          "id": "551b43a4-80c8-410e-a058-5ee18d305576",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GHJ6-L4F",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Cândida",
+          "surname": "Damasceno de Oliveira"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4febaec9-2c76-484c-a8f3-25271f4abe77",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GHJ6-2BB",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Abel",
+          "surname": "de Oliveira"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1c8f0e31-2cef-472f-b882-96e143fd9219",
+          "type": "Death",
+          "date": "6 de março de 1967",
+          "standard_date": "6 Mar 1967",
+          "place": "Monrovia, Montserrado, Libéria",
+          "standard_place": "Monrovia, Greater Monrovia, Montserrado, Liberia"
+        }
+      ]
+    },
+    {
+      "id": "GHJQ-G8N",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Maria Lila",
+          "surname": "de Oliveira Serrano"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3c5e1fce-7a8f-44b2-b720-756e2370c3ba",
+          "type": "Birth",
+          "date": "7 de novembro de 1901",
+          "standard_date": "7 Nov 1901",
+          "place": "Paraíba, Brasil",
+          "standard_place": "Paraíba, Brazil"
+        },
+        {
+          "id": "f64447f6-16b4-435f-9f99-e572c6d02c54",
+          "type": "Death",
+          "date": "20 de outubro de 1995",
+          "standard_date": "20 Oct 1995",
+          "place": "Natal, Rio Grande do Norte, Brasil",
+          "standard_place": "Natal, Rio Grande do Norte, Brazil"
+        },
+        {
+          "id": "a8ce3147-17ec-4d92-8ca9-1a6ad531e45b",
+          "type": "Death Registration",
+          "date": "24 Oct 1995",
+          "standard_date": "24 Oct 1995"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GHJ6-2WV",
+      "person2": "GHJ6-L4F"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GHJ6-2WV",
+      "child": "GHJQ-G8N"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GHJ6-L4F",
+      "child": "GHJQ-G8N"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GHJ6-2WV",
+      "child": "GHJ6-2BB"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GHJ6-L4F",
+      "child": "GHJ6-2BB"
+    }
+  ],
+  "sources": [
+    {
+      "id": "3Y5P-3LQ",
+      "title": "Manuel Melchiades de Oliveira, “Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019”",
+      "citation": "\"Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XWC-93R5 : Sat Mar 09 11:03:27 UTC 2024), Entry for Carlos Vieira de Andrade Serrano and Antonio Serrano Gonçalves de Andrade, 20 Nov 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XWC-93RB"
+    },
+    {
+      "id": "QKN1-CXG",
+      "title": "Manuel Melchiades de Oliveira, “Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019”",
+      "citation": "\"Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XWC-DTH1 : Sat Mar 09 04:59:39 UTC 2024), Entry for Carlos Vieira de Andrade Serrano and Antonio Serrano Gonçalves de Andrade, 20 May 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XWC-DTC7"
+    },
+    {
+      "id": "3Y5W-3F8",
+      "title": "Manoel Melquiades de Oliveira, “Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019”",
+      "citation": "\"Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XWH-CL2C : Sat Mar 09 19:51:51 UTC 2024), Entry for Maria Lila de Oliveira Serrano and Manoel Melquiades de Oliveira, 24 Oct 1995.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XWH-CL2Z"
+    },
+    {
+      "id": "3Y5W-T8F",
+      "title": "Manuel Melchiades de Oliveira, “Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019”",
+      "citation": "\"Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XWC-QXK1 : Sun Mar 10 20:54:00 UTC 2024), Entry for Carlos Vieira de Andrade Serrano and Antonio Serrano Gonçalves de Andrade, 30 Dec 1922.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XWC-DSZQ"
+    },
+    {
+      "id": "QKN1-NV6",
+      "title": "Manoel Melquiades de Oliveira, “Brasil, Rio Grande do Norte, Registro Civil, 1803-2021”",
+      "citation": "\"Brasil, Rio Grande do Norte, Registro Civil, 1803-2021\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62MV-LNKP : Wed May 27 06:45:44 UTC 2026), Entry for Lucy de Oliveira Serrano and Carlos Vieira de Andrade Serrano, setembro de 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62MV-LNK1"
+    }
+  ]
+}

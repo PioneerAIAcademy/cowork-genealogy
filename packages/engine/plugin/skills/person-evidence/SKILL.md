@@ -18,6 +18,7 @@ description: >-
   after proof-conclusion).
 allowed-tools:
   - research_append
+  - research_query
   - tree_edit
   - same_person
   - materialize_facts
@@ -178,9 +179,19 @@ Find the assertions that have no corresponding `person_evidence` entry
 in this same continuous run and you already hold the new `a_` ids and the
 current `person_evidence` set in context, work from that — don't re-read
 `research.json` "to be safe"; the writer tools validate the whole project
-on every write, so the in-context view can't be silently stale. Re-read
-`research.json` when you're entering this skill cold, or when a sub-skill
-or the user changed assertions/links since you last saw them.
+on every write, so the in-context view can't be silently stale.
+
+When you *do* need to look — entering this skill cold, or a sub-skill or
+the user changed assertions/links since you last saw them — use
+**`research_query`, not a whole-file `Read`** of research.json (which
+grows all session):
+
+- `research_query({ section: "assertions", recordId, recordRole })` — the
+  personas you're about to link, one call per persona.
+- `research_query({ section: "person_evidence", assertionId })` — whether a
+  given `a_` is already linked (an empty result IS the answer: unlinked).
+- `research_query({ section: "person_evidence", personId })` — the existing
+  links for a candidate person, when checking for revisions.
 
 An assertion is "unlinked" if no `pe_` entry references its `a_` ID.
 Group unlinked assertions by `record_id` + `record_role` — all
@@ -323,6 +334,38 @@ score should pull a tentative Strong back to Moderate. But:
 - When **no score is available** (FTS-, image-, PDF-sourced
   assertions, or a search with no sidecar), correlation analysis stands
   alone — the table above applies unchanged.
+
+**Autonomous mode (no user to pause with).** This resolution applies
+**only** to an autonomous run where no user can ever confirm (an
+autonomous `/research` run). **When a user is present** — a request that
+names an assertion to link, an interactive session — the pause rows
+above apply unchanged: present the evidence, disclose the score and the
+conflict, and create the `speculative` link or leave it for the user's
+confirmation. A high score capped at `speculative` by a qualitative
+conflict is still a pause-for-user, **not** a no-link — do not convert
+it into a hard rejection when a user can adjudicate. In an autonomous
+run, by contrast, the two pause rows resolve **downward, never upward**:
+a **Weak** match — or any match whose correlation caps confidence at
+`speculative` — becomes a **no-link**. Do
+not create the pe_ entry. State the rejection explicitly in your
+returned summary — the candidate, the score, and exactly what
+conflicted — and recommend `hypothesis-tracking` as the follow-up if
+the rejected identity is worth persisting as a hypothesis (this skill
+writes only the `person_evidence` section; the rejection note itself
+belongs in your summary, never in `hypotheses` or `log`, which other
+skills own). A **Moderate** match may link at `probable` only when the
+correlation genuinely meets the Moderate bar, evidenced in the
+rationale. The absence of a user NEVER upgrades confidence or converts
+a pause-for-confirmation into a link — an unconfirmable weak identity
+is a research gap to keep working, not a link opportunity. (This rule
+exists because an autonomous run linked a death certificate scored
+0.026 at `probable` — a different person's death entered the tree as
+the subject's.)
+
+**Disclose the score.** Whenever a `same_person` score was computed for
+a link decision, state it in the pe_ entry's rationale (e.g. "score
+0.32; linked on strong non-name correlation") — an undisclosed score
+hides exactly the number a reviewer needs to audit the decision.
 
 For reference, `same_person` scores broadly track the strength
 tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak, the same bands
@@ -470,23 +513,47 @@ hands a merge set to proof-conclusion to fold. For a household record:
    - **Warning tier is advisory.** A softer flag (e.g. a shared-census
      signal that doesn't fully cohere) does not block; note it in the
      affected `pe_` rationale and proceed.
-3. **Materialize every member, per persona.** Only after the gate clears
-   the error tier: for each persona — the subject *and* each
-   sibling/spouse — call
-   `materialize_facts({ personId, recordId, recordRole })` to write that
-   persona's assertions as sourced facts/names onto its tree person, and
-   create the `pe_` link (Step 4). For a persona **matched** to an
-   existing tree person you already have the `personId`; for a **new**
-   member, create-or-enrich mints it WITH its facts (never a name-only
-   stub) — pass a not-yet-existing `personId`, or omit it and the tool
-   allocates one, then link to the id it returns.
-4. **Write the edges.** Write the parent-child and spouse-spouse
-   relationships this record establishes via `tree_edit`
-   `add_relationship`, each edge carrying a source-ref resolved from the
-   relationship assertion's `source_id`. A pre-1880 census parent-child
-   edge is *indirect* evidence (a headship/co-residence inference, not a
-   stated relationship); it still carries a ref, at a **lower ref
-   quality** reflecting the weaker evidence class.
+3. **Materialize every member in ONE batched call.** Only after the gate
+   clears the error tier: collect every persona that **needs**
+   materializing — the subject *and* each sibling/spouse — as one `ops`
+   entry `{ personId?, recordId, recordRole }` per persona, and issue a
+   single `materialize_facts({ ops: [...] })` call rather than one call
+   per persona. For a persona **matched** to an existing tree person,
+   supply its `personId`; for a **new** member, create-or-enrich mints it
+   WITH its facts (never a name-only stub) — pass a not-yet-existing
+   `personId`, or omit it and the tool allocates one. **"Needs
+   materializing" excludes a matched persona whose assertions are
+   entirely relationship-implying** (`marriage`, `relationship`) — the
+   tool silently skips those fact_types (they belong on the Couple/edge,
+   never a person), so a persona with nothing else to contribute has
+   nothing to materialize; skip the call for it and go straight to its
+   `pe_` link (Step 4). The call returns
+   `results: [...]`, one entry per persona in the same order you listed
+   them — read each persona's `personId` from there to create its `pe_`
+   link (Step 4). **Batch this; do not loop one call per persona** — a
+   household's members share one validate-once/write-once call instead of
+   paying a full round-trip per persona (this per-persona loop was a
+   measured driver of e2e wall-clock regressions on marriage/vitals/
+   family-reconstitution questions).
+4. **Write the edges in ONE batched call.** Collect the parent-child and
+   spouse-spouse relationships this record establishes and issue a single
+   `tree_edit({ ops: [...] })` call — one
+   `{ operation: "add_relationship", relationship: {...}, sourceAssertionId }`
+   entry per edge — rather than one `tree_edit` call per edge. Pass
+   **`sourceAssertionId`** (the `id` of the `relationship`-type assertion
+   this edge comes from) — do **not** hand-walk `assertion.source_id →
+   research source → tree S-entry` and supply a literal
+   `relationship.sources` yourself; the tool resolves it for you (the same
+   resolver `materialize_facts` uses), including the direct/indirect quality
+   distinction, and rejects the call clearly if the assertion or its source
+   doesn't resolve — cheaper to fix than a silent wrong ref, and removes the
+   chain-walking mistake that used to cost a retry. A pre-1880 census
+   parent-child edge is *indirect* evidence (a headship/co-residence
+   inference, not a stated relationship) — its assertion's `evidence_type`
+   already reflects that, so the resolved ref quality follows automatically.
+   `tree_edit`'s `ops[]` form is validate-once/write-once/all-or-nothing, so
+   a household's edges land atomically — none of them, or all of them,
+   never a partial household.
 
 Every household persona ends up **paired** — matched to an existing tree
 person, or minted via create-or-enrich — with none left dangling.
@@ -602,12 +669,20 @@ When multiple candidates share the same name in the same area:
   the `pe_` entries, not a tree relationship.** Create a `pe_` link for
   each party a relationship assertion names (a marriage record → one `pe_`
   for each spouse; a will naming an heir → one for the testator and one for
-  the heir). Do **not** create the `Couple`/`ParentChild` relationship
-  itself, and do **not** write the couple-event fact (Marriage, Divorce)
-  here — person-evidence owns stub `persons` and `pe_` links only. The
-  relationship and its facts are written later by proof-conclusion →
+  the heir; a baptism or death record naming a parent → one for the child
+  and one for that named parent). Do **not** create the `Couple`/`ParentChild`
+  relationship itself, and do **not** write the couple-event fact (Marriage,
+  Divorce) here — person-evidence owns stub `persons` and `pe_` links only.
+  The relationship and its facts are written later by proof-conclusion →
   tree-edit, which own the `relationships` section (see also "proof-conclusion
-  populates them later" under stub creation).
+  populates them later" under stub creation). **The one exception is the
+  household skeleton above:** when you materialize a co-resident household
+  from a household record (census), you write that household's
+  parent-child/spouse edges at link time. A single, non-household record
+  that merely *states* a parentage — e.g. a baptism naming an existing
+  child's mother — is not a household skeleton: create the `pe_` links and
+  defer its `ParentChild` edge to proof-conclusion, like any other
+  relationship assertion.
 
 ## Re-invocation behavior
 

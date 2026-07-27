@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_anna_findejsova_daughter",
+    "objective": "Did Anna Marie Findejsová and her husband Maxmilián Michl have a daughter named Agnes, born 1818, in addition to their daughter Anna (b. 1823)?",
+    "subject_person_ids": [
+      "P915-7QP"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -16,6 +16,21 @@ incomplete / malformed) is the maintainer's ``calibrate_judge --dry-run`` step
 and the loader's own classification — kept out of CI so this check stays
 stdlib-only and never needs the harness venv.
 
+## Unresolved-draft check (WARN only)
+
+A `genre: "record-hint"` fixture ships as a draft: its README carries
+``DRAFT PENDING ADJUDICATION`` until a genealogist resolves the hint
+(Step 1a of docs/e2e-testing-guide.md), and `/resolve-record-hint` clearing
+that marker is what makes it resolved. Committing a *run* for a fixture whose
+marker is still there means the run scored the unverified hint rather than the
+truth — the run is not wrong to exist, but its grade means much less, so the
+reviewer should know. Warn-only: never blocks.
+
+Scoped to **PR-added run logs**, deliberately. An earlier fixture-validity
+warning was removed for re-flagging every un-run fixture in the repo on every
+e2e PR; this one can only fire on a fixture the PR itself committed a run for,
+so it stays silent until someone actually does the thing worth flagging.
+
 ## Not gated: fixture validity
 
 Whether a fixture has a committed *passing* run log (proof it is solvable from
@@ -37,6 +52,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[2]
 RUNLOGS_DIR = REPO_ROOT / "eval" / "runlogs" / "e2e"
+
+# The marker `/resolve-record-hint` strips from a record-hint fixture's README
+# when a genealogist resolves it. Its presence == still an unverified draft.
+DRAFT_MARKER = "DRAFT PENDING ADJUDICATION"
 
 
 # --------------------------------------------------------------------------- #
@@ -115,6 +134,36 @@ def check_added_runlogs_graded(added: list[Path]) -> list[str]:
 
 
 # --------------------------------------------------------------------------- #
+# Unresolved-draft check (warn only): a run committed for a still-draft fixture
+# --------------------------------------------------------------------------- #
+
+def check_added_runlogs_resolved(added: list[Path]) -> list[str]:
+    """Warn-only: a PR-added run log whose fixture README still carries
+    ``DRAFT PENDING ADJUDICATION``.
+
+    The run scored an unverified hint rather than a genealogist-confirmed
+    answer, so its verdict and its grade both mean less than they look like
+    they do. One warning per fixture, not per run log.
+    """
+    warnings: list[str] = []
+    for slug in sorted({rel.parts[3] for rel in added if len(rel.parts) >= 4}):
+        # Resolved against REPO_ROOT at call time, like check_added_runlogs_graded.
+        readme = REPO_ROOT / "eval" / "tests" / "e2e" / slug / "README.md"
+        if not readme.exists():
+            continue
+        if DRAFT_MARKER in readme.read_text(encoding="utf-8"):
+            warnings.append(
+                f"fixture '{slug}' still carries '{DRAFT_MARKER}' in its "
+                "README, but this PR commits a run for it. The run scored the "
+                "unverified hint, not a resolved answer — resolve the hint "
+                "first (/resolve-record-hint, e2e-testing-guide.md Step 1a) "
+                "and re-run, or say in the PR why the draft run is worth "
+                "committing."
+            )
+    return warnings
+
+
+# --------------------------------------------------------------------------- #
 # CLI
 # --------------------------------------------------------------------------- #
 
@@ -124,6 +173,12 @@ def main() -> int:
     if added is None:
         print("E2E grading gate skipped (no PR context: BASE_SHA/HEAD_SHA unset).")
         return 0
+
+    # --- Unresolved-draft check (warn only) — runs first so its output is
+    # --- visible even when the blocking gate below fails the job.
+    for w in check_added_runlogs_resolved(added):
+        print(f"::warning::{w}")
+        print(f"  ! {w}", file=sys.stderr)
 
     grade_violations = check_added_runlogs_graded(added)
     if grade_violations:

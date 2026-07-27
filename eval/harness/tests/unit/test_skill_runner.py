@@ -44,6 +44,26 @@ def test_sdk_version_probe_warns_on_future_major(monkeypatch):
     assert "disallowed_tools" in warning
 
 
+def test_classify_exception_abort_reason_matches_max_turns_phrasing():
+    """A bare exception carrying the SDK's own max_turns wording is
+    classified as the deterministic 'max_turns' reason, not the generic
+    (retryable) 'error' bucket — regression test for the misclassification
+    that caused ut_proof_conclusion_016 to burn a wasted retry attempt."""
+    from harness.skill_runner import _classify_exception_abort_reason
+
+    exc = Exception(
+        "Claude Code returned an error result: Reached maximum number of turns (30)"
+    )
+    assert _classify_exception_abort_reason(exc) == "max_turns"
+
+
+def test_classify_exception_abort_reason_defaults_to_error():
+    from harness.skill_runner import _classify_exception_abort_reason
+
+    exc = Exception("connection reset by peer")
+    assert _classify_exception_abort_reason(exc) == "error"
+
+
 def test_skill_run_result_shape():
     r = skill_runner.SkillRunResult(
         text_response="hi",

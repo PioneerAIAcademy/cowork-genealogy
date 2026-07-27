@@ -34,7 +34,12 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
-import { resolveStandardPlace } from "../utils/place-resolver.js";
+import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
+
+// Re-exported for back-compat: tests and any other importer that reaches this
+// check via research-append.ts (its original home) keep working unchanged.
+// The implementation now lives in place-resolver.ts, shared with tree-edit.ts.
+export { countryConsistency };
 import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -502,6 +507,37 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   }
 }
 
+/** Assertions with `evidence_type: "negative"` must set `record_role` to the
+ *  exact string `"absent"` (research-schema-spec.md §5.6), and vice versa —
+ *  the two fields are not independent judgment calls, `record_role: "absent"`
+ *  is a mechanical corollary of the evidence_type decision, so this REJECTS
+ *  rather than silently coercing. Silently overwriting `record_role` would
+ *  risk masking an assertion whose `value` also failed to differentiate the
+ *  person — observed live: three negative-evidence assertions on three
+ *  different people sharing one generic `value` string ("preceded Harold
+ *  Dean Whitaker in death"), with `record_role` as their only distinguishing
+ *  field. No-op for a non-assertion entry (only assertions carry
+ *  `evidence_type`) or a non-string `evidence_type`. */
+function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
+  if (typeof entry.evidence_type !== "string") return;
+  const isNegative = entry.evidence_type === "negative";
+  const roleIsAbsent = entry.record_role === "absent";
+  if (isNegative && !roleIsAbsent) {
+    throw new ResearchAppendError(
+      `assertion has evidence_type "negative" but record_role '${entry.record_role}' ` +
+        `— negative evidence always uses the literal record_role "absent". Keep the ` +
+        `person's identity in \`value\` instead (e.g. "Walter Whitaker preceded Harold ` +
+        `Dean Whitaker in death", not a generic value shared across multiple people).`,
+    );
+  }
+  if (roleIsAbsent && !isNegative) {
+    throw new ResearchAppendError(
+      `assertion has record_role "absent" but evidence_type '${entry.evidence_type}' ` +
+        `— record_role "absent" is reserved for negative evidence (evidence_type: "negative").`,
+    );
+  }
+}
+
 function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<string>): AppliedOp {
   const section = op.section;
   const config = SECTIONS[section];
@@ -531,6 +567,37 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
         `field(s) not updatable on '${section}': ${rejected.join(", ")} ` +
           `(allowed: ${config.singleton.allowedFields.join(", ")})`,
       );
+    }
+    // Completed-gate (GPS Component 4, deterministic): refuse to mark the
+    // project completed while a BLOCKING conflict is unresolved. Blocking =
+    // status "unresolved" AND (identity_question true OR blocks_question_ids
+    // non-empty). "resolved" and "moot" both settle a conflict. This is a
+    // tool precondition on the status transition, not a document-validity
+    // rule — an already-completed project with such a conflict still loads.
+    // Motivated by the wilkins-death-kentucky e2e run where an agent logged
+    // an unresolved identity conflict (wrong-person death certificate,
+    // 43-year birth mismatch) and completed the project anyway; prose-level
+    // guardrails (warnings, mentor) fired and were rationalized away.
+    if (section === "project" && op.fields.status === "completed") {
+      const blocking = (Array.isArray(research.conflicts) ? research.conflicts : []).filter(
+        (c: any) =>
+          c &&
+          c.status === "unresolved" &&
+          (c.identity_question === true ||
+            (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
+      );
+      if (blocking.length > 0) {
+        const names = blocking
+          .map((c: any) => `${c.id} (${c.conflict_type ?? "conflict"}${c.identity_question ? ", identity" : ""})`)
+          .join(", ");
+        throw new ResearchAppendError(
+          `cannot set project.status = "completed": unresolved blocking conflict(s) ${names}. ` +
+            "GPS Component 4 requires conflicting evidence to be resolved before concluding. " +
+            "Run conflict-resolution for each — set its status to 'resolved' (with " +
+            "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
+            "(with a rationale for why it no longer matters) — then retry completing the project.",
+        );
+      }
     }
     for (const [k, v] of Object.entries(op.fields)) target[k] = v;
     const stamp = config.singleton.stampTimestamp;
@@ -588,6 +655,7 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
     normalizeDateFields(newEntry);
     normalizeAccessDate(newEntry);
     canonicalizeAssertionLabels(newEntry);
+    validateNegativeEvidenceRole(newEntry);
     const stamp = config.stampTimestamp;
     if (stamp && newEntry[stamp.field] === undefined) {
       newEntry[stamp.field] = stamp.kind === "date" ? today() : now();
@@ -651,6 +719,7 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
     normalizeDateFields(existing);
     normalizeAccessDate(existing);
     canonicalizeAssertionLabels(existing);
+    validateNegativeEvidenceRole(existing);
     entryId = op.entryId;
     resultEntry = existing;
   } else {
@@ -678,87 +747,6 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
 }
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
-
-/** Country-token guard for the wrong-geocode theme. Small, conservative alias
- *  map: only when the assertion's own place TEXT ends in a recognized country
- *  can a contradiction be declared. */
-const COUNTRY_ALIASES: Record<string, string> = {
-  "united states": "united states",
-  "united states of america": "united states",
-  usa: "united states",
-  us: "united states",
-  america: "united states",
-  "united kingdom": "united kingdom",
-  uk: "united kingdom",
-  "great britain": "united kingdom",
-  england: "england",
-  scotland: "scotland",
-  wales: "wales",
-  "northern ireland": "northern ireland",
-  ireland: "ireland",
-  canada: "canada",
-  australia: "australia",
-  "new zealand": "new zealand",
-  germany: "germany",
-  france: "france",
-  norway: "norway",
-  sweden: "sweden",
-  denmark: "denmark",
-  netherlands: "netherlands",
-  holland: "netherlands",
-  belgium: "belgium",
-  italy: "italy",
-  spain: "spain",
-  portugal: "portugal",
-  poland: "poland",
-  russia: "russia",
-  austria: "austria",
-  hungary: "hungary",
-  switzerland: "switzerland",
-  mexico: "mexico",
-};
-
-const UK_CONSTITUENTS = new Set(["england", "scotland", "wales", "northern ireland"]);
-
-function canonicalCountry(segment: string): string | null {
-  const norm = segment.trim().toLowerCase().replace(/\./g, "");
-  return COUNTRY_ALIASES[norm] ?? null;
-}
-
-function placeSegments(place: string): string[] {
-  return place
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-}
-
-/**
- * Compare the country the place TEXT names (its trailing token, when that token
- * is a recognized country) against the standard_place's segments.
- * - "ok": the input names a country and the standard place is consistent.
- * - "contradiction": the input names a country the standard place plainly lacks.
- * - "unverifiable": the input text names no recognized country — cannot compare.
- */
-export function countryConsistency(place: string, standardPlace: string): "ok" | "contradiction" | "unverifiable" {
-  const inputSegs = placeSegments(place);
-  if (inputSegs.length === 0) return "unverifiable";
-  const inputCountry = canonicalCountry(inputSegs[inputSegs.length - 1]);
-  if (!inputCountry) return "unverifiable";
-
-  const stdCountries = placeSegments(standardPlace)
-    .map(canonicalCountry)
-    .filter((c): c is string => c !== null);
-  if (stdCountries.includes(inputCountry)) return "ok";
-  // UK constituents: "England" is consistent with a standard place that ends in
-  // "United Kingdom" — unless a DIFFERENT constituent is present.
-  if (UK_CONSTITUENTS.has(inputCountry)) {
-    if (stdCountries.some((c) => UK_CONSTITUENTS.has(c) && c !== inputCountry)) return "contradiction";
-    if (stdCountries.includes("united kingdom")) return "ok";
-  }
-  // Historic Irish records: "Ireland" is consistent with "Northern Ireland".
-  if (inputCountry === "ireland" && stdCountries.includes("northern ireland")) return "ok";
-  return "contradiction";
-}
 
 /** Find a converter-resolved standard_place inside a sidecar record's
  *  simplified gedcomx whose fact `place` matches `place` (trimmed,

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_gertrudis_hoffmans_daughter",
+    "objective": "Did Gertrudis Hoffmans and her husband Petrus Jansen of Wanroij, North Brabant, Netherlands have a daughter named Elisabeth, baptized 1713, in addition to their three known sons (christened 1709-1717)?",
+    "subject_person_ids": [
+      "KN19-Q19"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

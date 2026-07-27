@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_chresten_nielsen_daughter",
+    "objective": "Did Chresten Nielsen and his wife Birte Kirstine Sørensdatter of Tyrsted, Vejle, Denmark have a daughter named Birte, born 1805, in addition to their nine known children (b. 1791-1801)?",
+    "subject_person_ids": [
+      "KN3K-9Q3"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

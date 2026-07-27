@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_heinrich_zinsmeister_death",
+    "objective": "When and where was Heinrich Zinsmeister of Steinwenden, Pfalz, Bavaria born, and when and where did he die?",
+    "subject_person_ids": [
+      "KD72-C6D"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

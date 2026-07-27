@@ -1,0 +1,38 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Susanna Szljacsan's husband was Joannes Janeczky. The tree currently records no spouse or children for her.",
+      "details": {
+        "subject_person": "Susanna Szljacsan (LDK6-6SH)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Joannes Janeczky",
+          "birth": "unknown, likely Lisková, Ružomberok, Slovakia"
+        }
+      },
+      "supporting_sources": [
+        "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry for Susanna Janeczky, naming parents Joannes Janeczky and Susanna Szliacsan"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Susanna Szljacsan and Joannes Janeczky had a daughter, Susanna Janeczky, baptized about 1884 in Lisková, Ružomberok.",
+      "details": {
+        "subject_person": "Susanna Szljacsan (LDK6-6SH)",
+        "relation": "child",
+        "target_person": {
+          "name": "Susanna Janeczky",
+          "birth": "baptized about 1884, Lisková, Ružomberok, Slovakia"
+        }
+      },
+      "supporting_sources": [
+        "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry, Lisková, Ružomberok"
+      ],
+      "required": true
+    }
+  ]
+}

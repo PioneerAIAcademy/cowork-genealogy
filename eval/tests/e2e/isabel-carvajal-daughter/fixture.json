@@ -1,0 +1,19 @@
+{
+  "id": "isabel-carvajal-daughter",
+  "name": "Isabel Carvajal Chinchilla — additional daughter Juana (m. 1929)",
+  "genre": "record-hint",
+  "source_pid": "LR2Y-X3H",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Isabel Carvajal Chinchilla and her husband Emilio Martínez of Santander, Colombia have a daughter named Juana, married 1929, in addition to their six known children (b. 1881-1895)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1900s",
+    "geography": "CO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 10, flag adds_daughter, confidence 3). Draft transcribed from a Colombian Catholic marriage record; unverified."
+}

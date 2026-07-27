@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_estefania_zambrana_son",
+    "objective": "Did Estefania Zambrana and her husband Antonio Beisaga of Cochabamba, Bolivia have a son named Ricardo, baptized 1874, in addition to their two known children (b. 1867 and 1877)?",
+    "subject_person_ids": [
+      "9QTV-KDZ"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

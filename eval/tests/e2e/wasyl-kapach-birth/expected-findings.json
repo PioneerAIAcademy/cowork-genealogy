@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Wasyl Kapach (recorded in the census as Wasyl Capach) was born 1883 in Ukraine and immigrated to Canada in 1906, per the 1926 Prairie Provinces census (Athabasca, Alberta). The tree currently has no birth fact for him.",
+      "details": {
+        "subject_person": "Wasyl Kapach (L17M-W4Q)",
+        "fact_type": "Birth",
+        "date": "1883",
+        "place": "Ukraine"
+      },
+      "supporting_sources": [
+        "Canada, Prairie Provinces, Census, 1926 — household entry for Wasyl Capach, Athabasca, Alberta"
+      ],
+      "required": true
+    }
+  ]
+}

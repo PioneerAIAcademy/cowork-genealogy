@@ -1,0 +1,146 @@
+{
+  "persons": [
+    {
+      "id": "GTDL-981",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Friedrich Carl",
+          "surname": "Weber"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d7883dd0-1ab9-4c23-824e-e7c5d33c15a9",
+          "type": "Birth",
+          "date": "1846",
+          "standard_date": "1846"
+        },
+        {
+          "id": "a993524e-b958-4c35-944c-6ad53c78c235",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GTD2-RXP",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Catharina",
+          "surname": "Carell"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1987274c-a310-4e1d-bcb3-81a25135047e",
+          "type": "Birth",
+          "date": "14. Februar 1847",
+          "standard_date": "14 Feb 1847"
+        },
+        {
+          "id": "8f5643d1-d5a4-4478-a6d1-11f6bef9f582",
+          "type": "Christening",
+          "date": "16. Februar 1847",
+          "standard_date": "16 Feb 1847",
+          "place": "Sindlingen, Frankfurt am Main, Herzogtum Nassau",
+          "standard_place": "Sindlingen, Frankfurt, Duchy of Nassau"
+        },
+        {
+          "id": "c1525899-e9c4-4dcb-b297-8cde25acb7fc",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GTDL-3XG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Katharina",
+          "surname": "Weber"
+        }
+      ],
+      "facts": [
+        {
+          "id": "faaf15fd-5a25-4948-bf82-ac7d3f993a14",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GTD2-BWK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Thomas",
+          "surname": "Traband"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ac40f43d-c2d8-4b67-9e3f-dd8c7df2e75e",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GTDL-981",
+      "person2": "GTD2-RXP",
+      "facts": [
+        {
+          "id": "d343656e-cb0b-4f55-b258-ed4365731489",
+          "type": "Marriage",
+          "date": "7. Februar 1869",
+          "standard_date": "7 Feb 1869",
+          "place": "Sindlingen, Kreis Höchst, Hessen-Nassau, Preußen, Deutschland",
+          "standard_place": "Sindlingen, Höchst, Hesse-Nassau, Prussia, Germany"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GTD2-BWK",
+      "person2": "GTDL-3XG"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GTD2-BWK",
+      "child": "GTDL-981"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GTDL-3XG",
+      "child": "GTDL-981"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7MH2-WGG",
+      "title": "Friedrich Weber, „Deutschland, Hesse-Nassau, Diözese Limburg, Katholische Kirchenbücher, 1601-1919“",
+      "citation": "\"Deutschland, Hesse-Nassau, Diözese Limburg, Katholische Kirchenbücher, 1601-1919\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D4WX-91PZ : Sun Mar 10 14:14:08 UTC 2024), Entry for Friedrich Weber and Katharine Weber, 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D4WX-91PZ"
+    },
+    {
+      "id": "7MH2-W5T",
+      "title": "Friedrich Carl Weber, „Deutschland, Hesse-Nassau, Diözese Limburg, Katholische Kirchenbücher, 1601-1919“",
+      "citation": "\"Deutschland, Hesse-Nassau, Diözese Limburg, Katholische Kirchenbücher, 1601-1919\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D4HV-K63Z : Sat Mar 09 02:27:29 UTC 2024), Entry for Friedrich Carl Weber and Thomas Traband, 7 Feb 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D4HV-K63Z"
+    }
+  ]
+}

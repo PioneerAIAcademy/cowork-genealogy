@@ -1,0 +1,19 @@
+{
+  "id": "anna-macek-son",
+  "name": "Anna Macek — additional son František (b. 1867)",
+  "genre": "record-hint",
+  "source_pid": "PW3W-LJN",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Anna Macek and her husband Václav Jičinský of Rohovládova Bělá, Pardubice, Czechia have a son named František, baptized 1867?",
+  "tags": {
+    "question_type": "children",
+    "era": "1860s",
+    "geography": "CZ"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 12, flag adds_son, confidence 3). Draft transcribed from a Czech church baptismal record; unverified."
+}

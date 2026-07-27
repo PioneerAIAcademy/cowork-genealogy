@@ -1,0 +1,19 @@
+{
+  "id": "estefania-zambrana-son",
+  "name": "Estefania Zambrana — additional son Ricardo (b. 1874)",
+  "genre": "record-hint",
+  "source_pid": "9QTV-KDZ",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Estefania Zambrana and her husband Antonio Beisaga of Cochabamba, Bolivia have a son named Ricardo, baptized 1874, in addition to their two known children (b. 1867 and 1877)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1870s",
+    "geography": "BO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 7, flag adds_son, confidence 3). Draft transcribed from a Bolivian parish baptismal record; unverified."
+}

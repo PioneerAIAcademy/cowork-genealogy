@@ -1,7 +1,9 @@
 ---
 name: forget-and-rederive
 description: Set up a practice run by removing information the researcher already has from the project tree, so it must be re-derived from records. Use when the researcher says "forget what you know about X and find it again", "hide his parents and see if you can find them", "I want to test whether you can work this out", "re-derive this from scratch", or seeds a project from a well-documented FamilySearch person specifically to check whether the agent can rediscover a known answer. Do NOT use to correct a wrong fact (use tree_correct), to remove a duplicate person (use merge_tree_persons), or to start a project (use init-project).
-allowed-tools: Bash, Read, validate_research_schema
+allowed-tools:
+  - project_context
+  - tree_forget
 ---
 
 **Narration:** read `researcher_profile.narration_guidance` in `research.json` and
@@ -17,7 +19,7 @@ removes a chosen slice of the local tree so the question becomes genuine.
 
 Stripping the local tree is only half the mechanism.
 
-1. **Remove it locally** — `scripts/forget.py`, below.
+1. **Remove it locally** — the `tree_forget` tool, below.
 2. **Do not look it up again.** Live FamilySearch *still has the answer*. If you
    call `person_read`, `person_search`, `person_ancestors`, or the person-match
    tools on the affected people, you will read straight back what was just
@@ -37,55 +39,71 @@ prohibition is on reading the FamilySearch **tree** for the forgotten facts.
 ### 1. Find out what to forget
 
 Ask the researcher what they want you to re-derive, in their words — "his
-parents", "her death date", "who she married". Map that to the tree's own ids by
-reading `tree.gedcomx.json` **structurally**: find the person's `id`, and let the
-script resolve relatives from the relationships. You do not need to read, quote,
-or remember the names and dates you are about to remove — and you are better off
-not doing so.
+parents", "her death date", "who she married".
+
+Map that to the tree's own ids with `project_context({ projectPath })`, which
+returns each tree person's `id` and preferred name. That is all you need: the
+selectors below take ids, and `tree_forget` walks the relationships itself to
+resolve parents, children and spouses.
+
+**Do not read `tree.gedcomx.json`.** You do not need the names and dates you are
+about to remove, and you are better off not having them in context.
 
 If the researcher hasn't seeded a project yet, run `init-project` first. This
 skill edits an existing tree; it does not create one.
 
 ### 2. Always dry-run first
 
-```bash
-python3 scripts/forget.py --project <project-dir> --forget <selector> --dry-run
+```
+tree_forget({ projectPath, forget: [ … ], dryRun: true })
 ```
 
-Selectors (repeat `--forget` for several):
+Each entry in `forget` is `{ selector, … }`:
 
-| Selector | Removes |
-|---|---|
-| `parents-of:<person_id>` | the person's parents, and the links to them |
-| `children-of:<person_id>` | the person's children, and the links to them |
-| `spouses-of:<person_id>` | the person's spouses, and the couple relationships |
-| `birth-of:<person_id>` | that person's birth facts |
-| `death-of:<person_id>` | that person's death facts |
-| `facts-of:<person_id>:<Type>` | that person's facts of one type (e.g. `Marriage`) |
-| `person:<person_id>` | one person, cascading their relationships |
-| `fact:<fact_id>` | one specific fact |
-| `relationship:<rel_id>` | one specific relationship |
+| Selector | Fields | Removes |
+|---|---|---|
+| `parents-of` | `personId` | the person's parents, and the links to them |
+| `children-of` | `personId` | the person's children, and the links to them |
+| `spouses-of` | `personId` | the person's spouses, and the couple relationships |
+| `birth-of` | `personId` | that person's birth facts |
+| `death-of` | `personId` | that person's death facts |
+| `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`) |
+| `person` | `personId` | one person, cascading their relationships |
+| `fact` | `factId` | one specific fact |
+| `relationship` | `relationshipId` | one specific relationship |
 
 **Show the researcher the dry-run counts and get their agreement before
 writing.** This matters more than it looks: removing a *person* also removes
 every relationship touching them. Forgetting a father can therefore also cut the
-subject's siblings, that father's own parents, and his marriage — the dry-run
-reports these as "cascaded", and a surprised researcher is why you check first.
-If the cascade is wider than they want, prefer fact-level selectors
-(`birth-of:`, `death-of:`, `facts-of:`) which never cascade.
+subject's siblings, that father's own parents, and his marriage — the dry run
+reports these as `relationshipsCascaded`, and a surprised researcher is why you
+check first. If the cascade is wider than they want, prefer fact-level selectors
+(`birth-of`, `death-of`, `facts-of`) which never cascade.
 
 ### 3. Apply it
 
-Re-run the same command without `--dry-run`. Then:
+Re-run the same call without `dryRun`. Then:
 
-- Report what went, using the script's own redacted summary — **counts and kinds
+- Report what went, using the tool's own redacted summary — **counts and kinds
   only**. Do not restate the removed names, dates or places back to the
   researcher: you are about to go looking for them, and repeating them here puts
   them right back in your context.
 - Tell the researcher to confirm the gap in the viewer. Seeing the hole is how
   they check you removed what they meant.
-- The script writes `.tree-before-forget.gedcomx.json` so they can restore the
+- The tool writes `.tree-before-forget.gedcomx.json` so they can restore the
   tree. **Never read that file.** It still contains everything that was removed.
+
+If the call comes back `{ ok: false, errors }`, nothing was written. Two errors
+are worth reading carefully rather than routing around:
+
+- **"matched nothing"** — the target is already gone. Read it as "this was
+  already forgotten," not as a problem to fix.
+- **A validation error naming `research.json` paths** — the researcher has
+  assertions, person-evidence entries or a timeline that still reference a person
+  you are about to remove. `tree_forget` does not touch `research.json`, so tell
+  them what is blocking it and let them choose: clear those entries, or forget a
+  narrower slice with a fact-level selector. Say plainly that entries which
+  *state* the answer compromise the exercise anyway.
 
 ### 4. Research it
 
@@ -108,28 +126,17 @@ The researcher will compare it against what they know.
 
 ## Re-invocation behavior
 
-**Writes** `tree.gedcomx.json` only — `scripts/forget.py` removes the persons,
-relationships, and facts named by the `--forget` selectors, plus everything that
-cascades from them. It writes nothing to `research.json`, the `log`, or the
-`results/` sidecars. It also writes the restore file
-`.tree-before-forget.gedcomx.json` next to the tree. `--dry-run` writes neither
-file.
+**Writes** `tree.gedcomx.json` only — `tree_forget` removes the persons,
+relationships, and facts named by the selectors, plus everything that cascades
+from them. It writes nothing to `research.json`, the `log`, or the `results/`
+sidecars. It also writes the restore file `.tree-before-forget.gedcomx.json` next
+to the tree. `dryRun` writes neither file.
 
-**On re-invocation,** forgetting is additive: a second invocation strips a
-further slice from the already-stripped tree. Re-running a selector whose target
-is already gone is an **error, not a no-op** — the script raises
-`"<selector> matched nothing"` (or an unknown-id error, if a previous `person:`
-run removed the person the selector names), exits non-zero, and writes nothing.
-That is a safe failure, with no partial edit, and it is reported the same way
-under `--dry-run`; read it as "this was already forgotten", not as a problem to
-route around. Dry-run first every time regardless: the cascade depends on the
-tree's *current* shape, so the second run's blast radius is not the first run's.
+**On re-invocation,** forgetting is additive: a second call strips a further
+slice from the already-stripped tree. Dry-run first every time regardless — the
+cascade depends on the tree's *current* shape, so the second call's blast radius
+is not the first one's.
 
-**The restore file is overwritten on every non-dry-run invocation.** It is a
-snapshot of the tree as it was at the start of *that* run, not of the original.
-So a second forget replaces the pristine snapshot with the already-forgotten
-tree, and the first slice is no longer recoverable from it. Before forgetting a
-second slice, either confirm the researcher no longer needs the original restore
-point, or have them copy `.tree-before-forget.gedcomx.json` aside first. Decide
-this by asking them — never by reading either file, which would put the
-forgotten information straight back into your context.
+**The restore file is written once and never overwritten,** so it always holds
+the tree as it was before the *first* forget. A second forget does not disturb
+it; restoring it undoes every slice at once.

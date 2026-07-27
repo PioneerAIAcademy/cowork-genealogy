@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Pierre Albert Tullier and Constance Dorothé Leys had a son, Pierre Jacques Dominique Tuilier, born 1796 and married 1825 in Bambecque, France, in addition to their five children already in the tree (born 1805-1816).",
+      "details": {
+        "subject_person": "Pierre Albert Tullier (GPX7-28P)",
+        "relation": "child",
+        "target_person": {
+          "name": "Pierre Jacques Dominique Tuilier",
+          "birth": "1796, France",
+          "marriage": "21 June 1825, Bambecque, Nord, France, to Constance Victoire Depuydt"
+        }
+      },
+      "supporting_sources": [
+        "France, Nord, Parish and Civil Registration, 1524-1893 — marriage entry, 21 Jun 1825, Bambecque, naming parents Pierre Tuilier and Constance Ley"
+      ],
+      "required": true
+    }
+  ]
+}
