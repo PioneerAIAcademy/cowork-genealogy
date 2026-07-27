@@ -614,10 +614,10 @@ Four responses, in rough order of leverage:
    means doctrine survives longer. Their measured 698k → 391k on search payload
    directly extends the window in which a skill body is still resident. This is
    a *behavioral* justification for changes that looked purely economic.
-3. **Re-invoke the skill per plan item**, not once per session. The `research`
-   orchestrator already loops; re-entering `search-records` on each plan item
-   would reload the body. Costs ~10k tokens per reload — cheap against a
-   compaction cycle, and far cheaper than 114 unranked searches.
+3. **Convert load-bearing doctrine into structural anchors** — see §5.3. An
+   earlier draft proposed re-invoking the skill per plan item to reload the
+   body; the rule audit below found a cheaper and permanent fix, so that is
+   superseded rather than merely deferred.
 4. **Shrink the skill body.** 41.6 KB is a lot to hold, and a smaller body both
    survives longer and costs less to reload. Out of scope here; flagged for the
    skill stewards.
@@ -625,6 +625,55 @@ Four responses, in rough order of leverage:
 The order matters: (1) and (2) are already in flight, (3) is a small orchestrator
 change with a real cost model, and (4) is prose work that should follow the
 measurement rather than lead it.
+
+## 5.3 Rule audit — only unanchored prose decays
+
+Every `search-records` rule the transcript can measure, early (segments 0–2,
+before compaction had evicted the body) versus late (segment 3+):
+
+| rule | anchor | early | late |
+|---|---|---|---|
+| Anchor rule: `surname` or `recordCountry` (:125) | **tool rejects violation** | 13/13 (100%) | 127/127 (**100%**) |
+| `birthYearFrom`/`To` paired (:133) | **tool validates** | 13/13 (100%) | 127/127 (**100%**) |
+| `projectPath` on every search (:168) | **output feeds the next required step** | 13/13 (100%) | 127/127 (**100%**) |
+| Log every search (Step 5) | **durable trace in `research.json`** | 13/13 | 140 appends / 127 searches (**100%**) |
+| Keep `givenName`, no surname-only (:160) | none | 7/13 (54%) | 119/127 (94%) † |
+| **`count: 50` (:162)** | **none** | 13/13 (100%) | 57/127 (**45%**) |
+| **"Always call `rank_search_matches`" (:174)** | **none** | 10/13 (77%) | 4/118 (**3%**) |
+
+† Not decay — the early surname-only queries were deliberate broad sweeps. Rate
+*rose*. Listed to show the audit distinguishes decay from ordinary variation.
+
+**Every rule with a structural anchor held at 100%. Both rules that decayed had
+none.** The anchor can be any of three kinds — the tool rejects the violation,
+the rule's output is consumed by a step that cannot proceed without it, or it
+leaves a durable trace the agent re-reads. Prose alone is a rule with a half-life.
+
+### The criterion this gives us
+
+> **A rule that must hold for hours needs a structural anchor. If it lives only
+> in SKILL.md prose, assume it survives ~3 compactions and plan accordingly.**
+
+Applied to `search-records`, exactly two rules need converting — the rest are
+already anchored:
+
+1. **Ranking → tool contract.** The deferred fold (§6). Removes the rule by
+   making it something `record_search` does.
+2. **`count: 50` → tool default** when `projectPath` is supplied.
+
+**These two are coupled and must land together or not at all.** `count: 50`
+exists *to feed the re-ranker a deep pool* (:162). Defaulting count to 50 while
+ranking is still optional would re-instate precisely the waste F2 measured — 50
+raw stubs per search, hand-triaged — and make things worse, not better. Ranking
+first, or both at once; never `count` alone.
+
+### Scope note
+
+This audit covers `search-records` because it is the body that was resident for
+228 of 309 turns. The criterion is general, but the per-skill audit is not done
+elsewhere and should not be assumed. Plugin **agents** are exempt: they run in
+fresh context per invocation, so `record-extractor` (48 KB) and `gps-mentor`
+(30.8 KB) reload every time and cannot decay this way.
 
 ## 5.1a Superseded — the starved-subject reading
 
