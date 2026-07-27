@@ -266,7 +266,7 @@ async function applyLogAppendOp(
   let resultsRef: string | null = null;
   let returnedCount: number | null = null;
   if (op.stagedResultsRef !== undefined && op.stagedResultsRef !== null) {
-    let fin: { resultsRef: string; returnedCount: number };
+    let fin: Awaited<ReturnType<typeof finalizeStagedResults>>;
     try {
       fin = await finalizeStagedResults({
         projectPath,
@@ -281,6 +281,30 @@ async function applyLogAppendOp(
     returnedCount = fin.returnedCount;
     entry.results_ref = resultsRef;
     sidecarsCreated.push(resultsRef);
+
+    // Default `query` from the producing tool's own echo in the staged payload.
+    // The search tool already recorded the exact parameters host-side, so making
+    // the model re-serialize them buys nothing and costs a 20%-failure-rate
+    // hand-transcription of an ARK-dense object (see the tool description). An
+    // explicit caller-supplied `query` always wins — this only fills a gap.
+    if (entry.query === undefined && fin.payloadQuery !== undefined) {
+      entry.query = fin.payloadQuery;
+    }
+  }
+
+  // Every persisted entry carries a `query` object (research.schema.json). If
+  // the caller omitted it and no staged payload supplied one, that is an input
+  // error — fail loudly here rather than writing an entry the validator will
+  // reject on the next append.
+  if (entry.query === undefined) {
+    throw new LogAppendError(
+      "`query` is required. Supply it as an object — search parameters for a " +
+        'search entry, or a keyed identifier for a read-style entry (e.g. ' +
+        '`{"recordId": "ark:/61903/1:1:XXXX-XXX"}` for record_read, ' +
+        '`{"imageArk": "..."}` for image_transcribe). It may be omitted only ' +
+        "when `stagedResultsRef` points at a staged payload that already " +
+        "carries the query.",
+    );
   }
 
   // 4. Append (append-only — existing entries are never touched).
@@ -338,22 +362,35 @@ export async function researchLogAppend(
     }
 
     // ─── Single-op form (behavior unchanged) ─────────────────────────────────
-    const result = await applyLogAppendOp(
-      research,
-      {
-        tool: input.tool!,
-        query: input.query,
-        outcome: input.outcome!,
-        resultsExamined: input.resultsExamined!,
-        planItemId: input.planItemId,
-        resultsAvailable: input.resultsAvailable,
-        notes: input.notes,
-        externalSite: input.externalSite,
-        stagedResultsRef: input.stagedResultsRef,
-      },
-      projectPath,
-      sidecarsCreated,
-    );
+    // Wrapped in the same unwind the batch path uses. `applyLogAppendOp` can
+    // throw AFTER it has finalized a sidecar (the `query`-missing check does
+    // exactly that), and a sidecar written with no `research.json` entry to
+    // reference it is an orphan the next validate_research_schema hard-fails
+    // on — with no recovery, since the staged file it came from is already
+    // unlinked. The outer catch below returns the error but cannot know a
+    // sidecar was written, so the unwind has to happen here.
+    let result;
+    try {
+      result = await applyLogAppendOp(
+        research,
+        {
+          tool: input.tool!,
+          query: input.query,
+          outcome: input.outcome!,
+          resultsExamined: input.resultsExamined!,
+          planItemId: input.planItemId,
+          resultsAvailable: input.resultsAvailable,
+          notes: input.notes,
+          externalSite: input.externalSite,
+          stagedResultsRef: input.stagedResultsRef,
+        },
+        projectPath,
+        sidecarsCreated,
+      );
+    } catch (e) {
+      await cleanupSidecars(projectPath, sidecarsCreated);
+      throw e;
+    }
 
     const validation = await validateParsed(research, tree, { projectPath });
     if (!validation.valid) {
@@ -421,7 +458,21 @@ export const researchLogAppendSchema = {
       },
       query: {
         type: "object",
-        description: "Freeform object capturing enough of the search to reproduce it.",
+        description:
+          "Freeform OBJECT capturing enough of the search to reproduce it — " +
+          "never a bare sentence. For a search entry, the search parameters: " +
+          '`{"surname": "Stephens", "residencePlace": "Shelby, Tennessee, ' +
+          'United States", "recordType": "census"}`. For a read-style entry ' +
+          "there are no search parameters, so key the identifier instead: " +
+          '`record_read` → `{"recordId": "ark:/61903/1:1:XXXX-XXX"}` (or ' +
+          '`{"recordIds": [...]}` for several); `image_transcribe` / ' +
+          '`image_read` → `{"imageArk": "ark:/61903/3:1:XXXX-XXXX-XXX"}`. ' +
+          "Put the prose in `notes`. An ARK written into free text is dense " +
+          "with `:` and `/` and is the common cause of an " +
+          "InputValidationError that rejects the whole call before this tool " +
+          "runs — keep ARKs in a keyed field. Omit entirely when " +
+          "`stagedResultsRef` is given and the staged payload already " +
+          "carries the query.",
       },
       outcome: {
         type: "string",
@@ -491,7 +542,11 @@ export const researchLogAppendSchema = {
             externalSite: { type: ["object", "null"] },
             stagedResultsRef: { type: ["string", "null"] },
           },
-          required: ["tool", "query", "outcome", "resultsExamined"],
+          // `query` is deliberately absent: it may be omitted when
+          // `stagedResultsRef` carries a payload the producing tool already
+          // stamped with its own query. Enforced in code (applyLogAppendOp),
+          // which fails loudly when neither source supplies one.
+          required: ["tool", "outcome", "resultsExamined"],
         },
       },
     },
