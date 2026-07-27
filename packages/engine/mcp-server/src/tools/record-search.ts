@@ -534,19 +534,57 @@ export async function recordSearchTool(
     }
   }
 
-  // Whenever results were staged, drop the inline per-result gedcomx so a broad
-  // search can't overflow the model's context — the bulk lives in the staged
-  // file, which rank_search_matches (and record_read) read host-side, and the
+  // Whenever results were staged, slim the INLINE projection so a broad search
+  // can't overflow the model's context — the bulk lives in the staged file,
+  // which rank_search_matches (and record_read) read host-side, and the
   // remaining flat stub fields still carry names/dates/places for triage. This
-  // is unconditional (no opt-in flag): once staged, nothing needs inline
-  // gedcomx, so the overflow protection can't be forgotten by the caller. Safe
-  // because the staged file is already serialized to disk, so stripping the
-  // inline copy cannot corrupt the sidecar. Never strip when `staged` is null
-  // (an un-staged exploratory search — nothing was retained to re-read from).
+  // is unconditional (no opt-in flag): once staged, nothing needs the dropped
+  // fields inline, so the overflow protection can't be forgotten by the caller.
+  //
+  // Safe because the staged file is already serialized to disk by the awaited
+  // stageSearchResults above, so mutating the inline copy cannot corrupt the
+  // sidecar — the sidecar, the viewer's SidecarResultCard, and the eval fixtures
+  // all keep full fidelity. Never slim when `staged` is null (an un-staged
+  // exploratory search — nothing was retained to re-read from).
+  //
+  // Measured against the 3,380 rows of a real 140-search session: gedcomx aside,
+  // collectionUrl was 14.0% of row bytes, collectionTitle 9.4%, empty
+  // treeMatches 2.9%. primaryId (4.6%) is deliberately KEPT — rank_search_matches
+  // skips any candidate lacking it (rank-search-matches.ts), so dropping it would
+  // silently disable the re-ranker.
   if (out.staged) {
+    const collections: Record<string, string> = {};
     for (const r of out.results) {
       delete r.gedcomx;
+
+      // Derivable from collectionId; nothing reads it off the inline stub.
+      delete r.collectionUrl;
+
+      // Hoist the repeated per-row title into one response-level map.
+      if (r.collectionId && r.collectionTitle) {
+        collections[r.collectionId] = r.collectionTitle;
+        delete r.collectionTitle;
+      }
+
+      // `treeMatches: []` on most rows — say nothing instead of saying "none".
+      if (Array.isArray(r.treeMatches) && r.treeMatches.length === 0) {
+        delete (r as Partial<RecordSearchResult>).treeMatches;
+      }
+
+      // FamilySearch repeats identical event entries (e.g. the same Census
+      // date+place twice). Exact-duplicate removal only — no type filtering,
+      // since Race/MaritalStatus are real triage signal.
+      if (Array.isArray(r.events) && r.events.length > 1) {
+        const seen = new Set<string>();
+        r.events = r.events.filter((e) => {
+          const k = JSON.stringify(e);
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
+      }
     }
+    if (Object.keys(collections).length > 0) out.collections = collections;
   }
 
   return out;
@@ -636,7 +674,7 @@ export const recordSearchToolSchema = {
       count: { type: "number", description: "Number of results per page. Default 20, max 100." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },
 
-      projectPath: { type: "string", description: "Absolute path to the active project directory. When supplied, the tool stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results then come back as compact stubs WITHOUT the per-result `gedcomx` (the bulk lives in the staged file, so a broad search can't overflow the context) — pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them. Omit `projectPath` for an exploratory search you do not intend to log (results come back inline with full gedcomx)." },
+      projectPath: { type: "string", description: "Absolute path to the active project directory. When supplied, the tool stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results then come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. The full-fidelity rows live in the staged file, so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Omit `projectPath` for an exploratory search you do not intend to log (results come back inline at full fidelity)." },
     },
   },
 };

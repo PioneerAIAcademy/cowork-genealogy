@@ -230,6 +230,11 @@ export interface RecordSearchToolResponse {
   offset: number;
   hasMore: boolean;
   results: RecordSearchResult[];
+  // collectionId → collectionTitle for every collection in `results`, present
+  // only on a STAGED response. The per-result `collectionTitle` repeats one of a
+  // handful of strings on every row (9.4% of inline row bytes, measured); hoisting
+  // it here says the same thing once. The staged sidecar keeps the per-row copy.
+  collections?: Record<string, string>;
   // Present only when `projectPath` was supplied. The host-staged handle to pass
   // to research_log_append as `stagedResultsRef`; null for a nil search or when
   // staging failed (see `stagingError`).
