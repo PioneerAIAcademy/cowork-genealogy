@@ -101,6 +101,62 @@ describe("research_log_append", () => {
     expect(research.log[0].query).toEqual({ surname: "FromCaller" });
   });
 
+  it("strips projectPath/subjectId from the defaulted query — they are host plumbing", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: {
+        // echoQuery copies EVERY defined input, plumbing included.
+        query: { surname: "Grice", projectPath: "/private/var/folders/tv/xyz", subjectId: "I1" },
+        results: [{ recordId: "A" }],
+      },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+      stagedResultsRef: handle!.resultsRef,
+    } as any);
+
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    // research.json travels between machines; an absolute host path in it is
+    // meaningless anywhere else.
+    expect(research.log[0].query).toEqual({ surname: "Grice" });
+  });
+
+  it("unlinks the sidecar when the single-op form throws after finalizing it", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_read",
+      // No `query` in the payload, so nothing can default it → the op throws
+      // AFTER the sidecar has been finalized.
+      response: { results: [{ recordId: "A" }] },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_read",
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+      stagedResultsRef: handle!.resultsRef,
+    } as any);
+
+    expect(result.ok).toBe(false);
+    // The sidecar must NOT survive: nothing in research.json references it, the
+    // staged file it came from is already unlinked, and the next
+    // validate_research_schema hard-fails on an orphan with no way to recover.
+    expect(await exists("results/log_001.json")).toBe(false);
+    const research = await readJson("research.json");
+    expect(research.log).toEqual([]);
+  });
+
   it("fails loudly when `query` is omitted and nothing staged supplies one", async () => {
     await writeProject(baseResearch());
 

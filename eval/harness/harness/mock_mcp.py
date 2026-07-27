@@ -58,6 +58,12 @@ Current live tools:
   record-extractor agent consumes instead of reading project files. A
   deterministic function of workspace state — a canned fixture cannot
   honestly reflect what the skill just wrote.
+- research_query: same rationale as project_context — a read-only projection
+  over the workspace's own research.json, so a fixture could only drift from
+  what the skill just wrote. Registered live when search-records and the
+  research orchestrator were pointed at it in place of whole-file Reads;
+  without it, a skill that follows that instruction hits an uncovered tool
+  call and grades badly for doing the right thing.
 """
 
 from __future__ import annotations
@@ -84,6 +90,12 @@ LIVE_TOOLS: set[str] = {
     "tree_correct",
     "materialize_facts",
     "project_context",
+    # Read-only projection over the workspace's own research.json — same shape
+    # as project_context, and deterministic, so mocking it would only invite
+    # drift. Added when search-records / research were pointed at it in place of
+    # whole-file Reads; without it a skill following that instruction hits an
+    # uncovered tool call and grades badly for doing the right thing.
+    "research_query",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -385,6 +397,10 @@ def _make_live_handler(
     if tool_name == "project_context":
         return _make_compiled_tool_handler(
             "project_context", "project-context.js", "projectContext", workspace, call_log
+        )
+    if tool_name == "research_query":
+        return _make_compiled_tool_handler(
+            "research_query", "research-query.js", "researchQuery", workspace, call_log
         )
     raise ValueError(f"No live handler defined for {tool_name!r}")
 

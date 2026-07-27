@@ -362,22 +362,35 @@ export async function researchLogAppend(
     }
 
     // ─── Single-op form (behavior unchanged) ─────────────────────────────────
-    const result = await applyLogAppendOp(
-      research,
-      {
-        tool: input.tool!,
-        query: input.query,
-        outcome: input.outcome!,
-        resultsExamined: input.resultsExamined!,
-        planItemId: input.planItemId,
-        resultsAvailable: input.resultsAvailable,
-        notes: input.notes,
-        externalSite: input.externalSite,
-        stagedResultsRef: input.stagedResultsRef,
-      },
-      projectPath,
-      sidecarsCreated,
-    );
+    // Wrapped in the same unwind the batch path uses. `applyLogAppendOp` can
+    // throw AFTER it has finalized a sidecar (the `query`-missing check does
+    // exactly that), and a sidecar written with no `research.json` entry to
+    // reference it is an orphan the next validate_research_schema hard-fails
+    // on — with no recovery, since the staged file it came from is already
+    // unlinked. The outer catch below returns the error but cannot know a
+    // sidecar was written, so the unwind has to happen here.
+    let result;
+    try {
+      result = await applyLogAppendOp(
+        research,
+        {
+          tool: input.tool!,
+          query: input.query,
+          outcome: input.outcome!,
+          resultsExamined: input.resultsExamined!,
+          planItemId: input.planItemId,
+          resultsAvailable: input.resultsAvailable,
+          notes: input.notes,
+          externalSite: input.externalSite,
+          stagedResultsRef: input.stagedResultsRef,
+        },
+        projectPath,
+        sidecarsCreated,
+      );
+    } catch (e) {
+      await cleanupSidecars(projectPath, sidecarsCreated);
+      throw e;
+    }
 
     const validation = await validateParsed(research, tree, { projectPath });
     if (!validation.valid) {

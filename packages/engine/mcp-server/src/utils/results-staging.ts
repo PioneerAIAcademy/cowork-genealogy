@@ -169,10 +169,18 @@ export async function finalizeStagedResults(args: {
   // so a malformed payload degrades to "no default" rather than persisting a
   // string or array into a field the schema types as an object.
   const rawQuery = (payload as { query?: unknown }).query;
-  const payloadQuery =
-    rawQuery !== null && typeof rawQuery === "object" && !Array.isArray(rawQuery)
-      ? (rawQuery as Record<string, unknown>)
-      : undefined;
+  let payloadQuery: Record<string, unknown> | undefined;
+  if (rawQuery !== null && typeof rawQuery === "object" && !Array.isArray(rawQuery)) {
+    // `echoQuery` copies EVERY defined input, which includes plumbing the log
+    // entry must not carry: `projectPath` is an absolute host path (it landed
+    // in 11 of 24 entries of a real run before this filter) and `subjectId` is
+    // a tree id, not a search parameter. `research.json` is shared project
+    // state that moves between machines — a `/private/var/folders/...` in it is
+    // meaningless anywhere else. Strip them from the DEFAULT only; a caller who
+    // passes `query` explicitly still owns its contents.
+    const { projectPath: _p, subjectId: _s, ...rest } = rawQuery as Record<string, unknown>;
+    payloadQuery = rest;
+  }
 
   return { resultsRef, returnedCount, payloadQuery };
 }

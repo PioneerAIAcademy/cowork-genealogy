@@ -467,8 +467,17 @@ export const rankSearchMatchesSchema = {
     "candidate against the subject person, and returns the top-N compact stubs " +
     "sorted by match score — no bulk gedcomx crosses the wire. Treat the result " +
     "as a REVIEW SURFACE (confirm with role/age cross-checks), not an " +
-    "accept/reject. If `subjectResolvable` is false, the subject is too sparse " +
-    "to rank — fall back to manual `same_person` cross-checks. Requires " +
+    "accept/reject. When `subjectResolvable` is false, READ THE `diagnostic` " +
+    "FIELD — it means one of two opposite things. Either the subject carries no " +
+    "dated or placed fact, so the scores are noise and `matches` is withheld " +
+    "deliberately (give the subject a dated/placed fact, or narrow the query — " +
+    "do NOT hand-triage the stubs, and do NOT re-score with `same_person` " +
+    "against that same subject, which fails identically); or the subject is " +
+    "fine and nothing in this pool matched, which is a real negative worth " +
+    "acting on (page deeper or narrow). Most searches are ranked for you by " +
+    "`record_search` itself when you pass it a `subjectId` — call this tool " +
+    "directly only to re-rank a finalized `results/<log_id>.json` or to rank " +
+    "against a different subject than the one searched for. Requires " +
     "authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object" as const,
