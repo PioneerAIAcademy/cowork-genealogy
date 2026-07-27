@@ -4,7 +4,7 @@
     "skill": "search-records",
     "name": "Check attachment status during result triage",
     "type": "positive",
-    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn, Schuylkill County). After record_search (with projectPath) stages results, the skill should call rank_search_matches to re-rank them by match against the subject and fold in the attachment check (checkAttachments: true). The fixture reranks the correct record (attached to the subject) to the top and returns unattached lower-ranked candidates — the skill should note the attached record is already in the tree (deprioritize for extraction) and surface attachment status in its triage.",
+    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn, Schuylkill County). After record_search (with projectPath) stages results, passing subjectId ranks them by match against the subject and folds in the attachment check. The fixture reranks the correct record (attached to the subject) to the top and returns unattached lower-ranked candidates — the skill should note the attached record is already in the tree (deprioritize for extraction) and surface attachment status in its triage.",
     "tags": [
       "search",
       "census",
@@ -23,10 +23,10 @@
     "rank-search-matches-flynn-census"
   ],
   "judge_context": [
-    "After record_search stages results (called with projectPath), the skill should call rank_search_matches with the staged.resultsRef, the subject id, and checkAttachments: true — NOT per-result same_person or a separate source_attachments call (rank_search_matches folds both in).",
+    "record_search ranks host-side when it is called with projectPath AND subjectId, returning the ranking inline as `ranked` (match score + attachment flag for every candidate). The skill should pass subjectId and triage from `ranked` — NOT per-result same_person, NOT a separate source_attachments call, and NOT a separate rank_search_matches call (the search folds all three in).",
     "The triage output should surface attachment status from the returned matches: distinguish records already attached to the subject (attachedToSubject) — deprioritized as already in the tree — from unattached records prioritized as new evidence for extraction.",
     "The skill should present the top matches with match score and attachment status to the user, and record_read / hand off the promising record(s) for extraction.",
-    "Tool Arguments: score 3 if record_search (with projectPath) and rank_search_matches (with stagedResultsRef, subjectId, checkAttachments) were both called with appropriate parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if a required tool (record_search or rank_search_matches) had clearly wrong arguments or was skipped entirely.",
+    "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
     "IMPORTANT — How file writes work: The skill uses baseline Write/Edit (not MCP) to write log entries and sidecars. results/ sidecars are newly created files — they do NOT appear in the file-change diff. Score Sidecar correctness 3 if the skill text mentions writing results/<log_id>.json. Do NOT score Sidecar=1 because the file does not appear in the MCP tool calls or file-change diff."
   ]
 }

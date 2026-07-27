@@ -260,6 +260,20 @@ def create_mock_server(
         }
     call_log: list[dict[str, Any]] = []
 
+    # `record_search` now ranks host-side when given a `subjectId`, returning the
+    # result inline as `ranked` — the model makes no separate rank call in the
+    # normal flow. The corpus already carries per-test `rank-search-matches-*`
+    # fixtures, tuned to each test's intent, so the mock composes the two rather
+    # than requiring every record-search fixture to be rewritten with a `ranked`
+    # block. Composition (not duplication) is also the only shape that works:
+    # one record-search fixture is shared by tests that want DIFFERENT rankings
+    # (record-search-1850-census-flynn pairs with both -flynn-census and
+    # -flynn-collection-mismatch), which an inline block could not express.
+    # Fixtures are loaded per test, so the right ranking is the one this test
+    # declared. Same class of simulation as the staging block below: mirror what
+    # the real tool does internally.
+    rank_predicated = list((manifest.get("rank_search_matches") or {}).get("predicated") or [])
+
     tools = []
     for tool_name, bucket in manifest.items():
         predicated = list(bucket["predicated"])
@@ -280,6 +294,7 @@ def create_mock_server(
             _predicated=predicated,
             _name=tool_name,
             _workspace=workspace,
+            _rank_predicated=rank_predicated,
         ):
             entry: dict[str, Any] = {
                 "tool": f"mcp__genealogy__{_name}",
@@ -324,6 +339,23 @@ def create_mock_server(
                 staged = _stage_search_results(_workspace, _name, response)
                 if staged is not None:
                     response = {**response, "staged": staged}
+
+            # Fold in the ranking the real record_search performs when the
+            # caller names a subject. Matched against the test's own
+            # rank_search_matches fixtures so each test keeps the ranking it was
+            # written for. A test that declares no rank fixture gets no `ranked`
+            # key — the same shape the real tool returns when ranking is not
+            # requested — rather than a fabricated one.
+            if (
+                _name == "record_search"
+                and args.get("subjectId")
+                and "error" not in response
+                and response.get("staged")
+            ):
+                for predicate, rank_resp, _src in _rank_predicated:
+                    if matches(predicate, args):
+                        response = {**response, "ranked": rank_resp}
+                        break
 
             entry["response"] = response
             entry["response_fixture"] = source_name

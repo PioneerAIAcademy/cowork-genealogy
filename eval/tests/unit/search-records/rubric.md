@@ -12,11 +12,48 @@ Did the skill construct appropriate search parameters from the plan item? Name v
 
 ## Result triage
 
-Did the skill correctly evaluate each result against the research subject? Near-matches must be flagged for review — not silently dropped, not treated as confirmed matches. The skill should use `same_person` scores to support (not replace) its own reasoning, and check `source_attachments` to identify what is already in the tree.
+Did the skill obtain a real match signal against the research subject, and then
+reason on top of it? When `record_search` is given a `subjectId` it ranks the
+staged pool host-side and returns a `ranked` block — `matches[]` carrying
+`matchRank`, `searchRank`, `matchScore`, `matchConfidence`, `candidateFactCount`,
+and `attachedToSubject` / `attachedToOther`. The ranking is a **review surface,
+not a verdict**; this dimension grades whether the skill treated it as one.
 
-- **pass:** Each result is categorized as promising / needs-review / not-relevant with per-record reasoning citing specific matching attributes (e.g., "name and county match but age is 3 years off — flagged needs-review"). `same_person` score is cited where called, and the score range (>0.7 strong, 0.4–0.7 possible, <0.4 weak) informs the category. Attachment status from `source_attachments` is noted for each result (already attached / attached to different person / unattached). A low `same_person` score is not used as the sole reason to dismiss a result when other contextual evidence (age, place, household) supports a match.
-- **partial:** Most results triaged correctly but one near-match is silently discarded without reasoning, or `same_person` is called but the score is treated as the final word without contextual cross-check, or attachment status is checked but not factored into prioritization for extraction.
-- **fail:** Results are bulk-categorized without per-record reasoning (e.g., "no matches found" when the fixture returned near-matches); near-matches treated identically to irrelevant matches; or `same_person` / `source_attachments` not called when results are present and the tools are available.
+**This dimension owns the promising / needs-review / not-relevant verdict and the
+reasoning behind it.** Correctness and Completeness must not re-grade the verdict
+band — they grade whether required actions happened and whether stated facts are
+true.
+
+**No numeric threshold is graded.** Match-score bands genuinely overlap: on live
+data a confirmed record scored 0.632 while a *different* same-name man scored
+0.716, and two dateless obituary stubs differing only by a middle initial scored
+0.086 and 0.668. Never reward or penalize a specific cutoff, in either direction.
+Grade the shape of the reasoning, not the number it lands on.
+
+**`results[].score` is not `matchScore`.** The former is FamilySearch's search
+relevance — the unreliable ranking the match-ranker exists to replace. Citing it
+as if it were a match score is a defect, not a pass.
+
+**The standalone `rank_search_matches` tool is no longer part of the normal
+flow.** Do not penalize its absence. It survives only for re-ranking a finalized
+`results/<log_id>.json`, ranking a pool against a *different* subject, or
+recovering from `rankingError`. Correct in those cases; a redundant second
+ranking of a pool the search already ranked is `partial` (wasted call).
+
+- **pass:** For a search with a known tree subject, `subjectId` was passed and the skill triaged from `ranked.matches[]`, not from raw search order or `results[].score`. Each surfaced candidate is categorized promising / needs-review / not-relevant with per-candidate reasoning naming the discriminating attributes — role in the record, birth-year distance, place, household, collection. Match score is cited as one input among several, and at least one verdict is argued rather than inherited from the ordering (a high-scoring candidate flagged on a failed cross-check, or a middling-scoring one kept for review because independent anchors corroborate it). Thin candidates are treated as low-signal in **both** directions: a low `candidateFactCount`, or a dateless / placeless stub, is a reason to corroborate before accepting *or* dismissing — never a reason to rank-order confidently. Attachment status is used directionally: attached-to-subject is deprioritized when the plan item's goal is *discovering* new evidence, and is the target when the goal is *confirming* a suspected fact.
+- **partial:** Triage happened but the ranking was used as a verdict rather than a surface. Any of: the top match is adopted on score with no independent cross-check; a needs-review-band candidate is written up as a "Top Match" or "almost certainly the right person"; a conflicting date is explained away rather than resolved by corroborating anchors (this counts in **either** direction — the record's imprecision *or* the tree's own estimate being approximate are both excuses); a thin / dateless candidate is confidently dismissed on a low score alone; attachment status is reported but not used to prioritize; `results[].score` is cited alongside or instead of `matchScore` without noticing they are different quantities; or one near-match is silently dropped while the rest are triaged.
+- **fail:** No match signal was obtained or reconstructed for a search that had a known tree subject — `subjectId` omitted and no ranking recovered — so every candidate was hand-scored from FamilySearch's search order. Or results are bulk-categorized with no per-candidate reasoning ("no matches found" when candidates were returned); near-matches are treated identically to irrelevant ones; or a candidate is presented as confirmed on score alone against a cross-check that visibly contradicts it (impossible role, birth year years off, wrong collection).
+
+**`subjectResolvable: false` — score these clauses only when the response actually
+carries the field; otherwise ignore them.** The field means one of two things and
+`diagnostic` says which. *Subject too thin to score* — `matches` is withheld on
+purpose — the correct response is to thicken the subject (extract or link one
+dated/placed assertion) or narrow the query; hand-triaging the pool, or falling
+back to `same_person` against the same starved tree person, is **partial**.
+*Scoreable subject, no match in the pool* — this is a real negative for the
+query; log it as such and page deeper or narrow. Taking the wrong branch for the
+`diagnostic` returned is **partial**; recognizing the distinction and acting on
+it is part of **pass**.
 
 ## Log quality
 
