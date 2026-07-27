@@ -21,6 +21,7 @@ allowed-tools:
   - source_attachments
   - research_log_append
   - research_append
+  - research_query
 ---
 
 # Search Records
@@ -103,9 +104,12 @@ the current question. If you already hold the active plan and its item
 statuses in context from the same run (e.g. research-plan just wrote it
 and you have its compact return), work from that — don't re-read
 `research.json` "to be safe"; the writer tools validate the whole project
-on every write, so the in-context view can't be silently stale. Re-read
-`research.json` `plans[]` when you're entering this skill cold, or when a
-sub-skill or the user changed the plan since you last saw it. If the user
+on every write, so the in-context view can't be silently stale. When you
+*do* need it — entering this skill cold, or a sub-skill/the user changed
+the plan since you last saw it — fetch `plans[]` with **`research_query`**,
+not a whole-file `Read` and never a `grep`. The file grows all run, and a
+long search phase re-reads it many times; `research_query` returns just the
+plan items and their statuses. If the user
 specifies a particular search, match it to a plan item or create an
 ad-hoc search (with `plan_item_id: null` in the log).
 
@@ -242,18 +246,34 @@ candidates; you still confirm the top ones:
   near-miss, not a finding; log it `partial` (collection-mismatch) per Step 5.
 
 **When nothing in the top 10 is a confident match** — or `rank_search_matches`
-returns `subjectResolvable: false` (a thin/unresolvable subject, so its scores
-carry no signal) — do **not** conclude the record is absent:
+returns `subjectResolvable: false` — do **not** conclude the record is absent:
 
 - The pool caps at 50 by FamilySearch's ranker, and re-ranking only re-orders what
   was fetched — it can't rescue a target FamilySearch buries past rank 50. So
   **page deeper** (`record_search` with `offset: 50`, then rank again) or **narrow**
   the query (collection, place, parent/spouse) so the target ranks into the fetched
   50. For a very broad search (thousands of hits), narrow *first*.
-- On `subjectResolvable: false`, fall back to hand-scoring the promising stubs with
-  `same_person` (`gedcomx1` = the record via `record_read`; `gedcomx2` = the subject
-  from `tree.gedcomx.json`; `primaryId2` = the subject's id) plus the cross-checks
-  above.
+- **`subjectResolvable: false` means one of two things — read the `diagnostic`
+  field, which says which.**
+  - *The subject is too thin to score.* `matches` comes back **empty on
+    purpose**: the ranking would have been FamilySearch's search order wearing
+    match scores, and that order is unreliable (a live probe found the top 21
+    hits sharing one score). **Fix the subject, don't hand-triage 50 stubs.**
+    The tool already folds in every assertion linked to the person through
+    `person_evidence`, so the cure is to give it something to fold: extract and
+    link one dated or placed assertion for this person, or record the fact on
+    the tree person, then rank again. If the subject genuinely cannot be
+    thickened yet, **narrow the query** instead — a smaller, better-targeted
+    pool is worth more than a big unranked one.
+  - *The subject is fine; the pool holds no match.* That is a **real negative**
+    for this query. Log it as such and page deeper or narrow — do not re-triage
+    the same 50 stubs by hand.
+
+  Do **not** fall back to hand-scoring with `same_person` against the same tree
+  subject: that is the identical starved document the ranker just failed on, so
+  it will fail the same way. `same_person` is a fallback only when you have a
+  *richer* subject document than the tree person — e.g. a confirmed record for
+  this person, compared record-to-record.
 
 **Deduplicate.** Multiple index entries may point to one underlying record; check
 identifiers before treating similar matches as independent.
