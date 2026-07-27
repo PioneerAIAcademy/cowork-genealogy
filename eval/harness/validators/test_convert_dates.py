@@ -42,3 +42,28 @@ def test_only_convert_calendar_called(tool_calls, test):
         f"convert-dates positive tests should only call convert_calendar; "
         f"also called: {bad}"
     )
+
+
+# --- Invariant for the plain-reformatting negative -------------------
+
+def test_no_spurious_conversion_on_reformatting(tool_calls, test):
+    """Invariant behind ut_convert_dates_010's `grade_on_invariant` flag,
+    gated on the `no-spurious-conversion` tag.
+
+    A cosmetic reformatting request ("reformat '15-Feb-1821' to 'February
+    15, 1821'") involves no calendar-system change, so convert-dates must
+    NOT perform a conversion. The router reliably loads convert-dates on
+    the date-shaped input; what matters is that it declines to convert.
+    Deterministic check: convert_calendar was never invoked. This is the
+    real gate that keeps grade_on_invariant from passing vacuously.
+    """
+    if "no-spurious-conversion" not in (test.get("tags") or []):
+        pytest.skip("only applies to the no-spurious-conversion negative test")
+    converted = [
+        tc["tool"] for tc in tool_calls
+        if "convert_calendar" in tc.get("tool", "")
+    ]
+    assert not converted, (
+        "a plain reformatting request must not trigger a calendar "
+        f"conversion; convert_calendar was invoked: {converted}"
+    )
