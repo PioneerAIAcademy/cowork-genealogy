@@ -749,3 +749,54 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `*Error` type so it surfaces as `{ ok: false, errors }`; `readProjectJson`
   throws a plain `Error` and leaves that mapping to the caller (see
   `tree-forget.ts`'s three-line `readJson` wrapper).
+
+- **The reasoning-effort A/B (C0) is unshipped, and it is the largest single
+  lever** — `docs/plan/research-performance-2026-07-27.md` §F0/§C0. 58% of a real
+  session's output tokens are unstored billed reasoning, and generation time is
+  linear in output tokens, so effort is the only knob that reaches the majority
+  of the cost. `high` is the default everywhere — the SDK's own default
+  (`ClaudeAgentOptions.effort` docstring: *"high — Deep reasoning (default)"*),
+  inherited by the unit harness, pinned explicitly by the e2e orchestrator, and
+  never set by `apps/server/app/agent/real_agent.py`. **Nobody has measured this
+  product at any other effort.** Sequenced last deliberately: the payload and
+  ranking changes move the baseline, so an A/B run before them would be
+  invalidated. Run it against the e2e suite (unit can only screen), and note the
+  suite economics — 20 fixtures ≈ $185 / ~20.5 h serial, scaled by the mean not
+  the median, since 17 of 96 committed runlogs carry no cost.
+
+- **`ClaudeAgentOptions.effort` is not verified end-to-end** — the field exists
+  in claude-agent-sdk 0.1.81 with a documented default, and would make C0 a
+  one-line change in `build_options` instead of writing a `settings.json` into
+  the sandbox. The e2e orchestrator's comment calls its settings-file write "the
+  only working effort lever from the harness", but that comment names the
+  `CLAUDE_EFFORT` env var as what failed, not the SDK option — so it may simply
+  predate it. Five-minute check; do it before building C0 the harder way.
+
+- **`search-records/SKILL.md` is 41.6 KB and wants shrinking** — it was resident
+  for 228 of 309 turns in the measured session, and its unanchored rules decayed
+  under compaction (`research-performance-2026-07-27.md` §5.2–5.3). Shrinking is
+  now *safer* than it was: the two load-bearing rules (ranking, `count: 50`)
+  became tool contracts, so they can no longer be lost with the prose. The
+  hazard that remains is that the unit suite grades single invocations in fresh
+  context and therefore **cannot see** multi-hour retention — so it will happily
+  bless a cut that removes something only a long session needs. Needs a gate
+  other than the unit suite before anyone cuts deeply.
+
+- **The ranking fold has not been tested under real compaction pressure** — the
+  post-change e2e run (`hannah-earnest-children` 2026-07-27) compacted only 4
+  times in 190 turns and ranked 7 of 7 eligible searches. That confirms the
+  contract fires; it does not demonstrate the contract beating prose under the
+  23-compaction pressure that motivated it. The 302-turn baseline of the same
+  fixture would be the harder test.
+
+- **Agents read records the ranker did not surface** — in the same run, 6 of 11
+  `record_read` calls (55%) targeted a record in a ranker top-3. Some is
+  legitimate (5 of 14 searches were deliberately subject-less broad sweeps, which
+  cannot rank), but it is worth checking whether the agent is ignoring rankings
+  it now gets for free. That would be the same adoption gap one layer down.
+
+- **`rank_search_matches`'s subject enrichment (C2a) earns almost nothing** — it
+  moves a true match by +0.0008 (`research-performance-2026-07-27.md` §5.1). It
+  is retained only because it is free and can add nothing the project does not
+  already hold. If it ever acquires a cost — a slow read, a correctness risk —
+  delete it rather than defend it.
