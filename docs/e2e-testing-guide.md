@@ -1,12 +1,7 @@
 # E2E Testing Guide — authoring and running a benchmark fixture
 
-How to author and run an end-to-end research benchmark test, walked through
-**one real fixture end to end**. Written for the team
-doing the work.
-
-This page covers **the e2e benchmark only** — the expensive, live-FamilySearch
-runs that measure how much real research the agent can do on its own. Two
-things it deliberately does *not* cover:
+How to work an end-to-end research benchmark fixture: resolve one you've been
+assigned, or author a new one from a FamilySearch person.
 
 | You want to… | Go to |
 |---|---|
@@ -15,32 +10,36 @@ things it deliberately does *not* cover:
 
 ---
 
-## What e2e tests are
+## The workflow at a glance
 
-An e2e test snapshots a real, well-researched FamilySearch person's tree,
-strips a focused subset (the "answer"), and asks the agent — via
-`/research --autonomous` — to recover what was removed. The judge grades the
-final state `pass` / `partial` / `fail`.
+Which steps are yours depends on how you got here:
 
-They're a **stakeholder-facing benchmark, not a regression suite**. Per-PR
-regression coverage is the unit tests in `eval/tests/unit/`.
+- **Assigned a fixture** — a GitHub issue titled "test `<slug>`". This is the
+  normal case. Do steps **0, 1a, then 4–9**.
+- **Authoring a new fixture** — no issue, just a person you want to turn into a
+  test. Do **every** step.
 
-**Runs are expensive: 20–60 minutes and $3–10 each. Run one at a time.**
-
-> **Before you quote a number to anyone outside the team.** The verdict
-> measures *fact recovery, not sound reasoning* — an agent can recover a right
-> answer from one weak hit and still `pass`. The advisory proof-quality score
-> partly closes that gap, and negative fixtures sample the agent's restraint
-> from over-claiming, but neither certifies it. This is a strong **capability
-> signal**, not a certification that the agent does sound, verifiable GPS
-> research. Don't describe it as the latter. Full framing: spec §1.
+| Step | What you do | Where |
+|---|---|---|
+| 0 Branch | `git checkout -b <short-task-name>` | ⌨️ Terminal |
+| 1 Choose your path | assigned a fixture → 1a; authoring a new one → 1b | 🤖 Claude Code |
+| 1a Resolve *(the norm)* | `/resolve-record-hint` — verify the hint, write the truth | 🤖 Claude Code |
+| 1b Author | `/author-e2e-fixture` — pick a deceased, stable person | 🤖 Claude Code |
+| 2 Scope *(1b only)* | one question, 1–5 findings; keep the search anchors | 🤖 Claude Code |
+| 3 Validate *(1b only)* | check the answer is findable; `make e2e-validate TEST=<slug>` | ⌨️ Terminal |
+| 4 Debug live | `make e2e-project`, then `/research` in Cowork with the Viewer open | 🖥️ Cowork + Viewer |
+| 5 Run | `make e2e-run TEST=<slug>` — one fixture, 20–60 min, $3–10 | ⌨️ Terminal |
+| 6 Read | `/interpret-e2e-result`; `make e2e-view` for the visual pass | 🤖 Claude Code |
+| 7 Attribute | read the transcript, fix in Step 4; `/mine-unit-test --e2e-run …` for a skill miss | 🤖 Claude Code |
+| 8 Grade | `/grade-e2e-run` → commit the `.ann.json` (CI-enforced) | 🤖 Claude Code |
+| 9 Land | commit fixture + run log + grade; open the PR | ⌨️ Terminal / GitHub |
 
 ## The three places you'll work
 
 | Icon | Place | What it is | You use it to… |
 |---|---|---|---|
 | ⌨️ | **Terminal** | A plain shell where you type `make …` (Windows: double-click the matching `.bat` in `eval\`). | Set up, validate, seed, run, view. |
-| 🤖 | **Claude Code** | The **Code tab** of the Claude desktop app opened on your **repo root**, or `claude` in a terminal there — either works, and the Code tab is the usual Windows path. **Not** Cowork. The `/`-commands below are repo-local dev skills under `.claude/skills/`, picked up automatically in this checkout. | Author the fixture, interpret the result, grade the run. |
+| 🤖 | **Claude Code** | The **Code tab** of the Claude desktop app opened on your **repo root**, or `claude` in a terminal there — either works, and the Code tab is the usual Windows path. **Not** Cowork. The `/`-commands below are repo-local dev skills under `.claude/skills/`, picked up automatically in this checkout and identical on every platform. | Author the fixture, interpret the result, grade the run. |
 | 🖥️ | **Cowork** | The shipping product, with the plugin + MCP extension installed. | Watch `/research` work on the fixture live, before you spend money on a headless run. |
 
 A fourth surface matters throughout: the **Research Viewer** (Electron,
@@ -48,10 +47,19 @@ A fourth surface matters throughout: the **Research Viewer** (Electron,
 sources of whichever project folder you point it at. It's how you *see* what the
 agent wrote instead of trusting the chat's summary of itself.
 
-> `author-e2e-fixture`, `resolve-record-hint`, `interpret-e2e-result`, and
-> `grade-e2e-run` are repo-local dev skills — **not** part of the shipped
-> Cowork plugin. The `/`-commands are typed into Claude Code and are
-> identical on every platform.
+## What e2e tests are
+
+An e2e test snapshots a real, well-researched FamilySearch person's tree,
+strips a focused subset (the "answer"), and asks the agent — via
+`/research --autonomous` — to recover what was removed. The judge grades the
+final state `pass` / `partial` / `fail`.
+
+**Runs are expensive: 20–60 minutes and $3–10 each. Run one at a time.**
+
+This is a capability benchmark, not a regression suite — per-PR regression
+coverage is the unit tests in `eval/tests/unit/`. The verdict measures *fact
+recovery, not sound reasoning*, so don't quote it outside the team as proof that
+the agent does sound, verifiable GPS research. Full framing: spec §1.
 
 ---
 
@@ -79,22 +87,6 @@ If it flags something:
 
 ---
 
-## The running example
-
-Everything below follows one fixture that's already in the repo:
-**`spriggs-parents-1898`** — Reuben Spencer Spriggs, FamilySearch PID
-`L64C-QQX`, born 1898 in Maddock, Benson County, North Dakota; died 1998. The
-research question is *"Who were the parents of Reuben Spencer Spriggs?"*, and
-the answer — his father John William Spriggs, his mother Charlotte Marie
-Westby, and the two census sources naming them — is what got stripped.
-
-Read `eval/tests/e2e/spriggs-parents-1898/` alongside this page; substitute your
-own slug as you go. It follows the self-authoring path (Step 1b). If you're
-adjudicating an assigned fixture instead (Step 1a), `thomas-seaver-other-wife`
-and `heinrich-dewus-children-death` are the worked examples to read instead.
-
----
-
 ## Step 0 — Branch ⌨️ Terminal
 
 One task, one branch, always cut from an up-to-date `main` — you open a PR from
@@ -109,8 +101,8 @@ git checkout -b spriggs-parents-fixture
 ```
 
 **GitHub Desktop:** Current Branch dropdown → select **main** and
-**Fetch/Pull** → **New branch…** → name it `spriggs-parents-fixture` → base it
-on `main` → **Create branch**.
+**Fetch/Pull** → **New branch…** → name it → base it on `main` → **Create
+branch**.
 
 Everything the rest of this produces — the fixture files, the run log, the
 grade — lands on this one branch.
@@ -119,55 +111,59 @@ grade — lands on this one branch.
 
 - **Assigned a fixture?** A GitHub issue titled "test `<slug>`" means the
   fixture already exists, drafted from an unverified FamilySearch record
-  hint. Go to **Step 1a**. This is the normal way fixtures get worked going
-  forward — most contributors start here, not by picking a new person.
+  hint. Go to **Step 1a**.
 - **Authoring a brand-new fixture?** No issue — just a person (or research
   document) you want to turn into a test. Go to **Step 1b**.
 
 ## Step 1a — Resolve an assigned fixture 🤖 Claude Code
 
-**What this is.** A `genre: "record-hint"` fixture (spec §3.6) inverts the
-normal shape: nothing was stripped, because the answer was never in the
-FamilySearch tree to begin with. It lives in a historical record that
-FamilySearch's own hinting matched to the tree person with *unverified*
-confidence. Adjudicating means doing the real genealogical work to decide
-whether the hint is true, then making `expected-findings.json` state the
-truth instead of the raw, unverified hint.
+**What this is.** The fixture's answer was never in the FamilySearch tree — it
+lives in a historical record that FamilySearch's own hinting matched to the tree
+person with *unverified* confidence, and about half of those matches are wrong.
+Your job is to decide whether this one is true, and leave the fixture stating
+what you found instead of the raw hint.
 
-**Start from the GitHub issue, not the fixture folder.** The source you're
-checking — a clickable `familysearch.org/ark:/...` URL to the specific hint
-record — lives *only* in the issue body. The fixture's own README
-paraphrases the hint as prose, with no link. Open the issue first.
+**Start from the GitHub issue, not the fixture folder.** It links the two things
+you need: the **tree person** on familysearch.org, and the **hint record** that
+was matched to them.
 
-**Do the research.** Read the fixture's README "Notes for reviewers" section
-for what the original author already found (the tree's existing sources, the
-match-strength argument for and against). Then open the hint record at the
-issue's URL on **familysearch.org** and look, by hand, for corroborating or
-contradicting evidence — the same way you would for any genealogical proof.
+**Do the research, in this order:**
+
+1. **Open the tree person first** and read the sources already attached to them.
+   That's the baseline the hint has to be consistent with — and it's how you
+   catch a hint that is really just a re-indexing of a source the person already
+   has.
+2. **Read the fixture's README**, "Notes for reviewers" section, for what the
+   original author already found (the tree's existing sources, the
+   match-strength argument for and against).
+3. **Open the hint record** and look, by hand, for corroborating or
+   contradicting evidence — the same way you would for any genealogical proof.
+
 This is the human GPS work the benchmark exists to measure; there's no tool
 shortcut for it. **Ask a genealogist for a second opinion** if the call is
 borderline — don't guess alone.
 
-**Write the outcome with the skill — don't hand-edit the JSON:**
+**Write the outcome with the skill — don't hand-edit the fixture files:**
 
 ```
 /resolve-record-hint
 ```
 
-Give it the issue (number or URL) or the slug. It walks you through the three
-possible outcomes, asks what you found, and writes `expected-findings.json`,
-the README's "Notes for reviewers", and `fixture.json`'s `notes` for you —
-then validates the result:
+Give it the issue (number or URL) or the slug. It asks what you found, writes
+the fixture files, and validates the result. The three outcomes:
 
-1. **True match** — findings stay as written.
-2. **Answerable, but differently** — the skill edits `expected-findings.json`
-   to the correct answer.
-3. **False match, no findable substitute** — the skill replaces the findings
-   with a `polarity: "avoid"` finding naming the wrong claim, paired with a
-   required finding documenting the negative conclusion.
+1. **The hint is right** — the fixture stays as it is.
+2. **The answer is something else** — the skill rewrites the fixture's expected
+   findings to the correct answer.
+3. **The hint is wrong, and no other record answers the question** — the skill
+   turns the fixture into a restraint test: the agent must *not* assert the
+   wrong claim, and must document the negative conclusion.
 
-Once the skill hands off, go straight to **Step 4** — Steps 2 and 3 don't
-apply here (nothing was stripped, and the skill already validated).
+`thomas-seaver-other-wife` and `heinrich-dewus-children-death` are the worked
+examples in the repo — read one alongside your own.
+
+Once the skill hands off, go straight to **Step 4** — Steps 2 and 3 don't apply
+here (nothing was stripped, and the skill already validated).
 
 ## Step 1b — Pick a person and author a new fixture 🤖 Claude Code
 
@@ -190,6 +186,11 @@ choosing:
   authoring tool refuses a person marked living, and refuses one whose `living`
   field is simply absent (absent is not deceased).
 - **Stable.** Older records, settled profiles — not ones being actively edited.
+
+`eval/tests/e2e/spriggs-parents-1898/` is the worked example to read alongside
+your own: *"Who were the parents of Reuben Spencer Spriggs?"* (PID `L64C-QQX`,
+born 1898 in Maddock, Benson County, North Dakota), where the stripped answer is
+his two parents and the census sources naming them.
 
 > There's a second, secondary path for when you have no FamilySearch access:
 > building PID-less from a bundled research document, with a placeholder
@@ -227,11 +228,10 @@ you'd search from measures nothing but frustration.
   matched when the agent correctly declined. (`hole-parents-negative` is the
   worked instance in the repo.)
 
-Negative fixtures are the only way this benchmark sees **over-claiming** —
-concluding from insufficient evidence, which is the failure that matters most
-in genealogy, because a wrong parent silently corrupts an entire upstream tree.
-Aim for the suite as a whole to cover both, across a spread of question types,
-eras and geographies. Details: spec §3.4.1.
+Negative fixtures are the only way this benchmark sees **over-claiming**, the
+failure that matters most in genealogy. Aim for the suite as a whole to cover
+both, across a spread of question types, eras and geographies. Details: spec
+§3.4.1.
 
 ## Step 3 — Prove the answer is findable ⌨️ Terminal
 
@@ -323,20 +323,10 @@ Full walkthrough: `eval/README.md` → "Debug a fixture interactively".
 ## Step 5 — Run it ⌨️ Terminal
 
 **This is the expensive confirmation at the *end* of the loop, not a debugging
-tool.**
+tool.** One fixture at a time:
 
 ```bash
 make e2e-run TEST=<slug>            # Windows: eval\RunE2E.bat
-```
-
-Takes one `TEST=<slug>` at a time — there's deliberately no full-suite flag,
-since a sweep is 4–10 hours and $30–100. If you genuinely need a batch, drive
-it with a shell loop and budget for it.
-
-For the full flag list, ask the tool rather than a doc:
-
-```bash
-cd eval/harness && uv run python -m e2e.run_e2e --help
 ```
 
 ## Step 6 — Read the result 🤖 Claude Code
@@ -388,10 +378,6 @@ for the Research Viewer (`make electron`, Windows: `eval\Viewer.bat`).
 | `cost_cap` | Hit the per-run cost limit |
 | `error` | SDK or harness exception; check `result.error` |
 
-One note on reading `blocked_tree_reads`: each entry carries a `blocked_by`
-field, because a block isn't always the universal tree-read rule — it may be the
-fixture's own `blocked_tools`. Read the field rather than assuming.
-
 Full field reference: spec §8.
 
 ## Step 7 — When it fails ⌨️ / 🤖
@@ -432,9 +418,8 @@ grade.)
 
 It shows you each expected finding plus the agent's evidence, and writes
 `run-<ts>.ann.json` with your labels. It reads the fixture and the run's final
-tree — deliberately **not** the judge's own grades — so you label blind. That
-independence is what makes the agreement number mean anything. Commit the
-`.ann.json`.
+tree — deliberately **not** the judge's own grades — so you label blind. Commit
+the `.ann.json`.
 
 Annotation format, the ≥80% agreement gate, and how to read a calibration
 report: spec §7.4.
@@ -458,42 +443,20 @@ tick the fixture directory plus the run log **and** its `.ann.json`, type a
 summary, **Commit to `<your-branch>`**, then **Push origin** and **Create Pull
 Request** (it opens GitHub in your browser with the branch pre-filled).
 
-**Prove it's solvable.** Stripping proves the answer isn't *in* the starting
-tree; only a run proves it's *recoverable from live FS*. So run the fixture,
-confirm `pass`, and commit that run log under `eval/runlogs/e2e/<slug>/`.
+**Commit a passing run, from the branch you're landing.** Stripping proves the
+answer isn't *in* the starting tree; only a run proves it's *recoverable from
+live FS*. If you fixed something in Step 7 and re-ran, the earlier run log is
+stale — commit the new one. Landing a fixture without a passing run is a
+judgment call you should be able to defend in review.
 
-> This is a **strong convention, not a CI check** — `check_e2e_fixtures.py`
-> deliberately does not gate it, because draft and PID-less fixtures routinely
-> land without a passing run first. What CI *does* block is the grading rule
-> above. Landing an unproven fixture is a judgment call you should be able to
-> defend in review, not something the machine will stop.
-
-> **Adjudicated a fixture to a false-match/`avoid` outcome (Step 1a)?**
-> "Confirm `pass`" doesn't mean anything for a fixture whose answer is "the
-> agent should NOT conclude X" — there's no fact to recover. The equivalent
-> proof here is a run where the agent searches, comes up empty (or finds the
-> same contradicting evidence you did), and documents the negative conclusion
-> instead of asserting the hint's claim. Read the transcript for restraint,
-> not recall, before committing the run log.
+> **Resolved a fixture to "the hint is wrong" (Step 1a)?** "Passing" means
+> something different there: there's no fact to recover, so what you're looking
+> for in the run is **restraint** — the agent searched, came up empty (or found
+> the same contradicting evidence you did), and documented that negative
+> conclusion instead of asserting the hint's claim. Read the transcript for
+> restraint, not recall, before committing the run log.
 
 ---
-
-## Cheat sheet
-
-| Step | What you do | Where |
-|---|---|---|
-| 0 Branch | `git checkout -b <short-task-name>` | ⌨️ Terminal |
-| 1 Choose your path | assigned a fixture → 1a; authoring a new one → 1b | 🤖 Claude Code |
-| 1a Resolve *(the norm)* | `/resolve-record-hint` — verify the hint, write the truth | 🤖 Claude Code |
-| 1b Author | `/author-e2e-fixture` — pick a deceased, stable person | 🤖 Claude Code |
-| 2 Scope *(1b only)* | one question, 1–5 findings; keep the search anchors | 🤖 Claude Code |
-| 3 Validate *(1b only)* | check the answer is findable; `make e2e-validate TEST=<slug>` | ⌨️ Terminal |
-| 4 Debug live | `make e2e-project`, then `/research` in Cowork with the Viewer open | 🖥️ Cowork + Viewer |
-| 5 Run | `make e2e-run TEST=<slug>` — one fixture, 20–60 min, $3–10 | ⌨️ Terminal |
-| 6 Read | `/interpret-e2e-result`; `make e2e-view` for the visual pass | 🤖 Claude Code |
-| 7 Attribute | read the transcript, fix in Step 4; `/mine-unit-test --e2e-run …` for a skill miss | 🤖 Claude Code |
-| 8 Grade | `/grade-e2e-run` → commit the `.ann.json` (CI-enforced) | 🤖 Claude Code |
-| 9 Land | commit fixture + run log + grade; open the PR | ⌨️ Terminal / GitHub |
 
 ## Windows equivalents
 
@@ -512,7 +475,6 @@ it from that folder; each prompts for what it needs instead of taking
 | `make e2e-run TEST=<slug>` | `eval\RunE2E.bat` |
 | `make e2e-view TEST=<slug>` | `eval\ViewE2E.bat` |
 | `make electron` | `eval\Viewer.bat` |
-| `make e2e-calibrate` *(maintainer)* | `eval\RunCalibration.bat` |
 | `git checkout -b <short-task-name>` | GitHub Desktop → Current Branch → **New branch…** |
 
 The `/`-commands (`/author-e2e-fixture`, `/resolve-record-hint`,
