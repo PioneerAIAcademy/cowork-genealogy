@@ -163,33 +163,69 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 
 ### 3. Execute the search
 
-Call `record_search` with the constructed params plus `projectPath` (the absolute path of the project directory) and **`count: 50`**. Passing `projectPath` stages the raw results host-side, returns a `staged.resultsRef` handle (pass it to `rank_search_matches` in Step 4 **and** `research_log_append` in Step 5), and returns the inline results as **compact stubs** — the bulk per-result GedcomX lives in the staged file (so a large result set can't overflow; no flag needed). `count: 50` fetches a deep-enough pool for the match re-ranker.
+Call `record_search` with the constructed params plus **`projectPath`** (the
+absolute path of the project directory) and **`subjectId`** (the research
+subject's `persons[].id` in `tree.gedcomx.json`, e.g. `"I1"`).
 
-**Always rank and log the search (Steps 4–5) — never skip them.** `projectPath` on the call is what earns the log entry its results sidecar (the `staged.resultsRef` handle). If you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`, re-run the identical query **with** `projectPath` and use **that** staged re-run for Steps 4 and 5, so the entry gets its sidecar. Why the sidecar matters: a sidecar-less search entry can't feed extraction — `record_persona_id` is auto-filled from the sidecar, `research_append` **rejects** an assertions append against a sidecar-less search, and there is no manual workaround (you cannot set `results_ref` by hand) — so **re-stage before any handoff to extraction**. A missing handle is a reason to re-run, never a reason to skip ranking or logging. If a `stagingError` persists across one retry, surface it to the user. (A nil search correctly has no handle — nothing was found to retain; that is expected.)
+Those two arguments do all of Step 4 for you:
+
+- `projectPath` stages the raw results host-side and returns a
+  `staged.resultsRef` handle (pass it to `research_log_append` in Step 5), and
+  returns the inline results as **compact stubs** — the bulk per-result GedcomX
+  lives in the staged file, so a large result set can't overflow.
+- `subjectId` makes the tool **rank the candidates for you** against that
+  subject and return them under `ranked` (see Step 4). You do not call
+  `rank_search_matches` yourself in the normal flow.
+
+Leave `count` alone. It defaults to 50 when you pass `subjectId` — a deep pool is
+worth fetching precisely because the ranker cuts it back host-side — and to 20
+when you don't. Setting `count: 50` without a `subjectId` just hands you 50 raw
+stubs to read.
+
+Omit `subjectId` only when the search is genuinely not about a specific tree
+person (a broad survey, or a person not yet in the tree). Then triage falls back
+to the manual path in Step 4.
+
+**Always log the search (Step 5) — never skip it.** (Ranking no longer needs a rule: passing `subjectId` above makes it part of the search.) `projectPath` on the call is what earns the log entry its results sidecar (the `staged.resultsRef` handle). If you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`, re-run the identical query **with** `projectPath` and use **that** staged re-run for Steps 4 and 5, so the entry gets its sidecar. Why the sidecar matters: a sidecar-less search entry can't feed extraction — `record_persona_id` is auto-filled from the sidecar, `research_append` **rejects** an assertions append against a sidecar-less search, and there is no manual workaround (you cannot set `results_ref` by hand) — so **re-stage before any handoff to extraction**. A missing handle is a reason to re-run, never a reason to skip ranking or logging. If a `stagingError` persists across one retry, surface it to the user. (A nil search correctly has no handle — nothing was found to retain; that is expected.)
 
 **If the search fails due to authentication:** Instruct the user to log in: "The search requires FamilySearch authentication. Please ask me to log you in, or type `login`."
 
 ### 4. Triage results — rank by match, then confirm
 
-Step 3 returned compact stubs plus a `staged.resultsRef`. **Always call
-`rank_search_matches` after any search that returns one or more results — even
-1–2.** Don't hand-score, eyeball, or skip it for a small result set: one cheap
-host-side call gives a real match score + attachment flag for every candidate
-(which also feeds the match-score log for later threshold calibration) and keeps
-triage uniform.
+**If you passed `subjectId` in Step 3, the ranking is already in the response —
+read `ranked`, don't re-rank.** The tool scored every staged candidate against
+the subject and checked attachments as part of the search. There is no separate
+call to remember, and nothing to skip.
 
-**Rank the staged results:**
+This used to be a rule here — *"always call `rank_search_matches`"* — and it did
+not survive: in a measured session it held while this file was resident in
+context and collapsed to 3% compliance once compaction evicted it, leaving 114
+searches triaged by hand. It is now a property of the tool instead. If you find
+yourself about to hand-score a stub list, check whether you passed `subjectId`.
+
+**Two cases still need the standalone `rank_search_matches` tool:**
+
+1. **Re-ranking a logged search later** — pass the finalized
+   `results/<log_id>.json` as `stagedResultsRef`, e.g. to score an old pool
+   against a subject you have since enriched.
+2. **Ranking against a different subject** than the one you searched for —
+   testing whether a candidate pool matches a *sibling* or a hypothesised parent.
 
 ```
 rank_search_matches({
   projectPath,
-  stagedResultsRef,        // the staged.resultsRef from Step 3
-  subjectId,               // the research subject's id in tree.gedcomx.json (e.g. "I1")
+  stagedResultsRef,        // staged.resultsRef, or results/<log_id>.json
+  subjectId,               // any persons[].id in tree.gedcomx.json
   checkAttachments: true
 })
 ```
 
-It scores **every** staged candidate against the subject with FamilySearch's own
+**If `rankingError` came back on the search**, ranking failed but the search did
+not: `results` is intact and unranked. Re-run the standalone tool with the
+`staged.resultsRef` you already hold; if it fails again, surface it and triage
+by hand for that one search.
+
+Whichever path produced it, the ranking scores **every** staged candidate against the subject with FamilySearch's own
 matcher (the engine `same_person` uses), re-orders by real match quality — **not**
 FamilySearch's search rank, which is unreliable — and returns the **top 10** in
 `matches[]`. Each carries `matchRank`, `searchRank` (its original position — shows

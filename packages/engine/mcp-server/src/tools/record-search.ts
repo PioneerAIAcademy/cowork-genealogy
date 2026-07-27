@@ -25,6 +25,7 @@ import {
 } from "../utils/search-helpers.js";
 import { toArk } from "../utils/ark.js";
 import { stageSearchResults } from "../utils/results-staging.js";
+import { rankSearchMatches } from "./rank-search-matches.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
 export { parseUpstreamErrorBody };
@@ -89,6 +90,22 @@ const KIN_GROUPS: KinGroup[] = [
   { prefix: "other", apiGiven: "q.otherGivenName", apiSurname: "q.otherSurname" },
 ];
 
+/** Results per page when the caller doesn't say.
+ *
+ *  50 when ranking is active, 20 otherwise. `count: 50` was previously a
+ *  SKILL.md instruction justified by "fetch a deep-enough pool for the match
+ *  re-ranker" — but prose rules decay: measured over one real session it held
+ *  at 100% while the skill body was resident and fell to 45% after compaction
+ *  evicted it, while the re-ranker call it existed to serve fell to 3%. The
+ *  session therefore paid for deep pools it never triaged.
+ *
+ *  Coupling the default to `subjectId` makes the pair inseparable by
+ *  construction: a deep pool is only fetched when something will cut it back.
+ *  See docs/plan/research-performance-2026-07-27.md §5.3. */
+export function defaultCount(input: RecordSearchInput): number {
+  return input.subjectId && input.projectPath ? 50 : 20;
+}
+
 export function applyAltNameAutoPair(input: RecordSearchInput): RecordSearchInput {
   const out = { ...input };
   if (out.surnameAlt && !out.givenNameAlt && out.givenName) {
@@ -117,7 +134,11 @@ export function validateInput(input: RecordSearchInput): void {
       throw new Error("offset must be non-negative.");
     }
   }
-  const count = input.count ?? 20;
+  // Ranking active (subjectId supplied) justifies a deep pool: the re-ranker
+  // cuts it back host-side, so the model never sees 50 raw stubs. Without
+  // ranking a deep pool is pure context waste, so the default stays 20. See
+  // docs/plan/research-performance-2026-07-27.md §5.3 — the two are coupled.
+  const count = input.count ?? defaultCount(input);
   const offset = input.offset ?? 0;
   if (offset + count > PAGINATION_CAP) {
     throw new Error(
@@ -258,7 +279,7 @@ export function buildSearchUrl(input: RecordSearchInput): string {
   if (input.maritalStatus) add("f.maritalStatus", input.maritalStatus);
   if (input.isPrincipal !== undefined) add("q.isPrincipal", input.isPrincipal);
 
-  add("count", input.count ?? 20);
+  add("count", input.count ?? defaultCount(input));
   add("offset", input.offset ?? 0);
 
   add("m.queryRequireDefault", "on");
@@ -587,6 +608,32 @@ export async function recordSearchTool(
     if (Object.keys(collections).length > 0) out.collections = collections;
   }
 
+  // Rank host-side when the caller named a subject. This is the "always call
+  // rank_search_matches" rule turned into a tool contract — a documented step
+  // decays under compaction (77% → 3% in one measured session), a contract
+  // cannot. `rank_search_matches` remains a standalone tool: it is still the
+  // way to re-rank a finalized results/<log_id>.json later, and the way to rank
+  // against a different subject than the one searched for.
+  //
+  // Strictly best-effort. The original reason these were separate tools was
+  // graceful degradation — "a matcher throttle slows ranking, not search" — and
+  // that property is preserved here: any ranking failure leaves the search
+  // result intact and merely sets `rankingError`. Ranking is read-only
+  // (scoring + a staged-file read), so unlike a folded log write it introduces
+  // no partial-failure state.
+  if (out.staged && input.subjectId && input.projectPath) {
+    try {
+      out.ranked = await rankSearchMatches({
+        projectPath: input.projectPath,
+        stagedResultsRef: out.staged.resultsRef,
+        subjectId: input.subjectId,
+        checkAttachments: true,
+      });
+    } catch (error) {
+      out.rankingError = error instanceof Error ? error.message : String(error);
+    }
+  }
+
   return out;
 }
 
@@ -671,7 +718,8 @@ export const recordSearchToolSchema = {
       maritalStatus: { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },
       isPrincipal: { type: "boolean", description: "Filter by the searched person's role in the record. `true` returns only records where the matched person is the principal subject (e.g., the deceased on a death certificate, the bride/groom on a marriage). `false` returns only records where the matched person is mentioned but is not the principal (e.g., as a parent, witness, sibling). Omit the parameter to return both — the broadest set, recommended for most natural-language searches." },
 
-      count: { type: "number", description: "Number of results per page. Default 20, max 100." },
+      subjectId: { type: "string", description: "A `persons[].id` from the project's tree.gedcomx.json (e.g. `\"I1\"`). Supply it together with `projectPath` and the tool ALSO ranks the results against that subject with FamilySearch's own matcher and returns them under `ranked` — match-scored, attachment-checked, best first. This replaces a separate `rank_search_matches` call. Supply it for any search where you know which tree person you are looking for, which is nearly all of them. Ranking never fails the search: on a ranking error you still get `results`, plus `rankingError`. Omit it only when the search is not about a specific tree person (a broad survey, or a person not yet in the tree)." },
+      count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — ranking cuts a deep pool back host-side, so fetching one is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },
 
       projectPath: { type: "string", description: "Absolute path to the active project directory. When supplied, the tool stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results then come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. The full-fidelity rows live in the staged file, so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Omit `projectPath` for an exploratory search you do not intend to log (results come back inline at full fidelity)." },
