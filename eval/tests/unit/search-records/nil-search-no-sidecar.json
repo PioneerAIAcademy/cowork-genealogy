@@ -2,34 +2,40 @@
   "test": {
     "id": "ut_search_records_011",
     "skill": "search-records",
-    "name": "A nil search writes no result sidecar",
-    "type": "positive",
-    "description": "Execute a record search that returns zero results. The skill must log the nil result honestly (outcome negative, results_examined 0) and must NOT write a results/ sidecar — results_ref stays null. The log entry's query and counts already prove the nil; an empty sidecar would add nothing.",
+    "name": "Unplanned search request should route to research-plan",
+    "type": "negative",
+    "description": "The user names a person no plan item covers — Bartholomew Flynn, a possible brother of Patrick, who is not in the tree and not the target of any item in the active plan. It is phrased as an instruction ('Search FamilySearch records for...'), so the intent to execute is plain; what is missing is a plan. Under GPS, research is planned research: a search with no plan item behind it logs plan_item_id null, which no exhaustiveness declaration can cite — the search happened but is accountable to nothing. Pulling a new person into the investigation is a change of scope, and scope belongs to research-plan. The skill must hand off rather than search ad-hoc, the same shape as research-plan handing off to locality-guide when the localities section is missing.",
     "tags": [
-      "search",
-      "negative-result",
-      "sidecar-nil",
-      "log-honest-no-match"
+      "negative",
+      "routing",
+      "boundary",
+      "planning",
+      "unplanned-search",
+      "no-search-no-write"
     ]
   },
   "input": {
     "user_message": "Search FamilySearch records for Bartholomew Flynn — a possible brother of Patrick.",
     "scenario": "flynn-record-matching"
   },
+  "negative": {
+    "correct_skill": [
+      "research-plan"
+    ],
+    "explanation": "No plan item covers Bartholomew. The active plan targets Patrick's parentage — pli_001 is the 1850 Schuylkill census and pli_002 is probate; neither reaches a sibling who is not yet in the tree. Searching for him anyway is search-records deciding WHAT to research, which is research-plan's job; search-records only executes items a plan already contains. Routing gets the sibling search planned first, after which it can be executed and cited like any other item. This is a state-based boundary, not an intent-based one: the request is a perfectly clear instruction to search, and it is still refused, because the project state has no plan to hang it on.",
+    "grade_on_invariant": true
+  },
   "mcp_fixtures": [
-    "record-search-flynn-no-results",
-    "record-search-flinn-no-results",
-    "record-search-flyn-no-results",
-    "record-search-variant-father-name-no-results",
-    "record-search-variant-any-givenname-flynn-no-results"
-  ],
-  "judge_context": [
-    "The new log entry must record the nil honestly — outcome 'negative', results_examined 0 — and must NOT claim a positive result",
-    "results_ref must be null and no results/ sidecar file may be written — the log entry's query and counts already record the nil",
-    "Extra parameters beyond surname+givenName (such as residencePlace, birthPlace, residenceYearFrom/To) are acceptable when they match fixtures and aid precision — do NOT penalize for including extra context parameters",
-    "Tool Arguments grading: score 3 if the skill's primary searches (seeking the subject directly by name) include givenName. A supplementary search using fatherGivenName/fatherSurname as an escalation pivot after givenName variants are exhausted is acceptable and should NOT reduce the score. Score 2 if a primary search drops givenName entirely without having tried givenName variants first. Score 1 only if multiple primary calls systematically drop givenName."
+    "record-search-flynn-any-variant-no-results"
   ],
   "execution": {
-    "max_turns": 35
-  }
+    "max_turns": 15
+  },
+  "judge_context": [
+    "This is a grade_on_invariant negative test: PASS/FAIL is decided solely by the deterministic no-search-no-write validator (no record_search call, no new search log entry, no results/ sidecar). Routing and activation are NOT gated, and the judge runs base-only and diagnostically — its scores do not decide the outcome.",
+    "Ideal behavior is a Skill('research-plan') tool call with no prior searching, and without doing research-plan's work inline (do not draft the plan item, sequence records, or recommend repositories here). Note in your rationale whether the skill routed cleanly.",
+    "The distinction under test is STATE, not phrasing. 'Search FamilySearch records for X' is an execute-shaped instruction and would normally proceed; it is refused here only because no plan item covers Bartholomew. Do not treat the imperative phrasing as evidence the skill was right to search.",
+    "The harm this guards against is search-records executing a search and writing a log entry with plan_item_id null. Such an entry cannot be cited by research-exhaustiveness against any plan item, so the work is invisible to the GPS audit trail even though it happened. That is what the validator fails on.",
+    "One catch-all nil fixture is loaded deliberately, and is not expected to be used. It is there so a skill that wrongly searches gets an honest empty result and fails cleanly on the validator, instead of hitting an unregistered tool and aborting — an abort would hide the routing failure behind a harness error."
+  ]
 }

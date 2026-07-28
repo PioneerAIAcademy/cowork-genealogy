@@ -286,6 +286,22 @@ def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
     return set(correct) or None
 
 
+def _stub_skills(spec: TestSpec) -> set[str] | None:
+    """Sub-skills a POSITIVE test declares it doesn't want executed.
+
+    Opt-in per test via `execution.stub_skills`. The PreToolUse hook records
+    the delegation in `skills_invoked`, denies the launch, and lets the run
+    continue — so the caller still finishes its own logging and summary.
+
+    Use when the callee is separately covered by its own unit suite, so running
+    it inside the caller's test spends wall-clock and tokens on coverage that
+    already exists. Assert the hand-off with a `skills_invoked` validator; do
+    not leave it to the judge, which reads a transcript and can misread it.
+    """
+    declared = spec.execution.get("stub_skills") or []
+    return set(declared) or None
+
+
 async def _execute_single_run(
     *,
     run_index: int,
@@ -320,6 +336,7 @@ async def _execute_single_run(
         auth=auth,
         model=model,
         routing_short_circuit_skills=routing_short_circuit,
+        stub_skills=_stub_skills(spec),
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -413,6 +430,7 @@ async def _execute_single_run(
         tool_calls=result.tool_calls,
         blocked_context_calls=result.blocked_context_calls,
         skill_frontmatter=skill_frontmatter,
+        skills_invoked=result.skills_invoked,
         test={
             **spec.raw.get("test", {}),
             # Top-level validator-facing block threaded in alongside the
@@ -563,6 +581,7 @@ async def _execute_skill_with_retry(
     auth: AuthConfig,
     model: str,
     routing_short_circuit_skills: set[str] | None = None,
+    stub_skills: set[str] | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -641,6 +660,7 @@ async def _execute_skill_with_retry(
                     ),
                     allowed_tools_override=skill_baseline,
                     routing_short_circuit_skills=routing_short_circuit_skills,
+                    stub_skills=stub_skills,
                     # The skill's OWN declaration, not skill_baseline (which
                     # unions in its subagents' tools). The gap between the two
                     # is what the per-context policy guards.

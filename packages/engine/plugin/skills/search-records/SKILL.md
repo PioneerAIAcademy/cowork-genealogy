@@ -105,9 +105,37 @@ plan item and in your instructions. Do not re-query between searches; the plan
 does not change while you are searching it. If the plan item arrived in your
 prompt, in a hand-off, or from `research-plan` earlier in this same run, you
 already have it — issue no query at all. Every query is a turn, and a search
-phase has few to spare. If the user
-specifies a particular search, match it to a plan item or create an
-ad-hoc search (with `plan_item_id: null` in the log).
+phase has few to spare.
+
+**Every search must be accountable to a plan item. If the user names a
+particular search, match it to one — and if no plan item covers it, invoke
+`Skill("research-plan")` and stop.** Do not run it as an ad-hoc search.
+
+GPS research is *planned* research. A search with no plan item behind it logs
+`plan_item_id: null`, and `research-exhaustiveness` cannot cite that entry
+against any plan item when it applies the `repository_breadth` and
+`goal_alignment` criteria — so the work happened but is invisible to the audit
+trail that has to justify the conclusion. Deciding *what* to search is
+`research-plan`'s job; this skill executes what a plan already contains.
+
+**This is a state check, not a phrasing check** — and it is the one place where
+an execute-shaped instruction still routes away. The Route check above turns on
+what the user is *asking for*; this turns on what the project *contains*.
+"Search for X" normally proceeds, and is refused here only when the plan has
+nothing covering X.
+
+The commonest trigger is a **person the plan does not reach** — a sibling,
+a FAN associate, a candidate parent not yet in the tree. Bringing a new person
+into the investigation widens its scope, and scope is planned, not improvised.
+
+❌ WRONG: "No plan item covers Bartholomew, so I'll run this as an ad-hoc search
+with `plan_item_id: null`."
+✅ CORRECT: Call `Skill("research-plan")` so the sibling search gets planned,
+then execute it as a normal plan item on the next pass.
+
+This mirrors `research-plan` invoking `locality-guide` when the `localities`
+section is missing: a skill that hits an absent prerequisite delegates to the
+skill that owns it, rather than improvising a substitute.
 
 ### 2. Construct the search query
 
@@ -185,6 +213,35 @@ to the manual path in Step 4.
 **Always log the search (Step 5) — never skip it.** (Ranking no longer needs a rule: passing `subjectId` above makes it part of the search.) `projectPath` on the call is what earns the log entry its results sidecar (the `staged.resultsRef` handle). If you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`, re-run the identical query **with** `projectPath` and use **that** staged re-run for Steps 4 and 5, so the entry gets its sidecar. Why the sidecar matters: a sidecar-less search entry can't feed extraction — `record_persona_id` is auto-filled from the sidecar, `research_append` **rejects** an assertions append against a sidecar-less search, and there is no manual workaround (you cannot set `results_ref` by hand) — so **re-stage before any handoff to extraction**. A missing handle is a reason to re-run, never a reason to skip ranking or logging. If a `stagingError` persists across one retry, surface it to the user. (A nil search correctly has no handle — nothing was found to retain; that is expected.)
 
 **If the search fails due to authentication:** Instruct the user to log in: "The search requires FamilySearch authentication. Please ask me to log you in, or type `login`."
+
+**A zero-result search is NOT an authentication failure — never treat it as one.**
+An auth problem surfaces as a thrown **error**, never as an empty result set: an
+absent or expired session fails with "User is not logged in to FamilySearch. Call
+the login tool to authenticate," and a session the server rejects fails with
+"FamilySearch session not accepted; call the login tool to re-authenticate." A
+response of `results: []` / `total: 0` means the query ran, authenticated, and
+matched nothing. That is **evidence** — the nil finding this skill exists to
+record — not a session problem.
+
+So an implausible-looking nil is not licence to suspect your session. Zero hits
+US-wide on a well-indexed collection is surprising, and the right response is to
+say so in the log `notes` and carry on down whatever path that search's own rules
+already prescribe. **This paragraph settles one question only — whether the
+result is real. It does not tell you what to do next, and it never adds a step
+your search did not already owe.**
+
+**Scope: zero results only.** A search that returned rows is not a nil, whatever
+is wrong with them. Wrong-decade or wrong-collection hits are a **collection
+mismatch** — a different finding with a different, shorter response (log
+`outcome: "partial"`, say which collection came back, stop) — and nothing here
+licenses escalating it.
+
+❌ WRONG: "Zero results US-wide is implausible for the 1850 census, so the session
+must be dead — please log in and I'll re-run."
+✅ CORRECT: "Zero results US-wide despite good coverage. The search ran fine, so
+this is a real nil — most likely a transcription error the FamilySearch index
+cannot match. Logging it as such and continuing with this plan item's own
+next step."
 
 ### 4. Triage results — rank by match, then confirm
 

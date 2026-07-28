@@ -249,6 +249,7 @@ async def run_skill(
     sdk_message_silence_seconds: int = DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     allowed_tools_override: list[str] | None = None,
     routing_short_circuit_skills: set[str] | None = None,
+    stub_skills: set[str] | None = None,
     declared_tools: set[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
@@ -304,6 +305,15 @@ async def run_skill(
     # this after consuming to force a clean (non-aborted) termination.
     routing_resolved = {"v": False}
     _short_circuit = routing_short_circuit_skills or set()
+    # Positive-test sub-skill stubbing (`execution.stub_skills`). Distinct from
+    # the negative-test short-circuit above: that one DENIES AND STOPS, because
+    # a negative test's verdict is sealed the moment routing happens. A positive
+    # test still has work to do after the hand-off (its closing log entry and
+    # summary), so this one DENIES AND CONTINUES — the delegation is recorded in
+    # skills_invoked, the callee never executes, and the caller finishes normally.
+    # Use it when the callee has its own unit suite and re-running it here buys
+    # no signal, only wall-clock and tokens.
+    _stub_skills = stub_skills or set()
     # Main-thread calls to subagent-only tools, denied by the hook below.
     blocked_context_calls: list[dict[str, Any]] = []
 
@@ -341,6 +351,23 @@ async def run_skill(
                         },
                         "continue_": False,
                         "stopReason": "routing_resolved",
+                    }
+                # Positive-test stub: record the hand-off, skip the callee's
+                # execution, but let this run finish its own remaining work.
+                if skill_name in _stub_skills:
+                    return {
+                        "hookSpecificOutput": {
+                            "hookEventName": "PreToolUse",
+                            "permissionDecision": "deny",
+                            "permissionDecisionReason": (
+                                f"{skill_name!r} is stubbed for this eval run — it "
+                                "has its own unit suite and is not under test here. "
+                                "Your delegation to it HAS been recorded and counts "
+                                "as successful. Do not retry it, and do not attempt "
+                                "to do its work yourself. Carry on and finish your "
+                                "own remaining steps (logging, status, summary)."
+                            ),
+                        }
                     }
         # Per-context tool policy: deny a subagent-only tool (image_read) on
         # the main thread UNLESS this skill declared it itself. Checked BEFORE

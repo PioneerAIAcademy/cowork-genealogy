@@ -4,12 +4,23 @@
   "title": "Cowork Genealogy Unit Test",
   "description": "A skill-level evaluation test for Cowork Genealogy. See docs/specs/unit-test-spec.md for prose explanation.",
   "type": "object",
-  "required": ["test", "input", "judge_context"],
+  "required": [
+    "test",
+    "input",
+    "judge_context"
+  ],
   "additionalProperties": false,
   "properties": {
     "test": {
       "type": "object",
-      "required": ["id", "skill", "name", "type", "description", "tags"],
+      "required": [
+        "id",
+        "skill",
+        "name",
+        "type",
+        "description",
+        "tags"
+      ],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -27,7 +38,10 @@
         },
         "type": {
           "type": "string",
-          "enum": ["positive", "negative"],
+          "enum": [
+            "positive",
+            "negative"
+          ],
           "description": "Positive: skill should activate. Negative: skill should decline."
         },
         "description": {
@@ -36,7 +50,9 @@
         },
         "tags": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Freeform tags for filtering and grouping. May be empty."
         },
         "holdout": {
@@ -46,7 +62,10 @@
         },
         "expected_outcome": {
           "type": "string",
-          "enum": ["pass", "xfail"],
+          "enum": [
+            "pass",
+            "xfail"
+          ],
           "default": "pass",
           "description": "Expected aggregated outcome. `xfail` marks a known-failing test so its failures aggregate to `outcome: xfail` rather than `fail` (not a regression). A test marked xfail that starts passing is reported as `xpass` — investigate before flipping to `pass`. Matches pytest convention."
         },
@@ -58,16 +77,28 @@
       "allOf": [
         {
           "if": {
-            "properties": { "expected_outcome": { "const": "xfail" } },
-            "required": ["expected_outcome"]
+            "properties": {
+              "expected_outcome": {
+                "const": "xfail"
+              }
+            },
+            "required": [
+              "expected_outcome"
+            ]
           },
-          "then": { "required": ["xfail_reason"] }
+          "then": {
+            "required": [
+              "xfail_reason"
+            ]
+          }
         }
       ]
     },
     "input": {
       "type": "object",
-      "required": ["user_message"],
+      "required": [
+        "user_message"
+      ],
       "additionalProperties": false,
       "properties": {
         "user_message": {
@@ -75,23 +106,33 @@
           "description": "The exact user input fed to the test harness."
         },
         "scenario": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Name of a scenario directory under eval/fixtures/scenarios/. Null for stateless skills."
         },
         "scenario_notes": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Documentation only — harness ignores this. Describes how the required state differs from the selected scenario."
         }
       }
     },
     "mcp_fixtures": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "Fixture file names (without path or extension) from eval/fixtures/mcp/. Optional for both positive and negative tests."
     },
     "judge_context": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "Per-test background notes the LLM judge reads to ground its rationales for the base + rubric dimensions. NOT a separate scored source — the judge does not emit a `criteria` dimension. Deterministic checks belong in validators (eval/harness/validators/test_<skill>.py), gated on tags. May be empty."
     },
     "expected_classifications": {
@@ -99,7 +140,10 @@
       "description": "Optional deterministic classification ground truth, checked mechanically by the skill's validator (test_expected_classifications in eval/harness/validators/). Semantics per matcher: at least one NEW assertion (created by the run) with the matcher's record_role + fact_type must exist, and EVERY new assertion with that record_role + fact_type must carry each classification value the matcher declares. The LLM judge still grades the classification dimensions; validator results are the mechanical reference during annotation. Only declare pairs and values the doctrine fixes deterministically.",
       "items": {
         "type": "object",
-        "required": ["record_role", "fact_type"],
+        "required": [
+          "record_role",
+          "fact_type"
+        ],
         "additionalProperties": false,
         "properties": {
           "record_role": {
@@ -112,7 +156,10 @@
           },
           "attribute": {
             "type": "string",
-            "enum": ["date", "place"],
+            "enum": [
+              "date",
+              "place"
+            ],
             "description": "Optional facet for an event fact whose date and place are separate attributes of the one event type. When set, the matcher matches ONLY new assertions of the given fact_type that have that attribute populated (`place`/`standard_place` for \"place\", `date` for \"date\") — so a `birth` place-claim (`direct`) and a `birth` date-claim (`indirect`) stay independently checkable. Omit for facts that don't split date from place."
           },
           "optional": {
@@ -122,22 +169,46 @@
           },
           "evidence_type": {
             "oneOf": [
-              { "type": "string" },
-              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              }
             ],
             "description": "Expected evidence_type on every matching new assertion (direct | indirect | negative). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
           },
           "informant_proximity": {
             "oneOf": [
-              { "type": "string" },
-              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              }
             ],
             "description": "Expected informant_proximity on every matching new assertion (self | witness | household_member | family_not_present | researcher | official_duty | unknown). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
           },
           "information_quality": {
             "oneOf": [
-              { "type": "string" },
-              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              }
             ],
             "description": "Expected information_quality on every matching new assertion (primary | secondary | indeterminate). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
           }
@@ -146,12 +217,17 @@
     },
     "negative": {
       "type": "object",
-      "required": ["correct_skill", "explanation"],
+      "required": [
+        "correct_skill",
+        "explanation"
+      ],
       "additionalProperties": false,
       "properties": {
         "correct_skill": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Skills that should handle this request instead. Each entry must be a valid skill directory name. Empty array = no skill should fire (out-of-scope user message). One entry = exactly that skill is expected. Multiple entries = any one is acceptable."
         },
         "explanation": {
@@ -186,29 +262,73 @@
       "additionalProperties": false,
       "description": "Optional per-test overrides of harness execution limits. Defaults documented in unit-test-spec.md Section 15.",
       "properties": {
-        "max_turns": { "type": "integer", "minimum": 1 },
-        "max_wall_clock_seconds": { "type": "integer", "minimum": 1 },
-        "max_tool_calls": { "type": "integer", "minimum": 1 },
-        "max_input_tokens_per_turn": { "type": "integer", "minimum": 1 },
-        "sdk_message_silence_seconds": { "type": "integer", "minimum": 1 }
+        "max_turns": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_wall_clock_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_tool_calls": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_input_tokens_per_turn": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sdk_message_silence_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "stub_skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Positive tests only. Sub-skills this test does NOT want executed. The PreToolUse hook records the delegation in skills_invoked, denies the launch, and lets the run continue so the caller still finishes its own logging and summary. Use when the callee has its own unit suite, so running it here spends wall-clock and tokens on existing coverage. Assert the hand-off with a skills_invoked validator rather than leaving it to the judge."
+        }
       }
     }
   },
   "allOf": [
     {
       "if": {
-        "properties": { "test": { "properties": { "type": { "const": "positive" } } } }
+        "properties": {
+          "test": {
+            "properties": {
+              "type": {
+                "const": "positive"
+              }
+            }
+          }
+        }
       },
       "then": {
-        "not": { "required": ["negative"] }
+        "not": {
+          "required": [
+            "negative"
+          ]
+        }
       }
     },
     {
       "if": {
-        "properties": { "test": { "properties": { "type": { "const": "negative" } } } }
+        "properties": {
+          "test": {
+            "properties": {
+              "type": {
+                "const": "negative"
+              }
+            }
+          }
+        }
       },
       "then": {
-        "required": ["negative"]
+        "required": [
+          "negative"
+        ]
       }
     }
   ]

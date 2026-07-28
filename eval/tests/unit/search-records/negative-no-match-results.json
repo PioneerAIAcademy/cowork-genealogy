@@ -9,7 +9,7 @@
   },
   "input": {
     "user_message": "Search the 1870 census for Patrick Flynn in Schuylkill County to see if he stayed in the area through young adulthood.",
-    "scenario": "mid-research-flynn"
+    "scenario": "mid-research-flynn-1870-census"
   },
   "mcp_fixtures": ["record-search-1850-census-flynn", "rank-search-matches-flynn-collection-mismatch"],
   "judge_context": [
