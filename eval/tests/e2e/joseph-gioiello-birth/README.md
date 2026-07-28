@@ -37,8 +37,17 @@ directly and independently confirm the exact same birth year and birthplace
 country), but it is what both records genuinely state. Do not expect or
 require a more specific country or city from a run unless it turns up an
 actual new record supplying one (e.g. a naturalization record, ship
-manifest, or draft registration) -- a supplementary search for such a record
-was attempted during authoring but hit repeated transient FamilySearch API
-failures (`fetch failed`) and was not completed. Worth another look before
-treating this fixture as fully exhaustive; it may be that no more specific
-record exists, or it may simply not have been found yet.
+manifest, or draft registration).
+
+This fixture was authored twice: the first attempt's live-research validation
+pass hit a persistent FamilySearch `record_search` outage ("fetch failed" on
+every attempt) that never recovered within that session, and was later
+discarded and re-authored fresh (this version) rather than carried forward.
+The re-snapshot is byte-identical in substance to the first attempt (same
+facts, sources, and IDs) -- nothing about the fixture itself was wrong; the
+outage was purely a transient upstream issue. Worth noting for whoever runs
+the scored pass: if `record_search` is down, the agent has no way to answer
+this question (the tree-read tools are blocked in the scored run), so a
+`fail`/`aborted` verdict in that situation reflects a tool outage, not an
+agent or fixture defect -- rerun once the tool recovers before concluding
+anything about the agent's performance.

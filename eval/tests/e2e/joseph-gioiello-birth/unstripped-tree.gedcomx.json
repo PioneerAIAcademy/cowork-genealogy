@@ -280,18 +280,6 @@
   ],
   "sources": [
     {
-      "id": "77NV-3MS",
-      "title": "Joseph Gioiello, \"Ohio, County Marriages, 1789-2016\"",
-      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQR-HMGQ : Thu Mar 07 12:22:53 UTC 2024), Entry for Carmen Martin Gioiello and Bonnie Jean Jepsen, 15 August 1953.",
-      "url": "https://familysearch.org/ark:/61903/1:1:QPQR-HMGW"
-    },
-    {
-      "id": "77NJ-1LT",
-      "title": "Joseph Gioiello, \"Ohio, County Marriages, 1789-2016\"",
-      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KDMY-KLC : Fri Jul 19 09:37:22 UTC 2024), Entry for Carmen Martin Gioiello and Bonnie Jean Jepson, 22 Oct 1953.",
-      "url": "https://familysearch.org/ark:/61903/1:1:KDMY-KLZ"
-    },
-    {
       "id": "77NN-R2X",
       "title": "Joseph Gioiello, \"Ohio, County Marriages, 1789-2016\"",
       "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q297-LGB9 : Sun Mar 10 04:00:26 UTC 2024), Entry for Robert James Lyell and Concetta Immaculate Gioiello, 26 Dec 1953.",
@@ -316,10 +304,22 @@
       "url": "https://familysearch.org/ark:/61903/1:1:Q297-LT5Z"
     },
     {
+      "id": "77NJ-1LT",
+      "title": "Joseph Gioiello, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KDMY-KLC : Fri Jul 19 09:37:22 UTC 2024), Entry for Carmen Martin Gioiello and Bonnie Jean Jepson, 22 Oct 1953.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KDMY-KLZ"
+    },
+    {
       "id": "3WM1-C77",
       "title": "Joseph Gioiello, \"United States, Census, 1940\"",
       "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KWGH-G21 : Thu Jul 18 01:23:09 UTC 2024), Entry for Joseph Gioiello and Lena Gioiello, 1940.",
       "url": "https://familysearch.org/ark:/61903/1:1:KWGH-G21"
+    },
+    {
+      "id": "77NV-3MS",
+      "title": "Joseph Gioiello, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQR-HMGQ : Thu Mar 07 12:22:53 UTC 2024), Entry for Carmen Martin Gioiello and Bonnie Jean Jepsen, 15 August 1953.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQR-HMGW"
     },
     {
       "id": "77NX-9YR",
