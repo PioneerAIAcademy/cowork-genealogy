@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Death 11 Mar 1903, Cincinnati, Hamilton, Ohio encoded on William (G7JB-YH6) as fact F2, primary=true, sourced to Ohio County Death Records (S1). Required finding fully recovered.",
+    "f2": "Spring Grove burial appears only in the proof narrative, not as a burial fact on the subject in the final tree; the FindAGrave/cemetery lookup was deferred (needs off-FamilySearch browser access the blocked run cannot do). Bonus finding, graded false because no burial fact/source was recovered. (Proof soundness scored 2/thin: probable tier resting essentially on a single derivative death index — the corroborating original register image was not read due to an OpenRouter OCR connectivity failure.)"
+  },
+  "annotator": "francishappy"
+}

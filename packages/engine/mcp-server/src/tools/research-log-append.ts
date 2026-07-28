@@ -7,6 +7,15 @@
 // returned_count integrity, camelCase→snake_case rename, and the atomic write.
 // The raw payload reaches disk via host-side staging (search-result-staging-
 // spec.md) — it never round-trips through the model. Spec: research-log-editor-spec.md.
+//
+// Batch form (`ops[]`, added 2026-07-26): mirrors research_append/tree_edit/
+// materialize_facts's ops[] convention — validate-once/write-once/all-or-
+// nothing on research.json. One wrinkle those tools don't have: a sidecar
+// finalization is a REAL file write that happens as each op is applied, not a
+// pure in-memory mutation deferred to the final commit — so a batch tracks
+// every sidecar it creates and unlinks all of them (not just the failing op's)
+// on any later failure, exactly mirroring the single-call path's existing
+// orphan-cleanup behavior, just extended to a list.
 
 import { join } from "path";
 import { readFile, unlink } from "fs/promises";
@@ -15,6 +24,7 @@ import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson } from "../utils/project-io.js";
 import { finalizeStagedResults } from "../utils/results-staging.js";
+import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 
 const EXTERNAL_SITE_VALUES = new Set([
   "ancestry",
@@ -33,8 +43,8 @@ export interface ResearchLogAppendExternalSite {
   captureFilename?: string | null;
 }
 
-export interface ResearchLogAppendInput {
-  projectPath: string;
+/** One log entry — the body of a single call, or one element of a batch `ops`. */
+export interface ResearchLogAppendOp {
   tool: string;
   query: unknown;
   outcome: string;
@@ -46,13 +56,36 @@ export interface ResearchLogAppendInput {
   stagedResultsRef?: string | null;
 }
 
+export interface ResearchLogAppendInput extends Partial<ResearchLogAppendOp> {
+  projectPath: string;
+  // Batch form — supply ops; when present the single-op fields above are
+  // ignored. Every op applies to one in-memory research.json (log ids assigned
+  // in order), validates ONCE, and writes research.json ONCE (all-or-nothing).
+  // Each op's sidecar (if it stages results) is still written as that op is
+  // applied — see the module comment on why that's the one place this tool's
+  // batching isn't purely in-memory, and how failure cleanup handles it.
+  ops?: ResearchLogAppendOp[];
+}
+
+/** The per-entry result payload — the body of a single call's success, or one
+ *  element of a batch `results`. */
+export interface ResearchLogAppendOpResult {
+  logId: string;
+  performed: string;
+  resultsRef: string | null;
+  returnedCount: number | null;
+}
+
 export type ResearchLogAppendResult =
+  | ({
+      ok: true;
+      filesWritten: string[];
+      validation: { valid: true; warnings: string[] };
+    } & ResearchLogAppendOpResult)
   | {
       ok: true;
-      logId: string;
-      performed: string;
-      resultsRef: string | null;
-      returnedCount: number | null;
+      /** One entry per `ops[]` element, in order — the batch form. */
+      results: ResearchLogAppendOpResult[];
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
     }
@@ -117,161 +150,259 @@ function nextLogId(log: any[]): string {
   return `log_${String(max + 1).padStart(3, "0")}`;
 }
 
+/** Unlink every sidecar this call created, best-effort — used on any failure
+ *  path (a later op in a batch throws, or the final validation fails) so no
+ *  orphan sidecar survives a call that ultimately writes nothing. */
+async function cleanupSidecars(projectPath: string, resultsRefs: string[]): Promise<void> {
+  for (const ref of resultsRefs) {
+    await unlink(join(projectPath, ref)).catch(() => {});
+  }
+}
+
+/**
+ * Apply one log entry to the shared in-memory `research` document: validates
+ * the op's own input consistency, assigns the next log id (reading the
+ * CURRENT `research.log`, so ids sequence correctly across a batch), finalizes
+ * a staged sidecar if one was supplied (a REAL file write — pushed onto
+ * `sidecarsCreated` so a later failure in this same call can unwind it), and
+ * pushes the entry. Throws `LogAppendError` on any input problem — the caller
+ * (single-op or batch) decides how to report it.
+ */
+async function applyLogAppendOp(
+  research: any,
+  op: ResearchLogAppendOp,
+  projectPath: string,
+  sidecarsCreated: string[],
+): Promise<ResearchLogAppendOpResult> {
+  // 0. Coerce object-typed args a model may have stringified. Some models
+  //    emit `externalSite` / `query` as a JSON string instead of a nested
+  //    object; without this they reach the checks below as strings and fail
+  //    opaquely ("externalSite.site 'undefined' is not a valid site").
+  const externalSite = coerceObjectArg(op.externalSite, "externalSite") as
+    | ResearchLogAppendExternalSite
+    | null
+    | undefined;
+  const query = coerceObjectArg(op.query, "query");
+
+  // 0b. Map the literal string "null" back to null for nullable scalar args.
+  //     Some models emit `planItemId: "null"` (the string) instead of JSON
+  //     null; stored verbatim it becomes a bogus id reference that fails
+  //     validation ("plan_item_id 'null' not found"). "null" is never a
+  //     valid pli_ id, so this coercion is safe.
+  let planItemId = op.planItemId;
+  if ((planItemId as unknown) === "null") planItemId = null;
+
+  // 0c. planItemId must be a plan-item id (^pli_) from the active plan, or
+  //     null for an opportunistic/ad-hoc search. Models sometimes stuff a
+  //     question id (q_...) or free text into this slot — which persists
+  //     silently (validate_research_schema historically didn't check it) and
+  //     then hard-fails the JSON-Schema validator downstream. Reject it here
+  //     with an actionable error so the caller can correct it, rather than
+  //     silently nulling it (which would discard the caller's expressed
+  //     intent) or persisting an invalid reference.
+  if (planItemId != null && !(typeof planItemId === "string" && planItemId.startsWith("pli_"))) {
+    throw new LogAppendError(
+      `planItemId '${planItemId}' is not a plan-item id. It must start ` +
+        `with 'pli_' (a plan item from the active research plan) or be null ` +
+        `for an opportunistic search with no plan item. A question id ` +
+        `(q_...) is not a plan-item id — supply the pli_ item under that ` +
+        `question, or null.`,
+    );
+  }
+
+  // 1. Input-consistency checks (external_site ↔ tool, enums).
+  const isExternal = op.tool === "external_site";
+  if (isExternal && (externalSite === undefined || externalSite === null)) {
+    throw new LogAppendError("tool is 'external_site' but externalSite is missing");
+  }
+  if (!isExternal && externalSite !== undefined && externalSite !== null) {
+    throw new LogAppendError("externalSite provided but tool is not 'external_site'");
+  }
+  if (externalSite && !EXTERNAL_SITE_VALUES.has(externalSite.site)) {
+    throw new LogAppendError(`externalSite.site '${externalSite.site}' is not a valid site`);
+  }
+  if (!OUTCOME_VALUES.has(op.outcome)) {
+    throw new LogAppendError(`outcome '${op.outcome}' is not one of positive/negative/partial/error`);
+  }
+
+  if (!Array.isArray(research.log)) {
+    throw new LogAppendError("research.json `log` is missing or not an array");
+  }
+  const log: any[] = research.log;
+
+  // 2. Assign the id and timestamp; build the snake_case entry.
+  const logId = nextLogId(log);
+  const performed = new Date().toISOString();
+  const entry: any = {
+    id: logId,
+    plan_item_id: planItemId ?? null,
+    performed,
+    tool: op.tool,
+    query,
+    outcome: op.outcome,
+    results_examined: op.resultsExamined,
+    external_site: externalSite
+      ? {
+          site: externalSite.site,
+          url_generated: externalSite.urlGenerated,
+          capture_received: externalSite.captureReceived,
+          ...(externalSite.captureFilename !== undefined
+            ? { capture_filename: externalSite.captureFilename }
+            : {}),
+        }
+      : null,
+    results_ref: null,
+  };
+  if (op.resultsAvailable !== undefined && op.resultsAvailable !== null) {
+    entry.results_available = op.resultsAvailable;
+  }
+  if (op.notes !== undefined && op.notes !== null) {
+    entry.notes = op.notes;
+  }
+
+  // 3. Finalize a staged sidecar if results were retained. A REAL file write —
+  //    unlike every other op in this tool family, this is not undone just by
+  //    skipping the final research.json write, so record it for cleanup.
+  let resultsRef: string | null = null;
+  let returnedCount: number | null = null;
+  if (op.stagedResultsRef !== undefined && op.stagedResultsRef !== null) {
+    let fin: Awaited<ReturnType<typeof finalizeStagedResults>>;
+    try {
+      fin = await finalizeStagedResults({
+        projectPath,
+        stagedResultsRef: op.stagedResultsRef,
+        logId,
+        expectedTool: op.tool,
+      });
+    } catch (e) {
+      throw new LogAppendError(e instanceof Error ? e.message : String(e));
+    }
+    resultsRef = fin.resultsRef;
+    returnedCount = fin.returnedCount;
+    entry.results_ref = resultsRef;
+    sidecarsCreated.push(resultsRef);
+
+    // Default `query` from the producing tool's own echo in the staged payload.
+    // The search tool already recorded the exact parameters host-side, so making
+    // the model re-serialize them buys nothing and costs a 20%-failure-rate
+    // hand-transcription of an ARK-dense object (see the tool description). An
+    // explicit caller-supplied `query` always wins — this only fills a gap.
+    if (entry.query === undefined && fin.payloadQuery !== undefined) {
+      entry.query = fin.payloadQuery;
+    }
+  }
+
+  // Every persisted entry carries a `query` object (research.schema.json). If
+  // the caller omitted it and no staged payload supplied one, that is an input
+  // error — fail loudly here rather than writing an entry the validator will
+  // reject on the next append.
+  if (entry.query === undefined) {
+    throw new LogAppendError(
+      "`query` is required. Supply it as an object — search parameters for a " +
+        'search entry, or a keyed identifier for a read-style entry (e.g. ' +
+        '`{"recordId": "ark:/61903/1:1:XXXX-XXX"}` for record_read, ' +
+        '`{"imageArk": "..."}` for image_transcribe). It may be omitted only ' +
+        "when `stagedResultsRef` points at a staged payload that already " +
+        "carries the query.",
+    );
+  }
+
+  // 4. Append (append-only — existing entries are never touched).
+  log.push(entry);
+
+  return { logId, performed, resultsRef, returnedCount };
+}
+
 export async function researchLogAppend(
   input: ResearchLogAppendInput,
 ): Promise<ResearchLogAppendResult> {
   const { projectPath } = input;
 
+  // Recover a batch `ops` array the model serialized as a JSON string (see
+  // coerceJsonArg) before any shape checks.
+  input.ops = coerceJsonArg(input.ops) as ResearchLogAppendOp[] | undefined;
+
   try {
-    // 0. Coerce object-typed args a model may have stringified. Some models
-    //    emit `externalSite` / `query` as a JSON string instead of a nested
-    //    object; without this they reach the checks below as strings and fail
-    //    opaquely ("externalSite.site 'undefined' is not a valid site").
-    input.externalSite = coerceObjectArg(input.externalSite, "externalSite") as
-      | ResearchLogAppendExternalSite
-      | null
-      | undefined;
-    input.query = coerceObjectArg(input.query, "query");
-
-    // 0b. Map the literal string "null" back to null for nullable scalar args.
-    //     Some models emit `planItemId: "null"` (the string) instead of JSON
-    //     null; stored verbatim it becomes a bogus id reference that fails
-    //     validation ("plan_item_id 'null' not found"). "null" is never a
-    //     valid pli_ id, so this coercion is safe.
-    if ((input.planItemId as unknown) === "null") input.planItemId = null;
-
-    // 0c. planItemId must be a plan-item id (^pli_) from the active plan, or
-    //     null for an opportunistic/ad-hoc search. Models sometimes stuff a
-    //     question id (q_...) or free text into this slot — which persists
-    //     silently (validate_research_schema historically didn't check it) and
-    //     then hard-fails the JSON-Schema validator downstream. Reject it here
-    //     with an actionable error so the caller can correct it, rather than
-    //     silently nulling it (which would discard the caller's expressed
-    //     intent) or persisting an invalid reference.
-    if (
-      input.planItemId != null &&
-      !(typeof input.planItemId === "string" && input.planItemId.startsWith("pli_"))
-    ) {
-      return {
-        ok: false,
-        errors: [
-          `planItemId '${input.planItemId}' is not a plan-item id. It must start ` +
-            `with 'pli_' (a plan item from the active research plan) or be null ` +
-            `for an opportunistic search with no plan item. A question id ` +
-            `(q_...) is not a plan-item id — supply the pli_ item under that ` +
-            `question, or null.`,
-        ],
-      };
-    }
-
-    // 1. Input-consistency checks (external_site ↔ tool, enums).
-    const isExternal = input.tool === "external_site";
-    if (isExternal && (input.externalSite === undefined || input.externalSite === null)) {
-      return { ok: false, errors: ["tool is 'external_site' but externalSite is missing"] };
-    }
-    if (!isExternal && input.externalSite !== undefined && input.externalSite !== null) {
-      return { ok: false, errors: ["externalSite provided but tool is not 'external_site'"] };
-    }
-    if (input.externalSite && !EXTERNAL_SITE_VALUES.has(input.externalSite.site)) {
-      return {
-        ok: false,
-        errors: [`externalSite.site '${input.externalSite.site}' is not a valid site`],
-      };
-    }
-    if (!OUTCOME_VALUES.has(input.outcome)) {
-      return {
-        ok: false,
-        errors: [
-          `outcome '${input.outcome}' is not one of positive/negative/partial/error`,
-        ],
-      };
-    }
-
-    // 2. Read project files (research mutated in memory only; tree read for
-    //    cross-file checks during validation).
+    // Read project files once (research mutated in memory only; tree read for
+    // cross-file checks during validation).
     const research = await readProjectJson(projectPath, "research.json");
     const { tree } = sanitizeTree(
       await readProjectJson(projectPath, "tree.gedcomx.json"),
     );
-    if (!Array.isArray(research.log)) {
-      return { ok: false, errors: ["research.json `log` is missing or not an array"] };
-    }
-    const log: any[] = research.log;
+    const sidecarsCreated: string[] = [];
 
-    // 3. Assign the id and timestamp; build the snake_case entry.
-    const logId = nextLogId(log);
-    const performed = new Date().toISOString();
-    const entry: any = {
-      id: logId,
-      plan_item_id: input.planItemId ?? null,
-      performed,
-      tool: input.tool,
-      query: input.query,
-      outcome: input.outcome,
-      results_examined: input.resultsExamined,
-      external_site: input.externalSite
-        ? {
-            site: input.externalSite.site,
-            url_generated: input.externalSite.urlGenerated,
-            capture_received: input.externalSite.captureReceived,
-            ...(input.externalSite.captureFilename !== undefined
-              ? { capture_filename: input.externalSite.captureFilename }
-              : {}),
-          }
-        : null,
-      results_ref: null,
-    };
-    if (input.resultsAvailable !== undefined && input.resultsAvailable !== null) {
-      entry.results_available = input.resultsAvailable;
-    }
-    if (input.notes !== undefined && input.notes !== null) {
-      entry.notes = input.notes;
-    }
-
-    // 4. Finalize a staged sidecar if results were retained.
-    let resultsRef: string | null = null;
-    let returnedCount: number | null = null;
-    let sidecarPath: string | null = null;
-    if (input.stagedResultsRef !== undefined && input.stagedResultsRef !== null) {
-      try {
-        const fin = await finalizeStagedResults({
-          projectPath,
-          stagedResultsRef: input.stagedResultsRef,
-          logId,
-          expectedTool: input.tool,
-        });
-        resultsRef = fin.resultsRef;
-        returnedCount = fin.returnedCount;
-        sidecarPath = join(projectPath, fin.resultsRef);
-        entry.results_ref = resultsRef;
-      } catch (e) {
-        return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
+    // ─── Batch form: apply every op in-memory, then validate + write once ────
+    if (input.ops !== undefined) {
+      if (!Array.isArray(input.ops) || input.ops.length === 0) {
+        return { ok: false, errors: ["`ops` must be a non-empty array"] };
       }
+      const results: ResearchLogAppendOpResult[] = [];
+      for (let i = 0; i < input.ops.length; i++) {
+        try {
+          results.push(await applyLogAppendOp(research, input.ops[i], projectPath, sidecarsCreated));
+        } catch (e) {
+          await cleanupSidecars(projectPath, sidecarsCreated);
+          if (e instanceof LogAppendError) return { ok: false, errors: [`ops[${i}]: ${e.message}`] };
+          throw e;
+        }
+      }
+
+      const validation = await validateParsed(research, tree, { projectPath });
+      if (!validation.valid) {
+        await cleanupSidecars(projectPath, sidecarsCreated);
+        return { ok: false, errors: formatIssues(validation.errors) };
+      }
+      await atomicWriteJson(join(projectPath, "research.json"), research);
+      return {
+        ok: true,
+        results,
+        filesWritten: ["research.json", ...sidecarsCreated],
+        validation: { valid: true, warnings: formatIssues(validation.warnings) },
+      };
     }
 
-    // 5. Append (append-only — existing entries are never touched).
-    log.push(entry);
+    // ─── Single-op form (behavior unchanged) ─────────────────────────────────
+    // Wrapped in the same unwind the batch path uses. `applyLogAppendOp` can
+    // throw AFTER it has finalized a sidecar (the `query`-missing check does
+    // exactly that), and a sidecar written with no `research.json` entry to
+    // reference it is an orphan the next validate_research_schema hard-fails
+    // on — with no recovery, since the staged file it came from is already
+    // unlinked. The outer catch below returns the error but cannot know a
+    // sidecar was written, so the unwind has to happen here.
+    let result;
+    try {
+      result = await applyLogAppendOp(
+        research,
+        {
+          tool: input.tool!,
+          query: input.query,
+          outcome: input.outcome!,
+          resultsExamined: input.resultsExamined!,
+          planItemId: input.planItemId,
+          resultsAvailable: input.resultsAvailable,
+          notes: input.notes,
+          externalSite: input.externalSite,
+          stagedResultsRef: input.stagedResultsRef,
+        },
+        projectPath,
+        sidecarsCreated,
+      );
+    } catch (e) {
+      await cleanupSidecars(projectPath, sidecarsCreated);
+      throw e;
+    }
 
-    // 6. Validate the would-be-committed state. The sidecar is on disk, so the
-    //    sidecar checks (returned_count, log_id match, orphan, D5) all run.
     const validation = await validateParsed(research, tree, { projectPath });
     if (!validation.valid) {
-      // Unlink the sidecar just written so no orphan remains; research.json
-      // is untouched on disk.
-      if (sidecarPath) await unlink(sidecarPath).catch(() => {});
+      await cleanupSidecars(projectPath, sidecarsCreated);
       return { ok: false, errors: formatIssues(validation.errors) };
     }
-
-    // 7. Commit research.json atomically.
     await atomicWriteJson(join(projectPath, "research.json"), research);
 
     return {
       ok: true,
-      logId,
-      performed,
-      resultsRef,
-      returnedCount,
-      filesWritten: resultsRef ? ["research.json", resultsRef] : ["research.json"],
+      ...result,
+      filesWritten: result.resultsRef ? ["research.json", result.resultsRef] : ["research.json"],
       validation: { valid: true, warnings: formatIssues(validation.warnings) },
     };
   } catch (e) {
@@ -301,7 +432,16 @@ export const researchLogAppendSchema = {
     "\n" +
     "Returns a compact summary (logId, resultsRef, returnedCount, filesWritten) — " +
     "never the payload. On a validation failure nothing is written and " +
-    "`{ ok: false, errors }` is returned.",
+    "`{ ok: false, errors }` is returned.\n" +
+    "\n" +
+    "To log several searches at once, pass an `ops` array instead of the " +
+    "top-level tool/query/outcome/... fields: each op is the same per-entry " +
+    "shape. The tool applies all ops to one in-memory research.json, validates " +
+    "ONCE, and writes ONCE — all-or-nothing (on any op's failure nothing is " +
+    "written, including any sidecar an earlier op in the batch staged, and the " +
+    "error is `ops[i]: <msg>`). Log ids are assigned in order. Returns " +
+    "`results: [{ logId, performed, resultsRef, returnedCount }]`, one entry " +
+    "per op, in order.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -318,7 +458,21 @@ export const researchLogAppendSchema = {
       },
       query: {
         type: "object",
-        description: "Freeform object capturing enough of the search to reproduce it.",
+        description:
+          "Freeform OBJECT capturing enough of the search to reproduce it — " +
+          "never a bare sentence. For a search entry, the search parameters: " +
+          '`{"surname": "Stephens", "residencePlace": "Shelby, Tennessee, ' +
+          'United States", "recordType": "census"}`. For a read-style entry ' +
+          "there are no search parameters, so key the identifier instead: " +
+          '`record_read` → `{"recordId": "ark:/61903/1:1:XXXX-XXX"}` (or ' +
+          '`{"recordIds": [...]}` for several); `image_transcribe` / ' +
+          '`image_read` → `{"imageArk": "ark:/61903/3:1:XXXX-XXXX-XXX"}`. ' +
+          "Put the prose in `notes`. An ARK written into free text is dense " +
+          "with `:` and `/` and is the common cause of an " +
+          "InputValidationError that rejects the whole call before this tool " +
+          "runs — keep ARKs in a keyed field. Omit entirely when " +
+          "`stagedResultsRef` is given and the staged payload already " +
+          "carries the query.",
       },
       outcome: {
         type: "string",
@@ -369,7 +523,33 @@ export const researchLogAppendSchema = {
           "The `staged.resultsRef` handle returned by record_search / fulltext_search " +
           "(when called with projectPath). Omit/null for nil and external-site searches.",
       },
+      ops: {
+        type: "array",
+        description:
+          "Batch form: log several searches in one validate-once/write-once call " +
+          "(all-or-nothing). When present, the top-level tool/query/outcome/... fields " +
+          "are ignored. Each op is the same per-entry shape the single form takes.",
+        items: {
+          type: "object",
+          properties: {
+            tool: { type: "string" },
+            query: { type: "object" },
+            outcome: { type: "string", enum: ["positive", "negative", "partial", "error"] },
+            resultsExamined: { type: "number" },
+            planItemId: { type: ["string", "null"] },
+            resultsAvailable: { type: ["number", "null"] },
+            notes: { type: ["string", "null"] },
+            externalSite: { type: ["object", "null"] },
+            stagedResultsRef: { type: ["string", "null"] },
+          },
+          // `query` is deliberately absent: it may be omitted when
+          // `stagedResultsRef` carries a payload the producing tool already
+          // stamped with its own query. Enforced in code (applyLogAppendOp),
+          // which fails loudly when neither source supplies one.
+          required: ["tool", "outcome", "resultsExamined"],
+        },
+      },
     },
-    required: ["projectPath", "tool", "query", "outcome", "resultsExamined"],
+    required: ["projectPath"],
   },
 };

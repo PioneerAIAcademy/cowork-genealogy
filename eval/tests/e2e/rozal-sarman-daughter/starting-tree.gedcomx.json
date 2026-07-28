@@ -1,0 +1,281 @@
+{
+  "persons": [
+    {
+      "id": "P873-TWP",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Rozál",
+          "surname": "Sármán"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0e92e801-02a2-4a75-94b9-d8976af1d996",
+          "type": "Birth",
+          "date": "1872. szeptember 27.",
+          "standard_date": "27 1872",
+          "place": "Livada, Arad, Románia",
+          "standard_place": "Livada, Arad, Romania"
+        },
+        {
+          "id": "c804071e-3ae0-4f5a-8db0-be54253f51dd",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PZ4D-4KF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "István",
+          "surname": "Juhász"
+        }
+      ],
+      "facts": [
+        {
+          "id": "26101c6e-c112-46f0-b13d-5804903e95a0",
+          "type": "Birth",
+          "date": "1868. augusztus 14.",
+          "standard_date": "14 1868",
+          "place": "Torontál, Magyarország Limara",
+          "standard_place": "Torontál, Hungary"
+        },
+        {
+          "id": "f8123867-9526-4108-ac22-7f0aafc5096b",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PZH3-WD7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "István",
+          "surname": "Juhász"
+        }
+      ],
+      "facts": [
+        {
+          "id": "11aaa817-b474-4615-985a-b0ac06bf4823",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P87Q-2VC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Katalin",
+          "surname": "Majtényi"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ad67982e-58a2-4561-bc4b-6f44c19037cf",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GG3F-1XM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Ágnes",
+          "surname": "Juhász"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6fefaab1-c44b-42eb-8a8e-dea07f9c5e72",
+          "type": "Birth",
+          "date": "1894. április 13.",
+          "standard_date": "13 1894",
+          "place": "Zimándudvar"
+        },
+        {
+          "id": "fd6a38d6-d2b1-4e55-8899-4e2a88a50193",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PZ4D-2LS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Veronika",
+          "surname": "Juhász"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2daadfc2-0214-4fa3-a914-06a03f4218c0",
+          "type": "Death"
+        },
+        {
+          "id": "3151750b-5b32-43e5-8009-3848a964ee4a",
+          "type": "LifeSketch",
+          "value": "Vera nénihez került csabai tata fiatal korában, ott lakott, Táncsics u. 41. (kb)laktak."
+        }
+      ]
+    },
+    {
+      "id": "PZ4D-W99",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Antal",
+          "surname": "Juhász"
+        }
+      ],
+      "facts": [
+        {
+          "id": "36e6515c-c3d4-49a0-ba65-2557e6de176a",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PZ4D-81P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "János",
+          "surname": "Juhász"
+        }
+      ],
+      "facts": [
+        {
+          "id": "12e4feec-f67a-4843-993f-26a4d5c67e36",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P87Q-VF6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "József",
+          "surname": "Sármán"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3ce33561-bcab-448e-bc19-9238b949d349",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "PZ4D-4KF",
+      "person2": "P873-TWP"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "P87Q-VF6",
+      "person2": "P87Q-2VC"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "P87Q-VF6",
+      "child": "P873-TWP"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "P87Q-2VC",
+      "child": "P873-TWP"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "PZ4D-4KF",
+      "child": "GG3F-1XM"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "P873-TWP",
+      "child": "GG3F-1XM"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "PZ4D-4KF",
+      "child": "PZ4D-W99"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "P873-TWP",
+      "child": "PZ4D-W99"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "PZ4D-4KF",
+      "child": "PZH3-WD7"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "P873-TWP",
+      "child": "PZH3-WD7"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "PZ4D-4KF",
+      "child": "PZ4D-81P"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "P873-TWP",
+      "child": "PZ4D-81P"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "PZ4D-4KF",
+      "child": "PZ4D-2LS"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "P873-TWP",
+      "child": "PZ4D-2LS"
+    }
+  ],
+  "sources": []
+}

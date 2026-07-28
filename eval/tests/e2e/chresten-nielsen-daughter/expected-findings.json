@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Chresten Nielsen and Birte Kirstine had a daughter, Birte, born 3 August 1805 in Dallerup and christened 6 October 1805 in Tyrsted, Vejle, in addition to their nine children already in the tree (b. 1791-1801).",
+      "details": {
+        "subject_person": "Chresten Nielsen (KN3K-9Q3)",
+        "relation": "child",
+        "target_person": {
+          "name": "Birte Nielsen",
+          "birth": "3 August 1805, Dallerup, Vejle, Denmark"
+        }
+      },
+      "supporting_sources": [
+        "Denmark, Baptisms, 1618-1923 — christening entry, 6 Oct 1805, Tyrsted, Vejle, naming parents Chresten Nielsen and Birte Kirstine"
+      ],
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,482 @@
+{
+  "persons": [
+    {
+      "id": "MJDL-Q8B",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "William A.",
+          "surname": "Bagley"
+        },
+        {
+          "id": "N7",
+          "type": "BirthName",
+          "given": "William A",
+          "surname": "Bagley",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "Abt 1815",
+          "standard_date": "Abt 1815",
+          "place": "West Topsham, Orange, Vermont",
+          "standard_place": "Topsham, Orange, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            },
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "31 May 1884",
+          "standard_date": "31 May 1884",
+          "place": "Topsham, Orange, Vermont, United States",
+          "standard_place": "Topsham, Orange, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "28119bdf-00ed-4c5f-a9fc-9b39c096b055",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Topsham, Orange, Vermont, United States",
+          "standard_place": "Topsham, Orange, Vermont, United States"
+        }
+      ]
+    },
+    {
+      "id": "L528-9HM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Eva Belle",
+          "surname": "Bagley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c65fd7c9-7586-4a5c-98b1-27981c8f4ed3",
+          "type": "Birth",
+          "date": "29 July 1847",
+          "standard_date": "29 Jul 1847",
+          "place": "Barre, Barre, Washington, Vermont, United States",
+          "standard_place": "Barre City, Washington, Vermont, United States"
+        },
+        {
+          "id": "56040e10-989e-42e1-9470-cf3a7d385136",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Topsham, Orange, Vermont, United States",
+          "standard_place": "Topsham, Orange, Vermont, United States"
+        },
+        {
+          "id": "8a8e2950-70c9-42c0-955a-3ebaac83ae4e",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Vermont, United States",
+          "standard_place": "Vermont, United States"
+        },
+        {
+          "id": "926a74b0-628f-430a-85a8-fc5862acc2b9",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Topsham, Orange, Vermont, United States",
+          "standard_place": "Topsham, Orange, Vermont, United States"
+        },
+        {
+          "id": "cc5e47c1-61b1-44ba-ac2c-fd5777bdc0d3",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Barre town, north side (excl. Barre city), Washington, Vermont, United States",
+          "standard_place": "Barre Town, Washington, Vermont, United States"
+        },
+        {
+          "id": "4f2dc707-d54e-4d9b-b186-ec63924623b5",
+          "type": "Death",
+          "date": "7 March 1925",
+          "standard_date": "7 Mar 1925",
+          "place": "Barre, Barre, Washington, Vermont, United States",
+          "standard_place": "Barre City, Washington, Vermont, United States"
+        },
+        {
+          "id": "01b023a0-dc7f-441f-bc65-f846e51e9477",
+          "type": "Burial",
+          "place": "West Topsham Cemetery, West Topsham, Orange, Vermont, United States of America",
+          "standard_place": "West Topsham Cemetery, Topsham, Orange, Vermont, United States"
+        }
+      ]
+    },
+    {
+      "id": "KHY4-7VP",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Ann",
+          "surname": "Tillotson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100-KHY4",
+          "type": "Birth",
+          "date": "1826",
+          "standard_date": "1826",
+          "place": "Topsham, Orange, Vt.",
+          "standard_place": "Topsham, Orange, Vermont, United States"
+        },
+        {
+          "id": "5bad4ac9-d8e9-4a9b-a820-af1dc0708089",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Topsham, Orange, Vermont, United States",
+          "standard_place": "Topsham, Orange, Vermont, United States"
+        },
+        {
+          "id": "716108d5-252f-4c2b-9eaa-0d98e8a7434a",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Vermont, United States",
+          "standard_place": "Vermont, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922-KHY4",
+          "type": "Death",
+          "date": "30 Apr 1876",
+          "standard_date": "30 Apr 1876",
+          "place": "Vermont, United States",
+          "standard_place": "Vermont, United States"
+        },
+        {
+          "id": "c0d5bbc8-4524-4880-9947-245327865519",
+          "type": "Burial",
+          "date": "1876",
+          "standard_date": "1876",
+          "place": "West Topsham, Orange, Vermont, United States of America",
+          "standard_place": "Topsham, Orange, Vermont, United States"
+        }
+      ]
+    },
+    {
+      "id": "LVDV-6MK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Sarah Sally",
+          "surname": "Andrews"
+        },
+        {
+          "id": "N8",
+          "type": "BirthName",
+          "given": "Sarah A",
+          "surname": "Bagley",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            },
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "377e6373-a54b-4d9c-8dbb-21e46d2d96e2",
+          "type": "Birth",
+          "date": "1777",
+          "standard_date": "1777",
+          "place": "Gloucester, Essex, Massachusetts, United States",
+          "standard_place": "Gloucester, Essex, Massachusetts, United States"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "7 December 1777",
+          "standard_date": "7 Dec 1777",
+          "place": "Gloucester, Essex, Massachusetts, United States",
+          "standard_place": "Gloucester, Essex, Massachusetts, United States"
+        },
+        {
+          "id": "af27bdb3-0190-4145-8100-880432d43893",
+          "type": "Death",
+          "date": "19 March 1847",
+          "standard_date": "19 Mar 1847",
+          "place": "Topsham, Orange, Vermont, United States",
+          "standard_place": "Topsham, Orange, Vermont, United States"
+        },
+        {
+          "id": "fc30de70-823f-4852-91a3-ec94704349dc",
+          "type": "Burial",
+          "date": "March 1947",
+          "standard_date": "Mar 1947",
+          "place": "Old West Topsham Cemetery, Topsham, Orange, Vermont, USA",
+          "standard_place": "West Topsham Cemetery, Topsham, Orange, Vermont, United States"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N6",
+          "type": "BirthName",
+          "given": "David",
+          "surname": "Bagley",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            },
+            {
+              "ref": "S2",
+              "quality": 2
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Residence",
+          "date": "1820",
+          "place": "Topsham, Orange, Vermont, United States",
+          "standard_place": "Topsham, Orange, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Census",
+          "date": "1820",
+          "place": "Topsham, Orange, Vermont, United States",
+          "standard_place": "Topsham, Orange, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1840",
+          "place": "Topsham, Orange, Vermont, United States",
+          "standard_place": "Topsham, Orange, Vermont, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "MJDL-Q8B",
+      "person2": "KHY4-7VP",
+      "facts": [
+        {
+          "id": "2519e746-0a0a-4421-8726-7d1c729c22b8",
+          "type": "Marriage",
+          "place": "Topsham, Orange, Vermont, United States",
+          "standard_place": "Topsham, Orange, Vermont, United States"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LVDV-6MK",
+      "child": "MJDL-Q8B",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "MJDL-Q8B",
+      "child": "L528-9HM"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KHY4-7VP",
+      "child": "L528-9HM"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "MJDL-Q8B",
+      "id": "R7",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "31KH-KNQ",
+      "title": "William A Bagley, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC26-77Q : Sun Oct 19 18:25:15 UTC 2025), Entry for William A Bagley and Ann Bagley, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC26-77Q"
+    },
+    {
+      "id": "3PJB-YFV",
+      "title": "Wm A Bagley, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+      "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQP-JBTG : Fri Mar 08 23:31:40 UTC 2024), Entry for Andrew Thurston and Eva Ann Bagley.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQP-JBYH"
+    },
+    {
+      "id": "S8BB-N5D",
+      "title": "William Bugby, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+      "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQG-NCL1 : Sun Mar 10 04:53:23 UTC 2024), Entry for Andrew Thurston and Eva B Bugby, 11 November 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQR-3PN5"
+    },
+    {
+      "id": "S8BB-N2L",
+      "title": "William Bugby, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+      "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQ5-76SN : Sat Mar 09 09:59:37 UTC 2024), Entry for Andrew Thurston and Eva B Bugby, 11 November 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQ5-6Q6G"
+    },
+    {
+      "id": "S8BB-NNT",
+      "title": "William Bugby, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+      "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQK-7V5H : Fri Mar 08 04:46:12 UTC 2024), Entry for Andrew Thurston and Eva B Bugby, 11 November 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQV-NR2M"
+    },
+    {
+      "id": "S8BB-N8N",
+      "title": "William Bugby, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+      "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQP-LGDS : Sat Mar 09 10:13:38 UTC 2024), Entry for Andrew Thurston and Eva B Bugby, 11 November 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQ5-KDX4"
+    },
+    {
+      "id": "S8BB-FRM",
+      "title": "William Bugbee, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFVQ-L5R : Thu Mar 07 02:55:48 UTC 2024), Entry for Andrew Thurston and Eva B Bugby, 11 Nov 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFVQ-L5Y"
+    },
+    {
+      "id": "S8BB-FL6",
+      "title": "Wm A Bagley, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+      "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q28Q-6HTN : Sat Mar 09 19:35:29 UTC 2024), Entry for Andrew Thurston and Andrew Thurston, 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q28Q-6CM7"
+    },
+    {
+      "id": "SCBT-5CN",
+      "title": "William A Bagley, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+      "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQL-XX78 : Sat Mar 09 22:59:33 UTC 2024), Entry for Andrew Thurston and Eva Ann Bagley, 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQL-XX7V"
+    },
+    {
+      "id": "9NCT-WB5",
+      "title": "William Bagley, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6RC-8PY : Thu Jan 09 15:19:37 UTC 2025), Entry for William Bagley and Ann Bagley, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M6RC-8PY"
+    },
+    {
+      "id": "9N3F-5LL",
+      "title": "William Bagley, \"Vermont, Vital Records, 1760-2008\"",
+      "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KN9Y-4CM : Wed Jan 29 23:19:38 UTC 2025), Entry for Evie Viel Thurston and William Bagley, 07 Mar 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KN9Y-4C9"
+    },
+    {
+      "id": "9N38-6C4",
+      "title": "William Bagley, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2V7S-65V : Fri Mar 08 22:22:28 UTC 2024), Entry for Evie Vill Thurston and William Bagley, 07 Mar 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2V7S-65K"
+    },
+    {
+      "id": "MSV2-K72",
+      "title": "Wm A Bagley, \"Vermont, Vital Records, 1760-1954\"",
+      "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFFP-JM2 : Sun Mar 10 11:10:53 UTC 2024), Entry for Andrew Thurston and Eva Ann Bagley, 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XFFP-JMG"
+    },
+    {
+      "id": "S1",
+      "title": "Entry for William A Bagley, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPQP-R8T8"
+    },
+    {
+      "id": "S2",
+      "title": "Entry for William A Bagley and David Bagley, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPQP-24HR"
+    },
+    {
+      "id": "S3",
+      "title": "Household of David Bagley, \"United States, Census, 1820\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XHLG-T8R"
+    },
+    {
+      "id": "S4",
+      "title": "Household of David Bagley, \"United States, Census, 1840\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XHRB-V42"
+    }
+  ]
+}

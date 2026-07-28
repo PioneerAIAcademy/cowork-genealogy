@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Rafael Reyes and Serapia Benavides Cueva had a daughter, Rita Reyes, born and died in January 1913 (death registered 22 July 1932, Santa Elena, Usulután — the registration itself dated decades after the death).",
+      "details": {
+        "subject_person": "Rafael Reyes (MTNY-RXQ)",
+        "relation": "child",
+        "target_person": {
+          "name": "Rita Reyes",
+          "birth": "January 1913",
+          "death": "January 1913, Usulután, El Salvador"
+        }
+      },
+      "supporting_sources": [
+        "El Salvador, Civil Registration, 1704-2001 — death registration, 22 Jul 1932, Santa Elena, Usulután, naming parents Manuel Rafael Reyes and Serapia Benavides"
+      ],
+      "required": true
+    }
+  ]
+}

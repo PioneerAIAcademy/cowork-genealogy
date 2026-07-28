@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Juan Rodriguez and Marcelina Garcia had a son also named Juan Rodriguez, buried in infancy on 17 February 1801 in San Bartolomé, Pozuelo, Albacete — close in time to their tree-recorded daughter Juana (b. 1799) and son Francisco (christened 1801).",
+      "details": {
+        "subject_person": "Juan Rodríguez Martínez (9634-PS9)",
+        "relation": "child",
+        "target_person": {
+          "name": "Juan Rodriguez",
+          "birth": "unknown, likely Pozuelo, Albacete, Spain",
+          "death": "17 February 1801 (burial), San Bartolomé, Pozuelo, Albacete, Spain"
+        }
+      },
+      "supporting_sources": [
+        "España, Diócesis de Albacete, registros parroquiales, 1504-1979 — burial entry, 17 Feb 1801, San Bartolomé, Pozuelo, naming parents Juan Rodriguez and Marcelina Garcia"
+      ],
+      "required": true
+    }
+  ]
+}

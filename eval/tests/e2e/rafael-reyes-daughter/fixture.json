@@ -1,0 +1,19 @@
+{
+  "id": "rafael-reyes-daughter",
+  "name": "Rafael Reyes — daughter Rita (b./d. 1913)",
+  "genre": "record-hint",
+  "source_pid": "MTNY-RXQ",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Rafael Reyes and his wife Serapia Benavides Cueva of Usulután, El Salvador have a daughter named Rita, born and died in 1913?",
+  "tags": {
+    "question_type": "children",
+    "era": "1910s",
+    "geography": "SV"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 16, flag adds_daughter, confidence 3). Draft transcribed from an El Salvador civil registration record; unverified."
+}

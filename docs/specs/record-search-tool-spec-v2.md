@@ -165,7 +165,7 @@ when the caller's intent specifically requires one role or the other.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `count` | number | Results per call. Default 20, max 100. |
+| `count` | number | Results per call. Max 100. **Default 50 when `subjectId` is supplied, 20 otherwise.** The default is coupled to ranking on purpose: a deep pool is worth fetching only because the re-ranker cuts it back host-side. Fetching 50 without ranking hands the model 50 raw stubs to triage, which is the cost this default exists to avoid. |
 | `offset` | number | Pagination offset. Default 0. The combined value `offset + count` must be at most 4999. |
 
 ### Examples

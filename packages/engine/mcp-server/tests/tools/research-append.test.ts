@@ -6,15 +6,19 @@ import { tmpdir } from "os";
 // Stub the network place resolver so the composite place-lever tests are
 // offline and deterministic. The wrong-geocode mapping (England → Cameroon)
 // reproduces the silent-wrong-standard_place theme the country guard catches.
-vi.mock("../../src/utils/place-resolver.js", () => ({
-  resolveStandardPlace: vi.fn(async (text: string) => {
-    if (text === "Schuylkill County, Pennsylvania") return "Schuylkill, Pennsylvania, United States";
-    if (text === "West Bromwich, England") return "Bamenda, Mezam, Northwest Region, Cameroon";
-    if (text === "West Bromwich, Staffordshire, England")
-      return "West Bromwich, Staffordshire, England, United Kingdom";
-    return null;
-  }),
-}));
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
+  return {
+    ...actual,
+    resolveStandardPlace: vi.fn(async (text: string) => {
+      if (text === "Schuylkill County, Pennsylvania") return "Schuylkill, Pennsylvania, United States";
+      if (text === "West Bromwich, England") return "Bamenda, Mezam, Northwest Region, Cameroon";
+      if (text === "West Bromwich, Staffordshire, England")
+        return "West Bromwich, Staffordshire, England, United Kingdom";
+      return null;
+    }),
+  };
+});
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
 import { __testing } from "../../src/tools/research-append-examples.js";
@@ -730,6 +734,150 @@ describe("research_append (Phase 3)", () => {
     expect(r.ok && r.entryId).toBe("ps_001");
   });
 
+  // docs/plan/research-guardrail-bypass-plan.md §4.2 — tier/exhaustiveness cross-field guardrail.
+  it("rejects tier 'proved' when the question's exhaustive_declaration.declared is false", async () => {
+    await writeProject(); // phase3Research(): q_001 defaults to exhaustive_declaration.declared: false
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "proof_summaries",
+      op: "append",
+      entry: {
+        question_id: "q_001",
+        tier: "proved",
+        vehicle: "summary",
+        supporting_assertion_ids: ["a_001"],
+        resolved_conflict_ids: [],
+        exhaustive_search_summary: "Searched census + vitals",
+        narrative_markdown: "## Conclusion\n...",
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/exhaustive_declaration\.declared === true/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("rejects a single batch that declares exhaustiveness and consumes it for tier 'proved' in the same call (TOCTOU)", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "questions",
+          op: "update",
+          entryId: "q_001",
+          fields: {
+            exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: {} },
+          },
+        },
+        {
+          section: "proof_summaries",
+          op: "append",
+          entry: {
+            question_id: "q_001",
+            tier: "proved",
+            vehicle: "summary",
+            supporting_assertion_ids: ["a_001"],
+            resolved_conflict_ids: [],
+            exhaustive_search_summary: "Searched census + vitals",
+            narrative_markdown: "## Conclusion\n...",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/exhaustive_declaration\.declared === true/);
+    // All-or-nothing: neither op landed, including the exhaustiveness declaration.
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  const fullStopCriteria = () => ({
+    goal_alignment: true,
+    repository_breadth: true,
+    original_substitution: true,
+    independent_verification: true,
+    evidence_class: true,
+    conflict_resolution: true,
+    overturn_risk: true,
+  });
+  const declaredExhaustiveLog = () => [
+    {
+      id: "log_001",
+      plan_item_id: null,
+      performed: "2026-01-01T00:00:00Z",
+      tool: "record_search",
+      query: {},
+      outcome: "negative",
+      results_examined: 0,
+      external_site: null,
+      results_ref: null,
+    },
+  ];
+
+  it("allows tier 'proved' when exhaustive_declaration.declared was already true from an earlier, separate call", async () => {
+    const r0 = phase3Research();
+    r0.questions = [
+      {
+        ...validQuestion("q_001"),
+        status: "exhaustive_declared",
+        exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria() },
+      },
+    ];
+    r0.log = declaredExhaustiveLog();
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "proof_summaries",
+      op: "append",
+      entry: {
+        question_id: "q_001",
+        tier: "proved",
+        vehicle: "summary",
+        supporting_assertion_ids: ["a_001"],
+        resolved_conflict_ids: [],
+        exhaustive_search_summary: "Searched census + vitals",
+        narrative_markdown: "## Conclusion\n...",
+      },
+    });
+    expect(r.ok && r.entryId).toBe("ps_001");
+  });
+
+  it("does not re-trigger the tier guardrail on an unrelated update to an already-proved entry", async () => {
+    const r0 = phase3Research();
+    r0.questions = [
+      {
+        ...validQuestion("q_001"),
+        status: "exhaustive_declared",
+        exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria() },
+      },
+    ];
+    r0.log = declaredExhaustiveLog();
+    r0.proof_summaries = [
+      {
+        id: "ps_001",
+        question_id: "q_001",
+        tier: "proved",
+        vehicle: "summary",
+        supporting_assertion_ids: ["a_001"],
+        resolved_conflict_ids: [],
+        exhaustive_search_summary: "Searched census + vitals",
+        narrative_markdown: "## Conclusion\n...",
+      },
+    ];
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "proof_summaries",
+      op: "update",
+      entryId: "ps_001",
+      fields: { narrative_markdown: "## Conclusion\nRevised wording." },
+    });
+    expect(r.ok).toBe(true);
+  });
+
   it("appends an evaluation and stamps `timestamp` (datetime)", async () => {
     await writeProject();
     const r = await researchAppend({
@@ -839,6 +987,91 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/requires a .?fields/);
+  });
+
+  // ── Completed-gate: unresolved blocking conflicts refuse the transition ──
+  // (wilkins-death-kentucky e2e finding: an agent logged an unresolved
+  // identity conflict and completed the project anyway. The gate makes the
+  // GPS Component 4 rule deterministic at the status transition.)
+
+  const conflictBase = () => ({
+    id: "c_001",
+    conflict_type: "identity",
+    description: "Certificate birth year contradicts the profile by 43 years.",
+    competing_assertion_ids: ["a_001", "a_002"],
+    status: "unresolved",
+    blocks_question_ids: [],
+  });
+  const withConflict = (conflict: any) => {
+    const r = baseResearch();
+    r.assertions.push(validAssertion("a_002"));
+    (r.conflicts as any[]).push(conflict);
+    return r;
+  };
+  const complete = () =>
+    researchAppend({ projectPath: dir, section: "project", op: "update", fields: { status: "completed" } });
+
+  it("refuses completed while an unresolved identity conflict exists (even with empty blocks_question_ids)", async () => {
+    await writeProject(withConflict({ ...conflictBase(), identity_question: true }));
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/cannot set project\.status/);
+    expect(msg).toMatch(/c_001/);
+    expect(msg).toMatch(/conflict-resolution/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active"); // nothing written
+  });
+
+  it("refuses completed while an unresolved conflict blocks a question", async () => {
+    await writeProject(withConflict({ ...conflictBase(), blocks_question_ids: ["q_001"] }));
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/unresolved blocking conflict/);
+  });
+
+  it("allows completed once the blocking conflict is resolved", async () => {
+    await writeProject(
+      withConflict({
+        ...conflictBase(),
+        identity_question: true,
+        status: "resolved",
+        independence_analysis: "The two records have independent informants.",
+        weighing_analysis: "The original register outweighs the derivative index.",
+        resolution_rationale: "The 1857 candidate is a different person; link rejected.",
+        preferred_assertion_id: "a_001",
+      }),
+    );
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows completed when the blocking conflict is moot", async () => {
+    await writeProject(
+      withConflict({
+        ...conflictBase(),
+        identity_question: true,
+        status: "moot",
+        resolution_rationale: "Superseded: the certificate was re-attributed to the correct person.",
+      }),
+    );
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows completed with an unresolved but non-blocking conflict (fact-type, empty blocks)", async () => {
+    await writeProject(
+      withConflict({
+        ...conflictBase(),
+        conflict_type: "fact",
+        disputed_attribute: "birth_date",
+        description: "Minor date variance between two censuses; does not bear on any open question.",
+      }),
+    );
+    const r = await complete();
+    expect(r.ok).toBe(true);
   });
 });
 
@@ -1637,6 +1870,7 @@ describe("research_append (composite persist + enforcement)", () => {
           op: "append",
           entry: {
             ...noId(validAssertion("x", "src_001")),
+            record_role: "absent",
             evidence_type: "negative",
             log_entry_id: "log_001",
           },
@@ -2598,6 +2832,125 @@ describe("research_append — evaluations verdict composite", () => {
       entry: { ...pointer(), file_path: "evaluations/hand-written.json" },
     } as any);
     expect(r.errors ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+});
+
+describe("research_append — negative evidence role invariant", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "ra-negev-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+
+  it("rejects evidence_type: negative with a non-absent record_role", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "father_of_deceased",
+            evidence_type: "negative",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/negative evidence always uses the literal record_role "absent"/);
+  });
+
+  it("rejects record_role: absent paired with a non-negative evidence_type", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "absent",
+            evidence_type: "direct",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/record_role "absent" is reserved for negative evidence/);
+  });
+
+  it("accepts evidence_type: negative paired with record_role: absent", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "absent",
+            evidence_type: "negative",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("re-checks the invariant on update, against the merged (not just patched) fields", async () => {
+    await writeProject();
+    const created = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "absent",
+            evidence_type: "negative",
+          },
+        },
+      ],
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const entryId = (created as any).results[0].entryId as string;
+
+    // Flips evidence_type back to direct without also fixing record_role —
+    // the merged result violates the invariant even though this one update
+    // only names one field.
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "update", entryId, fields: { evidence_type: "direct" } },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/record_role "absent" is reserved for negative evidence/);
+  });
+
+  it("does not fire for non-assertion sections (no evidence_type field)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "sources", op: "append", entry: noId(validSource("x")) }],
+    });
     expect(r.ok).toBe(true);
   });
 });

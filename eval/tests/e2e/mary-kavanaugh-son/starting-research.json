@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_mary_kavanaugh_son",
+    "objective": "Did Mary E. Kavanaugh and her husband Charles H. Williston of Cohasset, Massachusetts have a son born before their four known children (1877-1880), in addition to the four already in the tree?",
+    "subject_person_ids": [
+      "G95C-GFP"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

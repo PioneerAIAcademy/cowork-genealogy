@@ -13,7 +13,12 @@ import json
 from pathlib import Path
 
 import e2e.validate_fixture as vf
-from e2e.validate_fixture import _resolve_target, check_stripping, lint_fixture
+from e2e.validate_fixture import (
+    _resolve_target,
+    check_stripping,
+    finding_shape_errors,
+    lint_fixture,
+)
 
 
 # --- helpers ----------------------------------------------------------
@@ -364,3 +369,72 @@ def test_lint_fixture_rejects_a_lowercase_fact_type(tmp_path):
     _write_fixture(tmp_path, _valid_tree(person))
     _, errors = lint_fixture(tmp_path)
     assert any("'move'" in e and "[A-Z]" in e for e in errors)
+
+
+# --- finding shape (spec §3.4) — expected-findings.json has no JSON Schema,
+# so this is the only thing standing between a made-up field and a fixture
+# that silently grades nothing (the `"expectation": "not_found"` bug that
+# shipped across issues #852-883) -----------------------------------------
+
+
+def test_finding_shape_rejects_an_unrecognized_field():
+    finding = _rel_finding("Robert Smith")
+    finding["expectation"] = "not_found"  # the actual mistake, spec §3.6
+    errors = finding_shape_errors({"findings": [finding]})
+    assert any("expectation" in e and "not a real field" in e for e in errors)
+
+
+def test_finding_shape_accepts_all_known_fields():
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    finding["supporting_sources"] = ["a census"]
+    finding["required"] = True
+    assert finding_shape_errors({"findings": [finding]}) == []
+
+
+def test_finding_shape_rejects_an_out_of_enum_type():
+    finding = _rel_finding("Robert Smith")
+    finding["type"] = "relationshp"  # typo
+    errors = finding_shape_errors({"findings": [finding]})
+    assert any("relationshp" in e for e in errors)
+
+
+def test_finding_shape_rejects_an_out_of_enum_polarity():
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "reject"  # not "avoid"
+    errors = finding_shape_errors({"findings": [finding]})
+    assert any("reject" in e for e in errors)
+
+
+def test_finding_shape_rejects_a_non_boolean_required():
+    finding = _rel_finding("Robert Smith")
+    finding["required"] = "true"  # string, not bool
+    errors = finding_shape_errors({"findings": [finding]})
+    assert any("non-boolean" in e for e in errors)
+
+
+def test_finding_shape_rejects_duplicate_ids():
+    findings = {
+        "findings": [_rel_finding("Robert Smith", fid="f1"), _rel_finding("Mary Jones", fid="f1")]
+    }
+    errors = finding_shape_errors(findings)
+    assert any("duplicate finding id 'f1'" in e for e in errors)
+
+
+def test_finding_shape_does_not_require_any_field_present():
+    # A draft mid-authoring shouldn't be punished for an omission that isn't
+    # this check's job — `check_stripping`/the schema-less README convention
+    # cover completeness elsewhere.
+    assert finding_shape_errors({"findings": [{"id": "f1"}]}) == []
+
+
+def test_lint_fixture_rejects_an_unrecognized_finding_field(tmp_path):
+    finding = _rel_finding("Robert Smith")
+    finding["expectation"] = "not_found"
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I1", "John", "Smith")),
+        findings={"findings": [finding]},
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert any("expectation" in e for e in errors)

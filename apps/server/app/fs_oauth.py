@@ -87,6 +87,32 @@ async def exchange_code_for_tokens(code: str, verifier: str) -> dict | None:
     return resp.json()
 
 
+async def refresh_tokens(refresh_token: str) -> dict | None:
+    """Exchange a refresh token for a fresh access token. Returns the raw token
+    JSON, or None when FamilySearch refuses — which the caller must treat as
+    "this grant is dead, the user has to sign in at the front door again".
+
+    FamilySearch refresh tokens are capped at **8 hours idle / 24 hours
+    absolute** (docs/testing-guides/oauth-tool-testing-guide.md), so this
+    returning None is a routine daily event, not an error condition: no amount
+    of refreshing carries a grant past 24h from the original login."""
+    s = get_settings()
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            FS_TOKEN_URL,
+            data={
+                "grant_type": "refresh_token",
+                "refresh_token": refresh_token,
+                "client_id": s.familysearch_client_id,
+            },
+            headers={"Accept": "application/json"},  # ident endpoint: no browser UA
+        )
+    if resp.status_code != 200:
+        return None
+    token_json = resp.json()
+    return token_json if token_json.get("access_token") else None
+
+
 async def fetch_identity(access_token: str) -> dict | None:
     """GET /platform/users/current → ``users[0]`` (id, email, personId, ...), or
     None on failure. Sends the browser UA (Imperva 403s otherwise). Read ONLY the
@@ -139,6 +165,20 @@ async def write_tokens(
     await sandbox.write_file(
         TOKENS_PATH, tokens_file_bytes(access_token, refresh_token, expires_at)
     )
+
+
+def hosted_config(openrouter_api_key: str | None) -> dict:
+    """The ~/.familysearch-mcp/config.json body for a hosted sandbox.
+
+    `hosted: true` marks the in-VM MCP server so its `login` tool refuses the
+    desktop loopback OAuth flow (which cannot complete on a headless VM — the
+    redirect targets 127.0.0.1:1837 on the *user's* laptop, not the sandbox) and
+    instead tells the agent to have the user click "Reconnect FamilySearch" in
+    the web app. The OpenRouter key rides the same document when present."""
+    config: dict = {"hosted": True}
+    if openrouter_api_key:
+        config["openRouterApiKey"] = openrouter_api_key
+    return config
 
 
 async def write_config(sandbox, config: dict) -> None:

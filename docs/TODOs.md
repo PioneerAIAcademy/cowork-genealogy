@@ -146,11 +146,20 @@ create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
 - [ ] **Encrypt FS tokens at rest** — `familysearch_tokens.access_token` /
   `refresh_token` are plaintext (`models.py` TODO). Encrypt before any real PII /
   wider alpha.
-- [ ] **Refresh-on-inject for long-lived sandboxes** — the token is injected at
-  sandbox-create and self-refreshed in-sandbox by `getValidToken()` on first use.
-  A sandbox created long before first use (or whose refresh token has since died)
-  keeps a stale token; re-login at the front door updates the DB row but not an
-  existing sandbox. Optionally refresh-on-inject / re-inject on resume.
+- [x] **Refresh-on-inject for long-lived sandboxes — DONE.** `POST /connect`
+  now calls `sessions.sync_fs_token`, which refreshes the user's grant via
+  `auth.fresh_fs_token` (when within 10 min of expiry) and re-injects it into the
+  sandbox on every reconnect — so a tab left open overnight recovers on its own
+  (`WsSessionConnection` re-mints credentials per attempt), and a fresh front-door
+  login reaches an existing sandbox. `/connect` returns `familysearch: ok|expired|none`;
+  the web `SessionView` shows a "Reconnect FamilySearch" banner on `expired`, and
+  the in-VM `login` tool + `getValidToken` route the user there instead of the
+  doomed loopback flow (`config.json` `hosted: true`, `isHostedMode()`). Surfaced
+  by an alpha user whose next-day tab showed a raw `person_read` auth error and a
+  `login` that claimed a browser tab opened on the headless VM. **Residual:** the
+  `/v1` public REST path still injects once at create and never re-syncs — a `/v1`
+  session that outlives its refresh token has no reconnect surface (bearer clients
+  have no front door). Acceptable for now; revisit if a `/v1` client hits it.
 - [ ] **Allowlist trusts an unverified email** — `/users/current` returns no
   `email_verified`, so the gate trusts the FS-account email as-is. Fine for a
   hand-curated alpha list; before open signup, pin `users[0].id` (trust-on-first-
@@ -261,31 +270,77 @@ Deferred at wrap; see
   production** — or Cowork grants a broader set and **the router can crash a real
   user's run**. Settling it needs one live Cowork run against an image ARK, not a
   repo read. See plan §5.
-- [ ] **Does `search-images` have the same base64 crash exposure?** Two shipped
-  claims contradict each other and both can't be right. `record-extraction/SKILL.md:70-73`
-  and `agents/image-reader.md:13-16` say accumulated `image_read` base64 overflows
-  the transport's ~1 MiB per-turn buffer and **crashes the whole run**, which is why
-  that skill delegates to a throwaway subagent. But `search-images` declares
-  `image_read` itself (`SKILL.md:20`) and browses a volume **page-by-page in its own
-  main-session context** (`§4 Browse with image_read`) — the accumulation pattern the
-  warning describes, only more so. Either search-images is exposed to the same crash
-  (and should delegate per-page, or the reader should), or the crash needs conditions
-  beyond "more than one image" and the record-extraction rationale is overstated.
-  Worth settling because the answer changes the per-context guard's scope: today it
-  exempts search-images purely because the skill declared the tool
-  (`harness/context_policy.py`, plan §4.1), which encodes "declared = intended", not
-  "declared = safe". Surfaced 2026-07-16 while implementing
-  `docs/plan/image-read-context-policy.md`; NOT investigated.
+  **The same live run should also settle the transport ceiling itself**
+  (surfaced 2026-07-24 testing `image-reader-opus`): the "~1 MiB" figure is not
+  a fixed protocol wall — it's `claude_agent_sdk`'s configurable
+  `ClaudeAgentOptions.max_buffer_size` (`_DEFAULT_MAX_BUFFER_SIZE = 1024*1024`,
+  `subprocess_cli.py:30`). `eval/harness/e2e/orchestrator.py:752` already
+  overrides it to 10 MiB, explicitly for this exact class of crash — but its
+  own comment says so "since this is eval-harness-only config; it does not
+  change production Cowork behavior or the tool's own inline-image ceiling."
+  `apps/server/app/agent/real_agent.py` sets no override (still the 1 MiB
+  default), and **Cowork/Desktop production doesn't run through this Python
+  SDK transport at all** — a different, closed-source client, real ceiling
+  unverified. So before ever raising `MAX_INLINE_IMAGE_BYTES`
+  (`image-read.ts`) past 700 KB, confirm what Cowork's client actually
+  enforces; don't infer it from the e2e harness's own override.
+- [ ] **Should `image-reader`/`image-reader-opus` compress non-matching pages
+  during a `search-images` browse?** Raised while designing
+  `docs/plan/image-reader-opus-agent-plan.md`: for a browse with a
+  `looking_for` target, only relay the full transcription for a likely-matching
+  page and a one-line verdict for the rest, so a ten-page browse doesn't
+  accumulate ten full transcriptions in the calling skill's context. **This is
+  the same shape as `docs/plan/search-images-base64-accumulation.md`'s "Option
+  B", which was explicitly rejected on 2026-07-17 for a correctness reason, not
+  cost** — asking the reader to judge relevance and shorten its output was
+  found to encourage hallucination, whereas the current contract (always full,
+  faithful OCR, never slanted) avoids it. `image-reader-opus-agent-plan.md` §7
+  offers one candidate distinction (gate compression on `image_transcribe`'s
+  own deterministic `FOUND`/`NOT FOUND` field, from a forced always-full pass,
+  rather than a fresh relevance judgment by the relaying agent) but does not
+  resolve it. Needs the same genealogist scrutiny Option B got before building
+  anything — NOT investigated.
+- [ ] **`image-reader-opus` is capped out of most real scans by `image_read`'s
+  700 KB ceiling — confirmed across 7 live attempts, not one sample.**
+  Live-tested 2026-07-24: **6 of 7** real FamilySearch scans exceeded 700 KB
+  (1.2–1.5 MB) and `image_read` refused outright — two different German
+  civil/church register volumes (`004764543_00001`/`00271` and
+  `ark:/61903/3:2:77P1-FRQ`/`77T6-B33`), plus a fifth from a different
+  collection (`3Q9M-CSS8-G345-B`, 0.8 MB). Only 2 succeeded, both smaller
+  single-sheet US documents (an old printed newspaper column, 419 KB; a 1947
+  Army discharge certificate, 384 KB) — neither a genuine hard-handwriting
+  case. Pattern: **format/collection matters more than legibility** — bound
+  European register books scanned as full high-DPI pages run consistently
+  over the cap regardless of how hard the handwriting actually is, while
+  single-sheet US-style documents tend to land well under it. This page
+  wasn't even dense running Kurrentschrift, just a tabular index; a genuinely
+  harder page is likely larger still.
+  **Decision (Dallan, 2026-07-24): leave the cap as-is for now** — the agent's
+  `NOT READ` path already points back to `image_transcribe` — and decide
+  whether to raise the cap, give the agent its own larger ceiling, or explore
+  a downscale-before-read path once there's more usage data. **Any raise must
+  first resolve the transport-ceiling item above** (this repo can raise
+  `MAX_INLINE_IMAGE_BYTES` past 700 KB only as far as the actual deployed
+  `max_buffer_size` allows, and that's unverified for Cowork production and
+  not yet configured for the hosted web workbench). See
+  `docs/specs/image-reader-opus-agent-spec.md` §9.
 
 ## Tree materialization (#701) — deferred from implementation
 Deferred during the #701 build.
-- [ ] **Batch `add_relationship`** — person-evidence now writes a household's
-  parent-child + spouse edges as N separate `tree_edit add_relationship` calls
-  (Phase 3A, Option 1: tools encode the write, the skill handles matching). A
-  batch mode (multiple edges in one validated write) would make a household's
-  edges atomic and cut tool round-trips for the common census-child case (~7-9
-  edges). Latency/atomicity only — per-edge writes are correct today. Surfaced
-  2026-07-18 while implementing Phase 3A.
+- [x] **Batch `add_relationship` — DONE.** Turned out to need no tool change:
+  `tree_edit`'s existing `ops[]` batch mechanism already accepts multiple
+  `add_relationship` edges in one validated, atomic call (proven by
+  `tests/tools/tree-edit.test.ts:950,1012,1020,1037`, which already batch
+  relationship ops). The actual gap was that `person-evidence/SKILL.md` §7
+  step 4 never instructed collecting a household's edges into one call — it
+  issued N separate `tree_edit` calls, one per edge (~7-9 for a census
+  household). Fixed by rewriting step 4 to batch (docs/plan/
+  tree-materialization-batching-plan.md Phase 2). Also batched
+  `materialize_facts` itself (step 3, same plan Phase 1) — that one *did*
+  need a tool change (`MaterializeFactsInput` gained an `ops[]` form), since
+  it shipped 2026-07-18 without the batch convention `research_append`/
+  `tree_edit` already had, which was the dated e2e latency regression's
+  proximate cause.
 
 ## Eval framework
 - [ ] **Adopt a run-log retention rule — `eval/runlogs/` is 147MB tracked and ~85%
@@ -322,17 +377,10 @@ Deferred during the #701 build.
   regradeable evidence.** Deleting all 164 superseded candidates outright would
   reclaim 108MB but orphans 125 annotations from the traces they argue against —
   not recommended.
-- [ ] **Make `forget.py` refuse to clobber an existing backup.** It writes
-  `.tree-before-forget.gedcomx.json` unconditionally on every non-dry-run
-  (`forget.py:332`), so the snapshot always reflects the tree at the start of
-  *that* run. A second forget therefore overwrites the pristine snapshot with
-  the already-forgotten tree and the first slice becomes unrecoverable from it —
-  silent data loss on a file the researcher is told is their restore point.
-  Currently mitigated only by prose in the skill's "Re-invocation behavior".
-  A guard (refuse, or write `.tree-before-forget.<n>.gedcomx.json`) would make
-  the prose unnecessary. Note `forget-and-rederive` is deliberately exempt from
-  the runlog gate (`RUNLOG_GATE_EXEMPT_SKILLS`), so a change here is not gated
-  by the eval suite — verify it by hand.
+- [x] **Make the forget backup refuse to clobber an existing one.** Done
+  2026-07-23: `tree_forget` writes `.tree-before-forget.gedcomx.json` only when
+  it does not already exist, so the restore point always holds the tree as it
+  was before the *first* forget. Spec: `docs/specs/tree-forget-tool-spec.md` §5.
 - [x] **record-extraction real craft gaps (surfaced by the 2026-07-16 classification
   audit) — RESOLVED (#711 + record-extractor informant-craft follow-up).** The audit
   found 3 agent craft gaps + a christening-table gap. Resolution:
@@ -517,6 +565,65 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `record-extraction/SKILL.md`. The instrument if it recurs is a
   `context_policy` PreToolUse rule keyed on `agent_id` — eval-only, so it
   would not cover Cowork or the hosted path.
+- [ ] **Investigate giving each of the four GPS guardrail skills its own
+  write tool** (`proof_conclusion_append` / `exhaustiveness_declare` /
+  `person_evidence_link` / `conflict_resolve`, splitting `research_append`'s
+  `proof_summaries`/`exhaustive_declaration`/`person_evidence`/`conflicts`
+  sections off the same way `extraction_append` split off record-extraction,
+  #695). Raised during the PR #893 orchestration-bypass investigation — see
+  `docs/plan/research-guardrail-bypass-plan.md` §3/§5. Splitting doesn't
+  attribute a call to a skill by itself in a shared session (a split tool is
+  exactly as callable by the main thread as the section-branch version is
+  today), but it (a) turns a caller-tracking `PreToolUse` hook into a flat
+  tool-name lookup instead of parsing `ops[]`/`section` out of args, and (b)
+  is close to a prerequisite for ever giving one of these four skills a hard
+  `agent_id`/`disallowedTools` boundary, since that enforcement is tool-name-
+  granular only — a shared `research_append` can't be partially denied.
+  Cost: real multi-file scaffolding (schema/handler/tests/manifest/
+  `mock_mcp.py`/lint scripts) × 4, plus a permanent increase in Cowork's
+  up-front tool-schema count (Cowork does not defer schemas via `ToolSearch`
+  the way both harnesses do). Worth doing if/when one of the four skills is
+  converted to an agent; not worth it standalone. Decide after the plan's
+  caller-id hook ships and its practical gaps, if any, are known.
+- [ ] **Research-guardrail-bypass fix (docs/plan/research-guardrail-bypass-plan.md)
+  does not cover the hosted/production path.** The caller-id `PreToolUse`
+  hook (§4.1), the `Write`/`Edit` lockdown (§4.3), and the two hard-fail
+  checks (§4.4) are all e2e-harness-only (`eval/harness/e2e/orchestrator.py`).
+  `apps/server/app/agent/real_agent.py` still runs `bypassPermissions` with
+  no equivalent guard, so the exact bypass the plan documents (and the live
+  `bagley-father-1884` run confirmed) remains fully reachable in Cowork and
+  the hosted web workbench. The plan explicitly deferred this pending the
+  eval-side mechanism proving out first; it hasn't been ported yet.
+- [ ] **Whether `Skill`-tool content injection survives compaction is
+  unverified — and there's now real reason to suspect it doesn't.**
+  `docs/plan/research-guardrail-bypass-plan.md` §6 flagged this as an open
+  question (proof-conclusion/research-exhaustiveness/person-evidence/
+  conflict-resolution all do an on-demand `Read` of their own
+  `references/*.md`, unverified for reliability). The `feedback-2026-07-27-perf`
+  branch's compaction audit (commits `3455ce84`/`f05757ef`,
+  `docs/plan/research-performance-2026-07-27.md`) independently measured the
+  general mechanism: an unanchored prose rule's compliance decays from
+  ~100% to 3-45% once its skill body is evicted from context by compaction,
+  while tool-validated/output-coupled rules hold at 100%. A guardrail
+  skill's own reference-doc reads are exactly this shape (prose-anchored,
+  no tool validation) — worth the same before/after-compaction segment
+  analysis their audit used, applied to the four guardrail skills
+  specifically, before assuming the reference reads hold up in long runs.
+- [ ] **`gps-mentor`'s proof-critique gate may be as skippable as the four
+  guardrail skills — undetermined.** `find_missing_mentor_verdicts`
+  (`harness/skill_invocation.py`) detects a missing verdict after the fact
+  but does nothing to prevent the orchestrator from silently skipping the
+  `@plugin:gps-mentor` invocation under the same context-pressure conditions
+  that caused the other four skips. No runlog evidence has been checked
+  either way (`docs/plan/research-guardrail-bypass-plan.md` §6).
+- [ ] **`research-append.ts`'s batch-ordering was only audited for one
+  TOCTOU case.** The §4.2 fix (tier vs. `exhaustive_declaration`, checked
+  against pre-call state) closes the specific same-batch establish-and-
+  consume hole found during adversarial review. Other same-batch orderings
+  that could similarly self-satisfy a precondition within one atomic write
+  (e.g. adding a `person_evidence` link and consuming it for an assertion in
+  the same batch) were not exhaustively checked — flagged, not audited, in
+  the plan's §6.
 - **MCP tool-name prefix differs between Cowork and the harnesses — agent
   `tools:` lists do not bind in Cowork.** Every plugin agent declares
   `mcp__genealogy__*`, correct for the unit + e2e harnesses. A live Cowork
@@ -603,23 +710,6 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `tree_edit`, `materialize_facts`, and `extraction_append` appear in no README
   tool table, and `docs/specs/mcpb-package-spec.md` still tells a manual tester
   to assert 21 tools. No CI reads either, so nothing reds.
-- **`forget-and-rederive/scripts/forget.py` has no automated coverage** — the
-  selector resolution, the relationship cascade, and the restore-file write are
-  all untested. The skill is exempt from the runlog gate
-  (`RUNLOG_GATE_EXEMPT_SKILLS`) because a tree-stripping utility has no
-  genealogical output for a judge to grade, so the right coverage is
-  script-level tests, not a skill eval suite. Highest-value cases: the cascade
-  when `person:` removes someone with relationships in both directions, and the
-  `matched nothing` error paths.
-- **`forget.py` overwrites its restore file on every non-dry-run** — 
-  `.tree-before-forget.gedcomx.json` is written unconditionally
-  (`forget.py:332-333`, no existence check), so it always holds the tree as of
-  the most recent run. After a second forget pass the original tree is
-  unrecoverable: pass 1's removals are already baked into the backup. This may
-  be intended (incremental forgetting wants the immediately-prior state), which
-  is why it was documented in the skill's Re-invocation section rather than
-  changed. Decide: keep and document, or refuse to overwrite an existing
-  backup / write per-run timestamped restore files.
 - **`evidence_type: "negative"` is not tied to `record_role: "absent"` in
   `validator.ts`** — the runtime validator checks each assertion field
   independently and has no cross-field rule, so `extraction_append` happily
@@ -666,3 +756,140 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   consistent with the unattributed portion of a real run's cost. Deliberately
   not half-built: a cap that silently fires late is worse than a documented
   reporting threshold. The spec (`e2e-test-spec.md` §5) now says so explicitly.
+
+- **A specialized `places-guidance.md` copy is unlinted for drift** — the drift
+  lint (`tests/packaging/skill-guidance.test.ts`) holds 8 skills byte-identical
+  to `plugin/references/places-guidance.md`, but `research-plan`'s copy is
+  deliberately specialized (8bf43be2 split place work by function, so its copy
+  reframes four tools it no longer has as locality-guide's). It now gets only an
+  exists-and-non-empty check, so a genuine regression *inside* that copy — or a
+  canonical edit that should have been mirrored into its shared paragraphs —
+  passes silently. Two ways out: factor the guidance into a shared core plus a
+  per-skill "who calls what" section and lint the core, or derive each skill's
+  copy from the canonical at plugin-build time using its `allowed-tools`. The
+  second kills the duplication problem outright but is a build-step change.
+
+- **`login.test.ts` "returns immediately with the authorization URL" failed once,
+  unreproducibly** — observed 2026-07-23 in a full-suite run; it has not
+  recurred in 24 subsequent full-suite runs or 10 isolated runs of the file, so
+  it is filed rather than fixed. Ruled out: port contention (the test mocks
+  `node:http` wholesale — nothing binds a real port) and the obvious
+  order-dependency, where the module-level `pendingAuthUrl` in `login.ts` leaks
+  into the next test because `afterEach`'s cleanup reads
+  `mockedOpen.mock.calls[0]` before the fire-and-forget `open()` has landed. An
+  instrumented probe never fired: `performLogin` calls `void open(authUrl)`
+  synchronously before returning, so `mock.calls` is always populated by the
+  time the test's `await` resolves. The remaining suspects are cross-file (the
+  suite runs 69 files in parallel workers) or timer-related — `afterEach` calls
+  `vi.useRealTimers()`, implying some test installs fake ones. Next step is to
+  capture a failing run's full assertion output; a bare "it failed once" is not
+  enough to tell a real leak from an environment hiccup.
+- **Nothing checks that `forget-and-rederive` honors its own redaction rule** —
+  the skill stays permanently exempt from the runlog gate (a setup utility has no
+  genealogical output for a judge to grade; confirmed 2026-07-18), and as of
+  2026-07-23 its mechanical half is `tree_forget`, whose redaction *is*
+  unit-tested. What no test covers is the skill's behavioral half: that it
+  dry-runs before applying, reaches for `project_context` instead of reading
+  `tree.gedcomx.json`, and does not restate removed values back to the
+  researcher. That is a transcript property, not a tool property, so it needs
+  either a targeted lint over the run transcript or a deliberate decision to
+  leave it to prose. Not a unit suite — see `RUNLOG_GATE_EXEMPT_SKILLS`.
+
+- **Six private copies of `readJson` / `formatIssues` across the writer tools** —
+  `materialize-facts`, `project-context`, `research-append`, `research-log-append`,
+  and `tree-edit` each carry a byte-identical `readJson(projectPath, filename)`,
+  and five carry `formatIssues` (only `merge-shared.ts` exports its copy).
+  `tree_forget` (2026-07-23) added the shared `readProjectJson` to
+  `src/utils/project-io.ts` — the designated project-IO layer — and uses it, but
+  did not migrate the five incumbents, since that touches the merge and append
+  write paths in a PR scoped to a skill fix. Migrate them onto `readProjectJson`
+  and onto `merge-shared.ts`'s `formatIssues`, then delete the copies. The only
+  wrinkle is the error class: each tool wraps the read failure in its own
+  `*Error` type so it surfaces as `{ ok: false, errors }`; `readProjectJson`
+  throws a plain `Error` and leaves that mapping to the caller (see
+  `tree-forget.ts`'s three-line `readJson` wrapper).
+
+- **The reasoning-effort A/B (C0) is unshipped, and it is the largest single
+  lever** — `docs/plan/research-performance-2026-07-27.md` §F0/§C0. 58% of a real
+  session's output tokens are unstored billed reasoning, and generation time is
+  linear in output tokens, so effort is the only knob that reaches the majority
+  of the cost. `high` is the default everywhere — the SDK's own default
+  (`ClaudeAgentOptions.effort` docstring: *"high — Deep reasoning (default)"*),
+  inherited by the unit harness, pinned explicitly by the e2e orchestrator, and
+  never set by `apps/server/app/agent/real_agent.py`. **Nobody has measured this
+  product at any other effort.** Sequenced last deliberately: the payload and
+  ranking changes move the baseline, so an A/B run before them would be
+  invalidated. Run it against the e2e suite (unit can only screen), and note the
+  suite economics — 20 fixtures ≈ $185 / ~20.5 h serial, scaled by the mean not
+  the median, since 17 of 96 committed runlogs carry no cost.
+
+- **`ClaudeAgentOptions.effort` is not verified end-to-end** — the field exists
+  in claude-agent-sdk 0.1.81 with a documented default, and would make C0 a
+  one-line change in `build_options` instead of writing a `settings.json` into
+  the sandbox. The e2e orchestrator's comment calls its settings-file write "the
+  only working effort lever from the harness", but that comment names the
+  `CLAUDE_EFFORT` env var as what failed, not the SDK option — so it may simply
+  predate it. Five-minute check; do it before building C0 the harder way.
+
+- **`search-records/SKILL.md` is 41.6 KB and wants shrinking** — it was resident
+  for 228 of 309 turns in the measured session, and its unanchored rules decayed
+  under compaction (`research-performance-2026-07-27.md` §5.2–5.3). Shrinking is
+  now *safer* than it was: the two load-bearing rules (ranking, `count: 50`)
+  became tool contracts, so they can no longer be lost with the prose. The
+  hazard that remains is that the unit suite grades single invocations in fresh
+  context and therefore **cannot see** multi-hour retention — so it will happily
+  bless a cut that removes something only a long session needs. Needs a gate
+  other than the unit suite before anyone cuts deeply.
+
+- **The ranking fold has not been tested under real compaction pressure** — the
+  post-change e2e run (`hannah-earnest-children` 2026-07-27) compacted only 4
+  times in 190 turns and ranked 7 of 7 eligible searches. That confirms the
+  contract fires; it does not demonstrate the contract beating prose under the
+  23-compaction pressure that motivated it. The 302-turn baseline of the same
+  fixture would be the harder test.
+
+- **Agents read records the ranker did not surface** — in the same run, 6 of 11
+  `record_read` calls (55%) targeted a record in a ranker top-3. Some is
+  legitimate (5 of 14 searches were deliberately subject-less broad sweeps, which
+  cannot rank), but it is worth checking whether the agent is ignoring rankings
+  it now gets for free. That would be the same adoption gap one layer down.
+
+- **`rank_search_matches`'s subject enrichment (C2a) earns almost nothing** — it
+  moves a true match by +0.0008 (`research-performance-2026-07-27.md` §5.1). It
+  is retained only because it is free and can add nothing the project does not
+  already hold. If it ever acquires a cost — a slow read, a correctness risk —
+  delete it rather than defend it.
+
+- **`docs/plan/research-performance-2026-07-27.md` is kept deliberately, against
+  the "delete a plan once the work ships" convention** — because C0 (the
+  reasoning-effort A/B, the largest remaining lever) has not shipped. C1–C7 have,
+  and their rationale is in the tool specs, but three things in that plan belong
+  in neither a spec nor a commit message: §1 (the session decomposition and the
+  output-tokens/wall-clock equation), §5.1 (the live probe that refuted this
+  plan's own F2 — the ranker works; the low scores were correct negatives), and
+  §5.3 (the rule audit showing only unanchored SKILL.md prose decays under
+  compaction). Delete or trim it once C0 is decided, and fold those three
+  findings somewhere durable rather than losing them with the file.
+
+- **Nothing prevents the eval corpus drifting behind a tool contract again** —
+  it happened twice unnoticed. `search-records`' rubric was TWO contracts stale
+  (still failing runs for not calling `same_person`/`source_attachments`, folded
+  into `rank_search_matches` months earlier and into `record_search` this PR),
+  and 14 test files' `judge_context` was one contract stale. The corpus was
+  marking the skill down for doing the right thing, and only a regression run
+  surfaced it. A cheap lint would catch both: flag any tool name appearing in a
+  skill's `rubric.md` or per-test `judge_context` that is absent from that
+  skill's `allowed-tools`. That single rule would have fired on
+  `same_person`/`source_attachments` in the rubric the day they were folded away.
+  Same shape as the existing places-guidance byte-lint and the enum-drift lint
+  already queued above.
+
+- **Eval annotation signal is concentrated in three reviewers** — surfaced by the
+  rubric-critic audit of `search-records`. 14 of 19 `.ann.json` files contain
+  **zero** divergences across 116–164 corrections each, and all 16 divergences in
+  the skill's entire history come from three annotators (11 / 3 / 1). So the
+  headline "96%+ judge–human agreement" is substantially "Agree with all" rather
+  than verified concordance, and absence of divergence on a quiet dimension is
+  weak evidence the judge is right there. Process observation, not a code change:
+  worth deciding whether "Agree with all" should be distinguishable from
+  per-dimension review in the CRUD UI's output.

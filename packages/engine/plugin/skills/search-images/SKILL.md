@@ -167,9 +167,10 @@ delegate its `imageId` to the **`image-reader` subagent** (`@plugin:image-reader
 once per page. It reads the scan in an isolated context and returns a **full text
 transcription** plus an extracted-facts list; the raw image never enters your
 context. This matters: `image_read` returns the page as inline base64, and a
-volume browse means many pages — read them yourself and the accumulated base64
-overflows the transport's ~1 MiB buffer and **crashes the run** (two scans already
-risk it). Delegating keeps the base64 in the subagent's throwaway context.
+volume browse means many pages — read them yourself in this skill's own
+session and the accumulated base64 overflows the transport's ~1 MiB buffer and
+**crashes the run**. Delegating keeps the base64 in the subagent's own
+throwaway context, which ends after one page and never accumulates.
 
 Browsing is manual: delegate a likely page, triage the returned transcription,
 and step forward or back by delegating the next page (the trailing 5-digit number
@@ -178,6 +179,12 @@ first to jump to the right range. Hand the subagent only the `imageId` (optional
 a short `looking_for` pointer for *who/what* to locate — never an assertion of
 what the page says). If it returns `NOT READ`, do not fabricate the page — note it
 and move on.
+
+If a page you land on comes back heavy with `[illegible]` marks or otherwise
+looks unreliable (faded ink, difficult handwriting, Kurrentschrift), a
+higher-accuracy but slower and far more expensive re-read is available:
+`@plugin:image-reader-opus`, invoked the same way, one image at a time. Reserve
+it for a specific page that's worth the cost — never for routine browsing.
 
 **Listing a volume's images IS a completed browse — log it (step 6) before you
 present anything or defer reading.** The `image_search` call is the browse event

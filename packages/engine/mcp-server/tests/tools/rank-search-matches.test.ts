@@ -138,6 +138,118 @@ describe("rank_search_matches", () => {
       .map((l) => JSON.parse(l));
   };
 
+  // ── C2: subject enrichment + honest degradation ────────────────────────────
+
+  async function writeResearch(doc: unknown): Promise<void> {
+    await writeFile(join(dir, "research.json"), JSON.stringify(doc, null, 2), "utf-8");
+  }
+
+  /** A tree person with a name and nothing else — the ark-less `I*` stub that
+   *  scores uniformly near-zero against every candidate. */
+  const starvedTree = {
+    persons: [{ id: "I1", names: [{ preferred: true, given: "James", surname: "Stephens" }] }],
+    relationships: [],
+    sources: [],
+  };
+
+  it("enriches the subject from assertions linked through person_evidence", async () => {
+    await writeTree(starvedTree);
+    await writeResearch({
+      person_evidence: [
+        { id: "pe_001", person_id: "I1", assertion_id: "a_001" },
+        { id: "pe_002", person_id: "I1", assertion_id: "a_002" },
+        // a different person's evidence must not leak onto the subject
+        { id: "pe_003", person_id: "I9", assertion_id: "a_003" },
+      ],
+      assertions: [
+        { id: "a_001", fact_type: "birth", value: "born 15 August 1858, Memphis" },
+        { id: "a_002", fact_type: "residence", structured_value: { place: "Acme, New Mexico" } },
+        { id: "a_003", fact_type: "birth", structured_value: { year: "1799" } },
+      ],
+    });
+    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" });
+
+    expect(out.subjectEnrichedFacts).toBe(2);
+    const sentSubject = scorePairMock.mock.calls[0][2] as any;
+    const facts = sentSubject.persons[0].facts;
+    // free-text year recovered; structured place carried through
+    expect(facts).toContainEqual({ type: "Birth", date: "1858" });
+    expect(facts).toContainEqual({ type: "Residence", place: "Acme, New Mexico" });
+    // the other person's assertion did not leak in
+    expect(JSON.stringify(facts)).not.toContain("1799");
+  });
+
+  it("withholds the ranking when the subject has no dated or placed fact", async () => {
+    await writeTree(starvedTree);
+    scorePairMock.mockResolvedValue(scoreResult(0.001));
+    const ref = await stage([
+      candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" }),
+      candidate({ recordId: "ark:/61903/1:1:AAAA-AA2", primaryId: "p2" }),
+    ]);
+
+    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" });
+
+    // Empty ON PURPOSE — a ranked-looking list here would be search order.
+    expect(out.matches).toEqual([]);
+    expect(out.returnedCount).toBe(0);
+    expect(out.subjectResolvable).toBe(false);
+    expect(out.diagnostic).toMatch(/no fact with a date or place/);
+    // the scoring still happened, so the calibration log is intact
+    expect(out.scoredCount).toBe(2);
+  });
+
+  it("keeps a real negative distinguishable from a starved subject", async () => {
+    await writeTree(); // subjectTree HAS a Birth date → scoreable
+    scorePairMock.mockResolvedValue(scoreResult(0.001));
+    const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+    const out = await rankSearchMatches({
+      projectPath: dir,
+      stagedResultsRef: ref,
+      subjectId: SUBJECT_ID,
+    });
+
+    expect(out.subjectResolvable).toBe(false);
+    expect(out.diagnostic).toMatch(/real negative/);
+    // subject was fine, so the caller still sees what was scored
+    expect(out.matches.length).toBe(1);
+  });
+
+  it("falls back to the bare tree person when research.json is absent", async () => {
+    await writeTree();
+    scorePairMock.mockResolvedValue(scoreResult(0.8, 4));
+    const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+
+    const out = await rankSearchMatches({
+      projectPath: dir,
+      stagedResultsRef: ref,
+      subjectId: SUBJECT_ID,
+    });
+
+    expect(out.subjectEnrichedFacts).toBeUndefined();
+    expect(out.matches).toHaveLength(1);
+  });
+
+  it("reports candidate thinness without thresholding on it", async () => {
+    await writeTree();
+    scorePairMock.mockResolvedValue(scoreResult(0.8, 4));
+    const thin = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" });
+    const rich = candidate({ recordId: "ark:/61903/1:1:AAAA-AA2", primaryId: "p2", birthDate: "1858" });
+    (rich as any).events = [{ type: "Census", date: "1900", place: "Jackson, TN" }];
+    const ref = await stage([thin, rich]);
+
+    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID });
+
+    const byId = Object.fromEntries(out.matches.map((m) => [m.recordId, m.candidateFactCount]));
+    expect(byId["ark:/61903/1:1:AAAA-AA1"]).toBe(0);
+    expect(byId["ark:/61903/1:1:AAAA-AA2"]).toBe(2);
+    // both are still returned — thinness is reported, never filtered
+    expect(out.matches).toHaveLength(2);
+  });
+
   // ── Return shape / ordering / top-N ────────────────────────────────────────
 
   it("returns top-N stubs sorted by matchScore desc (nulls last), searchRank preserved", async () => {

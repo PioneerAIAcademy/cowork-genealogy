@@ -1,0 +1,19 @@
+{
+  "id": "mary-kavanaugh-son",
+  "name": "Mary E. Kavanaugh — additional son James (b. 1872, Cohasset)",
+  "genre": "record-hint",
+  "source_pid": "G95C-GFP",
+  "captured": "2026-07-24",
+  "researcher_question": "Did Mary E. Kavanaugh and her husband Charles H. Williston of Cohasset, Massachusetts have a son born before their four known children (1877-1880), in addition to the four already in the tree?",
+  "tags": {
+    "question_type": "children",
+    "era": "1870s",
+    "geography": "US-MA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 2, flag adds_son, confidence 3). Draft transcribed from a Massachusetts vital record; unverified."
+}

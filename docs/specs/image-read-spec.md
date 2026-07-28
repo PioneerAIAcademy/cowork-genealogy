@@ -10,12 +10,15 @@ to OCR models. Requires FamilySearch authentication.
 
 ```typescript
 {
-  imageId?: string   // An Image Group Number of the form NUMBER_NUMBER
-  ark?: string       // A FamilySearch document-image ARK, resolver URL, or resolved distribution URL
+  imageId?: string      // An Image Group Number of the form NUMBER_NUMBER
+  ark?: string          // A FamilySearch document-image ARK, resolver URL, or resolved distribution URL
+  projectPath?: string  // Absolute project-folder path. When set, the fetched scan is saved
+                         // under images/ and its project-relative path returned as imageRef.
 }
 ```
 
-Exactly one of `imageId` or `ark` must be provided.
+Exactly one of `imageId` or `ark` must be provided. `projectPath` is optional
+and independent of that choice.
 
 ### imageId format
 
@@ -66,15 +69,18 @@ Fetching requires a valid FamilySearch bearer token.
 The tool returns two content blocks:
 
 1. **Image block** (`type: "image"`) — base64-encoded image bytes + MIME type.
-   Claude and downstream OCR models (Gemini, Mistral) can consume this directly.
+   The calling agent sees this as a real image via its own vision (used by
+   the `image-reader-opus` agent — `docs/specs/image-reader-opus-agent-spec.md`).
 
 2. **Metadata block** (`type: "text"`) — JSON with:
 
 ```typescript
 {
-  url: string         // The distribution URL that was built and fetched
-  mimeType: string    // e.g. "image/jpeg"
-  sizeBytes: number   // Size of the image in bytes
+  url: string          // The distribution URL that was built and fetched
+  mimeType: string     // e.g. "image/jpeg"
+  sizeBytes: number    // Size of the image in bytes
+  imageRef?: string    // Project-relative saved path (images/<key>.jpg), present only
+                        // when projectPath was supplied and the save succeeded
 }
 ```
 
@@ -89,7 +95,7 @@ The tool returns two content blocks:
 | Invalid ark format | "Unrecognized ark. Expected a FamilySearch document-image ARK (ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, or a resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS distribution URL (dgs:.../dist.jpg)." |
 | FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}" |
 | Response is not an image | "Expected an image response but got content-type: {type}" |
-| Image exceeds the inline size cap | "FamilySearch image {imageId or ark} is {N} MB — too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. Read the indexed record for this image with record_read / record_search instead of fetching the page scan, or choose a more specific image." |
+| Image exceeds the inline size cap | "FamilySearch image {imageId or ark} is {N} MB — too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. OCR it with image_transcribe instead (it reads the scan host-side and returns text, with no size limit), or read the indexed record with record_read / record_search." |
 
 ## Auth
 

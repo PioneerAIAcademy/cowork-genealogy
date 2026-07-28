@@ -41,6 +41,12 @@ from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
 )
+from harness.skill_invocation import (
+    find_effects_without_invocation,
+    find_missing_mentor_verdicts,
+    find_person_evidence_missing_same_person,
+    find_unguarded_protected_writes,
+)
 
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
@@ -118,6 +124,15 @@ BLOCKED_TREE_TOOLS = frozenset(
 )
 
 
+# docs/plan/research-guardrail-bypass-plan.md §4.1/§6 — trailing tool-call
+# window for the shadow-mode guardrail check: a first-cut default, not yet
+# empirically tuned against the runlog corpus. Generous on purpose — a
+# guardrail skill legitimately does several reads/searches/writes before its
+# protected write, so this needs to be wide enough to cover that without
+# being so wide it stops meaning anything.
+GUARDRAIL_SHADOW_WINDOW = 40
+
+
 def is_turn_cap_error(detail: str | None) -> bool:
     """Whether an SDK error result is really a turn-cap hit.
 
@@ -151,6 +166,28 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
     if not tool_name.startswith("mcp__"):
         return False
     return _bare_tool_name(tool_name) in blocked_tools
+
+
+# The two project files that must never be touched by raw Write/Edit — all
+# writes go through the MCP writer tools (research_append, research_log_append,
+# tree_edit, tree_correct), which validate before persisting. See
+# docs/plan/research-guardrail-bypass-plan.md §4.3.
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+
+
+def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
+    """The protected filename a Write/Edit call targets, or None.
+
+    Only Write/Edit are candidates — every other tool (including the MCP
+    writer tools) is a different code path. Matched on the `file_path`
+    argument's basename, so it doesn't matter whether the model passed an
+    absolute or relative path.
+    """
+    if tool_name not in ("Write", "Edit"):
+        return None
+    file_path = str((tool_input or {}).get("file_path") or "")
+    name = file_path.rsplit("/", 1)[-1]
+    return name if name in PROTECTED_PROJECT_FILES else None
 
 
 @dataclass
@@ -404,6 +441,28 @@ def _summarize_tool_response(content: Any) -> str:
     return text
 
 
+def _timeline_tool_label(tool: str, args: dict | None) -> str:
+    """Human-legible label for a `timeline` entry's tool-names list.
+
+    `tool_calls` already has the bare name (and, for Skill, the skill it
+    launched, in `args["skill"]`) — but no timestamp. `timeline` has the
+    timestamp — but until this label existed, no tool identity, so a
+    per-skill wall-clock breakdown (e2e.latency_report --by-skill) could
+    only be reconstructed from the raw SDK session transcript, which is
+    gitignored and normally discarded once the run's tempdir is cleaned up
+    (not a reliable source for other contributors' PRs). Labeling the
+    timeline directly means every committed run carries it for free.
+
+    A Skill call is labeled with the skill it launches (e.g.
+    "Skill:person-evidence") rather than the bare "Skill" — that is the
+    actual phase-boundary signal callers need; the bare tool name alone
+    would require a second join against `tool_calls` to recover it.
+    """
+    if tool == "Skill":
+        return f"Skill:{(args or {}).get('skill', '?')}"
+    return _bare_tool_name(tool)
+
+
 _USAGE_FIELDS = (
     "input_tokens",
     "output_tokens",
@@ -526,9 +585,14 @@ async def _run_agent(
 
     run_started = time.monotonic()
 
-    # Per-message timeline for forensics: [elapsed_seconds, kind]. Lets a later
-    # analysis split a run into structural vs stall time and pinpoint a
-    # no-progress gap WITHOUT a session.jsonl (which isn't reliably copied).
+    # Per-message timeline for forensics: [elapsed_seconds, kind, tool_names].
+    # Lets a later analysis split a run into structural vs stall time, pinpoint
+    # a no-progress gap, AND segment a run by Skill-phase boundaries — all
+    # WITHOUT a session.jsonl (which isn't reliably copied, and is gitignored
+    # even when it is — see _timeline_tool_label). tool_names is the list of
+    # `_timeline_tool_label`-formatted names for any ToolUseBlock/ToolResultBlock
+    # in this message ([] for assistant messages with no tool call, and always
+    # [] for system:*/result kinds).
     timeline: list[list[Any]] = []
     # Stall detection tracks time since the last PROGRESS message (assistant
     # text, a tool call, or a tool result) — not since any message, because the
@@ -573,6 +637,30 @@ async def _run_agent(
         # skill writes nothing. The mcp__-only budget cap is tool_call_count,
         # incremented separately below.
         activity_count["n"] += 1
+
+        # docs/plan/research-guardrail-bypass-plan.md §4.3 — no skill's
+        # allowed-tools lists bare Write/Edit, and research/SKILL.md already
+        # prose-forbids direct writes to these two files ("all writes go
+        # through the writer tools"). This closes that as a real denial
+        # instead of a convention. Hygiene, not the fix for the observed
+        # bypass — both known bypass shapes write via research_append, never
+        # raw Write/Edit (see §4.1/§4.2 for the actual gates).
+        protected_file = direct_project_file_write(tool_name, input_data.get("tool_input", {}))
+        if protected_file:
+            _emit(f"[blocked direct write] {tool_name} -> {protected_file}")
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"{tool_name} on {protected_file} is disabled — all writes to "
+                        "research.json/tree.gedcomx.json must go through the writer tools "
+                        "(research_append, research_log_append, tree_edit, tree_correct), "
+                        "which validate before persisting. Direct file writes never validate."
+                    ),
+                },
+            }
+
         if not tool_name.startswith("mcp__"):
             return {}
 
@@ -807,6 +895,7 @@ async def _run_agent(
                 progressed = False
 
                 if isinstance(message, AssistantMessage):
+                    assistant_tool_names: list[str] = []
                     for block in message.content:
                         if isinstance(block, TextBlock):
                             transcript.append(f"\n**assistant:** {block.text}\n")
@@ -822,6 +911,9 @@ async def _run_agent(
                             }
                             tool_calls.append(entry)
                             pending_tool_uses[block.id] = entry
+                            assistant_tool_names.append(
+                                _timeline_tool_label(block.name, block.input)
+                            )
                             args_short = _summarize_tool_response(block.input)
                             transcript.append(
                                 f"\n**tool_use** `{block.name}` — args: {args_short}\n"
@@ -834,10 +926,13 @@ async def _run_agent(
                     # Record before the timeline append so a message that
                     # arrives moments before a timeout still counts.
                     _accumulate_usage(streamed, message)
-                    timeline.append([round(now - run_started, 1), "assistant"])
+                    timeline.append(
+                        [round(now - run_started, 1), "assistant", assistant_tool_names]
+                    )
                 elif isinstance(message, UserMessage):
                     # Tool results return as UserMessages with ToolResultBlock content.
                     content = message.content
+                    tool_result_names: list[str] = []
                     if isinstance(content, list):
                         for block in content:
                             if isinstance(block, ToolResultBlock):
@@ -845,9 +940,14 @@ async def _run_agent(
                                 summary = _summarize_tool_response(block.content)
                                 if entry is not None:
                                     entry["response_summary"] = summary
+                                    tool_result_names.append(
+                                        _timeline_tool_label(entry["tool"], entry.get("args"))
+                                    )
                                 transcript.append(f"\n**tool_result:** {summary}\n")
                                 progressed = True
-                    timeline.append([round(now - run_started, 1), "tool_result"])
+                    timeline.append(
+                        [round(now - run_started, 1), "tool_result", tool_result_names]
+                    )
                 elif isinstance(message, SystemMessage):
                     # Init / config / hint messages. Capture the session id (for
                     # resume) and the CLI version (for the runlog); neither counts
@@ -860,10 +960,10 @@ async def _run_agent(
                     if ver:
                         cli_version["v"] = ver
                     timeline.append(
-                        [round(now - run_started, 1), f"system:{message.subtype}"]
+                        [round(now - run_started, 1), f"system:{message.subtype}", []]
                     )
                 elif isinstance(message, ResultMessage):
-                    timeline.append([round(now - run_started, 1), "result"])
+                    timeline.append([round(now - run_started, 1), "result", []])
                     usage = {
                         "duration_ms": message.duration_ms,
                         "duration_api_ms": message.duration_api_ms,
@@ -984,7 +1084,31 @@ async def _run_agent(
             "max_cost_usd": fixture.caps.max_cost_usd,
         },
     }
-    return tool_calls, transcript, usage, aborted_reason, error, blocked_tree_reads
+    # docs/plan/research-guardrail-bypass-plan.md §4.1 — SHADOW MODE ONLY:
+    # computed once over the completed `tool_calls` list (equivalent to
+    # checking live at each call, since the check only ever looks backward),
+    # so this ships without touching pretool_hook's decision path at all.
+    # Graduating to actual denial later requires moving the check into
+    # pretool_hook, since only a live PreToolUse decision can reject a call
+    # before it happens — this post-hoc form can only ever log.
+    guardrail_shadow_violations = find_unguarded_protected_writes(
+        tool_calls, window=GUARDRAIL_SHADOW_WINDOW
+    )
+    if guardrail_shadow_violations:
+        _emit(
+            f"[guardrail-shadow] {len(guardrail_shadow_violations)} protected write(s) "
+            "with no recent matching Skill invocation (shadow mode — not denied)"
+        )
+
+    return (
+        tool_calls,
+        transcript,
+        usage,
+        aborted_reason,
+        error,
+        blocked_tree_reads,
+        guardrail_shadow_violations,
+    )
 
 
 def _find_session_transcript(workspace: Path) -> Path | None:
@@ -1054,6 +1178,12 @@ async def run_e2e_test(
         workspace = build_workspace(
             fixture, Path(tmp), skills_dir, effort_level=effort_level, agent_model=agent_model
         )
+        # Snapshot BEFORE the agent touches the workspace — build_workspace just
+        # copied fixture.starting_tree_path in. Lets the §4.4 guardrail-effects
+        # check (below) tell a fixture's own seeded persons apart from persons
+        # the agent created/enriched this run (docs/plan/
+        # research-guardrail-bypass-plan.md §4.4).
+        starting_tree = read_tree_json(workspace)
 
         (
             tool_calls,
@@ -1062,6 +1192,7 @@ async def run_e2e_test(
             aborted,
             error,
             blocked_tree_reads,
+            guardrail_shadow_violations,
         ) = await _run_agent(
             fixture=fixture,
             workspace=workspace,
@@ -1108,6 +1239,42 @@ async def run_e2e_test(
                 verdict = "skipped"
             judge_seconds = time.monotonic() - judge_start
 
+        # docs/plan/research-guardrail-bypass-plan.md §4.4 — HARD FAIL, not
+        # shadow: a guardrail skill's effect present in the FINAL project
+        # state with no matching successful invocation anywhere in the run,
+        # or a resolved question's proof_summary missing its mandatory
+        # gps-mentor proof-critique verdict. Overrides the judge's verdict
+        # regardless of what it said — mirrors the unit harness's
+        # `test_positive_fails_when_skill_not_in_skills_invoked`, which has no
+        # e2e equivalent otherwise (`skills_invoked` has zero hits in this
+        # module family before this). Unlike §4.1's shadow-mode recency
+        # check, this only looks at whether the skill ran AT ALL across the
+        # whole run, so it's far less prone to false positives and safe to
+        # hard-fail on immediately rather than roll out in shadow mode first.
+        #
+        # find_person_evidence_missing_same_person is a separate, also-hard,
+        # also-non-windowed check added after the first real run of
+        # bagley-father-1884 showed the gap in "invoked anywhere": that run
+        # linked a brand-new person across 13 person_evidence entries with
+        # zero same_person calls in the whole run, while person-evidence
+        # ITSELF was invoked 52 tool calls later for unrelated work — passing
+        # the "invoked anywhere" bar while still skipping the identity-scoring
+        # doctrine entirely. This checks the specific required tool for the
+        # specific person instead of the skill's mere presence in the run.
+        guardrail_effects_without_invocation = (
+            find_effects_without_invocation(tool_calls, final_research, final_tree, starting_tree=starting_tree)
+            + find_missing_mentor_verdicts(final_research)
+            + find_person_evidence_missing_same_person(
+                tool_calls, final_research, final_tree, starting_tree=starting_tree
+            )
+        )
+        if guardrail_effects_without_invocation:
+            verdict = "fail"
+            judge_output = {
+                **judge_output,
+                "guardrail_bypass_violations": guardrail_effects_without_invocation,
+            }
+
         # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
         # matches the wall-clock cap and the stall watchdog (also monotonic) and
         # is NOT inflated by laptop sleep. `real_clock_seconds` is the literal
@@ -1152,6 +1319,7 @@ async def run_e2e_test(
             error=error,
             tags=fixture.tags,
             blocked_tree_reads=blocked_tree_reads,
+            guardrail_shadow_violations=guardrail_shadow_violations,
             subagents=subagents,
         )
 

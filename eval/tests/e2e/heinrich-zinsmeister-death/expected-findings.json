@@ -1,0 +1,34 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Heinrich Zinssmeister was born about 1768 and died 15 December 1854, buried 17 December 1854, in Bavaria, Germany. The tree currently has no birth fact and only a blank Death fact for him.",
+      "details": {
+        "subject_person": "Heinrich Zinsmeister (KD72-C6D)",
+        "fact_type": "Death",
+        "date": "15 December 1854",
+        "place": "Bayern, Deutschland"
+      },
+      "supporting_sources": [
+        "Germany, Deaths and Burials, 1582-1958 — entry for Heinrich Zinssmeister, death 15 Dec 1854, burial 17 Dec 1854, spouse Elisabetha Engel"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Heinrich Zinssmeister was born about 1768, per the same death/burial record.",
+      "details": {
+        "subject_person": "Heinrich Zinsmeister (KD72-C6D)",
+        "fact_type": "Birth",
+        "date": "about 1768",
+        "place": "unknown"
+      },
+      "supporting_sources": [
+        "Germany, Deaths and Burials, 1582-1958 — entry for Heinrich Zinssmeister"
+      ],
+      "required": false
+    }
+  ]
+}

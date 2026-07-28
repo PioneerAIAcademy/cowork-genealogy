@@ -374,6 +374,37 @@ button {
   display: grid;
   /* --chat-w is set inline by SessionView (drag state, persisted per browser). */
   grid-template-columns: var(--chat-w, 380px) auto 1fr;
+  /* Row 1 (auto) is the FamilySearch-expired banner; it collapses to 0 when the
+     banner isn't rendered, so the panes keep filling the viewport as before.
+     The panes are pinned to row 2 so they never drift into the banner row. */
+  grid-template-rows: auto 1fr;
+}
+.sessionShell > .chatPane,
+.sessionShell > .paneDivider,
+.sessionShell > .viewerPane {
+  grid-row: 2;
+}
+/* Amber, from the viewer's badge palette so it tracks both themes. */
+.fsExpiredBanner {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  background: var(--badge-amber-bg);
+  color: var(--badge-amber-text);
+  border-bottom: 1px solid var(--accent-gold-strong);
+  font-size: 14px;
+  text-align: center;
+}
+.fsExpiredBanner .btnPrimary {
+  flex: none;
+  width: auto;
+  padding: 6px 14px;
+  font-size: 13px;
 }
 .chatPane {
   display: flex;
@@ -492,6 +523,15 @@ button {
 }
 
 /* ── Chat ─────────────────────────────────────────────── */
+/* Positioning context for the jump-to-latest button, so it floats just above
+   the composer regardless of how tall the composer has grown. */
+.chatScrollArea {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 .chatMessages {
   flex: 1;
   overflow-y: auto;
@@ -499,6 +539,44 @@ button {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+.chatJumpLatest {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-elev);
+  color: var(--ink-soft);
+  cursor: pointer;
+  box-shadow: var(--shadow, 0 2px 8px rgb(0 0 0 / 0.18));
+  animation: jumpLatestIn 120ms ease-out;
+}
+.chatJumpLatest:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+@keyframes jumpLatestIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chatJumpLatest {
+    animation: none;
+  }
 }
 .msgUser {
   align-self: flex-end;

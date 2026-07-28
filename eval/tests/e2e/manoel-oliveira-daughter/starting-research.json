@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_manoel_oliveira_daughter",
+    "objective": "Did Manoel Melquiades de Oliveira and his wife Cândida Damasceno de Oliveira of Rio Grande do Norte, Brazil have a daughter named Josefa, married 1926, in addition to their known children Abel and Maria Lila (b. 1901)?",
+    "subject_person_ids": [
+      "GHJ6-2WV"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

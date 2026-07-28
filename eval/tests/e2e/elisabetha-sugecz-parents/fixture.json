@@ -1,0 +1,19 @@
+{
+  "id": "elisabetha-sugecz-parents",
+  "name": "Elisabetha Sugecz — parents Thomas Sugecz and Susanna Petrich",
+  "genre": "record-hint",
+  "source_pid": "G4C9-Y6C",
+  "captured": "2026-07-24",
+  "researcher_question": "Who were the parents of Elisabetha Sugecz, wife of Thomas Pofuk-Harmicar of Madžarevo, Varaždin, Croatia?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1780s",
+    "geography": "HR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 11, flags adds_father/adds_mother, confidence 3). Draft transcribed from a Croatian church baptismal record; unverified."
+}

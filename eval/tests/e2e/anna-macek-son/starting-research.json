@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_anna_macek_son",
+    "objective": "Did Anna Macek and her husband Václav Jičinský of Rohovládova Bělá, Pardubice, Czechia have a son named František, baptized 1867?",
+    "subject_person_ids": [
+      "PW3W-LJN"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
