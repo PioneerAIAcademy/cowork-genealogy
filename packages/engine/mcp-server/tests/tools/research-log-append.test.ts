@@ -54,6 +54,128 @@ describe("research_log_append", () => {
   const readJson = async (name: string) => JSON.parse(await readFile(join(dir, name), "utf-8"));
   const exists = async (rel: string) => access(join(dir, rel)).then(() => true, () => false);
 
+  it("defaults `query` from the staged payload when the caller omits it", async () => {
+    await writeProject(baseResearch());
+    const echoed = { surname: "Stephens", residencePlace: "Shelby, Tennessee, United States" };
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: echoed, results: [{ recordId: "A" }] },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      // no `query` — the staged payload already carries the producing tool's echo
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+      stagedResultsRef: handle!.resultsRef,
+    } as any);
+
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    expect(research.log[0].query).toEqual(echoed);
+  });
+
+  it("prefers an explicit `query` over the staged payload's echo", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: { surname: "FromPayload" }, results: [{ recordId: "A" }] },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "FromCaller" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+      stagedResultsRef: handle!.resultsRef,
+    });
+
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    expect(research.log[0].query).toEqual({ surname: "FromCaller" });
+  });
+
+  it("strips projectPath/subjectId from the defaulted query — they are host plumbing", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: {
+        // echoQuery copies EVERY defined input, plumbing included.
+        query: { surname: "Grice", projectPath: "/private/var/folders/tv/xyz", subjectId: "I1" },
+        results: [{ recordId: "A" }],
+      },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+      stagedResultsRef: handle!.resultsRef,
+    } as any);
+
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    // research.json travels between machines; an absolute host path in it is
+    // meaningless anywhere else.
+    expect(research.log[0].query).toEqual({ surname: "Grice" });
+  });
+
+  it("unlinks the sidecar when the single-op form throws after finalizing it", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_read",
+      // No `query` in the payload, so nothing can default it → the op throws
+      // AFTER the sidecar has been finalized.
+      response: { results: [{ recordId: "A" }] },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_read",
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+      stagedResultsRef: handle!.resultsRef,
+    } as any);
+
+    expect(result.ok).toBe(false);
+    // The sidecar must NOT survive: nothing in research.json references it, the
+    // staged file it came from is already unlinked, and the next
+    // validate_research_schema hard-fails on an orphan with no way to recover.
+    expect(await exists("results/log_001.json")).toBe(false);
+    const research = await readJson("research.json");
+    expect(research.log).toEqual([]);
+  });
+
+  it("fails loudly when `query` is omitted and nothing staged supplies one", async () => {
+    await writeProject(baseResearch());
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_read",
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+    } as any);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/`query` is required/);
+    // nothing persisted
+    const research = await readJson("research.json");
+    expect(research.log).toEqual([]);
+  });
+
   it("appends a positive search with a finalized sidecar (staging round-trip)", async () => {
     await writeProject(baseResearch());
     const handle = await stageSearchResults({

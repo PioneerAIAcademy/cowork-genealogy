@@ -101,7 +101,16 @@ export async function finalizeStagedResults(args: {
   stagedResultsRef: string;
   logId: string;
   expectedTool: string;
-}): Promise<{ resultsRef: string; returnedCount: number }> {
+}): Promise<{
+  resultsRef: string;
+  returnedCount: number;
+  /** The producing tool's own echo of its query, when the staged payload
+   *  carries one (`record_search` sets it via `echoQuery`). Lets
+   *  `research_log_append` fill `query` host-side so the model never
+   *  re-serializes an ARK-dense object it can only get wrong. Undefined when
+   *  the payload has no `query`. */
+  payloadQuery?: Record<string, unknown>;
+}> {
   const { projectPath, stagedResultsRef, logId, expectedTool } = args;
 
   // 1. Path-traversal guard, then require the ref to live under results/.staging/.
@@ -156,7 +165,24 @@ export async function finalizeStagedResults(args: {
   // 6. Consume the staged file (best-effort; a lost race is harmless).
   await unlink(abs).catch(() => {});
 
-  return { resultsRef, returnedCount };
+  // The producer's echoed query, if it recorded one. Guarded on a plain object
+  // so a malformed payload degrades to "no default" rather than persisting a
+  // string or array into a field the schema types as an object.
+  const rawQuery = (payload as { query?: unknown }).query;
+  let payloadQuery: Record<string, unknown> | undefined;
+  if (rawQuery !== null && typeof rawQuery === "object" && !Array.isArray(rawQuery)) {
+    // `echoQuery` copies EVERY defined input, which includes plumbing the log
+    // entry must not carry: `projectPath` is an absolute host path (it landed
+    // in 11 of 24 entries of a real run before this filter) and `subjectId` is
+    // a tree id, not a search parameter. `research.json` is shared project
+    // state that moves between machines — a `/private/var/folders/...` in it is
+    // meaningless anywhere else. Strip them from the DEFAULT only; a caller who
+    // passes `query` explicitly still owns its contents.
+    const { projectPath: _p, subjectId: _s, ...rest } = rawQuery as Record<string, unknown>;
+    payloadQuery = rest;
+  }
+
+  return { resultsRef, returnedCount, payloadQuery };
 }
 
 async function pruneStale(stagingDir: string): Promise<void> {

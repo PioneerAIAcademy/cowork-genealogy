@@ -734,6 +734,150 @@ describe("research_append (Phase 3)", () => {
     expect(r.ok && r.entryId).toBe("ps_001");
   });
 
+  // docs/plan/research-guardrail-bypass-plan.md §4.2 — tier/exhaustiveness cross-field guardrail.
+  it("rejects tier 'proved' when the question's exhaustive_declaration.declared is false", async () => {
+    await writeProject(); // phase3Research(): q_001 defaults to exhaustive_declaration.declared: false
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "proof_summaries",
+      op: "append",
+      entry: {
+        question_id: "q_001",
+        tier: "proved",
+        vehicle: "summary",
+        supporting_assertion_ids: ["a_001"],
+        resolved_conflict_ids: [],
+        exhaustive_search_summary: "Searched census + vitals",
+        narrative_markdown: "## Conclusion\n...",
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/exhaustive_declaration\.declared === true/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("rejects a single batch that declares exhaustiveness and consumes it for tier 'proved' in the same call (TOCTOU)", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "questions",
+          op: "update",
+          entryId: "q_001",
+          fields: {
+            exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: {} },
+          },
+        },
+        {
+          section: "proof_summaries",
+          op: "append",
+          entry: {
+            question_id: "q_001",
+            tier: "proved",
+            vehicle: "summary",
+            supporting_assertion_ids: ["a_001"],
+            resolved_conflict_ids: [],
+            exhaustive_search_summary: "Searched census + vitals",
+            narrative_markdown: "## Conclusion\n...",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/exhaustive_declaration\.declared === true/);
+    // All-or-nothing: neither op landed, including the exhaustiveness declaration.
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  const fullStopCriteria = () => ({
+    goal_alignment: true,
+    repository_breadth: true,
+    original_substitution: true,
+    independent_verification: true,
+    evidence_class: true,
+    conflict_resolution: true,
+    overturn_risk: true,
+  });
+  const declaredExhaustiveLog = () => [
+    {
+      id: "log_001",
+      plan_item_id: null,
+      performed: "2026-01-01T00:00:00Z",
+      tool: "record_search",
+      query: {},
+      outcome: "negative",
+      results_examined: 0,
+      external_site: null,
+      results_ref: null,
+    },
+  ];
+
+  it("allows tier 'proved' when exhaustive_declaration.declared was already true from an earlier, separate call", async () => {
+    const r0 = phase3Research();
+    r0.questions = [
+      {
+        ...validQuestion("q_001"),
+        status: "exhaustive_declared",
+        exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria() },
+      },
+    ];
+    r0.log = declaredExhaustiveLog();
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "proof_summaries",
+      op: "append",
+      entry: {
+        question_id: "q_001",
+        tier: "proved",
+        vehicle: "summary",
+        supporting_assertion_ids: ["a_001"],
+        resolved_conflict_ids: [],
+        exhaustive_search_summary: "Searched census + vitals",
+        narrative_markdown: "## Conclusion\n...",
+      },
+    });
+    expect(r.ok && r.entryId).toBe("ps_001");
+  });
+
+  it("does not re-trigger the tier guardrail on an unrelated update to an already-proved entry", async () => {
+    const r0 = phase3Research();
+    r0.questions = [
+      {
+        ...validQuestion("q_001"),
+        status: "exhaustive_declared",
+        exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria() },
+      },
+    ];
+    r0.log = declaredExhaustiveLog();
+    r0.proof_summaries = [
+      {
+        id: "ps_001",
+        question_id: "q_001",
+        tier: "proved",
+        vehicle: "summary",
+        supporting_assertion_ids: ["a_001"],
+        resolved_conflict_ids: [],
+        exhaustive_search_summary: "Searched census + vitals",
+        narrative_markdown: "## Conclusion\n...",
+      },
+    ];
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "proof_summaries",
+      op: "update",
+      entryId: "ps_001",
+      fields: { narrative_markdown: "## Conclusion\nRevised wording." },
+    });
+    expect(r.ok).toBe(true);
+  });
+
   it("appends an evaluation and stamps `timestamp` (datetime)", async () => {
     await writeProject();
     const r = await researchAppend({
