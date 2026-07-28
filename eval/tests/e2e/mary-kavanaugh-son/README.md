@@ -1,4 +1,6 @@
 # Mary E. Kavanaugh — additional son James (b. 1872, Cohasset)
+---
+_Test edit: verifying commit workflow_
 
 **Source PID:** `G95C-GFP`
 **Mary E. Kavanaugh is deceased.** (FamilySearch ToS requires
