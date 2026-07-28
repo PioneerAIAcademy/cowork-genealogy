@@ -1,0 +1,87 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-07-09T11:48:21.223Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "collectionId": "1468080",
+      "surname": "Monsen",
+      "givenName": "Anders",
+      "recordType": "marriage"
+    },
+    "totalMatches": 58,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:NW44-PM2",
+        "personName": "Anders Monsen",
+        "score": 0.97,
+        "sex": "Male",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "25 Jun 1786",
+            "place": "Hamre, Hordaland, Norway"
+          }
+        ],
+        "collectionId": "1468080",
+        "collectionTitle": "Norway, Marriages, 1660-1926",
+        "recordTitle": "Anders Monsen and Urna Halsteinsdr, 25 Jun 1786",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Anders",
+                  "surname": "Monsen",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Urna",
+                  "surname": "Halsteinsdr",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "R1",
+              "type": "Couple",
+              "person1": "P1",
+              "person2": "P2",
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Marriage",
+                  "date": "25 Jun 1786",
+                  "place": "Hamre, Hordaland, Norway"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

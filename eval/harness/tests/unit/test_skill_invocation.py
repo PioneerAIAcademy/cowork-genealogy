@@ -1,0 +1,488 @@
+"""Unit tests for harness/skill_invocation.py.
+
+docs/plan/research-guardrail-bypass-plan.md §4.1/§4.4 — pure matching logic
+over the harness's `tool_calls` list shape, no I/O, no SDK types.
+"""
+
+from harness.skill_invocation import (
+    GUARDRAIL_SKILLS,
+    find_effects_without_invocation,
+    find_missing_mentor_verdicts,
+    find_person_evidence_missing_same_person,
+    find_unguarded_protected_writes,
+    owning_skills,
+    recently_succeeded,
+    skill_name_if_skill_call,
+)
+
+
+def _skill_call(name, args_text=None, is_error=False):
+    entry = {"tool": "Skill", "args": {"skill": name}}
+    if args_text is not None:
+        entry["args"]["args"] = args_text
+    if is_error:
+        entry["is_error"] = True
+    return entry
+
+
+def _mcp_call(bare_name, args, is_error=False):
+    entry = {"tool": f"mcp__genealogy__{bare_name}", "args": args}
+    if is_error:
+        entry["is_error"] = True
+    return entry
+
+
+# --- skill_name_if_skill_call ------------------------------------------------
+
+
+def test_skill_name_extracted_from_skill_tool_call():
+    assert skill_name_if_skill_call("Skill", {"skill": "proof-conclusion"}) == "proof-conclusion"
+
+
+def test_skill_name_none_for_non_skill_tools():
+    assert skill_name_if_skill_call("mcp__genealogy__research_append", {"skill": "proof-conclusion"}) is None
+    assert skill_name_if_skill_call("Agent", {"skill": "proof-conclusion"}) is None
+
+
+def test_skill_name_none_when_skill_arg_missing_or_blank():
+    assert skill_name_if_skill_call("Skill", {}) is None
+    assert skill_name_if_skill_call("Skill", {"skill": ""}) is None
+    assert skill_name_if_skill_call("Skill", None) is None
+
+
+# --- owning_skills: research_append sections ---------------------------------
+
+
+def test_proof_summaries_owned_by_proof_conclusion():
+    args = {"section": "proof_summaries", "op": "append", "entry": {"question_id": "q_001", "tier": "proved"}}
+    assert owning_skills("mcp__genealogy__research_append", args) == ["proof-conclusion"]
+
+
+def test_person_evidence_owned_by_person_evidence():
+    args = {"section": "person_evidence", "op": "append", "entry": {"person_id": "I1"}}
+    assert owning_skills("mcp__genealogy__research_append", args) == ["person-evidence"]
+
+
+def test_conflicts_owned_by_conflict_resolution():
+    args = {"section": "conflicts", "op": "update", "entryId": "c_001", "fields": {"status": "resolved"}}
+    assert owning_skills("mcp__genealogy__research_append", args) == ["conflict-resolution"]
+
+
+def test_exhaustive_declaration_true_owned_by_research_exhaustiveness():
+    args = {
+        "section": "questions",
+        "op": "update",
+        "entryId": "q_001",
+        "fields": {"exhaustive_declaration": {"declared": True}},
+    }
+    assert owning_skills("mcp__genealogy__research_append", args) == ["research-exhaustiveness"]
+
+
+def test_questions_update_without_declaring_true_owns_nothing():
+    args = {"section": "questions", "op": "update", "entryId": "q_001", "fields": {"priority": "low"}}
+    assert owning_skills("mcp__genealogy__research_append", args) == []
+    args2 = {
+        "section": "questions",
+        "op": "update",
+        "entryId": "q_001",
+        "fields": {"exhaustive_declaration": {"declared": False}},
+    }
+    assert owning_skills("mcp__genealogy__research_append", args2) == []
+
+
+def test_unrelated_sections_own_nothing():
+    for section in ("sources", "assertions", "plans", "hypotheses", "timelines", "evaluations"):
+        args = {"section": section, "op": "append", "entry": {}}
+        assert owning_skills("mcp__genealogy__research_append", args) == []
+
+
+def test_batch_form_touching_multiple_sections_returns_all_owners_deduped():
+    args = {
+        "ops": [
+            {"section": "person_evidence", "op": "append", "entry": {"person_id": "I1"}},
+            {"section": "proof_summaries", "op": "append", "entry": {"question_id": "q_001", "tier": "probable"}},
+            {"section": "person_evidence", "op": "append", "entry": {"person_id": "I2"}},
+        ]
+    }
+    assert owning_skills("mcp__genealogy__research_append", args) == ["person-evidence", "proof-conclusion"]
+
+
+# --- owning_skills: materialize_facts / tree_edit / tree_correct ------------
+
+
+def test_materialize_facts_minting_new_person_owned_by_person_evidence():
+    args = {"recordId": "rec_1", "recordRole": "child"}  # no personId => mints new
+    assert owning_skills("mcp__genealogy__materialize_facts", args) == ["person-evidence"]
+
+
+def test_materialize_facts_enriching_existing_person_owns_nothing():
+    args = {"personId": "I1", "recordId": "rec_1", "recordRole": "child"}
+    assert owning_skills("mcp__genealogy__materialize_facts", args) == []
+
+
+def test_tree_edit_add_parent_child_relationship_owned_by_proof_conclusion():
+    args = {"operation": "add_relationship", "relationship": {"type": "ParentChild", "person1": "I1", "person2": "I2"}}
+    assert owning_skills("mcp__genealogy__tree_edit", args) == ["proof-conclusion"]
+
+
+def test_tree_edit_add_couple_relationship_owned_by_proof_conclusion():
+    args = {"operation": "add_relationship", "relationship": {"type": "Couple", "person1": "I1", "person2": "I2"}}
+    assert owning_skills("mcp__genealogy__tree_edit", args) == ["proof-conclusion"]
+
+
+def test_tree_correct_setting_primary_fact_owned_by_proof_conclusion():
+    args = {"operation": "update_fact", "factId": "f1", "fact": {"type": "Death", "primary": True}}
+    assert owning_skills("mcp__genealogy__tree_correct", args) == ["proof-conclusion"]
+
+
+def test_tree_edit_unrelated_op_owns_nothing():
+    args = {"operation": "add_source", "source": {"title": "x"}}
+    assert owning_skills("mcp__genealogy__tree_edit", args) == []
+
+
+def test_non_write_tools_own_nothing():
+    assert owning_skills("mcp__genealogy__record_search", {}) == []
+    assert owning_skills("Read", {"file_path": "research.json"}) == []
+
+
+# --- recently_succeeded ------------------------------------------------------
+
+
+def test_recently_succeeded_true_within_window():
+    calls = [_skill_call("proof-conclusion"), _mcp_call("research_append", {})]
+    assert recently_succeeded("proof-conclusion", calls, before_index=1, window=5) is True
+
+
+def test_recently_succeeded_false_outside_window():
+    calls = [_skill_call("proof-conclusion")] + [_mcp_call("record_search", {})] * 5
+    assert recently_succeeded("proof-conclusion", calls, before_index=6, window=3) is False
+
+
+def test_recently_succeeded_false_when_never_invoked():
+    calls = [_mcp_call("record_search", {})]
+    assert recently_succeeded("proof-conclusion", calls, before_index=1, window=5) is False
+
+
+def test_recently_succeeded_ignores_a_failed_skill_call():
+    """An errored Skill invocation must not open the window — otherwise
+    invoke -> fail -> finish inline evades detection (plan §4.1)."""
+    calls = [_skill_call("proof-conclusion", is_error=True), _mcp_call("research_append", {})]
+    assert recently_succeeded("proof-conclusion", calls, before_index=1, window=5) is False
+
+
+def test_recently_succeeded_keyed_by_question_when_derivable():
+    calls = [_skill_call("proof-conclusion", args_text="--autonomous q_001 projectPath=/x")]
+    assert recently_succeeded("proof-conclusion", calls, before_index=1, window=5, question_id="q_002") is False
+    assert recently_succeeded("proof-conclusion", calls, before_index=1, window=5, question_id="q_001") is True
+
+
+def test_recently_succeeded_falls_back_to_skill_only_when_question_id_not_derivable():
+    calls = [_skill_call("proof-conclusion")]  # no args text -> no derivable question id
+    assert recently_succeeded("proof-conclusion", calls, before_index=1, window=5, question_id="q_001") is True
+
+
+# --- find_unguarded_protected_writes ----------------------------------------
+
+
+def test_flags_a_protected_write_with_no_prior_skill_call():
+    calls = [_mcp_call("research_append", {"section": "proof_summaries", "entry": {"question_id": "q_001", "tier": "probable"}})]
+    violations = find_unguarded_protected_writes(calls, window=10)
+    assert len(violations) == 1
+    assert violations[0]["required_skill"] == "proof-conclusion"
+    assert violations[0]["index"] == 0
+
+
+def test_does_not_flag_a_protected_write_preceded_by_the_right_skill():
+    calls = [
+        _skill_call("proof-conclusion", args_text="--autonomous q_001"),
+        _mcp_call("research_append", {"section": "proof_summaries", "entry": {"question_id": "q_001", "tier": "probable"}}),
+    ]
+    assert find_unguarded_protected_writes(calls, window=10) == []
+
+
+def test_flags_the_read_and_improvise_bypass_shape():
+    """No Skill call at all, no Agent/Task call — just the write."""
+    calls = [
+        _mcp_call("research_append", {"section": "person_evidence", "entry": {"person_id": "I1"}}),
+    ]
+    violations = find_unguarded_protected_writes(calls, window=10)
+    assert violations[0]["required_skill"] == "person-evidence"
+
+
+def test_flags_the_untyped_agent_bypass_shape():
+    """An Agent call with no subagent_type never sets skill_name_if_skill_call
+    to anything, so it never opens a window either."""
+    calls = [
+        {"tool": "Agent", "args": {"description": "write proof summary", "prompt": "..."}},
+        _mcp_call("research_append", {"section": "proof_summaries", "entry": {"question_id": "q_001", "tier": "probable"}}),
+    ]
+    violations = find_unguarded_protected_writes(calls, window=10)
+    assert violations[0]["required_skill"] == "proof-conclusion"
+
+
+# --- find_effects_without_invocation -----------------------------------------
+
+
+def test_no_violations_on_a_clean_run():
+    calls = [
+        _skill_call("research-exhaustiveness"),
+        _skill_call("proof-conclusion"),
+        _skill_call("person-evidence"),
+        _skill_call("conflict-resolution"),
+    ]
+    research = {
+        "questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}],
+        "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "proved"}],
+        "person_evidence": [{"id": "pe_001", "person_id": "I1"}],
+        "conflicts": [{"id": "c_001", "status": "resolved"}],
+    }
+    tree = {"persons": [{"id": "I1", "names": [{"given": "A"}], "facts": []}], "relationships": []}
+    assert find_effects_without_invocation(calls, research, tree, starting_tree=tree) == []
+
+
+def test_flags_exhaustive_declaration_with_no_research_exhaustiveness_invocation():
+    research = {"questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}]}
+    violations = find_effects_without_invocation([], research, {})
+    assert any("research-exhaustiveness" in v for v in violations)
+
+
+def test_flags_proof_summaries_entry_with_no_proof_conclusion_invocation():
+    research = {"proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "probable"}]}
+    violations = find_effects_without_invocation([], research, {})
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_flags_a_primary_fact_with_no_proof_conclusion_invocation_even_with_no_proof_summary():
+    """proof-conclusion's tree-encoding output, not just the research.json entry."""
+    tree = {"persons": [{"id": "I1", "facts": [{"type": "Death", "primary": True}]}], "relationships": []}
+    violations = find_effects_without_invocation([], {}, tree)
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_flags_a_parent_child_relationship_with_no_proof_conclusion_invocation():
+    tree = {"persons": [], "relationships": [{"type": "ParentChild", "person1": "I1", "person2": "I2"}]}
+    violations = find_effects_without_invocation([], {}, tree)
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_flags_a_new_unlinked_person_with_no_person_evidence_invocation():
+    """The materialize_facts identity-bypass route the adversarial review found."""
+    tree = {"persons": [{"id": "I9", "names": [{"given": "New"}], "facts": [{"type": "Birth"}]}], "relationships": []}
+    violations = find_effects_without_invocation([], {"person_evidence": []}, tree, starting_tree={"persons": []})
+    assert any("person-evidence" in v for v in violations)
+
+
+def test_does_not_flag_a_seed_person_already_in_the_starting_tree():
+    """A fixture's starting tree naturally has unlinked persons with facts —
+    that's not a bypass, it's the fixture's initial state."""
+    seed_person = {"id": "I1", "names": [{"given": "Seed"}], "facts": [{"type": "Birth"}]}
+    tree = {"persons": [seed_person], "relationships": []}
+    violations = find_effects_without_invocation([], {"person_evidence": []}, tree, starting_tree=tree)
+    assert not any("person-evidence" in v for v in violations)
+
+
+def test_flags_a_seed_person_who_gained_new_facts_this_run():
+    starting = {"persons": [{"id": "I1", "names": [{"given": "Seed"}], "facts": [{"type": "Birth"}]}]}
+    grown = {"persons": [{"id": "I1", "names": [{"given": "Seed"}], "facts": [{"type": "Birth"}, {"type": "Death"}]}], "relationships": []}
+    violations = find_effects_without_invocation([], {"person_evidence": []}, grown, starting_tree=starting)
+    assert any("person-evidence" in v for v in violations)
+
+
+def test_flags_a_resolved_conflict_with_no_conflict_resolution_invocation():
+    research = {"conflicts": [{"id": "c_001", "status": "resolved"}]}
+    violations = find_effects_without_invocation([], research, {})
+    assert any("conflict-resolution" in v for v in violations)
+
+
+def test_unresolved_conflict_does_not_require_invocation():
+    research = {"conflicts": [{"id": "c_001", "status": "unresolved"}]}
+    assert find_effects_without_invocation([], research, {}) == []
+
+
+def test_a_failed_skill_call_does_not_count_as_invoked():
+    calls = [_skill_call("proof-conclusion", is_error=True)]
+    research = {"proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "probable"}]}
+    violations = find_effects_without_invocation(calls, research, {})
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_guardrail_skills_tuple_is_exactly_the_four():
+    assert set(GUARDRAIL_SKILLS) == {
+        "research-exhaustiveness",
+        "proof-conclusion",
+        "person-evidence",
+        "conflict-resolution",
+    }
+
+
+# --- find_missing_mentor_verdicts --------------------------------------------
+
+
+def test_flags_a_resolved_questions_proof_summary_with_no_proof_critique_verdict():
+    research = {
+        "questions": [{"id": "q_001", "status": "resolved"}],
+        "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "proved"}],
+        "evaluations": [],
+    }
+    violations = find_missing_mentor_verdicts(research)
+    assert len(violations) == 1
+    assert "ps_001" in violations[0]
+
+
+def test_does_not_flag_when_a_matching_proof_critique_verdict_exists():
+    research = {
+        "questions": [{"id": "q_001", "status": "resolved"}],
+        "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "proved"}],
+        "evaluations": [
+            {"id": "ev_001", "focus": "proof-critique", "target_id": "ps_001", "target_type": "proof_summary"}
+        ],
+    }
+    assert find_missing_mentor_verdicts(research) == []
+
+
+def test_does_not_flag_an_unrelated_evaluation_focus():
+    """A pre-exhaustiveness or on-demand verdict does not satisfy the
+    mandatory proof-critique gate."""
+    research = {
+        "questions": [{"id": "q_001", "status": "resolved"}],
+        "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "proved"}],
+        "evaluations": [{"id": "ev_001", "focus": "on-demand", "target_id": "ps_001"}],
+    }
+    violations = find_missing_mentor_verdicts(research)
+    assert len(violations) == 1
+
+
+def test_does_not_flag_a_proof_summary_on_an_unresolved_question():
+    research = {
+        "questions": [{"id": "q_001", "status": "in_progress"}],
+        "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "probable"}],
+        "evaluations": [],
+    }
+    assert find_missing_mentor_verdicts(research) == []
+
+
+def test_empty_research_has_no_violations():
+    assert find_missing_mentor_verdicts({}) == []
+    assert find_missing_mentor_verdicts(None) == []
+
+
+# --- find_person_evidence_missing_same_person --------------------------------
+
+
+def _same_person_call(primary_id1=None, primary_id2=None, is_error=False):
+    args = {"gedcomx1": {}, "gedcomx2": {}}
+    if primary_id1 is not None:
+        args["primaryId1"] = primary_id1
+    if primary_id2 is not None:
+        args["primaryId2"] = primary_id2
+    entry = {"tool": "mcp__genealogy__same_person", "args": args}
+    if is_error:
+        entry["is_error"] = True
+    return entry
+
+
+def test_flags_a_new_person_linked_with_zero_same_person_calls():
+    """The bagley-father-1884 case: person-evidence invoked, but not for
+    this link, and same_person never called for the new person at all."""
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    calls = [_skill_call("person-evidence")]  # invoked, but irrelevant here
+    violations = find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []})
+    assert len(violations) == 1
+    assert "I1" in violations[0]
+
+
+def test_does_not_flag_when_same_person_was_called_as_primaryId1():
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    calls = [_same_person_call(primary_id1="I1", primary_id2="p_260268760900")]
+    assert find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []}) == []
+
+
+def test_does_not_flag_when_same_person_was_called_as_primaryId2():
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    calls = [_same_person_call(primary_id1="p_260268760900", primary_id2="I1")]
+    assert find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []}) == []
+
+
+def test_a_same_person_call_for_a_different_person_does_not_clear_the_flag():
+    """The crude 'was same_person called at all' version would wrongly clear
+    this — this is exactly the precision gap that version was rejected for."""
+    tree = {
+        "persons": [
+            {"id": "I1", "names": [{"given": "David"}]},
+            {"id": "I2", "names": [{"given": "Someone Else"}]},
+        ]
+    }
+    research = {
+        "person_evidence": [
+            {"id": "pe_001", "person_id": "I1"},
+            {"id": "pe_002", "person_id": "I2"},
+        ]
+    }
+    # same_person is called, but only for I2 -- I1 is still unscored.
+    calls = [_same_person_call(primary_id1="p_999", primary_id2="I2")]
+    violations = find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []})
+    assert len(violations) == 1
+    assert "I1" in violations[0]
+
+
+def test_an_errored_same_person_call_does_not_count_as_scoring():
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    calls = [_same_person_call(primary_id1="I1", primary_id2="p_999", is_error=True)]
+    violations = find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []})
+    assert len(violations) == 1
+
+
+def test_does_not_flag_a_person_already_in_the_starting_tree():
+    """Only BRAND-NEW persons are in scope -- an already-known person
+    (e.g. the research subject) confirming their own identity again is not
+    what this check is for; find_effects_without_invocation's coarser
+    unlinked-person check covers the general case."""
+    seed = {"id": "MJDL-Q8B", "names": [{"given": "William"}]}
+    tree = {"persons": [seed]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "MJDL-Q8B"}]}
+    calls = []  # no same_person call anywhere
+    assert find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": [seed]}) == []
+
+
+def test_does_not_flag_a_new_person_with_no_person_evidence_link_at_all():
+    """No link yet -> nothing for this check to flag (find_effects_without_
+    invocation's unlinked-person check is the one that covers this case)."""
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": []}
+    assert find_person_evidence_missing_same_person([], research, tree, starting_tree={"persons": []}) == []
+
+
+def test_multiple_new_persons_only_unscored_ones_flagged():
+    tree = {
+        "persons": [
+            {"id": "I1", "names": [{"given": "David"}]},
+            {"id": "I2", "names": [{"given": "Sarah"}]},
+        ]
+    }
+    research = {
+        "person_evidence": [
+            {"id": "pe_001", "person_id": "I1"},
+            {"id": "pe_002", "person_id": "I2"},
+        ]
+    }
+    calls = [_same_person_call(primary_id1="p_1", primary_id2="I1")]  # only I1 scored
+    violations = find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []})
+    assert len(violations) == 1
+    assert "I2" in violations[0]
+
+
+def test_no_starting_tree_treats_every_current_person_as_new():
+    tree = {"persons": [{"id": "I1", "names": [{"given": "David"}]}]}
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    # Best-effort with no baseline: still flags an unscored link.
+    violations = find_person_evidence_missing_same_person([], research, tree)
+    assert len(violations) == 1
+
+
+def test_empty_tree_and_research_have_no_violations():
+    assert find_person_evidence_missing_same_person([], {}, {}) == []
+    assert find_person_evidence_missing_same_person([], None, None) == []

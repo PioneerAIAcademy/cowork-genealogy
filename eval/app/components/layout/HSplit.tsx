@@ -32,6 +32,12 @@ export function HSplit({
   const [widths, setWidths] = useState<[number, number]>(defaultWidths);
   const [hydrated, setHydrated] = useState(false);
 
+  // Hydrate persisted widths post-mount. This has to be an effect: reading
+  // localStorage in a lazy useState initializer would run during the hydration
+  // render, where the server had no localStorage, and mismatch the inline
+  // widths below. useSyncExternalStore doesn't fit either — `widths` is not a
+  // pure read of an external store, dragging mutates it locally.
+  /* eslint-disable react-hooks/set-state-in-effect -- rationale above */
   useEffect(() => {
     if (!storageKey) {
       setHydrated(true);
@@ -55,6 +61,7 @@ export function HSplit({
     }
     setHydrated(true);
   }, [storageKey]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!storageKey || !hydrated) return;

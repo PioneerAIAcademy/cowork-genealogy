@@ -30,6 +30,22 @@ what belongs in `query`/`notes` — that remain your judgment.
    enough detail to reproduce the search: names, dates, places,
    collection, and any filters used.
 
+   **A read-style entry has no search parameters — it still needs an
+   object.** For `record_read`, `image_transcribe` and `image_read`, put
+   the identifier under a canonical key and leave the prose to `notes`:
+
+   | entry `tool` | canonical `query` |
+   |---|---|
+   | `record_read`, one record | `{"recordId": "ark:/61903/1:1:XXXX-XXX"}` |
+   | `record_read`, several | `{"recordIds": ["ark:/61903/1:1:…", "ark:/61903/1:1:…"]}` |
+   | `image_transcribe`, `image_read` | `{"imageArk": "ark:/61903/3:1:XXXX-XXXX-XXX"}` |
+
+   Never write a bare sentence there. An ARK is dense with `:` and `/`,
+   and prose containing one is what produces `InputValidationError: …
+   could not be parsed as JSON` — the call is rejected **before** the
+   tool runs, so nothing is logged and the entire turn is wasted. Keep
+   ARKs in a keyed field.
+
 5. **Link to plan items.** If the search was part of a research plan,
    set `plan_item_id` to the `pli_` ID. For ad-hoc searches, use null.
 

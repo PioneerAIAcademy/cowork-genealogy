@@ -153,6 +153,35 @@ class _LimitExceeded(Exception):
         self.reason = reason
 
 
+# The SDK usually reports max_turns via ResultMessage.stop_reason (handled
+# inline in _consume_messages), but has also been observed raising it as a
+# bare exception instead — message text confirmed against a live run:
+# "Claude Code returned an error result: Reached maximum number of turns
+# (30)". The generic `except Exception` handler below used to bucket that
+# under aborted_reason="error", which orchestrator.RETRYABLE_ABORT_REASONS
+# retries — burning a second full attempt (and its own turn budget) on a
+# test that was always going to hit the same deterministic cap again.
+# Pattern-matching the message routes it to "max_turns" instead, which the
+# orchestrator correctly does not retry.
+_DETERMINISTIC_CAP_EXCEPTION_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"reached maximum number of turns", re.IGNORECASE), "max_turns"),
+)
+
+
+def _classify_exception_abort_reason(exc: Exception) -> str:
+    """`aborted_reason` for a bare exception from the SDK's query() loop.
+
+    Returns a specific deterministic-cap reason (e.g. "max_turns") when the
+    exception message matches a known SDK phrasing, else the generic
+    "error" bucket used for genuinely transient failures.
+    """
+    message = str(exc)
+    for pattern, reason in _DETERMINISTIC_CAP_EXCEPTION_PATTERNS:
+        if pattern.search(message):
+            return reason
+    return "error"
+
+
 # Module-level set of Skill-tool input keys we've observed Claude using
 # across runs. Populated by the PreToolUse hook (see `run_skill`). Used by
 # `verify_skill_tool_key()` to surface SDK changes — if Claude starts
@@ -478,7 +507,7 @@ async def run_skill(
             error = f"{e.reason} exceeded"
     except Exception as e:  # pragma: no cover — exercised in e2e
         error = f"{type(e).__name__}: {e}"
-        aborted_reason = "error"
+        aborted_reason = _classify_exception_abort_reason(e)
     finally:
         # Close the query() generator while this event loop is still running.
         # The SDK's process_query tears down its subprocess transport only

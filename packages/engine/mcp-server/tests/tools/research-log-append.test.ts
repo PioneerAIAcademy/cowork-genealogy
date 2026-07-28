@@ -54,6 +54,128 @@ describe("research_log_append", () => {
   const readJson = async (name: string) => JSON.parse(await readFile(join(dir, name), "utf-8"));
   const exists = async (rel: string) => access(join(dir, rel)).then(() => true, () => false);
 
+  it("defaults `query` from the staged payload when the caller omits it", async () => {
+    await writeProject(baseResearch());
+    const echoed = { surname: "Stephens", residencePlace: "Shelby, Tennessee, United States" };
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: echoed, results: [{ recordId: "A" }] },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      // no `query` — the staged payload already carries the producing tool's echo
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+      stagedResultsRef: handle!.resultsRef,
+    } as any);
+
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    expect(research.log[0].query).toEqual(echoed);
+  });
+
+  it("prefers an explicit `query` over the staged payload's echo", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: { surname: "FromPayload" }, results: [{ recordId: "A" }] },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "FromCaller" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+      stagedResultsRef: handle!.resultsRef,
+    });
+
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    expect(research.log[0].query).toEqual({ surname: "FromCaller" });
+  });
+
+  it("strips projectPath/subjectId from the defaulted query — they are host plumbing", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: {
+        // echoQuery copies EVERY defined input, plumbing included.
+        query: { surname: "Grice", projectPath: "/private/var/folders/tv/xyz", subjectId: "I1" },
+        results: [{ recordId: "A" }],
+      },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+      stagedResultsRef: handle!.resultsRef,
+    } as any);
+
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    // research.json travels between machines; an absolute host path in it is
+    // meaningless anywhere else.
+    expect(research.log[0].query).toEqual({ surname: "Grice" });
+  });
+
+  it("unlinks the sidecar when the single-op form throws after finalizing it", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_read",
+      // No `query` in the payload, so nothing can default it → the op throws
+      // AFTER the sidecar has been finalized.
+      response: { results: [{ recordId: "A" }] },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_read",
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+      stagedResultsRef: handle!.resultsRef,
+    } as any);
+
+    expect(result.ok).toBe(false);
+    // The sidecar must NOT survive: nothing in research.json references it, the
+    // staged file it came from is already unlinked, and the next
+    // validate_research_schema hard-fails on an orphan with no way to recover.
+    expect(await exists("results/log_001.json")).toBe(false);
+    const research = await readJson("research.json");
+    expect(research.log).toEqual([]);
+  });
+
+  it("fails loudly when `query` is omitted and nothing staged supplies one", async () => {
+    await writeProject(baseResearch());
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_read",
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: "pli_001",
+    } as any);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/`query` is required/);
+    // nothing persisted
+    const research = await readJson("research.json");
+    expect(research.log).toEqual([]);
+  });
+
   it("appends a positive search with a finalized sidecar (staging round-trip)", async () => {
     await writeProject(baseResearch());
     const handle = await stageSearchResults({
@@ -349,5 +471,107 @@ describe("research_log_append", () => {
     const result = await validateProject(dir);
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
+  });
+
+  // ── Batch form (`ops[]`) — mirrors materialize-facts.test.ts/tree-edit.test.ts's batch suites ──
+
+  it("(batch) logs multiple entries in one validate-once/write-once call", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { results: [{ recordId: "A" }] },
+    });
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        { tool: "record_search", query: { surname: "Flynn" }, outcome: "negative", resultsExamined: 0 },
+        {
+          tool: "record_search",
+          query: { surname: "Smith" },
+          outcome: "positive",
+          resultsExamined: 1,
+          stagedResultsRef: handle!.resultsRef,
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("results" in result)) return;
+    expect(result.results).toHaveLength(2);
+    expect(result.results[0]).toMatchObject({ logId: "log_001", resultsRef: null });
+    expect(result.results[1]).toMatchObject({ logId: "log_002", resultsRef: "results/log_002.json" });
+    expect(result.filesWritten).toEqual(["research.json", "results/log_002.json"]);
+
+    const research = await readJson("research.json");
+    expect(research.log).toHaveLength(2);
+    expect(research.log[1].results_ref).toBe("results/log_002.json");
+    expect((await validateProject(dir)).valid).toBe(true);
+  });
+
+  it("(batch) all-or-nothing: op[1] failing writes NOTHING and cleans up op[0]'s sidecar", async () => {
+    await writeProject(baseResearch());
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { results: [{ recordId: "A" }] },
+    });
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const result = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        {
+          tool: "record_search",
+          query: {},
+          outcome: "positive",
+          resultsExamined: 1,
+          stagedResultsRef: handle!.resultsRef,
+        }, // op 0: stages a real sidecar
+        { tool: "record_search", query: {}, outcome: "not-a-real-outcome", resultsExamined: 0 }, // op 1: invalid outcome
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors[0]).toMatch(/^ops\[1\]:/);
+    // Nothing written to research.json...
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    // ...and op 0's sidecar (already written to disk before op 1 ran) is cleaned up too —
+    // not just "the failing op's own" sidecar.
+    expect(await exists("results/log_001.json")).toBe(false);
+  });
+
+  it("(batch) id-allocator continuity: three entries in one call get sequential ids", async () => {
+    await writeProject(baseResearch([logEntry(1)]));
+    const result = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        { tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 },
+        { tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 },
+        { tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("results" in result)) return;
+    expect(result.results.map((r) => r.logId)).toEqual(["log_002", "log_003", "log_004"]);
+  });
+
+  it("(batch) a JSON-stringified `ops` array is coerced", async () => {
+    await writeProject(baseResearch());
+    const opsArray = [{ tool: "record_search", query: {}, outcome: "negative", resultsExamined: 0 }];
+    const result = await researchLogAppend({ projectPath: dir, ops: JSON.stringify(opsArray) as any });
+    expect(result.ok).toBe(true);
+    if (!result.ok || !("results" in result)) return;
+    expect(result.results).toHaveLength(1);
+  });
+
+  it("(batch) rejects an empty ops array", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({ projectPath: dir, ops: [] });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/non-empty/);
   });
 });

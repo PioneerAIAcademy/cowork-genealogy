@@ -29,6 +29,13 @@ DEFAULT_PLUGIN_AGENTS = (
     Path(__file__).resolve().parents[3] / "packages" / "engine" / "plugin" / "agents"
 )
 
+# Reasoning effort pinned into every unit workspace. "high" matches both Cowork
+# and the e2e orchestrator's default, so unit and e2e grade the same behavior.
+# Unpinned runs inherit the launching Claude Code session's effort, which makes
+# a run log depend on who produced it. Change this only alongside a re-run of
+# the affected suites — it moves every grade.
+DEFAULT_EFFORT_LEVEL = "high"
+
 
 # Session-store cleanup relies on the SDK's `project_key_for_directory`
 # function. We import it lazily inside `cleanup_session_store` so that
@@ -48,6 +55,7 @@ def build_workspace(
     skills_dir: Path,
     target_dir: Path,
     agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+    effort_level: str | None = DEFAULT_EFFORT_LEVEL,
 ) -> Path:
     """Populate target_dir with scenario files and a .claude/skills/ tree.
 
@@ -57,6 +65,14 @@ def build_workspace(
     so a skill's `@plugin:<name>` delegation via the Task tool resolves to
     the real agent instead of an improvised generic subagent. The SDK loads
     them via setting_sources=["project"].
+
+    ``effort_level`` pins the run's reasoning effort through a project-level
+    ``.claude/settings.json``, exactly as the e2e orchestrator does. Left
+    unpinned, a unit run inherits the reasoning effort of whatever Claude Code
+    session or shell launched it, so the same test grades differently on two
+    machines — the non-reproducibility the e2e side already pins against
+    (e2e/orchestrator.py::build_workspace). Pass ``None`` to deliberately
+    inherit. Valid: low | medium | high | xhigh | max.
 
     Returns target_dir for chaining. target_dir must already exist (typically
     created by pytest's tmp_path or tempfile.mkdtemp).
@@ -91,6 +107,19 @@ def build_workspace(
         agents_target.mkdir(parents=True, exist_ok=True)
         for agent_file in sorted(agents_dir.glob("*.md")):
             shutil.copy(agent_file, agents_target / agent_file.name)
+
+    # Pin reasoning effort via the PROJECT-level setting the SDK reads through
+    # setting_sources=["project"] (the CLAUDE_EFFORT env var does not work —
+    # it's output-only, verified on the e2e side). Without this a unit run
+    # inherits the launching session's effort, which makes grades depend on who
+    # ran them and silently breaks any effort A/B.
+    if effort_level is not None:
+        claude_dir = target / ".claude"
+        claude_dir.mkdir(parents=True, exist_ok=True)
+        (claude_dir / "settings.json").write_text(
+            json.dumps({"effortLevel": effort_level}, indent=2) + "\n",
+            encoding="utf-8",
+        )
 
     # Write a CLAUDE.md so the base model knows it is operating as a
     # genealogy research assistant. Without this, the model defaults to

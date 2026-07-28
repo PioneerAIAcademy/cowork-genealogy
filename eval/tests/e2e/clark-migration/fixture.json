@@ -1,0 +1,19 @@
+{
+  "id": "clark-migration",
+  "name": "Christiana Clark",
+  "genre": "strip",
+  "source_pid": "GP3R-215",
+  "captured": "2026-07-22",
+  "researcher_question": "Did Christiana Clark (nee Schreck, b.1783), widow of William Clark of Coshocton County, Ohio, migrate from Ohio to Wisconsin?",
+  "tags": {
+    "question_type": "migration",
+    "era": "1840s",
+    "geography": "US-WI"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Migration IS real (confirmed via Find a Grave memorial 154768466): Christiana died 1848 in Monroe, Green County, Wisconsin, but was buried back in the family plot at West Carlisle Cemetery, Coshocton, Ohio (a 'died away, buried home' case) -- so the Ohio burial is a genuine confounder, NOT a contradiction. FS-reachable migration evidence (tree-blocked): BLM Land Tract Book entry 'Christiana Clark', Wisconsin, 1847 (sparse -- image_transcribe can pull the land description/county); son Joseph Clark's Wisconsin marriage 1854; sons Joseph (1850) and William (1849) enumerated in Green County, WI census. Husband William Clark predeceased her (estate probated Coshocton, OH), so she migrated as a widow. Difficulty hard: the kept Ohio anchors (all residences 1820-1840 OH, deeds, probate, Ohio burial/Find a Grave) pull toward 'stayed in Ohio'; the agent must correlate the sparse WI land record + sons' WI records to establish migration. Required: she migrated to / was present in Wisconsin. Bonus: exact death place Monroe, Green County (that specific place is on the off-FS Find a Grave page + tree, not the FS index)."
+}

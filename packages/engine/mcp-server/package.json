@@ -17,7 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "cheerio": "^1.0.0",
     "open": "^10.2.0",
     "turndown": "^7.2.4"

@@ -11,7 +11,14 @@ Three gates, in order:
    relationship endpoint or source `ref` lints clean and then hard-fails
    `tree_edit` mid-run), id uniqueness, and the FamilySearch-ToS
    living-person rule. Applied to the starting tree and, when present,
-   the committed unstripped tree.
+   the committed unstripped tree. `expected-findings.json` has no JSON
+   Schema of its own (unlike the tree/research files), so this gate also
+   covers its shape: an unrecognized field name, an out-of-enum `type` or
+   `polarity`, or a duplicate finding `id` (`finding_shape_errors`). This
+   is the gate that would have caught the `"expectation": "not_found"`
+   field that shipped un-enforced in the record-hint adjudication batch
+   (issues #852-883) — a made-up field silently no-ops instead of failing,
+   so a fixture can carry ground truth the harness and judge never read.
 3. **Stripping completeness** (warn-only), described below.
 
 The crux invariant of an e2e fixture: every entry in
@@ -322,6 +329,91 @@ def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
     return errors
 
 
+# The finding-object fields spec §3.4 defines. Anything else is unrecognized.
+_KNOWN_FINDING_KEYS = frozenset(
+    {"id", "type", "description", "details", "polarity", "supporting_sources", "required"}
+)
+_FINDING_TYPES = frozenset({"relationship", "fact", "person", "source"})
+_POLARITIES = frozenset({"recover", "avoid"})  # spec §3.4.1
+
+
+def finding_shape_errors(expected_findings: dict[str, Any]) -> list[str]:
+    """Structural checks on `expected-findings.json` (spec §3.4 field table).
+
+    `expected-findings.json` has no JSON Schema of its own, and every field
+    is read with a permissive `.get()` — so a misspelled or invented field
+    silently no-ops instead of failing. That is exactly how the
+    `"expectation": "not_found"` field shipped across the record-hint
+    adjudication batch (issues #852-883): it isn't `polarity`, isn't read by
+    `check_stripping`, `judge.py`, or anywhere else, so a finding written
+    that way would grade as an ordinary `recover` finding the agent can never
+    satisfy. The supported shape for "no findable answer" is
+    `polarity: "avoid"` plus a paired required finding documenting the
+    negative conclusion (spec §3.6, worked example: `thomas-seaver-other-wife`).
+
+    Only checks what's structurally unambiguous: unrecognized fields,
+    out-of-enum `type`/`polarity`, non-boolean `required`, and duplicate
+    ids. Does not require any field be present — real fixtures always
+    populate `description`/`required`, but nothing here should punish an
+    author still mid-draft.
+    """
+    errors: list[str] = []
+    findings = expected_findings.get("findings")
+    if findings is None:
+        return errors  # absence is `check_stripping`'s problem, not this one
+    if not isinstance(findings, list):
+        return [
+            f"expected-findings.json: `findings` must be a list, got "
+            f"{type(findings).__name__}"
+        ]
+
+    seen_ids: set[str] = set()
+    for i, finding in enumerate(findings):
+        if not isinstance(finding, dict):
+            errors.append(f"expected-findings.json: findings[{i}] is not an object")
+            continue
+
+        label = finding.get("id") or f"index {i}"
+        where = f"expected-findings.json: finding {label!r}"
+
+        unknown = sorted(set(finding.keys()) - _KNOWN_FINDING_KEYS)
+        if unknown:
+            errors.append(
+                f"{where} has unrecognized field(s) {unknown!r} — spec §3.4 "
+                f"only defines {sorted(_KNOWN_FINDING_KEYS)!r}. An unrecognized "
+                f"field is silently ignored, not enforced (e.g. "
+                f"`\"expectation\": \"not_found\"` is not a real field — encode "
+                f"a false match as `\"polarity\": \"avoid\"` plus a paired "
+                f"required finding instead, spec §3.6)."
+            )
+
+        fid = finding.get("id")
+        if isinstance(fid, str):
+            if fid in seen_ids:
+                errors.append(f"expected-findings.json: duplicate finding id {fid!r}")
+            seen_ids.add(fid)
+
+        ftype = finding.get("type")
+        if ftype is not None and ftype not in _FINDING_TYPES:
+            errors.append(
+                f"{where} has type {ftype!r} — expected one of "
+                f"{sorted(_FINDING_TYPES)!r}"
+            )
+
+        polarity = finding.get("polarity")
+        if polarity is not None and polarity not in _POLARITIES:
+            errors.append(
+                f"{where} has polarity {polarity!r} — expected one of "
+                f"{sorted(_POLARITIES)!r}"
+            )
+
+        required = finding.get("required")
+        if required is not None and not isinstance(required, bool):
+            errors.append(f"{where} has non-boolean `required`: {required!r}")
+
+    return errors
+
+
 @dataclass
 class Suspect:
     finding_id: str
@@ -438,11 +530,13 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
     """Lint one fixture dir. Returns (suspects, hard_errors).
 
     hard_errors are structural problems — a missing or unparseable file, a
-    JSON-Schema violation, or a `tree_integrity_errors` failure (dangling
-    refs, duplicate ids, living persons) — that should fail the run with
-    exit 2; suspects are warn-only. `e2e.author validate` reaches the same
-    schema check through the same `harness.schema_validator` module, so a
-    fixture cannot pass one gate and fail the other.
+    JSON-Schema violation, a `tree_integrity_errors` failure (dangling refs,
+    duplicate ids, living persons), or a `finding_shape_errors` failure (an
+    unrecognized finding field, an out-of-enum `type`/`polarity`, a duplicate
+    finding id) — that should fail the run with exit 2; suspects are
+    warn-only. `e2e.author validate` reaches the same schema check through
+    the same `harness.schema_validator` module, so a fixture cannot pass one
+    gate and fail the other.
     """
     fixture_dir = Path(fixture_dir)
     errors: list[str] = []
@@ -468,6 +562,7 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
 
     errors += [f"starting-tree.gedcomx.json: {e}" for e in validate_tree_gedcomx_json(tree)]
     errors += tree_integrity_errors(tree, "starting-tree.gedcomx.json")
+    errors += finding_shape_errors(expected)
 
     # Optional: only PID-path fixtures have one. It is committed, so it is held to
     # the same structural and living-person bar as the starting tree.

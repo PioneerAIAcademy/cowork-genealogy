@@ -27,6 +27,30 @@ live FamilySearch data (see **Design notes**):
   **automatically drops the per-result gedcomx from its *inline* return whenever
   it stages** (no flag), so the raw search can't overflow. `rank_search_matches`
   consumes the `resultsRef`.
+
+  **`record_search` now also invokes this tool itself** when the caller supplies
+  `subjectId` alongside `projectPath`, returning the result under `ranked`. That
+  is the normal path; the skill no longer calls this tool per search.
+
+  *Why the fold, given the original decision to keep them separate
+  (`record-search-compaction-scope.md` Decisions §2).* The separation's stated
+  benefits were blast radius, graceful degradation, and composability. Measured
+  against a real session
+  (`docs/plan/research-performance-2026-07-27.md` §5.2–5.3): composability was
+  **never exercised** (all 14 calls used a fresh staging handle, none a
+  finalized `results/<log_id>.json`), and the skill instruction that drove
+  adoption **decayed under compaction** — 77% compliance while the skill body
+  was resident, 3% after, leaving 114 searches hand-triaged. Every rule with a
+  structural anchor held at 100%; only unanchored prose decayed. A tool contract
+  is such an anchor.
+
+  **Both surviving benefits are preserved.** Graceful degradation: a ranking
+  failure inside `record_search` sets `rankingError` and leaves the search
+  result intact and usable unranked — ranking is read-only, so unlike a folded
+  log write it creates no partial-failure state. Composability: this tool
+  remains standalone, and is still the only way to re-rank a **finalized**
+  `results/<log_id>.json` or to rank a pool against a **different** subject than
+  the one searched for.
 - **`same_person`** is the pair scorer. `rank_search_matches` reuses its
   `scorePair` / `buildRawWithAnchor` internals (lifted to a shared
   `src/utils/match-engine.ts`), calling them in a bounded host-side fan-out.
