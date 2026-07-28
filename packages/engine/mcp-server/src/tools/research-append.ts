@@ -174,6 +174,37 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
   ];
 }
 
+/** Tier/exhaustiveness cross-field guardrail (docs/plan/research-guardrail-bypass-plan.md
+ *  §4.2). `proved`/`disproved` claim the research is reasonably exhaustive by
+ *  definition, so either tier requires the referenced question's
+ *  `exhaustive_declaration.declared` to already be `true` — checked against
+ *  `preCallExhaustiveDeclared`, a snapshot taken BEFORE this call's ops began
+ *  applying, never the live-mutating `research` object. Checking the live
+ *  object would let one batch call both declare exhaustiveness and consume it
+ *  for a tier in the same atomic write — `applyOne` mutates `research` in
+ *  place per op, so an earlier op in the same batch has already "happened" by
+ *  the time a later op in that batch is checked. This function only runs when
+ *  the *current* op is the one setting/changing `tier` (see call site), so an
+ *  unrelated update to an already-legitimately-proved entry (proved in an
+ *  earlier, separate call) never re-triggers it. */
+function proofSummaryInvariants(
+  entry: any,
+  preCallExhaustiveDeclared: Map<string, boolean> | undefined,
+): string[] {
+  const tier = entry?.tier;
+  if (tier !== "proved" && tier !== "disproved") return [];
+  const declaredBeforeThisCall = preCallExhaustiveDeclared?.get(entry?.question_id) === true;
+  if (!declaredBeforeThisCall) {
+    return [
+      `tier '${tier}' requires question '${entry?.question_id}' to already carry ` +
+        `exhaustive_declaration.declared === true from BEFORE this call (a batch may not ` +
+        `declare exhaustiveness and consume it for a tier in the same call) — invoke ` +
+        `research-exhaustiveness first, in its own call.`,
+    ];
+  }
+  return [];
+}
+
 export type ResearchAppendSection = keyof typeof SECTIONS | string;
 
 /** One mutation. The body of a single call, or one element of a batch `ops`. */
@@ -538,7 +569,12 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
   }
 }
 
-function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<string>): AppliedOp {
+function applyOne(
+  research: any,
+  op: ResearchAppendOp,
+  appendedThisBatch?: Set<string>,
+  preCallExhaustiveDeclared?: Map<string, boolean>,
+): AppliedOp {
   const section = op.section;
   const config = SECTIONS[section];
   if (!config) {
@@ -738,6 +774,16 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
   // to "confident"; the helper no-ops for every other confidence value.
   if (section === "person_evidence") {
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
+  }
+  // Only when THIS op is the one setting/changing tier — append always sets it;
+  // update only when `fields` names it. An unrelated update to an entry already
+  // legitimately proved (in an earlier, separate call) must not re-trigger this.
+  if (section === "proof_summaries") {
+    const tierTouchedThisOp =
+      op.op === "append" || Object.prototype.hasOwnProperty.call(op.fields ?? {}, "tier");
+    if (tierTouchedThisOp) {
+      invariantErrors.push(...proofSummaryInvariants(resultEntry, preCallExhaustiveDeclared));
+    }
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
@@ -1384,6 +1430,15 @@ export async function researchAppend(
 
   try {
     const research = await readJson(projectPath, "research.json");
+    // Snapshot BEFORE any op in this call/batch applies — see
+    // proofSummaryInvariants. Must be taken here, not read off `research`
+    // later, since applyOne mutates `research` in place per op.
+    const preCallExhaustiveDeclared = new Map<string, boolean>(
+      (Array.isArray(research.questions) ? research.questions : []).map((q: any) => [
+        q?.id,
+        q?.exhaustive_declaration?.declared === true,
+      ]),
+    );
     // Heal legacy tree shapes in memory; the healed document is what a
     // composite write persists (same one-shot migration as tree_edit). A
     // research-only call still never writes the tree.
@@ -1448,7 +1503,7 @@ export async function researchAppend(
     const appendedThisBatch = new Set<string>();
     for (let i = 0; i < ops.length; i++) {
       try {
-        applied.push(applyOne(research, ops[i], appendedThisBatch));
+        applied.push(applyOne(research, ops[i], appendedThisBatch, preCallExhaustiveDeclared));
       } catch (e) {
         if (e instanceof ResearchAppendError) {
           // Identify the failing op; nothing has been written.

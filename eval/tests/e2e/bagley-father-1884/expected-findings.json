@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "William A. Bagley's father is David Bagley",
+      "details": {
+        "subject_person": "William A. Bagley (PID MJDL-Q8B)",
+        "relation": "parent",
+        "target_person": {
+          "name": "David Bagley",
+          "birth": "22 February 1777, Newton, Rockingham, New Hampshire"
+        }
+      },
+      "supporting_sources": [
+        "Vermont, Town Clerk, Vital and Town Records, 1732-2005 — entry for William A Bagley naming father David Bagley, recorded at William's death, 31 May 1884, Topsham, Orange County, Vermont"
+      ],
+      "required": true
+    }
+  ]
+}

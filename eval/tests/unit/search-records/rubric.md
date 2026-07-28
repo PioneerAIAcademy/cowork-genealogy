@@ -7,32 +7,74 @@ Grading dimensions for search-records unit tests. Evaluated by the LLM judge alo
 Did the skill construct appropriate search parameters from the plan item? Name variants, date ranges, and jurisdictions should match the research context, and the broad-to-narrow default should be followed unless the plan item justifies a narrow start.
 
 - **pass:** Search parameters include the correct surname anchor (or `recordCountry` if surname unknown), a date range that matches the plan item, and a jurisdiction at the right level of specificity. For names with known variant patterns (Irish, German, Eastern European origins), at least one relevant variant or phonetic alternative is included. Rationale or `notes` explains the parameter choices.
-- **partial:** Parameters are reasonable but a clearly relevant variant is missed (e.g., no Anglicization variants for an Irish-origin name such as Flynn → Flyn/Flinn), or the date range is significantly wider or narrower than the plan item suggested without explanation, or the jurisdiction is set at the wrong level (country instead of state, or city instead of county).
-- **fail:** Parameters are bare (just first + last name, no date range, no jurisdiction); the search would flood results for a common name or miss indexed variants. Or the required anchor (`surname` or `recordCountry`) is absent entirely.
+- **partial:** Parameters are reasonable but a clearly relevant variant is missed (e.g., no Anglicization variants for an Irish-origin name such as Flynn → Flyn/Flinn), or the date range is significantly wider or narrower than the plan item suggested without explanation, or the jurisdiction is set at the wrong level (country instead of state, or city instead of county). **Also partial when the parameters are sound but unexplained** — the plan item or tree offered a specific reason to choose this surname, variant, or date range (a maiden-vs-married shift, a documented nickname, a marriage date bounding the range) and the skill silently used one without saying why. A future reader cannot tell a considered choice from a lucky one.
+- **fail:** Parameters would not plausibly find the target even if it is indexed — the wrong jurisdiction for the plan item, a date range excluding the event, or a name form the plan item's own evidence rules out. (A *missing* anchor is not graded here: `record_search` rejects an anchorless query outright, so it surfaces as a Tool Arguments failure, not a strategy one.)
 
 ## Result triage
 
-Did the skill correctly evaluate each result against the research subject? Near-matches must be flagged for review — not silently dropped, not treated as confirmed matches. The skill should use `same_person` scores to support (not replace) its own reasoning, and check `source_attachments` to identify what is already in the tree.
+Did the skill obtain a real match signal against the research subject, and then
+reason on top of it? When `record_search` is given a `subjectId` it ranks the
+staged pool host-side and returns a `ranked` block — `matches[]` carrying
+`matchRank`, `searchRank`, `matchScore`, `matchConfidence`, `candidateFactCount`,
+and `attachedToSubject` / `attachedToOther`. The ranking is a **review surface,
+not a verdict**; this dimension grades whether the skill treated it as one.
 
-- **pass:** Each result is categorized as promising / needs-review / not-relevant with per-record reasoning citing specific matching attributes (e.g., "name and county match but age is 3 years off — flagged needs-review"). `same_person` score is cited where called, and the score range (>0.7 strong, 0.4–0.7 possible, <0.4 weak) informs the category. Attachment status from `source_attachments` is noted for each result (already attached / attached to different person / unattached). A low `same_person` score is not used as the sole reason to dismiss a result when other contextual evidence (age, place, household) supports a match.
-- **partial:** Most results triaged correctly but one near-match is silently discarded without reasoning, or `same_person` is called but the score is treated as the final word without contextual cross-check, or attachment status is checked but not factored into prioritization for extraction.
-- **fail:** Results are bulk-categorized without per-record reasoning (e.g., "no matches found" when the fixture returned near-matches); near-matches treated identically to irrelevant matches; or `same_person` / `source_attachments` not called when results are present and the tools are available.
+**This dimension owns the promising / needs-review / not-relevant verdict and the
+reasoning behind it.** Correctness and Completeness must not re-grade the verdict
+band — they grade whether required actions happened and whether stated facts are
+true.
+
+**No numeric threshold is graded.** Match-score bands genuinely overlap: on live
+data a confirmed record scored 0.632 while a *different* same-name man scored
+0.716, and two dateless obituary stubs differing only by a middle initial scored
+0.086 and 0.668. Never reward or penalize a specific cutoff, in either direction.
+Grade the shape of the reasoning, not the number it lands on.
+
+**`results[].score` is not `matchScore`.** The former is FamilySearch's search
+relevance — the unreliable ranking the match-ranker exists to replace. Citing it
+as if it were a match score is a defect, not a pass.
+
+**The standalone `rank_search_matches` tool is no longer part of the normal
+flow.** Do not penalize its absence. It survives only for re-ranking a finalized
+`results/<log_id>.json`, ranking a pool against a *different* subject, or
+recovering from `rankingError`. Correct in those cases; a redundant second
+ranking of a pool the search already ranked is `partial` (wasted call).
+
+- **pass:** For a search with a known tree subject, `subjectId` was passed and the skill triaged from `ranked.matches[]`, not from raw search order or `results[].score`. Each surfaced candidate is categorized promising / needs-review / not-relevant with per-candidate reasoning naming the discriminating attributes — role in the record, birth-year distance, place, household, collection. Match score is cited as one input among several, and at least one verdict is argued rather than inherited from the ordering (a high-scoring candidate flagged on a failed cross-check, or a middling-scoring one kept for review because independent anchors corroborate it). Thin candidates are treated as low-signal in **both** directions: a low `candidateFactCount`, or a dateless / placeless stub, is a reason to corroborate before accepting *or* dismissing — never a reason to rank-order confidently. Attachment status is used directionally: attached-to-subject is deprioritized when the plan item's goal is *discovering* new evidence, and is the target when the goal is *confirming* a suspected fact.
+- **partial:** Triage happened but the ranking was used as a verdict rather than a surface. Any of: the top match is adopted on score with no independent cross-check; a needs-review-band candidate is written up as a "Top Match" or "almost certainly the right person"; a conflicting date is explained away rather than resolved by corroborating anchors (this counts in **either** direction — the record's imprecision *or* the tree's own estimate being approximate are both excuses); a thin / dateless candidate is confidently dismissed on a low score alone; attachment status is reported but not used to prioritize; `results[].score` is cited alongside or instead of `matchScore` without noticing they are different quantities; or one near-match is silently dropped while the rest are triaged.
+- **fail:** No match signal was obtained or reconstructed for a search that had a known tree subject — `subjectId` omitted and no ranking recovered — so every candidate was hand-scored from FamilySearch's search order. Or results are bulk-categorized with no per-candidate reasoning ("no matches found" when candidates were returned); near-matches are treated identically to irrelevant ones; or a candidate is presented as confirmed on score alone against a cross-check that visibly contradicts it (impossible role, birth year years off, wrong collection).
+
+**`subjectResolvable: false` — score these clauses only when the response actually
+carries the field; otherwise ignore them.** The field means one of two things and
+`diagnostic` says which. *Subject too thin to score* — `matches` is withheld on
+purpose — the correct response is to thicken the subject (extract or link one
+dated/placed assertion) or narrow the query; hand-triaging the pool, or falling
+back to `same_person` against the same starved tree person, is **partial**.
+*Scoreable subject, no match in the pool* — this is a real negative for the
+query; log it as such and page deeper or narrow. Taking the wrong branch for the
+`diagnostic` returned is **partial**; recognizing the distinction and acting on
+it is part of **pass**.
 
 ## Log quality
 
-Does every search — including nil searches — produce a log entry that honestly records what was queried, how many results were examined, and the outcome? The log is the audit trail for exhaustiveness claims.
+Does every search produce a log entry whose *authored* content is faithful and
+useful? Scope this dimension narrowly: `research_log_append` assigns `id`,
+`performed`, `results_ref` and writes the sidecar, and deterministic validators
+already own entry existence (`test_positive_appends_log_entry`) and `outcome`
+honesty (`test_log_outcome_positive_record_search`,
+`test_log_outcome_honest_no_match`). **Do not re-grade any of those here.**
 
-- **pass:** Log entry has `query` populated with the actual search parameters used, `results_examined` matches the count of results reviewed, `outcome` is accurate (`positive` / `negative` / `partial` / `error`), `results_ref` points to the sidecar file for positive searches and is `null` for nil searches, and `notes` gives a one-line human summary useful for future review.
-- **partial:** Log entry is mostly accurate but a count is approximate (e.g., "approximately 3" instead of "3"), or `notes` is absent or too vague to be useful for future review, or `results_ref` is present but the path is wrong.
-- **fail:** Log entry omits the `query` field, misreports `results_examined`, records the wrong `outcome`, or — most critically — no log entry is written at all. Every search must produce a log entry; a nil result with no log entry is an invisible search that cannot support exhaustiveness claims.
+What is left is the part only a reader can judge: whether `query` faithfully
+reproduces the search that was actually run, whether `results_examined` matches
+what was really reviewed, and whether `notes` would help a future researcher.
 
-## Sidecar correctness
+Judge these from the skill's own account of what it wrote. Sidecar files are
+newly created and do not appear in the file-change diff, so their absence from
+the diff is never evidence.
 
-Did the skill write a result sidecar for positive searches and skip it for nil searches? This is the headline invariant: a positive search writes `results/<log_id>.json`; a search that returns zero results writes no sidecar.
-
-- **pass:** Positive search: sidecar written at the correct path (`results/<log_id>.json`), contains the verbatim `record_search` payload, and `returned_count` matches the number of results in the payload. Nil search: no sidecar created.
-- **partial:** Sidecar written for a positive search but `returned_count` is wrong (off-by-one or approximate), or the sidecar path does not match the `results_ref` in the log entry, or the payload is truncated without explanation.
-- **fail:** Sidecar missing for a positive search (data loss — the results cannot be reviewed later); or a sidecar created for a nil search (the nil invariant is violated and false evidence is stored); or `log_id` in the sidecar does not match the log entry.
+- **pass:** `query` reproduces the search — the parameters actually sent, not a paraphrase, and complete enough to re-run. `results_examined` matches the number of candidates actually triaged. `notes` is a specific one-liner a later reader could act on ("1850 Schuylkill household matched; 1870 collection-mismatch candidate rejected on collection year"), not a restatement of the query.
+- **partial:** The entry is broadly right but one authored field is thin: `query` omits a parameter that materially shaped the result set; `results_examined` is approximate ("about 3") when an exact count was available; or `notes` is generic ("search completed", "found some results") and carries no information a future reader lacks.
+- **fail:** `query` misrepresents what was searched (wrong parameters, or so abbreviated the search cannot be reconstructed), or `results_examined` is materially wrong in a way that would mislead an exhaustiveness claim.
 
 ## Nil escalation
 

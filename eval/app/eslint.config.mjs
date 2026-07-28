@@ -1,20 +1,14 @@
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { FlatCompat } from '@eslint/eslintrc';
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
+import nextTypescript from 'eslint-config-next/typescript';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-// eslint-config-next@15.5.x ships only the legacy eslintrc format, so the
-// configs are loaded through FlatCompat rather than imported as native flat
-// config arrays. When eslint-config-next gains native flat-config exports
-// (16+), this shim can be dropped in favor of direct imports.
+// eslint-config-next@16+ ships native flat config, so these are imported
+// directly rather than through the FlatCompat shim the 15.x line required.
+// eslint stays on ^9: config-next 16 still bundles eslint-plugin-react 7.37.5,
+// eslint-plugin-import 2.32.0 and eslint-plugin-jsx-a11y 6.10.2, all of which
+// cap their eslint peer at 9 and break on 10 (removed `context.getFilename()`).
 const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  ...nextCoreWebVitals,
+  ...nextTypescript,
   {
     ignores: [
       'node_modules/**',
