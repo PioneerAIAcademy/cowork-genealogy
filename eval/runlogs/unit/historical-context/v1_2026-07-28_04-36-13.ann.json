@@ -1,5 +1,5 @@
 {
-  "run_log": "v1_2026-07-27_18-39-09.json",
+  "run_log": "v1_2026-07-28_04-36-13.json",
   "annotator": "ernestjacob789@gmail.com",
   "corrections": [
     {
@@ -22,9 +22,9 @@
       "test_id": "ut_historical_context_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 2,
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Arguments were all well-targeted and matched their fixtures (Great Famine, anthracite coal, Irish immigration). The judge scored 2 for the wikipedia-search-any mock returning generic boilerplate — a fixture-coverage limitation, not an argument defect. Corrected to 3."
+      "comment": null
     },
     {
       "test_id": "ut_historical_context_003",
