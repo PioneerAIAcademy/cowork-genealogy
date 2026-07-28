@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Ricardo (I4) was created but left unattached (no ParentChild link); the tree-encoding gate blocked it at the not_proved tier - a correct decline. Note: the agent over-attached three other new children (Luis 1871, Tomaza 1875, Maria de la o 1878) as children of the couple, beyond the fixture's scope; none is Ricardo, so no breach of the avoid guard.",
+    "f2": "Proof ps_001 concluded 'Not Proved' for Ricardo, documenting that no Ricardo appears among the couple's indexed children 1865-1880 and that the only 'Ricardo Beisaga' found is a father in a 1908 record with no parent link. Negative conclusion is present; proof rated thin (2) partly for the residual 'Veizaga' (V) spelling coverage gap in the child search."
+  }
+}
