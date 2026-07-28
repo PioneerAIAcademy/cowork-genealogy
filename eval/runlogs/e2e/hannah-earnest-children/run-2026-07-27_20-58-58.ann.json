@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Recovered: Lydia Grice present as a daughter of both Edwin (R15) and Hannah (R16), with the expected Staffordshire church record (S2, QL3R-C5SR) cited and the christening dated 8 Aug 1878 at West Bromwich as its primary fact. Correctly does not assert the fixture's own unattested '10 July 1878' contributor estimate. Two nitpicks that do not change the label: (a) two approximate birth facts coexist un-reconciled on the same person — F21 '~1878' from the baptism and F8 '~1879' from the 1891 census — where the narrative explicitly says the baptism is the more reliable of the two, so the tree should reflect that preference rather than carry both silently; (b) both parent links cite S1 (the 1891 census) rather than the 1878 baptism that actually attests the parentage — same citation-hygiene pattern flagged on the 2026-07-22 run, still unfixed. Proof quality 2 rather than 3 this run: the search summary is honest about its gaps, but the narrative extends the conclusion to a second child (Fanny Grice) whose mother-name conflict (c_001, indexed 'Anne') it could not resolve, and it leaves that person in the tree with a father link and no mother link — an unresolved conflict carried into the answer rather than out of it."
+  }
+}

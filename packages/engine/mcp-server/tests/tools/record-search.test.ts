@@ -27,7 +27,7 @@ import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
 import type { FSSearchEntry, FSSearchResponse } from "../../src/types/record-search.js";
-import { mkdtemp, rm } from "fs/promises";
+import { mkdtemp, rm, readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
@@ -707,6 +707,105 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(out.results[0].gedcomx).toBeUndefined();
     expect(out.results[0].recordId).toBeTruthy();
     expect(out.results[0].primaryId).toBe("p_1");
+  });
+
+  it("slims the inline stub when staged: no collectionUrl, no empty treeMatches, title hoisted", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    expect(out.staged).toBeTruthy();
+    const r = out.results[0];
+    // Derivable / repeated fields are gone from the INLINE projection.
+    expect(r.collectionUrl).toBeUndefined();
+    expect(r.collectionTitle).toBeUndefined();
+    // …and the repeated title says the same thing once, response-level.
+    expect(Object.keys(out.collections!)).toEqual([r.collectionId!]);
+    expect(out.collections![r.collectionId!]).toBeTruthy();
+    // This fixture carries hints, so treeMatches is real signal and is kept.
+    expect(r.treeMatches?.length).toBeGreaterThan(0);
+    // primaryId is deliberately KEPT — rank_search_matches skips candidates
+    // without it, so dropping it would silently disable the re-ranker.
+    expect(r.primaryId).toBe("p_1");
+  });
+
+  it("ranks host-side when subjectId is supplied, and defaults count to 50", async () => {
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [{ id: "I1", names: [{ preferred: true, given: "A", surname: "B" }], facts: [{ type: "Birth", date: "1900", place: "X" }] }],
+      }),
+      "utf-8",
+    );
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" });
+
+    // The deep pool is requested only because ranking will cut it back.
+    expect(mockFetch.mock.calls[0][0]).toContain("count=50");
+    expect(out.ranked).toBeTruthy();
+    expect(out.ranked!.subjectId).toBe("I1");
+    expect(out.rankingError).toBeUndefined();
+  });
+
+  it("keeps count at 20 when there is no subject to rank against", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    // An unranked deep pool is just more stubs to read — the two are coupled.
+    expect(mockFetch.mock.calls[0][0]).toContain("count=20");
+  });
+
+  it("a ranking failure never fails the search", async () => {
+    // No tree.gedcomx.json in this project dir → buildSubjectDoc throws.
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" });
+
+    expect(out.ranked).toBeUndefined();
+    expect(out.rankingError).toBeTruthy();
+    // The search itself is intact and usable unranked — the graceful
+    // degradation the two-tool split originally existed to protect.
+    expect(out.results).toHaveLength(1);
+    expect(out.staged).toBeTruthy();
+  });
+
+  it("does not rank when nothing was staged", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", subjectId: "I1" });
+
+    expect(out.ranked).toBeUndefined();
+    expect(out.rankingError).toBeUndefined();
+  });
+
+  it("drops treeMatches only when it is empty", async () => {
+    const noHints = JSON.parse(JSON.stringify(lincolnEntry()));
+    delete noHints.hints;
+    mockFetch.mockResolvedValueOnce(
+      makeOkResponse({ results: 1, index: 0, entries: [noHints] }),
+    );
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+    expect(out.results[0].treeMatches).toBeUndefined();
+  });
+
+  it("leaves the staged sidecar at full fidelity even though the inline copy is slimmed", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+    expect(out.results[0].collectionUrl).toBeUndefined();
+
+    const staged = JSON.parse(
+      await readFile(join(dir, out.staged!.resultsRef), "utf-8"),
+    );
+    const row = staged.payload.results[0];
+    // The sidecar is what rank_search_matches, record_read and the viewer read.
+    expect(row.gedcomx).toBeTruthy();
+    expect(row.collectionUrl).toBeTruthy();
+    expect(row.collectionTitle).toBeTruthy();
+    expect(row.treeMatches).toBeDefined();
   });
 
   it("keeps inline gedcomx when staging returned null", async () => {

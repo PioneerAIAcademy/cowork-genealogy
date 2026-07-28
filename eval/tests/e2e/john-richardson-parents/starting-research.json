@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_john_richardson_parents",
+    "objective": "Who were the parents of John Richardson, born 24 July 1833 in Preston, Lancashire, England, an LDS pioneer who emigrated via Nauvoo to Utah and died 10 March 1906 in Richmond, Cache County, Utah?",
+    "subject_person_ids": [
+      "LR9N-VGQ"
+    ],
+    "status": "active",
+    "created": "2026-07-22",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
