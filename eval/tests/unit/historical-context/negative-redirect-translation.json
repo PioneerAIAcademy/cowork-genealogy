@@ -4,11 +4,11 @@
     "skill": "historical-context",
     "name": "Redirect to translation — German record translation request",
     "type": "negative",
-    "description": "Tests that the skill does NOT translate German record terms. Translating non-English records is the translation skill's job.",
+    "description": "Tests that the skill does NOT translate a German record. Translating non-English records is the translation skill's job. The request supplies a full German parish baptism entry (not just an isolated word), so the correct behavior is to route to the translation skill rather than transcribe/translate it here.",
     "tags": ["negative", "redirect", "translation", "german"]
   },
   "input": {
-    "user_message": "What do 'getauft' and 'Pate' mean? Can you translate this German baptism entry for me?",
+    "user_message": "Can you translate this German baptism entry for me? \"Im Jahr 1834, den 12. März, ist geboren und den 15. desselben getauft worden Johann Georg, ehelicher Sohn des Johann Michael Weber, Ackersmann allhier, und dessen Ehefrau Anna Maria geborene Schmidt. Pate war Georg Fischer, Bürger und Schuhmacher.\"",
     "scenario": null
   },
   "negative": {
