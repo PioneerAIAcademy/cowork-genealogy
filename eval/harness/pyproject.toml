@@ -10,6 +10,14 @@ dependencies = [
     # present since 0.1.x — if a future major drops it, workspace.py raises
     # at import time rather than silently leaking ~/.claude/projects/ entries.
     "claude-agent-sdk>=0.1.81,<0.2",
+    # mcp: claude-agent-sdk declares `mcp>=1.19.0` with NO upper bound, so an
+    # unpinned resolve can float onto a new mcp major and break it silently.
+    # mcp 2.0.0 (released 2026-07-28) removed/renamed Server.list_tools,
+    # which claude_agent_sdk.create_sdk_mcp_server calls -- broke CI the same
+    # day (AttributeError: 'Server' object has no attribute 'list_tools').
+    # This is an upper-bound guard until claude-agent-sdk itself supports
+    # mcp 2.x -- delete this line once it does.
+    "mcp>=1.29,<2",
     "anthropic>=0.40.0",
     "jsonschema>=4.22.0",
     "python-dotenv>=1.0.1",
