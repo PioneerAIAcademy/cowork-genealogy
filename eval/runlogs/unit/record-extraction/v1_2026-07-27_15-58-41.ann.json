@@ -1,0 +1,1190 @@
+{
+  "run_log": "v1_2026-07-27_15-58-41.json",
+  "annotator": "83524248+taiwo-stack@users.noreply.github.com",
+  "corrections": [
+    {
+      "test_id": "ut_record_extraction_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The judge context is explicit about what correct sibling handling looks like: \"FLAG the record-vs-tree children discrepancy in the summary as an identity question\" — Bridget and John are on this census but not in the tree, while Mary (I3) and James (I4) are in the tree via the St. Mary's baptism edges (R2/R3 → S5) and do not appear here. The summary never mentions I3 or I4. Its five sibling flags are all forward-research suggestions (missing mother, emigration window, Bridget as FAN lead, John's PA baptism, mortality schedule) — all good, none of them the required flag. The user asked directly to \"flag anything about the siblings I should follow up on,\" so this isn't an inferred expectation.\n\nA second missed flag compounds it: q_001 is \"parents of Patrick Flynn (b. ~1845, PA, d. 1908)\" — the model quotes this itself — yet census Patrick is born Ireland. The summary recommends linking child_2 to I1 in person-evidence without surfacing that birthplace conflict. Hedging it with \"once you're satisfied with the identity match\" isn't the same as naming the discrepancy. The extraction ops are complete; the summary's analytical obligations are not, and the fixture's whole discriminator lives in the summary. Extraction complete + required flags absent = 2."
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The LLM graded fact accuracy only, and on that narrow reading it's right: every value traces to the pasted record, Mary correctly has no occupation, birth-year arithmetic checks out. But the persisted state is probably not what the summary claims. All three extraction_append calls include a sources append op with the same citation. If the first call committed before timing out — a timeout is not a rollback — the final file holds three source records and 46 assertions (23 + 8 + 15), not the \"23 assertions, src_001 / S1\" the response reports. Even if call 1 fully failed, calls 2 and 3 still append the source twice. The model reported a clean single-source outcome it had no way to verify and did not re-read state after the failure to check. In ut_record_extraction_023 I held Correctness at 3 because the miscount was cosmetic over clean data; here the data itself is likely duplicated, which is the reason for the split."
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The judge context asks for three things on name/age/birthplace facts: informant unknown household member, proximity household_member, and reasoning recorded in informant_bias_notes (\"likely self or spouse\" for adults, \"likely a parent\" for children). The first two are right on all 30 biographical assertions; the third is absent from every one of them. informant_bias_notes appears only on the eight relationship assertions. There is also no adult/child differentiation — Patrick and 3-year-old John carry an identical bare informant string, when the rubric specifically wanted the plausible-informant reasoning to differ by age. The model clearly knows the field exists (it used it here for relationships, and in ut_record_extraction_024 for parentage), so this is an application gap rather than a schema limitation. Two of three requirements met uniformly = 2, not a 3 or a 1."
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The LLM docks this because the Thomas–Mary spouse inference was \"persisted as a confident relationship assertion\" rather than a flagged hypothesis. That directly contradicts the judge context, which carves out intra-family inference as \"expected, correct 1860-census practice and must not be penalized as fabrication.\" spouse_inferred + evidence_type: indirect + informant_proximity: researcher, with an informant_bias_notes that even names the sibling alternative, is exactly what was asked for. Grading it down inverts the fixture.\n\nThe actual defect is the role taxonomy. Silas is head_of_household and Thomas (42), Mary (38), and Patrick (15) are child_1, child_2, child_3. Those labels assert that all three Flynns are Silas's children — precisely the cross-surname link the fixture bans. It gets worse in the relationship ops, which reference related_person_role: the persisted structure now reads \"child_1 is spouse of child_2,\" i.e. two of Silas's children married to each other. The narrative correctly says Silas's \"relationship to the Flynns is unasserted,\" so the role labels contradict the model's own prose. No explicit Silas→Flynn relationship op was emitted, which is why this is a 2 and not a 1 — the fabrication is in the taxonomy rather than in an assertion. I flagged neutral-label drift as a non-scoring note on ut_record_extraction_003; here it collides with an explicit fail condition, so it scores."
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The context makes the FAN lead a must: note that Silas heading a Flynn household could be kin, that the ~24-year gap to Mary (b. ~1822) makes parent-child plausible, and that \"Kerrigan\" is a candidate maiden name worth investigating. The summary delivers one contentless line — \"a valuable FAN club lead worth tracking\" — with no age gap, no parent-child hypothesis, and no maiden-name lead. Next steps mention Kerrigan only as a stub to mint. For a project whose open question is Patrick Flynn's parentage, Mary's possible maiden name is the highest-value inference available from this record, and it isn't there.\n\nThe LLM's gap analysis is also inverted: it says the lead \"was not persisted as a structured assertion... only mentioned in the chat summary,\" but the context bans persisting it and asks for it \"in the presentation.\" Chat was the right venue; the content was missing. This is a softer 2 than ut_record_extraction_013 (which omitted the required flag entirely), but same failure mode — correct extraction ops, unfulfilled analytical obligation in the summary, which is where this fixture's discriminator lives. No boardinghouse assumption was made, so that guard passes."
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The LLM docks because the recorder/informant distinction \"only appears in the persisted assertion fields\" and wasn't surfaced narratively. The rubric asks the skill to distinguish them, not to editorialize about it, and the assertions do so correctly and uniformly: unknown household member / household_member for biographical facts, census enumerator / witness for residence, the researcher / researcher for inferences. The narrative does in fact state \"Information layer: Indeterminate for all facts — pre-1940 census, informant unknown.\" This is an invented requirement. Unlike ut_record_extraction_003, this fixture's context doesn't ask for informant_bias_notes on biographical facts, so their absence there isn't chargeable either."
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The LLM's own text concedes the classification is \"doctrinally sound\" and \"defensible,\" then says \"the real defect is the failure to surface the Silas Kerrigan kinship lead... not a classification error per se\" — and scores 2 anyway. That's the Completeness gap charged a second time under the wrong heading. Checking the assignments directly: stated facts direct; computed birth years indirect; residence direct with enumerator-as-witness; all three inferred relationships indirect with _inferred suffixes; no cross-surname relationship op. Clean."
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Of the three reasons the LLM gives, two belong elsewhere: compounded birth assertions are Atomicity, and missing relationship assertions are Completeness. Both are correctly scored 1 there. What's uniquely Correctness — faithfulness of values, no fabrication, source classification — largely passes: all eight names, years, and birthplaces match the paste; \"Baker\" was not silently corrected to \"Becker\", which is this fixture's explicit fabrication guard; nothing ties these people to Emma Becker or any Kramer household; derivative is right for a FamilySearch indexed transcription.\n\nThe genuine Correctness defect is the role taxonomy contradicting the model's own summary. Barbara is persisted as record_role: \"wife\" and the six younger Bakers as child_1..6, while flag #2 tells the user \"nothing in the record states that Barbara is John's wife or that the younger Bakers are children.\" The inference it declined to assert is baked into the labels anyway — so the household structure is persisted, just in the one place it carries no evidence_type, no informant, and no reasoning. Compounding it, flag #2 states a false doctrine: that relationship links \"must be established through person-evidence, not from this record,\" when the context says the opposite (\"Relationships WITHIN the enumerated household ARE expected and must be persisted\"). Misinforming the user about the skill's own contract is a real correctness problem. Systematic, self-contradictory, but no fabricated values → 2."
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The LLM docks this solely because relationship assertions are absent, so the researcher-informant case was never exercised. That's the Completeness failure charged twice. Judged on what was written, every informant field is correct and uniform: unknown household member / household_member for name, sex, and birth; census enumerator / witness for residence; information_quality: indeterminate throughout. That satisfies this fixture's context verbatim — \"the household informant is unknown, so information quality for names/ages/birthplaces is indeterminate; the enumerator is the recorder.\" In 014 I raised this criterion from 2 to 3 for an invented requirement; the principle is the same when the phantom requirement is an absence charged elsewhere."
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Emma's \"at school\" is persisted as fact_type: \"occupation\" with structured_value: {\"occupation\": \"at school\"}, against an explicit instruction that it \"is a school-attendance datum, not an occupation.\" The aggravating detail the LLM missed: the summary table calls it \"school attendance\" while the persisted op calls it an occupation. The model classified it correctly in prose and wrong in the data — the same narrative-vs-structure split I flagged in 014 (role labels vs. \"relationship unasserted\") and 022 (wife/child_N vs. \"nothing states Barbara is John's wife\"). Third consecutive instance; the summary layer and the op-generation layer are not reading from the same understanding. One fact out of 36, other half of the guard passed (no occupation invented for Sarah) → 2, not 1."
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_026",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_026",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_026",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The LLM's own text concedes evidence_type: \"direct\" is correct for every assertion, then docks the criterion for date_certainty — a different field, on a different axis, which it explicitly calls \"a secondary manifestation of the date precision error noted in Correctness.\" That's charging one defect twice, the same pattern I corrected in 014 (Informant/Evidence) and 022 (Correctness/Informant). evidence_type encodes stated-vs-inferred; date_certainty encodes precision. The marriage year is stated, so direct is right, and there is nothing else on this axis to grade: names, sex, place all stated and all direct; no inference was made anywhere, so there's no indirect call to get wrong. Clean 3."
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Same structural problem as ut_record_extraction_001, where the LLM also gave 3 and I docked to 2. All three extraction_append calls carry a sources append op with the identical citation. A timeout is not a rollback, so if call 1 committed before timing out, the file holds three source records and 50 assertions — not the \"25 assertions (a_001–a_025)\" and single src_001 / S1 the summary reports. Even if call 1 fully failed, the source is appended twice more. The model reported a clean single-source state it had no way to verify and never re-read state after the failure.\n\nSecond item, unique to this trace: the citation reads \"verbatim transcription in possession of researcher, 2026\" and repository: \"Schuylkill County, Pennsylvania — verbatim transcription.\"* Nothing in the paste establishes custody. That's invented provenance in the field whose entire purpose is recording provenance — the same defect as ut_record_extraction_009's \"Pennsylvania State Archives, Harrisburg,\" milder in degree but identical in kind. source_classification: \"original\"` is defensible for a full field-by-field certificate transcription; the fabricated custody chain is not.\n\nOtherwise faithful: every name, age, date, place, and occupation matches; 1870−25=1845 and 1870−22=1848 check out."
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The LLM says \"the timeout... is a tool execution failure, not an argument error.\" Re-sending the sources op is an argument-level defect: a retry after an ambiguous timeout should carry only un-persisted assertion ops, or an idempotency key.\n\nTwo things make this a better recovery than 001's, and they're why I hold at 2 rather than 1:\n\nNo content drift. Calls 2 + 3 reproduce exactly the 25 assertions from call 1, field for field. In 001 the retry payloads were regenerated from scratch and drifted (structured_value present in one attempt, absent in the next). Here the split was a genuine resume.\nCall 3 attempts idempotency — its source entry carries gedcomx_source_description_id: \"S1\", i.e. reference the existing source rather than mint a new one. That's the right instinct. But call 2 doesn't do it (blind full replay, sourceDescription param and all), and call 3 omits the sourceDescription param entirely. Inconsistent handling across two retries in one run."
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The 1921-03-14 death date is the right defect to dock: a man born 1930 cannot die in 1921, and the obituary says 2021 plainly. But the LLM writes \"This was initially entered incorrectly and then corrected via update call, but the persisted value in the response summary shows the correction was applied\" — conflating the summary with the data. The summary says 2021-03-14 because the summary is correct; the update op is what fixed the file. More importantly, the fix is partial: fields: {\"date\": \"2021-03-14\"} patches the date field only. The same assertion's value still reads \"passed away peacefully on March 14, 2021\" — which happens to be right — but the three negative-evidence assertions each say \"as of 14 March 2021\" while nothing re-verified the corrected record. The self-correction is real and worth credit, which is why this stays 2 rather than 1.\n\nWorth noting the model caught its own error mid-run without being prompted. That's better behavior than 014/018/022/009, where prose and data diverged and nothing noticed."
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The LLM calls the update \"a single clean recovery from an initial validation issue, demonstrating competent error correction.\" Two problems. First, there was no validation issue — the payload was accepted; this was a self-caught factual error, not a tool rejection. Second, and this is the reason for the dock: the original assertion was written with no date_certainty on the death date, while the birth and marriage assertions in the same payload both carry date_certainty: \"exact\". A stated exact death date is the most certain fact in an obituary. The update didn't add it either. So the corrected assertion is still missing a field its siblings have, for the record's central event."
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Two fabrications in the source entry:\n\"Image ARK 3:1:3QS7-99QG-KBTG was unreachable (no OpenRouter key configured).\" The notes field is describing an infrastructure diagnosis as a property of the source. Worse, the fixture header lists image-read-marriage-3QS7-99QG-KBTG as a supplied fixture, and the judge context says the mock returns JSON rather than a rendered image — so the reader couldn't render it, which is expected and fine. \"No OpenRouter key configured\" is the model's own guess at a cause, stated twice as fact (also in the user-facing summary, which offers to retry \"if you have one\"). Diagnosing the harness and persisting that diagnosis into the research record is fabrication of a different flavour than the usual invented provenance, but it's the same failure.\n\"The underlying original is a Brazilian civil registration marriage certificate held in Pernambuco state archives.\" Invented custody, exactly like 009's \"Pennsylvania State Archives, Harrisburg\" and 010's \"in possession of researcher.\" Nothing in the paste says where the original is held.\n\nThe extracted values are all faithful: names, ages, both birthplaces (correctly distinguishing Recife from Caruaru), the 1957−26=1931 and 1957−21=1936 arithmetic. So this is 2, not 1, on the same scoping I've applied throughout: persisted-data faithfulness, with fabricated provenance docked here."
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The LLM credits the calls with \"properly documenting the record_read and record_search actions,\" but there are two research_log_append calls for a single record, and the second is defective on two counts.\n\nMislabelled against its own payload. It passes tool: \"record_search\" while carrying query: {\"recordId\": \"...\", \"action\": \"record_read\"} and notes: \"Reading full GedcomX ... via record_read before extraction.\" The tool field says search; everything inside it says read.\n\nRedundant. The first call had already logged the same ARK correctly — tool: \"record_read\", full collection and description — so the research log now holds two entries describing one act of reading one record, while every downstream assertion cites a single log_001.\n\nThere's a prior question too: tool: \"record_read\" is itself the wrong value, because the user pasted the record content. Nothing was fetched. Every other pasted-record trace in this suite logged user_provided (023, 024, 001, 003, 013, 014, 018, 020, 021, 022, 025, 026, 028, 010, 017), and 002 used record_search only because a search genuinely occurred. Here the correct value was user_provided, and the trace instead invents a retrieval event that never happened — then logs it twice, under two different names."
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The record supplies a stated birth fact, {\"type\": \"Birth\", \"date\": \"1845\", \"place\": \"Ireland\"}, and contains no age field anywhere in the gedcomx. The skill nonetheless persists that year as value: \"~1845\" with date_certainty: \"calculated\" and an informant_bias_notes reading \"Birth year computed from stated age in the 1850 census.\" No age was stated and no computation took place, so the note documents a derivation the skill never performed from a field the input does not contain, and a stated 1845 is silently degraded to an approximate ~1845 along the way. That is the same class of defect as ut_record_extraction_015's invented \"no OpenRouter key configured\" cause — plausible-sounding provenance written into the research record as fact. Everything else is faithful, including both personas, the Branch Township residence, and the genuinely sharp observation that the indexer's own ParentChild edge is an inference from household position rather than record content, which is why this is a 2 and not a 1. I'd also note the LLM's comment credits the skill with reporting the LZNY-BRF match, but the trace shows an empty text response and a collapsed fixture response, so that is content the grader cannot see."
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The extraction work is complete on its face: both persons covered, every fact present captured, the match check performed with the correct persona ID, and the record provision logged. I'm holding at 3 rather than docking because the two things I would otherwise charge here belong elsewhere or cannot be established. The missing record_persona_id is an argument to extraction_append and I have charged it once, under Tool Arguments, consistent with how I treated the overlapping defects in ut_record_extraction_014 and _022. The match report the judge context requires cannot be verified either way, because the text response is blank — and unlike 013 and 014, where a visible summary demonstrably omitted a required flag, there is no summary here to inspect. If that response is genuinely empty rather than lost in capture, this becomes a 2, since reporting the LZNY-BRF match is an explicit requirement and the user asked for it directly."
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The judge context states in terms that the skill must \"not compound relationship type with inference method in a single value,\" and both relationship assertions do precisely that: value: \"child of Thomas Flynn (inferred)\" and value: \"parent of Patrick Flynn (inferred)\", each already carrying the inference in structured_value.relationship_type as child_inferred and parent_inferred. The inference method is therefore stated twice, once in a field designed for it and once welded into the human-readable value. Earlier traces in this suite used the same construction and I let it pass as a non-scoring convention flag because no fixture prohibited it; this fixture prohibits it explicitly, so it scores. The LLM's comment covers the birth date/place split — which is genuinely clean, one assertion per attribute distinguished by populated field — but does not engage with the requirement the context actually raises. Two of eleven assertions affected, one relationship per assertion otherwise, so 2 rather than 1."
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The relationship classifications are right: indirect for a pre-1880 census with no relationship column, researcher as informant, which is settled doctrine across this suite. Residence, name, sex, and birthplace as direct are all correct. The defect is the birth year, which the record states and the skill marks indirect on the strength of an arithmetic step that never happened. The LLM's comment reproduces the skill's own false premise — \"the computed birth year is marked 'indirect' (inferred from stated age)\" — and grades the classification against that premise rather than against the input. Marking a stated fact indirect is the mirror image of the ut_record_extraction_022 failure, where derived years were marked direct, and it is squarely on this axis. This is a single misclassification among ten otherwise-correct ones, and the reasoning that produced it is at least internally coherent, so 2."
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "Three of the nine assertions are written against record_id: \"ark:/61903/1:1:68Q9-K34Q\" — a Q terminal character where the record is ...K34P. The user's request names 68Q9-K34P, the record_read call fetched 68Q9-K34P, the source entry is keyed to 68Q9-K34P, and Patrick's six assertions use 68Q9-K34P. Only Thomas Flynn's three assertions carry the corrupted ARK, and the summary compounds the error by presenting \"68Q9-K34Q\" as though it were a persona identifier sitting alongside \"68Q9-K34P\" — as if the household head belonged to a different record. He does not; he is a second persona within the same record. The consequence is a broken persisted graph: Thomas's name, sex, and residence are orphaned against an ARK that does not exist, while Patrick's child_inferred relationship points at related_person_role: \"head_of_household\" under the correct ARK, so the relationship now references a role with no assertions attached to it. That also fails the fixture's \"should NOT invent facts not present in the record_read response\" guard in the most literal way available — an invented record identifier. The LLM's stated basis for its 2 is the residence informant, which I do not consider a defect at all; it does not mention the ARK corruption."
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The LLM writes that \"the extraction_append call correctly structured all assertions and source metadata.\" It did not: three assertion entries carry a malformed record_id. The record_read call is correct — ark:/61903/1:1:68Q9-K34P matches the expected ~68Q9-K34P substring, and the mandatory-call requirement is satisfied — but a payload that misroutes a third of its assertions to a non-existent record is the clearest argument-level failure in this suite. Compare the traces I held at 2: ut_record_extraction_001 and _010 re-sent duplicate sources ops after ambiguous timeouts, _015 logged a spurious duplicate entry, _007 abandoned a required field on retry. In every one of those the persisted data remained internally consistent. Here it does not, and there was no failure to recover from — the single call was accepted as sent, so nothing flagged it and nothing will."
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The fixture says: \"For residence, 'census enumerator' with proximity 'witness' is acceptable.\" Acceptable is permissive, not mandatory. The LLM treats it as required, calls the alternative \"a concrete error,\" and docks for it twice — here and under Correctness. Using unknown household member / household_member for residence is defensible on its own terms, since a household member is who answered the enumerator's questions about the dwelling, and it has the incidental virtue of internal consistency: all eight non-relationship assertions share one informant rather than splitting doctrine mid-record. It also sidesteps the information_quality: \"primary\" / witness pairing that several other traces in this suite produced. The name, sex, and birth facts use exactly what the context asks for, the inferred relationship sits with the researcher at researcher, and that relationship's informant_bias_notes are the most careful in the suite — explicitly identifying the ParentChild edge as the indexer's inference which the researcher is adopting, rather than as record content."
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Patrick's birth year is persisted as evidence_type: \"direct\" with date_certainty: \"approximate\". The context is explicit: \"Birth year computed from stated age is INDIRECT evidence.\" The LLM defends the direct call on the grounds that it is \"the stated age from which the year is derived\" — but that describes an age assertion, which this trace never wrote. What was written is a birth date of 1845, and if that year came from an age it is indirect, while if the index handed it over pre-derived then direct would need a date_certainty reflecting a stated value rather than approximate. The trace has it both ways: direct evidence, approximate date, and no age assertion anywhere to anchor either reading. This is the mirror of ut_record_extraction_022, where eight derived years were marked direct, and the inverse of _007, where a stated year was marked indirect on the strength of arithmetic that never happened — three traces, three different wrong answers on one axis, which is itself the finding: the age-to-birth-year path needs pinning in SKILL.md rather than re-derived per run. Everything else on this axis is correct, with birthplace direct and the relationship indirect carrying the _inferred suffix."
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The LLM's comment concludes \"no fabricated material or unsupported claims,\" but the relationship assertion contains an unsupported claim by the skill's own admission and two pieces of incoherent persisted text.\n\nThe input gedcomx contains a single person, P1, and no relationships array; Thomas Flynn appears only inside the recordTitle string, \"Patrick Flynn in household of Thomas Flynn.\" The skill's informant_bias_notes reason this correctly and carefully — \"The nature of the relationship (child, nephew, boarder, other) is not stated — Thomas Flynn may be a parent, relative, or unrelated head\" — and the value field follows suit with the honest \"member of household of Thomas Flynn (inferred).\" Then structured_value.relationship_type is persisted as child_inferred, and the note closes by conceding the substitution outright: \"Relationship type recorded as child_inferred per household position only.\" Downstream consumers read the structured field, not the prose, so the file now asserts a parent-child relationship the skill just finished explaining it cannot establish. This is the narrative-versus-data split I flagged in ut_record_extraction_014, _018, _022 and _009, and it is milder here than 014's cross-surname case, since both men are Flynn and \"in household of\" makes a child reading plausible — but it is the same defect.\n\nTwo smaller errors compound it. The same note contains \"This is a FAN lead: a differently-surnamed head (both named Flynn here, but the relationship is structurally inferred, not stated) warrants follow-up,\" which contradicts itself inside a single parenthesis and reads like boilerplate carried over from the Kerrigan household in ut_record_extraction_014. And the birth-year note states \"Pre-1840 census did not record who answered,\" where the point being made requires pre-1940; as written it is simply false of an 1850 record. Every extracted value is faithful to the gedcomx, which is why this is a 2 rather than a 1, but three persisted errors of reasoning in two assertions is more than a clean pass."
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "This is the cleanest tool sequence among the handover fixtures. A single extraction_append with no retries, no duplicated sources op, and no ambiguous timeout, which is more than ut_record_extraction_001, _007, _010 or _015 managed. research_log_append correctly uses tool: \"user_provided\" for content handed over in context — the value ut_record_extraction_015 got wrong with a spurious record_read and _007 got wrong with a fabricated external_site. The record_record_matches call passes id: \"MXHY-TP4\" as required, and the additional minConfidence and includeSummary parameters are additive rather than mismatched. Worth noting that record_persona_id is absent even though the input supplies primaryId: \"P1\" and the summary references P1 by name; this fixture's context does not require it, unlike ut_record_extraction_007's, so it isn't chargeable here."
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The source is persisted as source_classification: \"original\", with citation_detail.what reading \"Christening register entry\" and the notes opening \"Original parish christening register.\" The same notes then say \"Original image not confirmed this session (volume_search unavailable). Image confirmation of the father's surname required.\" A source cannot simultaneously have been examined and still require examination. What was actually read is a FamilySearch index entry at an ark:/61903/1:1: record ARK, which every other index-based trace in this suite classified derivative — ut_record_extraction_005, _006, _007, _008, _015, _021, _025 and _028 all did so on identical inputs.\n\nThe consequence is not cosmetic. The judge context states that transcription doubt \"is captured at the information/source layers,\" and the source layer is precisely where an OCR misread belongs — a derivative index of an original register is the standard genealogical home for exactly this defect. By marking the source original, the skill closed off that home, and then had to improvise the doubt into the informant fields instead, which is the defect the next criterion covers. The two errors are causally linked.\n\nI acknowledge a defensible contrary reading, that the underlying parish register is original and the index is merely the access path, and note that source classification is not among the elements the fixture's stated pass condition enumerates. I am still docking, because Correctness measures factual accuracy of what was persisted, and the persisted classification contradicts the skill's own adjacent sentence.\n\nTwo smaller items support the 2 rather than driving it. The relationship assertions use related_person_role: \"child\" and related_person_role: \"parent\", but no assertion anywhere carries either role — the declared roles are baptized, father_of_baptized and mother_of_baptized. Worse, both the father→child and mother→child assertions point at \"child\", and both child→parent assertions point at \"parent\", so the paternal and maternal links are indistinguishable by their structured references and resolve to nothing. That is the dangling-reference shape I flagged in ut_record_extraction_008, here doubled and ambiguous. And the summary renders the child as \"Kristian Fredrik,\" the user's spelling, where the assertions correctly persist the record's \"Christian Frederich\" — faithful capture in the data, the user's version in the prose."
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The LLM characterises the first extraction_append failure as \"a meaningful misunderstanding of the schema (when to include vs. omit record_persona_id).\" The schema question is real and mirrors ut_record_extraction_007, where the field requires a sidecar-backed log entry that a fresh record_read log does not stage. But the LLM missed what the values actually were: 68Q3-5SGC for the child, 68Q3-5SGF for the father, 68Q3-5SGM for the mother. Those are not GedcomX person ids. They are the record ARK's own identifier with the final character mutated — F for father, M for mother — which is invented data of exactly the shape as the K34P → K34Q corruption I scored down to 1 in ut_record_extraction_005. Where ut_record_extraction_006, _007 and _008 carried genuine P1/P2/P3 ids from the gedcomx, this trace manufactured plausible-looking substitutes.\n\nTwo things keep this at 2 rather than 1. The fabrication did not persist: the first call was rejected, the retry dropped record_persona_id entirely, and unlike the timeout ambiguity in ut_record_extraction_001 and _010 a clean validation rejection leaves no duplicate sources op behind despite both calls carrying one. And unlike ut_record_extraction_007, dropping the field here abandons nothing the fixture required, since this context does not mention record_persona_id at all. One rejection, one competent correction, clean persisted state.\n\nWorth crediting on the other side of the ledger: research_log_append is called once, with tool: \"record_read\", which is correct here because record_read genuinely was called — the value ut_record_extraction_015 got wrong for pasted content and _007 got wrong with a fabricated external_site entry."
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification — death certificate / burial / cemetery specifics",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The record is a christening register, so this dimension has no application, which the LLM says itself before scoring it 3 anyway. That inflates the aggregate with a criterion nothing was measured against. This suite already has the right convention available: ut_record_extraction_004, _011 and _012 mark Tool Arguments N/A where no tool calls were made, and ut_record_extraction_012's comment says so explicitly. An inapplicable rubric dimension should be marked N/A rather than awarded full credit, or the fixture should not carry it."
+    }
+  ]
+}
