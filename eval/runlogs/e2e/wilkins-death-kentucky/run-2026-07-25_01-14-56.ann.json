@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Bounded documented-negative death conclusion on the correct subject ('after 1870, before 1880'; no KY death certificate exists), recovered; place not on the fact (Muhlenberg expected) and the upper bound is 'before 1880' vs the ~1880s estate bracket, so partial.",
+    "f2": "Identity soundly established via children's death certificates; the 1918 Paducah namesake is held out as a separate stub (I1), not conflated onto the subject. Note: this run's pass is driven by the merged #657 fixes, not the image-reader lever (the run had no thrash)."
+  },
+  "annotator": "bolu"
+}
