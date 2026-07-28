@@ -125,7 +125,7 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 | Parameter | Source | Notes |
 |-----------|--------|-------|
 | `surname` | tree.gedcomx.json person name | Try exact first, then fuzzy variants. Anchor — required if `recordCountry` is absent. |
-| `givenName` | tree.gedcomx.json person name | Use first name only — middle names often absent in records |
+| `givenName` | tree.gedcomx.json person name | **Try the full given-name string first when the source names one** — e.g. search "Anna Maria Eva", not just "Anna", when that is how the person is named in the research question or an existing record. A full given name is more discriminating, not less: a common first name alone (e.g. "Anna") returns a large, low-confidence, undifferentiated result set, while the full name a source actually used tends to surface the target as a clear top-scoring outlier. Drop to first-name-only as a **lever** if the full-name search nils (see `references/search-strategy-levers.md`), not as the default starting query. |
 | `birthYearFrom` / `birthYearTo` | Assertions or facts | Year range, both required when filtering by birth year (±5 years typical) |
 | `birthPlace` | Assertions or facts | Use the broadest useful level (state, not city) |
 | `residenceYearFrom` / `residenceYearTo` | Plan item year | Census-style anchor. Set both to the same year for a single-census search |
