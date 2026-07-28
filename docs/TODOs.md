@@ -530,11 +530,15 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `check_tool_coverage.py`/`check_skill_frontmatter.py` had none). Also scans
   plugin agent bodies (`packages/engine/plugin/agents/*.md`) against their
   `tools:`/`disallowedTools:` frontmatter, dual-spelling normalized, not just
-  skill `rubric.md`/`judge_context`. The real-corpus run found a substantial
-  false-positive rate with zero genuine drift — see the open follow-up above
-  ("Decide whether `check_rubric_tool_drift.py` needs an allow-comment /
-  suppression mechanism") for what that means before this ever becomes
-  blocking.
+  skill `rubric.md`/`judge_context`. The real-corpus run initially found 86
+  hits and zero genuine drift; two mechanical (ground-truth, not heuristic)
+  false-positive sources got fixed in the same PR — delegated-agent tools
+  unioned in via `@plugin:<name>` references (`delegated_tools()`), and a
+  `COMMON_WORD_EXEMPTIONS` list for tool names that double as ordinary
+  English (`login`/`logout`) — bringing it to 68, all in the one remaining,
+  not-mechanically-fixable shape. See the open follow-up above ("Decide
+  whether `check_rubric_tool_drift.py` needs an allow-comment / suppression
+  mechanism") for what that shape is and why it's still open.
 - ~~Generate the mock input-schema mirror from compiled schemas~~ —
   **shipped** (2026-07-13): `mock_mcp.py` now pulls both input schemas and
   descriptions from the compiled `allToolSchemas` (`build/tool-schemas.js`)
@@ -889,18 +893,20 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
 
 - **Decide whether `check_rubric_tool_drift.py` needs an allow-comment /
   suppression mechanism** — it shipped warn-only (#915; see Done) alongside
-  `check_tool_coverage.py`. Running it against the current corpus found 86
-  hits and, on manual review, zero genuine drift: every hit clustered into a
-  false-positive shape the naive "tool name mentioned, not in allowed-tools"
-  heuristic can't tell apart from real drift — a skill's prose naming a tool
-  it delegates to a subagent rather than calling itself (`record-extraction`
-  naming `extraction_append`), a routing/negative test's `judge_context`
-  naming a tool that belongs to the *destination* skill
+  `check_tool_coverage.py`. The two mechanically-groundable false-positive
+  shapes found on the first real-corpus run (delegation to a subagent;
+  `login`/`logout` colliding with ordinary English) are already fixed in the
+  same PR, bringing 86 hits down to 68. Every remaining hit is the one shape
+  that isn't mechanically fixable: a rubric/judge_context legitimately
+  naming a tool that belongs to a *different* skill — a routing/negative
+  test's `judge_context` naming the destination skill's tool
   (`validate_research_schema` in a test that should hand off to
-  `validate-schema`), and a plain-English collision on the word `login`.
-  Before ever making this blocking, either add a way to mark a mention as
-  intentional, or accept it as a human-triaged warning list rather than a
-  gate. Revisit once someone has tried acting on its warnings for a while.
+  `validate-schema`), or a skill's rubric explaining what a downstream skill
+  does with its output (`record-extraction`'s rubric naming `tree_edit` /
+  `materialize_facts`, which are person-evidence's job). Before ever making
+  this blocking, either add a way to mark a mention as intentional, or
+  accept it as a human-triaged warning list rather than a gate. Revisit once
+  someone has tried acting on its warnings for a while.
 
 - **Eval annotation signal is concentrated in three reviewers** — surfaced by the
   rubric-critic audit of `search-records`. 14 of 19 `.ann.json` files contain

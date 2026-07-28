@@ -205,3 +205,71 @@ def test_agent_body_mentions_missing_file_returns_empty(tmp_path: Path) -> None:
         )
         == set()
     )
+
+
+def test_usable_vocabulary_excludes_common_word_exemptions() -> None:
+    manifest_tools = {"record_search", "login", "logout"}
+    assert check_rubric_tool_drift.usable_vocabulary(manifest_tools) == {
+        "record_search"
+    }
+
+
+def test_skill_delegated_agents_finds_plugin_references(tmp_path: Path) -> None:
+    skill_md = tmp_path / "SKILL.md"
+    skill_md.write_text(
+        "---\nname: record-extraction\n---\n"
+        "Delegate each record to `@plugin:record-extractor`, which owns the "
+        "write. Route images through `@plugin:image-reader` first.\n",
+        encoding="utf-8",
+    )
+    assert check_rubric_tool_drift.skill_delegated_agents(skill_md) == {
+        "record-extractor",
+        "image-reader",
+    }
+
+
+def test_skill_delegated_agents_no_references_returns_empty(tmp_path: Path) -> None:
+    skill_md = tmp_path / "SKILL.md"
+    skill_md.write_text("---\nname: search-records\n---\nNo delegation here.\n", encoding="utf-8")
+    assert check_rubric_tool_drift.skill_delegated_agents(skill_md) == set()
+
+
+def test_delegated_tools_unions_only_delegate_tools_not_disallowed(
+    tmp_path: Path,
+) -> None:
+    skill_md = tmp_path / "SKILL.md"
+    skill_md.write_text(
+        "---\nname: record-extraction\n---\nDelegates to `@plugin:record-extractor`.\n",
+        encoding="utf-8",
+    )
+    agents_dir = tmp_path / "agents"
+    agents_dir.mkdir()
+    (agents_dir / "record-extractor.md").write_text(
+        "---\n"
+        "name: record-extractor\n"
+        "tools:\n"
+        "  - mcp__genealogy__extraction_append\n"
+        "disallowedTools:\n"
+        "  - mcp__genealogy__research_append\n"
+        "---\n"
+        "# body\n",
+        encoding="utf-8",
+    )
+    assert check_rubric_tool_drift.delegated_tools(skill_md, agents_dir) == {
+        "extraction_append"
+    }
+
+
+def test_delegated_tools_missing_agent_file_returns_empty(tmp_path: Path) -> None:
+    skill_md = tmp_path / "SKILL.md"
+    skill_md.write_text(
+        "---\nname: record-extraction\n---\nDelegates to `@plugin:ghost-agent`.\n",
+        encoding="utf-8",
+    )
+    assert check_rubric_tool_drift.delegated_tools(skill_md, tmp_path / "agents") == set()
+
+
+def test_delegated_tools_no_delegation_returns_empty(tmp_path: Path) -> None:
+    skill_md = tmp_path / "SKILL.md"
+    skill_md.write_text("---\nname: search-records\n---\nNo delegation.\n", encoding="utf-8")
+    assert check_rubric_tool_drift.delegated_tools(skill_md, tmp_path / "agents") == set()
