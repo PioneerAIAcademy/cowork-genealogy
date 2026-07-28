@@ -103,6 +103,14 @@ jobs:
       - name: Check skill tool-coverage drift (warn-only)
         run: python eval/harness/scripts/check_tool_coverage.py
 
+      # The inverse of the check above: a tool name in a skill's rubric.md,
+      # a test's judge_context, or an agent's body that isn't in that
+      # skill's/agent's declared tools — the corpus talking about a call
+      # the architecture no longer lets it make. Caught same_person and
+      # source_attachments in search-records' rubric two contracts late.
+      - name: Check rubric/judge_context/agent tool-mention drift (warn-only)
+        run: python eval/harness/scripts/check_rubric_tool_drift.py
+
       # Blocking on hard rules (bad/mismatched name, or a description that
       # is missing, over 1024 chars, or contains angle brackets) for skills
       # AND agents; the description checks fold multi-line/block scalars, so

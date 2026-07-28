@@ -519,6 +519,22 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   Unbuilt product intent, recorded here because the plan doc is being retired.
 
 ## Done
+- ~~Nothing prevents the eval corpus drifting behind a tool contract again~~ —
+  **shipped** (2026-07-28, #915): `eval/harness/scripts/check_rubric_tool_drift.py`,
+  wired into `check-runlogs.yml` immediately after `check_tool_coverage.py` —
+  the same declared-tools-vs-corpus comparison, pointed the other way (flags a
+  tool *mentioned* in grading prose that isn't declared, instead of a
+  *declared* tool with no fixture). Warn-only, unit-tested
+  (`eval/harness/tests/unit/test_check_rubric_tool_drift.py`, following
+  `test_check_runlogs.py`'s `importlib.util` loading pattern since
+  `check_tool_coverage.py`/`check_skill_frontmatter.py` had none). Also scans
+  plugin agent bodies (`packages/engine/plugin/agents/*.md`) against their
+  `tools:`/`disallowedTools:` frontmatter, dual-spelling normalized, not just
+  skill `rubric.md`/`judge_context`. The real-corpus run found a substantial
+  false-positive rate with zero genuine drift — see the open follow-up above
+  ("Decide whether `check_rubric_tool_drift.py` needs an allow-comment /
+  suppression mechanism") for what that means before this ever becomes
+  blocking.
 - ~~Generate the mock input-schema mirror from compiled schemas~~ —
   **shipped** (2026-07-13): `mock_mcp.py` now pulls both input schemas and
   descriptions from the compiled `allToolSchemas` (`build/tool-schemas.js`)
@@ -871,18 +887,20 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   compaction). Delete or trim it once C0 is decided, and fold those three
   findings somewhere durable rather than losing them with the file.
 
-- **Nothing prevents the eval corpus drifting behind a tool contract again** —
-  it happened twice unnoticed. `search-records`' rubric was TWO contracts stale
-  (still failing runs for not calling `same_person`/`source_attachments`, folded
-  into `rank_search_matches` months earlier and into `record_search` this PR),
-  and 14 test files' `judge_context` was one contract stale. The corpus was
-  marking the skill down for doing the right thing, and only a regression run
-  surfaced it. A cheap lint would catch both: flag any tool name appearing in a
-  skill's `rubric.md` or per-test `judge_context` that is absent from that
-  skill's `allowed-tools`. That single rule would have fired on
-  `same_person`/`source_attachments` in the rubric the day they were folded away.
-  Same shape as the existing places-guidance byte-lint and the enum-drift lint
-  already queued above.
+- **Decide whether `check_rubric_tool_drift.py` needs an allow-comment /
+  suppression mechanism** — it shipped warn-only (#915; see Done) alongside
+  `check_tool_coverage.py`. Running it against the current corpus found 86
+  hits and, on manual review, zero genuine drift: every hit clustered into a
+  false-positive shape the naive "tool name mentioned, not in allowed-tools"
+  heuristic can't tell apart from real drift — a skill's prose naming a tool
+  it delegates to a subagent rather than calling itself (`record-extraction`
+  naming `extraction_append`), a routing/negative test's `judge_context`
+  naming a tool that belongs to the *destination* skill
+  (`validate_research_schema` in a test that should hand off to
+  `validate-schema`), and a plain-English collision on the word `login`.
+  Before ever making this blocking, either add a way to mark a mention as
+  intentional, or accept it as a human-triaged warning list rather than a
+  gate. Revisit once someone has tried acting on its warnings for a while.
 
 - **Eval annotation signal is concentrated in three reviewers** — surfaced by the
   rubric-critic audit of `search-records`. 14 of 19 `.ann.json` files contain

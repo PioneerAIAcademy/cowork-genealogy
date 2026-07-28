@@ -171,6 +171,8 @@ The `eval-cosmetic-skip` label is for genuinely behavior-neutral edits only (rew
 
 The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-only): it flags any skill whose `allowed-tools` declares a tool with no fixture in its test corpus. `image_read` is exempt — the mock cannot emit image content blocks; see `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 
+The inverse direction also runs: `eval/harness/scripts/check_rubric_tool_drift.py` (warn-only) flags a tool name in a skill's `rubric.md` or a test's `judge_context`, or in an agent's body, that is absent from that skill's/agent's declared tools — grading prose talking about a call the architecture no longer lets the skill make. This is what would have caught `search-records`' rubric still failing runs for `same_person`/`source_attachments` two contracts after they were folded into `record_search`. It has a real false-positive rate today: a skill's prose legitimately names a tool it delegates to a subagent for (e.g. `record-extraction` naming `extraction_append`, which only `record-extractor` calls) or names as a pivot to a *different* skill (e.g. a routing test's `judge_context` naming `validate_research_schema`, which belongs to `validate-schema`) — neither is drift. Whether to add an allow-comment suppression mechanism, or leave this as a warn-only signal a human triages, is an open follow-up (`docs/TODOs.md`).
+
 ### E2E checks (`check-e2e-fixtures.yml`)
 
 A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` — one blocking check plus one warn:
