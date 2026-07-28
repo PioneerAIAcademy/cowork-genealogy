@@ -1,0 +1,15 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial",
+    "f3": "true",
+    "f4": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Right person (Gerhard Ferber) and parent link to William (R7) established, but the stub person carries no facts — no birth ~1820 and no Germany origin recorded.",
+    "f2": "Mother found and linked (R8), but recorded as 'Eva Ferber' (married surname) rather than the maiden name 'Engermann'; no birth 1834 / Bavaria. Maiden surname was only in the stripped 1870 census, so hardest detail to recover.",
+    "f4": "No Burial fact on William anywhere in the tree. The only Spring Grove burials are the retained anchors Emma and Charles. External-site searches (Find A Grave, Spring Grove index) were deferred in autonomous mode; run ended before executing them."
+  },
+  "annotator": "Paaboat"
+}
