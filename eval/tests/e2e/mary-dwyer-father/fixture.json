@@ -1,6 +1,6 @@
 {
   "id": "mary-dwyer-father",
-  "name": "Mary Dwyer — father Patrick Dwyer",
+  "name": "Mary Dwyer — father Michael Reagan (probable)",
   "genre": "record-hint",
   "source_pid": "MNFL-T24",
   "captured": "2026-07-24",
@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 3, flag adds_father, confidence 3). Draft transcribed from a Massachusetts marriage record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 3, flag adds_father, confidence 3). The hinted father (Patrick Dwyer, per a Chicopee, Hampden marriage record) is a false match. A full live /research run plus independent verification found the real answer: Michael Reagan (m. Margaret Callahan), probable tier, corroborated by a 1922 MA death certificate and the 1880 census. expected-findings.json encodes a positive relationship finding for Michael Reagan plus an avoid guard against Patrick Dwyer."
 }
