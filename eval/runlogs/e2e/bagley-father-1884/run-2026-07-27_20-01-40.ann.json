@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Right father and right source: David Bagley added as a new person with a ParentChild link to William A. Bagley, sourced to the 1884 Topsham town-clerk death entry. But the person is not pinned to an identity — no birth fact (expected 22 Feb 1777, Newton, Rockingham, NH), no death fact — and the agent's own narrative surfaces a co-resident 'David Bagley Jr.' in Topsham, so the tree as written does not distinguish which David Bagley was named. Identity-resolution call."
+  }
+}

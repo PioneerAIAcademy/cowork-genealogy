@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import {
   Alert,
   Badge,
@@ -52,8 +52,9 @@ function CompareInner() {
   });
 
   const [skill, setSkill] = useState<string | null>(null);
-  const [recentId, setRecentId] = useState<string | null>(null);
-  const [previousId, setPreviousId] = useState<string | null>(null);
+  // Null means "no manual pick yet" — fall back to the auto-pick below.
+  const [recentOverride, setRecentOverride] = useState<string | null>(null);
+  const [previousOverride, setPreviousOverride] = useState<string | null>(null);
 
   const skillOptions = useMemo(() => {
     const s = new Set<string>();
@@ -66,14 +67,32 @@ function CompareInner() {
     [runlogs.data, skill],
   );
 
-  // Auto-pick: latest released as previous, latest candidate as recent.
-  useEffect(() => {
-    if (!skill || runsForSkill.length === 0) return;
+  // Auto-pick: latest released as previous, latest candidate as recent. Derived
+  // during render, with the manual picks above taking precedence. The previous
+  // effect-based version wrote straight into the pick state on every change of
+  // `runsForSkill`, so a background refetch of /api/runlogs silently reset both
+  // Selects out from under the user; an override now survives until the skill
+  // changes.
+  const autoPick = useMemo(() => {
+    if (!skill || runsForSkill.length === 0) return { recent: null, previous: null };
     const released = runsForSkill.find((r) => r.kind === 'released');
     const candidate = runsForSkill.find((r) => r.kind === 'candidate');
-    setRecentId(candidate?.id ?? runsForSkill[0]?.id ?? null);
-    setPreviousId(released?.id ?? runsForSkill[1]?.id ?? null);
+    return {
+      recent: candidate?.id ?? runsForSkill[0]?.id ?? null,
+      previous: released?.id ?? runsForSkill[1]?.id ?? null,
+    };
   }, [skill, runsForSkill]);
+
+  const recentId = recentOverride ?? autoPick.recent;
+  const previousId = previousOverride ?? autoPick.previous;
+
+  // Picking a different skill invalidates both manual picks — the ids belong to
+  // the old skill's run logs.
+  const onSkillChange = (value: string | null) => {
+    setSkill(value);
+    setRecentOverride(null);
+    setPreviousOverride(null);
+  };
 
   const runOptions = runsForSkill.map((r) => ({
     value: r.id,
@@ -99,7 +118,7 @@ function CompareInner() {
           placeholder="pick a skill"
           data={skillOptions}
           value={skill}
-          onChange={setSkill}
+          onChange={onSkillChange}
           searchable
           w={260}
         />
@@ -108,7 +127,7 @@ function CompareInner() {
           placeholder="pick a run log"
           data={runOptions}
           value={recentId}
-          onChange={setRecentId}
+          onChange={setRecentOverride}
           disabled={!skill}
           w={360}
         />
@@ -117,7 +136,7 @@ function CompareInner() {
           placeholder="pick a run log"
           data={runOptions}
           value={previousId}
-          onChange={setPreviousId}
+          onChange={setPreviousOverride}
           disabled={!skill}
           w={360}
         />

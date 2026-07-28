@@ -1,10 +1,115 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
 import { api, ApiError } from '../api'
 
 const OPENING_TURN = "Let's start a new genealogy research project."
+
+// How close to the bottom still counts as "at the bottom". Deliberately not an
+// equality check: fractional device pixel ratios and sub-pixel scrollHeight
+// leave scrollTop + clientHeight a pixel or two short even when fully pinned.
+const STICK_THRESHOLD_PX = 64
+
+/**
+ * Follow the bottom of a scroll container while the user is pinned there, and
+ * stop the moment they scroll up to read.
+ *
+ * Detaching is driven by *input events*, never by comparing scroll positions
+ * across renders. While a turn streams, the document grows underneath the
+ * viewport many times a second, and position-only logic cannot tell "the user
+ * scrolled up" apart from "the content got taller" — which is how the old
+ * unconditional scroll-to-bottom yanked the view away mid-read. Re-attaching is
+ * the reverse: only a real `scroll` event that lands inside the threshold does
+ * it, so growth alone never re-arms following.
+ *
+ * The caller drives `follow()` from its own effect, so the "content changed"
+ * dependencies stay visible at the call site.
+ */
+function useStickToBottom(ref: React.RefObject<HTMLDivElement | null>): {
+  detached: boolean
+  follow: () => void
+  scrollToBottom: (smooth?: boolean) => void
+} {
+  // Mirrored in a ref as well as state: the event handlers below read it
+  // without re-subscribing, while the arrow button renders off the state.
+  const stickingRef = useRef(true)
+  const [detached, setDetached] = useState(false)
+
+  const setSticking = useCallback((next: boolean): void => {
+    if (stickingRef.current === next) return
+    stickingRef.current = next
+    setDetached(!next)
+  }, [])
+
+  const scrollToBottom = useCallback(
+    (smooth = false): void => {
+      const el = ref.current
+      if (!el) return
+      el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'auto' })
+      setSticking(true)
+    },
+    [ref, setSticking]
+  )
+
+  // Instant, never smooth: at delta granularity a smooth scroll is still
+  // animating when the next chunk lands, so the view lags behind the text and
+  // rubber-bands. Smooth is reserved for the explicit arrow click.
+  const follow = useCallback((): void => {
+    if (!stickingRef.current) return
+    const el = ref.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight })
+  }, [ref])
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    // Any upward gesture is an explicit "let me read" — detach at once, before
+    // the scroll it causes has even been applied. Testing "is anything below
+    // me" here would be wrong for exactly that reason: the gesture fires while
+    // still pinned at the bottom, so the only thing worth asking is whether the
+    // transcript can scroll at all. On one too short to overflow the gesture
+    // moves nothing, and an arrow pointing at no content is worse than none.
+    const detach = (): void => {
+      if (el.scrollHeight > el.clientHeight + STICK_THRESHOLD_PX) setSticking(false)
+    }
+    const onWheel = (e: WheelEvent): void => {
+      if (e.deltaY < 0) detach()
+    }
+    const onTouchMove = (): void => detach()
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (['PageUp', 'ArrowUp', 'Home'].includes(e.key)) detach()
+    }
+    // Scrollbar drag: a pointerdown past the content box is on the gutter, which
+    // produces no wheel or touch event of its own.
+    const onPointerDown = (e: PointerEvent): void => {
+      if (e.offsetX > el.clientWidth) detach()
+    }
+    // The only way back. Content growing while detached moves no scrollTop, so
+    // it fires nothing here and cannot silently re-arm following.
+    const onScroll = (): void => {
+      if (el.scrollHeight - el.scrollTop - el.clientHeight <= STICK_THRESHOLD_PX)
+        setSticking(true)
+    }
+
+    el.addEventListener('wheel', onWheel, { passive: true })
+    el.addEventListener('touchmove', onTouchMove, { passive: true })
+    el.addEventListener('keydown', onKeyDown)
+    el.addEventListener('pointerdown', onPointerDown)
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('touchmove', onTouchMove)
+      el.removeEventListener('keydown', onKeyDown)
+      el.removeEventListener('pointerdown', onPointerDown)
+      el.removeEventListener('scroll', onScroll)
+    }
+  }, [ref, setSticking])
+
+  return { detached, follow, scrollToBottom }
+}
 
 interface ToolChip {
   tool: string
@@ -64,6 +169,7 @@ export default function ChatPane({
   const turnStartRef = useRef(0)
   const [activity, setActivity] = useState<AgentActivity | null>(null)
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
+  const { detached, follow, scrollToBottom } = useStickToBottom(scrollRef)
 
   // Append agent_event content onto the last assistant message (the streaming one).
   const applyEvent = (ev: Record<string, unknown>): void => {
@@ -171,9 +277,12 @@ export default function ChatPane({
     return off
   }, [conn])
 
+  // Follow new content only while the user is pinned to the bottom. Note there
+  // is deliberately no scroll on turn_done: finishing a response is not a
+  // reason to yank someone out of the passage they scrolled up to read.
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
-  }, [messages, busy])
+    follow()
+  }, [messages, busy, follow])
 
   // Tick a visible "working… Ns" while a turn is in flight, so a long tool call
   // reads as alive rather than hung.
@@ -195,6 +304,9 @@ export default function ChatPane({
     conn.send({ type: 'user_msg', text: trimmed })
     setBusy(true)
     setInput('')
+    // Sending is an unambiguous "I'm back at the live edge" — re-attach even if
+    // the user had scrolled up to compose against something further back.
+    scrollToBottom()
   }
 
   // Ask the agent to abort the running turn. The runner forwards this to the SDK
@@ -235,68 +347,93 @@ export default function ChatPane({
 
   return (
     <div className="chatBody">
-      <div className="chatMessages" ref={scrollRef}>
-        {messages.length === 0 && (
-          <div className="chatPlaceholder">
-            <p className="muted small">
-              {ready ? 'Say hello to start.' : 'Connecting to the agent…'}
-            </p>
-          </div>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} className={m.role === 'user' ? 'msgUser' : 'msgAssistant'}>
-            {m.tools.length > 0 && (
-              <div className="toolChips">
-                {m.tools.map((t, j) => (
-                  <span key={j} className={`toolChip ${t.done ? 'toolDone' : 'toolRunning'}`}>
-                    {t.done ? '✓' : '⟳'} {t.agent ? `${t.agent} · ` : ''}
-                    {t.tool}: {t.summary}
-                  </span>
-                ))}
-              </div>
-            )}
-            {(m.thinking || m.streamThinking) && (
-              <details className="thinkingBlock" style={{ margin: '4px 0' }}>
-                <summary className="muted small" style={{ cursor: 'pointer' }}>💭 Thinking</summary>
-                <div className="muted small" style={{ whiteSpace: 'pre-wrap', marginTop: 4 }}>
-                  {m.thinking}
-                  {m.streamThinking}
-                </div>
-              </details>
-            )}
-            {m.text && (
-              <div className={`msgText ${m.error ? 'msgError' : ''}`}>
-                <Markdown remarkPlugins={[remarkGfm]}>{m.text}</Markdown>
-              </div>
-            )}
-            {/* In-flight text, rendered as plain preformatted text: markdown is
-                routinely mid-token at delta granularity, and re-parsing a partial
-                document every frame makes list/code blocks flicker as they close. */}
-            {m.streamText && (
-              <div className={`msgText ${m.error ? 'msgError' : ''}`} style={{ whiteSpace: 'pre-wrap' }}>
-                {m.streamText}
-              </div>
-            )}
-          </div>
-        ))}
-        {/* One status line, three distinct states. Reconnecting is shown even
-            when a turn wasn't running, because a dropped socket is worth knowing
-            about; it takes priority over "working" so a stall never masquerades
-            as progress (the failure mode that hid the 2026-07-20 disconnect). */}
-        {connState === 'reconnecting' ? (
-          <div className="typing">●●● Reconnecting…</div>
-        ) : (
-          busy && (
-            <div className="typing">
-              ●●●{' '}
-              {activity
-                ? `${activity.agent}${activity.lastTool ? ` · ${activity.lastTool}` : ''}${
-                    activity.toolUses ? ` · ${activity.toolUses} tools` : ''
-                  }`
-                : 'working…'}{' '}
-              {elapsed}s
+      <div className="chatScrollArea">
+        <div className="chatMessages" ref={scrollRef}>
+          {messages.length === 0 && (
+            <div className="chatPlaceholder">
+              <p className="muted small">
+                {ready ? 'Say hello to start.' : 'Connecting to the agent…'}
+              </p>
             </div>
-          )
+          )}
+          {messages.map((m, i) => (
+            <div key={i} className={m.role === 'user' ? 'msgUser' : 'msgAssistant'}>
+              {m.tools.length > 0 && (
+                <div className="toolChips">
+                  {m.tools.map((t, j) => (
+                    <span key={j} className={`toolChip ${t.done ? 'toolDone' : 'toolRunning'}`}>
+                      {t.done ? '✓' : '⟳'} {t.agent ? `${t.agent} · ` : ''}
+                      {t.tool}: {t.summary}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {(m.thinking || m.streamThinking) && (
+                <details className="thinkingBlock" style={{ margin: '4px 0' }}>
+                  <summary className="muted small" style={{ cursor: 'pointer' }}>💭 Thinking</summary>
+                  <div className="muted small" style={{ whiteSpace: 'pre-wrap', marginTop: 4 }}>
+                    {m.thinking}
+                    {m.streamThinking}
+                  </div>
+                </details>
+              )}
+              {m.text && (
+                <div className={`msgText ${m.error ? 'msgError' : ''}`}>
+                  <Markdown remarkPlugins={[remarkGfm]}>{m.text}</Markdown>
+                </div>
+              )}
+              {/* In-flight text, rendered as plain preformatted text: markdown is
+                  routinely mid-token at delta granularity, and re-parsing a partial
+                  document every frame makes list/code blocks flicker as they close. */}
+              {m.streamText && (
+                <div className={`msgText ${m.error ? 'msgError' : ''}`} style={{ whiteSpace: 'pre-wrap' }}>
+                  {m.streamText}
+                </div>
+              )}
+            </div>
+          ))}
+          {/* One status line, three distinct states. Reconnecting is shown even
+              when a turn wasn't running, because a dropped socket is worth knowing
+              about; it takes priority over "working" so a stall never masquerades
+              as progress (the failure mode that hid the 2026-07-20 disconnect). */}
+          {connState === 'reconnecting' ? (
+            <div className="typing">●●● Reconnecting…</div>
+          ) : (
+            busy && (
+              <div className="typing">
+                ●●●{' '}
+                {activity
+                  ? `${activity.agent}${activity.lastTool ? ` · ${activity.lastTool}` : ''}${
+                      activity.toolUses ? ` · ${activity.toolUses} tools` : ''
+                    }`
+                  : 'working…'}{' '}
+                {elapsed}s
+              </div>
+            )
+          )}
+        </div>
+
+        {/* Shown only while detached, so during normal "watch it work" reading
+            it never appears. Smooth here — this one is a deliberate click, not
+            a per-token follow. */}
+        {detached && (
+          <button
+            type="button"
+            className="chatJumpLatest"
+            onClick={() => scrollToBottom(true)}
+            title="Scroll to latest"
+            aria-label="Scroll to latest"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M6 9.5 12 15.5 18 9.5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         )}
       </div>
 
