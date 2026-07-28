@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_frederick_curtiss_munson_parents",
+    "objective": "Who were the parents of Frederick Curtiss Munson, born 31 July 1887 in Brooklyn, New York?",
+    "subject_person_ids": [
+      "9WMW-SVC"
+    ],
+    "status": "active",
+    "created": "2026-07-15",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
