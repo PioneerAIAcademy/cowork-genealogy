@@ -24,11 +24,17 @@ identical to it so `snapshot --check` can audit upstream drift.
 
 ## Expected difficulty
 
-medium — see "Notes for reviewers" below for the reviewer's read on
-match strength.
+medium — a false-match adjudication (the answer is that the hint is wrong);
+see "Notes for reviewers" below for the evidence that decided it.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 7, flag `adds_son`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — Bolivia, Catholic Church Records, 1566-2020: baptismal entry, 3 April 1874, Santo Domingo, Cochabamba, naming parents Antonio Veizaga and Estefania Zambrana. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming the 1874 Ricardo baptism, plus a `required` finding that the report documents the rejection.
+**Resolved (issue #857): FALSE MATCH — insufficient evidence; the hint does not meet the Genealogical Proof Standard.** The hint — Bolivia, Catholic Church Records, 1566-2020: baptism of Ricardo, 3 April 1874, Santo Domingo, Cochabamba, naming parents "Antonio Veizaga" and "Estefania Zambrana" — should **not** be attached to the tree couple Estefania Zambrana (`9QTV-KDZ`) and Antonio Beisaga (`9QTV-KD3`).
 
-Points a reviewer should weigh: the father's surname is recorded as "Veizaga" in the hint record vs. "Beisaga" in the tree — a common regional spelling variant (both plausible renderings of the same Bolivian surname) also seen on the tree's own children (Beisaga Zambrana). The mother's name "Estefania Zambrana" matches exactly. A baptism in 1874 slots neatly between the tree's two known children (1867, 1877), and the parish (Cochabamba) matches the tree's known family location.
+What decided it:
+- **The only record naming Ricardo is this one baptism.** It establishes only that a child named Ricardo was baptized to parents *named* Antonio Veizaga and Estefania Zambrana — not that those parents are the couple in the tree.
+- **No corroborating marriage.** A marriage of this Antonio and Estefania could not be located. The closest Cochabamba marriage found — 22 October 1877, Narsiso Zurita & Antonina Beisaga, Tarata — is an unrelated couple and provides no support.
+- **The 1877 Geronimo baptism does not help.** The tree's known son Geronimo's baptism neither mentions Ricardo nor identifies the 1874 baptism's family, so it cannot link Ricardo to the tree couple.
+- **Surname variation alone is not proof.** Beisaga/Beizaga/Veizaga are plausibly the same surname (betacismo, Z/S interchange — common in Bolivian records), but orthographic variation by itself does not establish identity; the GPS requires independent corroborating evidence tying the records to the same individuals.
+
+**Rebuttal of the automated true-match reading (pre-empting a re-run).** A Cowork agent reached a *probable true match* by treating the surnames as scribal variants and citing an **1870 marriage** of Antonio and Estefania as corroboration. On review that marriage **could not be found** — so the corroboration does not stand, and the case reduces to a single uncorroborated baptism, which does not meet the GPS. Accordingly `expected-findings.json` is a `polarity: "avoid"` guard (the agent must not attach the 1874 Ricardo to this couple) paired with a `required` documented-negative-conclusion finding.

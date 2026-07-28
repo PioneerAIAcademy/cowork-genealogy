@@ -3,17 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Estefania Zambrana and Antonio Beisaga (recorded in the hint as Veizaga) had a son, Ricardo Veizaga Zambrana, baptized 3 April 1874 in Santo Domingo, Cochabamba, Bolivia, in addition to their two children already in the tree (Fructuosa b. 1867, Geronimo b. 1877).",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Estefania Zambrana (PID 9QTV-KDZ, wife of Antonio Beisaga) had a son Ricardo, baptized 3 April 1874 at Santo Domingo, Cochabamba. The hint rests on a single Bolivia Catholic Church baptismal record naming the parents as 'Antonio Veizaga' and 'Estefania Zambrana' - which establishes only that a child named Ricardo was baptized to parents of those names, not that those parents are the tree couple. No independent record corroborates the identification: no marriage of this Antonio and Estefania could be located (the closest Cochabamba marriage found - 22 Oct 1877, Narsiso Zurita & Antonina Beisaga, Tarata - is an unrelated couple), and the tree's 1877 baptism of the known son Geronimo neither names Ricardo nor ties the 1874 family to the tree couple. Treating the surnames Beisaga/Beizaga/Veizaga as spelling variants is not by itself proof of identity. On this evidence the identification does not meet the Genealogical Proof Standard. Pass = the final tree/research contains no son Ricardo for this couple, no 1874 child, and no stub person representing him (or such a candidate appears only as an explicitly rejected hypothesis).",
       "details": {
-        "subject_person": "Estefania Zambrana (9QTV-KDZ)",
+        "subject_person": "Estefania Zambrana (PID 9QTV-KDZ)",
         "relation": "child",
-        "target_person": {
-          "name": "Ricardo Veizaga Zambrana",
-          "birth": "baptized 3 April 1874, Santo Domingo, Cochabamba, Bolivia"
+        "wrong_candidate": {
+          "name": "Ricardo, baptized 3 Apr 1874, Santo Domingo, Cochabamba, Bolivia",
+          "note": "The only record naming Ricardo (the 1874 baptism) names parents 'Antonio Veizaga' + 'Estefania Zambrana' but does not connect them to the tree couple. No corroborating marriage was found; the tree's 1877 Geronimo baptism does not link Ricardo; surname variation alone (Beisaga/Beizaga/Veizaga) is insufficient for identity. Attaching Ricardo would assert a parent-child link the available evidence does not support."
         }
       },
       "supporting_sources": [
-        "Bolivia, Catholic Church Records, 1566-2020 — baptismal entry, 3 Apr 1874, Santo Domingo, Cochabamba, naming parents Antonio Veizaga and Estefania Zambrana"
+        "Bolivia, Catholic Church Records, 1566-2020 - baptism of Ricardo, 3 Apr 1874, Santo Domingo, Cochabamba, naming parents Antonio Veizaga and Estefania Zambrana (the hint record - the only record naming Ricardo)",
+        "Negative search: no marriage of Antonio Beisaga/Veizaga and Estefania Zambrana located in Cochabamba; the nearest marriage found (22 Oct 1877, Narsiso Zurita & Antonina Beisaga, Tarata) is an unrelated couple",
+        "1877 baptism of the tree's known son Geronimo - does not name Ricardo and does not link the 1874 baptism family to the tree couple"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having compared the 1874 Santo Domingo baptism hint against the tree family (Estefania Zambrana + Antonio Beisaga; children Fructuosa b. 1867 and Geronimo chr. 1877, Cochabamba), the agent should document a negative conclusion: the available evidence does not establish Ricardo (bap. 1874) as their son. The hint is a single baptism naming parents of matching names; no corroborating marriage of this couple could be located, the tree's 1877 Geronimo baptism does not link Ricardo, and surname variation alone (Beisaga/Beizaga/Veizaga) does not prove identity. The identification does not meet the Genealogical Proof Standard, so Ricardo should not be added without additional independent evidence.",
+      "details": {
+        "subject_person": "Estefania Zambrana (PID 9QTV-KDZ)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: the 1874 son (Ricardo) is not established as this couple's child on the available evidence (GPS not met)",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Only the 1874 baptism names Ricardo (parents Antonio Veizaga + Estefania Zambrana); no independent record - marriage or otherwise - corroborates that these parents are the tree couple, and surname variation alone (Beisaga/Beizaga/Veizaga) is insufficient for identity"
       ],
       "required": true
     }

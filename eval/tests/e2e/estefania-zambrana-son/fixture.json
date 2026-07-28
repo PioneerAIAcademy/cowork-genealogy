@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 7, flag adds_son, confidence 3). Draft transcribed from a Bolivian parish baptismal record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 7, flag adds_son, confidence 3). RESOLVED (issue #857): FALSE MATCH (insufficient evidence) - the 1874 Santo Domingo (Cochabamba) baptism of Ricardo names parents 'Antonio Veizaga'/'Estefania Zambrana' but is the only record naming Ricardo; no marriage of this couple could be located, the tree's 1877 Geronimo baptism does not link him, and surname variation (Beisaga/Beizaga/Veizaga) alone does not prove identity, so the hint does not meet the GPS. A Cowork agent's probable-true-match reading relied on an 1870 marriage that could not be found. expected-findings.json is a polarity:avoid guard + a required documented-negative-conclusion finding. See README 'Notes for reviewers'."
 }
