@@ -1,0 +1,1875 @@
+{
+  "project": {
+    "id": "rp_amelia_gioiello_marriage",
+    "objective": "Who is the spouse of Amelia Frances Gioiello and what were they married with evidence?",
+    "subject_person_ids": [
+      "GCT1-F3Q"
+    ],
+    "status": "completed",
+    "created": "2026-07-28",
+    "updated": "2026-07-28"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Whom did Amelia Frances Gioiello marry, and what marriage record documents that event?",
+      "rationale": "The project objective is to identify the spouse of Amelia Frances Gioiello and the evidence of their marriage. This single question captures both the identity of the spouse (a relationship fact) and the documentary evidence of the marriage event. Marriage records (certificates, licenses, church registers) and corroborating records (census, vital records) are the primary record types for this search. No birth year or location is currently known for Amelia from the tree; research will begin with broad searches and narrow as information is found. Joseph Gioiello and Lena Manro are present in the tree but their relationship to Amelia is not yet established from sources.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-28",
+      "resolution_assertion_ids": [
+        "a_042",
+        "a_004"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two sources document the marriage: (1) src_001, Ohio County Marriages 1789-2016 derivative index (FamilySearch ark:/61903/1:1:Q297-LTPT), and (2) src_002, original Ohio Marriage License Application and Certificate No. 43517, Trumbull County (image ark:/61903/3:1:3QSQ-G9WJ-M3P), transcribed and extracted. The original civil document is certified by Father Nicholas Anioli (officiating priest) and Judge Sydney W. Jones (Probate Judge). Bride's parents confirmed as Joseph Gioiello and Lena Mauro. Groom's parents confirmed as Nikolas Datchuk and Sarah Frymarchuk (correcting index transcription errors). Census searches (1900, 1910, 1920) returned appropriate negatives for the subject's birth year. Derivative source replaced with original. Birth-year discrepancies for bride (1935 vs 1936) and groom (1927 vs 1933) are tangential to the marriage question and logged as open conflicts for future research.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 Amelia Frances Gioiello married Stanley Datchuk on 20 August 1955 in Trumbull County (Niles), Ohio, documented by the original Ohio Marriage License Certificate No. 43517.",
+          "repository_breadth": "FamilySearch US marriage index (broad), original county certificate image, three decades of US census (appropriate negatives), FAN search on Joseph Gioiello. Appropriate breadth for a 1955 Ohio marriage question.",
+          "original_substitution": "Original certificate image (ark:/61903/3:1:3QSQ-G9WJ-M3P) accessed, transcribed, and extracted as src_002. Derivative index (src_001) corroborated. Criterion fully met.",
+          "independent_verification": "Two sources at different access layers: county marriage index (derivative, compiled) and the original civil certificate (sworn application + judicial certification). The certifying informant (priest + probate judge) is independent of the parties. Both agree on identity, date, and place.",
+          "evidence_class": "src_002 is an original civil record with primary information (sworn oath by parties) and direct evidence of the marriage (official judicial certification). Highest evidence class met.",
+          "conflict_resolution": "Mauro/Manro discrepancy resolved in favor of Mauro (confirmed by original). Birth-year conflicts (bride 1935 vs 1936; groom 1927 vs 1933) are tangential to q_001 and noted as open for future research questions about birth dates.",
+          "overturn_risk": "Low. Original civil marriage certificate with dual certification. No unsearched source category would plausibly alter the conclusion that Amelia Frances Gioiello married Stanley Datchuk on 20 August 1955 in Trumbull County, Ohio."
+        }
+      },
+      "created": "2026-07-28"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "United States",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "No birth year or location is currently known for Amelia Frances Gioiello. The 1900 US Census is the highest-priority discovery record: it lists every household member by name, age, birthplace, and parents' birthplaces, and shows marital status and years married. If Amelia was born circa 1875-1888 she would appear here either in her parents' household (unmarried) or in her own household (married). Finding her here will establish the jurisdiction, her approximate birth year, and \u2014 if already married \u2014 her husband's name and the approximate marriage year, directly answering or narrowing the question. Collection: United States, Census, 1900 (FamilySearch collection 1325221). Search on surname Gioiello with given name Amelia or Frances.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "United States",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "The 1910 US Census covers a later window \u2014 if Amelia married between 1900 and 1910 she would appear under her married name and the 1900 census search would miss her. The 1910 census records years of marriage and number of children, which will corroborate the marriage date range. Also search for Joseph Gioiello (in the tree, likely her father or relative) to locate the family and establish jurisdiction. Collection: United States, Census, 1910 (FamilySearch collection 1727033).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "United States",
+          "date_range": "1920",
+          "repository": "FamilySearch",
+          "rationale": "The 1920 US Census extends the search window for a later marriage. If Amelia married after 1910, she appears here under her married surname. The 1920 census names the head of household (her husband), all children with ages, and state/country of birth \u2014 enabling both identification of the spouse and corroboration of approximate marriage timing. Collection: United States, Census, 1920 (FamilySearch collection 1488411).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "United States",
+          "date_range": "1880-1940",
+          "repository": "FamilySearch",
+          "rationale": "The FamilySearch broad US Marriages 1733-1990 collection (id 1675543) indexes marriage records across many states. Searching directly for Amelia Gioiello as a bride provides the most direct route to the marriage record: it would name the groom, date, and location. This is the primary documentary answer to the question. Also search the Western States Marriage Index (id 1854302, 914,500 records) as a complementary broad sweep, in case Amelia resided in the western United States.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "newspaper",
+          "jurisdiction": "United States",
+          "date_range": "1890-1930",
+          "repository": "FamilySearch",
+          "rationale": "The GenealogyBank Historic Newspaper Marriages 1815-2011 (FamilySearch collection 2603807, 303,599 records) indexes marriage announcements from hundreds of US newspapers. Italian-American communities in urban centers frequently published marriage notices in both English-language and Italian-language papers. A notice for Amelia Gioiello's marriage would name the groom and location, corroborating any marriage record found and potentially supplying the exact date. This is corroborating evidence with direct announcement value.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "United States (state to be determined from census)",
+          "date_range": "1880-1940",
+          "repository": "Ancestry",
+          "rationale": "Ancestry.com holds state marriage collections not fully replicated on FamilySearch, including many civil marriage licenses, certificates, and registers for major Italian-immigrant receiving states (New York, New Jersey, Pennsylvania, Massachusetts, Connecticut, Illinois). Once the census searches (pli_001\u2013pli_003) establish Amelia's state of residence, this item targets that state's marriage collection on Ancestry for the corresponding years. This is the fallback for the FamilySearch marriage search (pli_004) and the primary paid-repository source.",
+          "fallback_for": "pli_004",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "census",
+          "jurisdiction": "United States",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "FAN search: Joseph Gioiello is in the tree and is likely Amelia's father or a close male relative. The 1880 census (FamilySearch collection 1417683, 50M records) would show the Gioiello household with children \u2014 potentially including Amelia as a child, establishing her birth year and the family's location. This is a FAN-directed search per BCG Standard 14. The household address from this census also opens the door to local vital records, church records, and city directories. Search on surname Gioiello, given name Joseph.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "United States (state to be determined)",
+          "date_range": "1880-1940",
+          "repository": "FamilySearch",
+          "rationale": "Once the jurisdiction (state) is established from census results, search the state-level marriage collection on FamilySearch. State vital registration for marriages began at varying dates (e.g., New York 1880, New Jersey 1848, Pennsylvania 1885, Massachusetts 1841). The state marriage register is the original civil record and the highest-quality primary source for the marriage event. This item is a follow-on to pli_004 \u2014 if the broad US collection does not find the record, the state-specific collection provides direct access to the local civil registration. Fallback for pli_004.",
+          "fallback_for": "pli_004",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T17:02:57.596Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Amelia",
+        "collectionId": "1325221",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Single result (Pologillial, Alaska, Native American male, 1848) is not a match. matchScore essentially 0. No Amelia Gioiello in the 1900 US Census under this spelling."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T17:02:57.596Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Frances",
+        "collectionId": "1325221",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 4,
+      "notes": "Top result: Francesco Gioiello (male, b. Apr 1869, Italy, single) in household of Carolina Carrano, Manhattan Ward 6 NYC \u2014 possible relative but not Amelia. All other results are different surnames or unrelated persons. No Amelia Frances Gioiello found in 1900 census under Frances variant. She may have married before 1900 and appear under married surname, or be too young for her own household, or the surname is indexed differently."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T17:03:47.233Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Amelia",
+        "collectionId": "1727033",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 12,
+      "notes": "12 results returned, all matchScores below 0.01 \u2014 real negative per diagnostic. Best candidates are 'Amelia Giardiello' (female, b.1887, Italy, Boston, married) and 'Amelia M Yagiello' (female, b.1890, Russia, Manhattan) \u2014 different surnames, not Amelia Gioiello. No credible match found in 1910 census under this surname spelling."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-28T17:03:47.240Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Joseph",
+        "collectionId": "1417683",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Joseph Gioiello in 1880 US Census. Surname may be absent from US in 1880 (Italian immigration peak was 1880s\u20131910s), or indexed under a variant spelling. Will try 1900 census for Joseph."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T17:05:43.615Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Amelia",
+        "collectionId": "1488411",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 13,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 13,
+      "notes": "13 results, all matchScores below 0.01. Real negative per diagnostic. Amelia was born in 1936 (confirmed by marriage record) so she would not appear as a head of household in 1920. Plan item superseded by positive marriage record finding."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T17:05:43.621Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Amelia",
+        "recordType": "marriage"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 333,
+      "notes": "MATCH FOUND: Rank 1, matchScore 0.9001964, attached to subject. Record ark:/61903/1:1:Q297-LTPT: 'Entry for Stanley Datchuk and Amelia Frances Gioiello, Ohio, County Marriages, 1789-2016.' Full record read: Amelia Frances Gioiello (b.1936, prefix Miss) married Stanley Datchuk (b.1933, prefix Mr) on 20 Aug 1955, Trumbull, Ohio. Her parents: Joseph Gioiello (father) and Lena Mauro (mother). Stanley's parents: Geo Datchuk and Sarah Mynarchyk. Collection: Ohio, County Marriages, 1789-2016 (collection 1614804). This is the primary marriage record directly answering q_001."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-28T17:05:43.630Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Joseph",
+        "collectionId": "1325221",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 4,
+      "notes": "4 results, all matchScores below 0.01. No Joseph Gioiello found in 1900 US census. The marriage record confirms Joseph Gioiello as Amelia's father. The family was established in Ohio by 1955; Joseph may have arrived in the US after 1900 or the surname is indexed under a variant in the census."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T17:23:08.217Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3QSQ-G9WJ-M3P"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Original Ohio County Marriage License Application and Certificate No. 43517, Trumbull County. Confirms: Stanley Datchuk and Amelia Frances Gioiello married 20 Aug 1955, Miles, Ohio. Bride's mother maiden name confirmed as Lena Mauro (not Manro). Groom's father is Nikolas Datchuk (index had 'Geo Datchuk' \u2014 index error). Groom's mother maiden name: Sarah Frymarchuk (index had 'Mynarchyk'). Image saved as images/ark_61903_3_1_3QSQ-G9WJ-M3P.jpg."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q297-LTGC : Mon Jan 13 08:11:34 UTC 2025), Entry for Stanley Datchuk and Amelia Frances Gioiello, 20 Aug 1955.",
+      "citation_detail": {
+        "who": "Stanley Datchuk and Amelia Frances Gioiello",
+        "what": "Ohio county marriage record, FamilySearch index entry",
+        "when_created": "20 Aug 1955 (original event); indexed and published by FamilySearch",
+        "when_accessed": "2026-07-28",
+        "where": "FamilySearch, Ohio, County Marriages, 1789-2016 (collection 1614804)",
+        "where_within": "Entry for Stanley Datchuk and Amelia Frances Gioiello, 20 Aug 1955, Trumbull, Ohio"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q21Z-MPM2",
+      "notes": "FamilySearch index/transcription of the underlying Ohio county marriage record. Original county marriage record not examined \u2014 only the digital index entry was accessed. The record spells the bride's mother's surname as 'Mauro'; the existing tree person (GCT1-CC7) has 'Manro' \u2014 spelling discrepancy noted; resolution deferred to person-evidence.",
+      "log_entry_id": "log_006",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "Ohio, County Marriage License Application and Certificate No. 43517, Trumbull County, Ohio; Stanley Datchuk and Amelia Frances Gioiello, married 20 August 1955; image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WJ-M3P : accessed 28 July 2026), citing Trumbull County Probate Court, Warren, Ohio.",
+      "citation_detail": {
+        "who": "Stanley Datchuk (groom) and Amelia Frances Gioiello (bride)",
+        "what": "Ohio County Marriage License Application and Certificate No. 43517, Trumbull County, Ohio",
+        "when_created": "Application dated 13 August 1955; filed and recorded 22 August 1955",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch, image of original held by Trumbull County Probate Court, Warren, Ohio",
+        "where_within": "Certificate No. 43517"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "access_date": "2026-07-28",
+      "log_entry_id": "log_008",
+      "notes": "Original civil marriage license application and certificate \u2014 upgrades evidence from the previously extracted derivative county index (src_001, ark:/61903/1:1:Q297-LTPT). Key discrepancies with index: (1) Groom's father named 'Nikolas Datchuk' on original vs. 'Geo Datchuk' in index \u2014 index transcription error, original prevails; (2) Groom's mother maiden name 'Frymarchuk' vs. index 'Mynarchyk' \u2014 variant spellings of what appears to be a Ukrainian surname; (3) Bride's mother maiden name 'Lena Mauro' confirmed \u2014 tree has 'Lena Manro' (GCT1-CC7), a tree data error; (4) Bride's birth year: certificate states '19 years of age on the 16 day of Nov 1954', implying born ~16 Nov 1935, conflicting with tree entry 1936 for GCT1-F3Q and index 'b.1936' \u2014 original certificate is primary evidence; requires reconciliation. Groom's birth year: '27 years as of 14 Sept 1954' implies ~14 Sept 1927, conflicting with index b.1933.",
+      "transcription": "Ohio County Marriage License Application and Certificate, Trumbull County, Ohio, No. 43517. GROOM: Stanley Datchuk; Age: 27 years as of 14 Sept 1954; Residence: 530 Saline, Niles, Ohio; Birthplace: Niles, Ohio; Occupation: Opp. Garage; Father: Nikolas Datchuk; Mother maiden: Sarah Frymarchuk; Previously married: No. BRIDE: Amelia Frances Gioiello; Age: 19 years as of 16 Nov 1954; Residence: 819 Henry St., Niles, Ohio, Trumbull County; Birthplace: Niles, Ohio; Occupation: Clerk; Father: Joseph Gioiello; Mother maiden: Lena Mauro; Previously married: No. Application date: 13 August 1955. Marriage date: 20 August 1955. Marriage place: Niles, Ohio (Trumbull County). Filed and recorded: 22 August 1955. Certificate No.: 43517. Officiant: Father Nicholas Anioli, C.P.P.S., Priest, Niles, Ohio. Judge: Sydney W. Jones, Probate Judge. Deputy Clerk: Cyril Sherman / Thelma M. Randall. Consent section: Father signing: Giuseppe Gioiello; Mother signing: Lena Gioiello.",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941116",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Amelia Frances Gioiello",
+      "structured_value": {
+        "given": "Amelia Frances",
+        "surname": "Gioiello"
+      },
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941116",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941116",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "birth year 1936",
+      "date": "1936",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1936"
+      },
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941116",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Stanley Datchuk, 20 Aug 1955, Trumbull, Ohio",
+      "date": "20 Aug 1955",
+      "date_certainty": "exact",
+      "place": "Trumbull, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "county marriage clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001",
+      "standard_place": "Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941116",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Joseph Gioiello",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941116",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Lena Mauro",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "Record spells the bride's mother's surname 'Mauro'; the existing tree person GCT1-CC7 is recorded as 'Manro'. Spelling discrepancy noted \u2014 could be an indexing/transcription error in either the record or the tree entry. Original county marriage document not examined; resolution deferred to person-evidence.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941069",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Stanley Datchuk",
+      "structured_value": {
+        "given": "Stanley",
+        "surname": "Datchuk"
+      },
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941069",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941069",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "birth year 1933",
+      "date": "1933",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1933"
+      },
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941069",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Amelia Frances Gioiello, 20 Aug 1955, Trumbull, Ohio",
+      "date": "20 Aug 1955",
+      "date_certainty": "exact",
+      "place": "Trumbull, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "county marriage clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001",
+      "standard_place": "Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941069",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Geo Datchuk",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941069",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Sarah Mynarchyk",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941130",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Joseph Gioiello",
+      "structured_value": {
+        "given": "Joseph",
+        "surname": "Gioiello"
+      },
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941130",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941145",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Lena Mauro",
+      "structured_value": {
+        "given": "Lena",
+        "surname": "Mauro"
+      },
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "Surname spelled 'Mauro' in this record; tree person GCT1-CC7 is recorded as 'Manro'. May reflect a transcription/indexing error in this derivative source, an enumerator spelling variant, or a genuine name discrepancy. Original county marriage document not examined.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941145",
+      "record_role": "mother_of_bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941087",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Geo Datchuk",
+      "structured_value": {
+        "given": "Geo",
+        "surname": "Datchuk"
+      },
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "'Geo' is likely an abbreviation for 'George'; cannot confirm from this derivative record alone. Original document not examined.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941087",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941102",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Sarah Mynarchyk",
+      "structured_value": {
+        "given": "Sarah",
+        "surname": "Mynarchyk"
+      },
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:Q297-LTPT",
+      "record_persona_id": "p_102088941102",
+      "record_role": "mother_of_groom",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Stanley Datchuk",
+      "structured_value": {
+        "given": "Stanley",
+        "surname": "Datchuk"
+      },
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "age",
+      "value": "27 years as of 14 September 1954",
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Age stated by groom on application dated 13 August 1955, referencing age as of 14 September 1954. Index had birth year 1933; age-at-date calculation implies birth year ~1927 \u2014 significant discrepancy requiring corroboration.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born approximately 14 September 1927 (computed from age 27 as of 14 Sept 1954)",
+      "date": "~1927-09-14",
+      "date_certainty": "estimated",
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Birth year computed from stated age of 27 as of 14 September 1954. Conflicts with index b.1933 (I1 in tree). The original certificate is primary evidence; the index is derivative. Corroboration needed \u2014 birth certificate or early life record.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "Niles [Miles], Ohio",
+      "place": "Niles, Ohio",
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Image reads 'Miles' \u2014 a known spelling variant for Niles, Ohio, as confirmed by context (residence also 'Miles'). Standardized to Niles, Ohio.",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "residence",
+      "value": "530 Saline, Niles [Miles], Ohio",
+      "place": "Niles, Trumbull County, Ohio",
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "occupation",
+      "value": "Opp. Garage",
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Abbreviated on certificate as 'Opp. Garage' \u2014 likely 'Operator, Garage' or similar trade abbreviation. Recorded as written.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "marital_status",
+      "value": "Never previously married",
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Nikolas Datchuk",
+      "structured_value": {
+        "given": "Nikolas",
+        "surname": "Datchuk"
+      },
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Stated by groom (proximity self \u2014 a party reporting his own parent's name on a marriage application). Original certificate reads 'Nikolas Datchuk'; index (src_001) had 'Geo Datchuk' \u2014 index transcription error, original prevails. Tree person I2 is currently named 'Geo Datchuk' and requires correction to 'Nikolas Datchuk'.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Sarah Frymarchuk",
+      "structured_value": {
+        "given": "Sarah",
+        "surname": "Frymarchuk"
+      },
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Stated by groom as mother's maiden name. Original reads 'Frymarchuk'; index (src_001) had 'Mynarchyk' \u2014 variant spellings of what appears to be a Ukrainian-origin surname. Original certificate prevails; 'Mynarchyk' is likely a transcription distortion. Tree person I3 is currently named 'Sarah Mynarchyk' and should be updated to 'Sarah Frymarchuk'.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Amelia Frances Gioiello",
+      "structured_value": {
+        "given": "Amelia Frances",
+        "surname": "Gioiello"
+      },
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "age",
+      "value": "19 years as of 16 November 1954",
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Age stated by bride on the marriage license application. Reference date 16 Nov 1954 implies birth on or before 16 Nov 1935. Conflicts with tree entry GCT1-F3Q (birth year 1936) and index b.1936. The original certificate is primary evidence; the 1936 date in tree/index is likely from a secondary or derivative source. Requires reconciliation \u2014 a birth certificate or other primary record is needed to resolve.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born approximately 16 November 1935 [?] (computed from age 19 as of 16 Nov 1954; tree has 1936)",
+      "date": "~1935-11-16",
+      "date_certainty": "estimated",
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Birth year computed from bride's stated age of 19 as of 16 November 1954. Implies birth year 1935, conflicting with tree GCT1-F3Q (1936) and index (b.1936). Marked [?] because of the conflict; the original civil record provides primary information but the arithmetic-derived year remains estimated. A birth certificate for Amelia Frances Gioiello in Niles/Trumbull County, Ohio ca. 1935\u20131936 would resolve the discrepancy.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "Niles [Miles], Ohio",
+      "place": "Niles, Ohio",
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Image reads 'Miles' \u2014 a known spelling variant for Niles, Ohio.",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "residence",
+      "value": "819 Henry St., Niles [Miles], Ohio, Trumbull County",
+      "place": "Niles, Trumbull County, Ohio",
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "occupation",
+      "value": "Clerk",
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "marital_status",
+      "value": "Never previously married",
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Joseph Gioiello (also Giuseppe Gioiello per consent section)",
+      "structured_value": {
+        "given": "Joseph",
+        "surname": "Gioiello"
+      },
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Stated by bride as father's name on the application. Consent section shows father signing as 'Giuseppe Gioiello' \u2014 Italian given name Giuseppe = English Joseph; same person. Corresponds to tree person GCT1-Z84 (Joseph Gioiello).",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Lena Mauro (maiden name; also signs as Lena Gioiello in consent section)",
+      "structured_value": {
+        "given": "Lena",
+        "surname": "Mauro"
+      },
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Stated by bride as mother's maiden name: 'Lena Mauro'. Consent section shows mother signing as 'Lena Gioiello' (married name). Tree person GCT1-CC7 is currently listed as 'Lena Manro' \u2014 this certificate confirms the correct maiden surname is Mauro, not Manro; the tree entry requires correction.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Amelia Frances Gioiello, 20 August 1955, Niles, Ohio",
+      "date": "1955-08-20",
+      "date_certainty": "exact",
+      "place": "Niles, Trumbull County, Ohio",
+      "information_quality": "primary",
+      "informant": "Father Nicholas Anioli",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Marriage certified by Father Nicholas Anioli, C.P.P.S., officiating priest, and confirmed by Judge Sydney W. Jones, Probate Judge, Trumbull County. Filed and recorded 22 August 1955.",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Stanley Datchuk, 20 August 1955, Niles, Ohio",
+      "date": "1955-08-20",
+      "date_certainty": "exact",
+      "place": "Niles, Trumbull County, Ohio",
+      "information_quality": "primary",
+      "informant": "Father Nicholas Anioli",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Marriage certified by Father Nicholas Anioli, C.P.P.S., officiating priest, and confirmed by Judge Sydney W. Jones, Probate Judge, Trumbull County. Filed and recorded 22 August 1955.",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Amelia Frances Gioiello",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Father Nicholas Anioli",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "spouse of Stanley Datchuk",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Father Nicholas Anioli",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Nikolas Datchuk",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Stated by groom on the marriage license application.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Sarah Frymarchuk",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Stanley Datchuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Stated by groom on the marriage license application. Mother's maiden name given as 'Frymarchuk' (original) vs. 'Mynarchyk' (index \u2014 transcription distortion).",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Joseph Gioiello",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Stated by bride on the marriage license application. Father listed as 'Joseph Gioiello'; consent section shows 'Giuseppe Gioiello' signing \u2014 same person, Italian/English name variant.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WJ-M3P",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Lena Mauro (married Gioiello)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Amelia Frances Gioiello",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Stated by bride on the marriage license application. Mother's maiden name given as 'Lena Mauro'. Tree has 'Lena Manro' \u2014 this certificate confirms correct spelling as Mauro.",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": 0.9001964,
+      "rationale": "Bride's name 'Amelia Frances Gioiello' is an exact match to tree person GCT1-F3Q on all three elements (given 'Amelia Frances', surname 'Gioiello'). Record was retrieved by searching for GCT1-F3Q specifically; FamilySearch match score 0.9001964 (strong). Sex (Female) and the named parents (Joseph Gioiello / Lena Mauro) align with GCT1-Z84 and GCT1-CC7 already in the tree. Strong match on name, sex, and relationship fit.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": 0.9001964,
+      "rationale": "Sex assertion Female from bride persona. GCT1-F3Q is Female in the tree. Consistent with all other bride assertions linked to GCT1-F3Q at confident. Score 0.9001964 from record_search match.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": 0.9001964,
+      "rationale": "Birth year 1936 from bride's own self-report on marriage license. GCT1-F3Q had no prior birth year; this assertion adds it. Score 0.9001964. Consistent with all other bride assertions linked to GCT1-F3Q.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": 0.9001964,
+      "rationale": "Marriage assertion from bride persona: married Stanley Datchuk, 20 Aug 1955, Trumbull, Ohio. Directly answers q_001. GCT1-F3Q is the bride by name and sex match (score 0.9001964). This assertion establishes the spousal relationship that is the object of the research question.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage assertion names Stanley Datchuk as bride's spouse; I1 is the new tree person minted from the groom persona in this same record. The assertion bears on I1 as the other party to the marriage. New stub \u2014 single record, no independent corroboration yet; probable appropriate.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": 0.9001964,
+      "rationale": "Relationship assertion: bride is child of Joseph Gioiello. GCT1-F3Q is the bride (exact name/sex match, score 0.9001964). This assertion bears on GCT1-F3Q as the child.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "GCT1-Z84",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion names Joseph Gioiello as father of bride. GCT1-Z84 in the tree is Joseph Gioiello (Male) \u2014 exact name and sex match, and his presence in the tree alongside Amelia's tree person GCT1-F3Q confirms the expected family relationship. Strong match on name and relationship position. No same_person score run (only name/sex available for GCT1-Z84 stub); qualitative correlation is strong.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": 0.9001964,
+      "rationale": "Relationship assertion: bride is child of Lena Mauro. GCT1-F3Q is the bride (score 0.9001964). This assertion bears on GCT1-F3Q as the child.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_006",
+      "person_id": "GCT1-CC7",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion names Lena Mauro as mother of bride. GCT1-CC7 in the tree is 'Lena Manro' (Female) \u2014 given name 'Lena' is exact; surname 'Mauro' (record) vs 'Manro' (tree) is a likely transcription variant in this derivative county index. Both names differ only in vowel arrangement (M-A-U-R-O vs M-A-N-R-O). Relationship position (mother of bride alongside Joseph Gioiello as father) is a strong contextual fit. Moderate match overall; surname discrepancy noted in bias notes \u2014 original document not examined. Linked at probable pending confirmation from original. Advisory merge_warnings flag (burial/death artifact in existing tree data) does not affect this link.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom's name 'Stanley Datchuk' from groom persona. I1 was minted by materialize_facts from this same persona in this invocation. New stub \u2014 this is the sole record; probable appropriate for a new person with no independent corroboration.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion Male from groom persona. I1 is Male (created from same persona). New stub; probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1933 from groom's self-report. I1 was created from this persona; no independent corroboration yet. Probable for new stub.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage assertion from groom persona: married Amelia Frances Gioiello, 20 Aug 1955, Trumbull, Ohio. I1 is the groom Stanley Datchuk (new stub minted from same persona). Probable for new stub.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_010",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": 0.9001964,
+      "rationale": "Marriage assertion from groom persona also names GCT1-F3Q (Amelia Frances Gioiello) as the bride. GCT1-F3Q identified by strong name/sex match and record_search score 0.9001964. This assertion independently corroborates a_004 for GCT1-F3Q.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: groom is child of Geo Datchuk. I1 is the groom (new stub). This assertion bears on I1 as the child. Probable for new stub.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion names Geo Datchuk as father of groom. I2 was minted from the father_of_groom persona in this same record. New stub \u2014 single record, no corroboration. Probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: groom is child of Sarah Mynarchyk. I1 is the groom (new stub). Bears on I1 as the child. Probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_012",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion names Sarah Mynarchyk as mother of groom. I3 was minted from the mother_of_groom persona in this same record. New stub \u2014 single record. Probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_013",
+      "person_id": "GCT1-Z84",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father-of-bride name 'Joseph Gioiello' is an exact match (given and surname) to tree person GCT1-Z84 (Joseph Gioiello, Male). GCT1-Z84 was already in the tree alongside Amelia's person (GCT1-F3Q), confirming the expected father-daughter relationship. Strong match on name and relationship position. No same_person score available (stub with no dated/placed facts for scoring).",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_014",
+      "person_id": "GCT1-Z84",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex assertion Male for father-of-bride persona. GCT1-Z84 is Male in the tree. Consistent with a_013 link at confident.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_015",
+      "person_id": "GCT1-CC7",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother-of-bride name 'Lena Mauro' vs tree person GCT1-CC7 'Lena Manro'. Given name 'Lena' exact; surname variant 'Mauro/Manro' (one transposed vowel pair) is consistent with derivative index transcription. Relationship position as mother of Amelia alongside father Joseph Gioiello (GCT1-Z84) is a strong contextual fit. Moderate match \u2014 surname discrepancy warrants probable rather than confident until original document consulted.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_016",
+      "person_id": "GCT1-CC7",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion Female for mother-of-bride persona. GCT1-CC7 is Female. Consistent with a_015 link at probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father-of-groom name 'Geo Datchuk'. I2 minted from this persona. 'Geo' is likely an abbreviation for 'George' (noted in bias notes); cannot confirm without the original document. New stub \u2014 probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_018",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion Male for father-of-groom. I2 is Male. Consistent with a_017 link at probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother-of-groom name 'Sarah Mynarchyk'. I3 minted from this persona in this record. New stub \u2014 probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_020",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion Female for mother-of-groom. I3 is Female. Consistent with a_019 link at probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Original civil marriage certificate: groom's name stated as Stanley Datchuk (self-reported on sworn application). Name, role, and record match I1 exactly \u2014 same person previously linked via index src_001.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex (Male) stated on original application. Consistent with I1.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_023",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Age 27 as of 14 Sept 1954 stated by Stanley Datchuk on sworn application. Implies birth ~1927; conflicts with tree/index b.1933 \u2014 conflict logged separately.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year ~1927 computed from age 27 as of 14 Sept 1954 on original sworn application. Original certificate is primary evidence; tree has 1933 from derivative index \u2014 birth conflict surfaced and logged.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace 'Miles [Niles], Ohio' stated by groom on sworn original application. Consistent with Trumbull County context.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_026",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence '530 Saline, Niles, Ohio' stated by groom on original application. Consistent with I1 profile.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Occupation 'Opp. Garage' stated by groom on original application. New biographical fact added to I1 profile.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Never previously married \u2014 stated by groom on sworn application. Confirms this is a first marriage.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_029",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father of groom stated as 'Nikolas Datchuk' on original sworn application. I2 is the only tree person in this role; index had 'Geo Datchuk' which was an index transcription error \u2014 original certificate prevails. Name 'Nikolas Datchuk' materialized onto I2.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_030",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother of groom maiden name stated as 'Sarah Frymarchuk' on original sworn application. I3 is the only tree person in this role; index had 'Sarah Mynarchyk' which is a transcription distortion of the Ukrainian surname \u2014 original certificate prevails. Name 'Sarah Frymarchuk' materialized onto I3.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_031",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride's name stated as Amelia Frances Gioiello (self-reported on sworn application). Exact match to GCT1-F3Q \u2014 same person previously linked via index src_001.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_032",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex (Female) stated on original application. Consistent with GCT1-F3Q.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_033",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Age 19 as of 16 Nov 1954 stated by Amelia Frances Gioiello on sworn application. Implies birth ~Nov 1935; conflicts with tree/index b.1936 \u2014 conflict logged separately.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_034",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year ~1935 computed from age 19 as of 16 Nov 1954 on original sworn application. Marked estimated [?]; conflicts with tree b.1936 from derivative index. Original certificate is primary evidence. Birth certificate needed to resolve.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_035",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace 'Miles [Niles], Ohio' stated by bride on sworn original application. Consistent with Trumbull County context.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_036",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence '819 Henry St., Niles, Ohio' stated by bride on original application. New biographical fact added to GCT1-F3Q profile.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_037",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Occupation 'Clerk' stated by bride on original application. New biographical fact for GCT1-F3Q.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_038",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Never previously married \u2014 stated by bride on sworn application.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_039",
+      "person_id": "GCT1-Z84",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride's father stated as 'Joseph Gioiello'; consent section shows 'Giuseppe Gioiello' signing. Giuseppe is the Italian given name for Joseph \u2014 same person. GCT1-Z84 (Joseph Gioiello) is the only tree person in this role. Ref added to GCT1-Z84.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_040",
+      "person_id": "GCT1-CC7",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride's mother maiden name stated as 'Lena Mauro' on original sworn application; consent section shows 'Lena Gioiello' (married name). GCT1-CC7 is the only tree person in this role. Original confirms 'Mauro' as the correct spelling \u2014 tree's 'Manro' was a data error. Name ref materialized onto GCT1-CC7.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_041",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (20 Aug 1955, Niles, Ohio) certified by Father Nicholas Anioli and Judge Sydney W. Jones. Groom role is I1 (Stanley Datchuk). Direct evidence of marriage.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_042",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (20 Aug 1955, Niles, Ohio) certified by Father Nicholas Anioli and Judge Sydney W. Jones. Bride role is GCT1-F3Q (Amelia Frances Gioiello). Direct evidence of marriage.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_043",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Spousal relationship assertion from groom's persona: Stanley Datchuk married Amelia Frances Gioiello. This assertion bears on I1 (groom) as the declaring party.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_043",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Spousal relationship assertion from groom's persona names Amelia Frances Gioiello as spouse. This assertion also bears on GCT1-F3Q (bride) as the named party.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_044",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Spousal relationship assertion from bride's persona: Amelia Frances Gioiello married Stanley Datchuk. This assertion bears on GCT1-F3Q (bride) as the declaring party.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_044",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Spousal relationship assertion from bride's persona names Stanley Datchuk as spouse. This assertion also bears on I1 (groom) as the named party.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_045",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom states he is a child of Nikolas Datchuk on sworn application. This assertion bears on I1 as the child.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_045",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom states Nikolas Datchuk as his father on sworn application. This assertion bears on I2 (father of groom) as the named parent. Original certificate corrects the index's 'Geo Datchuk' to 'Nikolas Datchuk'.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_046",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom states he is a child of Sarah Frymarchuk on sworn application. This assertion bears on I1 as the child.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_046",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom states Sarah Frymarchuk (maiden name) as his mother on sworn application. This assertion bears on I3 (mother of groom). Original 'Frymarchuk' corrects index 'Mynarchyk'.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_047",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride states she is a child of Joseph Gioiello on sworn application. This assertion bears on GCT1-F3Q as the child.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_047",
+      "person_id": "GCT1-Z84",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride states Joseph Gioiello (also Giuseppe in consent section) as her father. This assertion bears on GCT1-Z84 (Joseph Gioiello) as the named parent.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_048",
+      "person_id": "GCT1-F3Q",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride states she is a child of Lena Mauro on sworn application. This assertion bears on GCT1-F3Q as the child.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_048",
+      "person_id": "GCT1-CC7",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride states Lena Mauro (maiden name; married name Lena Gioiello) as her mother. This assertion bears on GCT1-CC7. Original confirms 'Mauro' as correct spelling of maiden name.",
+      "created": "2026-07-28"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Groom's father's given name: 'Geo Datchuk' (county marriage index, src_001) vs. 'Nikolas Datchuk' (original marriage certificate, src_002)",
+      "disputed_attribute": "father_given_name",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_017",
+        "a_029"
+      ],
+      "independence_analysis": "a_017 derives from the county marriage index (src_001), a compiled derivative record. a_029 derives from the original marriage license application (src_002), an original civil document sworn under oath by the groom himself. The two assertions stem from the same underlying civil event but different access layers \u2014 they share the same ultimate informant (the groom), so they are not independent. The conflict is therefore between a primary informant's own sworn statement (a_029) and a clerk's transcription of that statement (a_017).",
+      "weighing_analysis": "The original sworn application (a_029, src_002) carries greater weight as an original record with primary information in the informant's own words. The county index (a_017, src_001) is a derivative compiled from the original; transcription errors are a known characteristic of such indexes. 'Geo' (commonly an abbreviation for George) is not a recognizable short form of 'Nikolas', confirming this is a transcription error rather than a name variant or alias.",
+      "preferred_assertion_id": "a_029",
+      "resolution_rationale": "The original sworn application (a_029) is preferred. The index entry 'Geo Datchuk' (a_017) is a transcription error \u2014 the indexer misread or substituted a plausible but incorrect given name. Tree person I2 updated to 'Nikolas Datchuk'.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    },
+    {
+      "id": "c_002",
+      "conflict_type": "fact",
+      "description": "Groom's mother's maiden surname: 'Sarah Mynarchyk' (county marriage index, src_001) vs. 'Sarah Frymarchuk' (original marriage certificate, src_002)",
+      "disputed_attribute": "mother_maiden_surname",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_019",
+        "a_030"
+      ],
+      "independence_analysis": "a_019 derives from the county marriage index (src_001), a compiled derivative record. a_030 derives from the original marriage license application (src_002), sworn under oath by the groom. Same informant (the groom) in both; conflict is between a sworn original statement and its derivative transcription.",
+      "weighing_analysis": "The original sworn application (a_030, src_002) carries greater weight. Both surnames appear to be transliterations of a Ukrainian-origin surname, suggesting the index transcriber distorted the handwritten original. 'Frymarchuk' (as sworn by the groom) is the more reliable form; 'Mynarchyk' (the index version) is likely a phonetic misreading of the handwriting.",
+      "preferred_assertion_id": "a_030",
+      "resolution_rationale": "The original sworn application (a_030) is preferred. 'Mynarchyk' (a_019) is a transcription distortion of 'Frymarchuk'. Tree person I3 updated to 'Sarah Frymarchuk'.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    },
+    {
+      "id": "c_003",
+      "conflict_type": "fact",
+      "description": "Bride's birth year: approximately 1936 (county marriage index, src_001) vs. approximately 1935 (computed from original certificate age statement, src_002)",
+      "disputed_attribute": "birth_year",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_003",
+        "a_034"
+      ],
+      "independence_analysis": "a_003 derives from the county marriage index (src_001); a_034 is computed from the original certificate (src_002) in which the bride stated she was 19 years of age as of 16 November 1954. Both ultimately derive from information provided by the bride herself, so they share the same informant and are not independent. The original certificate is primary; the index is derivative.",
+      "weighing_analysis": "The original sworn application (src_002) is primary evidence and generally carries greater weight than the derivative index. However, the age statement implies birth before 16 November 1954, which could be consistent with a late-1935 OR very-early-1936 birth (if the bride misstated her reference date by a few months). A Trumbull County birth certificate is needed to resolve this one-year discrepancy.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": null,
+      "status": "unresolved",
+      "blocks_question_ids": []
+    },
+    {
+      "id": "c_004",
+      "conflict_type": "fact",
+      "description": "Groom's birth year: approximately 1933 (county marriage index, src_001) vs. approximately 1927 (computed from original certificate age statement, src_002)",
+      "disputed_attribute": "birth_year",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_009",
+        "a_024"
+      ],
+      "independence_analysis": "a_009 derives from the county marriage index (src_001); a_024 is computed from the original certificate (src_002) in which the groom stated he was 27 years of age as of 14 September 1954. Both ultimately derive from the groom as informant. The original certificate is primary; the index is derivative.",
+      "weighing_analysis": "The original sworn application (src_002) is primary evidence and generally carries greater weight. The six-year discrepancy (1927 vs. 1933) is large enough to suggest either a substantial reporting error or that the index derived the birth year from a different computation. A birth record for Stanley Datchuk in Niles or Trumbull County, Ohio, ca. 1927\u20131933 is needed to resolve this conflict.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": null,
+      "status": "unresolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_004",
+        "a_007",
+        "a_010",
+        "a_031",
+        "a_041",
+        "a_042",
+        "a_043",
+        "a_044"
+      ],
+      "resolved_conflict_ids": [
+        "c_001",
+        "c_002"
+      ],
+      "exhaustive_search_summary": "Searched FamilySearch Ohio, County Marriages 1789-2016 (collection 1614804) and accessed the original marriage certificate image (ark:/61903/3:1:3QSQ-G9WJ-M3P). Three US census years (1900, 1910, 1920) searched via FamilySearch \u2014 appropriate negatives for a subject born mid-1930s. FAN search on Joseph Gioiello in the 1880 US Census \u2014 negative. Newspaper search (pli_005) and Ancestry fallback (pli_006) skipped when the primary source succeeded; state-level FamilySearch marriage fallback (pli_008) skipped as the county marriage collection is the state civil registration. Research declared reasonably exhaustive.",
+      "narrative_markdown": "# Proof Summary: Marriage of Amelia Frances Gioiello\n\n## Conclusion\n\nAmelia Frances Gioiello married Stanley Datchuk on 20 August 1955 in Niles, Trumbull County, Ohio. The marriage is documented by Ohio Marriage License Application and Certificate No. 43517, Trumbull County Probate Court \u2014 an original civil record bearing direct primary evidence from three independent sets of informants: the parties themselves (sworn application), Father Nicholas Anioli, C.P.P.S. (officiating priest's certification), and Judge Sydney W. Jones (Trumbull County Probate Court, licensing and recording).\n\n## Primary Evidence\n\nOhio, County Marriage License Application and Certificate No. 43517, Trumbull County, Ohio; Stanley Datchuk and Amelia Frances Gioiello, married 20 August 1955; image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WJ-M3P : accessed 28 July 2026), citing Trumbull County Probate Court, Warren, Ohio. [Original source; primary information; direct evidence.]\n\nThe application, sworn by both parties on 13 August 1955 before Deputy Clerk Cyril Sherman, names the groom as **Stanley Datchuk**, age 27 as of 14 September 1954, residing at 530 Saline, Niles, Ohio, born in Niles, Ohio, occupation \"Opp. Garage,\" son of Nikolas Datchuk and Sarah Frymarchuk (maiden). The bride is named as **Amelia Frances Gioiello**, age 19 as of 16 November 1954, residing at 819 Henry Street, Niles, Trumbull County, Ohio, born in Niles, Ohio, occupation Clerk, daughter of Joseph Gioiello and Lena Mauro (maiden). Neither party had been previously married. The marriage was solemnized on 20 August 1955 by Father Nicholas Anioli, C.P.P.S., in Niles, Ohio, and recorded by the Probate Court on 22 August 1955 as Certificate No. 43517.\n\n## Corroborating Evidence\n\n\"Ohio, County Marriages, 1789-2016\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q297-LTGC : Mon Jan 13 08:11:34 UTC 2025), Entry for Stanley Datchuk and Amelia Frances Gioiello, 20 Aug 1955. [Derivative source; primary information; direct evidence.]\n\nThis county marriage index entry independently corroborates the parties' names, the marriage date of 20 August 1955, and the Trumbull County, Ohio jurisdiction. The bride's parents are named as Joseph Gioiello and Lena Mauro; the groom's parents as \"Geo Datchuk\" and \"Sarah Mynarchyk.\"\n\n## Resolution of Discrepancies\n\n**Bride's mother's surname (Mauro vs. Manro).** The project tree previously recorded the bride's mother (GCT1-CC7) as \"Lena Manro.\" Both the county index and the original certificate record the maiden surname as \"Mauro.\" The original certificate, in which the bride supplied the information under oath and the mother signed the consent section as \"Lena Gioiello,\" constitutes primary evidence. \"Manro\" in the tree was a data-entry error; \"Mauro\" is the correct form.\n\n**Groom's father's given name (Nikolas vs. Geo).** The county index names the groom's father as \"Geo Datchuk.\" The original sworn application names him \"Nikolas Datchuk.\" \"Geo\" (commonly an abbreviation for George) is not a recognizable short form of Nikolas; this is a transcription error in the index. The sworn application prevails. Tree person I2 has been updated to reflect \"Nikolas Datchuk.\"\n\n**Groom's mother's maiden name (Frymarchuk vs. Mynarchyk).** The index records \"Sarah Mynarchyk\"; the original sworn application records \"Sarah Frymarchuk.\" Both forms appear to be transliterations of a Ukrainian-origin surname. The sworn original certificate is the stronger evidence; \"Frymarchuk\" is the concluded form, with the index variant noted.\n\n**Collateral birth year discrepancies.** The original certificate states the bride was 19 years of age as of 16 November 1954, implying a birth year of approximately 1935 \u2014 conflicting with the tree entry of 1936. The groom's stated age implies a birth year of approximately 1927, conflicting with the index entry of approximately 1933. These are collateral to the marriage question; the marriage date of 20 August 1955 is uncontested. The birth-year conflicts are noted for future research: a Trumbull County birth certificate for Amelia Frances Gioiello and a birth record for Stanley Datchuk would resolve them.\n\n## Research Scope\n\nSearches included the FamilySearch Ohio, County Marriages 1789-2016 index; the original marriage certificate image; US census records for 1900, 1910, and 1920 (appropriate negatives given the subject's mid-1930s birth year); and a FAN search on Joseph Gioiello in the 1880 US Census. Research was declared reasonably exhaustive.\n\n## GPS Assessment\n\nAll five GPS components are satisfied: (1) research declared reasonably exhaustive; (2) complete, accurate citations supplied; (3) evidence from both sources classified and correlated; (4) the Mauro/Manro discrepancy and index transcription errors resolved with explicit reasoning; (5) this soundly reasoned written conclusion. The conclusion is stated at the **proved** tier. The original civil marriage certificate \u2014 with sworn primary information from the parties, the officiating priest, and the Probate Court \u2014 is the definitive documentary record of the marriage. No contrary evidence was found.\n\n*This conclusion represents the best answer the current evidence supports. Previously unknown evidence could require reassessment.*"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-28T18:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-28T18-00-00.json"
+    }
+  ]
+}

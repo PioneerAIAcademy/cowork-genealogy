@@ -1,0 +1,2430 @@
+{
+  "project": {
+    "id": "rp_joseph_gioiello_birth",
+    "objective": "What evidence supports the birth date and birthplace of Joseph Gioiello (GCT1-Z84)?",
+    "subject_person_ids": [
+      "GCT1-Z84"
+    ],
+    "status": "active",
+    "created": "2026-07-27",
+    "updated": "2026-07-27"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What was the birth date and birthplace of Joseph Gioiello (GCT1-Z84), who was residing in Niles, Trumbull County, Ohio by 1940?",
+      "rationale": "The project objective focuses directly on Joseph's birth date and birthplace. The tree records no birth fact for him. His Italian surname and children born in Trumbull County, Ohio from 1926 onward suggest he may have been an Italian immigrant; census and vital records for Trumbull County as well as U.S. naturalization and immigration records are the primary sources likely to record his birth information. This is the gatekeeper question for the entire project.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-28"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Trumbull County, Ohio, United States",
+          "date_range": "1940",
+          "repository": "FamilySearch",
+          "rationale": "The 1940 US Census entry for Joseph Gioiello (ARK 1:1:KWGH-G21) is already attached to the tree as source 3WM1-C77. It records his age (\u2192 birth year) and birthplace (country). Extracting this record establishes the baseline birth-year estimate and confirms whether the tree's 'Italy' birthplace is recorded. The 1940 census also records citizenship status and year of immigration, which guides the naturalization and passenger-list searches.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "military",
+          "jurisdiction": "Trumbull County, Ohio, United States",
+          "date_range": "1917-1918",
+          "repository": "FamilySearch",
+          "rationale": "WWI Draft Registration Cards (FamilySearch collection 'United States, World War I Draft Registration Cards, 1917\u20131918') explicitly state birth date and birthplace, along with citizenship/alien status. For an Italian immigrant man likely born ca. 1885\u20131900, this is often the most precise American record of his birth information. The card also records employer and nearest relative, which can corroborate identity. Search under 'Gioiello' and surname variants.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "court",
+          "jurisdiction": "Trumbull County, Ohio, United States",
+          "date_range": "1900-1945",
+          "repository": "FamilySearch",
+          "rationale": "Naturalization petitions filed after September 27, 1906, explicitly record birth date, birthplace (country and commune), port and date of arrival, and last foreign residence \u2014 the most precise birth information available from American records. Search FamilySearch 'Ohio, County Naturalization Records, 1800\u20131977' (CID 1987615, indexed + images) and 'Ohio, Naturalization Records, 1848\u20131951' (CID 5000084). Per loc_001: pre-1906 naturalizations went through Trumbull County Common Pleas Court; post-1906 went to the federal Northern District of Ohio (Eastern Division). Search both indexed collections first, then browse 'Ohio, Trumbull County Records, 1795\u20132010' (CID 2065327) if indexed search yields nothing \u2014 that collection holds ~789K images of county court records including naturalization volumes but is entirely browse-only (0% indexed).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Ohio, United States",
+          "date_range": "1920-1930",
+          "repository": "FamilySearch",
+          "rationale": "The 1920 and 1930 US censuses record age, birthplace (country), father's birthplace, mother's birthplace, year of immigration, and naturalization status. Finding Joseph in both censuses will triangulate his birth year and confirm his Italian origin. The 1920 census also gives the year of immigration, useful for targeting passenger arrival lists. Search FamilySearch under 'Gioiello' in Ohio.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "United States",
+          "date_range": "1900-1910",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 and 1910 US censuses record birth year (month/year in 1900), birthplace, immigration year, and years in the US. If Joseph arrived before 1910, these censuses may catch him shortly after immigration, giving a more reliable age statement when the respondent was younger. Also search neighboring counties (Mahoning) and states (Pennsylvania) in case he had not yet moved to Trumbull. Fallback to pli_004 if he does not appear in 1920\u20131930.",
+          "fallback_for": "pli_004",
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "immigration",
+          "jurisdiction": "United States",
+          "date_range": "1890-1920",
+          "repository": "FamilySearch",
+          "rationale": "Post-1906 steerage manifests (Form 500) record the immigrant's birthplace, last residence, nearest relative in country of origin, and destination contact in the US \u2014 the most specific geographic data available for identifying the exact Italian commune of origin. Search FamilySearch 'United States, Passenger and Crew Lists, 1882\u20131963' under 'Gioiello' and surname variants. The immigration year from the 1920/1940 censuses (pli_004, pli_001) will narrow the date range. Also search Ancestry New York Passenger Lists as a fallback.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "military",
+          "jurisdiction": "Trumbull County, Ohio, United States",
+          "date_range": "1942",
+          "repository": "FamilySearch",
+          "rationale": "The WWII 'Old Man's Draft' (Form 4, October 16, 1942) covers men born April 28, 1877 \u2013 February 16, 1897 and explicitly records birth date and birthplace. If Joseph's birth year falls in that range (consistent with children born 1926\u20131936 and wife born 1902), this card provides a second direct statement of birth date and place. Search FamilySearch 'United States, World War II Draft Registration Cards, 1942' (the Fourth Registration). Fallback if WWI draft card (pli_002) is not found or ambiguous.",
+          "fallback_for": "pli_002",
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "Ohio, United States",
+          "date_range": "1908-1970",
+          "repository": "FamilySearch",
+          "rationale": "Joseph Gioiello's Ohio death certificate (when/if found) names his birthplace and parents \u2014 secondary information, since the informant may not know exact Italian town, but it corroborates the country and provides a birth year estimate. Search FamilySearch 'Ohio, Deaths, 1908\u20131953' (CID 1307272, indexed + images) and 'Ohio, Death Index, 1908\u20132007' (CID 1949341). Also search Ohio Death Index on Ancestry. Death is not yet recorded in the tree with a date or place, so this search also fills the death record gap.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "vital_record",
+          "jurisdiction": "Trumbull County, Ohio, United States",
+          "date_range": "1926-1940",
+          "repository": "FamilySearch",
+          "rationale": "FAN search: Ohio birth certificates for Joseph's children (Concetta b. 1926, Carmen b. 1928, Neil b. 1929, Amelia b. 1936) list the father's birthplace. Search FamilySearch 'Ohio, County Births, 1841\u20132003' (CID 1932106) for each child. The father's birthplace field on these records reflects what was reported near the time of birth, potentially more accurate than later documents. The marriage records for the children (already in tree) may also list Joseph's birthplace as a witness field \u2014 extract those records as part of this step.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T07:27:13.262Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Joseph",
+        "residenceYearFrom": 1940,
+        "residenceYearTo": 1940,
+        "residencePlace": "Trumbull, Ohio, United States",
+        "collectionId": "2000219",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 3,
+      "notes": "Found Joseph Gioiello (ark:/61903/1:1:KWGH-G21), b. 1898, residing Niles, Weathersfield Township, Trumbull, Ohio with wife Lena and 4 children. Birthplace indexed as 'South America' (raw value); standardized to 'United States'. No immigration year recorded. Record already attached to tree subject GCT1-Z84 as source 3WM1-C77. The 'South America' birthplace is highly anomalous for the Gioiello surname and may be an indexing error \u2014 original image review needed."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T07:27:13.267Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Joseph",
+        "recordType": "military",
+        "recordCountry": "United States",
+        "recordSubdivision": "Ohio",
+        "birthYearFrom": 1883,
+        "birthYearTo": 1903,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1,
+      "notes": "Only result was James J Lichiello \u2014 irrelevant. No Joseph Gioiello WWI draft card in Ohio-scoped military search."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T07:27:13.272Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Joseph",
+        "collectionId": "1968530",
+        "birthYearFrom": 1883,
+        "birthYearTo": 1903,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 34,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 34,
+      "notes": "34 results for Gioiello in WWI draft CID 1968530 (nationwide). None matched Joseph Gioiello of Trumbull County, Ohio. May indicate non-registration (alien exemption), card not yet digitized/indexed, or surname variant not yet tried. Consistent with the 1940 census 'South America' birthplace if he was a foreign national at draft registration time."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T07:27:13.280Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Joseph",
+        "collectionId": "1987615",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Joseph Gioiello in FamilySearch Ohio County Naturalization Records 1800-1977 (CID 1987615). Consistent with either US/South American birth (no need to naturalize) or records not indexed."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T07:27:13.281Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Joseph",
+        "collectionId": "5000084",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Joseph Gioiello in FamilySearch Ohio Naturalization Records 1848-1951 (CID 5000084). Together with the CID 1987615 negative, no Ohio naturalization record located for subject. Given 'South America' birthplace in 1940 census (if accurate), he may have been born in the Americas and never naturalized as a foreign national."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T07:27:13.281Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Joseph",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "recordCountry": "United States",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 72,
+      "notes": "72 total results for Gioiello in 1920 census (nationwide). None identified as Joseph Gioiello in Ohio. May indicate he was not yet in the US in 1920, or indexed under variant spelling not tried, or he was a lodger/boarder whose name was misindexed."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T07:27:13.299Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Joseph",
+        "residenceYearFrom": 1930,
+        "residenceYearTo": 1930,
+        "recordCountry": "United States",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 96,
+      "notes": "96 total results for Gioiello in 1930 census (nationwide). None identified as Joseph Gioiello. Absence from both 1920 and 1930 censuses is significant \u2014 either he arrived after 1930, was indexed under a variant, or was enumerated as part of another household with a different head surname (e.g., a relative's or employer's household). The 1940 census with wife Lena and 4 children (youngest born 1936) suggests he was in Ohio by at least the early 1930s."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T07:30:53.601Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Giorello",
+        "givenName": "Joseph",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "recordCountry": "United States",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 3123,
+      "notes": "Variant spelling 'Giorello' for 1920 census. 3123 results but all are fuzzy matches (Fiorello, Fiorilla, Fiorella, Fiorio, etc.) \u2014 none are actual Giorello or Gioiello in Ohio. Subject absent from 1920 census in this variant as well. No Giorello-spelled records in Ohio."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T07:30:53.620Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Giorello",
+        "givenName": "Joseph",
+        "residenceYearFrom": 1930,
+        "residenceYearTo": 1930,
+        "recordCountry": "United States",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 3549,
+      "notes": "Variant spelling 'Giorello' for 1930 census. Top result 'Joe Giorello' b.1888 Italy immigration 1908 in Manhattan \u2014 different person. No Joseph Gioiello/Giorello in Ohio in 1930. Subject absent from both 1920 and 1930 US census in all searched variants: exact spelling, Giorello variant. Consistent with possible post-1930 US arrival or indexed under an unidentified variant."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-28T07:30:53.640Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Joseph",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "recordCountry": "United States",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 1634,
+      "notes": "Broad search including 1910 census and other collections. No Joseph Gioiello in any 1910 census records. KEY FINDS from other collections in these results: (1) Ohio Death Index (CID 1949341): 'Guisepp Gioiello' b.1899, residence Niles, Trumbull, Ohio, died 6 Feb 1984 Youngstown, Mahoning, Ohio, widowed \u2014 strong candidate for subject GCT1-Z84 (birth year 1 year off from 1940 census, same unique surname, same Niles Trumbull Ohio residence); (2) NY Book Indexes to Passenger Lists: 'Guiseppe Gioiello' arriving NY 1911 \u2014 candidate for subject's immigration event; (3) Giuseppina Gioiello from Volturara, Salerno, Italy arriving Ellis Island 22 April 1914 \u2014 possible relative. Joseph likely not in US for 1910 census; the 1911 passenger list entry supports arrival between 1910 and 1920."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-28T07:39:26.846Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "FamilySearch 'Ohio, County Births, 1841-2003' (CID 1932106)",
+        "givenName": "Neil",
+        "surname": "Gioiello",
+        "birthYearFrom": 1928,
+        "birthYearTo": 1930,
+        "collectionId": 1932106
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Neil Gioiello (b. ~1929) in Ohio County Births CID 1932106. Collection may have poor coverage for Trumbull County births of this era."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-28T07:39:26.846Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "FamilySearch 'Ohio, County Births, 1841-2003' (CID 1932106)",
+        "givenName": "Concetta",
+        "surname": "Gioiello",
+        "birthYearFrom": 1925,
+        "birthYearTo": 1927,
+        "collectionId": 1932106
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Concetta Gioiello (b. ~1926) in Ohio County Births CID 1932106."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-28T07:39:26.846Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "FamilySearch 'Ohio, County Births, 1841-2003' (CID 1932106)",
+        "surname": "Gioiello",
+        "birthYearFrom": 1926,
+        "birthYearTo": 1937,
+        "collectionId": 1932106
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 10,
+      "notes": "10 results for surname-only Gioiello search in Ohio County Births 1926-1937 \u2014 all fuzzy-match noise (Palaciello, Galiamello, etc.), no actual Gioiello records. Ohio County Births appears to have no indexed coverage of Gioiello children in Trumbull County for this period."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-28T07:39:26.854Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "FamilySearch passenger/immigration records (Ellis Island 1892-1925)",
+        "givenName": "Giuseppe",
+        "surname": "Gioiello",
+        "recordCountry": "United States",
+        "immigrationYearFrom": 1905,
+        "immigrationYearTo": 1921
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 325,
+      "notes": "Top candidate: ark:/61903/1:1:J6ND-1PY \u2014 Giuseppe Gioiello, b. 1898, arrived Ellis Island 19 April 1921 from Corleto Monforte, Italy. Birth year exactly matches the 1940 census estimate (~1898). April 1921 arrival explains absence from January 1920 census. Origin listed as 'Italian South'. Image at ark:/61903/3:1:3Q9M-C95R-JX89. GCT1-Z84 unresolvable for automated matching (no birth fact in tree). This Italian origin contradicts the 1940 census 'South America' birthplace \u2014 requires conflict resolution. Subject may have been born in South America to Italian parents or 1940 census entry may be in error."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-28T07:39:26.862Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "FamilySearch 'United States, World War II Draft Registration Cards, 1942' (CID 1861144, Old Man's Draft)",
+        "givenName": "Joseph",
+        "surname": "Gioiello",
+        "collectionId": 1861144
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 211,
+      "notes": "Old Man's Draft (CID 1861144) covers men born April 28, 1877 \u2013 February 16, 1897. Joseph Gioiello b. ~1898/1899 falls OUTSIDE this range \u2014 plan item not applicable. Top results were unrelated Gioiello men (Guiseppe L, b. 1888 Queens NY; Gabrale, b. 1896 New Orleans). No Joseph Gioiello of Trumbull Ohio found, as expected given the birth year."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-28T07:45:10.019Z",
+      "tool": "image_read",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3Q9M-C95R-JX89",
+        "description": "S.S. CANADA manifest List 38, Ellis Island 1921 \u2014 row for Giuseppe/Cioiello Gioiello"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Manifest image confirmed: Line 9 \u2014 CIOIELLO GIUSEPPE, age 23, male, single, peasant, ITALY / SO ITALIAN, birthplace ITALY / CORLETO MONFORTE (via ditto from line 8), last permanent residence ITALY / CORLETO MONFORTE, destination OHIO NILES. Nearest relative in old country: mother MORDENTE CONCETTA at Corleto Monforte. NO South American references anywhere on this manifest page. The '1940 census South America' entry is contradicted by this direct primary record \u2014 likely a census enumerator or indexing error. This manifest is original and primary for birthplace: Italy, Corleto Monforte, Salerno province."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T07:45:29.302Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "FamilySearch 'Ohio, County Naturalization Records, 1800-1977' (CID 1987615)",
+        "givenName": "Joseph",
+        "surname": "Gioiello",
+        "collectionId": 1987615
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Consistent with 1940 census recording Joseph as alien (not naturalized). No Gioiello naturalization record in Ohio County Naturalization Records."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T07:45:29.302Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "FamilySearch 'Ohio, Naturalization Records, 1848-1951' (CID 5000084)",
+        "givenName": "Joseph",
+        "surname": "Gioiello",
+        "collectionId": 5000084
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Joseph Gioiello did not naturalize through the Ohio statewide records either."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-28T07:47:08.570Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gioiello",
+        "givenName": "Joseph",
+        "residenceYearFrom": 1950,
+        "residenceYearTo": 1950,
+        "residencePlace": "Ohio, United States",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 295,
+      "notes": "Top match (rank 1 after scoring): ark:/61903/1:1:61FJ-GFSD \u2014 Joseph Gioiello named in Neil J Gioiello obituary (2014-2023), not yet attached to subject. Rank 2 (already attached): ark:/61903/1:1:6XB7-R191 \u2014 1950 census, Joseph Gioiello b.1898, Niles Weathersfield Twp Trumbull Ohio, Steel Catcher, already attached. Birthplace indexed as 'United States' (cf. 1940 census 'South America') \u2014 both non-Italy indexings likely reflect census enumerator/indexer uncertainty about foreign birthplace. Also found Ohio Death Index ark:/61903/1:1:VKB2-FT4 in these results: Guisepp Gioiello b.1899 d.6 Feb 1984 Youngstown Mahoning Ohio, residence Niles Trumbull."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-28T07:48:24.230Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:61FJ-GFSD",
+        "description": "Neil J Gioiello obituary 2018 \u2014 Joseph Gioiello named as parent"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Obituary for Neil J Gioiello (b. 3 Sep 1929, d. 16 Oct 2018) names 'Guiseppi Gioiello' as parent (ParentChild relationship in record) and 'Pasqualina Mauro Gioiello' as the other parent. Confirms Joseph/Guiseppi = subject GCT1-Z84; confirms Pasqualina Mauro = Lena Manro (GCT1-CC7), same person. No birthplace data for Guiseppi in structured fields. FAN record \u2014 confirms family network but does not add to birth date/place evidence. Source: 'United States, Obituary Records, 2014-2023' ark:/61903/1:1:61FJ-GFSD."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-28T07:48:24.230Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6XB7-R191",
+        "description": "1950 census Joseph Gioiello household, Niles Trumbull Ohio"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "1950 census confirms: Joseph Gioiello (Steel Catcher), b. 1898, birthplace 'South America' (AGAIN \u2014 same as 1940 census). Wife Pasqualina Gioiello (b. 1903 Chicago = Lena Manro GCT1-CC7). Children: Concetta I (b.1927 Ohio), Neil M (b.1930 Ohio), Amelia (b.1936 Ohio). Household at Niles, Weathersfield Township, Trumbull, Ohio. The 1950 census independently repeats 'South America' \u2014 this is now TWO census records vs. ONE Ellis Island manifest saying Italy. Either both censuses reflect what Joseph himself reported, or BOTH reflect the same enumerator idiom ('South America' for 'Southern Italy'). Critical conflict evidence."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-28T07:49:47.629Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:VKB2-FT4",
+        "description": "Ohio Death Index entry for Guisepp Gioiello d. 6 Feb 1984"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Ohio Death Index: Guisepp Gioiello (= Giuseppe = Joseph), b. 1899, died 6 February 1984, Youngstown, Mahoning, Ohio. Residence: Niles, Trumbull, Ohio. Marital status: Widowed. Race: White. Birth year 1899 vs. census estimate of 1898 \u2014 one year off, within rounding. Unique surname Gioiello + exact Niles Trumbull Ohio residence = high confidence same person as GCT1-Z84. Death index does not include birthplace. The underlying death certificate (Ohio 1984) would likely contain birthplace \u2014 not yet retrieved."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"New York, Passenger Arrival Lists (Ellis Island), 1892-1925,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:J6ND-1PY : accessed 28 July 2026), entry for Giuseppe Gioiello, S.S. Canada, arriving Ellis Island 19 April 1921, manifest list 38, line 9.",
+      "citation_detail": {
+        "who": "Giuseppe Gioiello (CIOIELLO GIUSEPPE on manifest)",
+        "what": "Passenger manifest, S.S. Canada, sailing Naples 6 April 1921, manifest list 38, line 9",
+        "when_created": "April 1921",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch, \"New York, Passenger Arrival Lists (Ellis Island), 1892-1925\"",
+        "where_within": "Manifest list 38, line 9; image ARK ark:/61903/3:1:3Q9M-C95R-JX89"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:J6ND-1PY",
+      "notes": "Surname recorded as 'CIOIELLO' on the manifest (initial C, not G) \u2014 a handwriting/transcription variant of Gioiello. FamilySearch index standardizes to 'Gioiello'. Image ARK: ark:/61903/3:1:3Q9M-C95R-JX89.",
+      "log_entry_id": "log_014",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States, Census, 1940,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KWGH-G21 : accessed 28 July 2026), entry for Joseph Gioiello household, Niles, Weathersfield Township, Trumbull, Ohio; citing NARA digital publication T627, roll 3179.",
+      "citation_detail": {
+        "who": "Joseph Gioiello household",
+        "what": "1940 United States Federal Census, population schedule",
+        "when_created": "13 April 1940",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KWGH-G21)",
+        "where_within": "Niles, Weathersfield Township, Trumbull County, Ohio"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KWGH-G21",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States, Census, 1950,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6XB7-R191 : accessed 28 July 2026), entry for Joseph Gioiello, Niles, Weathersfield Township, Trumbull, Ohio; dwelling of Pasqualina Gioiello, 13 April 1950.",
+      "citation_detail": {
+        "who": "Joseph Gioiello",
+        "what": "United States Federal Census, 1950",
+        "when_created": "13 April 1950",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Niles, Weathersfield Township, Trumbull County, Ohio; household of Pasqualina Gioiello"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6XB7-R191",
+      "log_entry_id": "log_021",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Ohio, Death Index, 1908-1932, 1938-1944, and 1958-2007,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VKB2-FT4 : accessed 28 July 2026), entry for Guisepp Gioiello, died 6 February 1984, Youngstown, Mahoning, Ohio.",
+      "citation_detail": {
+        "who": "Guisepp [Giuseppe] Gioiello",
+        "what": "Ohio Death Index, 1908-1932, 1938-1944, and 1958-2007",
+        "when_created": "compiled from death records, deaths 1958-2007",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Entry for Guisepp Gioiello, 6 February 1984"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VKB2-FT4",
+      "notes": "Original not examined \u2014 this is a compiled death index (derivative); the underlying Ohio death certificate was not accessed. The index may omit or alter fields present in the original certificate.",
+      "log_entry_id": "log_022",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "name",
+      "value": "CIOIELLO GIUSEPPE (manifest spelling; indexed as Giuseppe Gioiello)",
+      "structured_value": {
+        "given": "Giuseppe",
+        "surname": "Gioiello"
+      },
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "immigration",
+      "value": "Arrived Ellis Island, New York, 19 April 1921 on S.S. Canada sailing from Naples",
+      "date": "19 April 1921",
+      "date_certainty": "exact",
+      "place": "Ellis Island, New York City, New York, United States",
+      "standard_place": "Ellis Island, New York City, New York, United States",
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "age",
+      "value": "23",
+      "structured_value": {
+        "age": 23
+      },
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "birth",
+      "value": "Birth year approximately 1898, computed from stated age 23 at arrival April 1921",
+      "date": "~1898",
+      "date_certainty": "estimated",
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year ~1898 is computed from stated age 23 at arrival April 1921. The emigrant stated the age; the year is the researcher's arithmetic. A person cannot provide primary information about their own birth year with certainty.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "birth",
+      "value": "Corleto Monforte, Italy (via 'ditto' from line 8 above on manifest)",
+      "place": "Corleto Monforte, Italy",
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace column reads 'ditto' referencing the entry on line 8 above (Babbino Gabriele), whose birthplace is Corleto Monforte, Italy. The emigrant supplied this information at port of arrival.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_001",
+      "standard_place": "Corleto Monforte, Salerno, Campania, Italy"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "residence",
+      "value": "Corleto Monforte, Italy (last permanent residence before emigration)",
+      "place": "Corleto Monforte, Italy",
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_001",
+      "standard_place": "Corleto Monforte, Salerno, Campania, Italy"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "occupation",
+      "value": "Peasant",
+      "structured_value": {
+        "occupation": "Peasant"
+      },
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "nationality",
+      "value": "Italy, Southern Italian (SO ITALIAN)",
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "destination",
+      "value": "Niles, Ohio",
+      "place": "Niles, Ohio",
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_001",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_104064220970",
+      "record_role": "relative_in_origin_country_1",
+      "fact_type": "name",
+      "value": "MORDENTE CONCETTA (manifest); indexed as Congetta Mordente",
+      "structured_value": {
+        "given": "Concetta",
+        "surname": "Mordente"
+      },
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The emigrant named his nearest relative in his homeland as his mother, Mordente Concetta, at Corleto Monforte. He would know his mother's name firsthand. Manifest spelling 'Congetta' is an alternate spelling of 'Concetta'.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_104064220970",
+      "record_role": "relative_in_origin_country_1",
+      "fact_type": "residence",
+      "value": "Corleto Monforte, Italy (mother's residence at time of emigrant's departure)",
+      "place": "Corleto Monforte, Italy",
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The emigrant stated his mother resided at Corleto Monforte at the time of his departure. He would have firsthand knowledge of his mother's residence.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_001",
+      "standard_place": "Corleto Monforte, Salerno, Campania, Italy"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:J6ND-1PY",
+      "record_persona_id": "p_12722210817",
+      "record_role": "passenger",
+      "fact_type": "relationship",
+      "value": "child of Mordente Concetta (stated \u2014 named as nearest relative in homeland on passenger manifest)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "relative_in_origin_country_1"
+      },
+      "information_quality": "primary",
+      "informant": "Giuseppe Gioiello (the emigrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_014",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856429",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Joseph Gioiello",
+      "structured_value": {
+        "given": "Joseph",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856429",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856429",
+      "record_role": "head_of_household",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856429",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "42",
+      "structured_value": {
+        "year": "1898"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856429",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born circa 1898",
+      "date": "~1898",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year derived by subtracting stated age (42) from census year (1940). The enumerator did not record who answered; could be Joseph himself, his wife Lena, or another household member. Birth year is an inference from age, not a stated fact.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856429",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "South America",
+      "place": "South America",
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The census image and index both read 'South America' as written by the enumerator. FamilySearch standardized this to 'United States,' which is almost certainly erroneous \u2014 the enumerator's original entry states South America. Joseph's alien (non-naturalized) citizenship status is consistent with foreign birth. The standardized place has been suppressed in favor of the stated value. Corroborating records (passenger arrival, naturalization) are needed to determine the specific country of birth.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856429",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Niles, Weathersfield Township, Trumbull, Ohio",
+      "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+      "date": "1940",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856429",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Same Place (Niles, Trumbull, Ohio) in 1935",
+      "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+      "date": "1935",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The 1935 residence column reads 'Same Place,' meaning the household was already at this Niles address five years prior. Enumerator recorded this from household respondent's statement.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856429",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856429",
+      "record_role": "head_of_household",
+      "fact_type": "citizenship_status",
+      "value": "Alien (not naturalized)",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Census citizenship column indicates Joseph was a non-naturalized alien as of 1940, corroborating the foreign-birth claim ('South America'). No immigration year recorded on this enumeration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856430",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Lena Gioiello",
+      "structured_value": {
+        "given": "Lena",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856430",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856430",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born circa 1902",
+      "date": "~1902",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year derived from stated age; enumerator did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856430",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Illinois",
+      "place": "Illinois",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Illinois, United States"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856430",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Niles, Weathersfield Township, Trumbull, Ohio",
+      "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+      "date": "1940",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856430",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Joseph Gioiello",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1940 census included an explicit relationship-to-head column; 'wife' was stated, not inferred from position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856431",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Constance Gioiello",
+      "structured_value": {
+        "given": "Constance",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Indexed as 'Constance'; the tree records this person as Concetta Immaculate Gioiello (GBX4-XL8) \u2014 the index may be a transcription of a nickname or variant spelling. Image confirmation recommended.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856431",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856431",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born circa 1927",
+      "date": "~1927",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from age; enumerator did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856431",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Ohio",
+      "place": "Ohio",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856431",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Niles, Weathersfield Township, Trumbull, Ohio",
+      "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+      "date": "1940",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856431",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Joseph Gioiello",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1940 census relationship column stated; 'daughter' to head.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856432",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Carmen Gioiello",
+      "structured_value": {
+        "given": "Carmen",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856432",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856432",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born circa 1928",
+      "date": "~1928",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from age; enumerator did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856432",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Ohio",
+      "place": "Ohio",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856432",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Niles, Weathersfield Township, Trumbull, Ohio",
+      "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+      "date": "1940",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856432",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Joseph Gioiello",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1940 census relationship column stated; 'son' to head.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856433",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Neil Gioiello",
+      "structured_value": {
+        "given": "Neil",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856433",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856433",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born circa 1929",
+      "date": "~1929",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from age; enumerator did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856433",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "Ohio",
+      "place": "Ohio",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856433",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Niles, Weathersfield Township, Trumbull, Ohio",
+      "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+      "date": "1940",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856433",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Joseph Gioiello",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1940 census relationship column stated; 'son' to head.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856434",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "Amielia Gioiello",
+      "structured_value": {
+        "given": "Amielia",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Indexed spelling 'Amielia'; tree records this person as Amelia Frances Gioiello (GCT1-F3Q). Likely a transcription variant.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856434",
+      "record_role": "child_4",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856434",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born circa 1936",
+      "date": "~1936",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from age; enumerator did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856434",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "Ohio",
+      "place": "Ohio",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856434",
+      "record_role": "child_4",
+      "fact_type": "residence",
+      "value": "Niles, Weathersfield Township, Trumbull, Ohio",
+      "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+      "date": "1940",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:KWGH-G21",
+      "record_persona_id": "p_14014856434",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Joseph Gioiello",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1940 census relationship column stated; 'daughter' to head.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Joseph Gioiello",
+      "structured_value": {
+        "given": "Joseph",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born about 1898",
+      "structured_value": {
+        "year": "1898"
+      },
+      "date": "~1898",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birth year computed from age reported in 1950 census; the enumerator did not record who answered, so the household respondent is unknown.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "South America",
+      "place": "South America",
+      "standard_place": null,
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Raw census entry records birthplace as 'South America'; FamilySearch index incorrectly standardized this as 'United States'. Raw record value used here. Conflicts with other records \u2014 corroboration needed. Standard place set to null to avoid accepting the erroneous geocoding.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Steel Catcher",
+      "structured_value": {
+        "occupation": "Steel Catcher"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "head_of_household",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+      "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+      "date": "13 April 1950",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "spouse of Pasqualina Gioiello (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Spousal relationship inferred from co-residence and listing as head with wife in same household.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Pasqualina Gioiello",
+      "structured_value": {
+        "given": "Pasqualina",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born about 1903",
+      "structured_value": {
+        "year": "1903"
+      },
+      "date": "~1903",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birth year computed from age in 1950 census; enumerator did not record who answered.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Chicago, Illinois",
+      "place": "Chicago",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003",
+      "standard_place": "Chicago, Cook, Illinois, United States"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Concetta I Gioiello",
+      "structured_value": {
+        "given": "Concetta I",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born about 1927",
+      "structured_value": {
+        "year": "1927"
+      },
+      "date": "~1927",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birth year computed from age in census.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Ohio",
+      "place": "Ohio",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Joseph Gioiello (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Parent-child relationship inferred from household position.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Pasqualina Gioiello (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Parent-child relationship inferred from household position.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Neil M Gioiello",
+      "structured_value": {
+        "given": "Neil M",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born about 1930",
+      "structured_value": {
+        "year": "1930"
+      },
+      "date": "~1930",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birth year computed from age in census.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Ohio",
+      "place": "Ohio",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Joseph Gioiello (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Parent-child relationship inferred from household position.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Pasqualina Gioiello (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Parent-child relationship inferred from household position.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Amelia Gioiello",
+      "structured_value": {
+        "given": "Amelia",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born about 1936",
+      "structured_value": {
+        "year": "1936"
+      },
+      "date": "~1936",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birth year computed from age in census.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "Ohio",
+      "place": "Ohio",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_021",
+      "source_id": "src_003",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Joseph Gioiello (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Parent-child relationship inferred from household position.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:6XB7-R191",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Pasqualina Gioiello (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Parent-child relationship inferred from household position.",
+      "log_entry_id": "log_021",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:VKB2-FT4",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Guisepp Gioiello",
+      "structured_value": {
+        "given": "Guisepp",
+        "surname": "Gioiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Name appears as 'Guisepp' (variant of Giuseppe/Joseph). Index compiler is not the informant for biographical facts; the underlying informant on the original death certificate is unknown from this derivative source.",
+      "log_entry_id": "log_022",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:VKB2-FT4",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_022",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:VKB2-FT4",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "6 February 1984, Youngstown, Mahoning, Ohio",
+      "place": "Youngstown, Mahoning, Ohio, United States",
+      "date": "6 February 1984",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Death date and place from a compiled index (derivative source); the informant on the original death certificate is not identified in this index. Classified secondary because the underlying informant's proximity to the death event cannot be verified from the derivative alone; the original certificate would clarify whether the attending physician or a family member attested this.",
+      "log_entry_id": "log_022",
+      "source_id": "src_004",
+      "standard_place": "Youngstown, Mahoning, Ohio, United States"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:VKB2-FT4",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born about 1899",
+      "structured_value": {
+        "year": "1899"
+      },
+      "date": "~1899",
+      "date_certainty": "estimated",
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birth year from death index; the underlying informant likely did not witness the decedent's birth. Conflicts with 1950 census estimate of ~1898. The original death certificate should be sought to identify the informant and verify the year.",
+      "log_entry_id": "log_022",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:VKB2-FT4",
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "value": "Niles, Trumbull, Ohio, United States",
+      "place": "Niles, Trumbull, Ohio, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_022",
+      "source_id": "src_004",
+      "standard_place": "Niles, Trumbull, Ohio, United States"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:VKB2-FT4",
+      "record_role": "deceased",
+      "fact_type": "marital_status",
+      "value": "Widowed",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_022",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:VKB2-FT4",
+      "record_role": "deceased",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_022",
+      "source_id": "src_004"
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Ohio, United States",
+      "for_place": "Trumbull County, Ohio",
+      "time_period": "1880-1950",
+      "jurisdictions": [
+        {
+          "name": "Trumbull, Ohio, United States",
+          "date_range": "1803\u2013present"
+        },
+        {
+          "name": "Trumbull, Northwest Territory, United States",
+          "date_range": "1800\u20131803"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1932106",
+          "title": "Ohio, County Births, 1841-2003",
+          "date_range": "1841-2003"
+        },
+        {
+          "id": "1680845",
+          "title": "Ohio, Births and Christenings, 1821-1962",
+          "date_range": "1821-1962"
+        },
+        {
+          "id": "2373709",
+          "title": "Ohio, Church and Civil Births and Baptisms, 1765-1947",
+          "date_range": "1765-1947"
+        },
+        {
+          "id": "2128172",
+          "title": "Ohio, County Death Records, 1840-2001",
+          "date_range": "1840-2001"
+        },
+        {
+          "id": "1307272",
+          "title": "Ohio, Deaths, 1908-1953",
+          "date_range": "1908-1953"
+        },
+        {
+          "id": "1949341",
+          "title": "Ohio, Death Index, 1908-2007",
+          "date_range": "1908-2007"
+        },
+        {
+          "id": "1614804",
+          "title": "Ohio, County Marriages, 1789-2016",
+          "date_range": "1789-2016"
+        },
+        {
+          "id": "1987615",
+          "title": "Ohio, County Naturalization Records, 1800-1977",
+          "date_range": "1800-1977"
+        },
+        {
+          "id": "5000084",
+          "title": "Ohio, Naturalization Records, 1848-1951",
+          "date_range": "1848-1951"
+        },
+        {
+          "id": "2110746",
+          "title": "Ohio, Northern District, Eastern Division, Naturalization Index, 1855-1967",
+          "date_range": "1855-1967"
+        },
+        {
+          "id": "2065327",
+          "title": "Ohio, Trumbull County Records, 1795-2010",
+          "date_range": "1795-2010"
+        },
+        {
+          "id": "2787827",
+          "title": "Ohio, Church Records, 1762-2008",
+          "date_range": "1762-2008"
+        },
+        {
+          "id": "1494476",
+          "title": "Ohio, Diocese of Toledo, Catholic Parish Records, 1796-2004",
+          "date_range": "1796-2004"
+        },
+        {
+          "id": "3937280",
+          "title": "Ohio, Voter Records, 1893-1960",
+          "date_range": "1893-1960"
+        },
+        {
+          "id": "3039663",
+          "title": "Ohio, WWI Index and Return Cards, 1916-1920",
+          "date_range": "1916-1920"
+        },
+        {
+          "id": "3029263",
+          "title": "Ohio, World War I, Enrollment Cards, 1914-1920",
+          "date_range": "1914-1920"
+        }
+      ],
+      "quirks": [
+        "Ohio county-level birth and death registration began 1867; statewide registration began December 20, 1908. Compliance before 1908 was incomplete \u2014 births before that date may be unregistered.",
+        "FamilySearch collection 'Ohio, Trumbull County Records, 1795-2010' (CID 2065327) holds ~789K images including naturalization and court records but is entirely browse-only (0 records indexed) \u2014 access via Collection Browse Page, selecting Record Category then Volume.",
+        "The early Trumbull County naturalization volumes labeled 'Certificates of Naturalization vol 1, 1859\u20131874' are actually Declarations of Intention, not final papers.",
+        "Naturalization before September 27, 1906 could be filed in any court; most Trumbull County naturalizations went through the county Common Pleas Court. After 1906, federal courts (Northern District of Ohio, Eastern Division) handled petitions \u2014 search both county and federal collections.",
+        "WWI Draft Registration Cards (1917\u20131918) routinely record birth date, birthplace, and citizenship/alien status for men born ca. 1872\u20131900 \u2014 an essential source for Italian immigrant birthplace evidence.",
+        "WWII Old Man's Draft (Form 4, October 1942) covers men born April 28, 1877\u2013February 16, 1897 and records birthplace.",
+        "Niles, Ohio (Joseph's 1940 residence) was in the Diocese of Cleveland until 1943, then the Diocese of Youngstown. Catholic baptism and marriage records for the Niles area may be in individual parish registers, many not yet digitized at FamilySearch.",
+        "FamilySearch 'Ohio, Northern District, Eastern Division, Naturalization Index, 1855\u20131967' (CID 2110746) has images only \u2014 no name index; must be browsed.",
+        "Italian immigrants to northeast Ohio's steel and industrial corridor arrived primarily 1890\u20131915; Trumbull County (including Niles and Warren) was a major destination. Passenger arrival records at New York (Ellis Island) are the primary port-of-entry source."
+      ],
+      "guide_markdown": "## Trumbull County, Ohio \u2014 Locality Guide\n### Birth Records and Immigration/Naturalization, 1880\u20131950\n\n**Jurisdiction:** Trumbull County, Ohio (county seat: Warren). Organized July 10, 1800 from Jefferson and Wayne counties (then Northwest Territory); entered Ohio statehood 1803. No county splits since then; one continuous jurisdiction throughout the 1880\u20131950 research window.\n\n---\n\n### Birth Records\n\nOhio county-level birth registration began **1867**; statewide registration began **December 20, 1908**. Compliance before 1908 was incomplete \u2014 births before that date are frequently unregistered.\n\n| Collection | Access | Notes |\n|---|---|---|\n| Ohio, County Births, 1841\u20132003 (FS CID 1932106) | Indexed + images | Primary FamilySearch resource; 4M+ records |\n| Ohio, Births and Christenings, 1821\u20131962 (FS CID 1680845) | Index only | No images |\n| Ohio, Church and Civil Births and Baptisms, 1765\u20131947 (FS CID 2373709) | Indexed + images | Smaller set (~3K records) |\n\nPre-1908 originals: Trumbull County Archives, Warren, OH \u2014 alphabetical card index for 1867\u20131908. Post-1908: Ohio Dept of Health.\n\n---\n\n### Death Records\n\n| Collection | Access | Notes |\n|---|---|---|\n| Ohio, County Death Records, 1840\u20132001 (FS CID 2128172) | Indexed + images | 2M+ records |\n| Ohio, Deaths, 1908\u20131953 (FS CID 1307272) | Indexed + images | 3.5M records; state-registered |\n| Ohio, Death Index, 1908\u20132007 (FS CID 1949341) | Index only | No images |\n\nOhio Historical Society holds death certificates 1908\u20131944. Ohio Dept of Health holds post-1954.\n\n---\n\n### Census Records\n\nAll federal censuses 1880\u20131950 available via FamilySearch and Ancestry. Trumbull County 1900 census volumes are 96\u201397% name-indexed on FamilySearch. Census entries list age (\u2192 birth year), birthplace, and parents' birthplace \u2014 essential for an Italian immigrant.\n\n---\n\n### Naturalization Records (KEY for Italian immigrant birthplace)\n\nNaturalization before Sept 27, 1906 could be filed in any court; most Trumbull County filings went through the County Common Pleas Court. After 1906, the federal Northern District of Ohio (Eastern Division) handled petitions. Petitions post-1906 include birth date, birthplace, port of arrival, and date of arrival.\n\n| Collection | Access | Notes |\n|---|---|---|\n| Ohio, County Naturalization Records, 1800\u20131977 (FS CID 1987615) | Indexed + images | 1.9M records; includes Trumbull County court filings |\n| Ohio, Naturalization Records, 1848\u20131951 (FS CID 5000084) | Indexed + images | 783K records |\n| Ohio, Northern District, Eastern Division, Naturalization Index, 1855\u20131967 (FS CID 2110746) | Browse-only (images only) | No name index; federal court filings post-1906 |\n| Ohio, Trumbull County Records, 1795\u20132010 (FS CID 2065327) | Browse-only (~789K images) | Contains naturalization, marriage, court records; 0 records indexed; access via Collection Browse Page |\n\nFS Catalog: 'Trumbull County, naturalization records, 1855\u20131985' (catalog 2109650).\n\n**Known issue:** Early Trumbull County volumes labeled 'Certificates of Naturalization vol 1, 1859\u20131874' are actually Declarations of Intention.\n\n---\n\n### Immigration Records\n\nFor an Italian immigrant arriving ca. 1890\u20131910, primary port was New York (Ellis Island). Search:\n- FamilySearch: 'United States, Passenger and Crew Lists, 1882\u20131963'\n- Ancestry: New York Passenger Lists\n- Ellis Island Foundation: ellisisland.org (free index)\n\nNortheast Ohio's steel corridor (Trumbull, Mahoning, Cuyahoga counties) drew heavy Italian immigration 1890\u20131915.\n\n---\n\n### Military Records (Birthplace Evidence)\n\nWWI Draft Registration Cards (1917\u20131918) record birth date, birthplace, citizenship/alien status \u2014 essential for immigrant men.\n\n| Collection | Access | Notes |\n|---|---|---|\n| US, WWI Draft Registration Cards, 1917\u20131918 (FS nationwide) | Indexed + images | Birth date, birthplace, alien status |\n| Ohio, WWI Enrollment Cards, 1914\u20131920 (FS CID 3029263) | Indexed + images | 230K records |\n| Ohio, WWI Index and Return Cards, 1916\u20131920 (FS CID 3039663) | Indexed + images | 101K records |\n\nWWII Old Man's Draft (Oct 1942, Form 4): covers men born April 28, 1877\u2013Feb 16, 1897; records birthplace.\n\n---\n\n### Church Records\n\nNiles, OH was in the Diocese of Cleveland until 1943, then Diocese of Youngstown. Catholic baptism records for Italian families may be in individual parish registers.\n\n| Collection | Access | Notes |\n|---|---|---|\n| Ohio, Church Records, 1762\u20132008 (FS CID 2787827) | Indexed + images | 76K records |\n| Ohio, Diocese of Toledo, Catholic Parish Records, 1796\u20132004 (FS CID 1494476) | Browse-only (~102K images) | No name index |\n\n---\n\n### Trumbull County Records (Consolidated)\n\n'Ohio, Trumbull County Records, 1795\u20132010' (FS CID 2065327): ~789K images \u2014 marriages, naturalizations, probate, court records. Entirely browse-only; access via FamilySearch Collection Browse Page \u2192 select Record Category \u2192 Record Type/Volume/Year Range.\n\nPhysical holdings: Trumbull County Courthouse, 160 High St NW, Warren, OH 44481 (Clerk of Court: divorce, court, naturalization from 1800; Probate Judge: marriage and probate records).\n\n---\n\n### Other Online Resources\n\n- Ohio Genealogical Society: ogs.org ($)\n- Trumbull County OHGenWeb: trumbull.ohgenweb.org\n- Trumbull County Archives: archives.co.trumbull.oh.us\n- Ohio Memory Project: ohiomemory.org\n- GenealogyBank: Ohio Newspapers 1795\u20131991",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Ohio,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Ohio_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Ohio_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Ohio_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-28"
+    }
+  ]
+}
