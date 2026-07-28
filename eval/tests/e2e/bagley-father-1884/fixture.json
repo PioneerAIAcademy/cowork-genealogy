@@ -1,0 +1,19 @@
+{
+  "id": "bagley-father-1884",
+  "name": "Find the father of William A. Bagley (Topsham, VT, 1815-1884)",
+  "genre": "strip",
+  "source_pid": "MJDL-Q8B",
+  "captured": "2026-07-27",
+  "researcher_question": "Who was the father of William A. Bagley, born about 1815 and died 31 May 1884 in Topsham, Orange County, Vermont?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1810s-1880s",
+    "geography": "US-VT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Father named directly on William's own 1884 death-record town-clerk entry; single-record answer, no cross-record reasoning required. Authored to exercise the research-guardrail-bypass-plan changes end to end, not as a benchmark stress case."
+}
