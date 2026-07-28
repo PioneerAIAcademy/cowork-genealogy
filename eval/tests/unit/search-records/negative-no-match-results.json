@@ -2,16 +2,27 @@
   "test": {
     "id": "ut_search_records_002",
     "skill": "search-records",
-    "name": "Honest negative-result logging when no matches are found",
+    "name": "Collection mismatch: a high-scoring hit from the wrong decade is not an answer",
     "type": "positive",
-    "description": "Execute a 1870-census search that surfaces an 1850-collection result. After record_search (with projectPath) stages results, passing subjectId ranks them inline (attachments folded in); the one candidate is a GENUINE person match to Patrick Flynn and scores high, but it comes from 'United States Census, 1850' — a collection-mismatch for the asked-for 1870 collection. Tests whether the skill applies its Step-4 collection sanity-check: (a) does NOT let the strong person-match score make the 1850 result the 1870 answer, (b) categorizes it as a partial collection-mismatch with reasoning, and (c) logs honestly that the search didn't advance the 1870 question.",
-    "tags": ["search", "negative-result", "result-triage", "honest-logging", "log-honest-no-match", "rank-search-matches", "collection-mismatch"]
+    "description": "The user asks for an 1870 census search; the index returns one result — a genuine Patrick Flynn scoring 0.94 at confidence 5/5 — from the 1850 collection. The match is real; the record is twenty years too early and answers nothing about young adulthood. Tests whether the skill overrides a very confident score on the collection title: log outcome 'partial' (not 'positive', which would mark 1870 as covered and hide the gap from research-exhaustiveness; not 'negative', since results did come back), write the sidecar (results were returned — the mirror of the nil rule, and research_append rejects an assertions append against a sidecar-less entry), name the returned collection in notes so a later reader can see why it was partial, and STOP rather than trying surname variants — the name indexed fine, so spelling was never the problem and variants cannot conjure an 1870 record the index does not hold. Note this is an ad-hoc search: no plan item covers 1870, the user asked for it directly, so per Step 1 it executes and per Step 8 it must not escalate to external sites.",
+    "tags": [
+      "search",
+      "negative-result",
+      "result-triage",
+      "honest-logging",
+      "log-honest-no-match",
+      "rank-search-matches",
+      "collection-mismatch"
+    ]
   },
   "input": {
     "user_message": "Search the 1870 census for Patrick Flynn in Schuylkill County to see if he stayed in the area through young adulthood.",
-    "scenario": "mid-research-flynn-1870-census"
+    "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["record-search-1850-census-flynn", "rank-search-matches-flynn-collection-mismatch"],
+  "mcp_fixtures": [
+    "record-search-1850-census-flynn",
+    "rank-search-matches-flynn-collection-mismatch"
+  ],
   "judge_context": [
     "record_search ranks host-side when it is called with projectPath AND subjectId, returning the ranking inline as `ranked` (match score + attachment flag for every candidate). The skill should pass subjectId and triage from `ranked` — NOT per-result same_person, NOT a separate source_attachments call, and NOT a separate rank_search_matches call (the search folds all three in).",
     "The returned match is a genuine person match to Patrick Flynn (I1) and the inline ranking scores it high (matchScore ~0.94) — but it comes from collectionTitle='United States Census, 1850', which is a collection-mismatch for the 1870 search. A high person-match score does NOT override the collection sanity-check: the skill must NOT treat this 1850 result as the 1870 answer.",
