@@ -17,28 +17,57 @@ name: Check e2e fixtures + grading
 # This check only reads committed files; it does NOT run a live e2e test
 # (those are too expensive to gate PRs — see spec §12).
 
+# Runs on EVERY pull request — no `paths:` filter — so this check always
+# reports a conclusion and can be required by branch protection. A workflow
+# skipped by `paths:` reports nothing at all, and a required check that never
+# reports leaves its PR stuck on "Expected — waiting for status to be reported"
+# with no way forward except a ruleset bypass. The path scope moved into the
+# first job step; what this check does when it applies is unchanged.
 on:
   pull_request:
-    paths:
-      - 'eval/tests/e2e/**'
-      - 'eval/runlogs/e2e/**'
-      - 'eval/harness/scripts/check_e2e_fixtures.py'
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
-  check:
+  # Renamed from `check`: check-runlogs.yml also had a job named `check`, so
+  # with both now running on every PR two distinct contexts would share one
+  # name and a required-status-check rule could not tell them apart.
+  e2e-fixtures:
     runs-on: ubuntu-latest
     steps:
+      - name: Does this PR touch e2e fixtures or run logs?
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PATTERNS: '^eval/tests/e2e/|^eval/runlogs/e2e/|^eval/harness/scripts/check_e2e_fixtures\.py$|^\.github/workflows/check-e2e-fixtures\.yml$'
+        run: |
+          set -euo pipefail
+          files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
+                     --paginate --jq '.[].filename')"
+          if printf '%s\n' "$files" | grep -qE "$PATTERNS"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No e2e fixture or run-log path changed; reporting success without running the gate."
+          fi
+
       - name: Check out PR with full history
+        if: steps.scope.outputs.relevant == 'true'
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Set up Python
+        if: steps.scope.outputs.relevant == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Check e2e grading gate (blocking)
+        if: steps.scope.outputs.relevant == 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
