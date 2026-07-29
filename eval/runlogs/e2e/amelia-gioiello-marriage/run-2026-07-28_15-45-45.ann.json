@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "Run stalled (inactivity, no SDK response for 600s) at ~28 min, right after materialize_facts correctly wrote Stanley Datchuk into the tree in a sourced Couple relationship. Tree-level recovery is correct even though the conclusion was never written.",
+    "f2": "Same stall; the sourced Marriage fact (20 Aug 1955, Trumbull, Ohio) is present in the tree. No proof_summaries entry exists -- the agent went silent before writing the conclusion, hence no proof_quality_score."
+  },
+  "annotator": "Ikennaya1"
+}
