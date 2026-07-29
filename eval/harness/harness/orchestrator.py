@@ -753,7 +753,7 @@ def _build_warnings(
 # the judge contradicting verified ground truth (the recurring census
 # direct/indirect inversion, and the death-cert evidence-type flip). This is the
 # single biggest source of run-to-run flap: the deterministic check is stable,
-# the fuzzy re-grade is not. See docs/plan/record-extraction-tool-boundary-plan.md.
+# the fuzzy re-grade is not (record-extraction tool-boundary work, 2026-07-16).
 _CLASSIFICATION_DIMENSIONS = frozenset(
     {"Evidence type accuracy", "Informant identification"}
 )

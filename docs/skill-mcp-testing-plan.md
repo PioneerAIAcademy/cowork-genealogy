@@ -47,7 +47,7 @@ Each skill/endpoint gets two layers:
 
 ### 4. Senior genealogist review
 
-Per the per-PR review workflow (`docs/plan/per-pr-review-workflow.md`), senior genealogists review **every PR** at 100% coverage. Their work spans these activities:
+Per the per-PR review workflow (`docs/per-pr-review-workflow.md`), senior genealogists review **every PR** at 100% coverage. Their work spans these activities:
 
 - **Review each PR.** Each PR contains an updated skill prompt, tests, one run log, and one `.ann` annotation file (per skill touched). The senior reads the prompt diff, the test diff, the team's corrected grades, and the side-by-side comparison view (PR's run log vs main's) in the CRUD UI. Decision is holistic: did the skill improve, are the tests reasonable, are the grade corrections sound? Feedback comes as GitHub PR comments. Target: **1 business day** turnaround. If that slips, the team escalates to the senior volunteer pool (see Team Structure below).
 - **Leakage check on test additions.** The biggest validity threat to LLM-as-judge grading is when the test author embeds the expected answer in their `additional_criteria` — e.g., "Should resolve the conflict in favor of the Irish birthplace, citing informant proximity." The judge then "agrees" with the author by construction. For every test reviewed, the senior applies the **neutrality test** from `unit-test-spec.md` §5.4: *would a genealogist who reached the opposite conclusion still endorse this criterion as fair?* If not, the criterion gets rewritten to grade the reasoning rather than the verdict.

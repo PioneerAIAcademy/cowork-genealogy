@@ -882,7 +882,7 @@ these to follow the flow above:
 |---|---|
 | Skill architecture & the three skill kinds | [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md) |
 | Test JSON format, fixtures, validators | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
-| Per-PR review + run-log versioning mechanics | [`docs/plan/per-pr-review-workflow.md`](plan/per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
+| Per-PR review + run-log versioning mechanics | [`docs/per-pr-review-workflow.md`](per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
 | The vendored description optimizer | `eval/triggering/` (vendoring notes in `VENDORED.md`) |
 | The e2e fixture format and judge contract | [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md) |
 | The feedback-case contract (baseline, marker file, lints) | [`docs/specs/feedback-case-spec.md`](specs/feedback-case-spec.md) |

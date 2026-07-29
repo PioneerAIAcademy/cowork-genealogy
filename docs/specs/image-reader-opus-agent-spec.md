@@ -45,7 +45,8 @@ Cowork and the Claude Agent SDK itself honor a subagent's own `model:`
 frontmatter (confirmed: `proj_skill_model_frontmatter_inert_in_prod` memory;
 this is SDK-level subagent-resolution behavior, not something either
 integration layer constructs itself). No key, no bridge, no fork. Full
-design history: `docs/plan/image-reader-opus-agent-plan.md`.
+design history: this spec's §2.1 (why not a `fidelity` param) and §9 (the size
+ceiling) are the surviving record; the plan doc was deleted once it shipped.
 
 ## 3. Files to Create / Modify
 

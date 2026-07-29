@@ -1,7 +1,7 @@
 # Scope: `rank_search_matches` — a host-side match-score re-ranker for `record_search`
 
 **Status:** scoped + premise validated by a live probe (for team review) · **Date:** 2026-07-06
-· Extends [`search-result-staging-spec.md`](../specs/search-result-staging-spec.md).
+· Extends [`search-result-staging-spec.md`](docs/specs/search-result-staging-spec.md).
 
 ## Problem
 

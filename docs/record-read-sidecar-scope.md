@@ -1,7 +1,7 @@
 # Scope: read staged records from the sidecar instead of re-fetching via `record_read`
 
 **Status:** scoped + partially verified (one live re-probe owed) · **Date:** 2026-07-07
-· Extends [`search-result-staging-spec.md`](../specs/search-result-staging-spec.md)
+· Extends [`search-result-staging-spec.md`](docs/specs/search-result-staging-spec.md)
 and the `rank_search_matches` reranker.
 
 ## Problem

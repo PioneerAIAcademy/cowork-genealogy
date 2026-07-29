@@ -1,7 +1,7 @@
 # Realtime re-architecture — build status & morning run guide
 
 **Branch:** `hosted-web-workbench`. **What this is:** the "sandbox IS the
-per-session server" build (docs/plan/ably-realtime-migration.md). The browser
+per-session server" build (docs/realtime-architecture.md). The browser
 opens ONE authenticated WSS directly to the E2B sandbox; the control plane is out
 of the streaming path (affinity-free).
 

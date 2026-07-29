@@ -1,7 +1,7 @@
 # Hosted Genealogy Workbench — Developer Spec
 
 **Status:** draft spec for implementation. **Date:** 2026-06-05.
-**Companion docs:** sandbox layer = `docs/plan/sandbox-provider-interface.md`
+**Companion docs:** sandbox layer = `docs/specs/sandbox-provider-spec.md`
 (the per-user E2B sandbox abstraction); architecture/decision record = project
 memory `client-server-workbench-direction.md`.
 
@@ -12,7 +12,7 @@ memory `client-server-workbench-direction.md`.
 - **Re-host, don't rewrite.** The hosted product runs the **existing** SKILL.md
   skills + stdio MCP server under the **Claude Agent SDK**, inside a **per-user
   E2B microVM** (chosen platform; FamilySearch will require microVM isolation).
-  See `sandbox-provider-interface.md`.
+  See `docs/specs/sandbox-provider-spec.md`.
 - **Operator pays** for Claude (our Anthropic key). **Hosted multi-user SaaS.**
 - **Three artifacts ship from one monorepo:** (1) the existing Cowork plugin +
   `.mcpb` MCP extension (unchanged in purpose), (2) the existing Electron viewer
@@ -266,7 +266,7 @@ multi-tenant web this must change:
 - Google auth + allowlist; FamilySearch OAuth redirect + per-user token store.
 - **Session/sandbox orchestration** via the `SandboxProvider` interface
   (E2BProvider) — create / resume / suspend / write-secrets / expose-port.
-  See `sandbox-provider-interface.md` §6–7 for the exact flow.
+  See `docs/specs/sandbox-provider-spec.md` §6–7 for the exact flow.
 - **WebSocket endpoint** (`/ws/{project_id}`) that (a) proxies chat to/from the
   in-sandbox `agent_runner`, and (b) streams project-state deltas to the viewer.
 - **Viewer read API** — serve the latest `research.json` / `tree.gedcomx.json` /
@@ -309,7 +309,7 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 
 ## 7. The agent runtime (inside the E2B sandbox)
 
-Per `sandbox-provider-interface.md`. Key points for this spec:
+Per `docs/specs/sandbox-provider-spec.md`. Key points for this spec:
 - `agent_runner.py` runs the **Agent SDK**, loading the project's `.claude/skills`
   (the 28 skills) via `setting_sources=["project"], skills="all"`, and the
   genealogy **stdio MCP server** via `mcp_servers={genealogy: {command:"node",

@@ -13,8 +13,8 @@ Durability across a sandbox pause/resume (or any agent_runner restart): the
 ResultMessage's session_id is persisted to /project/.agent_session, and a
 relaunched RealAgent passes it as resume= so the SDK reloads the prior
 conversation from the on-disk transcript (which survives the E2B pause). See
-docs/plan/ably-realtime-migration.md is unrelated; the resume contract is
-sandbox-provider-interface.md decision #1.
+docs/realtime-architecture.md is unrelated; the resume contract is
+sandbox-provider-spec.md decision #1.
 
 Config (build_options) — three load-bearing choices: do NOT set skills="all" (the
 SDK turns it into `--allowedTools Skill`, restricting to only the Skill tool);

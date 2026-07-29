@@ -14,13 +14,13 @@ Long-term, research is uploaded to the user's FamilySearch tree — FamilySearch
 the eventual durable system-of-record (see §6).
 
 **Branch:** `hosted-web-workbench`.
-**Filename note:** kept as `ably-realtime-migration.md` for cross-reference
+**Filename note:** kept as `docs/realtime-architecture.md` for cross-reference
 continuity even though the conclusion is to *drop* Ably; rename can happen
 separately.
 **Read with:** `realtime-rearch-status.md` (current architecture),
-`sandbox-provider-interface.md`,
-`neon-postgres-plan.md` (its `count > 1` DB work still applies; its affinity-fix
-references were updated to point here), `fly-deploy-plan.md` (likewise).
+`docs/specs/sandbox-provider-spec.md`,
+`docs/plan/neon-postgres-plan.md` (its `count > 1` DB work still applies; its affinity-fix
+references were updated to point here), `docs/plan/fly-deploy-plan.md` (likewise).
 **Reviewers:** Dallan + eng reviewer.
 
 ---
@@ -41,7 +41,7 @@ stickiness, `/connect` can land on instance A (agent + watch spawn there) and th
 next `/message` on instance B, where `manager.ensure()` spawns a **second** agent
 + watch for the same session — two agents writing the same `/project`. That
 double-spawn is the affinity bug, and it is the real `count > 1` blocker that
-`neon-postgres-plan.md` names.
+`docs/plan/neon-postgres-plan.md` names.
 
 The earlier Ably work removed the browser-facing relay *socket* (Option A,
 shipped) and then proposed relocating `LiveSession` into the sandbox behind an
@@ -394,7 +394,7 @@ Each phase leaves `main` green and `local_ws` identical.
 - **Supersedes Ably Option A and Option B** in this doc's earlier revision. Outbound
   fanout, chat input, and viewer deltas all travel one authenticated WSS between the
   browser and its sandbox; the control plane is out of the data path. Ably is removed.
-- **Supersedes the sticky-routing stopgap** in `neon-postgres-plan.md`. Affinity is
+- **Supersedes the sticky-routing stopgap** in `docs/plan/neon-postgres-plan.md`. Affinity is
   removed (the sandbox is the per-session server), which is what AWS-no-sticky
   requires; sticky routing is not used.
 - **Does not change** the engine (`packages/engine/mcp-server/`, `packages/engine/plugin/`) or the `agent_runner`
