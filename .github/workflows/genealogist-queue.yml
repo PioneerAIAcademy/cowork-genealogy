@@ -1,8 +1,8 @@
 name: genealogist-queue
 
-# Labels a PR `ready-for-genealogist` once it is actually ready for senior
-# review: CI green, an approving review from someone other than the author, and
-# no outstanding changes-requested.
+# Labels a PR `ready-for-senior` once it is actually ready for senior review:
+# CI green, an approving review from someone other than the author, and no
+# outstanding changes-requested.
 #
 # WHY. `.github/CODEOWNERS` is `* @PioneerAIAcademy/senior-genealogists`, so
 # GitHub requests the team the instant a PR opens — when CI is usually red and
@@ -11,7 +11,7 @@ name: genealogist-queue
 # is therefore accurate as "a PR exists" and useless as "this needs you". The
 # label is the signal that means the second thing:
 #
-#   is:open is:pr label:ready-for-genealogist
+#   is:open is:pr label:ready-for-senior
 #
 # WHY A LABEL AND NOT THE REVIEW REQUEST. The obvious design is to strip the
 # team's review request on open and re-add it when ready, so the existing
@@ -82,7 +82,7 @@ jobs:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
         with:
           script: |
-            const LABEL = 'ready-for-genealogist';
+            const LABEL = 'ready-for-senior';
             // This workflow's own check run is always in progress while it
             // runs; counting it would mean CI is never "green".
             const SELF  = 'genealogist-queue';
