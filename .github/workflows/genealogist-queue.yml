@@ -1,0 +1,202 @@
+name: genealogist-queue
+
+# Defers the senior-genealogist review request until a PR is actually ready for
+# them: CI green, at least one approving review from someone other than the
+# author, and no outstanding "changes requested".
+#
+# WHY. `.github/CODEOWNERS` is `* @PioneerAIAcademy/senior-genealogists`, so
+# GitHub requests the team the instant a PR opens — when CI is usually red and
+# nobody has read it. On 2026-07-29 that put all 22 open PRs in their queue,
+# including 5 with failing CI and 2 blocked on their authors. The request is
+# therefore accurate as "a PR exists" and useless as "this needs you".
+#
+# WHAT CHANGES. Only the *request* — and so the notification and the queue.
+# Merge enforcement is untouched: `require_code_owner_review` in the
+# `protect-main` ruleset gates the merge whether or not the team is currently
+# requested. Nobody can merge past a genealogist because of this workflow.
+#
+# WHY REMOVING ONCE IS ENOUGH. GitHub does not re-request code owners on push.
+# Verified 2026-07-29 against PR #924: 7 `committed` events, exactly one
+# `review_requested` event for the team. `ready_for_review` is handled below
+# because a draft going ready *does* trigger a fresh code-owner request.
+#
+# V1 IS ADD-ONLY. Once a PR is promoted it stays promoted, even if it later
+# goes red. Demotion would make PRs flicker in and out of the queue while a
+# genealogist is mid-review. Revisit after a week of real use.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+  check_suite:
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would change across all open PRs, without touching any"
+        type: boolean
+        default: true
+
+permissions:
+  pull-requests: write
+  checks: read
+  contents: read
+
+concurrency:
+  group: >-
+    genealogist-queue-${{ github.event.pull_request.number
+      || github.event.check_suite.id
+      || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    # Fork PRs get a read-only token; every write below would 403.
+    if: >-
+      github.event_name != 'pull_request'
+      || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+        with:
+          script: |
+            const TEAM  = 'senior-genealogists';
+            const LABEL = 'ready-for-genealogist';
+            // This workflow's own check run is always in progress while it
+            // runs; counting it would mean CI is never "green".
+            const SELF  = 'genealogist-queue';
+
+            const BAD     = new Set(['failure', 'cancelled', 'timed_out', 'action_required', 'stale']);
+            const PENDING = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
+
+            const dryRun = process.env.DRY_RUN === 'true';
+            const { owner, repo } = context.repo;
+
+            // ---- which PRs to evaluate --------------------------------------
+            let numbers = [];
+            if (context.eventName === 'workflow_dispatch') {
+              const open = await github.paginate(github.rest.pulls.list,
+                { owner, repo, state: 'open', per_page: 100 });
+              numbers = open.map(p => p.number);
+            } else if (context.eventName === 'check_suite') {
+              numbers = (context.payload.check_suite.pull_requests || []).map(p => p.number);
+              if (numbers.length === 0) {
+                // check_suite payloads omit PRs in some cases; match on head sha.
+                const sha = context.payload.check_suite.head_sha;
+                const open = await github.paginate(github.rest.pulls.list,
+                  { owner, repo, state: 'open', per_page: 100 });
+                numbers = open.filter(p => p.head.sha === sha).map(p => p.number);
+              }
+            } else {
+              numbers = [context.payload.pull_request.number];
+            }
+
+            // ---- readiness ---------------------------------------------------
+            async function evaluate(number) {
+              const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });
+              const promoted = pr.labels.map(l => l.name).includes(LABEL);
+
+              if (pr.state !== 'open') return { pr, promoted, ready: false, reasons: ['not open'] };
+              if (pr.draft)            return { pr, promoted, ready: false, reasons: ['draft'] };
+
+              // Peer review: latest standing per reviewer, author excluded.
+              // Any non-author approval counts — deliberately not checking team
+              // membership, which would need a token with `read:org`.
+              const reviews = await github.paginate(github.rest.pulls.listReviews,
+                { owner, repo, pull_number: number, per_page: 100 });
+              const latest = new Map();
+              for (const r of reviews) {
+                if (!r.user || r.user.login === pr.user.login) continue;
+                if (r.state === 'COMMENTED') continue;  // a comment changes nothing
+                latest.set(r.user.login, r.state);
+              }
+              const standings = [...latest.values()];
+
+              // CI on the head sha: both check runs and legacy commit statuses.
+              const [checks, status] = await Promise.all([
+                github.paginate(github.rest.checks.listForRef,
+                  { owner, repo, ref: pr.head.sha, per_page: 100 }),
+                github.rest.repos.getCombinedStatusForRef({ owner, repo, ref: pr.head.sha }),
+              ]);
+              const others   = checks.filter(c => !(c.name || '').startsWith(SELF));
+              const failed   = others.filter(c => BAD.has(c.conclusion));
+              const running  = others.filter(c => PENDING.has(c.status));
+              const statuses = status.data.statuses || [];
+              const statusFailed = statuses.filter(s => s.state === 'failure' || s.state === 'error');
+
+              const reasons = [];
+              if (!standings.includes('APPROVED'))        reasons.push('no peer approval');
+              if (standings.includes('CHANGES_REQUESTED')) reasons.push('changes requested');
+              if (failed.length)       reasons.push(`CI failing: ${failed.map(c => c.name).join(', ')}`);
+              if (statusFailed.length) reasons.push(`status failing: ${statusFailed.map(s => s.context).join(', ')}`);
+              if (running.length)      reasons.push(`CI still running (${running.length})`);
+              if (others.length === 0 && statuses.length === 0) reasons.push('no CI has reported');
+
+              return { pr, promoted, ready: reasons.length === 0, reasons };
+            }
+
+            // ---- label bootstrap --------------------------------------------
+            async function ensureLabel() {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: LABEL });
+              } catch (e) {
+                if (e.status !== 404) throw e;
+                if (dryRun) return core.info(`would create label ${LABEL}`);
+                await github.rest.issues.createLabel({
+                  owner, repo, name: LABEL, color: '0E8A16',
+                  description: 'CI green + peer-approved; awaiting senior genealogist',
+                });
+              }
+            }
+            await ensureLabel();
+
+            // ---- act ---------------------------------------------------------
+            const rows = [];
+            for (const n of numbers) {
+              const { pr, promoted, ready, reasons } = await evaluate(n);
+              let action;
+
+              if (ready && promoted) {
+                action = 'already queued';
+              } else if (ready) {
+                action = dryRun ? 'WOULD promote' : 'promoted';
+                if (!dryRun) {
+                  try {
+                    await github.rest.pulls.requestReviewers({
+                      owner, repo, pull_number: n, team_reviewers: [TEAM] });
+                  } catch (e) {
+                    core.warning(`#${n}: could not request ${TEAM}: ${e.message}`);
+                  }
+                  await github.rest.issues.addLabels({
+                    owner, repo, issue_number: n, labels: [LABEL] });
+                }
+              } else if (promoted) {
+                // v1 is add-only: never pull a PR back out of the queue.
+                action = 'not ready, left queued (v1 add-only)';
+              } else {
+                action = dryRun ? 'WOULD defer' : 'deferred';
+                if (!dryRun) {
+                  try {
+                    await github.rest.pulls.removeRequestedReviewers({
+                      owner, repo, pull_number: n, team_reviewers: [TEAM] });
+                  } catch (e) {
+                    core.warning(`#${n}: could not remove ${TEAM}: ${e.message}`);
+                  }
+                }
+              }
+
+              core.info(`#${n} ${action}${reasons.length ? ' — ' + reasons.join('; ') : ''}`);
+              rows.push([`#${n}`, pr.user.login, action, reasons.join('; ') || '—']);
+            }
+
+            await core.summary
+              .addHeading(dryRun ? 'genealogist-queue (dry run)' : 'genealogist-queue', 3)
+              .addTable([
+                [{ data: 'PR', header: true }, { data: 'Author', header: true },
+                 { data: 'Action', header: true }, { data: 'Blocking', header: true }],
+                ...rows,
+              ])
+              .write();
