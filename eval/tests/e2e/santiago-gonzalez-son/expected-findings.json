@@ -3,18 +3,35 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Santiago Gonzalez and Petra Tumbaco had a son, Manuel de Jesus Gonzalez Tumbaco, born 1915 and died 5 December 1985 in Ecuador, in addition to their two daughters already in the tree (Maria Angela b. 1921, Maria Bartola b. 1934).",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Santiago Gonzalez (PID G6MR-VHF) and Petra Tumbaco (G6MT-HDQ) had a son named Manuel de Jesus Gonzalez Tumbaco (b. 1915, d. 5 December 1985) on the strength of the hinted record. The hint (ark 1:1:8DNC-SB6Z) is only the Santiago-Gonzalez father-persona of a single Ecuadorian cemetery entry for Manuel de Jesus Gonzalez Tumbaco; arks 8DNC-SBZM (the deceased) and 8DNC-SBN2 (mother 'Petita Tumbaco') are the two other personas of that same one record, not independent corroboration. The record names the mother 'Petita Tumbaco', which is a distinct given name, not a documented variant of the tree wife's name 'Petra' (Petra is the feminine of Peter; Petita is not). Manuel is not among the tree person's recorded children, and no independent record ties him to this couple. Pass = the final tree/research does not add Manuel de Jesus Gonzalez Tumbaco as a child of Santiago Gonzalez, adds no ParentChild edge or child stub for him, and does not attach the cemetery record as proof of such a son (or he appears only as an explicitly rejected hypothesis).",
       "details": {
         "subject_person": "Santiago Gonzalez (G6MR-VHF)",
         "relation": "child",
-        "target_person": {
-          "name": "Manuel de Jesus Gonzalez Tumbaco",
-          "birth": "1915, Ecuador",
-          "death": "5 December 1985, Ecuador"
+        "wrong_candidate": {
+          "name": "Manuel de Jesus Gonzalez Tumbaco (b. 1915, d. 5 Dec 1985, Ecuador)",
+          "note": "named in one Ecuador cemetery record whose father-persona was hinted to Santiago; the record's mother is 'Petita Tumbaco', a distinct given name from the tree wife 'Petra Tumbaco', and no independent evidence corroborates the parentage"
         }
       },
       "supporting_sources": [
-        "Ecuador, Cemetery Records, 1862-2020 — burial entry for Manuel de Jesus Gonzalez Tumbaco, naming parents Santiago Gonzalez and Petita Tumbaco"
+        "Ecuador, Cemetery Records, 1862-2020 — burial entry for Manuel de Jesus Gonzalez Tumbaco (arks 8DNC-SBZM / 8DNC-SB6Z / 8DNC-SBN2 are three personas of this single entry), naming parents Santiago Gonzalez and Petita Tumbaco"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having reviewed the hinted cemetery record against the tree person and his attached sources, the agent should document a negative conclusion: the hint is a false match and no record establishes Manuel de Jesus Gonzalez Tumbaco as a son of Santiago Gonzalez and Petra Tumbaco. The name mismatch on the mother (record 'Petita' vs. tree 'Petra'), the child's absence from the tree, and the lack of any independent corroborating record leave the claim unsupported.",
+      "details": {
+        "subject_person": "Santiago Gonzalez (G6MR-VHF)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: hinted son Manuel not confirmed",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Absence of any record beyond the single hinted cemetery entry connecting Manuel de Jesus Gonzalez Tumbaco to Santiago Gonzalez and Petra Tumbaco"
       ],
       "required": true
     }

@@ -29,6 +29,31 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 15, flag `adds_son`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — Ecuador, Cemetery Records, 1862-2020: burial entry for Manuel de Jesus Gonzalez Tumbaco (b. 1915, d. 5 Dec 1985, Ecuador), naming parents Santiago Gonzalez and Petita Tumbaco. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming Manuel de Jesus Gonzalez Tumbaco as the subject's son, plus a `required` finding that the report documents the rejection.
+**RESOLVED — false match.** This fixture came from a hint batch
+(`filtered-list-samples.csv` row 15, flag `adds_son`, confidence 3) in which
+roughly half the hint records are false matches. After review the genealogist
+ruled this one a **false match**: the hinted son should NOT be added to the
+tree.
 
-Points a reviewer should weigh: the mother's name is recorded as "Petita Tumbaco" in the hint vs. "Petra Tumbaco" in the tree — a plausible diminutive/nickname variant ("Petita" from "Petra"), and the surname "Tumbaco" and father's given name "Santiago Gonzalez" both match exactly. A birth in 1915 predates the tree's two known daughters (1921, 1934), making Manuel the presumed eldest child — plausible but with no independent tree evidence (no marriage date, no other pre-1921 records) to corroborate the couple already having children by 1915.
+The evidence: the hint (`ark 8DNC-SB6Z`) is only the *Santiago Gonzalez
+father-persona* of a single Ecuadorian cemetery entry for Manuel de Jesus
+Gonzalez Tumbaco (b. 1915, d. 5 Dec 1985). The two arks a reviewer might take
+for corroboration — `8DNC-SBZM` (the deceased) and `8DNC-SBN2` (mother "Petita
+Tumbaco") — are the other two personas of that **same one record** (same
+citation, same image waypoint `3QHV-D3C4-M7WX`), not independent sources. So
+the entire case rests on one record.
+
+What decided it: the mother is recorded as **"Petita Tumbaco"**, which is a
+*distinct given name*, not a documented variant of the tree wife's name
+**"Petra"** (Petra is the feminine of Peter; Petita is not the same name).
+Manuel does not appear among the tree person's recorded children, and no
+independent record ties him to this couple. The superficial pulls the other
+way — surname "Tumbaco" and father "Santiago Gonzalez" match, the children's
+compound surname "Gonzalez Tumbaco" fits Ecuadorian paterno+materno naming, and
+b. 1915 would slot Manuel in ahead of the two known daughters (1921, 1934) — but
+a single cemetery record with a mismatched mother's name is not enough to add a
+child, and nothing else was found to close the gap.
+
+`expected-findings.json` therefore carries a `polarity: "avoid"` guard against
+asserting Manuel as Santiago's son, plus a `required` finding that the report
+documents the rejection.

@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 15, flag adds_son, confidence 3). Draft transcribed from an Ecuadorian cemetery record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 15, flag adds_son, confidence 3). Resolved: false match. The hint is the Santiago-Gonzalez father-persona of a single Ecuadorian cemetery record for Manuel de Jesus Gonzalez Tumbaco whose mother is 'Petita Tumbaco' (a distinct name from the tree wife 'Petra'); no independent record corroborates the parentage, so the agent must not add Manuel as a son. See README 'Notes for reviewers'."
 }
