@@ -821,7 +821,7 @@ The minimum rationale length (20 chars) blocks one-word rationales — those cor
 
 ### Layer 3: Human verification
 
-The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for every judge dimension of every test. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/plan/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
+The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for every judge dimension of every test. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
 
 Per-dimension scores at every layer (judge tool_use, run log, `.ann` file, CRUD UI) use the same integer scale: **`3` = pass, `2` = partial, `1` = fail.** The semantic labels (pass/partial/fail) live in the judge prompt's instruction text and in each dimension's `**pass:** / **partial:** / **fail:**` bullets in `rubric.md`; the data field itself is just the integer. The monthly judge-prompt review (per the per-PR workflow plan §2.6) reads `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)` to identify systematic LLM-judge drift.
 
@@ -1047,7 +1047,7 @@ The timestamp is UTC second-resolution, filename-safe (no colons). Same-second c
 
 Including the model version in the path makes it easy to compare runs across model versions.
 
-**Annotations** use the per-PR convention defined in `docs/plan/per-pr-review-workflow.md` §2.3 and the schema at [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json):
+**Annotations** use the per-PR convention defined in `docs/per-pr-review-workflow.md` §2.3 and the schema at [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json):
 
 ```
 YYYY-MM-DDTHH-MM-SSZ.ann.json    # team's corrected grades for this run
@@ -1080,7 +1080,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
   "judge_model": "string (e.g. claude-haiku-4-5-20251001)",
   "rubric_hash": "string (SHA-256 of eval/tests/unit/<skill>/rubric.md at run time)",
   "judge_prompt_hash": "string (SHA-256 of eval/harness/judge/prompt.md at run time)",
-  "test_content_hash": "string (SHA-256 of the resolved test — test JSON minus cosmetic fields + scenario directory contents + referenced fixture file contents — used by cross-PR comparison to auto-exclude tests whose grading-relevant content changed; see docs/plan/per-pr-review-workflow.md §2.4)",
+  "test_content_hash": "string (SHA-256 of the resolved test — test JSON minus cosmetic fields + scenario directory contents + referenced fixture file contents — used by cross-PR comparison to auto-exclude tests whose grading-relevant content changed; see docs/per-pr-review-workflow.md §2.4)",
 
   "scenario": "string or null (scenario directory name)",
   "mcp_fixtures": ["string (fixture file names used)"],

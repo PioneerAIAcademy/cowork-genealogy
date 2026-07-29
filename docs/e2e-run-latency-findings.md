@@ -2,7 +2,7 @@
 
 **Status:** DRAFT — measurement + first lever, for review.
 **Scope:** the ~2-hour wall-clock of a single **e2e** research run. Complements
-`research-latency-reduction-plan.md` (that plan's baseline was the *record-only*
+`docs/plan/research-latency-reduction-plan.md` (that plan's baseline was the *record-only*
 Kenneth Quass session; it does **not** cover the image-reading path, which this
 doc adds). Confirms that plan's headline: **tool/API latency is ~0 — the cost is
 model generation and now, in image-heavy runs, the image-reader subagent.**
@@ -59,7 +59,7 @@ scan to it after a fixed number of attempts — so the reader still thrashes.
    `fulltext_search` to jump to the relevant scan instead of reading every image.
    Target: run 1's 25 reads / run 2's 267-image paging.
 3. **Parent model-generation** (the other ~50–67 min) — effort/verbosity/turn-count
-   tuning. This overlaps `research-latency-reduction-plan.md` Phase 2; defer to it
+   tuning. This overlaps `docs/plan/research-latency-reduction-plan.md` Phase 2; defer to it
    rather than duplicate.
 
 ## 4. Experiment 1 — bounded image-reader — RESULT

@@ -15,7 +15,7 @@
 > specs under `packages/engine/plugin/skills/`.
 >
 > Grounding evidence is the July record-extraction audit (theme T6) and
-> the closing report §3.4 (`docs/plan/record-extraction-consolidation-closing-report.md`),
+> the closing report §3.4 (`docs/record-extraction-consolidation-closing-report.md`),
 > plus a first-hand diagnosis of the `cruz-corona-ancestry` e2e runs
 > (§1.2).
 

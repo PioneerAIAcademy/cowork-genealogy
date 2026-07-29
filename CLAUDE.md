@@ -82,7 +82,7 @@ instance); end users do not need to set this for normal operation.
 ### Hosted web workbench (monorepo overlay)
 
 This repo is also a **pnpm + turborepo monorepo** for the hosted web product
-(see `DEVELOPMENT.md` and `docs/plan/realtime-rearch-status.md`). The engine
+(see `DEVELOPMENT.md` and `docs/realtime-rearch-status.md`). The engine
 (`packages/engine/{mcp-server,plugin}`) is deliberately **kept out of the pnpm
 workspace** via the `!packages/engine/**` negation in `pnpm-workspace.yaml`,
 and stays npm-managed, so the `.mcpb`/plugin release pipeline and CI are unchanged.
@@ -111,7 +111,15 @@ mocks (no E2B/Anthropic/OAuth needed).
   A plan is deleted once the work ships: the spec, the code, and any
   `docs/TODOs.md` entries become the record. Do not keep shipped plans
   as historical artifacts — if a plan's rationale is worth preserving,
-  fold it into the spec instead.
+  fold it into the spec instead. **A plan's `**Status:**` line is load-bearing** —
+  it is what tells the next reader whether the file describes pending work, so
+  update it when the work lands. Two files here spent weeks claiming
+  "not yet implemented" and "not yet branched" for things that had shipped.
+  And **only plans live here.** An architecture note, a status/checkpoint log, a
+  process doc, a measurement write-up, or a spec is *not* a plan: those go in
+  `docs/` (or `docs/specs/`), because a directory holding all five cannot answer
+  "is this still pending?" at a glance. Eight such files were moved out in the
+  #953 follow-up.
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth the `spec-review` agent checks implementations against.
   This is the durable tier; a live tool must have a live spec.

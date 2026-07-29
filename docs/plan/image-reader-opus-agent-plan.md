@@ -1,7 +1,12 @@
 # An explicit, opt-in Opus read path for hard-to-OCR images — plan
 
-> **Status:** proposed (2026-07-24), not yet branched. Read-only investigation
-> so far — no code written. Builds on, and does not reopen,
+> **Status: SHIPPED.** The agent exists
+> (`packages/engine/plugin/agents/image-reader-opus.md`), it has a spec
+> (`docs/specs/image-reader-opus-agent-spec.md`), and `record-extraction` /
+> `search-images` both offer `@plugin:image-reader-opus` as the opt-in re-read.
+> The spec is the contract; this file is kept only for the §7 open question it
+> records (see below) and should be deleted once that is resolved or moved.
+> Builds on, and does not reopen,
 > `docs/plan/image-read-context-policy.md` and
 > `docs/plan/search-images-base64-accumulation.md`, both already implemented.
 > §7 flags one adjacent, unresolved idea from the same conversation that

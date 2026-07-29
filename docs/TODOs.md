@@ -1,7 +1,7 @@
 # TODOs — hosted web workbench
 
 Open, deferred work — everything in this file is still to do. Architecture
-context: `docs/plan/ably-realtime-migration.md`.
+context: `docs/realtime-architecture.md`.
 
 **Retention rule.** When an item ships, **delete it** — do not check it off,
 strike it through, or move it to a "Done" section. If it leaves behind a rule
@@ -306,7 +306,7 @@ These MCP tools are shipped, specced, and advertised, but no skill references th
 
 ## Record-extraction consolidation follow-ups (2026-07 window)
 Deferred at wrap; see
-`docs/plan/record-extraction-consolidation-closing-report.md`.
+`docs/record-extraction-consolidation-closing-report.md`.
 
 - [ ] **Record-type playbook files + snapshot carve-out** — per-record-type
   references (census/death/probate/church/marriage) as the parallel-team
