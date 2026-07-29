@@ -1090,7 +1090,7 @@ def _summarize_before_state_sources(sources: Any) -> dict[str, Any]:
     return {
         "count": len(items),
         "all_ids": ids,
-        "detail": _summarize_response(sources, string_max=_BEFORE_STATE_STRING_MAX),
+        "detail": _summarize_response(items, string_max=_BEFORE_STATE_STRING_MAX),
     }
 
 
@@ -1102,12 +1102,14 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     that on-file source text was absent or invented — when it had no view of
     the pre-existing state. Surfacing the before-run `sources` (research.json,
     `src_` ids) and source descriptions (tree.gedcomx.json, `S` ids) makes
-    such claims checkable against what was actually on file. The full id list
-    always survives (see `_summarize_before_state_sources`); only the heavy
-    per-source content is sampled.
+    such claims checkable against what was actually on file.
 
-    Bounded per-field and overall so a large project can't blow the prompt.
-    Returns "(none)" when there was no prior state (e.g. an empty-project
+    The complete `count` + `all_ids` for every block is rendered first and is
+    never truncated — that is the existence-check ground truth, and clipping it
+    is exactly what revived the fabrication misgrade (ut_validate_schema_007/008).
+    The `_BEFORE_STATE_MAX_CHARS` prompt-size cap is spent only on the expendable
+    heavy `detail` sample, which is dropped (never the ids) when the budget runs
+    out. Returns "(none)" when there was no prior state (e.g. an empty-project
     scenario) — itself the correct signal: nothing was on file, so any
     "altered/removed an existing source" claim is unfounded.
     """
@@ -1118,36 +1120,52 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     research_sources = research.get("sources") if isinstance(research, dict) else None
     tree_sources = tree.get("sources") if isinstance(tree, dict) else None
 
-    blocks: list[str] = []
+    labelled: list[tuple[str, dict[str, Any]]] = []
     if research_sources:
-        blocks.append(
-            "research.json sources on file before this run (src_ ids):\n"
-            + json.dumps(
+        labelled.append(
+            (
+                "research.json sources on file before this run (src_ ids)",
                 _summarize_before_state_sources(research_sources),
-                ensure_ascii=False,
-                indent=2,
             )
         )
     if tree_sources:
-        blocks.append(
-            "tree.gedcomx.json source descriptions on file before this run "
-            "(S ids):\n"
-            + json.dumps(
+        labelled.append(
+            (
+                "tree.gedcomx.json source descriptions on file before this run "
+                "(S ids)",
                 _summarize_before_state_sources(tree_sources),
-                ensure_ascii=False,
-                indent=2,
             )
         )
-    if not blocks:
+    if not labelled:
         return "(none)"
-    rendered = "\n\n".join(blocks)
-    if len(rendered) > _BEFORE_STATE_MAX_CHARS:
-        rendered = (
-            rendered[:_BEFORE_STATE_MAX_CHARS]
-            + f"\n[before-state truncated by harness for prompt size; "
-            f"full length {len(rendered)} chars]"
+
+    # ids first — complete and never clipped (see docstring).
+    id_blocks = [
+        f"{label}:\n"
+        + json.dumps(
+            {"count": summary["count"], "all_ids": summary["all_ids"]},
+            ensure_ascii=False,
+            indent=2,
         )
-    return rendered
+        for label, summary in labelled
+    ]
+    id_section = "\n\n".join(id_blocks)
+
+    # heavy per-source sample after — this is what the prompt-size cap trims.
+    detail_blocks = [
+        f"{label} — sample detail (heavy fields truncated):\n"
+        + json.dumps(summary["detail"], ensure_ascii=False, indent=2)
+        for label, summary in labelled
+    ]
+    detail_section = "\n\n".join(detail_blocks)
+    budget = _BEFORE_STATE_MAX_CHARS - len(id_section)
+    if len(detail_section) > budget:
+        detail_section = (
+            detail_section[: max(budget, 0)]
+            + f"\n[detail truncated by harness for prompt size; "
+            f"full detail length {len(detail_section)} chars — ids above are complete]"
+        )
+    return id_section + "\n\n" + detail_section
 
 
 def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:

@@ -70,10 +70,12 @@ def test_non_list_and_empty_are_safe():
         "all_ids": [],
         "detail": [],
     }
-    # Defensive: a malformed (non-list) sources value must not raise.
+    # Defensive: a malformed (non-list) sources value must not raise, and every
+    # field must agree — count/all_ids/detail all derive from the type-guarded
+    # `items`, so a non-list yields an internally consistent empty block (not
+    # count:0 with a populated detail).
     weird = _summarize_before_state_sources({"unexpected": "shape"})
-    assert weird["count"] == 0
-    assert weird["all_ids"] == []
+    assert weird == {"count": 0, "all_ids": [], "detail": []}
 
 
 def test_sources_without_ids_are_counted_not_listed():
@@ -85,3 +87,29 @@ def test_sources_without_ids_are_counted_not_listed():
 def test_none_before_state_returns_none_sentinel():
     assert _summarize_before_state(None) == "(none)"
     assert _summarize_before_state({}) == "(none)"
+
+
+def test_ids_render_before_detail():
+    before = {"research_json": {"sources": _sources("src_", 4)}}
+    rendered = _summarize_before_state(before)
+    # The complete id list must come before the (clippable) heavy detail sample.
+    assert rendered.index("all_ids") < rendered.index("sample detail")
+
+
+def test_all_ids_survive_when_detail_blows_the_prompt_budget(monkeypatch):
+    # The prompt-size cap must trim the heavy detail, never the ids — otherwise
+    # a late source id gets stranded and the fabrication misgrade returns. Shrink
+    # the cap so the detail section overruns it while the ids stay complete.
+    from harness import orchestrator
+
+    monkeypatch.setattr(orchestrator, "_BEFORE_STATE_MAX_CHARS", 200)
+    before = {
+        "research_json": {"sources": _sources("src_", 10)},
+        "tree_gedcomx_json": {"sources": _sources("S", 10)},
+    }
+    rendered = orchestrator._summarize_before_state(before)
+    for i in range(1, 11):
+        assert f"src_{i:03d}" in rendered
+        assert f"S{i:03d}" in rendered
+    assert "detail truncated by harness" in rendered
+    assert "ids above are complete" in rendered
