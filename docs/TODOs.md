@@ -679,3 +679,25 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `*Error` type so it surfaces as `{ ok: false, errors }`; `readProjectJson`
   throws a plain `Error` and leaves that mapping to the caller (see
   `tree-forget.ts`'s three-line `readJson` wrapper).
+
+- [ ] **Eight shipped plans still sit in `docs/plan/` because they are the ONLY
+  written contract for the thing they built.** The #953 follow-up moved out the
+  eight files that were never plans and deleted the three shipped plans whose
+  content had a spec to fall back on. These eight are shipped too, but no spec
+  covers them, so deleting them under the "delete a plan once the work ships"
+  rule would destroy the only documentation of live infrastructure:
+  `public-rest-api.md` (the `/v1` API's contract — `docs/TODOs.md` and
+  `DEVELOPMENT.md` both cite it *as* the spec), `sandbox-provider-interface.md`
+  (decisions #1/#2 are cited from `real_agent.py` and `agent_secrets.py`),
+  `neon-postgres-plan.md`, `fly-deploy-plan.md`, `familysearch-login-plan.md`,
+  `3-pane-workbench-ui.md`, `localities-section-plan.md`, and
+  `standard-place-standardization.md`.
+  Each needs a **promote**, not a delete: write (or lift) a spec under
+  `docs/specs/`, then remove the plan. Cheapest first —
+  `3-pane-workbench-ui.md` has zero inbound references;
+  `standard-place-standardization.md` has **22**, mostly source comments citing
+  it for rationale, and is a project of its own. Two are only partially shipped
+  (`fly-deploy-plan.md`, `localities-section-plan.md`) and need their remaining
+  steps split out to entries here before the rest can go.
+  Until then their `Status:` lines are the guard: each says plainly that it is
+  shipped and kept only pending a spec. Do not read them as pending work.
