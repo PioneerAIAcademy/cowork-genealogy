@@ -1,0 +1,64 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Johann Frederich Widmer was born 25 Jan 1847 in Hausen, Bellikon, Aargau, Switzerland.",
+      "details": {
+        "subject_person": "Johann Frederich Widmer",
+        "fact_type": "Birth",
+        "date": "25 Jan 1847",
+        "place": "Hausen, Bellikon, Aargau, Switzerland"
+      },
+      "supporting_sources": [
+        "Swiss church/civil birth or christening record for Hausen, Bellikon, Aargau"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Johann Frederich Widmer died 4 Jul 1914 in Naples, Ontario, New York, USA.",
+      "details": {
+        "subject_person": "Johann Frederich Widmer",
+        "fact_type": "Death",
+        "date": "4 Jul 1914",
+        "place": "Naples, Ontario, New York, USA"
+      },
+      "supporting_sources": [
+        "New York death record or newspaper death notice for Naples, Ontario County"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Johann Frederich Widmer was buried in Naples, Ontario, New York, USA.",
+      "details": {
+        "subject_person": "Johann Frederich Widmer",
+        "fact_type": "Burial",
+        "place": "Naples, Ontario, New York, USA"
+      },
+      "supporting_sources": [
+        "Find A Grave Index entry for Johann Frederich Widmer"
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "fact",
+      "description": "Johann Frederich Widmer was buried 7 Jul 1914 at Rose Ridge Cemetery.",
+      "details": {
+        "subject_person": "Johann Frederich Widmer",
+        "fact_type": "Burial",
+        "date": "7 Jul 1914",
+        "place": "Rose Ridge Cemetery, Naples, Ontario, New York, United States of America"
+      },
+      "supporting_sources": [
+        "Find A Grave Index entry for Johann Frederich Widmer",
+        "Rose Ridge Cemetery burial/sexton record"
+      ],
+      "required": false
+    }
+  ]
+}

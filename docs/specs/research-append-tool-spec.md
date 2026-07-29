@@ -722,9 +722,12 @@ it load-bearing. Enforced by `tests/packaging/agent-tool-names.test.ts`.
 
 With that in place, this section's guarantee holds in all four environments.
 `CLAUDE.md`'s superseded claim that a single qualified spelling makes an agent
-"behave identically" across them has been corrected accordingly. One residual
-assumption is tracked in `docs/TODOs.md`: that the runtime refuses a spawn only
-when *every* entry is unrecognized, rather than on any one of them.
+"behave identically" across them has been corrected accordingly. The one residual
+assumption — that the runtime refuses a spawn only when *every* entry is
+unrecognized, rather than on any one of them — was **verified live in Cowork
+(2026-07-18)**: `@plugin:image-reader`, with 1 of its 2 entries unresolvable
+there, spawned normally and resolved `image_transcribe` through the bridge. See
+`CLAUDE.md` § "Cowork plugin agents".
 
 ### 11.2 The gate
 
