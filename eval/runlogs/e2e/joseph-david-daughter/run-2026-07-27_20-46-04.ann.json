@@ -4,5 +4,8 @@
     "f2": "true"
   },
   "proof_quality_score": 3,
+  "notes": {
+    "f1": "Final tree contains no person named Elizabeth. The only ParentChild links to the couple are R2/R3 -> Ethel (GNR6-547), R4/R5 -> Illiam G (GNR6-TRJ), and R6/R7 -> Enid (GNR6-V53, b. 1908). R6/R7 connect Joseph (GNR6-VWS) and Hannah (GNR6-RHN) to Enid, the third known child, not to an added Elizabeth. The agent correctly declined the false 1901-census hint, so f1 = true. Calibration note: reading the tree as adding an Elizabeth daughter is a misread of the R6/R7 -> Enid links."
+  },
   "annotator": "mercyokum"
 }
