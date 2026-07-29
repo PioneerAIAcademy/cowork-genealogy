@@ -1071,6 +1071,29 @@ _BEFORE_STATE_STRING_MAX = 4_000
 _BEFORE_STATE_MAX_CHARS = 40_000
 
 
+def _summarize_before_state_sources(sources: Any) -> dict[str, Any]:
+    """Summarize one before-state source array for the judge, keeping the
+    COMPLETE list of ids.
+
+    The judge uses the before-state block to check "references an id that isn't
+    on file" / "fabricated a source" claims, and that check is only sound if it
+    can see *every* id that was on file. The generic `_summarize_response`
+    samples a list down to its first `_RESPONSE_ARRAY_SAMPLE` (=3) entries —
+    which silently dropped the 4th+ source and made the judge (and human
+    annotators reading the same block) flag a correctly-cited later source
+    (`src_004` / `S4`) as fabricated. That is the exact failure this block was
+    written to prevent. So emit the full id list explicitly and only sample the
+    heavy per-source content (citations, notes) for prompt size.
+    """
+    items = sources if isinstance(sources, list) else []
+    ids = [s["id"] for s in items if isinstance(s, dict) and s.get("id")]
+    return {
+        "count": len(items),
+        "all_ids": ids,
+        "detail": _summarize_response(sources, string_max=_BEFORE_STATE_STRING_MAX),
+    }
+
+
 def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     """Render the source entries that existed BEFORE the skill ran, so the
     judge can mechanically check "not on file" / "fabricated" claims.
@@ -1079,7 +1102,9 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     that on-file source text was absent or invented — when it had no view of
     the pre-existing state. Surfacing the before-run `sources` (research.json,
     `src_` ids) and source descriptions (tree.gedcomx.json, `S` ids) makes
-    such claims checkable against what was actually on file.
+    such claims checkable against what was actually on file. The full id list
+    always survives (see `_summarize_before_state_sources`); only the heavy
+    per-source content is sampled.
 
     Bounded per-field and overall so a large project can't blow the prompt.
     Returns "(none)" when there was no prior state (e.g. an empty-project
@@ -1095,20 +1120,23 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
 
     blocks: list[str] = []
     if research_sources:
-        summarized = _summarize_response(
-            research_sources, string_max=_BEFORE_STATE_STRING_MAX
-        )
         blocks.append(
             "research.json sources on file before this run (src_ ids):\n"
-            + json.dumps(summarized, ensure_ascii=False, indent=2)
+            + json.dumps(
+                _summarize_before_state_sources(research_sources),
+                ensure_ascii=False,
+                indent=2,
+            )
         )
     if tree_sources:
-        summarized = _summarize_response(
-            tree_sources, string_max=_BEFORE_STATE_STRING_MAX
-        )
         blocks.append(
             "tree.gedcomx.json source descriptions on file before this run "
-            "(S ids):\n" + json.dumps(summarized, ensure_ascii=False, indent=2)
+            "(S ids):\n"
+            + json.dumps(
+                _summarize_before_state_sources(tree_sources),
+                ensure_ascii=False,
+                indent=2,
+            )
         )
     if not blocks:
         return "(none)"
