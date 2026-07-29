@@ -228,26 +228,10 @@ back to writing `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass schema validation, id allocation, and the `.bak`
 safety net; persistence belongs to the record-extractor agent's tools.
 
-**If `@plugin:record-extractor` itself fails to spawn** — any error at
-delegation time, including a tool-name-prefix mismatch or "would be
-spawned with zero tools" — **stop and report the exact error to the
-user.** Do not call `extraction_append` (or any other persistence tool)
-yourself to perform the extraction in its place, even though the write
-would validate. The agent's tools are scoped separately from this
-skill's on purpose — extraction and classification are its lane, not
-the router's — and a router that quietly does the job itself when the
-agent can't spawn produces assertions with none of the agent's
-dedicated classification reasoning behind them, with no signal to
-anyone that a substitution happened. Surfacing the failure is the
-correct outcome here, not a self-healed one.
-
 ## What this skill does not do
 
 - **No inline extraction or classification** — every assertion, source,
   and classification is written by the `record-extractor` agent.
-- **No stepping in for a failed agent spawn** — if `record-extractor`
-  can't be invoked, report it; never call `extraction_append` yourself
-  to route around it.
 - **No image reading in this context** — `@plugin:image-reader` only.
 - **No searching** — search-records / search-external-sites find
   records; this skill processes ones already found or provided.
