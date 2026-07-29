@@ -21,7 +21,8 @@
   },
   "mcp_fixtures": [
     "record-search-conflict-household-flynn",
-    "rank-search-matches-flynn-conflict"
+    "rank-search-matches-flynn-conflict",
+    "record-read-patrick-flynn-cflt-9k2"
   ],
   "judge_context": [
     "After record_search (with projectPath) stages results, the skill should pass subjectId to record_search and triage from the inline `ranked` block it returns. the inline `ranked` block returns the Patrick Flynn record at matchRank 1 with a high match score (0.85, matchConfidence 5).",
@@ -30,6 +31,6 @@
     "This tests that the skill treats the inline ranking's match score as one input to triage reasoning, not as the final word — the ranked list is a review surface for the existing role/age cross-checks, not an accept/reject classifier.",
     "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
     "IMPORTANT — Completeness grading: score 3 if the skill (a) found the conflicted result, (b) flagged the conflict with reasoning, (c) logged and offered next steps. Do NOT penalize for stopping after the conflicted result — stopping is CORRECT behavior. A conflicted result is NOT nil; the nil-escalation rules do not apply here. The Completeness dimension should NOT require the skill to search further after identifying a qualitative conflict",
-    "Only the primary Flynn/Patrick query is stocked. If the skill tries a surname or given-name variant (Flinn, Flyn, Pat) it gets a fixture_not_found error — that is a gap in this test's fixtures, not a skill defect. Trying a variant on an Irish surname is what the rubric asks for. Grade Tool Arguments on the PRIMARY search's arguments only, and do not score a variant attempt down. (A catch-all nil fixture was tried here and made things worse: an honest nil invites the next variant, where an error stops the skill, and the run hit the 20-turn cap. Do not re-add one without also raising the turn budget.)"
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ]
 }

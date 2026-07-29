@@ -5,7 +5,15 @@
     "name": "Use maiden surname for pre-marriage census search on woman with multiple marriages",
     "type": "positive",
     "description": "The tree has three name entries for Sarah Ann Mullen (BirthName: Mullen, MarriedName: Price, MarriedName: Mielke). Plan item pli_001 targets the 1860 census — before either marriage. The skill must use the maiden surname 'Mullen' as the primary search parameter for this pre-marriage time period, not the married names. Tests whether the skill correctly selects from multiple name entries based on name type and the search date relative to marriage dates.",
-    "tags": ["search", "census", "1860", "name-variation", "maiden-name", "multiple-marriages", "plan-execution"]
+    "tags": [
+      "search",
+      "census",
+      "1860",
+      "name-variation",
+      "maiden-name",
+      "multiple-marriages",
+      "plan-execution"
+    ]
   },
   "input": {
     "user_message": "Execute the 1860 census search for plan item pli_001. Sarah has three name entries in the tree — her birth name Mullen and two married names (Price, Mielke). Since this is 1860 and she didn't marry until 1872, search under her maiden name.",
@@ -16,7 +24,8 @@
     "record-search-price-no-results",
     "record-search-mielke-no-results",
     "rank-search-matches-mullen-1860-census",
-    "validate-research-schema"
+    "validate-research-schema",
+    "record-read-sarah-a-mullen-wicn-1860-m01"
   ],
   "judge_context": [
     "The skill MUST use surname 'Mullen' (the BirthName) as the primary surname parameter for the 1860 census search. Using 'Price' or 'Mielke' as the primary surname is incorrect for a pre-marriage search and should score Correctness=1.",
@@ -26,6 +35,7 @@
     "CRITICAL for Search strategy scoring: The key signal is whether the skill recognized that pli_001 targets a date (1860) before the first marriage (1872) and therefore chose the maiden surname. Score 3 if it explicitly reasons about the name type or marriage date. Score 2 if it uses Mullen but doesn't explain why. Score 1 if it uses a married name as the primary surname.",
     "The maiden-name record_search should be called with projectPath AND subjectId (I1), which ranks the staged pool host-side and returns the ranking inline as `ranked` — NOT per-result same_person, NOT a separate source_attachments call, and NOT a separate rank_search_matches call. The Price and Mielke searches return zero results, so they stage nothing and are not ranked; only the Mullen result set is.",
     "The triage output should surface attachment status from the returned match: the 1860 census record is unattached (attachedToSubject: false, attachedToOther: false), so it is new evidence confirming Sarah's birth surname and should be prioritized for extraction / record_read — not deprioritized as already in the tree.",
-    "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now."
+    "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ]
 }
