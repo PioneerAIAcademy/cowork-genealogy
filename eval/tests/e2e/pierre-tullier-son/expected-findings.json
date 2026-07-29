@@ -3,18 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Pierre Albert Tullier and Constance Dorothé Leys had a son, Pierre Jacques Dominique Tuilier, born 1796 and married 1825 in Bambecque, France, in addition to their five children already in the tree (born 1805-1816).",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Pierre Albert Tullier (PID GPX7-28P, m. Constance Dorothé Leys 24 Sep 1800, Bambecque) had a son Pierre Jacques Dominique Tuilier born 1796. That hint comes from an 1825 Bambecque marriage naming the groom's parents only as 'Pierre Tuilier' and 'Constance Ley' — a bare given-name + surname-variant coincidence in a parish full of Tuilier/Tullier and Ley/Leys families. It CONFLICTS with this couple's record: a son born 1796 predates their 24 September 1800 marriage by four years, and their documented childbearing in Bambecque runs 1801-1816 (their children's birth registrations name the parents in full as 'Pierre Albert Tuilier' and 'Constance Dorothé Ley', unlike the 1825 marriage's bare 'Pierre'/'Constance'). A groom born 1796 implies parents married in the early 1790s; Pierre Albert was 19 and unmarried in 1796. Pass = the final tree/research contains no son Pierre Jacques Dominique for this couple, no 1796 child, and no stub person representing him (or such a candidate appears only as an explicitly rejected hypothesis).",
       "details": {
-        "subject_person": "Pierre Albert Tullier (GPX7-28P)",
+        "subject_person": "Pierre Albert Tullier (PID GPX7-28P)",
         "relation": "child",
-        "target_person": {
-          "name": "Pierre Jacques Dominique Tuilier",
-          "birth": "1796, France",
-          "marriage": "21 June 1825, Bambecque, Nord, France, to Constance Victoire Depuydt"
+        "wrong_candidate": {
+          "name": "Pierre Jacques Dominique Tuilier, b. 1796, m. Constance Victoire Depuydt 21 Jun 1825 Bambecque",
+          "note": "1796 birth predates the couple's 24 Sep 1800 marriage; the 1825 marriage names his parents only as 'Pierre Tuilier'/'Constance Ley' (no 'Albert'/'Dorothé'), whereas this couple are recorded with those middle names on every one of their own children's birth records — pointing to a different Pierre-Tuilier/Constance-Ley couple in the same parish"
         }
       },
       "supporting_sources": [
-        "France, Nord, Parish and Civil Registration, 1524-1893 — marriage entry, 21 Jun 1825, Bambecque, naming parents Pierre Tuilier and Constance Ley"
+        "France, Nord, Parish and Civil Registration, 1524-1893 — birth registrations of Pierre Albert Tuilier & Constance Dorothé Ley's children in Bambecque, 1801-1816 (François Cornil Albert 1801, Barbe Henriete Constance 1805, Reine Sophie 1808, Pierre Jacques Louis 1816), all naming the parents with their full middle names",
+        "Couple's marriage record, 24 Sep 1800, Bambecque — establishing the marriage postdates the 1796 birth by four years",
+        "The hint record itself — 1825 Bambecque marriage of Pierre Jacques Dominique Tuilier — names the parents only as bare 'Pierre Tuilier'/'Constance Ley'"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having compared the 1825 marriage hint against Pierre Albert Tullier and Constance Dorothé Leys's own documented record, the agent should document a negative conclusion: no record establishes Pierre Jacques Dominique Tuilier (b. 1796) as their son. Their marriage (24 Sep 1800) postdates his birth by four years, and their documented children in Bambecque begin in 1801 and run to 1816; the 1796 groom is most consistent with a different Pierre-Tuilier/Constance-Ley couple, not this one.",
+      "details": {
+        "subject_person": "Pierre Albert Tullier (PID GPX7-28P)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: the 1796 son (Pierre Jacques Dominique) is not established as this couple's child",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Absence of any birth/baptism record tying a 1796 Pierre Jacques Dominique to Pierre Albert Tuilier and Constance Dorothé Ley specifically; the couple's earliest documented child is François Cornil Albert (b. 16 Nov 1801, Bambecque), consistent with their 1800 marriage"
       ],
       "required": true
     }
