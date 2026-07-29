@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_search_records_025",
+    "skill": "search-records",
+    "name": "A user-requested ad-hoc search that finds something still executes, and is logged as ad-hoc",
+    "type": "positive",
+    "description": "The user asks for a marriage record for Mary Flynn, Patrick's sister. No plan item covers it — the active plan targets Patrick's parentage through the 1850 census (pli_001) and Thomas's probate (pli_002), and neither reaches Mary's marriage. Per Step 1 this is an ad-hoc search: the user named this specific search, so it executes rather than being routed to research-plan. The search returns an 1862 Pottsville marriage to Michael Doyle. Pairs with ut_search_records_011, which is the same ad-hoc path ending in a nil: 011 proves an ad-hoc search that finds nothing writes no sidecar, this proves one that finds something writes a full one. Both must log plan_item_id null. The point is that ad-hoc is a first-class search path with the same evidentiary obligations as a planned search, not a degraded mode that only appears when nothing is found.",
+    "tags": [
+      "search",
+      "ad-hoc",
+      "adhoc-with-results",
+      "sidecar-write",
+      "marriage",
+      "plan-item-null"
+    ]
+  },
+  "input": {
+    "user_message": "Search FamilySearch for a marriage record for Mary Flynn, Patrick's sister — I'd like to know who she married and when.",
+    "scenario": "flynn-record-matching"
+  },
+  "mcp_fixtures": [
+    "record-search-mary-flynn-marriage-hit"
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is an AD-HOC search and executing it is CORRECT. No plan item covers Mary's marriage — pli_001 is the 1850 census for Patrick's parentage and pli_002 is Thomas's probate. Per Step 1 of the skill, the deciding question is who chose the search, not whether a plan exists: the user named this specific search, so the skill executes it. Do NOT penalize the skill for searching without a plan item, and do NOT expect it to route to research-plan. Routing away here would be the failure, not the pass.",
+    "REQUIRED: the new log entry must carry plan_item_id: null. An ad-hoc search is not accountable to any plan item, and recording a false one would let research-exhaustiveness count this search toward a question's repository_breadth when it was never planned for it. Score Correctness=1 if the skill invents a plan_item_id (e.g. attributing Mary's marriage to pli_001).",
+    "REQUIRED: results were returned, so the sidecar MUST be written and results_ref MUST be set. This is the opposite of the nil case — an ad-hoc search carries the same evidentiary obligations as a planned one, and a sidecar-less entry cannot feed extraction (research_append rejects an assertions append against one). outcome should be 'positive'.",
+    "The skill should note in the entry's notes that this was a user-requested ad-hoc search, so a later reader can tell a side excursion from planned work.",
+    "The skill must NOT invoke Skill('search-external-sites'). That escalation is for an important plan item gone nil across 3+ variants; this search is neither a plan item nor a nil. Score Nil escalation=1 if it escalates.",
+    "The skill must NOT modify the plan — no new plan item, no status change on pli_001 or pli_002. An ad-hoc search reports; research-plan is what folds a finding into the plan if it turns out to matter.",
+    "Triage: one result, a genuine marriage record for a Mary Flynn born 1841 in Ireland, consistent with the tree's sibling stub I3 (St. Mary's baptism 1841). Score Result triage=3 if the skill surfaces it as promising and gives any substantive reason — name, birth year, birthplace, county, or date fit — rather than adopting it on the 0.91 score alone. This test is NOT a triage-depth test; that is ut_search_records_013's job. Do not require a stated confirmation plan, a list of discriminating attributes, or an explicit caution about Mary Flynn being a common name. Reserve 2 for adopting the record as certainly Patrick's sister with no reasoning at all, and 1 for no triage.",
+    "Tool Arguments: score 3 if record_search was called with surname and givenName plus projectPath. subjectId is optional here and its absence must NOT be penalized — Mary (I3) is a name-only stub with no dated or placed facts, so the host-side ranker has nothing to score her against; the skill may reasonably omit it.",
+    "IMPORTANT — How file writes work: research_log_append writes the log entry AND the results/ sidecar host-side from the staged handle; the skill does not hand-write either. Sidecars are newly created files, so they never appear in the file-change diff — their absence from it is not evidence of anything."
+  ]
+}

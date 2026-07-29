@@ -1,0 +1,95 @@
+{
+  "tool": "record_read",
+  "description": "Full record for Jan Gallo's 1893 Turany baptism (ark:/61903/1:1:KHWD-N5R). Mirrors the gedcomx already embedded in record-search-gallo-slovakia-hit — same three persons, same parent-child and couple relationships, no new genealogical claims. Exists because ut_search_records_019 asks the skill to 'report what it says about his father', and reading the record before reporting on parentage is sound practice (the index is a pointer, the record is the evidence). record_read is in search-records' allowed-tools, but 019 stocked only record_search fixtures, so the tool was never registered in the mock and a call to it aborted the whole run as an unregistered tool (Type 1) — one abort in 22 runs, on a run that had otherwise done the job correctly. The coverage originally lived in ut_search_records_006, deleted 2026-06-18 as a side effect of a runlog commit.",
+  "args": {
+    "recordId": "~KHWD-N5R"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_14050599145",
+        "ark": "ark:/61903/1:1:KHWD-N5R",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "type": "BirthName",
+            "given": "Jan",
+            "surname": "Gallo"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Baptism",
+            "primary": true,
+            "date": "1893",
+            "standard_date": "1893",
+            "place": "Turany, Martin, Slovakia",
+            "standard_place": "Turany, Martin, Slovakia"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Slovakia, Church and Synagogue Books, 1592-1935"
+          }
+        ]
+      },
+      {
+        "id": "p_14050599143",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "type": "BirthName",
+            "given": "Andrej",
+            "surname": "Gallo"
+          }
+        ]
+      },
+      {
+        "id": "p_14050599144",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N3",
+            "type": "BirthName",
+            "given": "Katarina",
+            "surname": "Križko"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "ParentChild",
+        "parent": "p_14050599143",
+        "child": "p_14050599145"
+      },
+      {
+        "type": "Couple",
+        "person1": "p_14050599143",
+        "person2": "p_14050599144"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p_14050599144",
+        "child": "p_14050599145"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Slovakia, Church and Synagogue Books, 1592-1935",
+        "collectionId": "1554443",
+        "ark": "ark:/61903/1:2:9MFH-2SS5"
+      }
+    ],
+    "places": [
+      {
+        "id": "PL1",
+        "name": "Turany, Martin, Slovakia"
+      }
+    ]
+  }
+}
