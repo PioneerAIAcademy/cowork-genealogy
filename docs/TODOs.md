@@ -275,21 +275,19 @@ have proven out; none of them reach Cowork or the hosted web workbench.
   `docs/specs/image-reader-opus-agent-spec.md` §9.
 
 - [ ] **Should `image-reader`/`image-reader-opus` compress non-matching pages
-  during a `search-images` browse?** Raised while designing
-  `docs/plan/image-reader-opus-agent-plan.md`: for a browse with a
-  `looking_for` target, only relay the full transcription for a likely-matching
-  page and a one-line verdict for the rest, so a ten-page browse doesn't
-  accumulate ten full transcriptions in the calling skill's context. **This is
-  the same shape as `docs/plan/search-images-base64-accumulation.md`'s "Option
-  B", which was explicitly rejected on 2026-07-17 for a correctness reason, not
-  cost** — asking the reader to judge relevance and shorten its output was
-  found to encourage hallucination, whereas the current contract (always full,
-  faithful OCR, never slanted) avoids it. `image-reader-opus-agent-plan.md` §7
-  offers one candidate distinction (gate compression on `image_transcribe`'s
-  own deterministic `FOUND`/`NOT FOUND` field, from a forced always-full pass,
-  rather than a fresh relevance judgment by the relaying agent) but does not
-  resolve it. Needs the same genealogist scrutiny Option B got before building
-  anything — NOT investigated.
+  during a `search-images` browse?** Raised while designing `image-reader-opus`:
+  for a browse with a `looking_for` target, only relay the full transcription for
+  a likely-matching page and a one-line verdict for the rest, so a ten-page
+  browse doesn't accumulate ten full transcriptions in the calling skill's
+  context. **This is the same shape as the search-images accumulation work's
+  "Option B", explicitly rejected on 2026-07-17 for a correctness reason, not
+  cost** — asking the reader to judge relevance and shorten its output was found
+  to encourage hallucination, whereas the current contract (always full, faithful
+  OCR, never slanted) avoids it. One candidate distinction was identified but not
+  resolved: gate compression on `image_transcribe`'s own deterministic
+  `FOUND`/`NOT FOUND` field, produced by a forced always-full pass, rather than
+  on a fresh relevance judgment by the relaying agent. Needs the same
+  genealogist scrutiny Option B got before anything is built — NOT investigated.
 
 ## Skill coverage (orphaned tools)
 These MCP tools are shipped, specced, and advertised, but no skill references them
