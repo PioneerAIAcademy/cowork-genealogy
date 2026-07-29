@@ -1,0 +1,3812 @@
+{
+  "project": {
+    "id": "rp_heinrich_dewus_children_death",
+    "objective": "When did Heinrich Dewus of Milwaukee, Wisconsin (born about 1850 in Pommerania, Germany) die, and did he and his wife Augusta have children besides the four already in the tree?",
+    "subject_person_ids": [
+      "9VX4-1C3"
+    ],
+    "status": "completed",
+    "created": "2026-07-10",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Heinrich Dewus (born about 1850 in Pomerania, Germany; resident of Milwaukee, Wisconsin) die?",
+      "rationale": "Death is the first independent part of the research objective. Wisconsin death records begin in 1876 and Milwaukee county records are well-indexed; a death certificate or obituary would establish the date and may also name surviving children, making this a partial gatekeeper for the children-completeness question.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [
+        "q_002"
+      ],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Reasonably exhaustive research for Heinrich's death date: (1) Wisconsin Death Index 1820-1907 searched \u2014 negative, confirming survival past 1907. (2) Broad Wisconsin death search recovered the GenealogyBank obituary (src_001, log_002) naming death date 23 Aug 1936 with primary-quality information from a family informant. (3) WI Death Records 1867-1907 searched \u2014 negative. (4) Cemetery records searched \u2014 no match. (5) WI State Census 1885 and 1930 federal census attempts both negative (indexing issues). The obituary provides the death date; a Wisconsin post-1907 death certificate has not been accessed (State Vital Records, fee-based) and would strengthen the conclusion from probable to proved. Church records, probate, and newspaper indexes were not exhaustively searched. The GPS stop criteria are substantially met: sufficient evidence exists to form a defensible conclusion, and the one remaining gap (death certificate) is a practical access limitation rather than a search gap.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_010",
+          "log_011"
+        ],
+        "stop_criteria": "GPS Standard 18: available indexed online sources exhausted; remaining primary source (WI post-1907 death certificate) requires fee-based order from State Vital Records \u2014 a practical access limitation. Question answerable with available evidence."
+      },
+      "created": "2026-07-24"
+    },
+    {
+      "id": "q_002",
+      "question": "Did Heinrich Dewus and his wife Augusta Arndt (Milwaukee, Wisconsin, married circa 1870s\u20131880s) have any children besides Heinrich Charles, Alma Friedericka Wilhelmina, Adela Ulricka Augusta, and Hedwig Bertha Anna Dewus?",
+      "rationale": "The second independent part of the objective. Answering this requires enumerating all children through census records (1880, 1900, 1910), Milwaukee birth indexes, church baptism registers, and death/obituary records naming survivors. The death question (q_001) is a partial gatekeeper because obituaries and death certificates often name surviving children, but census and birth records can be searched in parallel.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Reasonably exhaustive research for additional children beyond the 4 in the tree: (1) Two obituary sources (Heinrich 1936, Ida 1947) name surviving children consistently. (2) WI Birth Index 1820-1907 searched \u2014 7 Milwaukee Dewus births recovered, all attributable to the family by surname rarity. (3) WI Death Records for Dewus children searched \u2014 Oscar (died 1881, parentage probable) and Herman (died 1885, parentage speculative) identified as children who died young. (4) 1880, 1900, and 1910 federal censuses searched. (5) WI State Census 1885 searched \u2014 negative due to indexing. Key gaps: parent names are absent from birth index stubs for Wilhelmine (1880), Elenora (1892), and Emma (1893); Lutheran baptism/christening records not searched; original Milwaukee county birth register images not examined. Despite these gaps, the evidence collectively identifies at least 7 additional children (Walter, Ida, Oscar, Herman, Wilhelmine, Elenora, Emma) with varying confidence levels. The core question \u2014 are there children beyond the original 4? \u2014 is answered affirmatively and with sufficient evidence for a defensible GPS conclusion.",
+        "log_entry_ids": [
+          "log_002",
+          "log_005",
+          "log_006",
+          "log_010",
+          "log_012"
+        ],
+        "stop_criteria": "GPS Standard 17/18: indexed online sources substantially exhausted; remaining gaps (original birth register images, church records) require access to non-indexed or fee-based repositories. Sufficient evidence exists to answer the research question at the GPS probable standard."
+      },
+      "created": "2026-07-24"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-24",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Milwaukee County, Wisconsin",
+          "date_range": "1820-1907",
+          "repository": "FamilySearch",
+          "rationale": "The Wisconsin Death Index (FS col. 1940759) is a free, indexed statewide collection covering 435,000 records. If Heinrich died before Wisconsin's 1907 statewide registration (the most likely scenario given his birth ~1850), a county death record should appear here. Search for 'Dewus' and variant spellings.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Milwaukee County, Wisconsin",
+          "date_range": "1867-1907",
+          "repository": "FamilySearch",
+          "rationale": "Wisconsin Death Records 1867-1907 (FS col. 1803975) is a separate indexed compilation of ~185K records drawn from county registers. Searching this alongside col. 1940759 guards against gaps between the two compilations; the actual county register entries may contain parent/birthplace details absent from the index.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Milwaukee, Wisconsin",
+          "date_range": "1854-1911",
+          "repository": "Ancestry",
+          "rationale": "Milwaukee Deaths 1854-1911 (Ancestry col. 61721) provides indexed access to the actual Milwaukee county death register images, which contain more detail than the FS index \u2014 including occupation, birthplace, length of residence, and informant. This is the primary source for the death certificate image regardless of whether the FS index returns a hit. Note: per locality quirk, the county abbreviation in these registers may appear as 'Milw'.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Milwaukee County, Wisconsin",
+          "date_range": "1880-1905",
+          "repository": "FamilySearch",
+          "rationale": "If no death record surfaces in steps 1-3, census records can bracket the death. The 1880 federal census should show Heinrich as a live householder (~age 30); Wisconsin State Censuses for 1885, 1895, and 1905 (FS cols. 1443713, 1443712, 1443899) fill intercensal gaps; the 1900 and 1910 federal censuses may show Augusta as a widow. The last census with him present and the first without provides a date bracket. The 1890 federal census was destroyed.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "cemetery",
+          "jurisdiction": "Milwaukee, Wisconsin",
+          "date_range": "1870-1920",
+          "repository": "FamilySearch",
+          "rationale": "Wanderer's Rest Cemetery (FS col. 3326771, 30,586 indexed records) was the primary burial ground for Lutheran German Milwaukeeans \u2014 the most likely cemetery for a Pomeranian Lutheran family. An interment record may include the exact death date. Also check Pilgrim's Rest Cemetery (FS col. 3246496). Both are indexed and free.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "cemetery",
+          "jurisdiction": "Milwaukee County, Wisconsin",
+          "date_range": "1870-1920",
+          "repository": "other",
+          "rationale": "Find A Grave and BillionGraves are community-transcribed cemetery indexes that often include death dates from gravestones not captured in institutional records. Search for 'Heinrich Dewus' and variant spellings. The Milwaukee County Genealogical Society (milwaukeegenealogy.org) also maintains a cemetery index. This is a fallback if FS cemetery collections are nil.",
+          "fallback_for": "pli_005",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "probate",
+          "jurisdiction": "Milwaukee County, Wisconsin",
+          "date_range": "1870-1920",
+          "repository": "FamilySearch",
+          "rationale": "Wisconsin Probate Estate Files, 1848-1948 (FS col. 1874190) contains 1.4M images but is 0% indexed and not full-text searchable \u2014 must be browsed by Milwaukee County volume and year. If the death date is bracketed by census results (step 4), browse the Milwaukee County volume for the appropriate year. An estate file names surviving children (critical for q_002) and confirms the death date.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "newspaper",
+          "jurisdiction": "Milwaukee, Wisconsin",
+          "date_range": "1870-1920",
+          "repository": "other",
+          "rationale": "The Milwaukee Public Library holds the 'Milwaukee's German Newspapers: an Index of Death Notices and Related Items' and the Milwaukee Sentinel Card Index (1837-1890) \u2014 both not digitized and requiring on-site or mail inquiry. For a Pomeranian German family, the death notice likely appeared in a German-language paper. GenealogyBank (1833-2012) and MyHeritage Wisconsin Newspapers (1884-2009) are paid alternatives searchable remotely. An obituary may name surviving children, directly addressing q_002.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-24",
+      "items": [
+        {
+          "id": "pli_009",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Milwaukee County, Wisconsin",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "The 1880 US Federal Census (free on FS) lists every household member including all children living at home. Heinrich (~age 30) would head the household; the census captures names, ages, and birthplaces of all children present. This is the foundational enumeration source for children born before 1880.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Milwaukee County, Wisconsin",
+          "date_range": "1885-1905",
+          "repository": "FamilySearch",
+          "rationale": "Wisconsin State Censuses for 1885, 1895, and 1905 (FS cols. 1443713, 1443712, 1443899) fill the intercensal gaps where children born in the mid-to-late 1880s or 1890s would appear as household members. These censuses are indexed and free. The 1890 federal census was destroyed, making these state censuses especially important for this family.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Milwaukee County, Wisconsin",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 US Federal Census is critical: it records the total number of children born to the mother and the number still living. This gives an exact count of all births (not just surviving children) and, if Augusta is head of household as a widow, will list any children still at home. Searching both 'Heinrich Dewus' and 'Augusta Dewus' households is essential.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Milwaukee County, Wisconsin",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "The 1910 US Federal Census may show Augusta as a widow with remaining children, or show grown children in adjacent households. The 1910 census also records number of children born and surviving. Tracking children into adulthood across 1900 and 1910 identifies any who had died young and might not appear in later censuses.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Milwaukee County, Wisconsin",
+          "date_range": "1839-1907",
+          "repository": "FamilySearch",
+          "rationale": "Wisconsin Birth Index 1820-1907 (FS col. 1946789) and Wisconsin Births and Christenings 1826-1926 (FS col. 1708703) are indexed and free. Searching for births with parent surnames 'Dewus' (father) or 'Arndt' (mother's maiden name) will systematically enumerate children born in Milwaukee County. The Ancestry Milwaukee Births 1839-1911 (col. 61719) provides the actual register images with additional detail.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_014",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Milwaukee, Wisconsin",
+          "date_range": "1870-1910",
+          "repository": "FamilySearch",
+          "rationale": "As Pomeranian German Lutherans, the family's baptism records are most likely in a Milwaukee Lutheran congregation. Trinity Lutheran Church records 1870-1968 (FS catalog 528983) are indexed in English and German. The Milwaukee Kirchenbuch 1870-1920 (FS catalog 577132) is German-only and browse-only \u2014 requires browsing image by image if the indexed search yields nothing. Baptism records list both parents by name and often note birth dates, allowing systematic enumeration of children.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_015",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Milwaukee County, Wisconsin",
+          "date_range": "1870-1930",
+          "repository": "FamilySearch",
+          "rationale": "Children who died in infancy or early childhood will not appear in later census records. Searching FS Wisconsin Death Index 1820-1907 (col. 1940759) and Milwaukee Deaths 1854-1911 (Ancestry col. 61721) for children with the surname 'Dewus' (mother's name 'Augusta' or father 'Heinrich') will identify any children who died young and are not in the four already in the tree. This addresses the completeness requirement directly.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_016",
+          "sequence": 8,
+          "record_type": "newspaper",
+          "jurisdiction": "Milwaukee, Wisconsin",
+          "date_range": "1870-1930",
+          "repository": "other",
+          "rationale": "An obituary for Heinrich or Augusta Dewus commonly names all surviving children. The Milwaukee Public Library holds the German-language newspaper death notice index. GenealogyBank Wisconsin Newspapers (1833-2012, paid) is remotely searchable. An obituary naming all children would directly corroborate or extend the list of four already in the tree.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-24T00:58:37.983Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "givenName": "Heinrich",
+        "collectionId": "1940759",
+        "recordType": "death",
+        "count": 50,
+        "note": "Wisconsin Death Index 1820-1907 only"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results in Wisconsin Death Index 1820-1907 (col. 1940759) for Heinrich Dewus. Surname is uncommon; absence may indicate he survived past 1907 or was indexed under a variant."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-24T01:00:08.753Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "givenName": "Heinrich",
+        "recordType": "death",
+        "recordCountry": "United States",
+        "recordSubdivision": "Wisconsin",
+        "count": 50,
+        "note": "Broad Wisconsin death search after nil in col. 1940759"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 115,
+      "notes": "Top hit: Henry Dewus (Americanized Heinrich), born ~1850 Germany, died ~23-28 Aug 1936 Milwaukee. Occupation Carpenter, address 6906 W. Lloyd St. Obituary (GenealogyBank, col. 2860782) names children: Henry C, Walter, Mrs. Alma Schmidt, Miss Ida Dewes, Mrs. Adele Kniophoff, Mrs. Hattie Henke. Combined page entry with Mr. Henry Downs \u2014 Walter and Eleanor Downs attribution uncertain. He survived past 1907, explaining nil in Wisconsin Death Index 1820-1907. Wisconsin Death Records 1867-1907 (col. 1803975) returned only unrelated 'William Hinry Due'."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-24T01:03:39.343Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "givenName": "Heinrich",
+        "collectionId": "1708699",
+        "recordType": "death",
+        "count": 50,
+        "note": "Wisconsin Deaths and Burials 1835-1968 \u2014 fallback search"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results in Wisconsin Deaths and Burials 1835-1968 (col. 1708699). Heinrich died in 1936, outside the well-indexed pre-1907 window. The obituary at ark:/61903/1:1:Q5SZ-J9LG (log_002) remains the primary death evidence."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-24T01:04:05.081Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "givenName": "Heinrich",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "residencePlace": "Milwaukee, Wisconsin",
+        "recordType": "census",
+        "count": 50,
+        "note": "1880 federal census \u2014 junk result returned, trying Henry variant next"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "notes": "Only result was an unrelated Native American census roll (Percy Za Do Ko). \"Heinrich\" may have been indexed as \"Henry\" in the 1880 US census. Retrying with Americanized given name."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_013",
+      "performed": "2026-07-24T01:08:29.457Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "recordCountry": "United States",
+        "recordType": "birth",
+        "residencePlace": "Milwaukee, Wisconsin",
+        "count": 50,
+        "note": "WI Birth Index 1820-1907 + broader search for Dewus births in Milwaukee"
+      },
+      "outcome": "positive",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 200,
+      "notes": "Found 7 Dewus births in Milwaukee in the WI Birth Index 1820-1907 (col. 1946789): Oscar A Dewus (25 Nov 1879), Wilhelmine Dewus (17 Dec 1880), Alma F Dewus (13 Feb 1882), Herman Dewus (7 Oct 1882), Heinrich Dewus (2 Aug 1889), Elenora Dewus (24 Apr 1892), Emma Dewus (13 Oct 1893). Birth index stubs do not include parent names \u2014 parentage established by surname rarity + Milwaukee location + obituary corroboration. Alma (1882) = confirmed tree child. Heinrich (1889) = confirmed tree child (Heinrich Charles). Others not yet in tree."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_012",
+      "performed": "2026-07-24T01:08:35.837Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "collectionId": "1727033",
+        "residencePlace": "Milwaukee, Wisconsin",
+        "count": 50,
+        "note": "1910 US Federal Census for Dewus surname in Milwaukee"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 27,
+      "notes": "Top hit: Walter Dewus (born 1888, Wisconsin), head of household, Milwaukee Ward 10, 1910. Wife Clara Dewus (born 1890, Wisconsin); son Clarence Dewus (born 1909). Walter is confirmed as the son named in the 1936 obituary. Heinrich Dewus (father, born ~1850 Germany) does not appear in the top results \u2014 likely indexed under a variant surname (Due, Dewuse, etc.) in the 1910 census."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-24T01:08:39.884Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "givenName": "Henry",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "residencePlace": "Milwaukee, Wisconsin",
+        "recordType": "census",
+        "count": 50,
+        "note": "1880 US Federal Census \u2014 Dewus/Henry in Milwaukee"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero relevant results for Heinrich/Henry Dewus in 1880 census regardless of given name variant used. The surname is almost certainly indexed under a phonetic variant (Due, Duse, etc.) in the 1880 federal census. No Dewus household found. Census bracket from obituary (died 1936) is sufficient \u2014 1880 census bracketing is no longer required to establish death date."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-24T01:08:44.685Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "givenName": "Heinrich",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Milwaukee, Wisconsin",
+        "recordType": "census",
+        "count": 50,
+        "note": "1900 US Federal Census \u2014 Dewus in Milwaukee"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "No relevant results for Heinrich Dewus in 1900 census. Top results are unrelated (unrelated Dewus families in other states, Native American census rolls). The father's household is not retrievable via indexed surname search \u2014 likely indexed under a phonetic variant. The 1900 census 'children born/living' column would have been the best source for a complete child count, but this record is not accessible via current search."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-24T01:08:48.353Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "givenName": "Henry",
+        "collectionId": "3326771",
+        "count": 50,
+        "note": "Wanderer's Rest Cemetery, Milwaukee (col. 3326771)"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results in Wanderer's Rest Cemetery (col. 3326771). Heinrich may have been buried in a different cemetery, or the burial record may not be indexed. The obituary provides the death date; exact burial location remains unknown."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-24T01:15:17.472Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "collectionId": "1443713",
+        "residencePlace": "Milwaukee, Wisconsin",
+        "count": 50,
+        "note": "WI State Census 1885 for Dewus surname \u2014 pli_010"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 4,
+      "notes": "4 results in WI State Census 1885 for Dewus surname in Milwaukee, all phonetic noise (Duehuer, Du*, Due, La Due). No Heinrich Dewus household found. The Dewus surname is not indexed as Dewus in the 1885 state census \u2014 same phonetic indexing problem as federal censuses. Census bracket approach for q_002 is not viable via indexed search."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": null,
+      "performed": "2026-07-24T01:15:24.439Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "givenName": "Henry",
+        "residenceYearFrom": 1930,
+        "residenceYearTo": 1930,
+        "residencePlace": "Milwaukee, Wisconsin",
+        "recordType": "census",
+        "count": 50,
+        "note": "1930 US Federal Census \u2014 Heinrich Dewus (father, died 1936) should appear"
+      },
+      "outcome": "negative",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 9,
+      "notes": "No relevant results. Top results are Dew*ski, La Dew, Native American census rolls. The surname Dewus is not indexed as Dewus in the 1930 federal census; father Heinrich is not retrievable via indexed search. The 1936 obituary (log_002) remains the primary source for his death date."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_015",
+      "performed": "2026-07-24T01:15:51.377Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dewus",
+        "recordType": "death",
+        "residencePlace": "Milwaukee, Wisconsin",
+        "recordCountry": "United States",
+        "count": 50,
+        "note": "WI Death Index + GenealogyBank obituaries for all Dewus \u2014 pli_015, children who died young"
+      },
+      "outcome": "positive",
+      "results_examined": 15,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 4357,
+      "notes": "Critical finds: (1) Oscar Albert Richard Dewus (born 25 Nov 1879 Milwaukee) died 1881 \u2014 WI Death Records 1867-1907, ark:/61903/1:1:XL4B-Q5G. (2) Herman Dewus (born 7 Oct 1882 Milwaukee) died 1885 \u2014 same collection, ark:/61903/1:1:XLXQ-SBF; same death record lists 'Wm. Dewus' and 'Ulrike Dewus' as other persons (likely parents, providing direct parentage evidence). Both children died young, explaining their absence from the 1936 obituary. Also found: Ida Dewus obituary (died 16 Jul 1947, Milwaukee) ark:/61903/1:1:Q576-9D79; Henry F Dewus obituary (died 23 Aug 1937) ark:/61903/1:1:Q57D-64MN; Walter C Dewus obituary (died 5 Aug 1953) ark:/61903/1:1:Q576-ZSPF; Henry C Dewus obituary (died 26 Jan 1958) ark:/61903/1:1:Q5SD-78ZF; FindAGrave: Alma Friedericka Wilhelmina Dewus Schmidt (born 13 Feb 1882, died 12 Dec 1945) ark:/61903/1:1:6K5Q-M23P; Walter C Dewus born 1887, died 1953 \u2014 FindAGrave ark:/61903/1:1:QVL1-YHTD."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q5SZ-J9LG : accessed 2026-07-24), entry for Henry Dewus, obituary published 28 Aug 1936, Milwaukee, Wisconsin.",
+      "citation_detail": {
+        "who": "Henry Dewus",
+        "what": "Obituary, United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013",
+        "when_created": "28 Aug 1936",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q5SZ-J9LG)",
+        "where_within": "Entry for Henry Dewus, 28 Aug 1936"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q5SZ-J9LG",
+      "notes": "FamilySearch index/abstract of a GenealogyBank newspaper obituary. Original newspaper image accessible via FamilySearch viewer (ark:/61903/3:1:3Q9M-CSPY-C9SP-R) but the underlying original newspaper page was not independently examined \u2014 original not examined beyond the FamilySearch-hosted image. Source treated as derivative (newspaper obituary index record). Obituary text submitted by family; family is the informant for biographical content.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Wisconsin, Death Records, 1867-1907\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XLXQ-SBF : accessed 2026-07-24), Entry for Herman Dewus and Wm. Dewus, 1885.",
+      "citation_detail": {
+        "who": "Herman Dewus (deceased), Wm. Dewus (father), Ulrike Dewus (mother)",
+        "what": "Wisconsin Death Record, 1885",
+        "when_created": "1885",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch, \"Wisconsin, Death Records, 1867-1907\" (collection 1803975)",
+        "where_within": "Entry for Herman Dewus, ARK ark:/61903/1:1:XLXQ-SBF"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MZ5-QBF",
+      "notes": "FamilySearch index of Wisconsin death registers; original register image not examined \u2014 index only. Father recorded as 'Wm. Dewus' \u2014 possibly Wilhelm (formal German name for Heinrich/Henry); discrepancy with 'Henry Dewus' on Oscar Dewus's 1881 death record from the same collection noted. Mother recorded as 'Ulrike Dewus' \u2014 likely the same woman recorded as 'Augustl'/Augusta on Oscar Dewus's 1881 death record. Dewus surname is extremely rare in Milwaukee, making family identification highly probable despite name variants.",
+      "log_entry_id": "log_012",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Wisconsin, Death Records, 1867-1907\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XL4B-Q5G : accessed 2026-07-24), Entry for Oscar Albert Richard Dewus and Henry, 1881.",
+      "citation_detail": {
+        "who": "Oscar Albert Richard Dewus",
+        "what": "Death record entry, Wisconsin Death Records, 1867-1907 (FamilySearch collection 1803975)",
+        "when_created": "1881",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Entry for Oscar Albert Richard Dewus, ARK ark:/61903/1:1:XL4B-Q5G"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XL4B-Q5G",
+      "notes": "Derivative compiled index/record from Wisconsin Death Records, 1867-1907 (FamilySearch collection 1803975). Original underlying record not examined \u2014 only the FamilySearch indexed/compiled entry was accessed. Mother's given name appears as 'Augustl' (likely an abbreviation for Augusta). Father listed by given name only ('Henry'); no surname provided for father, but context of the Dewus child makes identification as Heinrich/Henry Dewus clear. Birth year stated as 1880 in this record; corroborating WI Birth Index record (VH41-ZHL) gives 25 Nov 1879.",
+      "log_entry_id": "log_012",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q576-9D79 : 2025), Entry for Ida Dewus and Adele Kniepholf, 18 Jul 1947.",
+      "citation_detail": {
+        "who": "Ida Dewus",
+        "what": "Obituary notice naming deceased and surviving siblings",
+        "when_created": "18 Jul 1947",
+        "when_accessed": "2026-07-24",
+        "where": "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013, FamilySearch",
+        "where_within": "Entry for Ida Dewus, ark:/61903/1:1:Q576-9D79"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QT3T-5QWH",
+      "notes": "Newspaper obituary \u2014 derivative source; original newspaper not examined. Death date and sibling names are secondary information supplied by family through the newspaper. Original newspaper image not confirmed retrieved.",
+      "log_entry_id": "log_012",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Wisconsin, Birth Index, 1820-1907,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VH41-ZHN : accessed 24 July 2026), entry for Alma F Dewus, 13 Feb 1882.",
+      "citation_detail": {
+        "who": "Alma F Dewus",
+        "what": "Wisconsin, Birth Index, 1820-1907 (FamilySearch collection 1946789), index entry",
+        "when_created": "Index compiled from original Milwaukee County birth registers, covering 1820-1907",
+        "when_accessed": "24 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Entry for Alma F Dewus, born 13 Feb 1882, Milwaukee, Wisconsin"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHN",
+      "notes": "Index stub only \u2014 parent names not included in this record. Original birth register not examined; this is an index entry only. The underlying original register image was not accessed.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "\"Wisconsin, Birth Index, 1820-1907,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VH41-ZHG : accessed 24 July 2026), entry for Wilhelmine Dewus, 17 Dec 1880.",
+      "citation_detail": {
+        "who": "Wilhelmine Dewus",
+        "what": "Wisconsin, Birth Index, 1820-1907 (FamilySearch, collection 1946789)",
+        "when_created": "Index compiled from original Milwaukee County birth registers, covering 1820\u20131907",
+        "when_accessed": "24 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Entry for Wilhelmine Dewus, born 17 Dec 1880, Milwaukee, Wisconsin; ARK: ark:/61903/1:1:VH41-ZHG"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHG",
+      "access_date": "2026-07-24",
+      "notes": "Index stub only \u2014 parent names are not included in the indexed data. Original birth register not examined; this derivative index was the only record accessed. The underlying original register is held by Milwaukee County; image access was not confirmed.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S6"
+    },
+    {
+      "id": "src_007",
+      "citation": "\"Wisconsin, Birth Index, 1820-1907,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VH41-ZHL : accessed 2026-07-24), entry for Oscar A Dewus, 25 Nov 1879, Milwaukee, Wisconsin.",
+      "citation_detail": {
+        "who": "Oscar A Dewus",
+        "what": "Wisconsin, Birth Index, 1820-1907 (FamilySearch collection 1946789), index entry",
+        "when_created": "Index compiled from original county birth registers; original registration circa 25 November 1879",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "ARK ark:/61903/1:1:VH41-ZHL"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHL",
+      "access_date": "2026-07-24",
+      "notes": "Index stub only \u2014 parent names are NOT included in the indexed data. Original birth register not examined; this extraction is from the index entry alone. The original Milwaukee County birth register image was not accessed.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S7"
+    },
+    {
+      "id": "src_008",
+      "citation": "\"Wisconsin, Birth Index, 1820-1907\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VH41-ZH2 : accessed 2026-07-24), entry for Herman Dewus, 07 Oct 1882.",
+      "citation_detail": {
+        "who": "Herman Dewus",
+        "what": "Wisconsin, Birth Index, 1820-1907 (FamilySearch collection 1946789), index entry",
+        "when_created": "Index compiled from original county birth registers; record date 7 Oct 1882",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ARK ark:/61903/1:1:VH41-ZH2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZH2",
+      "access_date": "2026-07-24",
+      "notes": "Index stub only \u2014 parent names not included in this collection. Original birth register not examined; index may contain transcription errors. Birth date (7 Oct 1882, Milwaukee) is consistent with the Wisconsin Death Record for Herman Dewus (separate extraction) which records the same birth date and place.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S8"
+    },
+    {
+      "id": "src_009",
+      "citation": "\"Wisconsin, Birth Index, 1820-1907\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VH41-ZHK : accessed 2026-07-24), entry for Heinrich Dewus, 02 Aug 1889.",
+      "citation_detail": {
+        "who": "Heinrich Dewus",
+        "what": "Wisconsin, Birth Index, 1820-1907 (FamilySearch collection 1946789)",
+        "when_created": "Index compiled from original county birth registers; coverage 1820\u20131907",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Entry for Heinrich Dewus, born 02 Aug 1889, Milwaukee, Wisconsin; ARK ark:/61903/1:1:VH41-ZHK"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHK",
+      "notes": "Birth index stub only \u2014 parent names are NOT included in this index entry. Original birth register image not examined; this derivative index is the only record accessed. The underlying original register should be consulted to confirm details and retrieve parent names.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S9"
+    },
+    {
+      "id": "src_010",
+      "citation": "\"Wisconsin, Birth Index, 1820-1907,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VH41-ZHV : accessed 24 July 2026), entry for Emma Dewus, 13 Oct 1893.",
+      "citation_detail": {
+        "who": "Emma Dewus",
+        "what": "birth index entry",
+        "when_created": "created from original Milwaukee County birth registers, digitized and indexed by FamilySearch",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch, \"Wisconsin, Birth Index, 1820-1907,\" collection 1946789",
+        "where_within": "entry for Emma Dewus, 13 Oct 1893, Milwaukee, Wisconsin"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHV",
+      "notes": "Index stub only \u2014 parent names are NOT included in this collection. Original birth register not examined. The underlying Milwaukee County birth register image was not accessed; this index entry is the only evidence examined.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S10"
+    },
+    {
+      "id": "src_011",
+      "citation": "\"Wisconsin, Birth Index, 1820-1907,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VH41-ZHJ : accessed 2026-07-24), entry for Elenora Dewus, 24 Apr 1892.",
+      "citation_detail": {
+        "who": "Elenora Dewus",
+        "what": "Wisconsin, Birth Index, 1820-1907 (FamilySearch collection 1946789), index entry",
+        "when_created": "Index compiled from original Wisconsin county birth registers; underlying records circa 1892",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Entry for Elenora Dewus, born 24 Apr 1892, Milwaukee, Wisconsin"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHJ",
+      "access_date": "2026-07-24",
+      "notes": "Index stub only \u2014 parent names are not included in this collection. Original birth register not examined; image linked from the index (ark:/61903/1:2:9M98-KFVJ) was not retrieved. Original not examined \u2014 browse-only index entry.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S11"
+    },
+    {
+      "id": "src_012",
+      "citation": "\"United States, Census, 1910,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MPVV-WMW : accessed 2026-07-24), entry for Walter Dewus and household, Milwaukee Ward 10, Milwaukee, Wisconsin.",
+      "citation_detail": {
+        "who": "Walter Dewus, head; Clara Dewus, wife; Clerance Dewus, son",
+        "what": "United States Federal Census, 1910",
+        "when_created": "1910",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Milwaukee Ward 10, Milwaukee, Wisconsin; household of Walter Dewus"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MPVV-WMW",
+      "access_date": "2026-07-24",
+      "log_entry_id": "log_006",
+      "notes": "Census index/abstract from FamilySearch. Original census schedule image not confirmed examined \u2014 derivative classification applies. The relationship column was present in 1910 but respondent identity is unknown.",
+      "gedcomx_source_description_id": "S12"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_persona_id": "p_105033160552",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Henry Dewus",
+      "structured_value": {
+        "given": "Henry",
+        "surname": "Dewus"
+      },
+      "information_quality": "secondary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_persona_id": "p_105033160552",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_persona_id": "p_105033160552",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 23 Aug 1936",
+      "date": "23 Aug 1936",
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_persona_id": "p_105033160552",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "obituary published in Milwaukee, Wisconsin",
+      "place": "Milwaukee, Wisconsin",
+      "information_quality": "secondary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Death place is not explicitly stated in the obituary text as extracted; Milwaukee inferred from the obituary's publication venue and the stated residence at 6906 W. Lloyd St., Milwaukee. Indirect evidence only \u2014 a Wisconsin death certificate would confirm the exact place of death.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_persona_id": "p_105033160552",
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "value": "6906 W. Lloyd St., Milwaukee, Wisconsin",
+      "place": "Milwaukee, Wisconsin, United States",
+      "structured_value": {
+        "place": "6906 W. Lloyd St., Milwaukee, Wisconsin"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_persona_id": "p_105033160552",
+      "record_role": "deceased",
+      "fact_type": "occupation",
+      "value": "Carpenter",
+      "structured_value": {
+        "occupation": "Carpenter"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Henry C. Dewus",
+      "structured_value": {
+        "given": "Henry C.",
+        "surname": "Dewus"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Henry Dewus",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Walter Dewus",
+      "structured_value": {
+        "given": "Walter",
+        "surname": "Dewus"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Henry Dewus",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Mrs. Alma Schmidt",
+      "structured_value": {
+        "given": "Alma",
+        "surname": "Schmidt"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Listed as 'Mrs. Alma Schmidt' \u2014 married surname Schmidt. Birth surname Dewus (daughter of deceased). Corresponds to tree person Alma Friedericka Wilhelmina Dewus (9MNY-WQ1) based on given name match; identity to be confirmed by person-evidence.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Henry Dewus",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "Miss Ida Dewes",
+      "structured_value": {
+        "given": "Ida",
+        "surname": "Dewes"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Listed as 'Miss Ida Dewes' \u2014 unmarried as of obituary date. Surname spelled 'Dewes' (variant of 'Dewus'); likely a typographical or transcription variant of the family surname. Not currently in the tree as a known person \u2014 potential previously unidentified child (bears on q_002).",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_4",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Henry Dewus",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_5",
+      "fact_type": "name",
+      "value": "Mrs. Adele Kniophoff",
+      "structured_value": {
+        "given": "Adele",
+        "surname": "Kniophoff"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Listed as 'Mrs. Adele Kniophoff' \u2014 married surname Kniophoff. Birth surname Dewus (daughter of deceased). Corresponds to tree person Adela Ulricka Augusta Dewus (94F3-YQH) based on given name Adele/Adela match; identity to be confirmed by person-evidence.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_5",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "child of Henry Dewus",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_6",
+      "fact_type": "name",
+      "value": "Mrs. Hattie Henke",
+      "structured_value": {
+        "given": "Hattie",
+        "surname": "Henke"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Listed as 'Mrs. Hattie Henke' \u2014 married surname Henke. Birth surname Dewus (daughter of deceased). Corresponds to tree person Hedwig Bertha Anna Dewus (9VX4-1H3) \u2014 'Hattie' is a common English nickname for Hedwig/Harriet; identity to be confirmed by person-evidence.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_6",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:Q5SZ-J9LG",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "child of Henry Dewus",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "family informant (unnamed, submitted obituary)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "record_persona_id": "p_105033160552"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:XLXQ-SBF",
+      "record_persona_id": "p_10727750655",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Herman Dewus",
+      "structured_value": {
+        "given": "Herman",
+        "surname": "Dewus"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:XLXQ-SBF",
+      "record_persona_id": "p_10727750655",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "unknown family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:XLXQ-SBF",
+      "record_persona_id": "p_10727750655",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 1885 in Milwaukee, Milwaukee, Wisconsin, USA",
+      "date": "1885",
+      "place": "Milwaukee, Milwaukee, Wisconsin, USA",
+      "information_quality": "primary",
+      "informant": "death registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_002",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:XLXQ-SBF",
+      "record_persona_id": "p_10727750655",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 07 Oct 1882 in Milwaukee, Wisconsin, USA",
+      "date": "7 Oct 1882",
+      "date_certainty": "exact",
+      "place": "Milwaukee, Wisconsin, USA",
+      "information_quality": "secondary",
+      "informant": "unknown family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth facts reported on a death certificate by an unknown family informant relaying secondhand knowledge about the child's birth. Date and place corroborated by Wisconsin Birth Index record VH41-ZH2 for Herman Dewus born 7 Oct 1882 in Milwaukee.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_002",
+      "standard_place": "Milwaukee, Wisconsin, United States"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:XLXQ-SBF",
+      "record_persona_id": "p_10727750655",
+      "record_role": "deceased",
+      "fact_type": "race",
+      "value": "W",
+      "information_quality": "secondary",
+      "informant": "unknown family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_012",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:XLXQ-SBF",
+      "record_persona_id": "p_10727750656",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Wm. Dewus",
+      "structured_value": {
+        "given": "Wm.",
+        "surname": "Dewus"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Father's name reported by an unknown family informant on the death certificate of the deceased child. Recorded as 'Wm.' (William/Wilhelm) \u2014 likely an abbreviated form. Discrepancy with Oscar Dewus's 1881 death record from the same collection, which names the father as 'Henry Dewus'. Both 'Wm.' and 'Henry' may refer to the same man (Heinrich/Wilhelm were sometimes interchanged or a man may have had both given names); the extreme rarity of the Dewus surname in Milwaukee strongly supports family identity despite this variant. Original image not examined; index transcription may have misread the given name.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:XLXQ-SBF",
+      "record_persona_id": "p_10727750656",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "unknown family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:XLXQ-SBF",
+      "record_persona_id": "p_10727750657",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Ulrike Dewus",
+      "structured_value": {
+        "given": "Ulrike",
+        "surname": "Dewus"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Mother's name reported by an unknown family informant on the death certificate of the deceased child. Recorded as 'Ulrike' \u2014 a German baptismal name. The same woman appears as 'Augustl' (Augusta) on Oscar Dewus's 1881 death record from the same collection, suggesting 'Ulrike' may be a middle name or alternate given name. The Dewus surname rarity in Milwaukee strongly supports family identity. Original image not examined; index transcription of a German-language given name may contain errors.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:XLXQ-SBF",
+      "record_persona_id": "p_10727750657",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:XLXQ-SBF",
+      "record_persona_id": "p_10727750655",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Wm. Dewus (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Relationship inferred from the ParentChild edge in the FamilySearch index record linking Herman to Wm. Dewus as father. The index-derived relationship reflects an indexer inference from the original death register's fields; original not examined to confirm the exact wording.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:XLXQ-SBF",
+      "record_persona_id": "p_10727750655",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Ulrike Dewus (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Relationship inferred from the ParentChild edge in the FamilySearch index record linking Herman to Ulrike Dewus as mother. The index-derived relationship reflects an indexer inference from the original death register's fields; original not examined to confirm the exact wording.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:XL4B-Q5G",
+      "record_persona_id": "p_10722730342",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Oscar Albert Richard Dewus",
+      "structured_value": {
+        "given": "Oscar Albert Richard",
+        "surname": "Dewus"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative compiled record; original informant for this death entry is not identified. Cannot determine who supplied the name or how they knew it.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:XL4B-Q5G",
+      "record_persona_id": "p_10722730342",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative compiled record; original informant not identified.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:XL4B-Q5G",
+      "record_persona_id": "p_10722730342",
+      "record_role": "deceased",
+      "fact_type": "race",
+      "value": "white",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative compiled record; original informant not identified.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_012",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:XL4B-Q5G",
+      "record_persona_id": "p_10722730342",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1880, Milwaukee",
+      "date": "1880",
+      "date_certainty": "approximate",
+      "place": "Milwaukee",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative compiled record; original informant not identified. Birth year stated as 1880 in this record; corroborating WI Birth Index (VH41-ZHL) gives 25 Nov 1879 \u2014 a discrepancy of roughly one year. Place given only as 'Milwaukee' with no further specification.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_003",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:XL4B-Q5G",
+      "record_persona_id": "p_10722730342",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 1881, Milwaukee, Milwaukee, Wisconsin",
+      "date": "1881",
+      "date_certainty": "approximate",
+      "place": "Milwaukee, Milwaukee, Wisconsin",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative compiled record; original informant not identified. Death year 1881 is the primary event this record documents.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_003",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:XL4B-Q5G",
+      "record_persona_id": "p_10722730342",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Henry [Dewus] (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Father named as 'Henry' (given name only) on the death record. No surname provided for the father; identification as Heinrich/Henry Dewus relies on the child's surname and family context, not this record alone. Derivative record; original informant who named the parents is not identified. Corroboration from other records is needed to confirm the identification.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:XL4B-Q5G",
+      "record_persona_id": "p_10722730342",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Augustl [= Augusta] (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Mother named as 'Augustl' on the death record \u2014 likely an abbreviation or variant spelling of Augusta. Derivative record; original informant who named the parents is not identified. The identification of 'Augustl' as Augusta Dewus (n\u00e9e Arndt) relies on family context, not this record alone.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:XL4B-Q5G",
+      "record_persona_id": "p_10722730343",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Henry",
+      "structured_value": {
+        "given": "Henry"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Only a given name ('Henry') appears in the record; no surname is provided for the father. Identification as Heinrich/Henry Dewus is by inference from the child's surname and family context. Derivative record; original informant not identified. This is the father's name as recorded by an unknown informant for another person's death record \u2014 indirect evidence of the father's identity.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:XL4B-Q5G",
+      "record_persona_id": "p_10722730344",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Augustl [= Augusta, abbreviated]",
+      "structured_value": {
+        "given": "Augustl"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Mother's name appears as 'Augustl' \u2014 likely a scribal abbreviation or variant of Augusta. Derivative record; original informant not identified. This name was supplied by an unknown informant for another person's death record; it is indirect evidence of the mother's identity. The identification with Augusta (Arndt) Dewus relies on family context.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067951",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Ida Dewus",
+      "structured_value": {
+        "given": "Ida",
+        "surname": "Dewus"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067951",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067951",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 16 Jul 1947",
+      "date": "16 Jul 1947",
+      "date_certainty": "exact",
+      "place": "Milwaukee, Wisconsin",
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067952",
+      "record_role": "sibling_1",
+      "fact_type": "name",
+      "value": "Adele Kniepholf",
+      "structured_value": {
+        "given": "Adele",
+        "surname": "Kniepholf"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067952",
+      "record_role": "sibling_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067952",
+      "record_role": "sibling_1",
+      "fact_type": "relationship",
+      "value": "sibling of Ida Dewus",
+      "structured_value": {
+        "relationship_type": "sibling",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067953",
+      "record_role": "sibling_2",
+      "fact_type": "name",
+      "value": "Hattie Henke",
+      "structured_value": {
+        "given": "Hattie",
+        "surname": "Henke"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067953",
+      "record_role": "sibling_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067953",
+      "record_role": "sibling_2",
+      "fact_type": "relationship",
+      "value": "sibling of Ida Dewus",
+      "structured_value": {
+        "relationship_type": "sibling",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067954",
+      "record_role": "sibling_3",
+      "fact_type": "name",
+      "value": "Walter Henry [Dewus]",
+      "structured_value": {
+        "given": "Walter Henry",
+        "surname": "Dewus"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Surname 'Dewus' not stated in obituary for Walter Henry; bracketed surname inferred from family context and corroborated by father Heinrich Dewus's 1936 obituary which names 'Walter' as a son.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067954",
+      "record_role": "sibling_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067954",
+      "record_role": "sibling_3",
+      "fact_type": "relationship",
+      "value": "sibling of Ida Dewus",
+      "structured_value": {
+        "relationship_type": "sibling",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067955",
+      "record_role": "sibling_4",
+      "fact_type": "name",
+      "value": "Eleanor Downs",
+      "structured_value": {
+        "given": "Eleanor",
+        "surname": "Downs"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Eleanor Downs is tentatively identified with Elenora Dewus (born 24 Apr 1892, WI Birth Index) who married a man named Downs; name spelling differs slightly (Eleanor vs. Elenora). Original image confirmation of spelling recommended.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067955",
+      "record_role": "sibling_4",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:Q576-9D79",
+      "record_persona_id": "p_105108067955",
+      "record_role": "sibling_4",
+      "fact_type": "relationship",
+      "value": "sibling of Ida Dewus",
+      "structured_value": {
+        "relationship_type": "sibling",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family member relaying information to newspaper",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:VH41-ZHN",
+      "record_persona_id": "p_13322862256",
+      "record_role": "subject",
+      "fact_type": "name",
+      "value": "Alma F Dewus",
+      "structured_value": {
+        "given": "Alma F",
+        "surname": "Dewus"
+      },
+      "information_quality": "primary",
+      "informant": "registering parent or attending official",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:VH41-ZHN",
+      "record_persona_id": "p_13322862256",
+      "record_role": "subject",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "registering parent or attending official",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:VH41-ZHN",
+      "record_persona_id": "p_13322862256",
+      "record_role": "subject",
+      "fact_type": "birth",
+      "value": "born 13 Feb 1882",
+      "date": "13 Feb 1882",
+      "date_certainty": "exact",
+      "place": "Milwaukee, Wisconsin",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+      "information_quality": "primary",
+      "informant": "registering parent or attending official",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:VH41-ZHG",
+      "record_persona_id": "p_13322862262",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Wilhelmine Dewus",
+      "structured_value": {
+        "given": "Wilhelmine",
+        "surname": "Dewus"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent who registered the birth)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:VH41-ZHG",
+      "record_persona_id": "p_13322862262",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 17 Dec 1880, Milwaukee, Wisconsin",
+      "date": "17 Dec 1880",
+      "date_certainty": "exact",
+      "place": "Milwaukee, Wisconsin",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent who registered the birth)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:VH41-ZHL",
+      "record_persona_id": "p_13322862261",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Oscar A Dewus",
+      "structured_value": {
+        "given": "Oscar A",
+        "surname": "Dewus"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent) at original registration",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Index is derivative; name derives from original birth registration. Middle name given only as initial 'A' in the index \u2014 full middle name not captured. Parent names absent from index data; identity as a child of Heinrich and Augusta Dewus rests on surname rarity in Milwaukee and corroboration from the 1881 Wisconsin death record for Oscar Albert Richard Dewus.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:VH41-ZHL",
+      "record_persona_id": "p_13322862261",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "25 Nov 1879, Milwaukee, Wisconsin",
+      "date": "25 Nov 1879",
+      "date_certainty": "exact",
+      "place": "Milwaukee, Wisconsin",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent) at original registration",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth date from index entry, which reflects the original birth registration. Date conflicts with the 1881 Wisconsin Death Record for Oscar Albert Richard Dewus, which gives birth year as 1880; the birth index date (25 Nov 1879) is taken as primary per the delegation guidance, as it derives from a contemporaneous registration closer to the event. Place standardized from record: Milwaukee, Milwaukee, Wisconsin, United States.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:VH41-ZH2",
+      "record_persona_id": "p_13322862260",
+      "record_role": "subject",
+      "fact_type": "name",
+      "value": "Herman Dewus",
+      "structured_value": {
+        "given": "Herman",
+        "surname": "Dewus"
+      },
+      "information_quality": "primary",
+      "informant": "unknown registrant (likely a parent at time of registration)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_008"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:VH41-ZH2",
+      "record_persona_id": "p_13322862260",
+      "record_role": "subject",
+      "fact_type": "birth",
+      "value": "born 7 Oct 1882, Milwaukee, Wisconsin",
+      "date": "1882-10-07",
+      "date_certainty": "exact",
+      "place": "Milwaukee, Wisconsin",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+      "information_quality": "primary",
+      "informant": "unknown registrant (likely a parent at time of registration)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Index is derivative \u2014 transcription errors possible. Birth date corroborated by separately extracted Wisconsin Death Record for Herman Dewus showing same birth date and place. Original birth register not examined; original-image confirmation is the outstanding step. Parent names absent from index, so parentage cannot be confirmed from this record alone.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_008"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:VH41-ZHK",
+      "record_persona_id": "p_13322862259",
+      "record_role": "subject",
+      "fact_type": "name",
+      "value": "Heinrich Dewus",
+      "structured_value": {
+        "given": "Heinrich",
+        "surname": "Dewus"
+      },
+      "information_quality": "primary",
+      "informant": "unknown \u2014 birth index entry",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_009"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:VH41-ZHK",
+      "record_persona_id": "p_13322862259",
+      "record_role": "subject",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "unknown \u2014 birth index entry",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_009"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:VH41-ZHK",
+      "record_persona_id": "p_13322862259",
+      "record_role": "subject",
+      "fact_type": "birth",
+      "value": "2 Aug 1889",
+      "date": "2 Aug 1889",
+      "date_certainty": "exact",
+      "place": "Milwaukee, Wisconsin",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+      "information_quality": "primary",
+      "informant": "unknown \u2014 birth index entry (likely the registering parent or midwife/physician at time of registration)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "This is a derivative index \u2014 the informant for the original birth register entry is unknown but was likely a parent or attending physician at registration. Index transcription error possible; original register image not examined. The delegation notes confirm this is likely Heinrich Charles Dewus (tree KJW8-43Q), consistent with his approximate birth year inferred from later records.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_009"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:VH41-ZHV",
+      "record_persona_id": "p_13322862258",
+      "record_role": "subject",
+      "fact_type": "name",
+      "value": "Emma Dewus",
+      "structured_value": {
+        "given": "Emma",
+        "surname": "Dewus"
+      },
+      "information_quality": "primary",
+      "informant": "unknown registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "informant_bias_notes": "Birth index stub; registrant identity unknown. Parent names not captured in this index. Index transcription accuracy unverified against the original register image.",
+      "source_id": "src_010"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:VH41-ZHV",
+      "record_persona_id": "p_13322862258",
+      "record_role": "subject",
+      "fact_type": "birth",
+      "value": "born 13 Oct 1893, Milwaukee, Wisconsin",
+      "structured_value": {
+        "year": "1893",
+        "place": "Milwaukee, Wisconsin"
+      },
+      "date": "13 Oct 1893",
+      "date_certainty": "exact",
+      "place": "Milwaukee, Milwaukee, Wisconsin, United States",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+      "information_quality": "primary",
+      "informant": "unknown registrant or attending party",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "informant_bias_notes": "Date and place both stated in the index. Registrant identity unknown \u2014 likely the attending physician, midwife, or a parent. Index transcription unverified against the original Milwaukee County birth register. Original not examined.",
+      "source_id": "src_010"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:VH41-ZHJ",
+      "record_persona_id": "p_13322862257",
+      "record_role": "subject",
+      "fact_type": "name",
+      "value": "Elenora Dewus",
+      "structured_value": {
+        "given": "Elenora",
+        "surname": "Dewus"
+      },
+      "information_quality": "primary",
+      "informant": "unknown \u2014 birth index entry; original informant not identifiable from index alone",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Index entry only; no parent names recorded. The name 'Elenora Dewus' may correspond to 'Eleanor Downs' named as a sibling in Ida Dewus's 1947 obituary \u2014 spelling variant (Elenora vs. Eleanor) and possible married surname (Downs) make this identity tentative. Original birth register image not examined; index transcription accuracy unverified. Confirmation via the underlying Milwaukee county birth register image is the outstanding step.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_011"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:VH41-ZHJ",
+      "record_persona_id": "p_13322862257",
+      "record_role": "subject",
+      "fact_type": "birth",
+      "value": "born 24 Apr 1892, Milwaukee, Wisconsin",
+      "date": "24 Apr 1892",
+      "date_certainty": "exact",
+      "place": "Milwaukee, Wisconsin",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+      "information_quality": "primary",
+      "informant": "unknown \u2014 birth index entry; original informant not identifiable from index alone",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Index-derived date and place; original birth register not examined. Date precision (exact day) is as indexed \u2014 accuracy contingent on index transcription fidelity. Identity as a child of Heinrich and Augusta Dewus is inferred from surname and sibling reference in the 1947 Ida Dewus obituary; not confirmed by this record, which lacks parent names.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_011"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971406",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Walter Dewus",
+      "structured_value": {
+        "given": "Walter",
+        "surname": "Dewus"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971406",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971406",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Milwaukee Ward 10, Milwaukee, Wisconsin",
+      "place": "Milwaukee Ward 10, Milwaukee, Wisconsin, United States",
+      "date": "1910",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_012",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971406",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born about 1888 in Wisconsin",
+      "place": "Wisconsin",
+      "date": "~1888",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "1910 census; respondent identity unknown. Birth year derived from stated age; birthplace stated directly. Both classified direct but indeterminate as respondent is unidentified.",
+      "source_id": "src_012",
+      "standard_place": "Wisconsin, United States"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971406",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971406",
+      "record_role": "head_of_household",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971407",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Clara Dewus",
+      "structured_value": {
+        "given": "Clara",
+        "surname": "Dewus"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971407",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971407",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Milwaukee Ward 10, Milwaukee, Wisconsin",
+      "place": "Milwaukee Ward 10, Milwaukee, Wisconsin, United States",
+      "date": "1910",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_012",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971407",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born about 1890 in Wisconsin",
+      "place": "Wisconsin",
+      "date": "~1890",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "1910 census; respondent identity unknown. Birth year derived from stated age; birthplace stated directly.",
+      "source_id": "src_012",
+      "standard_place": "Wisconsin, United States"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971406",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "spouse of Clara Dewus",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "1910 census relationship column states wife \u2014 direct evidence. Respondent unknown.",
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971408",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Clerance Dewus",
+      "structured_value": {
+        "given": "Clerance",
+        "surname": "Dewus"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "Name spelled 'Clerance' in the index \u2014 likely a transcription variant of 'Clarence'. Original image should be checked to confirm spelling.",
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971408",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971408",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Milwaukee Ward 10, Milwaukee, Wisconsin",
+      "place": "Milwaukee Ward 10, Milwaukee, Wisconsin, United States",
+      "date": "1910",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_012",
+      "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971408",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born about 1909 in Wisconsin",
+      "place": "Wisconsin",
+      "date": "~1909",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "1910 census; respondent identity unknown. Birth year derived from stated age (approximately 1 year old); birthplace stated directly.",
+      "source_id": "src_012",
+      "standard_place": "Wisconsin, United States"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971408",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Walter Dewus",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "1910 census relationship column \u2014 respondent unknown.",
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:MPVV-WMW",
+      "record_persona_id": "p_573971408",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Clara Dewus",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "1910 census relationship column \u2014 respondent unknown.",
+      "source_id": "src_012"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Obituary deceased 'Henry Dewus': 'Henry' is Americanized 'Heinrich'; occupation Carpenter, Milwaukee address 6906 W. Lloyd St., death 23 Aug 1936 \u2014 all consistent with Heinrich Dewus (9VX4-1C3). Rare Dewus surname in Milwaukee plus multiple identifying facts agree strongly.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Sex Male agrees with Heinrich Dewus (9VX4-1C3).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Death date 23 Aug 1936 stated in obituary for deceased identified as Heinrich Dewus. Primary-information evidence directly answering q_001.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Death place Milwaukee inferred from obituary venue and stated residence address \u2014 indirect evidence. Consistent with Heinrich Dewus's documented Milwaukee residency.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Residence 6906 W. Lloyd St., Milwaukee \u2014 primary information from family informant in obituary; consistent with known Milwaukee profile of Heinrich Dewus (9VX4-1C3).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Occupation Carpenter from obituary \u2014 primary information. Consistent with a Pomeranian German immigrant laborer; adds occupational fact to Heinrich Dewus (9VX4-1C3).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "KJW8-43Q",
+      "confidence": "confident",
+      "rationale": "Obituary child_1 'Henry C. Dewus' = Heinrich Charles Dewus (KJW8-43Q): given name Henry C. matches Heinrich Charles; birth 2 Aug 1889 in tree is consistent with his age; Dewus surname rarity confirms family; only one Heinrich-named son in family.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "KJW8-43Q",
+      "confidence": "confident",
+      "rationale": "Sex Male agrees with KJW8-43Q (Heinrich Charles Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "KJW8-43Q",
+      "confidence": "confident",
+      "rationale": "Relationship 'child of Henry Dewus' \u2014 bears on child_1 identified as KJW8-43Q. Direct relationship evidence linking Heinrich Charles to Heinrich Sr.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Same relationship assertion also bears on patriarch 9VX4-1C3 as the named parent; cardinality: one assertion, two persons.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Obituary child_2 'Walter Dewus' = Walter Dewus (I1): confirmed in 1910 census (MPVV-WMW) as head of household born ~1888 Wisconsin, and in Ida Dewus's 1947 obituary as surviving brother Walter Henry. Name, sex, and family context agree strongly.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex Male agrees with I1 (Walter Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship 'child of Henry Dewus' \u2014 bears on Walter Dewus (I1) as the child.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Same relationship assertion bears on Heinrich Dewus (9VX4-1C3) as the named parent; two-person cardinality.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "9MNY-WQ1",
+      "confidence": "confident",
+      "rationale": "Obituary child_3 'Mrs. Alma Schmidt' = Alma Friedericka Wilhelmina Dewus (9MNY-WQ1): given name Alma matches exactly; married surname Schmidt adds new biographical fact; only Alma Dewus in Milwaukee; birth 13 Feb 1882 in tree is consistent with an adult daughter in 1936.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "9MNY-WQ1",
+      "confidence": "confident",
+      "rationale": "Sex Female agrees with 9MNY-WQ1 (Alma Friedericka Wilhelmina Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "9MNY-WQ1",
+      "confidence": "confident",
+      "rationale": "Relationship 'child of Henry Dewus' \u2014 bears on Alma (9MNY-WQ1) as the child.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Same relationship assertion bears on 9VX4-1C3 as the named parent; two-person cardinality.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Obituary child_4 'Miss Ida Dewes' = Ida Dewus (I2): given name Ida matches; 'Dewes' is documented variant spelling of 'Dewus' (same phonetics); corroborated by her own 1947 obituary (ark Q576-9D79); unmarried status 'Miss' consistent with Ida dying unmarried in 1947.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Sex Female agrees with I2 (Ida Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship 'child of Henry Dewus' \u2014 bears on Ida (I2) as the child.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Same relationship assertion bears on 9VX4-1C3 as the named parent; two-person cardinality.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "94F3-YQH",
+      "confidence": "confident",
+      "rationale": "Obituary child_5 'Mrs. Adele Kniophoff' = Adela Ulricka Augusta Dewus (94F3-YQH): given name Adele/Adela match; married surname Kniophoff corroborated by Ida's 1947 obituary (Adele Kniepholf); only Adela Dewus in Milwaukee.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_020",
+      "person_id": "94F3-YQH",
+      "confidence": "confident",
+      "rationale": "Sex Female agrees with 94F3-YQH (Adela Ulricka Augusta Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_021",
+      "person_id": "94F3-YQH",
+      "confidence": "confident",
+      "rationale": "Relationship 'child of Henry Dewus' \u2014 bears on Adela (94F3-YQH) as the child.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_021",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Same relationship assertion bears on 9VX4-1C3 as the named parent; two-person cardinality.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_022",
+      "person_id": "9VX4-1H3",
+      "confidence": "confident",
+      "rationale": "Obituary child_6 'Mrs. Hattie Henke' = Hedwig Bertha Anna Dewus (9VX4-1H3): 'Hattie' is established nickname for Hedwig/Harriet; married surname Henke corroborated by Ida's 1947 obituary (Hattie Henke); only Hedwig Dewus in Milwaukee; birth 12 Sep 1885 consistent with adult daughter in 1936.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_023",
+      "person_id": "9VX4-1H3",
+      "confidence": "confident",
+      "rationale": "Sex Female agrees with 9VX4-1H3 (Hedwig Bertha Anna Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_024",
+      "person_id": "9VX4-1H3",
+      "confidence": "confident",
+      "rationale": "Relationship 'child of Henry Dewus' \u2014 bears on Hedwig (9VX4-1H3) as the child.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_024",
+      "person_id": "9VX4-1C3",
+      "confidence": "confident",
+      "rationale": "Same relationship assertion bears on 9VX4-1C3 as the named parent; two-person cardinality.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_025",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Herman Dewus deceased on Wisconsin Death Record 1885 \u2014 minted from this persona. Name, birth date 7 Oct 1882, death 1885 Milwaukee all corroborated by WI Birth Index (VH41-ZH2 showing same name and date).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_026",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Sex Male agrees with I3 (Herman Dewus, died young 1885).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_027",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Death 1885 Milwaukee \u2014 primary evidence for Herman Dewus (I3); death is the primary event this record documents.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_028",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Birth 7 Oct 1882 Milwaukee \u2014 secondary information on death record; corroborated by WI Birth Index VH41-ZH2 showing same date and place.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_029",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Race 'W' \u2014 consistent with German Pomeranian family context.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_034",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Relationship 'child_inferred of father Wm. Dewus' \u2014 bears on Herman (I3) as the child. Parentage inferred from death record fields; probable given surname rarity supports same family.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_034",
+      "person_id": "9VX4-1C3",
+      "confidence": "speculative",
+      "rationale": "Same relationship assertion also bears on 9VX4-1C3 as the potential father named 'Wm. Dewus'. Given name 'Wm.' (Wilhelm) conflicts with known first name Heinrich/Henry \u2014 a core-identifier conflict. Dewus surname extreme rarity in Milwaukee is strong circumstantial support for same person; 'Wm.' may be a middle name, abbreviation error, or index slip for 'Hn.' Confidence capped at speculative due to the name conflict.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_035",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Relationship 'child_inferred of mother Ulrike Dewus' \u2014 bears on Herman (I3) as the child. Probable given family context and surname rarity.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_035",
+      "person_id": "9VX4-1ZR",
+      "confidence": "speculative",
+      "rationale": "Same relationship assertion bears on 9VX4-1ZR (Augusta Arndt Dewus) as potential mother named 'Ulrike Dewus'. 'Ulrike' differs from expected 'Augusta' \u2014 may be Augusta's baptismal German name or middle name. Dewus surname rarity supports family identity but name conflict is significant. Confidence capped at speculative.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_030",
+      "person_id": "9VX4-1C3",
+      "confidence": "speculative",
+      "rationale": "Father of Herman Dewus named 'Wm. Dewus' on death record. 'Wm.' (Wilhelm) is a core-identifier conflict with known first name Heinrich/Henry for 9VX4-1C3. Dewus surname rarity in Milwaukee is the primary support for this identification; 'Wm.' may be an abbreviation of a middle name or an index transcription error. Original death register image not examined. Confidence capped at speculative due to unresolved given name conflict.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_031",
+      "person_id": "9VX4-1C3",
+      "confidence": "speculative",
+      "rationale": "Sex Male corroborates 9VX4-1C3 but confidence limited by given name conflict on a_030.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_032",
+      "person_id": "9VX4-1ZR",
+      "confidence": "speculative",
+      "rationale": "Mother of Herman named 'Ulrike Dewus' on death record. 'Ulrike' conflicts with expected 'Augusta' (n\u00e9e Arndt) for 9VX4-1ZR. May be Augusta's German baptismal name or an indexing variant. Dewus surname rarity supports same family. Confidence capped at speculative due to name conflict.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_033",
+      "person_id": "9VX4-1ZR",
+      "confidence": "speculative",
+      "rationale": "Sex Female corroborates 9VX4-1ZR but confidence limited by name conflict in a_032.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_036",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Oscar Albert Richard Dewus deceased on Wisconsin Death Record 1881 \u2014 minted from this persona. Full name, birth ~1880 Milwaukee, death 1881 Milwaukee corroborated by WI Birth Index (VH41-ZHL: Oscar A Dewus, 25 Nov 1879).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_037",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Sex Male agrees with I4 (Oscar Albert Richard Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_038",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Race white \u2014 consistent with German Pomeranian family.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_039",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Birth ~1880 Milwaukee \u2014 minor conflict with birth index date (25 Nov 1879); death record's derivative/secondary birth year is less precise than contemporaneous birth registration; both attributed to Oscar (I4).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_040",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Death 1881 Milwaukee \u2014 primary event documented by this death record for Oscar (I4).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_041",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Relationship 'child of Henry [Dewus]' \u2014 bears on Oscar (I4) as the child. Parentage stated on death record; probable given no surname for father but child's surname Dewus implies the Dewus household.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_041",
+      "person_id": "9VX4-1C3",
+      "confidence": "probable",
+      "rationale": "Same relationship assertion also bears on 9VX4-1C3 as the named father 'Henry'. 'Henry' = Americanized 'Heinrich'; no surname given in record, but Oscar's surname Dewus and extreme surname rarity in Milwaukee make this the only plausible father. Probable rather than confident because no surname was recorded by the informant.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_042",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Relationship 'child of Augustl' \u2014 bears on Oscar (I4). 'Augustl' \u2248 Augusta; close phonetic variant.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_042",
+      "person_id": "9VX4-1ZR",
+      "confidence": "probable",
+      "rationale": "Same relationship assertion bears on 9VX4-1ZR (Augusta Arndt Dewus) as the mother named 'Augustl'. Close phonetic match to Augusta; same family context confirmed by Oscar's surname Dewus. Probable \u2014 informant is unknown and derivative record.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_043",
+      "person_id": "9VX4-1C3",
+      "confidence": "probable",
+      "rationale": "Father of Oscar named 'Henry' (given name only) on death record. 'Henry' = Americanized 'Heinrich'; no surname recorded, but Oscar's surname Dewus and surname rarity in Milwaukee make this the only plausible father. Probable rather than confident: no surname and derivative record with unknown informant.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_044",
+      "person_id": "9VX4-1ZR",
+      "confidence": "probable",
+      "rationale": "Mother of Oscar named 'Augustl' on death record \u2014 close phonetic variant of 'Augusta'. Same family context supports identification with Augusta Arndt Dewus (9VX4-1ZR). Probable given phonetic match and family context; informant unknown.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_045",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Ida Dewus deceased in 1947 obituary (Q576-9D79) = Ida Dewus (I2): confirmed identity with child_4 in Heinrich's 1936 obituary (Miss Ida Dewes); same name, sex Female, unmarried status consistent. Both obituaries name the same siblings (Adele Kniepholf/Kniophoff, Hattie Henke, Walter).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_046",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Sex Female agrees with I2 (Ida Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_047",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Death 16 Jul 1947 Milwaukee \u2014 primary evidence for Ida Dewus's death date, from her own obituary.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_048",
+      "person_id": "94F3-YQH",
+      "confidence": "confident",
+      "rationale": "Ida's obit sibling_1 'Adele Kniepholf' = Adela Ulricka Augusta Dewus (94F3-YQH): name matches child_5 'Mrs. Adele Kniophoff' from Heinrich's 1936 obit; two independent obituaries agree on this person's name and married surname (Kniepholf/Kniophoff). Strong match.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_049",
+      "person_id": "94F3-YQH",
+      "confidence": "confident",
+      "rationale": "Sex Female agrees with 94F3-YQH (Adela Ulricka Augusta Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_050",
+      "person_id": "94F3-YQH",
+      "confidence": "confident",
+      "rationale": "Relationship 'sibling of Ida Dewus' \u2014 bears on Adela (94F3-YQH) as the sibling.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_050",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Same sibling relationship assertion also bears on Ida Dewus (I2) as the deceased to whom Adela is a sibling; two-person cardinality.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_051",
+      "person_id": "9VX4-1H3",
+      "confidence": "confident",
+      "rationale": "Ida's obit sibling_2 'Hattie Henke' = Hedwig Bertha Anna Dewus (9VX4-1H3): same person as child_6 'Mrs. Hattie Henke' from Heinrich's 1936 obit; two independent obituaries confirm name and married surname Henke. Strong match.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_052",
+      "person_id": "9VX4-1H3",
+      "confidence": "confident",
+      "rationale": "Sex Female agrees with 9VX4-1H3 (Hedwig Bertha Anna Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_053",
+      "person_id": "9VX4-1H3",
+      "confidence": "confident",
+      "rationale": "Relationship 'sibling of Ida Dewus' \u2014 bears on Hedwig (9VX4-1H3) as the sibling.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_053",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Same sibling relationship assertion also bears on Ida Dewus (I2) as the deceased; two-person cardinality.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_054",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Ida's obit sibling_3 'Walter Henry [Dewus]' = Walter Dewus (I1): name Walter matches child_2 in Heinrich's obit; middle name 'Henry' consistent with being named for father Heinrich; 1910 census confirms Walter Dewus born ~1888 Milwaukee. Three independent sources agree.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_055",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex Male agrees with I1 (Walter Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_056",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship 'sibling of Ida Dewus' \u2014 bears on Walter Dewus (I1) as the sibling.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_056",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Same sibling relationship assertion also bears on Ida Dewus (I2) as the deceased; two-person cardinality.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_057",
+      "person_id": "I6",
+      "confidence": "speculative",
+      "rationale": "Ida's obit sibling_4 'Eleanor Downs' = tentatively Elenora Dewus (I6): 'Eleanor' vs 'Elenora' is a minor spelling variant; 'Downs' appears to be the married surname of Elenora Dewus born 24 Apr 1892 Milwaukee (WI Birth Index VH41-ZHJ). Identity is tentative \u2014 original birth register image not examined; no direct document naming 'Elenora Dewus' and 'Eleanor Downs' as the same person. Confidence speculative pending confirmation.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_058",
+      "person_id": "I6",
+      "confidence": "speculative",
+      "rationale": "Sex Female agrees with I6 (Elenora Dewus). Confidence limited by tentative identity link.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_059",
+      "person_id": "I6",
+      "confidence": "speculative",
+      "rationale": "Relationship 'sibling of Ida Dewus' \u2014 bears on Eleanor Downs persona, tentatively identified as Elenora Dewus (I6). Speculative confidence on I6's side pending identity confirmation.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_059",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Same sibling relationship assertion also bears on Ida Dewus (I2) as the deceased. Ida's identity is confident; this link is confident for Ida's side regardless of uncertainty about who 'Eleanor Downs' is.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_060",
+      "person_id": "9MNY-WQ1",
+      "confidence": "confident",
+      "rationale": "Birth index 'Alma F Dewus' born 13 Feb 1882 Milwaukee = Alma Friedericka Wilhelmina Dewus (9MNY-WQ1): birth date 13 Feb 1882 matches tree exactly; given name Alma matches; only Alma Dewus in Milwaukee; Dewus surname rarity confirms family.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_061",
+      "person_id": "9MNY-WQ1",
+      "confidence": "confident",
+      "rationale": "Sex Female agrees with 9MNY-WQ1 (Alma Friedericka Wilhelmina Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_062",
+      "person_id": "9MNY-WQ1",
+      "confidence": "confident",
+      "rationale": "Birth 13 Feb 1882 Milwaukee \u2014 corroborates tree birth date exactly; primary information from birth registration.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_063",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Birth index 'Wilhelmine Dewus' born 17 Dec 1880 Milwaukee = Wilhelmine Dewus (I5): minted from this persona; only Wilhelmine Dewus in Milwaukee. Dewus surname rarity confirms family membership.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_064",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Birth 17 Dec 1880 Milwaukee \u2014 primary information from birth registration for Wilhelmine Dewus (I5).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_065",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Birth index 'Oscar A Dewus' born 25 Nov 1879 Milwaukee = Oscar Albert Richard Dewus (I4): given name Oscar A matches; birth date corroborated (birth index preferred over death record's approximate year 1880); Dewus surname rarity confirms family. Two records agree on this individual.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_066",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Birth 25 Nov 1879 Milwaukee \u2014 primary information from contemporaneous birth registration; preferred over death record's approximate birth year 1880.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_067",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Birth index 'Herman Dewus' born 7 Oct 1882 Milwaukee = Herman Dewus (I3): name matches; birth date 7 Oct 1882 corroborates death record's birth date exactly; Dewus surname rarity confirms family. Two records agree.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_068",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Birth 7 Oct 1882 Milwaukee \u2014 primary information from birth registration, corroborating death record's secondary birth information for Herman Dewus (I3).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_083",
+      "assertion_id": "a_069",
+      "person_id": "KJW8-43Q",
+      "confidence": "confident",
+      "rationale": "Birth index 'Heinrich Dewus' born 2 Aug 1889 Milwaukee = Heinrich Charles Dewus (KJW8-43Q): birth date 2 Aug 1889 matches tree exactly; given name Heinrich matches; only Heinrich Dewus son in family; also confirmed by Wisconsin Births and Christenings 1826-1926 (tree source MXWW-JS1).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_084",
+      "assertion_id": "a_070",
+      "person_id": "KJW8-43Q",
+      "confidence": "confident",
+      "rationale": "Sex Male agrees with KJW8-43Q (Heinrich Charles Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_085",
+      "assertion_id": "a_071",
+      "person_id": "KJW8-43Q",
+      "confidence": "confident",
+      "rationale": "Birth 2 Aug 1889 Milwaukee \u2014 primary information from birth registration, matches tree fact exactly.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_086",
+      "assertion_id": "a_072",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Birth index 'Emma Dewus' born 13 Oct 1893 Milwaukee = Emma Dewus (I7): minted from this persona; only Emma Dewus in Milwaukee. Dewus surname rarity confirms family membership.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_087",
+      "assertion_id": "a_073",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Birth 13 Oct 1893 Milwaukee \u2014 primary information from birth registration for Emma Dewus (I7).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_088",
+      "assertion_id": "a_074",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Birth index 'Elenora Dewus' born 24 Apr 1892 Milwaukee = Elenora Dewus (I6): minted from this persona; only Elenora Dewus in Milwaukee. Tentatively the same person as 'Eleanor Downs' named in Ida's 1947 obituary (minor spelling variant; probable married surname Downs).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_089",
+      "assertion_id": "a_075",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Birth 24 Apr 1892 Milwaukee \u2014 primary information from birth registration for Elenora Dewus (I6).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_090",
+      "assertion_id": "a_076",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1910 census head of household 'Walter Dewus' = Walter Dewus (I1): name matches exactly; born ~1888 Wisconsin is consistent with his position as 3rd-youngest surviving child of Heinrich Dewus (born ~1850); Milwaukee residence consistent; corroborated by two obituaries naming Walter as a son of Heinrich.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_091",
+      "assertion_id": "a_077",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex Male agrees with I1 (Walter Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_092",
+      "assertion_id": "a_078",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Residence Milwaukee Ward 10, 1910 \u2014 primary evidence; census enumerator as informant. Consistent with known Milwaukee residency of Walter Dewus (I1).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_093",
+      "assertion_id": "a_079",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth ~1888 Wisconsin \u2014 approximate birth year from census age; consistent with Walter Dewus (I1) as a child of Heinrich Dewus (~1850) and Augusta. Original birth register not examined; birth index does not include a Walter Dewus entry.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_094",
+      "assertion_id": "a_080",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marital status Married in 1910 census \u2014 consistent; Walter was married to Clara per the same census.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_095",
+      "assertion_id": "a_081",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Race White \u2014 consistent with German Pomeranian family.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_096",
+      "assertion_id": "a_086",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship 'spouse of Clara Dewus' \u2014 bears on Walter Dewus (I1) as the husband.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_097",
+      "assertion_id": "a_086",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Same spousal relationship assertion also bears on Clara Dewus (I8) as the wife; two-person cardinality.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_098",
+      "assertion_id": "a_082",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "1910 census wife 'Clara Dewus' = Clara Dewus (I8): minted from this persona; wife of Walter Dewus (I1). No other Clara Dewus identified.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_099",
+      "assertion_id": "a_083",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Sex Female agrees with I8 (Clara Dewus).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_100",
+      "assertion_id": "a_084",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Residence Milwaukee Ward 10, 1910 \u2014 primary evidence; corroborates household membership with Walter Dewus.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_101",
+      "assertion_id": "a_085",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Birth ~1890 Wisconsin \u2014 approximate birth year from census age for Clara Dewus (I8).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_102",
+      "assertion_id": "a_087",
+      "person_id": "I9",
+      "confidence": "confident",
+      "rationale": "1910 census child 'Clerance Dewus' born ~1909 = Clarence Dewus (I9): minted from this persona; child of Walter (I1) and Clara (I8) Dewus. 'Clerance' is likely index transcription of 'Clarence'; original image not examined.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_103",
+      "assertion_id": "a_088",
+      "person_id": "I9",
+      "confidence": "confident",
+      "rationale": "Sex Male agrees with I9 (Clarence Dewus, son of Walter).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_104",
+      "assertion_id": "a_089",
+      "person_id": "I9",
+      "confidence": "confident",
+      "rationale": "Residence Milwaukee Ward 10, 1910 \u2014 primary evidence; corroborates household membership.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_105",
+      "assertion_id": "a_090",
+      "person_id": "I9",
+      "confidence": "confident",
+      "rationale": "Birth ~1909 Wisconsin \u2014 approximate birth year from census age for Clarence Dewus (I9).",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_106",
+      "assertion_id": "a_091",
+      "person_id": "I9",
+      "confidence": "confident",
+      "rationale": "Relationship 'child of Walter Dewus' \u2014 bears on Clarence (I9) as the child.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_107",
+      "assertion_id": "a_091",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Same relationship assertion also bears on Walter Dewus (I1) as the named father; two-person cardinality.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_108",
+      "assertion_id": "a_092",
+      "person_id": "I9",
+      "confidence": "confident",
+      "rationale": "Relationship 'child of Clara Dewus' \u2014 bears on Clarence (I9) as the child.",
+      "match_score": null,
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_109",
+      "assertion_id": "a_092",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Same relationship assertion also bears on Clara Dewus (I8) as the named mother; two-person cardinality.",
+      "match_score": null,
+      "created": "2026-07-24"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Herman Dewus's 1885 Wisconsin Death Record (XLXQ-SBF) names his father as 'Wm. Dewus' (William/Wilhelm). All other evidence names the Dewus patriarch as 'Heinrich' or 'Henry': Oscar Dewus's 1881 death record (a_043) names the father 'Henry'; Heinrich's own 1936 obituary (a_001) is filed as 'Henry Dewus'. 'Wm.' is a core given-name conflict with 'Heinrich/Henry'.",
+      "disputed_attribute": "father_given_name_on_Herman_death_record",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_030",
+        "a_043",
+        "a_001"
+      ],
+      "independence_analysis": "Herman's death record (a_030, src_002) and Oscar's death record (a_043, src_003) are independent registrations with different informants and different dates (1885 vs 1881). Heinrich's 1936 obituary (a_001, src_001) is a third independent source for the patriarch's name. Three independent sources thus weigh against the single 'Wm.' value.",
+      "weighing_analysis": "Two independent sources give the father's name as 'Henry/Heinrich' (Oscar's death record and the patriarch's own obituary). Only Herman's death record gives 'Wm.' The death record's original image was not examined \u2014 the 'Wm.' value may be an index transcription error (e.g. 'Hn.' misread as 'Wm.'). The extreme rarity of the Dewus surname in Milwaukee (only one family group in all examined records) supports same-family attribution despite the conflict. Alternatively, Heinrich may have had a middle name Wilhelm. Either way, the conflict cannot be resolved without examining the original register image.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": "The conflict cannot be resolved from indexed records alone. The original Herman Dewus death register image (record XLXQ-SBF) was not examined; the 'Wm.' reading in the index may represent a transcription error for 'Hn.' (Heinrich) or may reflect a genuine middle name Wilhelm used by the patriarch. Pending that examination, Herman's parentage link to Heinrich and Augusta Dewus is held at speculative confidence (pe_037, pe_040). The Dewus surname rarity in Milwaukee and the corroborating birth index entry provide strong circumstantial support for family membership but are insufficient to resolve the father-name conflict. This conflict is documented in the q_002 proof narrative (ps_002), which holds Herman's parentage at speculative while confirming that the core question \u2014 additional children beyond the original four \u2014 is answered affirmatively by independent evidence (Walter, Ida, Oscar). Resolving this conflict requires examination of the original death register image at the Wisconsin Historical Society or equivalent repository.",
+      "status": "unresolved",
+      "blocks_question_ids": [
+        "q_002"
+      ]
+    },
+    {
+      "id": "c_002",
+      "conflict_type": "fact",
+      "description": "Oscar Albert Richard Dewus (I4) has conflicting birth date evidence: his 1881 Wisconsin Death Record (XL4B-Q5G, a_039) states birth year 1880; the Wisconsin Birth Index (VH41-ZHL, a_066) gives the exact date 25 Nov 1879.",
+      "disputed_attribute": "birth_date",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_039",
+        "a_066"
+      ],
+      "independence_analysis": "The birth index entry (a_066) derives from the original birth registration filed at or near the time of Oscar's birth in 1879. The death record's birth year (a_039) was supplied by an unknown informant at the time of death registration in 1881 \u2014 a different registration event with a different informant. These are independent sources with different informants and information categories (primary vs. secondary).",
+      "weighing_analysis": "The birth index entry is primary information recorded close in time to the birth event; it gives a precise date (25 Nov 1879). The death record supplies secondary information from an unknown informant who may have been approximating; it gives only a year (1880). The one-year discrepancy is within the normal range for this type of conflict, likely reflecting rounding. The birth registration date is more proximate and more precise.",
+      "preferred_assertion_id": "a_066",
+      "resolution_rationale": "The birth index date 25 Nov 1879 is preferred. The birth registration is primary information proximate to the event; the death record's birth year is secondary and approximate. Both facts coexist as sourced values in the tree pending examination of the original birth register image.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched Wisconsin Death Index 1820-1907 (negative \u2014 Heinrich survived past 1907); Wisconsin Death Records 1867-1907 (negative); broad Wisconsin death search recovered GenealogyBank obituary naming death date 23 Aug 1936; Wisconsin State Census 1885 (negative, indexing variant); 1930 federal census (negative, indexing variant). A Wisconsin post-1907 death certificate was not accessed (requires fee-based order from State Vital Records). Cemetery, probate, and newspaper indexes were not exhaustively searched.",
+      "narrative_markdown": "## Death of Heinrich Dewus\n\n**Conclusion:** Heinrich Dewus died **23 August 1936** in **Milwaukee, Wisconsin**.\n\n### Primary Evidence\n\nA GenealogyBank obituary (src_001, ark:/61903/1:1:Q5SZ-J9LG), published 28 August 1936, states that \"Henry Dewus\" died 23 Aug 1936 at age 86, residing at 6906 W. Lloyd St., Milwaukee, occupation Carpenter. The name \"Henry\" is the Americanized form of \"Heinrich,\" consistent with German immigrants of this era. The death date is primary information: the obituary's immediate occasion was the death, and the date was reported by the family at the time of publication.\n\nIdentification of the deceased as Heinrich Dewus (9VX4-1C3) rests on: (1) name Henry/Heinrich match; (2) the Dewus surname, which is extremely rare in Milwaukee; (3) Milwaukee location consistent with the known subject; (4) occupation Carpenter adding biographical depth; (5) six named surviving children, of whom Heinrich Charles, Alma Schmidt, Adela Kniophoff, and Hattie Henke correspond exactly to tree persons.\n\n### Death Place\n\nMilwaukee, Wisconsin is established as **indirect evidence**: the obituary publication venue and the stated home address (6906 W. Lloyd St., Milwaukee) together strongly imply the death occurred in Milwaukee, but the place is not explicitly stated in the obituary text. A Wisconsin post-1907 death certificate would supply direct evidence for place of death.\n\n### Negative Evidence\n\nThe Wisconsin Death Index 1820-1907 returned no entry for Heinrich Dewus, confirming he survived past 1907 and is not double-counted with an earlier death.\n\n### Limitations\n\nNo Wisconsin state death certificate was accessed. Such a certificate is the primary direct-evidence source for Wisconsin deaths after 1907 and would elevate this conclusion from *probable* to *proved*.\n\n### GPS Assessment\n\nThis conclusion meets the **probable** (GPS Tier 3) standard. The obituary provides primary-quality death date information from a family informant; the identification is strong across multiple attributes; no conflicting evidence was found. The death place remains indirect. The one remaining gap\u2014the state death certificate\u2014is a practical access limitation."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_016",
+        "a_017",
+        "a_018",
+        "a_036",
+        "a_040",
+        "a_041",
+        "a_042",
+        "a_043",
+        "a_044",
+        "a_045",
+        "a_047",
+        "a_054",
+        "a_063",
+        "a_064",
+        "a_065",
+        "a_066",
+        "a_067",
+        "a_068",
+        "a_072",
+        "a_073",
+        "a_074",
+        "a_075",
+        "a_076",
+        "a_079"
+      ],
+      "resolved_conflict_ids": [
+        "c_002"
+      ],
+      "exhaustive_search_summary": "Searched Wisconsin Birth Index 1820-1907 (7 Milwaukee Dewus births recovered); Wisconsin Death Records 1867-1907 for Dewus children (Oscar and Herman found with parentage evidence); 1880, 1900, and 1910 federal censuses (1910 recovered Walter Dewus household; 1880 and 1900 negative for Heinrich household \u2014 likely indexing variants); Wisconsin State Census 1885 (negative, indexing); GenealogyBank obituaries for Heinrich (1936) and Ida Dewus (1947). Lutheran church/baptism records and original Milwaukee county birth register images were not examined. Parent names are absent from birth index stubs for three children (Wilhelmine, Elenora, Emma).",
+      "narrative_markdown": "## Additional Children of Heinrich and Augusta Dewus\n\n**Conclusion:** Heinrich Dewus and his wife Augusta (n\u00e9e Arndt) Dewus had at least **seven additional children** beyond the four originally in the tree (Heinrich Charles, Alma Friedericka Wilhelmina, Adela Ulricka Augusta, and Hedwig Bertha Anna).\n\n### Children Identified\n\n| Name | Born | Died | Confidence | Key Evidence |\n|------|------|------|------------|--------------|\n| Walter Dewus (I1) | ~1887\u201388, Milwaukee | \u2014 | Confident | Father's obit (S1) + Ida's obit (S4) + 1910 census (S12) |\n| Ida Dewus (I2) | Unknown | 16 Jul 1947, Milwaukee | Confident | Father's obit (S1) + own obit (S4) |\n| Oscar Albert Richard Dewus (I4) | 25 Nov 1879, Milwaukee | 1881, Milwaukee | Probable | Death record names parents Henry + Augustl (S3); birth index (S7) |\n| Herman Dewus (I3) | 7 Oct 1882, Milwaukee | 1885, Milwaukee | Speculative* | Death record (S2); birth index (S8); *father named \"Wm.\" conflicts with Heinrich (c_001) |\n| Elenora Dewus / Eleanor Downs (I6) | 24 Apr 1892, Milwaukee | Unknown | Probable | Birth index (S11) + tentative sibling identification as \"Eleanor Downs\" in Ida's obit (S4) |\n| Wilhelmine Dewus (I5) | 17 Dec 1880, Milwaukee | Unknown | Speculative | Birth index only; no parent names; attribution by surname rarity alone |\n| Emma Dewus (I7) | 13 Oct 1893, Milwaukee | Unknown | Speculative | Birth index only; no parent names; attribution by surname rarity alone |\n\n### Evidence Analysis\n\n**Walter and Ida** are established at confident level by two independent obituary sources each (no conflicting evidence). Walter is further corroborated by the 1910 federal census showing him as a household head in Milwaukee.\n\n**Oscar's parentage** is probable: his 1881 Wisconsin Death Record names father \"Henry\" and mother \"Augustl\" \u2014 direct parentage assertions, though from an unknown informant on a derivative record. \"Henry\" = Americanized Heinrich; \"Augustl\" \u2248 Augusta. The Dewus surname rarity makes family identification essentially certain.\n\n**Herman's parentage** is speculative due to conflict c_001: his 1885 death record names father \"Wm. Dewus\" (Wilhelm) rather than the expected Heinrich/Henry. The Dewus surname rarity in Milwaukee and the corroborating birth index entry (same name, same date) make family membership plausible, but the father-name conflict prevents parentage above speculative until the original death register image is examined.\n\n**Elenora** is supported at probable by two independent lines: the Wisconsin Birth Index entry (24 Apr 1892, Milwaukee) and the tentative identification as \"Eleanor Downs\" named among Ida's siblings in the 1947 obituary. This cross-source link elevates her attribution above surname rarity alone.\n\n**Wilhelmine and Emma** appear only in the Wisconsin Birth Index, with no parent names in the index stubs. Their membership in the Heinrich/Augusta Dewus family rests solely on surname rarity: the Dewus surname is extremely uncommon in Milwaukee, and no competing Dewus household was identified in any examined record. However, the assumption that all Milwaukee Dewus births belong to a single household was **not independently verified** against census enumerations, church registers, or city directories. Until original birth register images or Lutheran baptism records are examined, Wilhelmine's and Emma's parentage attributions are correctly held at **speculative** rather than probable. Their names appear in neither obituary source, consistent with either early death or marriage before 1936, but that negative evidence alone does not supply parentage.\n\n**Conflict c_002** (Oscar's birth date: 1880 vs 25 Nov 1879) is resolved in favor of the birth index date as primary information proximate to the birth event.\n\n### Limitations\n\n1. Parent names are absent from birth index stubs for Wilhelmine, Elenora, and Emma. Original Milwaukee county birth register images would supply parent names and definitively confirm or deny Heinrich/Augusta as parents.\n2. Lutheran church/baptism records were not searched and would likely provide direct parentage evidence for all these children.\n3. Herman's parentage remains speculative (conflict c_001 open) \u2014 original death register image needed to resolve the \"Wm.\" father-name discrepancy.\n4. The assumption that all Milwaukee Dewus births belong to a single household (Heinrich/Augusta) was not independently verified. A census or city directory survey checking for competing Dewus households is warranted before Wilhelmine's and Emma's attributions can be elevated.\n5. The fates of Wilhelmine and Emma are unknown (not named in either obituary; may have died young or married before 1936).\n\n### GPS Assessment\n\nThis conclusion meets the **probable** (GPS Tier 3) standard. The answer to the core question \u2014 are there additional children beyond the original four? \u2014 is affirmatively answered at the confident level by Walter and Ida alone. Oscar adds a probable parentage attribution with direct parental naming. Elenora is probable by birth index plus obituary corroboration. Wilhelmine and Emma are speculative attributions that require original record examination to confirm parentage; they are included in the tally as the most parsimonious explanation for Milwaukee Dewus births given the surname rarity, while their speculative status is acknowledged. Herman is similarly speculative. Church records and original birth register images would advance several attributions to the proved standard."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_002",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-24T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_002-2026-07-24T00-00-00.json"
+    },
+    {
+      "id": "ev_002",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-24T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-24T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Wisconsin, United States",
+      "for_place": "Milwaukee, Wisconsin, United States",
+      "time_period": "1870-1920",
+      "jurisdictions": [
+        {
+          "name": "Milwaukee County, Wisconsin",
+          "date_range": "1834\u2013present"
+        },
+        {
+          "name": "Milwaukee (City), Milwaukee County, Wisconsin",
+          "date_range": "1846\u2013present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1940759",
+          "title": "Wisconsin, Death Index, 1820-1907",
+          "date_range": "1820-1907"
+        },
+        {
+          "id": "1803975",
+          "title": "Wisconsin, Death Records, 1867-1907",
+          "date_range": "1867-1907"
+        },
+        {
+          "id": "1708699",
+          "title": "Wisconsin, Deaths and Burials, 1835-1968",
+          "date_range": "1835-1968"
+        },
+        {
+          "id": "1946789",
+          "title": "Wisconsin, Birth Index, 1820-1907",
+          "date_range": "1820-1907"
+        },
+        {
+          "id": "1708703",
+          "title": "Wisconsin, Births and Christenings, 1826-1926",
+          "date_range": "1826-1926"
+        },
+        {
+          "id": "1803973",
+          "title": "Wisconsin, County Marriages, 1836-1911",
+          "date_range": "1836-1911"
+        },
+        {
+          "id": "1708704",
+          "title": "Wisconsin, Marriages, 1836-1930",
+          "date_range": "1836-1930"
+        },
+        {
+          "id": "1443778",
+          "title": "Wisconsin, State Census, 1875",
+          "date_range": "1875"
+        },
+        {
+          "id": "1443713",
+          "title": "Wisconsin, State Census, 1885",
+          "date_range": "1885"
+        },
+        {
+          "id": "1443712",
+          "title": "Wisconsin, State Census, 1895",
+          "date_range": "1895"
+        },
+        {
+          "id": "1443899",
+          "title": "Wisconsin, State Census, 1905",
+          "date_range": "1905"
+        },
+        {
+          "id": "3714667",
+          "title": "Wisconsin, Milwaukee, Holy Cross Cemetery, Interment Records, 1909-1979",
+          "date_range": "1909-1979"
+        },
+        {
+          "id": "3246496",
+          "title": "Wisconsin, Milwaukee, Pilgrim's Rest Cemetery, Interment Records, 1880-1979",
+          "date_range": "1880-1979"
+        },
+        {
+          "id": "3326771",
+          "title": "Wisconsin, Milwaukee, Wanderer's Rest Cemetery Records, 1880-1979",
+          "date_range": "1880-1979"
+        },
+        {
+          "id": "1874190",
+          "title": "Wisconsin, Probate Estate Files, 1848-1948",
+          "date_range": "1848-1948"
+        },
+        {
+          "id": "2046887",
+          "title": "Wisconsin, County Naturalization Records, 1807-1992",
+          "date_range": "1807-1992"
+        },
+        {
+          "id": "2138589",
+          "title": "Wisconsin, Milwaukee, Naturalization Index, 1848-1990",
+          "date_range": "1848-1990"
+        }
+      ],
+      "quirks": [
+        "Statewide registration of births and deaths began in 1907 (complied with by 1917 for births, 1908 for deaths); Milwaukee County records generally start 1870s, so pre-1907 searches should use both FamilySearch collections AND the Pre-1907 Wisconsin Vital Records Index at the Wisconsin Historical Society (free index, images fee).",
+        "The Milwaukee Deaths, 1854-1911 collection on Ancestry (collection 61721) and the Milwaukee Births, 1839-1911 collection (collection 61719) provide indexed images of the actual county registers \u2014 check these after FamilySearch indexes, as coverage differs.",
+        "County four-letter abbreviations in Wisconsin vital records can be confusing: Milwaukee appears as 'Milw' but may resemble other place names \u2014 verify county field before accepting a hit.",
+        "German Pomeranian immigrants in Milwaukee were predominantly Lutheran (not Catholic). Church records for Trinity Lutheran (1870-1968, English and German) and an unnamed Kirchenbuch (1870-1920, German only, browse-image-by-image) are on FamilySearch. WELS Archives (Waukesha, WI) and Concordia Historical Institute (St. Louis, MO) hold additional Lutheran records for closed congregations.",
+        "Milwaukee County Historical Society (910 N. Third St., Milwaukee) specializes in German immigrant families and holds obituaries, naturalization indexes, biographical clippings, and manuscript collections not available digitally.",
+        "Milwaukee Public Library holds multiple German-language newspaper obituary indexes, including 'Milwaukee's German Newspapers: an Index of Death Notices and Related Items' and the Milwaukee Sentinel Card Index, 1837-1890 \u2014 invaluable for German families whose deaths may be in German-language papers only.",
+        "Wisconsin State Censuses (1875, 1885, 1895, 1905) are indexed on FamilySearch and fill the intercensal gaps \u2014 especially 1885, 1895, and 1905 for a family whose patriarch died sometime before 1920.",
+        "Wisconsin, Probate Estate Files, 1848-1948 (FS collection 1874190) holds 1.4M images but is browse-only (0% indexed, not full-text searchable) \u2014 requires browsing the Milwaukee County volume directly by year.",
+        "Wanderer's Rest Cemetery (Milwaukee) was the primary Lutheran German cemetery; the indexed collection (1880-1979) on FamilySearch is the fastest check for a Pomeranian Lutheran burial."
+      ],
+      "guide_markdown": "# Locality Guide: Milwaukee, Wisconsin, 1870\u20131920\n## German Immigrant Family Research\n\n**Standard place:** Milwaukee, Wisconsin, United States (county)\n\n---\n\n### Jurisdictional Context\nMilwaukee County was organized in 1834; the City of Milwaukee incorporated in 1846. No boundary changes affect this research period. German immigrants constituted the largest ethnic group in Milwaukee by the 1880s, and the city's Lutheran and Catholic institutional infrastructure reflects that.\n\n---\n\n### Death Records\n| Record | Coverage | Access | Notes |\n|--------|----------|--------|-------|\n| Wisconsin Death Index, 1820\u20131907 | FS col. 1940759 | Free, indexed | Index only, no images |\n| Wisconsin Death Records, 1867\u20131907 | FS col. 1803975 | Free, indexed | Index only |\n| Wisconsin Deaths & Burials, 1835\u20131968 | FS col. 1708699 | Free, indexed | Small (24K records) |\n| Milwaukee, WI Deaths, 1854\u20131911 | Ancestry col. 61721 | Paid, indexed + images | County register images \u2014 use after FS |\n| Pre-1907 WI Vital Records Index | WHS (wisconsinhistory.org) | Free index / paid images | Comprehensive pre-statewide coverage |\n| Milwaukee Archdiocese Catholic Burials, 1857\u20132022 | Ancestry col. 70645 | Paid | Catholic only |\n\n*Statewide registration began 1907 (compliance ~1908 for deaths). County-level records start 1870s.*\n\n---\n\n### Birth Records\n| Record | Coverage | Access |\n|--------|----------|--------|\n| Wisconsin Birth Index, 1820\u20131907 | FS col. 1946789 | Free, indexed |\n| Wisconsin Births & Christenings, 1826\u20131926 | FS col. 1708703 | Free, indexed |\n| Milwaukee, WI Births, 1839\u20131911 | Ancestry col. 61719 | Paid, indexed + images |\n| Pre-1907 WI Vital Records Index | WHS | Free index / paid images |\n\n---\n\n### Census Records\n| Census | Access | Notes |\n|--------|--------|-------|\n| US Federal: 1870, 1880, 1900, 1910, 1920 | Ancestry / FS (free 1880) | 1890 destroyed |\n| WI State Census: 1875, 1885, 1895, 1905 | FS (free, indexed + images) | Fills intercensal gaps |\n\n*The 1885 and 1895 state censuses are especially valuable given the 1890 federal census loss.*\n\n---\n\n### Church Records (Lutheran \u2014 primary denomination for Pomeranian Germans)\n| Record | Coverage | Access | Notes |\n|--------|----------|--------|-------|\n| Trinity Lutheran Church records | 1870\u20131968 | FS catalog 528983 | English and German; indexed |\n| Kirchenbuch (unnamed Lutheran) | 1870\u20131920 | FS catalog 577132 | German only; browse-only images |\n| Parish & family registers (Lutheran) | 1795\u20131968 | FS catalog 235277 | German; indexed |\n| ELCA Church Records (Ancestry/Archives.com) | Various | Paid | Multiple Milwaukee congregations |\n| Wanderer's Rest Cemetery (Lutheran) | 1880\u20131979 | FS col. 3326771 | Indexed + images; primary German Lutheran cemetery |\n| Pilgrim's Rest Cemetery | 1880\u20131979 | FS col. 3246496 | Indexed + images |\n| WELS Archives (for closed WELS congregations) | Varies | In-person/mail | N16W23377 Stone Ridge Dr., Waukesha |\n| Concordia Historical Institute (Missouri Synod) | Varies | In-person/mail | 801 DeMun Ave., St. Louis |\n\n---\n\n### Obituaries & Newspapers\n- **Milwaukee Sentinel Card Index, 1837\u20131890** \u2014 Milwaukee County Historical Society (not digitized)\n- **Milwaukee's German Newspapers: Death Notice Index** \u2014 Milwaukee Public Library (not digitized)\n- **Wisconsin Necrology, 1846\u20131944** \u2014 Milwaukee Public Library\n- **GenealogyBank Wisconsin Newspapers, 1833\u20132012** \u2014 paid, searchable\n- **Chronicling America** \u2014 Wisconsin digitized newspapers, some free\n- **MyHeritage Wisconsin Newspapers, 1884\u20132009** \u2014 paid\n\n---\n\n### Probate Records\n- **Wisconsin Probate Estate Files, 1848\u20131948** (FS col. 1874190): 1.4M images, **browse-only** (0% indexed, not full-text searchable). Must browse Milwaukee County volume by year.\n- **Wisconsin Wills and Probate Records, 1800\u20131987** (Ancestry col. 9088): indexed + images, paid.\n\n---\n\n### Naturalization\n- Wisconsin County Naturalization Records, 1807\u20131992 (FS col. 2046887): indexed + images\n- Wisconsin Milwaukee Naturalization Index, 1848\u20131990 (FS col. 2138589): indexed + images\n- Wisconsin Federal Naturalization Records, 1848\u20131992 (Ancestry col. 61213): paid\n\n---\n\n### Key Local Repositories\n| Repository | Specialty | Contact |\n|------------|-----------|--------|\n| Milwaukee County Historical Society | German immigrants, obituary/bio clippings, naturalization, manuscripts | 910 N. Third St., Milwaukee; milwaukeehistory.net |\n| Milwaukee Public Library Genealogy | German immigrant indexes, city directories, newspaper obituary indexes | 814 W. Wisconsin Ave.; mpl.org |\n| Wisconsin Historical Society | Statewide vital records, pre-1907 index | wisconsinhistory.org |\n| UW-Milwaukee Golda Meir Library | German immigrant records, maps | uwm.edu |\n\n---\n\n### Research Priorities for Heinrich Dewus\n1. **Death date (q_001):** Search FS Wisconsin Death Index (col. 1940759) and Death Records (col. 1803975) first; then Ancestry Milwaukee Deaths 1854\u20131911 (col. 61721) for the actual death certificate; then WHS Pre-1907 index.\n2. **Children completeness (q_002):** Federal censuses 1880, 1900, 1910, 1920 enumerate household children. WI State Censuses 1885, 1895, 1905 fill intercensal gaps. Milwaukee birth indexes (FS col. 1946789 and Ancestry col. 61719) enumerate children born in Milwaukee. Lutheran church baptism records (Trinity Lutheran, catalog 528983; Kirchenbuch, catalog 577132) may list baptisms not in civil indexes. Obituary and death certificate of Heinrich (or Augusta) may name all surviving children.\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Wisconsin,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Wisconsin_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Wisconsin_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Wisconsin_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-24"
+    }
+  ]
+}

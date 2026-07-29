@@ -1,0 +1,486 @@
+{
+  "run_log": "v1_2026-07-25_01-28-31.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_images_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate, evidence-based assessment with correct reasoning and no unsupported claims."
+    },
+    {
+      "test_id": "ut_search_images_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Complete and accurate evaluation that correctly reflects the skill's reasoning, guidance, and handling of the indexed volume constraint."
+    },
+    {
+      "test_id": "ut_search_images_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly evaluates the tool calls, confirming the arguments and research log accurately matched the intended research and outcome."
+    },
+    {
+      "test_id": "ut_search_images_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the proper tool sequence and the decision not to browse an indexed volume."
+    },
+    {
+      "test_id": "ut_search_images_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate evaluation that correctly reflects the skill's decision to avoid browsing an indexed volume and recommend the appropriate search strategy."
+    },
+    {
+      "test_id": "ut_search_images_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the complete, evidence-based audit trail and appropriate logging of the negative browsing outcome."
+    },
+    {
+      "test_id": "ut_search_images_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate evaluation that correctly reflects the proper tool sequence, successful image retrieval, complete logging, and clearly labeled inference."
+    },
+    {
+      "test_id": "ut_search_images_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Complete and accurate assessment that correctly confirms the skill fulfilled the user's request without unsupported claims."
+    },
+    {
+      "test_id": "ut_search_images_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly confirms that all MCP calls used appropriate arguments and matched the expected behavior without errors."
+    },
+    {
+      "test_id": "ut_search_images_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill selected the appropriate unindexed probate volume for the research objective."
+    },
+    {
+      "test_id": "ut_search_images_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly reflects the skill's handling of image_search, avoiding unsupported actions while providing appropriate next-step guidance."
+    },
+    {
+      "test_id": "ut_search_images_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the complete, evidence-based research log and appropriate documentation of the browsing scope and outcome."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the tool calls, returned metadata, research log, and absence of fabricated content."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill fulfilled all requested tasks, including listing the images, logging the browse, and providing appropriate next-step guidance."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms both tool calls used the expected arguments with no mismatches and that the research log was complete and semantically correct."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the supplied image group made image_search the appropriate starting point and that treating the volume as browse-only was the correct approach."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly reflects the skill's use of image_search, accurate reporting of image IDs, and avoidance of unsupported claims about image contents."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the comprehensive research log and clear documentation of the browsing scope and current progress."
+    },
+    {
+      "test_id": "ut_search_images_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly reflects the tool output, avoids unsupported claims, and remains fully grounded in the returned results."
+    },
+    {
+      "test_id": "ut_search_images_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill handled the empty result appropriately, documented the negative browse, and fully addressed the user's request."
+    },
+    {
+      "test_id": "ut_search_images_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms both tool calls matched the expected arguments and that the negative result was logged with complete and appropriate metadata."
+    },
+    {
+      "test_id": "ut_search_images_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the supplied image group made image_search the appropriate tool and that no volume selection was necessary."
+    },
+    {
+      "test_id": "ut_search_images_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly reflects the empty image_search result, avoids fabricated page contents, and appropriately stops after reporting the absence of images."
+    },
+    {
+      "test_id": "ut_search_images_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the negative research log as complete, well-scoped, and sufficient to support a future exhaustiveness audit."
+    },
+    {
+      "test_id": "ut_search_images_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the expected routing behavior, with the skill appropriately declining search-images and delegating to search-full-text."
+    },
+    {
+      "test_id": "ut_search_images_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill fulfilled the negative test by routing the request to the appropriate alternative skill instead of attempting an unsupported action."
+    },
+    {
+      "test_id": "ut_search_images_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made by the skill under test because it correctly declined the request and routed it to the appropriate skill (search-full-text)."
+    },
+    {
+      "test_id": "ut_search_images_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the expected routing behavior, with the skill appropriately declining the request and directing it to search-records for an indexed census query."
+    },
+    {
+      "test_id": "ut_search_images_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill fulfilled the negative test by declining the out-of-scope request and routing it to the appropriate search-records skill."
+    },
+    {
+      "test_id": "ut_search_images_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made because the skill correctly declined the request and routed it to search-records."
+    },
+    {
+      "test_id": "ut_search_images_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the expected routing behavior, with the skill appropriately declining the request and directing it to record-extraction."
+    },
+    {
+      "test_id": "ut_search_images_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill fulfilled the negative test by declining the request and routing it to the appropriate record-extraction skill."
+    },
+    {
+      "test_id": "ut_search_images_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made because the skill correctly declined the request and routed it to the appropriate record-extraction skill."
+    },
+    {
+      "test_id": "ut_search_images_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the request as a planning task and appropriately routes it to the research-plan skill without unsupported claims."
+    },
+    {
+      "test_id": "ut_search_images_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill fulfilled the negative test by declining the request and routing it to the appropriate research-plan skill."
+    },
+    {
+      "test_id": "ut_search_images_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made because the skill correctly declined the request and routed it to the appropriate research-plan skill."
+    },
+    {
+      "test_id": "ut_search_images_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly reflects the empty search result, avoids fabricated claims, and provides appropriate evidence-based next-step recommendations."
+    },
+    {
+      "test_id": "ut_search_images_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill completed the requested search, logged the negative result, and provided appropriate evidence-based next steps."
+    },
+    {
+      "test_id": "ut_search_images_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the tool calls used appropriate arguments and that the negative result was comprehensively logged in line with the fixture expectations."
+    },
+    {
+      "test_id": "ut_search_images_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the absence of matching volumes, avoids fabricated browsing, verifies the result appropriately, and recommends suitable alternative repositories."
+    },
+    {
+      "test_id": "ut_search_images_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes browsing was not possible without a matching volume and appropriately pivoted to evidence-based alternative search strategies."
+    },
+    {
+      "test_id": "ut_search_images_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the comprehensive negative research log, including the verification step, and that it provides sufficient scope for a future exhaustiveness audit."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill selected the appropriate volume, interpreted the tool responses correctly, and logged the browse without unsupported claims."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill completed all required tasks, including volume selection, image listing, recognition of the mixed-film structure, and comprehensive browse logging."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms all MCP tool calls used the expected arguments and that the browse was logged with complete and appropriate metadata."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the mixed-film structure, appropriate volume selection, correct scoping to the wills section, and proper rejection of the unrelated tax records volume."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly reflects the skill's handling of image_search, complete image listing, avoidance of unsupported page-reading actions, and appropriate next-step guidance."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the comprehensive research log, including the mixed-film context, browse status, and sufficient detail to support a future exhaustiveness audit."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the appropriate volume selection, correct handling of the image search and research log, and avoidance of unsupported or fabricated claims."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill completed all required tasks, including identifying the correct unindexed volume, listing all images, logging the browse, and fully satisfying the user's request."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms all MCP tool calls used the expected arguments, included the required metadata, and matched the fixture without errors."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill selected the appropriate probate volume, avoided the incorrect alternatives, and correctly scoped the search to the requested Schuylkill County probate records."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly reflects the skill's handling of image_search, appropriate browsing workflow for an unindexed volume, and avoidance of unsupported claims or actions."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the comprehensive research log, including all required scope elements and sufficient documentation to support a future exhaustiveness audit."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill selected both relevant probate films, accurately reported the returned image lists, documented the browse in the research log, and avoided unsupported claims about page contents."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the skill fulfilled all requested tasks, including selecting both relevant films, listing their images, explaining the film boundary, logging both browses, and providing appropriate next-step guidance."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms all MCP tool calls used the expected arguments, matched the fixture requirements, and recorded the browse with complete metadata."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the need to browse both films spanning the target date range, appropriately excludes the wrong-county volume, and confirms the correct volume selection strategy."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly reflects the skill's handling of both image_search calls, appropriate reporting of image IDs, avoidance of unsupported page-reading claims, and proper delegation of page viewing within the harness constraints."
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes both research log entries as comprehensive, documenting the browse scope, target, outcomes, and sufficient detail for a future exhaustiveness audit."
+    }
+  ]
+}

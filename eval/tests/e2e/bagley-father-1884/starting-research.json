@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_bagley_father_1884",
+    "objective": "Who was the father of William A. Bagley, born about 1815 and died 31 May 1884 in Topsham, Orange County, Vermont?",
+    "subject_person_ids": [
+      "MJDL-Q8B"
+    ],
+    "status": "active",
+    "created": "2026-07-27",
+    "updated": "2026-07-27"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

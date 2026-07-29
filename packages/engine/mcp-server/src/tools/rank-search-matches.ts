@@ -46,8 +46,9 @@ export async function rankSearchMatches(
     stagedResultsRef,
   )) as RecordSearchResult[];
 
-  // ── 2. Build the subject doc from tree.gedcomx.json ────────────────────────
-  const subjectDoc = await buildSubjectDoc(projectPath, subjectId);
+  // ── 2. Build the subject doc: tree person + the project's own evidence ─────
+  const subject = await buildSubjectDoc(projectPath, subjectId);
+  const subjectDoc = subject.doc;
 
   // Empty staged set: nothing to score, nothing to log — not an error.
   if (results.length === 0) {
@@ -115,10 +116,17 @@ export async function rankSearchMatches(
     scored,
   );
 
-  // Thin / unresolvable subject: no score clears the degenerate floor.
-  const subjectResolvable = scored.some(
+  // No score clears the degenerate floor. Two very different situations share
+  // this signature, and they need opposite responses from the caller:
+  //   (a) the SUBJECT is too thin to score — the ranking is noise;
+  //   (b) the subject is fine and genuinely nothing in this pool matches — a
+  //       real, useful negative ("not here; page deeper or narrow").
+  // Inferring from the score distribution alone conflates them. Disambiguate by
+  // looking at the subject document we actually sent.
+  const noSignal = !scored.some(
     (s) => s.matchScore !== null && s.matchScore > DEGENERATE_FLOOR,
   );
+  const subjectTooThin = subject.discriminatingFacts === 0;
 
   // ── 6+7. Build the top-`top` stubs; fold in attachments if requested ───────
   const top = input.top ?? DEFAULT_TOP;
@@ -138,7 +146,37 @@ export async function rankSearchMatches(
     scoreLogError,
     matches,
   };
-  if (!subjectResolvable) out.subjectResolvable = false;
+  if (subject.enrichedFacts > 0) out.subjectEnrichedFacts = subject.enrichedFacts;
+  if (subject.enrichedNames > 0) out.subjectEnrichedNames = subject.enrichedNames;
+
+  if (noSignal && subjectTooThin) {
+    // Withhold the ranking rather than flag it. Returning a ranked-LOOKING
+    // top-10 that is really search order is the silent-degradation path: the
+    // caller cannot tell noise from signal, and FamilySearch's own search order
+    // is known-unreliable (a live probe found the top 21 hits sharing one
+    // score). Say what is missing instead, so the caller can enrich the subject
+    // or narrow the query.
+    out.matches = [];
+    out.returnedCount = 0;
+    out.subjectResolvable = false;
+    out.diagnostic =
+      `Subject '${subjectId}' carries no fact with a date or place, so ` +
+      `FamilySearch's matcher cannot discriminate it from any same-named ` +
+      `person and every candidate scored at or below ${DEGENERATE_FLOOR}. The ` +
+      `ranking would be search order wearing match scores, so it is withheld. ` +
+      `Give the subject at least one dated or placed fact — record it on the ` +
+      `tree person, or extract and link an assertion via person_evidence — ` +
+      `then rank again. Meanwhile, narrow the search (collection, place, ` +
+      `date range) rather than triaging this pool by hand.`;
+  } else if (noSignal) {
+    // Subject is fine; the pool genuinely holds no match. That IS the finding.
+    out.subjectResolvable = false;
+    out.diagnostic =
+      `Subject '${subjectId}' is scoreable (${subject.discriminatingFacts} ` +
+      `dated/placed fact(s)), but no candidate in this pool scored above ` +
+      `${DEGENERATE_FLOOR}. Treat that as a real negative for this query — ` +
+      `page deeper (offset) or narrow the query; do not hand-triage the stubs.`;
+  }
   return out;
 }
 
@@ -148,10 +186,64 @@ export async function rankSearchMatches(
 
 // ─── Subject-doc assembly ────────────────────────────────────────────────────
 
-async function buildSubjectDoc(
+/** Assertion `fact_type` (snake_case, research.json) → simplified-GedcomX fact
+ *  `type` (TitleCase, tree.gedcomx.json). Types absent here are deliberately not
+ *  projected onto the person: `relationship`, `marital_status` and
+ *  `cause_of_death` say nothing the matcher scores a *person* on. */
+const ASSERTION_FACT_TYPE_TO_TREE: Record<string, string> = {
+  birth: "Birth",
+  christening: "Christening",
+  baptism: "Baptism",
+  death: "Death",
+  burial: "Burial",
+  residence: "Residence",
+  occupation: "Occupation",
+  marriage: "Marriage",
+  immigration: "Immigration",
+  military_service: "MilitaryService",
+};
+
+/** First 4-digit year in a free-text assertion value ("born 1829" → "1829").
+ *  Dates are the highest-signal discriminator the matcher has, so it is worth
+ *  recovering one from prose when `structured_value` carries none. */
+function yearFromText(text: unknown): string | undefined {
+  if (typeof text !== "string") return undefined;
+  const m = text.match(/\b(1[5-9]\d{2}|20\d{2})\b/);
+  return m ? m[1] : undefined;
+}
+
+/** How many facts on a person discriminate one human from another with the
+ *  same name — i.e. carry a date or a place. A name alone does not. Used only
+ *  for the unresolvable-subject diagnostic. */
+function discriminatingFactCount(person: { facts?: any[] }): number {
+  return (person.facts ?? []).filter(
+    (f) => f && (f.date || f.standard_date || f.place || f.standard_place),
+  ).length;
+}
+
+interface SubjectDoc {
+  doc: SimplifiedGedcomX;
+  /** Facts carrying a date or place, after enrichment. */
+  discriminatingFacts: number;
+  /** How many facts enrichment contributed on top of the bare tree person. */
+  enrichedFacts: number;
+  /** How many alternate names enrichment contributed. Counted separately
+   *  because it is NOT a rounding error: in the probe run behind this design,
+   *  every assertion linked to the subject was a name variant ("James L.",
+   *  "J.L."), which added zero facts and still lifted the top candidate 5.9×
+   *  (0.0082 → 0.0482). A facts-only counter reports 0 here and reads as "did
+   *  nothing", which is wrong. */
+  enrichedNames: number;
+  /** True when enrichment supplied a gender the tree person lacked. */
+  enrichedGender: boolean;
+}
+
+// Exported for dev/probe-rank-enrichment.ts, which A/Bs the enriched subject
+// against the bare tree person on live FamilySearch scores.
+export async function buildSubjectDoc(
   projectPath: string,
   subjectId: string,
-): Promise<SimplifiedGedcomX> {
+): Promise<SubjectDoc> {
   const treePath = join(projectPath, "tree.gedcomx.json");
   let tree: SimplifiedGedcomX;
   try {
@@ -171,10 +263,103 @@ async function buildSubjectDoc(
     );
   }
 
-  // v1: the minimal subject-only document. The mint-hardening in match-engine
-  // synthesizes a conforming Persistent id for the ark-less subject, so scoring
-  // is deterministic. (Future: enrich with 1-hop relatives — deferred.)
-  return { persons: [subject] };
+  // FamilySearch's matcher is excellent when both documents carry information
+  // and near-random when either is starved — and the tree person is routinely a
+  // local `I*` stub with `ark: null` and one or two facts, which scores
+  // uniformly near-zero against every candidate. The candidate side we cannot
+  // change; this side we can. The project already holds far more about this
+  // human than the tree person does (assertions extracted from records, linked
+  // to the person through person_evidence), so fold that in before scoring.
+  //
+  // Enrichment is additive and best-effort: a missing or malformed research.json
+  // degrades to the bare tree person (the previous behavior), never an error.
+  const enriched = JSON.parse(JSON.stringify(subject)) as typeof subject & {
+    names?: any[];
+    facts?: any[];
+    gender?: string;
+  };
+  const before = (enriched.facts ?? []).length;
+  const namesBefore = (enriched.names ?? []).length;
+  const hadGender = Boolean(enriched.gender);
+
+  try {
+    const research = JSON.parse(
+      await readFile(join(projectPath, "research.json"), "utf-8"),
+    );
+    const linkedIds = new Set(
+      (research.person_evidence ?? [])
+        .filter((pe: any) => pe?.person_id === subjectId)
+        .map((pe: any) => pe.assertion_id),
+    );
+    const assertions = (research.assertions ?? []).filter((a: any) =>
+      linkedIds.has(a?.id),
+    );
+
+    // Dedupe against what the tree already says, so enrichment never restates
+    // a fact the subject carries (which would weight it twice).
+    const existing = new Set(
+      (enriched.facts ?? []).map((f: any) =>
+        JSON.stringify([f?.type, f?.date ?? null, f?.place ?? null]),
+      ),
+    );
+    const existingNames = new Set(
+      (enriched.names ?? []).map((n: any) =>
+        JSON.stringify([n?.given ?? null, n?.surname ?? null]),
+      ),
+    );
+
+    for (const a of assertions) {
+      const sv = a?.structured_value ?? {};
+
+      if (a?.fact_type === "name") {
+        const given = sv.given ?? undefined;
+        const surname = sv.surname ?? undefined;
+        if (!given && !surname) continue;
+        const key = JSON.stringify([given ?? null, surname ?? null]);
+        if (existingNames.has(key)) continue;
+        existingNames.add(key);
+        (enriched.names ??= []).push({ given, surname, type: "AlsoKnownAs" });
+        continue;
+      }
+
+      if (a?.fact_type === "sex" && !enriched.gender) {
+        const v = String(a.value ?? "").trim().toLowerCase();
+        if (v === "male" || v === "female") {
+          enriched.gender = v === "male" ? "Male" : "Female";
+        }
+        continue;
+      }
+
+      const treeType = ASSERTION_FACT_TYPE_TO_TREE[a?.fact_type];
+      if (!treeType) continue;
+
+      const date = sv.date ?? sv.year ?? yearFromText(a?.value);
+      const place = sv.place ?? undefined;
+      if (!date && !place) continue; // nothing that discriminates — skip
+
+      const key = JSON.stringify([treeType, date ?? null, place ?? null]);
+      if (existing.has(key)) continue;
+      existing.add(key);
+
+      const fact: Record<string, unknown> = { type: treeType };
+      if (date) fact.date = String(date);
+      if (place) fact.place = String(place);
+      (enriched.facts ??= []).push(fact);
+    }
+  } catch {
+    // No research.json, unreadable, or an unexpected shape — fall back to the
+    // bare tree person rather than failing the whole ranking call.
+  }
+
+  // The mint-hardening in match-engine synthesizes a conforming Persistent id
+  // for the ark-less subject, so scoring stays deterministic.
+  return {
+    doc: { persons: [enriched] },
+    discriminatingFacts: discriminatingFactCount(enriched),
+    enrichedFacts: (enriched.facts ?? []).length - before,
+    enrichedNames: (enriched.names ?? []).length - namesBefore,
+    enrichedGender: Boolean(enriched.gender) && !hadGender,
+  };
 }
 
 // ─── Stub projection ─────────────────────────────────────────────────────────
@@ -197,6 +382,12 @@ function toStub(s: ScoredCandidate, matchRank: number): RankedMatch {
   if (r.collectionTitle) stub.collectionTitle = r.collectionTitle;
   if (r.recordArk) stub.recordArk = r.recordArk;
   if (s.matchConfidence !== undefined) stub.matchConfidence = s.matchConfidence;
+  // Candidate-side thinness — reported alongside the score so a caller can see
+  // that a 0.09 on a dateless stub and a 0.09 on a rich record mean different
+  // things. Counted off the staged row's own fields (the sidecar keeps them).
+  const evented = (r.events ?? []).filter((e) => e && (e.date || e.place)).length;
+  stub.candidateFactCount =
+    evented + (r.birthDate || r.birthPlace ? 1 : 0) + (r.deathDate || r.deathPlace ? 1 : 0);
   return stub;
 }
 
@@ -276,8 +467,17 @@ export const rankSearchMatchesSchema = {
     "candidate against the subject person, and returns the top-N compact stubs " +
     "sorted by match score — no bulk gedcomx crosses the wire. Treat the result " +
     "as a REVIEW SURFACE (confirm with role/age cross-checks), not an " +
-    "accept/reject. If `subjectResolvable` is false, the subject is too sparse " +
-    "to rank — fall back to manual `same_person` cross-checks. Requires " +
+    "accept/reject. When `subjectResolvable` is false, READ THE `diagnostic` " +
+    "FIELD — it means one of two opposite things. Either the subject carries no " +
+    "dated or placed fact, so the scores are noise and `matches` is withheld " +
+    "deliberately (give the subject a dated/placed fact, or narrow the query — " +
+    "do NOT hand-triage the stubs, and do NOT re-score with `same_person` " +
+    "against that same subject, which fails identically); or the subject is " +
+    "fine and nothing in this pool matched, which is a real negative worth " +
+    "acting on (page deeper or narrow). Most searches are ranked for you by " +
+    "`record_search` itself when you pass it a `subjectId` — call this tool " +
+    "directly only to re-rank a finalized `results/<log_id>.json` or to rank " +
+    "against a different subject than the one searched for. Requires " +
     "authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object" as const,

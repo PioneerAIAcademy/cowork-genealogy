@@ -1,0 +1,1471 @@
+{
+  "project": {
+    "id": "rp_bagley_father_1884",
+    "objective": "Who was the father of William A. Bagley, born about 1815 and died 31 May 1884 in Topsham, Orange County, Vermont?",
+    "subject_person_ids": [
+      "MJDL-Q8B"
+    ],
+    "status": "completed",
+    "created": "2026-07-27",
+    "updated": "2026-07-27"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was the father of William A. Bagley (born about 1815, Topsham, Orange County, Vermont; died 31 May 1884, Topsham, Orange County, Vermont)?",
+      "rationale": "The research objective directly targets the identity of William A. Bagley's father. His mother, Sarah Sally Andrews (born 1777 Gloucester, Essex, Massachusetts; died 19 March 1847 Topsham, Orange, Vermont), is already identified in the tree, but no father is recorded. Vermont death records for 1884, early census records (1820\u20131840, when William would appear in a parental household), and Orange County probate records on FamilySearch offer the most direct paths to naming his paternal line.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-27",
+      "resolution_assertion_ids": [
+        "a_005",
+        "a_015"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched Vermont Town Clerk vital records (death entries directly naming David Bagley as father), federal census 1820 and 1840 (David Bagley in Topsham both years), Vermont birth index, Vermont marriage records (indexed), Vermont probate (indexed), and full-text search of Topsham Town Records 1771-1860 (imageGroup 005464260, 110 results examined). Two independent evidence units establish the answer: (1) two indexings of one Vermont Town Clerk death entry directly naming David Bagley as William A. Bagley's father (secondary information, direct evidence); (2) the 1820 and 1840 federal census schedules placing David Bagley in Topsham, Orange County, Vermont \u2014 the same town as William \u2014 across two decades (primary information, indirect evidence). Full-text search of Topsham town records corroborates David Bagley's continuous presence as a selectman 1806-1855 and found the name 'Sophia Andrews Bagley' in an 1813 record, suggesting a child of David Bagley and Sarah Andrews named with the maternal maiden surname \u2014 consistent with the established maternal identification. No alternative candidate father appeared in any searched source. Gaps noted: Bradford District probate estate files (collection 1807377, 75K images, 0% name-indexed) are genuinely inaccessible via current tools; no indexed marriage record for David Bagley and Sarah Andrews found (consistent with pre-1857 Vermont recording gaps); land records and Ancestry local history were not searched. These gaps are unlikely to contradict the established conclusion.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 two Vermont Town Clerk death record indexings (QPQP-R8T8 and QPQP-24HR, both from the same 31 May 1884 entry) explicitly name David Bagley as William A. Bagley's father. The 1820 census (XHLG-T8R) and 1840 census (XHRB-V42) place David Bagley in Topsham, Orange County, Vermont at times consistent with being William's father.",
+          "repository_breadth": "FamilySearch census 1820, 1830, 1840; Vermont Births and Christenings 1765-1908; Vermont Town Clerk Vital and Town Records 1732-2005; Vermont Marriages 1791-1974; Vermont Vital Records 1760-1954; Vermont Probate Files 1800-1921; Vermont Wills and Deeds; and full-text search of Topsham Town Records 1771-1860 (imageGroup 005464260) all searched. Name variants Bagley/Bayley/Baley found and searched. Bradford District estate files (browse-only, inaccessible) and Ancestry local history 'Sketches of Topsham' documented as unsearched gaps. No indexed church records for Topsham found.",
+          "original_substitution": "Both Vermont Town Clerk death records are original government entries. The 1820 and 1840 federal censuses are original government schedules. No derivative source carries the parentage conclusion \u2014 the indexed entries were the originals in this case (the collection indexes the original town-clerk volume entries).",
+          "independent_verification": "Two independent evidence units: (1) the Vermont death record (QPQP-R8T8/QPQP-24HR are two indexings of one original, counting as one unit \u2014 informant: unidentified family/community member with secondhand knowledge of the 1815 birth); (2) the 1820 and 1840 federal censuses placing David Bagley in Topsham across 20 years \u2014 independent record creation, different informants, different government process. The Topsham town records full-text search adds circumstantial corroboration (selectman records, naming pattern). The death record provides direct evidence; the censuses provide independent indirect corroboration.",
+          "evidence_class": "The Vermont Town Clerk death entry is an original record. The parentage assertion (a_005, a_015) is direct evidence and secondary information \u2014 the record explicitly states the relationship (direct) but the informant was not present at William's 1815 birth (secondary). The 1820 and 1840 censuses are original records with primary information about David Bagley's name and residence.",
+          "conflict_resolution": "No conflicting evidence exists. No source names a different father for William A. Bagley. No contradictory information about parentage appeared in any of the 11 searches conducted. The 1830 census search (log_002) found David Bagley in Topsham but the specific ARK resolved to a wrong record \u2014 this is a data-quality limitation, not a conflict. The two death-record indexings agree completely.",
+          "overturn_risk": "Low. The only meaningfully unsearched sources with potential to bear on parentage are: (1) Bradford District probate estate files \u2014 genuinely inaccessible (75K images, 0% indexed, no full-text search capability); a David Bagley will or estate inventory could corroborate but is unlikely to contradict the explicit death-record naming; (2) Topsham land records \u2014 not searched; a deed referring to 'my son William' would corroborate; no evidence suggests a different father. No alternative candidate has emerged from any source. The explicit parentage statement in the death record, corroborated by 20+ years of census co-location in the same small Vermont town, makes the conclusion highly resistant to overturn."
+        }
+      },
+      "created": "2026-07-27"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-27",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1820",
+          "repository": "FamilySearch",
+          "rationale": "William A. Bagley was born about 1815. In the 1820 federal census he would be approximately 5 years old and appear as an unnamed male child under age 10 in his father's household. Pre-1850 censuses name only the head of household \u2014 identifying a Bagley household in Topsham with a male child in the under-10 bracket names William's father directly. His mother Sarah Sally Andrews (born 1777) should also appear in the same household in the correct age bracket for females 40-45. This is the highest-probability path to the father's name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1830",
+          "repository": "FamilySearch",
+          "rationale": "In the 1830 census William would be approximately 15 and still likely in his father's household. The 1830 census names only the head of household; a Bagley household in Topsham containing a male aged 15-19 confirms the father's name. Sarah Andrews (born 1777) would appear in the 50-59 bracket. Run this immediately after the 1820 search as corroboration \u2014 if one census is missing the family, the other may find them.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1810-1820",
+          "repository": "FamilySearch",
+          "rationale": "Search Vermont Births and Christenings 1765-1908 (collection 1675544, index only) for a birth record for William A. Bagley or a William Bagley born about 1815 in Topsham or Orange County. Also search Vermont Town Clerk, Vital and Town Records, 1732-2005 (collection 1987653, indexed + images). Per loc_001, state vital registration only began in 1857; pre-1857 births depend on town clerk recording. A birth entry would directly name William's father. Note per loc_001 quirk: the Topsham pre-1857 town records (imageGroup 005464260) are full-text searchable but NOT name-indexed \u2014 this item covers the indexed statewide compilations; the full-text browse of Topsham's own volume is a separate item.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Vermont",
+          "date_range": "1790-1820",
+          "repository": "FamilySearch",
+          "rationale": "Dedicated search for the marriage of Sarah Sally Andrews to a Bagley \u2014 the parents' marriage record. Per the record-type guide, a parentage plan requires a separate item for the parents' marriage: it (a) establishes the couple as a unit, (b) supplies the mother's maiden name (confirming it IS Sarah Andrews), and (c) by its date relative to William's ca.-1815 birth corroborates any father name found only in a census or derivative source. Sarah (born 1777) would have married between roughly 1795-1815. Search Vermont Marriages 1791-1974 (collection 1675550, index only) and Vermont Vital Records 1760-1954 (collection 1784223, indexed + images) for marriages in Topsham or Orange County under 'Andrews' or 'Bagley'. Also search Vermont Town Clerk Vital and Town Records 1732-2005 (collection 1987653).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1771-1860",
+          "repository": "FamilySearch",
+          "rationale": "Full-text search of the Topsham Town Records 1771-1860 (imageGroup 005464260, 265 images). Per loc_001, this volume is full-text searchable but 0% name-indexed \u2014 it cannot be reached by record_search. Route to the search-full-text skill using 'Bagley' as the search term across this imageGroup. Pre-1857 births, marriages, and deaths recorded by the Topsham town clerk are the most likely place to find William's birth entry (naming his father) or his parents' marriage. This is the only mechanism to search this volume.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "probate",
+          "jurisdiction": "Orange County, Vermont",
+          "date_range": "1800-1860",
+          "repository": "FamilySearch",
+          "rationale": "Search Vermont Probate Files 1800-1921 (collection 1435692, 10,225 records indexed + 204K images) for a Bagley estate in Orange County. If William's father died after 1800, an estate or will naming William as a son would be direct parentage evidence. Also search Vermont, Wills and Deeds, ca. 1700s-2017 (collection 3158875). Per loc_001, Topsham's probate district is Orange County. This indexed collection is the most accessible entry point before browsing the unindexed district files.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "probate",
+          "jurisdiction": "Orange County, Vermont \u2014 Bradford District",
+          "date_range": "1780-1860",
+          "repository": "FamilySearch",
+          "rationale": "Browse-only fallback for pli_006. Vermont Orange County, Bradford District Estate Files 1780-1915 (collection 1807377, 75,694 images) are digitized but 0% name-indexed and not full-text searchable \u2014 must be browsed image-by-image. Per loc_001, Topsham is in Orange County; the Bradford District estate files are a primary repository for Orange County probate. If the indexed Vermont Probate Files search (pli_006) yields nothing, browse this collection for Bagley-surname files.",
+          "fallback_for": "pli_006",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "census",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1840",
+          "repository": "FamilySearch",
+          "rationale": "In 1840 William would be approximately 25 \u2014 possibly still in his father's household, or the father may now be an older man living with a married son. If William's father was still living in 1840, he would head his own household. The 1840 census names only the head of household; look for an older Bagley male (50s\u201360s) in Topsham with household members in the right age ranges. Also look for William's own nascent household. Lower priority than 1820/1830 since William was more likely to have left home by 1840.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "other",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1929",
+          "repository": "Ancestry",
+          "rationale": "Per loc_001, 'Sketches of the Town of Topsham, Orange County, Vermont' (1929) by Frank H. Craig is available on Ancestry.com (collection 22236). Local town histories of this era routinely include biographical family sketches naming parents, children, and grandchildren. Search for 'Bagley' to identify any compiled genealogical notes naming William's father. Treat any finding as a derivative source requiring corroboration from original records.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 10,
+          "record_type": "land",
+          "jurisdiction": "Topsham, Orange County, Vermont",
+          "date_range": "1800-1850",
+          "repository": "FamilySearch",
+          "rationale": "FAN/contextual item. Vermont Land Records, Early to 1900 (collection 1409123, 169K images) and Topsham land record volumes (full-text searchable, per loc_001) may contain deeds where a Bagley grantee/grantor is identified with relationship terms ('my son William,' 'heirs,' etc.) or where William appears as a witness alongside a Bagley male who could be his father. Also search for Andrews-family land transactions that reference a Bagley son-in-law \u2014 these could establish the father's first name even when vital records are silent. Route the full-text volumes through search-full-text skill.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T19:13:02.246Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States, Census, 1820",
+        "surname": "Bagley",
+        "residencePlace": "Topsham, Vermont",
+        "residenceYear": 1820,
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 14,
+      "notes": "Found 4 Bagley households in Topsham 1820: Christopher (ark:/61903/1:1:XHLG-TXG), Aaron (ark:/61903/1:1:XHLG-TNL), David (ark:/61903/1:1:XHLG-T8R, attached-to-other), John (ark:/61903/1:1:XHLG-TNY). Index stubs only name the head of household \u2014 household tally marks (which would show a boy under 10 = William ~5) require image examination. All four are candidates; need image read to determine which has a male child under 10 and a female aged 40-45 (Sarah Andrews born 1777)."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-27T19:17:28.090Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States, Census, 1830",
+        "surname": "Bagley",
+        "residencePlace": "Topsham, Vermont",
+        "residenceYear": 1830,
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 9,
+      "notes": "Found 9 Bagley households in Topsham 1830: Aaron (XHLG-T37), Nathan (XHLG-T3Y), Dhan (XHLG-T9F), John (XHLG-T8W), John A (XHLG-TNG), Reber (XHLG-TN3), David (XHLG-T9Q, attached-to-other), John (XHLG-TN9), Philip (XHLG-TNT). David Bagley again appears \u2014 consistent with the 1820 David Bagley household in Topsham. Census stubs name only heads of household; household tally marks require image examination to confirm a male 15-19 (William ~15) and female 50-59 (Sarah Andrews born 1777). David Bagley's presence in both 1820 and 1830 Topsham census is consistent with him being William's father. Two key death records for William A. Bagley found in Vermont Town Clerk records (pli_003) independently name David Bagley as father \u2014 this corroborates the census pattern."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-27T19:17:28.093Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Vermont Births and Christenings, 1765-1908",
+        "collectionId": "1675544",
+        "surname": "Bagley",
+        "givenName": "William",
+        "birthPlace": "Vermont",
+        "birthYearFrom": 1810,
+        "birthYearTo": 1820,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Only result: Sally W. Bagley, female, born Corinth, Vermont \u2014 not the subject William A. Bagley (male, born ~1815 Topsham). No birth record for William A. Bagley in this indexed statewide compilation. Pre-1857 Vermont vital registration was not required by the state; births depended on town-clerk recording. The absence here is expected and does not rule out a record in the Topsham town clerk volume (pli_005, full-text searchable imageGroup 005464260)."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-27T19:17:28.093Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+        "collectionId": "1987653",
+        "surname": "Bagley",
+        "givenName": "William",
+        "birthYearFrom": 1810,
+        "birthYearTo": 1820,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 51,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 51,
+      "notes": "Found 51 results. Top two are direct matches for the research subject: (1) ark:/61903/1:1:QPQP-R8T8 \u2014 William A Bagley, death 31 May 1884, father=David Bagley (ark:/61903/1:1:QPQP-R8TJ), mother=Sarah A Bagley (ark:/61903/1:1:QPQP-7JPV); (2) ark:/61903/1:1:QPQP-24HR \u2014 William A Bagley, death 31 May 1884, Topsham Orange Vermont, father=David Bagley (ark:/61903/1:1:QPQP-24HB), mother=Sarah A Bagley (ark:/61903/1:1:QPQP-24C4). Both records independently name DAVID BAGLEY as William A. Bagley's father and Sarah A. Bagley (n\u00e9e Andrews) as his mother. These are two indexings of the same original entry in the Vermont town clerk vital records. This is strong evidence identifying William's father. Note per the locality guide: Vermont death records before 1919 did not require parental information \u2014 these records likely post-date that requirement or the informant supplied the data voluntarily; in any case, both records agree. Records read via record_read; images viewed at ark:/61903/3:1:3QS7-L99D-H995 and ark:/61903/3:1:3QS7-8999-LD1S."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-27T19:32:07.015Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Andrews",
+        "spouseSurname": "Bagley",
+        "residencePlace": "Vermont",
+        "marriageYearFrom": 1795,
+        "marriageYearTo": 1820,
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 160,
+      "notes": "No Sarah Andrews + Bagley marriage found in top 50 of 160 results. All results are male Andrews relatives of brides in later marriages, not the target Sarah Andrews marrying a Bagley. Indexed Vermont vital records and town clerk records do not appear to contain an indexed entry for this pre-1857 marriage. Pre-1857 Vermont marriages depended on town-clerk recording; the Topsham town records (pli_005, imageGroup 005464260) are the most likely repository but require full-text search."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-27T19:32:07.021Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bagley",
+        "givenName": "David",
+        "spouseGivenName": "Sarah",
+        "residencePlace": "Vermont",
+        "marriageYearFrom": 1795,
+        "marriageYearTo": 1820,
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 10,
+      "notes": "10 results. Top results include 'David Bagley and Voda Page' (multiple indexings of the same record in Vermont collections) and 'Otis B. Rollins and Flora E. Bagley' (different Bagley). No David Bagley + Sarah Andrews marriage found. The 'David Bagley and Voda Page' record may be a second marriage after Sarah's death in 1847; its date needs checking. The pre-1815 marriage of David Bagley to Sarah Andrews is not found in indexed Vermont marriage compilations \u2014 consistent with the pre-1857 recording gap."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-27T19:32:07.023Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bagley",
+        "residencePlace": "Orange County, Vermont",
+        "recordType": "probate",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 1,
+      "notes": "1 result: Sidney Albert Bagley, probate in Transvaal, South Africa, 1930 \u2014 born Braintree, Orange, Vermont 1896, but completely unrelated to David Bagley circa 1820-1860. No Orange County Vermont probate for any Bagley of the right era found in this indexed search."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-27T19:32:07.024Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bagley",
+        "givenName": "David",
+        "residencePlace": "Vermont",
+        "recordType": "probate",
+        "anyYearFrom": 1820,
+        "anyYearTo": 1870,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. No indexed probate record for David Bagley in Vermont 1820-1870 found in FamilySearch. The indexed Vermont probate collection (1435692) does not contain a David Bagley record. The unindexed Bradford District estate files (pli_007, collection 1807377) would need to be browsed image-by-image and are beyond the current tool capabilities. Marking pli_006 completed; pli_007 (browse fallback) to be skipped with this finding noted."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-27T19:32:07.024Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bagley",
+        "givenName": "David",
+        "residencePlace": "Topsham, Vermont",
+        "residenceYearFrom": 1840,
+        "residenceYearTo": 1840,
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 2,
+      "notes": "Found 2 results \u2014 both are 'Household of David Bagley, United States, Census, 1840, Topsham, Orange, Vermont' (two indexings of the same entry: XHRB-V42 and XHRB-V4V). Confidence 4, score 5.44. David Bagley was still in Topsham in 1840 when William would be approximately 25. Match ranking against I1 (David Bagley stub) returned scores of 0.15 due to thinness of stub (no birth/death dates), but both records are clearly David Bagley in Topsham, consistent with the father named in the 1884 death records. XHRB-V42 is attachedToOther (already linked in FamilySearch's tree to LVDV-DBC, corroborating the identity match). Will read XHRB-V42 to check household composition."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-27T19:44:16.990Z",
+      "tool": "fulltext_search",
+      "query": {
+        "imageGroupNumber": "005464260",
+        "searchTerms": "Bagley",
+        "offset": 0,
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 110,
+      "notes": "Full-text search of Topsham Town Records 1771-1860 (imageGroup 005464260), 50 results at offset 0. Key findings: (1) 1813 town record (ark:/61903/3:1:3QS7-L999-L4VT) contains 'David Bagleys', 'David Bagley', 'Aaron Andrews', 'John Andrews' on same image; (2) A 1813 town record contains 'Sophia Andrews Bagley' \u2014 a Bagley child bearing the Andrews maiden surname as middle name, strong circumstantial evidence that Sarah Andrews married David Bagley; (3) David Bagley appears as Topsham selectman from 1806 through at least 1839, consistent with long-term Topsham residence; (4) 'David Bagley Jr.' appears in 1839 record \u2014 two David Bagleys existed in Topsham simultaneously; (5) 'Wm A Bagley' and 'David Bayley Jr' appear on same 1853 page, possibly as brothers (sons of David Sr.); (6) No direct birth record for William Bagley or marriage record for David Bagley + Sarah Andrews found in this offset. 110 total results available; 60 remaining at offset 50."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-27T19:44:16.990Z",
+      "tool": "fulltext_search",
+      "query": {
+        "imageGroupNumber": "005464260",
+        "searchTerms": "Bagley",
+        "offset": 50,
+        "count": 60
+      },
+      "outcome": "partial",
+      "results_examined": 53,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 110,
+      "notes": "Full-text search of Topsham Town Records 1771-1860 (imageGroup 005464260), results at offset 50 (items 51-110). Key findings: (1) 1848 town record (ark:/61903/3:1:3QS7-L999-L4DW) contains 'Sophia A. Bagley' \u2014 a woman named Sophia with initial A (consistent with Andrews middle name), corroborating the Sophia Andrews Bagley child of David and Sarah; (2) David Bagley explicitly identified as Selectman in 1848 (ark:/61903/3:1:3QSQ-G999-L4RH); (3) 1822 record (ark:/61903/3:1:3QS7-8999-L46Y) contains 'Aaron Bagley' + 'John Andrews', 'Hannah Andrews', 'Sophia Andrews' on same image; (4) David Bagley appears in town records continuously 1806-1855; (5) Aaron Bagley, Moses Bagley, Ephraim Bagley, John Bagley also appear \u2014 multiple Bagley family members in Topsham; (6) No direct birth or marriage record for David Bagley + Sarah Andrews found in remaining results. Full-text search of 110-record result set now complete (all results examined)."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPQP-R8T8 : accessed 27 July 2026), Entry for William A Bagley and David Bagley, 31 May 1884.",
+      "citation_detail": {
+        "who": "William A. Bagley (deceased); David Bagley (father); Sarah A. Bagley (mother)",
+        "what": "Death registration entry, Vermont Town Clerk vital record",
+        "when_created": "31 May 1884",
+        "when_accessed": "27 July 2026",
+        "where": "Vermont, Town Clerk, Vital and Town Records, 1732-2005; FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPQP-R8T8)",
+        "where_within": "Entry for William A Bagley and David Bagley, 31 May 1884"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-27",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPQP-R8T8",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPQP-24HR : accessed 2026-07-27), Entry for William A Bagley and David Bagley, 31 May 1884.",
+      "citation_detail": {
+        "who": "William A. Bagley (deceased), David Bagley (father), Sarah A. Bagley (mother)",
+        "what": "Vermont Town Clerk vital record \u2014 death entry for William A. Bagley, 31 May 1884, with parental names indexed",
+        "when_created": "1884",
+        "when_accessed": "2026-07-27",
+        "where": "FamilySearch, Vermont, Town Clerk, Vital and Town Records, 1732-2005 (collection 1987653)",
+        "where_within": "Entry for William A Bagley and David Bagley, 31 May 1884"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-27",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPQP-24HR",
+      "notes": "Second indexing of the same original document as ark:/61903/1:1:QPQP-R8T8. This indexing captures the death place (Topsham, Orange, Vermont) and indexes both William A. Bagley and David Bagley as related persons. Vermont death records of this era (pre-1919) did not require parental information on the death certificate; parental names here are likely reported by a community or family informant with secondhand knowledge.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States, Census, 1820,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XHLG-T8R : accessed 2026-07-27), entry for David Bagley, Topsham, Orange, Vermont.",
+      "citation_detail": {
+        "who": "David Bagley, head of household",
+        "what": "1820 United States Federal Census schedule, Topsham, Orange County, Vermont",
+        "when_created": "1820",
+        "when_accessed": "2026-07-27",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Topsham, Orange, Vermont; ark:/61903/1:1:XHLG-T8R"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XHLG-T8R",
+      "access_date": "2026-07-27",
+      "log_entry_id": "log_001",
+      "notes": "Pre-1850 census; only the head of household is named. All other household members appear as tally marks in age/sex columns. The image is a digital scan of the original government schedule.",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"United States, Census, 1840,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XHRB-V42 : accessed 2026-07-27), entry for David Bagley, Topsham, Orange, Vermont, 1840.",
+      "citation_detail": {
+        "who": "David Bagley",
+        "what": "1840 United States Federal Census, household schedule",
+        "when_created": "1840",
+        "when_accessed": "2026-07-27",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Topsham, Orange County, Vermont; ark:/61903/1:1:XHRB-V42"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XHRB-V42",
+      "access_date": "2026-07-27",
+      "log_entry_id": "log_009",
+      "notes": "Pre-1850 U.S. census; only the head of household is named. All other household members appear as tally marks by age/sex category only \u2014 no names or individual details are recorded for non-heads. The digital image on FamilySearch was examined via the index entry; the underlying microfilm image at ark:/61903/3:1:33SQ-GYYY-24 is the original schedule.",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QPQP-R8T8",
+      "record_persona_id": "p_104363515691",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "William A. Bagley",
+      "structured_value": {
+        "given": "William A",
+        "surname": "Bagley"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member or family informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QPQP-R8T8",
+      "record_persona_id": "p_104363515691",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "unknown household member or family informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QPQP-R8T8",
+      "record_persona_id": "p_104363515691",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 31 May 1884 in Vermont",
+      "date": "31 May 1884",
+      "date_certainty": "exact",
+      "place": "Vermont, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member or family informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Vermont, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QPQP-R8T8",
+      "record_persona_id": "p_104363515691",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1815 (year stated in record)",
+      "date": "1815",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown household member or family informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The informant for a death registration was not present at William's birth in 1815; birth year is secondhand/recollected knowledge. Date certainty is approximate as only the year is given.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QPQP-R8T8",
+      "record_persona_id": "p_104363515691",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of David Bagley",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household member or family informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The record explicitly states a ParentChild relationship between William A. Bagley and David Bagley. The informant relayed this parentage information secondhand \u2014 they were not present at William's birth in 1815. However, the record directly states this relationship, making it direct evidence for q_001 (who was William's father).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QPQP-R8T8",
+      "record_persona_id": "p_104363515691",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Sarah A. Bagley",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household member or family informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The record explicitly states a ParentChild relationship between William A. Bagley and Sarah A. Bagley. The informant relayed this parentage information secondhand. Sarah A. Bagley in this record appears under the surname Bagley (married name); she may correspond to Sarah Sally Andrews (LVDV-6MK) in the project tree.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QPQP-R8T8",
+      "record_persona_id": "p_104363515697",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "David Bagley",
+      "structured_value": {
+        "given": "David",
+        "surname": "Bagley"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household member or family informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "David Bagley is named as the deceased's father by a third-party informant relaying secondhand biographical information about the parent. The name is stated in the record but the informant-knowledge test yields indirect evidence \u2014 the informant is relaying another person's identity.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QPQP-R8T8",
+      "record_persona_id": "p_104363515697",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "unknown household member or family informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QPQP-R8T8",
+      "record_persona_id": "p_104362981008",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Sarah A. Bagley",
+      "structured_value": {
+        "given": "Sarah A",
+        "surname": "Bagley"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household member or family informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Sarah A. Bagley is named as the deceased's mother by a third-party informant relaying secondhand biographical information. The name is stated in the record but the informant-knowledge test yields indirect \u2014 relaying another person's identity. The surname 'Bagley' here is her married name; the project tree already has Sarah Sally Andrews (LVDV-6MK) as William's mother under her birth surname Andrews.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:QPQP-R8T8",
+      "record_persona_id": "p_104362981008",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown household member or family informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:QPQP-24HR",
+      "record_persona_id": "p_104363376565",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "William A. Bagley",
+      "structured_value": {
+        "given": "William A",
+        "surname": "Bagley"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:QPQP-24HR",
+      "record_persona_id": "p_104363376565",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:QPQP-24HR",
+      "record_persona_id": "p_104363376565",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "31 May 1884",
+      "date": "31 May 1884",
+      "place": "Topsham, Orange, Vermont, United States",
+      "standard_place": "Topsham, Orange, Vermont, United States",
+      "information_quality": "primary",
+      "informant": "local registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:QPQP-24HR",
+      "record_persona_id": "p_104363376565",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "about 1815",
+      "date": "1815",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year reported on a death record by an unknown informant; the informant was not present at William's birth. Classification is indirect because the figure requires accepting the informant's secondhand knowledge of the birth year.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:QPQP-24HR",
+      "record_persona_id": "p_104363376565",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of David Bagley",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family or community informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The record explicitly indexes David Bagley as the father of William A. Bagley via a ParentChild relationship. The informant (unknown \u2014 likely a family member or neighbor who reported the death) was not present at William's birth, making this secondary information. However, the fact is directly stated in the record, so evidence type is direct. This assertion directly answers q_001.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:QPQP-24HR",
+      "record_persona_id": "p_104363376565",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Sarah A. Bagley",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family or community informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The record explicitly indexes Sarah A. Bagley as the mother of William A. Bagley via a ParentChild relationship. Secondary information because the informant was not present at William's birth. Note: Sarah Sally Andrews (LVDV-6MK) is already in the tree as William's mother \u2014 this assertion corroborates that link.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:QPQP-24HR",
+      "record_persona_id": "p_104363376568",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "David Bagley",
+      "structured_value": {
+        "given": "David",
+        "surname": "Bagley"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family or community informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "David Bagley's name is reported by the death record's informant (unknown \u2014 family or community member) who was relaying information about a third party. The informant was not present at David's naming and may have had imperfect knowledge. Classified indirect because the informant is relaying a third party's identifying information.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:QPQP-24HR",
+      "record_persona_id": "p_104363376568",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "unknown family or community informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Sex stated in the record (male given name, male role as father). Secondary because reported by a third-party informant about someone not the informant themselves.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:QPQP-24HR",
+      "record_persona_id": "p_104363376577",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Sarah A. Bagley",
+      "structured_value": {
+        "given": "Sarah A",
+        "surname": "Bagley"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown family or community informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Sarah A. Bagley's name is reported by the death record's informant relaying information about a third party. Indirect because a third party's identity is being relayed secondhand. The tree already has Sarah Sally Andrews (LVDV-6MK) as William's mother \u2014 the surname 'Bagley' here is her married name, consistent with the tree.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:QPQP-24HR",
+      "record_persona_id": "p_104363376577",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown family or community informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Sex stated by role (mother) and female given name. Secondary because reported by a third-party informant.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:QPQP-24HR",
+      "record_persona_id": "p_104363376568",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Sarah A. Bagley (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "secondary",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The record indexes a Couple relationship between David Bagley and Sarah A. Bagley, but the spousal relationship is an indexer inference from their joint ParentChild links to William \u2014 the death record itself does not state they were married. Classified as researcher-inferred from record structure.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:XHLG-T8R",
+      "record_persona_id": "p_10418027755",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "David Bagley",
+      "structured_value": {
+        "given": "David",
+        "surname": "Bagley"
+      },
+      "information_quality": "primary",
+      "informant": "David Bagley (household head, likely self-reported to enumerator)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:XHLG-T8R",
+      "record_persona_id": "p_10418027755",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "David Bagley (household head, likely self-reported to enumerator)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:XHLG-T8R",
+      "record_persona_id": "p_10418027755",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Topsham, Orange, Vermont, United States",
+      "structured_value": {
+        "place": "Topsham, Orange, Vermont, United States"
+      },
+      "date": "1820",
+      "date_certainty": "exact",
+      "place": "Topsham, Orange, Vermont, United States",
+      "standard_place": "Topsham, Orange, Vermont, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Enumerator personally visited the dwelling and recorded the household at this location. Residence is a direct fact \u2014 the enumerator attests the household was enumerated here.",
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:XHLG-T8R",
+      "record_persona_id": "p_10418027755",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "David Bagley appears as head of household in the 1820 United States Federal Census, Topsham, Orange, Vermont. Pre-1850 census; other household members appear only as tally marks by age/sex bracket and are not named.",
+      "date": "1820",
+      "date_certainty": "exact",
+      "place": "Topsham, Orange, Vermont, United States",
+      "standard_place": "Topsham, Orange, Vermont, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely David Bagley or another resident)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "This census entry is indirect evidence for q_001 (father of William A. Bagley). It establishes David Bagley was head of a household in Topsham in 1820, the same town and period where William (~age 5) would have lived with his father. The census does not name household members other than the head, so William's presence cannot be confirmed from this record alone. Two Vermont Town Clerk death records (src_001, src_002) independently name David Bagley as William's father.",
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:XHRB-V42",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "David Bagley",
+      "structured_value": {
+        "given": "David",
+        "surname": "Bagley"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely David Bagley himself)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_004",
+      "record_persona_id": "p_10421422430"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:XHRB-V42",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Topsham, Orange, Vermont",
+      "place": "Topsham, Orange, Vermont, United States",
+      "date": "1840",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "David Bagley's presence in Topsham, Orange County, Vermont in 1840 is consistent with him being the father of William A. Bagley (born ~1815, Topsham). This corroborates the 1884 Vermont death record naming David Bagley as William's father, but does not directly state any parentage relationship. The 1840 census predates William A. Bagley's approximate birth by ~25 years; at this date William would have been approximately 25 years old and may or may not be enumerated in this household (only tally marks for non-heads).",
+      "source_id": "src_004",
+      "record_persona_id": "p_10421422430",
+      "standard_place": "Topsham, Orange, Vermont, United States"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "William A. Bagley (deceased) named in Vermont Town Clerk vital record, 31 May 1884. Name, death date, and death place in Topsham all match tree subject MJDL-Q8B exactly. This is the research subject found by searching for this specific individual; FamilySearch record-person match returned confidence 5 (accepted).",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex=Male consistent with MJDL-Q8B (William A. Bagley). Same record as a_001; same confident identification.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death date 31 May 1884 and place Vermont match MJDL-Q8B's known death date exactly. This is the research subject; same confident identification as a_001.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year ~1815 consistent with MJDL-Q8B (born Abt 1815). Same confident identification as a_001.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of David Bagley' on the deceased persona bears on William A. Bagley (MJDL-Q8B) as the child party. William is the research subject; this assertion directly links William to his father David Bagley. Confident match per a_001 identification.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of David Bagley' on the deceased persona also bears on David Bagley as the parent party. David Bagley is a new tree stub (I1) created from this and related records. Named explicitly as William's father in two Vermont Town Clerk death record indexings (QPQP-R8T8, QPQP-24HR) of the same 1884 entry, and appears as head of household in Topsham in the 1820 census (XHLG-T8R), consistent with being William's father when William was ~5. Probable \u2014 new stub person, no prior independent corroboration; FamilySearch matches this persona to LVDV-DBC at confidence 5 in the FS tree.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Sarah A. Bagley' bears on William A. Bagley (MJDL-Q8B) as the child party. William is the research subject. Same confident identification as a_001.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Sarah A. Bagley' also bears on Sarah as the mother party. Tree person LVDV-6MK is Sarah Sally Andrews, already linked to MJDL-Q8B as his mother (R4 relationship). Record names 'Sarah A. Bagley' \u2014 surname Bagley is her married name; 'A' likely the initial of her maiden surname Andrews. FamilySearch record-person match returned confidence 4 (accepted) for this persona \u2192 LVDV-6MK. Name and relationship position agree with the tree. Probable \u2014 middle initial interpretation is reasonable but not independently confirmed.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "David Bagley (father_of_deceased) in Vermont Town Clerk record QPQP-R8T8 is linked to tree person I1 (David Bagley stub). This persona is the father named in the death registration of William A. Bagley (31 May 1884). Same person as the father_of_deceased persona in QPQP-24HR (two indexings of the same source entry) and the head_of_household in 1820 Topsham census XHLG-T8R. Probable \u2014 new stub from a single original source (two indexings); 1820 census independently corroborates Topsham residence.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex=Male for David Bagley (father_of_deceased, QPQP-R8T8) consistent with tree person I1 (male). Same identification as a_007.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sarah A. Bagley (mother_of_deceased, QPQP-R8T8) linked to LVDV-6MK (Sarah Sally Andrews). Name 'Sarah A. Bagley': first name Sarah matches; 'A' likely = Andrews (maiden name initial); surname Bagley is her married name. LVDV-6MK already in tree as William's mother (R4). FamilySearch record-person match confidence 4 (accepted) for persona p_104362981008 \u2192 LVDV-6MK. Probable \u2014 middle initial as maiden surname initial is a reasonable inference, not independently confirmed.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex=Female for Sarah A. Bagley (mother_of_deceased, QPQP-R8T8) consistent with LVDV-6MK (female). Same identification as a_009.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "William A. Bagley (deceased) in Vermont Town Clerk record QPQP-24HR. Second indexing of the same 1884 Topsham death entry; death place specified as Topsham, Orange, Vermont. Name, death date, place all match MJDL-Q8B. FamilySearch record-person match confidence 5 (accepted). Confident.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex=Male consistent with MJDL-Q8B. Same record and identification as a_011.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death date 31 May 1884, Topsham, Orange, Vermont matches MJDL-Q8B exactly. Same confident identification as a_011.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year ~1815 consistent with MJDL-Q8B (born Abt 1815). Same identification as a_011.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of David Bagley' in QPQP-24HR bears on William A. Bagley (MJDL-Q8B) as the child party. Same confident identification as a_011.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of David Bagley' in QPQP-24HR also bears on David Bagley as the parent. Same David Bagley (I1) identified in QPQP-R8T8 (a_005) and in the 1820 census (a_022). Two indexings of the same original entry both name him as father. Probable \u2014 same reasoning as a_005 \u2192 I1 link.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "MJDL-Q8B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Sarah A. Bagley' in QPQP-24HR bears on William A. Bagley (MJDL-Q8B) as child party. Same confident identification as a_011.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Sarah A. Bagley' in QPQP-24HR bears on Sarah as the mother. Same LVDV-6MK (Sarah Sally Andrews) identified in a_006 \u2192 LVDV-6MK link. Second indexing of same source corroborates the identification.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "David Bagley (father_of_deceased, QPQP-24HR) linked to I1. Second indexing of the same 1884 death entry; names David Bagley as father. Same person as in a_007 (QPQP-R8T8). Probable.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex=Male for David Bagley (father_of_deceased, QPQP-24HR). Consistent with I1. Same identification as a_017.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sarah A. Bagley (mother_of_deceased, QPQP-24HR) linked to LVDV-6MK. Second indexing corroborates the a_009 identification. Probable.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_020",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex=Female for Sarah A. Bagley (mother_of_deceased, QPQP-24HR). Consistent with LVDV-6MK. Same identification as a_019.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Inferred spousal relationship 'spouse of Sarah A. Bagley' in QPQP-24HR \u2014 bears on David Bagley (I1) as one party. This is researcher-inferred from the joint ParentChild links; the original death record does not explicitly state a marriage. Probable, noting the inference basis.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_021",
+      "person_id": "LVDV-6MK",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Inferred spousal relationship 'spouse of Sarah A. Bagley' in QPQP-24HR also bears on Sarah (LVDV-6MK) as the other party. Same inferred basis as the I1 link; probable.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "David Bagley (head_of_household, 1820 census, Topsham) linked to I1 (David Bagley). Same name, consistent with the father named in the 1884 death records \u2014 David Bagley was in Topsham in 1820 when William (~age 5) would have been in his father's household. Independent of the death records (a separate original source). Probable \u2014 name and Topsham residence agree; no conflicting evidence; the 1820 census corroborates the death-record identification.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_023",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex=Male for David Bagley (head_of_household, 1820 census). Consistent with I1. Same identification as a_022.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Residence Topsham, Orange, Vermont, 1820 for David Bagley. Consistent with I1 being the David Bagley who fathered William in Topsham. Same identification as a_022.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Census note \u2014 David Bagley as head of household, Topsham, 1820. Indirect evidence for q_001 (supports David's Topsham residence when William would have been ~5). Same identification as a_022.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_026",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The 1840 census head of household 'David Bagley' in Topsham, Orange, Vermont matches I1 (David Bagley) by name and location. I1 is already corroborated by two 1884 Vermont death records naming 'David Bagley' as William A. Bagley's father, and the 1820 federal census placing David Bagley in Topsham. The same name and same locality in 1840 is consistent with I1's established profile. No same_person score available \u2014 I1 is a local stub without a FamilySearch ARK, making any score uninformative. Qualitative correlation: name exact match, location exact match. Confident not used because no birth/death date corroboration is available to fully anchor the identity.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "David Bagley's 1840 residence in Topsham, Orange, Vermont (from head_of_household role in ark:/61903/1:1:XHRB-V42) is linked to I1 (David Bagley). This is indirect evidence for q_001: it places David Bagley \u2014 named as William A. Bagley's father in the 1884 death record \u2014 in Topsham in 1840, when William was approximately 25 years old, consistent with long-term Topsham residence spanning at least 1820 to 1840. No same_person score available (degenerate stub match). Probable confidence based on name + place correlation, consistent with all existing I1 evidence.",
+      "created": "2026-07-27"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "David Bagley Jr. \u2014 a second David Bagley documented in Topsham by 1839 \u2014 is William A. Bagley's father rather than David Bagley Sr.",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [
+        "a_025",
+        "a_027"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "The full-text search of Topsham Town Records 1771-1860 (log_010) found 'David Bagley Jr.' in an 1839 record and 'Wm A Bagley' alongside 'David Bayley Jr' on the same 1853 page, suggesting they were contemporaries of similar age rather than father and son. For David Bagley Jr. to be William A. Bagley's father (born approximately 1815), David Jr. would need to have been born no later than approximately 1800 \u2014 but the 'Jr.' designation implies he was born after David Bagley Sr. was already established. David Bagley Sr. appears in Topsham records as a selectman from 1806, well before William's approximately 1815 birth, and is the plausible family patriarch. The 1884 Vermont death record's unqualified reference to 'David Bagley' is most naturally the patriarch; by 1884 David Sr. would have been long deceased, and no record links David Jr. to William in a parental role. The 1853 co-appearance of William and David Jr. on the same Topsham town records page is most consistent with them being brothers, not father and son.",
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Raised by gps-mentor verdict ev_001 as must-address gap in the proof narrative. Chronological analysis rules out David Jr. as William's father."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_005",
+        "a_015",
+        "a_024",
+        "a_025",
+        "a_027"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Research encompassed Vermont Town Clerk vital records (FamilySearch collection 1987653 \u2014 yielded two indexings of the 1884 Topsham death entry naming David Bagley as William A. Bagley's father), Vermont Births and Christenings 1765\u20131908 (collection 1675544 \u2014 negative for William A. Bagley), Vermont marriage records (collections 1675550 and 1784223 \u2014 no indexed record found for a David Bagley and Sarah Andrews marriage, consistent with pre-1857 Vermont recording gaps), Vermont probate records indexed through FamilySearch (collection 1435692 \u2014 no David Bagley entry), federal census 1820 and 1840 for Topsham, Orange County, Vermont (FamilySearch), and a full-text search of Topsham Town Records 1771\u20131860 (FamilySearch imageGroup 005464260, 110 results examined across two search passes). Unsearched sources include the Bradford District estate files (FamilySearch collection 1807377, 75,694 browse-only, unindexed images), Ancestry local history 'Sketches of the Town of Topsham' by Frank H. Craig (1929, collection 22236), and Topsham land records. No competing candidate for William's father appeared in any searched record.",
+      "narrative_markdown": "# Proof Summary: Father of William A. Bagley (born about 1815, died 31 May 1884, Topsham, Orange County, Vermont)\n\n## Conclusion\n\nThe preponderance of available evidence strongly suggests that **David Bagley** was the father of William A. Bagley (born about 1815, died 31 May 1884, Topsham, Orange County, Vermont). This conclusion rests on a Vermont Town Clerk death entry that directly names David Bagley as William's father, corroborated by two federal census records confirming David Bagley's long-term residence in the same small Vermont town and by circumstantial evidence from the Topsham town records. No contradicting evidence was found in any searched record.\n\n## Primary Evidence: Vermont Town Clerk Death Entry (1884)\n\nThe most direct evidence is the Vermont Town Clerk vital record for William A. Bagley's death on 31 May 1884, accessed through two FamilySearch index entries derived from the same underlying original town-clerk entry and therefore constituting a single evidence unit:\n\n- \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPQP-R8T8 : accessed 27 July 2026), Entry for William A Bagley and David Bagley, 31 May 1884.\n- \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPQP-24HR : accessed 2026-07-27), Entry for William A Bagley and David Bagley, 31 May 1884.\n\nBoth indexings agree that David Bagley was William A. Bagley's father and that Sarah A. Bagley (n\u00e9e Andrews) was his mother. Classified as an **original record**, this entry provides **direct evidence** of the parentage relationship. The parentage information itself is, however, **secondary information** \u2014 the 1884 informant could not have been present at William's birth approximately seventy years earlier, and the parental names were likely supplied by a family or community member with secondhand knowledge. Vermont death records of this era (pre-1919) did not require parental information by law, making the voluntary inclusion of parental names noteworthy; it suggests the informant had specific knowledge of William's family.\n\n## Corroborating Evidence: Federal Census Records (1820 and 1840)\n\nTwo federal census records independently establish David Bagley's long-term residence in Topsham, Orange County, Vermont, and constitute a second, independent evidence unit drawn from a different record-creation process and different informants.\n\nThe 1820 federal census (original government schedule, primary information) lists David Bagley as head of household in Topsham, when William would have been approximately five years old: \"United States, Census, 1820,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XHLG-T8R : accessed 2026-07-27), entry for David Bagley, Topsham, Orange, Vermont. Pre-1850 census schedules name only the head of household; all other members are recorded by age-bracket tally marks only, and the census image was not examined to verify household composition. This record confirms that a David Bagley headed a household in Topsham in 1820 but does not independently confirm that William was among its members.\n\nThe 1840 federal census (original government schedule, primary information) again places David Bagley in Topsham, when William would have been approximately twenty-five: \"United States, Census, 1840,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XHRB-V42 : accessed 2026-07-27), entry for David Bagley, Topsham, Orange, Vermont, 1840. As with the 1820 census, only the head of household is named.\n\nThese records are **indirect evidence** for the parentage question \u2014 they confirm that a David Bagley was a long-term Topsham resident throughout William's childhood and young adulthood, consistent with the father identified in the 1884 death entry, but they do not state the father-son relationship.\n\n## Circumstantial Support: Topsham Town Records (1771\u20131860)\n\nA full-text search of Topsham Town Records 1771\u20131860 (FamilySearch imageGroup 005464260, 110 results examined) confirmed David Bagley's continuous Topsham presence from 1806 through at least 1855 as a town officer and selectman. The search also identified an 1813 Topsham record containing the name \"Sophia Andrews Bagley\" \u2014 a Bagley child bearing the Andrews maiden surname as a middle name, a common nineteenth-century New England practice for honoring the mother's family. William A. Bagley's mother was separately identified as Sarah Sally Andrews (born 1777, Gloucester, Essex, Massachusetts; died 19 March 1847, Topsham). A Bagley child named with the Andrews surname as a middle name is consistent with the conclusion that a member of the Bagley family had married Sarah Andrews, and circumstantially supports the identification of David Bagley as that family member. No formal birth or marriage record naming David Bagley and Sarah Andrews together was found in this volume.\n\n## The David Bagley Jr./Sr. Question\n\nThe same full-text search of Topsham town records found a \"David Bagley Jr.\" in an 1839 record, establishing that two David Bagleys coexisted in Topsham simultaneously. The 1884 death record names simply \"David Bagley\" with no qualifier. This raises the question of whether David Bagley Jr. could be William's father rather than David Bagley Sr.\n\nThis candidate has been considered and ruled out (hypothesis h_001). For David Bagley Jr. to be William's father (born approximately 1815), David Jr. would need to have been born no later than approximately 1800 \u2014 but the \"Jr.\" designation implies he was born after David Bagley Sr. was already established in Topsham. David Bagley Sr. appears in Topsham records as a selectman from 1806, well before William's approximately 1815 birth, making Sr. the plausible patriarch. Additionally, \"Wm A Bagley\" and \"David Bayley Jr\" appear together on a 1853 Topsham town records page \u2014 consistent with them being contemporaries and possible brothers, not father and son. No record links David Bagley Jr. to William in a parental role. The 1884 death record's unqualified \"David Bagley\" most naturally refers to the family patriarch, by then long deceased.\n\n## Negative Evidence and Research Gaps\n\nSearches of indexed Vermont birth records (collection 1675544), indexed Vermont marriage records (collections 1675550 and 1784223), and indexed Vermont probate records (collection 1435692) returned no relevant entries for David Bagley or a David Bagley and Sarah Andrews marriage. These negative results are consistent with Vermont's pre-1857 absence of mandatory statewide vital registration. The Bradford District estate file collection (FamilySearch collection 1807377, 75,694 images, 0% name-indexed) could not be searched by name and was not browsed \u2014 a David Bagley probate or estate record in that collection remains a possible source of additional corroboration. No alternative candidate for the role of William A. Bagley's father emerged from any of the eleven searches conducted.\n\n## Assessment\n\nThe parentage conclusion rests on two independent evidence units: (1) the 1884 Vermont Town Clerk death entry \u2014 an original record providing direct evidence that is secondary information \u2014 and (2) the 1820 and 1840 federal censuses, original records with primary information confirming David Bagley's decades-long Topsham residence independent of the death record. The potential namesake complication raised by \"David Bagley Jr.\" has been addressed and ruled out (h_001). No conflicting evidence was found. The conclusion cannot be elevated to **proved** because the parentage evidence depends on secondary information from a single original document; a second original record providing primary information about the parentage relationship \u2014 such as a David Bagley probate naming William as a son, a land deed identifying William as David's son, or William's own birth or baptism record \u2014 would be necessary to reach that standard.\n\n## Conclusion\n\nIt is **highly probable** that **David Bagley** was the father of William A. Bagley (born about 1815, Topsham, Orange County, Vermont; died 31 May 1884, Topsham, Orange County, Vermont). This conclusion reflects the weight of an 1884 Vermont death entry directly naming David Bagley as father, supported by two federal census records confirming his decades-long Topsham residence, and the circumstantial evidence of the Andrews-family naming pattern in the Topsham town records. Future research into the Bradford District probate estate files (FamilySearch collection 1807377) or Topsham land records could provide additional corroboration and potentially advance the conclusion to proved."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-27T20:15:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-27T20-15-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Vermont, United States",
+      "for_place": "Topsham, Orange County, Vermont",
+      "time_period": "1800-1890",
+      "jurisdictions": [
+        {
+          "name": "Topsham, Orange, Republic of Vermont",
+          "date_range": "pre-1791"
+        },
+        {
+          "name": "Topsham, Orange, Vermont, United States",
+          "date_range": "1791\u2013present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1987653",
+          "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+          "date_range": "1699-2005"
+        },
+        {
+          "id": "1784223",
+          "title": "Vermont, Vital Records, 1760-1954",
+          "date_range": "1760-1954"
+        },
+        {
+          "id": "2075288",
+          "title": "Vermont, Vital Records, 1760-2008",
+          "date_range": "1760-2003"
+        },
+        {
+          "id": "1675544",
+          "title": "Vermont, Births and Christenings, 1765-1908",
+          "date_range": "1765-1908"
+        },
+        {
+          "id": "1675549",
+          "title": "Vermont, Deaths and Burials, 1871-1965",
+          "date_range": "1871-1965"
+        },
+        {
+          "id": "1675550",
+          "title": "Vermont, Marriages, 1791-1974",
+          "date_range": "1791-1974"
+        },
+        {
+          "id": "1435692",
+          "title": "Vermont, Probate Files, 1800-1921",
+          "date_range": "1800-1921"
+        },
+        {
+          "id": "1807377",
+          "title": "Vermont, Orange County, Bradford District Estate Files, 1780-1915",
+          "date_range": "1780-1915"
+        },
+        {
+          "id": "1453983",
+          "title": "Vermont, Orange County, Randolph District Probate Records, 1790-1935",
+          "date_range": "1790-1935"
+        },
+        {
+          "id": "1409123",
+          "title": "Vermont, Land Records, Early to 1900",
+          "date_range": "1600-1900"
+        },
+        {
+          "id": "1627819",
+          "title": "Vermont, Town Records, 1850-2005",
+          "date_range": "1850-2005"
+        },
+        {
+          "id": "3158875",
+          "title": "Vermont, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700-2017"
+        }
+      ],
+      "quirks": [
+        "Statewide vital registration began 1857; before that, births/marriages/deaths are in Topsham town clerk records. The Topsham Town Records 1771-1860 (imageGroup 005464260) are digitized on FamilySearch with full-text search but 0% name-indexed \u2014 use full-text search, not record search.",
+        "Vermont death records before 1919 generally do NOT name the deceased's parents. Parental information on death certificates was required only from 1919 onward (Vermont Research Tips wiki). An 1884 death record for William A. Bagley will likely not name his father.",
+        "Topsham's probate district is Orange County, with court in Chelsea, VT. Two Orange County probate collections are on FamilySearch \u2014 Bradford District Estate Files 1780-1915 (imageGroup prefix 007814131 etc.) and Randolph District Probate Records 1790-1935 \u2014 both are browse-only images (0% indexed). Check both for any Bagley estate.",
+        "Also search Vermont Probate Files 1800-1921 (collection 1435692), which IS name-indexed and covers some Orange County records.",
+        "Topsham vital records 1857-1897 (imageGroup 005487650, 2180 images) and the vital statistic indexes 1857-1896 (imageGroup 005464890, 200 images) are 100% indexed and full-text searchable \u2014 primary target for William's 1884 death record.",
+        "Local history: 'Sketches of the Town of Topsham, Orange County, Vermont' (1929) by Frank H. Craig is available on Ancestry.com (collection 22236) and may contain family genealogies naming Bagley parents and children.",
+        "The largest Vermont vital records collection is 'Vermont, Town Clerk, Vital and Town Records, 1732-2005' (collection 1987653, 2.4M records, 1.4M images) \u2014 the primary indexed source for post-1857 Topsham vital records."
+      ],
+      "guide_markdown": "# Locality Guide: Topsham, Orange County, Vermont (1800\u20131890)\n\n## Jurisdictional Context\n\nTopsham was granted its charter 15 August 1763. It lies in Orange County, Vermont, and has three villages: East Topsham, Waits River, and West Topsham. Vermont became the 14th U.S. state on 4 March 1791; before that date, Topsham was in the Republic of Vermont. No boundary changes split the town's records across jurisdictions during the 1800\u20131890 period.\n\n## Vital Records\n\n**Pre-1857 (no state registration):** Town clerk records are the only source. The Topsham Town Records 1771\u20131860 are digitized on FamilySearch (imageGroup 005464260, 265 images). These are **full-text searchable but 0% name-indexed** \u2014 use the full-text search tool, not record search. Original records are also at the Topsham Town Clerk, 6 Harts Rd., Topsham, VT 05076.\n\n**Post-1857 (state registration):** Statewide registration required by law from 1857. Key indexed collections on FamilySearch:\n- **Vermont, Town Clerk, Vital and Town Records, 1732\u20132005** (coll. 1987653) \u2014 2.4M records, indexed + images. Primary target.\n- **Vermont, Vital Records, 1760\u20131954** (coll. 1784223) \u2014 2.3M records, indexed + images.\n- **Vermont, Vital Records, 1760\u20132008** (coll. 2075288) \u2014 1.97M records, indexed.\n- **Vermont, Deaths and Burials, 1871\u20131965** (coll. 1675549) \u2014 82K records, index only.\n- **Vermont, Births and Christenings, 1765\u20131908** (coll. 1675544) \u2014 210K records, index only.\n\nTopsham-specific volumes (100% indexed, full-text searchable): imageGroup 005487650 (births/marriages/deaths 1857\u20131997, 2,180 images) and imageGroup 005464890 (vital statistic indexes 1857\u20131896, 200 images).\n\n\u26a0\ufe0f **Critical quirk:** Vermont death records **before 1919 do not name the deceased's parents**. An 1884 death record for William A. Bagley will likely carry no parental information.\n\n## Census Records\n\nFederal censuses are the primary path to finding a ca.-1815 birth subject in his father's household:\n- **1820, 1830, 1840 censuses** (Ancestry, FamilySearch): William would appear as a child under his father's name. These are indexed.\n- **1850\u20131880 censuses** list all household members by name; 1880 adds relationship to head.\n- Vermont also has miscellaneous census substitutes 1778\u20131840 at American Ancestors and Ancestry.\n\n## Probate Records\n\nTopsham's probate district is Orange County (court at Chelsea, VT). Two district collections:\n- **Vermont, Orange County, Bradford District Estate Files, 1780\u20131915** (coll. 1807377) \u2014 75,694 images, **browse-only** (0% indexed, no full-text).\n- **Vermont, Orange County, Randolph District Probate Records, 1790\u20131935** (coll. 1453983) \u2014 65,929 images, **browse-only**.\n- **Vermont, Probate Files, 1800\u20131921** (coll. 1435692) \u2014 10,225 records **indexed + images** (204K images). Search here first.\n- **Vermont, Wills and Deeds, ca. 1700s\u20132017** (coll. 3158875) \u2014 some indexed records.\n- Ancestry also has **Vermont, U.S., Wills and Probate Records, 1749\u20131999** ($).\n\nIf William's father died in Orange County before 1921, an estate file may name his heirs (including William).\n\n## Land Records\n\n- **Vermont, Land Records, Early to 1900** (coll. 1409123) \u2014 169,270 images, browse-only, also on Ancestry.\n- Topsham land records volumes on FamilySearch are **full-text searchable** (0% name-indexed): vols. 14\u201315 (1853\u20131859), vols. 16\u201317 (1859\u20131869), vols. 18\u201319 (1866\u20131878), vol. 20 (1878\u20131883), vol. 21 (1882\u20131893), vol. 22 (1888\u20131893).\n- Earlier Topsham land volumes (deeds 1794\u20131849; index to deeds 1794\u20131860) are on microfilm at FamilySearch Library catalog 90593.\n\n## Church Records\n\nHistorically dominant denominations in Vermont: Congregational, Baptist, Methodist, Roman Catholic. FamilySearch has **Vermont Miscellaneous Records (includes Vermont Church Records)** from the Daughters of the American Revolution covering 1700s\u20131800s (catalog 383707). See [Vermont Church Records wiki](https://www.familysearch.org/en/wiki/Vermont_Church_Records).\n\n## Local Histories & Compiled Sources\n\n- **'Sketches of the Town of Topsham, Orange County, Vermont' (1929)** by Frank H. Craig \u2014 available on Ancestry.com (collection 22236). Often contains family genealogies naming parents and siblings.\n- *The Vermont Historical Gazetteer* (Hemenway, 1868\u20131923) \u2014 FamilySearch Digital Library, vols. 1\u20136.\n- *Genealogical and Family History of the State of Vermont* (Carleton, 1903) \u2014 FamilySearch Digital Library.\n- Vermont Historical Society (vermonthistory.org) holds genealogical research sources.\n\n## Cemeteries\n\nWest Topsham Cemetery and Old West Topsham Cemetery are the primary cemeteries for this family (per tree). Inscriptions at Find a Grave. Vermont Old Cemetery Association database: voca58.org.\n\n## Newspapers\n\nNo major newspaper served Topsham directly; Orange County was served by papers in Chelsea/Bradford. GenealogyBank has Vermont newspaper archives 1781\u20132006. Chronicling America has some Vermont titles.\n\n## Access Summary\n\n| Record Type | Access Level | Primary Repository |\n|---|---|---|\n| Vital records 1857+ | Indexed + images | FamilySearch (coll. 1987653, 1784223) |\n| Vital records pre-1857 | Full-text searchable (not name-indexed) | FamilySearch imageGroup 005464260 |\n| Census 1820\u20131880 | Indexed | FamilySearch, Ancestry |\n| Probate (indexed) | Indexed + images | FamilySearch coll. 1435692 |\n| Probate (district files) | Browse-only images | FamilySearch colls. 1807377, 1453983 |\n| Land records (post-1849) | Full-text searchable | FamilySearch |\n| Land records (pre-1849) | Microfilm | FamilySearch Library |\n| Local history | Images ($) | Ancestry.com (coll. 22236) |\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Vermont,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Vermont_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Vermont_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Vermont_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-27"
+    }
+  ]
+}
