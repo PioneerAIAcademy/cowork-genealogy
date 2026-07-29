@@ -1,0 +1,127 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Confirm the children of Santiago Gonzalez and his wife Petra Tumbaco of Guayaquil, Guayas, Ecuador",
+    "subject_person_ids": [
+      "I1",
+      "I2"
+    ],
+    "status": "active",
+    "created": "2026-05-01",
+    "updated": "2026-05-05"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Is the mother named in the burial record of Manuel de Jesus Gonzalez Tumbaco — 'Petita Tumbaco' — the same person as the subject's wife Petra Tumbaco (I2)?",
+      "rationale": "A cemetery record for a possible additional child names the mother as 'Petita Tumbaco'; its identity to the established wife Petra Tumbaco must be evaluated before the record is used to add a child.",
+      "selection_basis": "record_found_incidentally",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-05-02",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "death",
+          "jurisdiction": "Guayaquil, Guayas, Ecuador",
+          "date_range": "1985",
+          "repository": "FamilySearch",
+          "rationale": "An Ecuadorian cemetery record surfaced for a Manuel de Jesus Gonzalez Tumbaco naming Santiago Gonzalez and 'Petita Tumbaco' as parents.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-02T10:00:00Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:8DNC-SBZM"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Cemetery record for Manuel de Jesus Gonzalez Tumbaco (b. 1915, d. 5 Dec 1985, Guayaquil). Parents named: father Santiago Gonzalez, mother 'Petita Tumbaco'. Father's name matches the subject exactly; the mother's GIVEN name 'Petita' differs from the tree's 'Petra'.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"Ecuador, registros de cementerios, 1862-2020\", FamilySearch, entry for Manuel de Jesus Gonzalez Tumbaco and Santiago Gonzalez, 5 Dec 1985; digital image, accessed 2 May 2026.",
+      "citation_detail": {
+        "who": "Civil registrar / cemetery official",
+        "what": "Ecuadorian cemetery burial register entry",
+        "when_created": "1985",
+        "when_accessed": "2026-05-02",
+        "where": "FamilySearch.org",
+        "where_within": "Guayaquil, Guayas, Ecuador"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:8DNC-SBZM",
+      "url_archived": null,
+      "notes": "Parents reported at death registration ~70 years after the subject's birth; informant not recorded. The mother's given name is recorded as 'Petita', not 'Petra'.",
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:8DNC-SBN2",
+      "record_role": "mother",
+      "record_persona_id": "MP1",
+      "fact_type": "name",
+      "value": "Petita Tumbaco",
+      "structured_value": {
+        "given": "Petita",
+        "surname": "Tumbaco"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "secondary",
+      "informant": "Death-registration informant (not recorded)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Mother's name reported at the son's death registration in 1985, decades after any relevant event; informant unknown.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

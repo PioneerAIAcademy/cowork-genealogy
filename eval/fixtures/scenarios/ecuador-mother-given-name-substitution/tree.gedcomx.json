@@ -1,0 +1,107 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Santiago",
+          "surname": "Gonzalez",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Petra",
+          "surname": "Tumbaco",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Maria Angela",
+          "surname": "Gonzalez Tumbaco",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1921",
+          "place": "Guayaquil, Guayas, Ecuador"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "ref": "S1",
+          "page": "family established from daughters' records",
+          "quality": 2
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1",
+          "page": "1996 cemetery record of Maria Angela",
+          "quality": 2
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1",
+          "page": "1996 cemetery record of Maria Angela",
+          "quality": 2
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Ecuador, Cemetery Records, 1862-2020 — entry for Maria Angela Gonzalez Tumbaco, naming parents Santiago Gonzalez and Petra Tumbaco",
+      "author": "Registro Civil de Guayaquil"
+    },
+    {
+      "id": "S2",
+      "title": "Ecuador, Cemetery Records, 1862-2020 — entry for Manuel de Jesus Gonzalez Tumbaco",
+      "author": "Registro Civil de Guayaquil"
+    }
+  ]
+}

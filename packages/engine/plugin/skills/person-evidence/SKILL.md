@@ -331,6 +331,23 @@ score should pull a tentative Strong back to Moderate. But:
   reason past it to a link. Refuse the confident link and surface the
   mismatch; adjudicating a hard patronymic conflict is
   conflict-resolution's job, not something to smooth over in the match.
+- A **different given name presented as the same person is a
+  core-identifier conflict**, not a name variant. The line is *kind*, not
+  spelling distance: a transcription, phonetic, or cross-language rendering
+  — or an **established** diminutive that is genuinely the *same* name
+  (Bill/William, Peggy/Margaret) — stays benign; a record that gives one
+  given name where the tree gives another is a conflict until an
+  **independent** source (not the record in hand, not your own inline
+  assertion) establishes the two as one name. You may **not** dissolve it by
+  stating a linguistic rule ("X is a standard diminutive of Y") from your
+  own knowledge — that is the unsourced rationalization this policy forbids.
+  It **caps confidence at `speculative`**, must be **named explicitly in the
+  `pe_` rationale** as an open conflict, and is conflict-resolution's to
+  adjudicate and hypothesis-tracking's to persist — this skill only surfaces
+  and routes it. If records already in hand carry **both** renderings across
+  different personas, that co-occurrence is corroboration-or-conflict to
+  weigh through that same machinery, never an equivalence to assert
+  unilaterally.
 - When **no score is available** (FTS-, image-, PDF-sourced
   assertions, or a search with no sidecar), correlation analysis stands
   alone — the table above applies unchanged.
@@ -624,8 +641,12 @@ When multiple candidates share the same name in the same area:
   as head of household suggests adult"). Mark confidence no higher
   than `probable` without age corroboration.
 - **Name variants across languages:** Treat Johannes/John/Johann,
-  Marguerite/Margaret, etc. as potential matches. Note the variant
-  mapping in the rationale.
+  Marguerite/Margaret, etc. as potential matches where the mapping is an
+  **established** rendering of the *same* name; corroborate a claimed
+  diminutive or variant against an independent source rather than asserting
+  it inline. Note the variant mapping in the rationale. A *different* given
+  name presented as the same person is a core-identifier conflict (Step 3),
+  not a language variant.
 - **Multiple records, same repository session:** When a single search
   returns multiple records about the same person, link them in one
   batch but evaluate each independently. Do not let one record's
@@ -659,7 +680,10 @@ When multiple candidates share the same name in the same area:
   chart in Step 2; the score modulates within that tier but cannot
   by itself drop a match below what the non-name identifiers
   support. Reclassify as Moderate or Strong, create the link, and
-  document the variant explanation in `rationale`.
+  document the variant explanation in `rationale`. This covers renderings
+  of the *same* name only — a record giving a **different given name** than
+  the tree is the Step 3 core-identifier conflict above, not a transcription
+  variant; do not use this rule to wave it through.
 - **One pe_ entry per assertion-person pair.** Don't create duplicate
   links for the same assertion-person combination.
 - **Rationale is mandatory.** Every link must explain WHY. "Name

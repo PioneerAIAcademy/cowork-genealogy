@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person for the cemetery-record mother 'Petita Tumbaco' (MP1) vs the subject's wife Petra Tumbaco (I2). Surname (Tumbaco), gender, and family context align, so the tool returns a plausible score — but the record's GIVEN name 'Petita' differs from the tree's 'Petra'. 'Petita' is not a transcription, phonetic, or established diminutive of 'Petra': it is a different given name, a core-identifier conflict that must cap confidence regardless of the score (person-evidence given-name-substitution case). Matched on any primaryId pair.",
+  "args": {
+    "primaryId1": "~",
+    "primaryId2": "~"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 6,
+    "score": 0.68,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:8DNC-SBN2",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/4:1:PETRA-TUMBACO-I2",
+    "apiTitle": "Matches for ark:/61903/1:1:8DNC-SBN2",
+    "updated": "2026-05-21T00:00:00Z"
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "log_id": "log_001",
+  "tool": "record_read",
+  "retrieved": "2026-05-02T10:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "recordId": "https://www.familysearch.org/ark:/61903/1:1:8DNC-SBZM",
+    "collectionId": "3755446",
+    "collectionTitle": "Ecuador, Cemetery Records, 1862-2020",
+    "gedcomx": {
+      "persons": [
+        {
+          "id": "MC1",
+          "ark": "ark:/61903/1:1:8DNC-SBZM",
+          "gender": "Male",
+          "names": [
+            {
+              "id": "N1",
+              "type": "BirthName",
+              "given": "Manuel de Jesus",
+              "surname": "Gonzalez Tumbaco"
+            }
+          ],
+          "facts": [
+            {
+              "id": "FB",
+              "type": "Birth",
+              "date": "1915",
+              "standard_date": "1915"
+            },
+            {
+              "id": "FD",
+              "type": "Death",
+              "primary": true,
+              "date": "5 Dec 1985",
+              "standard_date": "5 Dec 1985",
+              "place": "Ecuador"
+            }
+          ]
+        },
+        {
+          "id": "FP1",
+          "ark": "ark:/61903/1:1:8DNC-SB6Z",
+          "gender": "Male",
+          "names": [
+            {
+              "id": "N2",
+              "type": "BirthName",
+              "given": "Santiago",
+              "surname": "Gonzalez"
+            }
+          ]
+        },
+        {
+          "id": "MP1",
+          "ark": "ark:/61903/1:1:8DNC-SBN2",
+          "gender": "Female",
+          "names": [
+            {
+              "id": "N3",
+              "type": "BirthName",
+              "given": "Petita",
+              "surname": "Tumbaco"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "id": "REL1",
+          "type": "Couple",
+          "person1": "FP1",
+          "person2": "MP1"
+        },
+        {
+          "id": "REL2",
+          "type": "ParentChild",
+          "parent": "FP1",
+          "child": "MC1"
+        },
+        {
+          "id": "REL3",
+          "type": "ParentChild",
+          "parent": "MP1",
+          "child": "MC1"
+        }
+      ]
+    }
+  }
+}
