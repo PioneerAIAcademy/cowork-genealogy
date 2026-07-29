@@ -89,6 +89,17 @@ class E2eResult:
     # See subagent_capture.py.
     subagents: list[dict[str, Any]] = field(default_factory=list)
 
+    # docs/plan/research-guardrail-bypass-plan.md §4.1 — SHADOW MODE ONLY:
+    # protected writes (a proof_summaries/person_evidence/conflicts/
+    # exhaustive_declaration write, or a tree_edit/tree_correct/
+    # materialize_facts write one of the four GPS guardrail skills owns) with
+    # no matching successful `Skill` invocation in a trailing window. Logged,
+    # never denied, at this stage — the point is to measure the false-positive
+    # rate against real runs before any call is ever rejected. Each entry is
+    # {index, tool, required_skill, question_id} — see
+    # harness/skill_invocation.py::find_unguarded_protected_writes.
+    guardrail_shadow_violations: list[dict[str, Any]] = field(default_factory=list)
+
 
 def timestamp_slug(now: datetime | None = None) -> str:
     """A filesystem-safe ISO-ish timestamp for filenames."""

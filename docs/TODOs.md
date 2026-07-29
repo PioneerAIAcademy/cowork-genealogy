@@ -565,6 +565,65 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `record-extraction/SKILL.md`. The instrument if it recurs is a
   `context_policy` PreToolUse rule keyed on `agent_id` — eval-only, so it
   would not cover Cowork or the hosted path.
+- [ ] **Investigate giving each of the four GPS guardrail skills its own
+  write tool** (`proof_conclusion_append` / `exhaustiveness_declare` /
+  `person_evidence_link` / `conflict_resolve`, splitting `research_append`'s
+  `proof_summaries`/`exhaustive_declaration`/`person_evidence`/`conflicts`
+  sections off the same way `extraction_append` split off record-extraction,
+  #695). Raised during the PR #893 orchestration-bypass investigation — see
+  `docs/plan/research-guardrail-bypass-plan.md` §3/§5. Splitting doesn't
+  attribute a call to a skill by itself in a shared session (a split tool is
+  exactly as callable by the main thread as the section-branch version is
+  today), but it (a) turns a caller-tracking `PreToolUse` hook into a flat
+  tool-name lookup instead of parsing `ops[]`/`section` out of args, and (b)
+  is close to a prerequisite for ever giving one of these four skills a hard
+  `agent_id`/`disallowedTools` boundary, since that enforcement is tool-name-
+  granular only — a shared `research_append` can't be partially denied.
+  Cost: real multi-file scaffolding (schema/handler/tests/manifest/
+  `mock_mcp.py`/lint scripts) × 4, plus a permanent increase in Cowork's
+  up-front tool-schema count (Cowork does not defer schemas via `ToolSearch`
+  the way both harnesses do). Worth doing if/when one of the four skills is
+  converted to an agent; not worth it standalone. Decide after the plan's
+  caller-id hook ships and its practical gaps, if any, are known.
+- [ ] **Research-guardrail-bypass fix (docs/plan/research-guardrail-bypass-plan.md)
+  does not cover the hosted/production path.** The caller-id `PreToolUse`
+  hook (§4.1), the `Write`/`Edit` lockdown (§4.3), and the two hard-fail
+  checks (§4.4) are all e2e-harness-only (`eval/harness/e2e/orchestrator.py`).
+  `apps/server/app/agent/real_agent.py` still runs `bypassPermissions` with
+  no equivalent guard, so the exact bypass the plan documents (and the live
+  `bagley-father-1884` run confirmed) remains fully reachable in Cowork and
+  the hosted web workbench. The plan explicitly deferred this pending the
+  eval-side mechanism proving out first; it hasn't been ported yet.
+- [ ] **Whether `Skill`-tool content injection survives compaction is
+  unverified — and there's now real reason to suspect it doesn't.**
+  `docs/plan/research-guardrail-bypass-plan.md` §6 flagged this as an open
+  question (proof-conclusion/research-exhaustiveness/person-evidence/
+  conflict-resolution all do an on-demand `Read` of their own
+  `references/*.md`, unverified for reliability). The `feedback-2026-07-27-perf`
+  branch's compaction audit (commits `3455ce84`/`f05757ef`,
+  `docs/plan/research-performance-2026-07-27.md`) independently measured the
+  general mechanism: an unanchored prose rule's compliance decays from
+  ~100% to 3-45% once its skill body is evicted from context by compaction,
+  while tool-validated/output-coupled rules hold at 100%. A guardrail
+  skill's own reference-doc reads are exactly this shape (prose-anchored,
+  no tool validation) — worth the same before/after-compaction segment
+  analysis their audit used, applied to the four guardrail skills
+  specifically, before assuming the reference reads hold up in long runs.
+- [ ] **`gps-mentor`'s proof-critique gate may be as skippable as the four
+  guardrail skills — undetermined.** `find_missing_mentor_verdicts`
+  (`harness/skill_invocation.py`) detects a missing verdict after the fact
+  but does nothing to prevent the orchestrator from silently skipping the
+  `@plugin:gps-mentor` invocation under the same context-pressure conditions
+  that caused the other four skips. No runlog evidence has been checked
+  either way (`docs/plan/research-guardrail-bypass-plan.md` §6).
+- [ ] **`research-append.ts`'s batch-ordering was only audited for one
+  TOCTOU case.** The §4.2 fix (tier vs. `exhaustive_declaration`, checked
+  against pre-call state) closes the specific same-batch establish-and-
+  consume hole found during adversarial review. Other same-batch orderings
+  that could similarly self-satisfy a precondition within one atomic write
+  (e.g. adding a `person_evidence` link and consuming it for an assertion in
+  the same batch) were not exhaustively checked — flagged, not audited, in
+  the plan's §6.
 - **MCP tool-name prefix differs between Cowork and the harnesses — agent
   `tools:` lists do not bind in Cowork.** Every plugin agent declares
   `mcp__genealogy__*`, correct for the unit + e2e harnesses. A live Cowork
@@ -749,3 +808,88 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `*Error` type so it surfaces as `{ ok: false, errors }`; `readProjectJson`
   throws a plain `Error` and leaves that mapping to the caller (see
   `tree-forget.ts`'s three-line `readJson` wrapper).
+
+- **The reasoning-effort A/B (C0) is unshipped, and it is the largest single
+  lever** — `docs/plan/research-performance-2026-07-27.md` §F0/§C0. 58% of a real
+  session's output tokens are unstored billed reasoning, and generation time is
+  linear in output tokens, so effort is the only knob that reaches the majority
+  of the cost. `high` is the default everywhere — the SDK's own default
+  (`ClaudeAgentOptions.effort` docstring: *"high — Deep reasoning (default)"*),
+  inherited by the unit harness, pinned explicitly by the e2e orchestrator, and
+  never set by `apps/server/app/agent/real_agent.py`. **Nobody has measured this
+  product at any other effort.** Sequenced last deliberately: the payload and
+  ranking changes move the baseline, so an A/B run before them would be
+  invalidated. Run it against the e2e suite (unit can only screen), and note the
+  suite economics — 20 fixtures ≈ $185 / ~20.5 h serial, scaled by the mean not
+  the median, since 17 of 96 committed runlogs carry no cost.
+
+- **`ClaudeAgentOptions.effort` is not verified end-to-end** — the field exists
+  in claude-agent-sdk 0.1.81 with a documented default, and would make C0 a
+  one-line change in `build_options` instead of writing a `settings.json` into
+  the sandbox. The e2e orchestrator's comment calls its settings-file write "the
+  only working effort lever from the harness", but that comment names the
+  `CLAUDE_EFFORT` env var as what failed, not the SDK option — so it may simply
+  predate it. Five-minute check; do it before building C0 the harder way.
+
+- **`search-records/SKILL.md` is 41.6 KB and wants shrinking** — it was resident
+  for 228 of 309 turns in the measured session, and its unanchored rules decayed
+  under compaction (`research-performance-2026-07-27.md` §5.2–5.3). Shrinking is
+  now *safer* than it was: the two load-bearing rules (ranking, `count: 50`)
+  became tool contracts, so they can no longer be lost with the prose. The
+  hazard that remains is that the unit suite grades single invocations in fresh
+  context and therefore **cannot see** multi-hour retention — so it will happily
+  bless a cut that removes something only a long session needs. Needs a gate
+  other than the unit suite before anyone cuts deeply.
+
+- **The ranking fold has not been tested under real compaction pressure** — the
+  post-change e2e run (`hannah-earnest-children` 2026-07-27) compacted only 4
+  times in 190 turns and ranked 7 of 7 eligible searches. That confirms the
+  contract fires; it does not demonstrate the contract beating prose under the
+  23-compaction pressure that motivated it. The 302-turn baseline of the same
+  fixture would be the harder test.
+
+- **Agents read records the ranker did not surface** — in the same run, 6 of 11
+  `record_read` calls (55%) targeted a record in a ranker top-3. Some is
+  legitimate (5 of 14 searches were deliberately subject-less broad sweeps, which
+  cannot rank), but it is worth checking whether the agent is ignoring rankings
+  it now gets for free. That would be the same adoption gap one layer down.
+
+- **`rank_search_matches`'s subject enrichment (C2a) earns almost nothing** — it
+  moves a true match by +0.0008 (`research-performance-2026-07-27.md` §5.1). It
+  is retained only because it is free and can add nothing the project does not
+  already hold. If it ever acquires a cost — a slow read, a correctness risk —
+  delete it rather than defend it.
+
+- **`docs/plan/research-performance-2026-07-27.md` is kept deliberately, against
+  the "delete a plan once the work ships" convention** — because C0 (the
+  reasoning-effort A/B, the largest remaining lever) has not shipped. C1–C7 have,
+  and their rationale is in the tool specs, but three things in that plan belong
+  in neither a spec nor a commit message: §1 (the session decomposition and the
+  output-tokens/wall-clock equation), §5.1 (the live probe that refuted this
+  plan's own F2 — the ranker works; the low scores were correct negatives), and
+  §5.3 (the rule audit showing only unanchored SKILL.md prose decays under
+  compaction). Delete or trim it once C0 is decided, and fold those three
+  findings somewhere durable rather than losing them with the file.
+
+- **Nothing prevents the eval corpus drifting behind a tool contract again** —
+  it happened twice unnoticed. `search-records`' rubric was TWO contracts stale
+  (still failing runs for not calling `same_person`/`source_attachments`, folded
+  into `rank_search_matches` months earlier and into `record_search` this PR),
+  and 14 test files' `judge_context` was one contract stale. The corpus was
+  marking the skill down for doing the right thing, and only a regression run
+  surfaced it. A cheap lint would catch both: flag any tool name appearing in a
+  skill's `rubric.md` or per-test `judge_context` that is absent from that
+  skill's `allowed-tools`. That single rule would have fired on
+  `same_person`/`source_attachments` in the rubric the day they were folded away.
+  Same shape as the existing places-guidance byte-lint and the enum-drift lint
+  already queued above.
+
+- **Eval annotation signal is concentrated in three reviewers** — surfaced by the
+  rubric-critic audit of `search-records`. 14 of 19 `.ann.json` files contain
+  **zero** divergences across 116–164 corrections each, and all 16 divergences in
+  the skill's entire history come from three annotators (11 / 3 / 1). So the
+  headline "96%+ judge–human agreement" is substantially "Agree with all" rather
+  than verified concordance, and absence of divergence on a quiet dimension is
+  weak evidence the judge is right there. Process observation, not a code change:
+  worth deciding whether "Agree with all" should be distinguishable from
+  per-dimension review in the CRUD UI's output.
