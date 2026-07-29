@@ -202,6 +202,15 @@ long as at least one resolves.
 of defence keeping `record-extractor` off the broad `research_append` — and
 a deny naming one spelling silently fails to bind under the other.
 
+**Allow-lists are subtractive; hooks are not.** A per-agent `tools:` list can
+only narrow what the session already holds — the session's tool set is always a
+superset — so no allow-list can deny the *main thread* a tool one of its
+subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
+hook layer always could do it: `eval/harness/harness/context_policy.py` denies
+`image_read` when `agent_id` is absent. Don't re-derive a per-context policy
+design; it exists. What is missing is a production port (`docs/TODOs.md` §
+"Guardrail enforcement in production").
+
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
 `project_memory_write`, so it would hand a read-only agent shell access to
