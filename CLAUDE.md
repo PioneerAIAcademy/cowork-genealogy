@@ -123,6 +123,15 @@ mocks (no E2B/Anthropic/OAuth needed).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth the `spec-review` agent checks implementations against.
   This is the durable tier; a live tool must have a live spec.
+- `docs/TODOs.md` — the open-work list: deferred items, known gaps, and the
+  residuals a shipped PR leaves behind. Every deferred item gets an entry in
+  the same PR that defers it. The file is **open-only** — when an item ships,
+  **delete** its entry rather than checking it off or moving it to a "Done"
+  section. Durable rationale ("don't re-derive X", "the original premise was
+  wrong") goes to the spec or this file; a residual gap becomes its own entry.
+  Git history keeps the prose. This is the same rule `docs/plan/` follows, and
+  it is not bookkeeping: a Done tier is how the file reached 932 lines with 29
+  open items filed underneath it (#953).
 - **Verification is automated, not a manual playbook.** New tools are
   verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
   and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
