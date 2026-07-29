@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Topical wikipedia_search fixture for the Great Famine / Irish emigration. Matches any query containing 'Famine'. Returns Great-Famine-specific content so the skill's Irish-emigration search gets targeted history instead of the generic catch-all. List before wikipedia-search-any in a test's mcp_fixtures.",
+  "args": {
+    "query": "~Famine"
+  },
+  "response": {
+    "title": "Great Famine (Ireland)",
+    "extract": "The Great Famine (Irish: An Gorta Mór, 1845-1852) was a period of mass starvation and disease in Ireland caused by successive failures of the potato crop. It killed roughly one million people and drove another million to emigrate, permanently reshaping Ireland's population. Emigration peaked in 1847-1851, and the largest numbers of Famine emigrants bound for the United States arrived at the ports of New York, Boston, and Philadelphia. Many settled in the industrial and mining districts of the northeastern states, including the anthracite coal region of Pennsylvania. U.S. customs passenger lists from 1820 onward record every individual aboard a vessel, including infants, so arrival manifests are a primary source for reconstructing Famine-era immigrant family groups.",
+    "url": "https://en.wikipedia.org/wiki/Great_Famine_(Ireland)"
+  }
+}
