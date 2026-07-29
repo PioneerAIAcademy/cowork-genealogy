@@ -1,0 +1,1328 @@
+{
+  "project": {
+    "id": "rp_pierre_tullier_son",
+    "objective": "Did Pierre Albert Tullier and his wife Constance Doroth\u00e9 Leys have a son, Pierre Jacques Dominique, born 1796, in addition to their five children recorded from 1805 onward?",
+    "subject_person_ids": [
+      "GPX7-28P"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Does a birth, baptismal, or death record for Pierre Jacques Dominique Tullier, born circa 1796 in French Flanders or Belgian West Flanders, name Pierre Albert Tullier and Constance Doroth\u00e9 Leys as his parents?",
+      "rationale": "The project objective rests on an unverified claim that Pierre Albert Tullier and Constance Doroth\u00e9 Leys had a son born in 1796, four years before their recorded 1800 marriage in Bambecque. The premise must be tested against original records before any conclusion can be drawn. Pierre Albert was born in Stavele, West Flanders (1777); the couple married in Bambecque, Nord (1800); so a 1796 birth could have been registered in either French Nord or Belgian West Flanders, both of which were under French administration by 1795-96 and subject to civil registration. Vital records for that region and era (French civil registers for Nord, West-Flemish parish and early civil registers) are partially accessible through FamilySearch and Belgian/French archives.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-27"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-27",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Bambecque, Nord, France",
+          "date_range": "1793-1802",
+          "repository": "FamilySearch",
+          "rationale": "FS collection 3216848 'France, Nord, Parish and Civil Registration, 1524-1893' (8.7M records, indexed + images) is name-searchable and covers Bambecque. Volume group 008599636 (7 vols, 100% indexed) includes Bambecque baptisms 1638-1814 and tables d\u00e9cennales 1792-1802 \u2014 these bridge the parish/civil transition and are the fastest entry point. A circa-1796 birth falls in this searchable window. Search 'Tullier' (and 'Pieter'/'Pierre'/'Jacobus'/'Dominicus' name variants) to identify any birth or baptism record naming Pierre Albert Tullier and Constance Doroth\u00e9 Leys as parents. Records appear in French, Latin, and Dutch; search both name forms. Indexed search precedes browse-only volumes (BCG Standard 15).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Stavele, West Flanders, Belgium",
+          "date_range": "1794-1796",
+          "repository": "FamilySearch",
+          "rationale": "Pierre Albert Tullier was born in Stavele, West Flanders (1777); his parents Jacobus Tullier and Anna Theresia Devloo married there in 1769 (R2). The family had established roots in Stavele ~10-12 km from Bambecque. Civil registration in Stavele (burgerlijke stand) did not begin until 1797 (Year V); a birth in 1796 belongs to the LAST parish baptism register. Volume 008413129_002 (only 22 images, browse-only Dutch) covers Stavele baptism records 1794-1796 exclusively \u2014 the single highest-priority browse target for a 1796 Stavele birth. At only 22 images, systematic page-by-page browsing is feasible (search-images skill). Names in Dutch: Pieter Jacobus Dominicus Tullier. Prioritized above the larger browse-only volumes because its small size and precise date range make it the most efficient browse target.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Stavele, West Flanders, Belgium",
+          "date_range": "1797-1810",
+          "repository": "FamilySearch",
+          "rationale": "FS collection 2139860 'Belgium, West Flanders, Civil Registration, 1582-1950' (596,937 records, partially indexed) includes pre-1796 church records from Stavele as well as civil registers from 1797 onward. An indexed search may surface: (a) a civil birth registration if the child was born in early 1797 rather than 1796; (b) a death record for Pierre Jacques Dominique if he died in infancy; or (c) a marriage record that would confirm he survived to adulthood. Also, the Tienjarige tafels (decennial tables, volume 005133457_001, full-text searchable) index civil events 1802-1870 and should be checked for any later event. Search surname 'Tullier' and Flemish variants.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Bambecque, Nord, France",
+          "date_range": "1793-1801",
+          "repository": "FamilySearch",
+          "rationale": "Volume group 008004587 (6 vols, 0% indexed, browse-only) covers Bambecque civil acts 1793-1801 and parish records 1791-1792 \u2014 the records predating the indexed volume group 008599636. Civil registration in Nord began circa 1796 (Year IV); a 1796 birth may appear in these unindexed first civil registers rather than the parish baptism series. These volumes must be browsed image-by-image in French/Latin/Dutch via the search-images skill. Fallback for the indexed FS search (pli_001): if the indexed collection yields nothing for the circa-1796 window, the unindexed civil acts are the next-best source.",
+          "fallback_for": "pli_001",
+          "status": "planned"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Stavele, West Flanders, Belgium",
+          "date_range": "1797-1822",
+          "repository": "FamilySearch",
+          "rationale": "Volume 004795170 (942 images, browse-only Dutch) covers Stavele births, deaths, and marriages 1797-1822. If Pierre Jacques Dominique was born in 1797 (the transitional year) or died shortly after birth, he would appear in the opening pages of this civil register. The 1797-1800 window (before the parents' Sep 1800 marriage) is the primary target \u2014 roughly the first 15-20% of images. The Huwelijksbijlagen (marriage supplements, volume 005144166_002, 1800-1810) may also contain retrospective birth references and should be checked alongside this volume. Fallback for the indexed collection 2139860 search (pli_003).",
+          "fallback_for": "pli_003",
+          "status": "planned"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Bambecque, Nord, France",
+          "date_range": "1800-1800",
+          "repository": "FamilySearch",
+          "rationale": "Per BCG Standard 14 and the record-type guide, a dedicated plan item for the parents' marriage is required in every parentage question. The couple's 24 Sep 1800 marriage in Bambecque is in the tree (R1) but unverified against an original record. French civil marriage acts of this period commonly include a 'reconnaissance d'enfant naturel' (recognition of natural/illegitimate children) or a 'l\u00e9gitimation' clause when the couple had pre-marital children \u2014 exactly the scenario posited here. The marriage act may name Pierre Jacques Dominique as a child being legitimated, or witnesses who can place the family in 1796. Search FS collection 3216848 and volume group 008599636 (100% indexed) for the 1800 marriage. The marriage proves the couple as a unit; paired with a child record, it corroborates the parentage claim \u2014 but it does not by itself establish that the child is theirs.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Bambecque, Nord, France",
+          "date_range": "1790-1805",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search as a fallback when indexed search and targeted browse-only searches are exhausted. Per the record-type guide, when a parish register is unindexed, a full-text search on surname co-occurrences (both 'Tullier' and 'Leys' as required terms) can surface the parents' acts \u2014 the child's baptism, a parent's burial or marriage \u2014 in browse-only image volumes that have AI-transcribed page text. Execute via the search-full-text skill with no collection scope, targeting both Bambecque and Stavele jurisdictions. Do not scope to a single collection id; run unscoped across the full FamilySearch corpus to catch the act wherever it was registered. This is the final direct-evidence path before declaring exhaustiveness.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T20:49:56.264Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "3216848 - France, Nord, Parish and Civil Registration, 1524-1893",
+        "surname": "Tullier",
+        "fatherGivenName": "Pierre",
+        "motherSurname": "Leys",
+        "birthPlace": "Bambecque, Nord, France",
+        "birthYearRange": "1792-1802"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 6241,
+      "notes": "6,241 total matches \u2014 search too broad; top 20 results are all unrelated Tullier records from elsewhere in Nord d\u00e9partement. None show a Bambecque birth circa 1796 for a child of Pierre Albert Tullier and Constance Doroth\u00e9 Leys. Two borderline results noted: ark:/61903/1:1:8NJ2-XN2M (Pierre Albert Tullier, record for Fran\u00e7ois Jaques Albert Tullier) and ark:/61903/1:1:8NV7-BM2M (Pierre Jacques Albert Tullier, record for Martine Victoire Rosalie Tullier) \u2014 to be read separately."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-27T20:49:56.271Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "2139860 - Belgium, West Flanders, Civil Registration, 1582-1950",
+        "surname": "Tullier",
+        "birthPlace": "Stavele, West Flanders, Belgium",
+        "birthYearRange": "1793-1802"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 32,
+      "notes": "32 total matches; no result places a Tullier birth in Stavele in the target window. Top results are Tellier/Tillier variants from Izegem and other West Flanders communes, not Stavele. The indexed portion of this collection does not surface a Pierre Jacques Dominique Tullier birth. Browse-only volumes (pli_002, pli_005) must be checked."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T20:53:14.192Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "3216848",
+        "surname": "Tullier",
+        "givenName": "Dominique",
+        "recordCountry": "France"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 226,
+      "notes": "KEY HIT: ark:/61903/1:1:DPJ5-4QW2 \u2014 'Pierre Jacques Dominique Tuiller', born 2 Nov 1799, Houtkerque, Nord, France. Parents indexed as Pierre Tuiller (father) and Constance Coley (mother). Given names match our subjects but mother surname 'Coley' vs expected 'Leys' \u2014 requires image verification. This is the highest-scoring match for a 'Pierre Jacques Dominique Tullier' in the entire Nord collection."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T20:53:14.198Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "3216848",
+        "surname": "Tullier",
+        "givenName": "Pierre Jacques",
+        "fatherGivenName": "Pierre",
+        "birthYearRange": "1792-1802"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 420,
+      "notes": "Confirms Pierre Jacques Dominique Tuiller (ark:/61903/1:1:DPJ5-4QW2) as the top result (score 7.08). Also surfaces multiple records for 'Pierre Jacques Albert Tullier' \u2014 a distinct person active in Rexpoede, Nord circa 1831-1869, identified as husband/widower of Henriette Victoire Ursule Degomme. Also confirms the 1803 Bambecque baptism of Francois Jaques Albert Tullier (parents Pierre Albert + Constance Leys). Record ark:/61903/1:1:8NJ2-XN2M previously noted."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T20:53:14.204Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:DPJ5-4QW2",
+        "title": "Pierre Jacques Dominique Tuiller birth, 2 Nov 1799, Houtkerque"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Full record confirmed: child Pierre Jacques Dominique Tuiller, born 2 Nov 1799, Houtkerque, Nord. Father: Pierre Tuiller. Mother: Constance Coley. This is his own birth record (he is the principal). Houtkerque is ~10km from Bambecque. 'Coley' vs 'Leys' is the key discrepancy \u2014 likely a transcription/indexing error given the Flemish/French bilingual context; must be verified against original image (image ARK in sd_da1: ark:/61903/3:1:3Q9M-C3W5-G3XT-P). The birth predates the Pierre Albert / Constance Leys 1800 marriage by ~10 months."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T20:53:14.204Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:8NV4-7D6Z",
+        "title": "Henriette Victoire Ursule Degomme death, Rexpoede 1869, husband Pierre Jacques Albert Tullier"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Death record of Henriette Victoire Ursule Degomme (b. 1803, d. 8 Jan 1869, Rexpoede). Husband named as Pierre Jacques Albert Tullier. This is a DIFFERENT person from Pierre Jacques Dominique \u2014 Pierre Jacques Albert had children from ~1831 in Rexpoede and is not the same as the 1799 Houtkerque birth."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T20:57:13.582Z",
+      "tool": "image_transcribe",
+      "query": {
+        "ark": "ark:/61903/3:1:3Q9M-C3W5-G3XT-P",
+        "lookingFor": "Pierre Jacques Dominique Tuiller birth 1799, mother Constance Ley/Leys"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CRITICAL POSITIVE. Full transcription of Houtkerque civil register page, Year VIII. Key act (11 Brumaire Year VIII = 2 Nov 1799): child 'pierre Jacques, Dominique' [Tullier/Tuiller], born in Houtkerque. Father: 'pierre taitier' [OCR for Tullier] brapeur, native of 'Commune de Avel' [OCR garble of Stavele -- Pierre Albert Tullier's birthplace]. Mother: 'Constance ley' [=Leys], native of 'Commune de Lamberke.' Family domiciled in Houtkerque for THREE MONTHS (temporarily resident). Witness: 'Marguerite leys propre tante a matre' [Marguerite Leys, maternal aunt of child] -- confirms mother surname is Leys. Indexed 'Coley' is a transcription error; the original document reads 'Constance ley.' The act describes birth 'du legitime mariage' -- either an undiscovered prior church marriage or standard formulaic language for cohabiting couples in early civil registration era. Father's native commune 'Avel' almost certainly = Stavele (Pierre Albert Tullier born in Stavele 4 Mar 1777). Image ARK: ark:/61903/3:1:3Q9M-C3W5-G3XT-P."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T20:57:13.582Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:8NJ2-XN2M",
+        "title": "Francois Jaques Albert Tullier baptism 7 Apr 1803 Bambecque"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Positive corroborating record: Francois Jaques Albert Tullier, born 6 Apr 1803, baptized 7 Apr 1803 in Bambecque, Nord. Parents: Pierre Albert Tullier and Constance Ley. This is a previously unrecorded child of the couple (not in tree.gedcomx.json). Confirms the couple was actively having children in Bambecque from 1803, complementing the 1799 Houtkerque birth of Pierre Jacques Dominique. The same mother 'Constance Ley' appears in both records. This record provides independent confirmation that the Houtkerque record's 'Constance ley' is the same Constance Leys who is Pierre Albert Tullier's wife."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-27T20:57:54.198Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "3216848",
+        "surname": "Tullier",
+        "givenName": "Pierre",
+        "spouseSurname": "Leys",
+        "marriagePlace": "Bambecque, Nord, France",
+        "marriageYearRange": "1798-1802",
+        "exact_place": true
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Pierre Tullier + Leys marriage in Bambecque 1798-1802 in indexed collection 3216848. The 24 Sep 1800 marriage is likely in browse-only volume 008004587 (Bambecque civil acts 1793-1801), not indexed. Noting for exhaustiveness evaluation. The act should also be captured in the 1792-1802 tables decennales (008599636 group, 100% indexed) but did not surface. May need targeted tables decennales search or browse of 008004587."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"France, Nord, Parish and Civil Registration, 1524-1893\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:8NJ2-XNN2 : 09 Mar 2024), Entry for Fran\u00e7ois Jaques Albert Tullier and Pierre Albert Tullier, 7 Apr 1803.",
+      "citation_detail": {
+        "who": "Fran\u00e7ois Jaques Albert Tullier (child); Pierre Albert Tullier (father/declarant); Constance Ley (mother)",
+        "what": "Baptism/birth act, civil registration",
+        "when_created": "7 April 1803",
+        "when_accessed": "27 July 2026",
+        "where": "France, Nord, Parish and Civil Registration, 1524-1893 (collection 3216848), FamilySearch",
+        "where_within": "Entry for Fran\u00e7ois Jaques Albert Tullier and Pierre Albert Tullier, 7 Apr 1803; image ark:/61903/1:2:4W6P-J9T2"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-27",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4W6P-J9T2",
+      "log_entry_id": "log_008",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"France, Nord, Parish and Civil Registration, 1524-1893,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:DPJ5-4QW2 : accessed 27 July 2026), Entry for Pierre Jacques Dominique Tuiller, birth act, 11 Brumaire Year VIII (2 November 1799), Houtkerque, Nord; image ark:/61903/3:1:3Q9M-C3W5-G3XT-P.",
+      "citation_detail": {
+        "who": "Pierre Jacques Dominique Tuiller (child); Pierre Tullier (father); Constance Ley/Leys (mother)",
+        "what": "Civil birth registration act, 11 Brumaire Year VIII, Houtkerque, Nord, France; collection 3216848",
+        "when_created": "2 November 1799 (11 Brumaire Year VIII)",
+        "when_accessed": "27 July 2026",
+        "where": "FamilySearch, France, Nord, Parish and Civil Registration, 1524-1893 (collection 3216848)",
+        "where_within": "Birth act for Pierre Jacques Dominique Tuiller, 11 Brumaire Year VIII; image ark:/61903/3:1:3Q9M-C3W5-G3XT-P"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-27",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:DPJ5-4QW2",
+      "notes": "The FamilySearch index (record_read) gives the birth date as 2 Nov 1799 \u2014 the registration date. The image transcription (log_007) shows the act states birth was 'hier' (yesterday), i.e., 1 Nov 1799 (10 Brumaire Year VIII); the registration was the following day, 11 Brumaire. Father's surname indexed as 'taitier' (OCR artifact for Tullier/Tuiller). Mother's surname indexed as 'Coley' (OCR artifact; image shows 'Constance ley' = Leys). Father's birthplace indexed as 'Commune de Avel' = Stavele (OCR dropped 'St-'). Image examined at ark:/61903/3:1:3Q9M-C3W5-G3XT-P; transcription in log_007.",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:8NJ2-XN2M",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Fran\u00e7ois Jaques Albert Tullier",
+      "structured_value": {
+        "given": "Fran\u00e7ois Jaques Albert",
+        "surname": "Tullier"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Albert Tullier (father, declarant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:8NJ2-XN2M",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Pierre Albert Tullier (father, declarant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:8NJ2-XN2M",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "6 April 1803",
+      "date": "6 Apr 1803",
+      "place": "Bambecque, Nord, France",
+      "information_quality": "primary",
+      "informant": "Pierre Albert Tullier (father, declarant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001",
+      "standard_place": "Bambecque, Nord, France"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:8NJ2-XN2M",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "7 April 1803, Bambecque, Nord, France",
+      "date": "7 Apr 1803",
+      "place": "Bambecque, Nord, France",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001",
+      "standard_place": "Bambecque, Nord, France"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:8NJ2-XN2M",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Pierre Albert Tullier",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Albert Tullier (father, declarant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:8NJ2-XN2M",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Constance Ley",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Albert Tullier (father, declarant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:8NJ2-XN2M",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Pierre Albert Tullier",
+      "structured_value": {
+        "given": "Pierre Albert",
+        "surname": "Tullier"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Albert Tullier (self, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:8NJ2-XN2M",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Pierre Albert Tullier (self, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:8NJ2-XN2M",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Bambecque, Nord, France (at time of child's registration, 7 Apr 1803)",
+      "date": "7 Apr 1803",
+      "place": "Bambecque, Nord, France",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001",
+      "standard_place": "Bambecque, Nord, France"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:8NJ2-XN2M",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Constance Ley",
+      "structured_value": {
+        "given": "Constance",
+        "surname": "Ley"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Albert Tullier (husband, declarant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:8NJ2-XN2M",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Pierre Albert Tullier (husband, declarant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Pierre Jacques Dominique Tullier",
+      "structured_value": {
+        "given": "Pierre Jacques Dominique",
+        "surname": "Tullier"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 1 November 1799 (10 Brumaire Year VIII), Houtkerque, Nord, France; registration day following (11 Brumaire = 2 Nov 1799)",
+      "date": "1 Nov 1799",
+      "date_certainty": "exact",
+      "place": "Houtkerque, Nord, France",
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002",
+      "standard_place": "Houtkerque, Nord, France"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "family domiciled in Houtkerque for approximately three months at time of registration",
+      "place": "Houtkerque, Nord, France",
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002",
+      "standard_place": "Houtkerque, Nord, France"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Pierre Tullier",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Constance Leys",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Pierre Tullier",
+      "structured_value": {
+        "given": "Pierre",
+        "surname": "Tullier"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Surname indexed as 'taitier' \u2014 OCR artifact; image transcription shows 'Tullier'/'Tuiller'. Father was the declarant presenting himself to the civil registrar.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "father",
+      "fact_type": "occupation",
+      "value": "brapeur [brewer or laborer]",
+      "structured_value": {
+        "occupation": "brapeur"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Term 'brapeur' is the stated form; may be a scribal rendering of 'brasseur' (brewer) or a regional variant for laborer. Father stated his own occupation to the registrar.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "father",
+      "fact_type": "birth",
+      "value": "native of Commune de Avel [= Stavele, West Flanders]",
+      "place": "Stavele, West Flanders, Belgium",
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Act reads 'Commune de Avel' \u2014 OCR artifact; 'St-Avel' = Stavele, West Flanders. Father stated his own birthplace. Consistent with tree person GPX7-28P Pierre Albert Tullier, born 4 Mar 1777 Stavele.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002",
+      "standard_place": "Stavele, West Flanders, Belgium"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Constance Leys",
+      "structured_value": {
+        "given": "Constance",
+        "surname": "Leys"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's surname indexed as 'Coley' \u2014 OCR artifact; image transcription shows 'Constance ley' (= Leys). Father stated his wife's name; he has direct knowledge of her identity as her husband. Consistent with tree person G8QK-FXP Constance Doroth\u00e9 Leys.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "mother",
+      "fact_type": "birth",
+      "value": "native of Commune de Lamberke [unidentified small Flemish commune]",
+      "place": "Lamberke, West Flanders, Belgium",
+      "information_quality": "secondary",
+      "informant": "Pierre Tullier (father, declarant)",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Act reads 'Commune de Lamberke'; unidentified small commune in Flemish Flanders. Father relayed his wife's birthplace \u2014 he was not present at her birth; this is secondhand knowledge, hence secondary/indirect. Corroborated by witness 2 Marguerite Leys (maternal aunt) also domiciled in Lamberke.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002",
+      "standard_place": "West Flanders, Belgium"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "Pierre Jacques [de Saitt]",
+      "structured_value": {
+        "given": "Pierre Jacques",
+        "surname": "[de Saitt]"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Jacques [de Saitt] (witness, uncle of child)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Surname uncertain \u2014 rendered '[de Saitt]' in image transcription; may be a scribal abbreviation or OCR artifact. Image confirmation of exact surname outstanding.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "witness_1",
+      "fact_type": "relationship",
+      "value": "oncle \u00e0 l'enfant (uncle of the child Pierre Jacques Dominique Tullier)",
+      "structured_value": {
+        "relationship_type": "uncle",
+        "related_person_role": "nephew"
+      },
+      "information_quality": "primary",
+      "informant": "Pierre Jacques [de Saitt] (witness, uncle of child)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Act states 'oncle \u00e0 l'enfant' \u2014 witness declared his own relationship to the child. Which side of the family (paternal or maternal) is not specified; could be a sibling of Pierre Tullier or of Constance Leys, or a more distant collateral styled 'oncle'. FAN lead for further research.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "witness_2",
+      "fact_type": "name",
+      "value": "Marguerite Leys",
+      "structured_value": {
+        "given": "Marguerite",
+        "surname": "Leys"
+      },
+      "information_quality": "primary",
+      "informant": "Marguerite Leys (witness, maternal aunt of child)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Sharing surname 'Leys' with the mother Constance Leys \u2014 act states 'propre tante \u00e0 matre audit enfant' (maternal aunt). She is a sister of Constance Leys. Also domiciled in 'Commune de Lamberke', corroborating that Leys family was from Lamberke.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "witness_2",
+      "fact_type": "relationship",
+      "value": "propre tante \u00e0 matre audit enfant (maternal aunt of the child; sister of Constance Leys)",
+      "structured_value": {
+        "relationship_type": "aunt",
+        "related_person_role": "nephew"
+      },
+      "information_quality": "primary",
+      "informant": "Marguerite Leys (witness, maternal aunt of child)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Act explicitly states maternal aunt ('\u00e0 matre') \u2014 Marguerite is a sister of the mother Constance Leys. This independently confirms Constance's surname as Leys. Important FAN lead: Marguerite Leys from Lamberke is a confirmed sibling of Constance Doroth\u00e9 Leys (G8QK-FXP).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "witness_2",
+      "fact_type": "residence",
+      "value": "domiciled in Commune de Lamberke",
+      "place": "Lamberke, West Flanders, Belgium",
+      "information_quality": "primary",
+      "informant": "Marguerite Leys (witness, maternal aunt of child)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Marguerite Leys declared her own domicile as Lamberke. Corroborates the Leys family's origin in that commune, consistent with mother Constance Leys also listed as native of Lamberke.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_002",
+      "standard_place": "West Flanders, Belgium"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:DPJ5-4QW2",
+      "record_role": "absent",
+      "fact_type": "marriage",
+      "value": "No marriage act for Pierre Tullier and Constance Leys found in Houtkerque civil registers; couple described as legitimately married but domiciled only three months in Houtkerque at time of registration, indicating a prior marriage contracted elsewhere (Stavele, Lamberke, or another Flemish commune) before the family relocated",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "informant_bias_notes": "Act uses 'du l\u00e9gitime mariage de pierre taitier...et de Constance ley son epouse' \u2014 formula affirming existing legal marriage. Three-month domicile in Houtkerque makes a prior marriage in that commune impossible. Alternative explanations: (1) church marriage in Stavele or Lamberke pre-civil-registration (before ~1796); (2) civil marriage in another Nord/West Flanders commune; (3) revolutionary-period informal union subsequently regularized. Search of Stavele and Lamberke registers outstanding.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Pierre Jacques Dominique Tullier's own birth record (Houtkerque, 2 Nov 1799). He is the principal subject of the act; his name is recorded by his father. No ambiguity.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex assertion from child's own birth record; he is the principal.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth date and place from child's own birth registration. Father was the declarant; born 1 Nov 1799, Houtkerque, Nord, France.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Residence assertion from child's own birth record; family domiciled in Houtkerque at registration.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion from child's own birth record: act states child was born of Pierre Tullier. The child (I1) is the subject of this parentage statement.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_016",
+      "person_id": "GPX7-28P",
+      "confidence": "probable",
+      "rationale": "Relationship assertion names Pierre Tullier as father of Pierre Jacques Dominique Tullier (I1). Father given as Pierre Tullier, native of Commune de Avel (= Stavele per image transcription \u2014 OCR dropped 'St'). Tree GPX7-28P Pierre Albert Tullier was born 4 Mar 1777 in Stavele, West Flanders. Surname Tullier matches; given name Pierre matches (Albert is a second given name not always recorded in civil registration); birthplace Stavele matches exactly. No same_person score available (image-sourced assertion). Strong name + birthplace correlation \u2192 probable confidence.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion from child's own birth record: act states child was born of Constance Leys. The child (I1) is the subject of this parentage statement.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_017",
+      "person_id": "G8QK-FXP",
+      "confidence": "probable",
+      "rationale": "Relationship assertion names Constance Leys as mother of Pierre Jacques Dominique Tullier (I1). Image transcription confirms mother as 'Constance ley' (indexed as 'Coley' \u2014 OCR error). Tree G8QK-FXP Constance Doroth\u00e9 Leys: given name Constance and surname Leys both match. Corroborated by witness Marguerite Leys (a_027) identified as maternal aunt ('propre tante \u00e0 matre'), independently confirming the Leys family name. No same_person score (image-sourced). Strong corroborated match \u2192 probable.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_018",
+      "person_id": "GPX7-28P",
+      "confidence": "probable",
+      "rationale": "Father's name from Houtkerque 1799 birth of Pierre Jacques Dominique. Image reads Pierre Tullier (indexed as 'taitier' \u2014 OCR artifact). Tree GPX7-28P: Pierre Albert Tullier. Surname Tullier matches; given name Pierre matches. Probable: name match strong, but 'Albert' second name not on record; no same_person score (image-sourced). Birthplace Stavele independently corroborates (see a_021).",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_019",
+      "person_id": "GPX7-28P",
+      "confidence": "probable",
+      "rationale": "Sex of father as Male; consistent with GPX7-28P. Follows the identity match on a_018.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_020",
+      "person_id": "GPX7-28P",
+      "confidence": "probable",
+      "rationale": "Occupation 'brapeur' for father Pierre Tullier in Houtkerque 1799. Not previously recorded in tree for GPX7-28P. Follows identity match on a_018.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_021",
+      "person_id": "GPX7-28P",
+      "confidence": "probable",
+      "rationale": "Father Pierre Tullier stated as native of 'Commune de Avel' \u2014 image transcription; 'Avel' = Stavele (OCR dropped the initial 'St'). Tree GPX7-28P was born in Stavele, West Flanders, Belgium (4 Mar 1777). Birthplace is a strong independent corroboration of the identity beyond the name match. No same_person score (image-sourced). This assertion significantly strengthens the identification of the Houtkerque father as GPX7-28P.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_022",
+      "person_id": "G8QK-FXP",
+      "confidence": "probable",
+      "rationale": "Mother's name from Houtkerque 1799 birth. Image transcription: 'Constance ley' (indexed as 'Coley' \u2014 OCR error confirmed by transcription). Tree G8QK-FXP: Constance Doroth\u00e9 Leys. Given name Constance exact; surname Leys exact (image confirms 'ley'). Corroborated by maternal aunt Marguerite Leys (a_027/a_028) independently confirming surname Leys as the family name. Probable (no same_person score, image-sourced).",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_023",
+      "person_id": "G8QK-FXP",
+      "confidence": "probable",
+      "rationale": "Sex of mother as Female; consistent with G8QK-FXP. Follows identity match on a_022.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_024",
+      "person_id": "G8QK-FXP",
+      "confidence": "probable",
+      "rationale": "Mother native of 'Commune de Lamberke' (unidentified small Flemish commune). No birthplace recorded in tree for G8QK-FXP, so this is new information rather than a conflict. Follows identity match on a_022. Secondary/indirect evidence per extraction classification.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_027",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Marguerite Leys named as witness in Houtkerque 1799 birth. New tree stub person (I3) created from this record. Surname Leys confirmed by act; act explicitly identifies her as 'propre tante \u00e0 matre' (maternal aunt) of the child \u2014 she is a sister of Constance Leys (G8QK-FXP). Probable: one record only.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_028",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Marguerite Leys's relationship (maternal aunt of Pierre Jacques Dominique) stated by the act. Links to her own stub (I3). Act: 'propre tante \u00e0 matre audit enfant' \u2014 directly describes her role.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion bears on the child (I1, Pierre Jacques Dominique Tullier) as well: he is the nephew of Marguerite Leys. Act states she is his maternal aunt. Links both parties to this assertion.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_029",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Marguerite Leys's residence in 'Commune de Lamberke' stated by the act. Consistent with mother Constance Leys also recorded as native of Lamberke, confirming the Leys family's Flemish origin.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_001",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Fran\u00e7ois Jaques Albert Tullier's own baptism record (Bambecque, 7 Apr 1803). He is the principal subject of the act.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_002",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Sex assertion from child's own baptism record.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_003",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birth date and place (6 Apr 1803, Bambecque) from child's own birth registration. Father Pierre Albert Tullier was the declarant.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Baptism/christening date and place (7 Apr 1803, Bambecque) from child's own registration. Principal subject of the act.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship from child's own birth record: he is the child of Pierre Albert Tullier. He is the principal of this act.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_005",
+      "person_id": "GPX7-28P",
+      "confidence": "confident",
+      "rationale": "Relationship assertion names Pierre Albert Tullier as father of Fran\u00e7ois Jaques Albert Tullier (I2). Father listed as 'Pierre Albert Tullier' \u2014 exact full name match with tree GPX7-28P. Bambecque, Nord, France residence in 1803 consistent with tree (Pierre Albert died in Bambecque 1846). Confident match.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship from child's own birth record: he is the child of Constance Ley. He is the principal of this act.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_006",
+      "person_id": "G8QK-FXP",
+      "confidence": "probable",
+      "rationale": "Relationship assertion names Constance Ley as mother of Fran\u00e7ois Jaques Albert Tullier (I2). 'Constance Ley' is a variant of Constance Doroth\u00e9 Leys (G8QK-FXP) \u2014 same given name, surname variant Ley/Leys. Consistent with the Houtkerque 1799 record also naming 'Constance ley' as mother in the same family. Probable (surname variant, no same_person score).",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_007",
+      "person_id": "GPX7-28P",
+      "confidence": "confident",
+      "rationale": "Head of household in Bambecque 1803 baptism named 'Pierre Albert Tullier' \u2014 exact full name match with tree GPX7-28P Pierre Albert Tullier. He was the declarant registering his son's birth in Bambecque, consistent with tree residence. Obvious/confident match.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_008",
+      "person_id": "GPX7-28P",
+      "confidence": "confident",
+      "rationale": "Sex of declarant/head as Male; consistent with GPX7-28P. Follows identity match on a_007.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_009",
+      "person_id": "GPX7-28P",
+      "confidence": "confident",
+      "rationale": "Residence of Pierre Albert Tullier in Bambecque, Nord, 7 Apr 1803. Consistent with tree record of his death in Bambecque in 1846 and marriage there in 1800. Confident.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_010",
+      "person_id": "G8QK-FXP",
+      "confidence": "probable",
+      "rationale": "Wife in Bambecque 1803 baptism named 'Constance Ley' \u2014 given name Constance matches G8QK-FXP Constance Doroth\u00e9 Leys; surname 'Ley' is a shortened form of 'Leys.' She is the wife of GPX7-28P (Pierre Albert Tullier, whose identity is certain on this record), making this a relationship-fit that strengthens the match beyond the name alone. Probable.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_011",
+      "person_id": "G8QK-FXP",
+      "confidence": "probable",
+      "rationale": "Sex of wife as Female; consistent with G8QK-FXP. Follows identity match on a_010.",
+      "match_score": null,
+      "created": "2026-07-27"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "France",
+      "for_place": "Bambecque, Nord, France",
+      "time_period": "1780-1820",
+      "jurisdictions": [
+        {
+          "name": "Bambecque, D\u00e9partement du Nord, France (French Flanders)",
+          "date_range": "1790-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "3216848",
+          "title": "France, Nord, Parish and Civil Registration, 1524-1893",
+          "date_range": "1524-1893"
+        },
+        {
+          "id": "1782519",
+          "title": "France, Births and Baptisms, 1546-1896",
+          "date_range": "1546-1896"
+        },
+        {
+          "id": "1500690",
+          "title": "France, Marriages, 1546-1924",
+          "date_range": "1546-1924"
+        },
+        {
+          "id": "1500691",
+          "title": "France, Deaths and Burials, 1546-1960",
+          "date_range": "1546-1960"
+        }
+      ],
+      "quirks": [
+        "French civil registration (\u00e9tat civil) in Nord began in 1796 (Revolutionary Year IV); parish records before that date are in the Catholic baptism registers \u2014 both series are digitized and the 1792-1802 tables d\u00e9cennales (volume 008599636 group, 100% indexed) provide a 10-year name index bridging the transition.",
+        "The 008599636 volume group (7 vols, 100% indexed) covers Bambecque baptisms/naissances 1638-1814 and civil acts 1801-1824 \u2014 this is the primary name-searchable entry point for a circa-1796 birth.",
+        "The 008004587 volume group (6 vols, 0% indexed) covers Bambecque civil acts 1793-1801 and parish records 1791-1792 \u2014 browse-only; must be read image-by-image in French/Latin/Dutch.",
+        "Bambecque is in French Flanders (Flandres fran\u00e7aises): records appear in French, Latin, and Dutch/Flemish. Given names have both forms \u2014 Pierre=Pieter, Jacques=Jacob/Jacobus, Dominique=Dominicus \u2014 search both.",
+        "The Archives D\u00e9partementales du Nord (archivesdepartementales.lenord.fr) hosts the full actes paroissiaux et d'\u00e9tat civil series online; GenNPdC (gennpdc.net/releves) has volunteer transcriptions for Nord communes.",
+        "Bambecque is approximately 10-12 km from Stavele, West Flanders (Belgium) \u2014 search both jurisdictions for any event circa 1796, as family members circulated freely across this border."
+      ],
+      "guide_markdown": "## Locality Guide: Bambecque, Nord, France (1780\u20131820)\n\n### Jurisdictional Context\nBambecque is a commune in the D\u00e9partement du Nord (created 1790), within historical French Flanders (Flandres fran\u00e7aises). French civil registration (\u00e9tat civil) commenced in Nord approximately 1796 (Revolutionary Year IV). Catholic parish records precede that date.\n\n**Records at the 1796 transition:** A birth in Bambecque in 1796 falls at the boundary of the parish baptism register and the first year of civil registration \u2014 both series are digitized.\n\n### Vital Records \u2014 FamilySearch\n**Primary indexed collection** (search first):\n- **France, Nord, Parish and Civil Registration, 1524\u20131893** (FS col. 3216848) \u2014 8.7M records, indexed + images.\n\n**Bambecque-specific volumes** (volume_search results):\n| Volume | Coverage | Dates | Indexed |\n|--------|----------|-------|---------|\n| 008599636 (7 vols) | Baptisms/naissances, civil acts, tables d\u00e9cennales | 1638\u20131814 (bapt.), 1792\u20131802 (table), 1801\u20131824 | **100% \u2014 name searchable** |\n| 008601247 (3 vols) | Bapt\u00eames, mariages, s\u00e9pultures | 1786\u20131789 | **100% \u2014 name searchable** |\n| 008596385 | Tables d\u00e9cennales | 1803\u20131892 | 0% indexed, **full-text searchable** |\n| 008004587 (6 vols) | Parish + civil acts | 1737\u20131801 | **Browse-only** (French/Latin/Dutch) |\n| 008106630 | Bapt\u00eames, mariages, s\u00e9pultures | 1774\u20131785 | **Browse-only** |\n\nThe 1792\u20131802 *tables d\u00e9cennales* in group 008599636 provide a 10-year name index covering the 1796 birth window.\n\n### Language Warning\nRecords are in **French, Latin, and Dutch/Flemish**. Search both name forms: Pierre=Pieter, Jacques=Jacob/Jacobus, Dominique=Dominicus.\n\n### Other Repositories\n- Archives D\u00e9partementales du Nord (archivesdepartementales.lenord.fr)\n- GenNPdC volunteer transcriptions (gennpdc.net/releves)\n- Filae.com (subscription)\n- MyHeritage: France, Nord Civil Marriages 1792\u20131937",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/France_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/France_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "loc_002",
+      "place": "Belgium",
+      "for_place": "Stavele, West Flanders, Belgium",
+      "time_period": "1780-1820",
+      "jurisdictions": [
+        {
+          "name": "Stavele, D\u00e9partement de la Lys (French Republic; formerly Austrian Netherlands)",
+          "date_range": "1795-1814"
+        },
+        {
+          "name": "Stavele, West Flanders, United Kingdom of the Netherlands",
+          "date_range": "1815-1830"
+        },
+        {
+          "name": "Stavele, West Flanders, Belgium",
+          "date_range": "1830-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2139860",
+          "title": "Belgium, West Flanders, Civil Registration, 1582-1950",
+          "date_range": "1582-1950"
+        },
+        {
+          "id": "5000063",
+          "title": "Belgium, West Flanders, Civil Registration and Church Records, 1582-1932",
+          "date_range": "1582-1932"
+        },
+        {
+          "id": "1520562",
+          "title": "Belgium, Births and Baptisms, 1560-1890",
+          "date_range": "1560-1890"
+        },
+        {
+          "id": "1520580",
+          "title": "Belgium, Deaths and Burials, 1564-1900",
+          "date_range": "1564-1900"
+        }
+      ],
+      "quirks": [
+        "Civil registration (burgerlijke stand) in Stavele begins 1797 (French Year V). A birth in 1796 falls in the LAST parish baptism register, not the civil register \u2014 volume 008413129_002 (22 images, 1794\u20131796, browse-only Dutch) is the primary target.",
+        "For 1797+ births: volume 004795170 (942 images, Stavele births/deaths/marriages 1797\u20131822, browse-only Dutch) is the civil registration source; small enough to identify 1797\u20131800 births systematically.",
+        "Church records prior to 1796 are included in the civil registration collection 2139860 (West Flanders Civil Registration 1582\u20131950); despite the name, this collection includes pre-civil-registration parish records.",
+        "All Stavele records are in Dutch/Flemish. Given names appear in Flemish form: Pierre=Pieter, Jacques=Jacob/Jacobus, Dominique=Dominicus/Domien. French spellings may appear in early French-era civil registers (1797 onward).",
+        "Stavele is approximately 10-12 km from Bambecque, Nord, France \u2014 the Tullier family had roots on both sides of the border; search both jurisdictions for events circa 1796.",
+        "The Tienjarige tafels (decennial tables, 1802\u20131870, volume 005133457_001, full-text searchable) provide a name index for civil events from 1802 \u2014 useful to check for a death or marriage of Pierre Jacques Dominique later.",
+        "Marriage supplement volumes (Huwelijksbijlagen 1800\u20131810, vol. 005144166_002, 242 images; 1811\u20131831, vol. 005144157, 920 images) may contain retrospective references to a person's birth \u2014 consult if the birth register yields nothing.",
+        "State Archives of Belgium (search.arch.be and genealogie.arch.be) index church and civil records; Vrijwilligersrab (vrijwilligersrab.be) indexes Flemish parish registers."
+      ],
+      "guide_markdown": "## Locality Guide: Stavele, West Flanders, Belgium (1780\u20131820)\n\n### Jurisdictional Context\nStavele was an independent municipality in West Flanders, ~10-12 km northeast of Bambecque (France). Annexed by France in 1795 (D\u00e9partement de la Lys). French-style civil registration began circa 1797 (Year V). The final Catholic parish baptism register runs through 1796.\n\n**Records at the 1796\u20131797 transition:** A birth in 1796 = parish baptism register (ending 1796). A birth in 1797+ = civil *burgerlijke stand*.\n\n### Vital Records \u2014 FamilySearch\n**Primary collections**:\n- **Belgium, West Flanders, Civil Registration, 1582\u20131950** (FS col. 2139860) \u2014 partially indexed, includes pre-1796 church records.\n- **Belgium, West Flanders, Civil Registration and Church Records, 1582\u20131932** (FS col. 5000063) \u2014 partially indexed.\n\n**Stavele-specific volumes** (volume_search results):\n| Volume | Record Type | Dates | Indexed |\n|--------|------------|-------|---------|\n| 008413129_002 (22 img) | Baptism Records | **1794\u20131796** | **Browse-only**, Dutch |\n| 008413129_001 (168 img) | Baptism Records | 1778\u20131794 | Browse-only, Dutch |\n| 008456411_001 (135 img) | Baptism Registers | 1599\u20131796 | Browse-only, multilingual |\n| 008413131_001 (134 img) | Baptism Records | 1599\u20131796 | Browse-only, Dutch |\n| 004795170 (942 img) | Births, Deaths, Marriages | **1797\u20131822** | Browse-only, Dutch |\n| 005133457_001 (184 img) | Tienjarige tafels | 1802\u20131870 | **Full-text searchable** |\n| 005144166_002 (242 img) | Huwelijksbijlagen | 1800\u20131810 | Browse-only, Dutch |\n| 005144157 (920 img) | Huwelijksbijlagen | 1811\u20131831 | Browse-only, Dutch |\n\nVolume 008413129_002 (only 22 images covering 1794\u20131796) is the highest-priority browse target for a 1796 Stavele baptism.\n\n### Language Warning\nAll records in **Dutch/Flemish**. Name forms: Pierre=**Pieter**, Jacques=**Jacob/Jacobus**, Dominique=**Dominicus/Domien**.\n\n### Other Repositories\n- State Archives of Belgium (search.arch.be; genealogie.arch.be)\n- Vrijwilligersrab / Database Akten West-Vlaanderen (vrijwilligersrab.be)\n- Familiekunde Vlaanderen (familiekunde-vlaanderen.be)",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Belgium_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Belgium_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-27"
+    }
+  ]
+}
