@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_esther_leroux_marriage",
+    "objective": "What is the marriage date and place of Esther Leroux (MD1C-48H)?",
+    "subject_person_ids": [
+      "MD1C-48H"
+    ],
+    "status": "active",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

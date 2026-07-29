@@ -5,7 +5,7 @@
     "name": "Planning question should route to research-plan, not generate URLs",
     "type": "negative",
     "description": "\"What should I search next?\" is a planning question — deciding which repositories and record types to target is research-plan's job. search-external-sites executes a chosen external-site search; it should not fire on a request to choose the searches. The skill's own description carves this boundary out ('Do NOT use when the user wants to plan what to search').",
-    "tags": ["near-miss", "external-vs-research-plan", "boundary", "planning"]
+    "tags": ["near-miss", "external-vs-research-plan", "boundary", "planning", "no-search-no-write"]
   },
   "input": {
     "user_message": "What external sites should I search next to find Patrick's parents?",
@@ -13,9 +13,12 @@
   },
   "negative": {
     "correct_skill": ["research-plan"],
-    "explanation": "Choosing what to search — which sites, which record types, in what order — is planning, owned by research-plan. search-external-sites is the execution arm: it fires when a specific external-site search has been chosen (by the user or a plan item) and a URL needs generating. Answering a 'what next' question with generated URLs skips the prioritization, fallback, and rationale that planning produces."
+    "explanation": "Choosing what to search — which sites, which record types, in what order — is planning, owned by research-plan. search-external-sites is the execution arm: it fires when a specific external-site search has been chosen (by the user or a plan item) and a URL needs generating. Answering a 'what next' question with generated URLs skips the prioritization, fallback, and rationale that planning produces.",
+    "grade_on_invariant": true
   },
   "judge_context": [
-    "Should route to research-plan (or recommend planning) rather than immediately generating external-site search URLs for sites the user never chose"
+    "This is a grade_on_invariant negative test: PASS/FAIL is decided solely by the deterministic no-search-no-write validator (no external_links_search call, no new search log entry). Routing and activation are NOT gated. The judge runs base-only and diagnostically here — its scores do not decide the outcome.",
+    "Ideal behavior is to route the planning question to research-plan (via a Skill('research-plan') call or a one-line hand-off) rather than generating external-site search URLs inline for sites the user never chose. Note in your rationale whether the skill routed cleanly.",
+    "Known model prior (why this was previously flaky): the model's decline is correct every run, but its phrasing and length vary — a longer decline that names research-plan was misread by the activation heuristic as substantive output and failed the test. Under grade_on_invariant the decline phrasing no longer decides the outcome; only executing or logging a search does."
   ]
 }

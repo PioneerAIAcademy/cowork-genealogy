@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Esther Leroux married Jean Jacques on 5 November 1894 at Lewiston, Androscoggin County, Maine.",
+      "details": {
+        "target_person": {
+          "name": "Esther Leroux",
+          "pid": "MD1C-48H"
+        },
+        "fact_type": "Marriage",
+        "date": "5 November 1894",
+        "place": "Lewiston, Androscoggin, Maine, United States"
+      },
+      "supporting_sources": [
+        "Maine, Marriages, 1771-1907 -- entry for Esther Leroux in the record for Jean Laque (an indexed name variant of her husband Jean Jacques), 1894, Lewiston, Androscoggin, Maine."
+      ],
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,846 @@
+{
+  "run_log": "v1_2026-07-25_01-28-31.json",
+  "annotator": "alewibolu05@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_003`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All extracted assertions are factually accurate and supported by the census record. The skill correctly identified all five household members, extracted their stated facts (name, age, sex, birthplace, occupation, residence), computed birth years from ages with proper `indirect` evidence type, and correctly omitted occupation assertions for household members with blank occupation fields. The source citation is accurate and complete. No fabricated material or unsupported claims.\n\nJunior: Factually accurate and complete: all five household members extracted with their stated facts; occupation asserted only for Patrick (blank cells correctly omitted); relationships marked indirect and kept atomic (no 1850 relationship column); birth years computed as indirect; derivative FamilySearch citation accurate. No fabricated or unsupported material. Agree with the judge."
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_record_extraction_013`** — `base` / `Completeness`\nLLM: 3 → Junior: 2\n\n> The skill extracted assertions for all four household members (Thomas, Bridget, Patrick, John) as required. For each person, it captured name, age/birth, birthplace, and sex. Thomas's occupation was extracted; Bridget, Patrick, and John correctly have no occupation assertions (blank columns per the record). Residence assertions were created for Bridget and John. The negative evidence for the absent wife/mother was properly surfaced. All household members and required facts were addressed; no silent omissions.\n\nJunior: too Lenient"
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_013`** — `base` / `Tool Arguments`\nLLM: 2 → Junior: 3\n\n> The first extraction_append call (ops[1]–ops[21]) failed with validation errors: the tool rejected the call because log_entry_id 'log_001' had no staged results_ref (results_ref is null), preventing record_persona_id resolution. Claude recovered by removing the log_entry_id field from the second call (ops[1]–ops[20]), which succeeded. This is a single clean recovery from a clear tool validation error, ending in correct persisted args and successful write. However, the recovery required a retry, which is a non-critical defect in the execution path. The final persisted state is correct, but the recovery was not instantaneous.\n\nJunior: the rubric answers this verbatim, and the judge ruled against it."
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_record_extraction_013`** — `rubric` / `Informant identification`\nLLM: 3 → Junior: 2\n\n> Informant identification is correct throughout. For census-stated facts (name, age, birthplace, occupation, sex), the skill correctly identifies 'unknown household member' as the informant with proximity 'household_member' — the household member reported the information, the enumerator recorded it. For residence, the informant is correctly 'census enumerator' with proximity 'official_duty' (the enumerator personally observed the dwelling). For the inferred relationship assertions, the informant is correctly 'the researcher' with proximity 'researcher' (no record informant exists for the inference). For the negative evidence (absent wife), the informant is correctly 'the researcher' with proximity 'researcher'. All identifications are specific and defensible.\n\nJunior: a concrete wrong value the judge blessed"
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_record_extraction_014`** — `base` / `Correctness`\nLLM: 3 → Junior: 2\n\n> All extracted facts are accurate and supported by the census record provided. Names, ages, birthplaces, occupations, and residence are correctly transcribed. Computed birth years (~1798, ~1818, ~1822, ~1845) are mathematically correct from stated ages. The skill correctly identifies the 1860 census as having no relationship column and properly classifies all intra-Flynn relationships as inferred. The Silas Kerrigan ambiguity is correctly flagged as a FAN lead without fabricating a relationship. No unsupported claims or fabricated material.\n\nJunior: The judge's rationale says \"No unsupported claims or fabricated material.\" The assertions, yes all 32 are accurate and the arithmetic checks out. But the source citation is fabricated."
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_018`** — `base` / `Correctness`\nLLM: 2 → Junior: 3\n\n> The extraction is mostly factually correct and faithful to the source data. However, there is one significant error: Charles and Emma's child-to-wife relationship assertions are marked as `evidence_type: direct`, but per the per-test context, these should be `indirect` because the census relationship column states only the relationship to the HEAD of household, not to the spouse. The record does not state that Charles is Sarah's biological child—only that he is George's son. The child-to-spouse relationship must be inferred, making it indirect evidence. This is a concrete classification error that affects downstream conflict resolution.\n\nJunior: The base Correctness dimension does not grade classification. evidence_type, informant_proximity, and information_quality are owned by the Evidence type accuracy and Informant identification dimensions... Do not fail or dock Correctness for a classification call (a direct-vs-indirect choice, a proximity choice)... Correctness grades the factual accuracy of the extracted values and whether required actions were performed."
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_020`** — `base` / `Correctness`\nLLM: 1 → Junior: 3\n\n> The skill failed to extract sex assertions for all household members. The per-test context explicitly states: 'for every household member whose sex the record states (Thomas=M, Bridget=F, Patrick=M, John=M), the extractor must emit a distinct `fact_type: \"sex\"` assertion.' The skill extracted sex assertions for Thomas, Bridget, Patrick, and John (a_015, a_024, a_032, a_040), so sex assertions ARE present in the persisted file. However, re-reading the test context more carefully: the PRIMARY CHECK states 'Emitting name/age/birthplace but NO sex assertion for the members is the failure this test exists to catch.' The skill DID emit sex assertions for all four members. Upon verification of the persisted assertions in the tool response, sex assertions are present for Thomas (a_015: Male), Bridget (a_024: Female), Patrick (a_032: Male), and John (a_040: Male). The extraction is factually correct and complete on this critical dimension. All other extracted values (names, ages, birthplaces, occupations, residences, relationships) match the source record accurately. No fabricated material is present.\n\nJunior: The rationale argues itself out of its own score. It opens with \"The skill failed to extract sex assertions,\" then immediately reverses — \"sex assertions ARE present in the persisted file\" — verifies all four by ID, and closes with \"The extraction is factually correct and complete on this critical dimension... No fabricated material is present.\" Then it emits 1. The score contradicts the sentence directly above it. This isn't a judgment I disagree with; it's a rationale that reached the right answer and stamped the wrong number on it.The rationale argues itself out of its own score. It opens with \"The skill failed to extract sex assertions,\" then immediately reverses — \"sex assertions ARE present in the persisted file\" — verifies all four by ID, and closes with \"The extraction is factually correct and complete on this critical dimension... No fabricated material is present.\" Then it emits 1. The score contradicts the sentence directly above it. This isn't a judgment I disagree with; it's a rationale that reached the right answer and stamped the wrong number on it."
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_009`** — `base` / `Correctness`\nLLM: 2 → Junior: 3\n\n> The extraction is mostly correct but contains a critical classification error: the decedent's name, sex, race, and occupation are marked with `informant: Mary Flynn (wife)` and `informant_proximity: family_not_present`, when these biographical facts about the deceased should be attributed to the named personal informant (Mary Flynn) per death-certificate doctrine. However, the more serious issue is that name, sex, race, and occupation are marked `evidence_type: direct` when they should be `indirect` — Mary Flynn is reporting secondhand biographical facts about her deceased husband that predate her knowledge. The per-test context explicitly states: 'The stated age (63 years, 2 months, 10 days) reported by the family informant is likewise INDIRECT — the informant-knowledge test, same as birth date/birthplace/parents: Mary Flynn is relaying secondhand knowledge of when Patrick was born.' This same logic applies to name, sex, race, and occupation — all biographical facts reported by a spouse who did not witness the decedent's birth or early life. The skill correctly marked age, birthplace, and parental facts as `indirect`, but inconsistently marked name/sex/race/occupation as `direct`. This is a factual error in classification that affects downstream conflict resolution.\n\nJunior: The judge docks both because Patrick's name, sex, race, and occupation are marked direct, arguing the death-cert indirect rule should extend to them. It shouldn't, and the doctrine says so in four places."
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_009`** — `rubric` / `Evidence type accuracy`\nLLM: 2 → Junior: 3\n\n> The skill correctly marked age, birthplace, and parental facts as `indirect` — these are secondhand biographical facts reported by Mary Flynn, who did not witness Patrick's birth or know his parents' birthplaces. The death event (date, place, cause) is correctly marked `direct` with the physician as informant. Burial is correctly marked `direct` with the undertaker. However, the skill incorrectly marked the decedent's name, sex, race, and occupation as `evidence_type: direct`. These are biographical facts reported by Mary Flynn (the spouse informant) about the deceased, and per death-certificate doctrine and the per-test context, they should be `indirect` — Mary Flynn is relaying secondhand knowledge about her husband's biographical attributes, not witnessing them. The skill's own rationale for age being indirect ('Mary Flynn was not present at Patrick's birth; age is secondhand biographical knowledge') applies equally to name, sex, race, and occupation. This is a concrete classification error affecting multiple assertions (a_001, a_002, a_003, a_006).\n\nJunior: So the decedent's own name is explicitly direct, and the indirect set is age / birth date / birthplace / parents. The run marked precisely those indirect age, birthplace, both parents' names, both parents' birthplaces — and left name, sex, race, occupation direct. It matches the doctrine exactly."
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_012`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> This is a negative test. The skill correctly declined to perform record-extraction and routed the user to the citation skill. The user requested formatting an existing citation into final form, not extracting a new record. The decline was appropriate and accurate.\n\nJunior: Score is fine but the rationale is fabricated. record-extraction did not \"decline\" and did not \"route the user to the citation skill\" — the trace shows it was never activated (0 turns, empty response). The router selected citation; record-extraction made no decision at all. Nothing was declined, because nothing ran. The outcome is correct; the described mechanism did not occur.Score is fine but the rationale is fabricated. record-extraction did not \"decline\" and did not \"route the user to the citation skill\" — the trace shows it was never activated (0 turns, empty response). The router selected citation; record-extraction made no decision at all. Nothing was declined, because nothing ran. The outcome is correct; the described mechanism did not occur."
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_012`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified that the user's request was out of scope for record-extraction (no record to extract, only citation formatting needed) and routed appropriately to citation. The routing decision was complete and correct for a negative test.\n\nJunior: Same fabrication: there was no \"routing decision\" by the skill to be complete or incomplete. On a routing short-circuit this dimension has no transcript to grade and will return 3 on every passing negative routing test — no signal. Should be N/A, not 3."
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_012`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: 3\n\n> No MCP tool calls were made. The skill declined and routed to another skill, which is the correct behavior for this negative test. N/A.\n\nJunior: The rationale says \"N/A\" and then emits 3. A passing score awarded for the absence of any tool call inflates the aggregate with a dimension that had nothing to evaluate. Should be N/A.The rationale says \"N/A\" and then emits 3. A passing score awarded for the absence of any tool call inflates the aggregate with a dimension that had nothing to evaluate. Should be N/A."
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_011`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> This is a negative test. The skill correctly declined to perform record-extraction's task and routed the user to the record-extraction skill, which owns classification refinement. No substantive output was produced when the correct behavior was to decline and route. The routing decision was accurate.\n\nJunior: Outcome is right — record-extraction was invoked and nothing was answered inline — but the rationale states the opposite of the fixture. The judge context explicitly says it is WRONG to \"decline the request as out-of-scope,\" and the rationale credits exactly that: \"the correct behavior was to decline and route.\" It also has record-extraction routing to record-extraction, which is not a thing. Do not carry this reasoning into calibration."
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Same inversion (\"it declined and routed to record-extraction\"). Beyond that, this dimension has nothing to grade: the routing short-circuit aborts at invocation, so the reclassification work the judge context describes never runs and cannot be assessed. Should be N/A."
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "Rationale says \"N/A\" then emits 3. Zero tool calls, zero turns — a passing score for the absence of any argument. Should be N/A.\n\n"
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_002`** — `base` / `Tool Arguments`\nLLM: 2 → Junior: 3\n\n> The skill made five MCP calls. The first research_log_append call failed validation (planItemId 'q_001' is a question id, not a plan-item id starting with 'pli_'), and Claude corrected it on the second attempt by setting planItemId to null — a single clean recovery that succeeded. However, the extraction_append call's citation_detail.who field contains 'Patrick Flynn (b. ~1845, Pennsylvania)' when it should describe the searcher/researcher, not the subject. This is a non-critical but noisy argument that doesn't match the expected semantic (who conducted the search, not who was searched for). The recovery was clean but this remaining argument issue warrants a partial score.\n\nJunior: Rubric scores a single clean recovery 3, and the judge's own rationale calls it that. The additional defect it cites is misdescribed: citation_detail.who is \"Creator, agency, or informant\" per research-schema-spec.md:368 (spec example: \"U.S. Census Bureau\"), not the searcher. who IS wrong here — it holds the subject — but it holds the subject in all seven record-extraction traces, because record-extractor.md:151 lists the key without defining it. Fix the agent; don't dock this run alone for a suite-wide convention six sibling runs weren't docked for."
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_record_extraction_017`** — `base` / `Correctness`\nLLM: 3 → Junior: 2\n\n> All extracted facts are factually accurate and supported by the obituary text. The skill correctly identified Harold's death date (March 14, 2021), birth date (January 8, 1930), parents (Walter and Edith), spouse (Ruth Ann Baxter), children (Robert and Linda Merrill), sibling (Grace Tolman), and neighbor (Karen Foster). No fabricated material or unsupported claims. The two Linda assertions are correctly distinguished and properly sourced.\n\nJunior: Three concrete value errors: fact_type: \"number_of_children\" carries the value \"7 grandchildren\" (type contradicts value; asserts Harold had 7 children, contradicting the two child_N personas in the same batch); the age assertion's structured_value: {\"year\": \"91\"} puts an age in the birth-year slot as a string — third run in this suite with this bug; and spouse_1's name value \"Ruth Ann Baxter Whitaker\" states a form the obituary never uses (\"Ruth Ann Baxter\" / \"his wife, Ruth\"), while structured_value drops Baxter. Not classification calls, so the Correctness carve-out doesn't apply.Three concrete value errors: fact_type: \"number_of_children\" carries the value \"7 grandchildren\" (type contradicts value; asserts Harold had 7 children, contradicting the two child_N personas in the same batch); the age assertion's structured_value: {\"year\": \"91\"} puts an age in the birth-year slot as a string — third run in this suite with this bug; and spouse_1's name value \"Ruth Ann Baxter Whitaker\" states a form the obituary never uses (\"Ruth Ann Baxter\" / \"his wife, Ruth\"), while structured_value drops Baxter. Not classification calls, so the Correctness carve-out doesn't apply."
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_017`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all substantive information in the obituary. It extracted Harold's biographical facts, his relationships (parents, spouse, children, sibling), the negative evidence (Ruth, Walter, and Edith preceded him in death), and the neighbor mention. All named individuals and their roles were captured. No required information from the source was omitted.\n\nJunior: The judge context asks that Whitaker be recorded as Grace's maiden/birth name. It appears only in informant_bias_notes prose — there's no second name assertion for \"Grace Whitaker\" and no maiden-name field in structured_value. Her maiden name is the datum proving she's a birth sibling rather than a sister-in-law, so leaving it unstructured costs person-evidence. The response's summary table also lists \"maiden name\" among Grace's assertions, which overstates what was written.The judge context asks that Whitaker be recorded as Grace's maiden/birth name. It appears only in informant_bias_notes prose — there's no second name assertion for \"Grace Whitaker\" and no maiden-name field in structured_value. Her maiden name is the datum proving she's a birth sibling rather than a sister-in-law, so leaving it unstructured costs person-evidence. The response's summary table also lists \"maiden name\" among Grace's assertions, which overstates what was written."
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_017`** — `rubric` / `Informant identification`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified the informant as 'family informant (unidentified)' for all facts reported in the obituary, with proximity 'family_not_present' (appropriate for secondhand biographical facts). For negative evidence (Ruth, Walter, Edith's deaths), the skill correctly assigned informant 'the researcher' with proximity 'researcher', since these are researcher inferences from the 'preceded in death' phrasing. Karen Foster's neighbor role is correctly identified with appropriate informant attribution.\n\nJunior: Score holds only because the judge context shields the informant layer here (\"secondary… should not be penalized as long as roles are read correctly\"), and roles were correct. But the rationale endorses an error: informant: \"the researcher\" / proximity researcher on the predecease assertions is wrong — researcher is reserved for facts with no record informant, and here the family informant stated it outright. No inference was involved.Score holds only because the judge context shields the informant layer here (\"secondary… should not be penalized as long as roles are read correctly\"), and roles were correct. But the rationale endorses an error: informant: \"the researcher\" / proximity researcher on the predecease assertions is wrong — researcher is reserved for facts with no record informant, and here the family informant stated it outright. No inference was involved."
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_record_extraction_017`** — `rubric` / `Evidence type accuracy`\nLLM: 3 → Junior: 2\n\n> Evidence types are correctly assigned. Harold's stated facts (name, death date/place, age, residence, marriage) are marked 'direct' (explicitly stated in the obituary). His birth date and birthplace are marked 'direct' (stated in the text), with information_quality 'secondary' (secondhand knowledge). Parent and spouse names are marked 'indirect' (relayed by family informant, not from the parties themselves). Negative evidence (deaths of Ruth, Walter, Edith) is correctly marked 'negative' with researcher informant. The two Linda assertions carry appropriate evidence_type values for their respective roles.\n\nJunior: The three \"preceded in death\" assertions are evidence_type: \"negative\" on record_role: \"absent\". The obituary STATES the predeceases (\"He was preceded in death by his wife, Ruth, and by his parents\") — stated is direct. Negative evidence is for information absent from a searched record (spec §5.6); Ruth is named in this one. Correct modeling: death assertions on spouse_1/father_of_deceased/mother_of_deceased, evidence_type: direct, date_certainty: \"before\" (in the enum for exactly this). As written, three death facts sit on an absent role detached from their own personas.The three \"preceded in death\" assertions are evidence_type: \"negative\" on record_role: \"absent\". The obituary STATES the predeceases (\"He was preceded in death by his wife, Ruth, and by his parents\") — stated is direct. Negative evidence is for information absent from a searched record (spec §5.6); Ruth is named in this one. Correct modeling: death assertions on spouse_1/father_of_deceased/mother_of_deceased, evidence_type: direct, date_certainty: \"before\" (in the enum for exactly this). As written, three death facts sit on an absent role detached from their own personas."
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_record_extraction_015`** — `base` / `Correctness`\nLLM: 3 → Junior: 2\n\n> All 26 assertions extracted from the marriage record are factually accurate and properly sourced to the record ARK. Names, ages, birthplaces, residences, parent relationships, and marriage event (22 Aug 1957, Recife) are all correctly transcribed. Birth years (~1931, ~1936) are correctly computed from stated ages and marriage year. The source entry is properly cited with full FamilySearch URL and metadata. No fabricated material or unsupported claims.\n\nJunior: source_classification: \"original\" with no notes, when the run's own summary reports the page scan at 3:1:3QS7-99QG-KBTG was NOT READ. What was examined is the FamilySearch index entry (1:1: ARK); the original register page was never reached. record-extractor.md:166-172 requires derivative + an \"original not examined — <reason>\" note in exactly this case, and calls it a first-class extraction finding downstream exhaustiveness must inherit. The skill applied that rule correctly in ut_010 and ut_002. Also: groom's age assertion carries structured_value: {\"year\": \"1931\"} — birth year, as a string, on the age fact — while the bride's has none and both birth assertions (where §5.6.1 defines {year}) have none. Fourth occurrence of that bug in this suite.source_classification: \"original\" with no notes, when the run's own summary reports the page scan at 3:1:3QS7-99QG-KBTG was NOT READ. What was examined is the FamilySearch index entry (1:1: ARK); the original register page was never reached. record-extractor.md:166-172 requires derivative + an \"original not examined — <reason>\" note in exactly this case, and calls it a first-class extraction finding downstream exhaustiveness must inherit. The skill applied that rule correctly in ut_010 and ut_002. Also: groom's age assertion carries structured_value: {\"year\": \"1931\"} — birth year, as a string, on the age fact — while the bride's has none and both birth assertions (where §5.6.1 defines {year}) have none. Fourth occurrence of that bug in this suite."
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_record_extraction_005`** — `base` / `Correctness`\nLLM: 3 → Junior: 2\n\n> The skill correctly extracted all facts from the record_read response: Patrick Flynn's name, sex, birthplace (Ireland), computed birth year (~1845 from age 5), and 1850 residence in Branch Township, Schuylkill, Pennsylvania. Thomas Flynn's name, sex, and residence were also correctly extracted. The parent-child relationship was properly inferred from household co-residence and age disparity. All assertions are factually supported by the record_read response with no fabricated material. The skill recovered cleanly from a validation error on the first extraction_append call (record_persona_id must be null for record_read logs) and resubmitted with correct arguments.\n\nJunior: The record_read fixture gives Patrick a Birth fact of {\"date\": \"1845\", \"place\": \"Ireland\"} and no age. The run persisted value: \"age 5 in 1850 (birth year computed as approximately 1845)\" with informant_bias_notes claiming \"The age itself is stated in the record.\" Age 5 is nowhere in the response — the run back-computed it from the stated 1845 and then wrote the invention into the assertion as record content. Directly violates the judge context's \"Should NOT invent facts not present in the record_read response.\" The judge repeated the fabrication in its own rationale and concluded \"no fabricated material.\"The record_read fixture gives Patrick a Birth fact of {\"date\": \"1845\", \"place\": \"Ireland\"} and no age. The run persisted value: \"age 5 in 1850 (birth year computed as approximately 1845)\" with informant_bias_notes claiming \"The age itself is stated in the record.\" Age 5 is nowhere in the response — the run back-computed it from the stated 1845 and then wrote the invention into the assertion as record content. Directly violates the judge context's \"Should NOT invent facts not present in the record_read response.\" The judge repeated the fabrication in its own rationale and concluded \"no fabricated material.\""
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_008`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All extracted assertions are factually accurate and supported by the provided GedcomX record. The skill correctly identified Patrick Flynn's name, sex, birthplace (Ireland), birth year (~1845), and 1850 residence in Branch Township, Schuylkill, Pennsylvania. The inferred relationship to Thomas Flynn is appropriately flagged as researcher-inferred from household position. The source citation is accurate and properly notes the derivative nature of the FamilySearch index. The record_record_matches call correctly returned the two pending collateral matches (1860 census and Pennsylvania Death Certificates) with accurate confidence scores and metadata.\n\nJunior: Persisted values are all correct. The response table is not: it reports a_003 (birthplace) as \"indirect evidence\" when the assertion is direct, and labels a_003/a_004 \"Secondary info\" when both are indeterminate. Narrative-only so not gradeable, but it tells the researcher the opposite of what was written. Headline also says \"8 assertions written\" against 7 actual.Persisted values are all correct. The response table is not: it reports a_003 (birthplace) as \"indirect evidence\" when the assertion is direct, and labels a_003/a_004 \"Secondary info\" when both are indeterminate. Narrative-only so not gradeable, but it tells the researcher the opposite of what was written. Headline also says \"8 assertions written\" against 7 actual."
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_008`** — `rubric` / `Evidence type accuracy`\nLLM: 3 → Junior: 3\n\n> Evidence types are assigned correctly. Name, sex, and birthplace (a_001, a_002, a_003) are marked 'direct' because the census explicitly states these facts in its columns—a household member reporting on their own household has firsthand knowledge. The birth year (a_004) is correctly marked 'indirect' because it is derived/computed from the stated birth date, not directly stated as a year. Residence (a_005) is correctly marked 'direct' because the census enumerator recorded the household's location. The inferred relationship (a_006) is correctly marked 'indirect' because it is inferred from household position, not stated (the 1850 census has no relationship column). The household head name (a_007) is marked 'direct' as a stated fact. All classifications align with the doctrine that direct = stated, indirect = inferred.\n\nJunior: evidence_type: \"indirect\" on a_004 is correct (the index converted a reported age, as the note's first sentence says). But the note closes with \"Indirect because no census respondent could have first-hand knowledge of the year of birth\" — the exact inversion rubric.md:66 flags as the #1 recurring error, and it is persisted in research.json, not just narrated. Right answer, banned reasoning. Agent-side doctrine fix, not a score change.evidence_type: \"indirect\" on a_004 is correct (the index converted a reported age, as the note's first sentence says). But the note closes with \"Indirect because no census respondent could have first-hand knowledge of the year of birth\" — the exact inversion rubric.md:66 flags as the #1 recurring error, and it is persisted in research.json, not just narrated. Right answer, banned reasoning. Agent-side doctrine fix, not a score change."
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_record_extraction_006`** — `rubric` / `Informant identification`\nLLM: 3 → Junior: 2\n\n> Informants are correctly identified. For Patrick's name/age/birthplace: 'unknown household member' with proximity 'household_member' and reasoning ('likely a parent') in informant_bias_notes. For residence facts: 'census enumerator' with proximity 'official_duty' (correct doctrine for census—enumerator personally observed the dwelling). For inferred relationships: 'the researcher' with proximity 'researcher' (correct for structure-inferred facts with no record informant). All informant_proximity values are from the closed enum and defensible.\n\nJunior: All three residence assertions use informant_proximity: \"official_duty\". rubric.md:9 has census stated residence on the strictly-graded list as direct/witness, the residence bullet says \"enumerator/witness is the doctrine,\" and this fixture's judge context names witness. The run's own bias note gives witness reasoning (\"firsthand observation of the household's residence\") against an official_duty value. Same error and same judge blessing as ut_013.All three residence assertions use informant_proximity: \"official_duty\". rubric.md:9 has census stated residence on the strictly-graded list as direct/witness, the residence bullet says \"enumerator/witness is the doctrine,\" and this fixture's judge context names witness. The run's own bias note gives witness reasoning (\"firsthand observation of the household's residence\") against an official_duty value. Same error and same judge blessing as ut_013."
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_record_extraction_006`** — `base` / `Correctness`\nLLM: 3 → Junior: 2\n\n> All extracted assertions are factually accurate. The skill correctly identified 16 assertions across three personas from the 1850 census record. Birth year ~1845 is correctly derived from stated age 5 in 1850. All relationships are properly marked as inferred from household structure (1850 has no relationship column). The source was correctly referenced via log_entry_id log_001 as instructed. No fabricated material or unsupported claims.\n\nJunior: (1) source_classification: \"original\" with no \"original not examined\" note, when what was examined is the FamilySearch index gedcomx and the schedule image was never reached — record-extractor.md:166-172 requires derivative + the note here, and ut_005/ut_007/ut_008 all got it right on this same record. (2) \"Age 5\" is fabricated: the gedcomx states Birth date 1845 and no age, but the run persisted value: \"age 5 in 1850…\", a bias note claiming the age was \"stated,\" and citation_detail.who: \"Patrick Flynn, age 5, …\". Same invention as ut_005; ut_008 handled the identical input correctly.(1) source_classification: \"original\" with no \"original not examined\" note, when what was examined is the FamilySearch index gedcomx and the schedule image was never reached — record-extractor.md:166-172 requires derivative + the note here, and ut_005/ut_007/ut_008 all got it right on this same record. (2) \"Age 5\" is fabricated: the gedcomx states Birth date 1845 and no age, but the run persisted value: \"age 5 in 1850…\", a bias note claiming the age was \"stated,\" and citation_detail.who: \"Patrick Flynn, age 5, …\". Same invention as ut_005; ut_008 handled the identical input correctly."
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "**`ut_record_extraction_016`** — `rubric` / `Informant identification`\nLLM: 3 → Junior: 2\n\n> Informants are correctly identified. For the child's name, sex, birth, and relationships: informant is 'presenting parent(s)' with proximity 'household_member' — correct for facts a household member reported to the christening officiant. For the christening event itself: informant is 'officiant' with proximity 'official_duty' — correct for the sacramental act. For the father's name: informant is 'FamilySearch index' with proximity 'unknown' — correctly identifying that the index (not the original scribe) is the source of the suspect reading, and marking proximity as unknown because the indexer is not a direct informant on the original record. The recorder-vs-informant distinction is properly applied.\n\nJunior: The father's name assertion sets informant: \"FamilySearch index\" / informant_proximity: \"unknown\". record-extractor.md:396-398 is explicit: \"indexers and transcribers are never the informant (look through derivatives to the original provider),\" and unknown means an informant exists but cannot be identified — here it can, and the run used \"presenting parent(s)\"/household_member for every other assertion including the father's own sex and residence. The transcription doubt was already correctly captured at information_quality: secondary, the [?] markers, the notes, and source_classification: derivative; rerouting the informant to the index corrupts a layer that was fine. The judge praised this as \"the recorder-vs-informant distinction properly applied\" — it is the conflation that paragraph exists to prevent.The father's name assertion sets informant: \"FamilySearch index\" / informant_proximity: \"unknown\". record-extractor.md:396-398 is explicit: \"indexers and transcribers are never the informant (look through derivatives to the original provider),\" and unknown means an informant exists but cannot be identified — here it can, and the run used \"presenting parent(s)\"/household_member for every other assertion including the father's own sex and residence. The transcription doubt was already correctly captured at information_quality: secondary, the [?] markers, the notes, and source_classification: derivative; rerouting the informant to the index corrupts a layer that was fine. The judge praised this as \"the recorder-vs-informant distinction properly applied\" — it is the conflation that paragraph exists to prevent."
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
