@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Topical wikipedia_search fixture for Schuylkill County / Pennsylvania anthracite coal. Matches any query containing 'coal'. Returns anthracite-region content so the skill's coal-economy search gets targeted history instead of the generic catch-all. List before wikipedia-search-any in a test's mcp_fixtures.",
+  "args": {
+    "query": "~coal"
+  },
+  "response": {
+    "title": "Coal Region (Pennsylvania)",
+    "extract": "The Coal Region of northeastern Pennsylvania is a historically significant anthracite coal-mining district centered on Schuylkill, Luzerne, Carbon, Lackawanna, and Northumberland counties. From the 1820s the region drew large numbers of immigrant laborers, and Irish immigrants arriving during and after the Great Famine (1845-1852) formed a major part of the mining workforce, concentrated around towns such as Pottsville, Minersville, Tamaqua, and Shenandoah. Mining companies kept payroll and employment records that frequently note a worker's nationality and prior residence.",
+    "url": "https://en.wikipedia.org/wiki/Coal_Region"
+  }
+}

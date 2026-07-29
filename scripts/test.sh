@@ -15,7 +15,7 @@ echo "=== Eval app tests (vitest) ==="
 
 echo ""
 echo "=== Eval harness tests (pytest) ==="
-(cd "$ROOT/eval/harness" && uv run pytest) || failed=1
+(cd "$ROOT/eval/harness" && uv run --frozen pytest) || failed=1
 
 echo ""
 if [ "$failed" -ne 0 ]; then

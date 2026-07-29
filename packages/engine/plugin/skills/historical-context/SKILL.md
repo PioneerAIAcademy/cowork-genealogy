@@ -38,12 +38,21 @@ If the question falls into one of these categories, redirect the user immediatel
 
 | Question type | Action |
 |---|---|
-| "What records exist in [place]?" / "Where do I access records?" / "What records are available?" | Tell the user this is the locality-guide skill's job. Explain briefly why. Do NOT call any MCP tools or load reference files. |
+| "What records exist in [place]?" / "Where do I access records?" / "What records are available?" | **Hand off — do not answer.** This is the locality-guide skill's job, so invoke it directly: call the **Skill** tool with the `locality-guide` skill and let it answer the question. Do NOT survey the records yourself, do NOT load reference files, do NOT call any MCP tools. |
 | "Search for / find records for [person]" | Redirect to search-records. |
 | "Translate this [non-English] record" / "What does [non-English word] mean?" | Redirect to translation. **Defining or glossing a non-English word — even a one-line "getauft = baptized" — IS translation; do not do it here, not even briefly before redirecting.** Only *English* historical terms (e.g. "relict", "yeoman") are handled in this skill. |
 | "Convert this date" | Redirect to convert-dates. |
 
-**When redirecting: output a short explanation and stop. No tool calls. No file reads.**
+**For a record-availability question (row 1): hand off by invoking the
+`locality-guide` skill via the Skill tool as your very first action. Write at
+most one short sentence before the hand-off (e.g. "Handing this to the
+locality-guide skill.") — do NOT explain how the two skills differ, do NOT
+write a multi-paragraph comparison, and do NOT call any MCP tools or read any
+files. A long explanation before handing off is itself doing the work you are
+supposed to hand off.**
+
+**For the other rows (search-records, translation, convert-dates): output one
+short sentence naming the right skill, and stop. No tool calls, no file reads.**
 
 ---
 
@@ -76,8 +85,9 @@ What does the user need to understand?
 - "Why does this record say X?" → interpretation. Apply the
   historical-terminology reference and broad-context factors.
 - "What records exist / where do I access records for [place]?" →
-  record availability. This is locality-guide's job — redirect there
-  immediately and do NOT call MCP tools (see the Routing check above).
+  record availability. This is locality-guide's job — hand off by invoking
+  the locality-guide skill via the Skill tool, and do NOT call MCP tools
+  (see the Routing check above).
 - "Why can't I find [person]?" → search strategy. Consider
   migration, occupation, ethnic/linguistic factors, name changes.
 - "What does [term/title/abbreviation] mean?" → vocabulary for
