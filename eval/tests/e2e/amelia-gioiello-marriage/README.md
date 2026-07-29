@@ -6,8 +6,8 @@ all committed e2e fixtures to be about deceased persons.)
 
 ## Research question
 
-> Who is the spouse of Amelia Frances Gioiello and what were they married with
-> evidence?
+> Who did Amelia Frances Gioiello marry, and what evidence is found for their
+> marriage?
 
 ## What was removed from the starting tree
 

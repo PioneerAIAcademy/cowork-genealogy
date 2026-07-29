@@ -1,7 +1,7 @@
 {
   "project": {
     "id": "rp_amelia_gioiello_marriage",
-    "objective": "Who is the spouse of Amelia Frances Gioiello and what were they married with evidence?",
+    "objective": "Who did Amelia Frances Gioiello marry, and what evidence is found for their marriage?",
     "subject_person_ids": [
       "GCT1-F3Q"
     ],
