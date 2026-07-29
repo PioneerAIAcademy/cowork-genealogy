@@ -39,6 +39,25 @@ for rel in $SHARED_PATHS; do
   src="$main/$rel"
   dst="$here/$rel"
   [ -e "$src" ] || continue                  # primary doesn't have it → skip
+  # An EMPTY directory in the primary is worse than a missing one: it exists,
+  # so it links cleanly, and every worktree then inherits an unusable
+  # node_modules that fails as `TS2307 Cannot find module` rather than as
+  # "deps not installed". `npm ci` deletes node_modules before repopulating it,
+  # so any interrupted install leaves exactly this state — and because the link
+  # is shared, one broken primary silently breaks every worktree at once.
+  # Refuse to link it and name the fix instead.
+  #
+  # Deliberately plain `ls`, NOT `ls -A`: npm writes `.package-lock.json` into
+  # node_modules early in the install, so a half-installed directory contains
+  # that one dotfile and nothing else. `ls -A` sees it and reads the directory
+  # as populated — which is the exact live state this guard was written for.
+  # Only a non-hidden entry (a real package, or an `@scope` dir) counts.
+  if [ -d "$src" ] && [ -z "$(ls "$src/" 2>/dev/null)" ]; then
+    echo "link-worktree: SKIPPING $rel — it exists in the primary worktree but is EMPTY."
+    echo "link-worktree:   Run 'make install' in $main to populate it, then re-run"
+    echo "link-worktree:   'make worktree-link' here."
+    continue
+  fi
   if [ -e "$dst" ] && [ ! -L "$dst" ]; then   # real file/dir already here → keep
     echo "link-worktree: keeping existing $rel (not a symlink)"
     continue

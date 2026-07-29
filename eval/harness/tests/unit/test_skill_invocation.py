@@ -4,7 +4,10 @@ docs/plan/research-guardrail-bypass-plan.md §4.1/§4.4 — pure matching logic
 over the harness's `tool_calls` list shape, no I/O, no SDK types.
 """
 
+import pytest
+
 from harness.skill_invocation import (
+    CONFLICT_ANALYSIS_FIELDS,
     GUARDRAIL_SKILLS,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
@@ -295,7 +298,55 @@ def test_flags_a_resolved_conflict_with_no_conflict_resolution_invocation():
 
 
 def test_unresolved_conflict_does_not_require_invocation():
+    """A bare record that a conflict EXISTS is not conflict-resolution's product.
+
+    person-evidence (#738), proof-conclusion, question-selection, research-plan,
+    timeline and init-project all legitimately open a conflicts entry with only
+    the schema's required fields. Firing here would flag every one of them.
+    """
     research = {"conflicts": [{"id": "c_001", "status": "unresolved"}]}
+    assert find_effects_without_invocation([], research, {}) == []
+
+
+@pytest.mark.parametrize("field", CONFLICT_ANALYSIS_FIELDS)
+def test_flags_an_unresolved_conflict_carrying_the_analysis_product(field):
+    """Regression for eulogia-gatica-burial run-2026-07-28_17-07-48.
+
+    The router wrote a full independence/weighing analysis into c_001, never
+    invoked conflict-resolution, and left `status: unresolved` — which the
+    status-only rule read as "nothing to see here". It then stamped the proof
+    `proved` over the open conflict. Each analysis field alone must fire.
+    """
+    research = {"conflicts": [{"id": "c_001", "status": "unresolved", field: "a_004"}]}
+    violations = find_effects_without_invocation([], research, {})
+    assert any("conflict-resolution" in v for v in violations)
+
+
+def test_analysis_product_is_satisfied_by_invoking_conflict_resolution():
+    research = {
+        "conflicts": [
+            {"id": "c_001", "status": "unresolved", "weighing_analysis": "the 1862 baptism wins"}
+        ]
+    }
+    calls = [_skill_call("conflict-resolution")]
+    assert not any("conflict-resolution" in v for v in find_effects_without_invocation(calls, research, {}))
+
+
+def test_empty_analysis_fields_do_not_fire():
+    """Null/empty is the schema's own default for these optional fields — a
+    writer that spells them out as empty has still produced no analysis."""
+    research = {
+        "conflicts": [
+            {
+                "id": "c_001",
+                "status": "unresolved",
+                "independence_analysis": None,
+                "weighing_analysis": "",
+                "preferred_assertion_id": None,
+                "resolution_rationale": None,
+            }
+        ]
+    }
     assert find_effects_without_invocation([], research, {}) == []
 
 
