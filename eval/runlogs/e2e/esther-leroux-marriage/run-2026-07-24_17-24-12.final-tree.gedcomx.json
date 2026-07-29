@@ -1,0 +1,422 @@
+{
+  "persons": [
+    {
+      "id": "MD1C-48H",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Esther",
+          "surname": "Leroux",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1874",
+          "standard_date": "1874",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "57a3d847-1116-47d7-9245-cd678e38df12",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Lewiston, Androscoggin, Maine, United States",
+          "standard_place": "Lewiston, Androscoggin, Maine, United States"
+        },
+        {
+          "id": "0514807f-8cf7-444d-afa5-294ce66024d5",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "0f37949d-eeda-4753-a38b-1c4b99c2d6c8",
+          "type": "Occupation",
+          "value": "Works In Cotton Mill"
+        },
+        {
+          "id": "56e01b9d-42a5-481a-8bd0-f730b8266a82",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "F2",
+          "type": "Marriage",
+          "date": "5 Nov 1894",
+          "place": "Lewiston, Androscoggin, Maine, United States",
+          "standard_place": "Lewiston, Androscoggin, Maine, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "G6GQ-P4F",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Jean",
+          "surname": "Jacques"
+        },
+        {
+          "id": "N6",
+          "type": "BirthName",
+          "given": "Jean",
+          "surname": "Laque",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "59cb3623-4d52-4c04-a526-5301cb850afa",
+          "type": "Birth",
+          "date": "1878",
+          "standard_date": "1878",
+          "place": "Quebec",
+          "standard_place": "Quebec, Canada"
+        },
+        {
+          "id": "3ceee2a0-bfb7-4265-8a85-1f215ab5625c",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Saint-Fr\u00e9d\u00e9ric, Beauce, Quebec, Canada",
+          "standard_place": "Saint-Fr\u00e9d\u00e9ric, Beauce, Quebec, Canada"
+        },
+        {
+          "id": "ff17c110-3e57-4a67-8d66-1f8b0e2f6324",
+          "type": "Death",
+          "date": "17 Jun 1938",
+          "standard_date": "17 Jun 1938",
+          "place": "Manhattan, New York, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "e21a3af4-69cb-4cb0-a2cb-a423d9842128",
+          "type": "Burial",
+          "date": "20 Jun 1938",
+          "standard_date": "20 Jun 1938"
+        },
+        {
+          "id": "7227be9a-a21e-4cd4-b31e-08232746b7af",
+          "type": "Residence",
+          "place": "Brooklyn",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "F3",
+          "type": "Marriage",
+          "date": "5 Nov 1894",
+          "place": "Lewiston, Androscoggin, Maine, United States",
+          "standard_place": "Lewiston, Androscoggin, Maine, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "LT17-CGW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Joseph",
+          "surname": "Leroud",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "6a846bb2-b214-4a59-bd32-bc772b505b4d",
+          "type": "Birth",
+          "date": "29 avril 1804",
+          "standard_date": "29 Apr 1804",
+          "place": "Saint-Joseph-de-Soulanges, Soulanges, Qu\u00e9bec, Canada",
+          "standard_place": "Saint-Joseph-de-Soulanges, Soulanges, Quebec, Canada"
+        },
+        {
+          "id": "4748ed3c-f65b-4004-abee-1310abc4a2b7",
+          "type": "Death",
+          "date": "10 dec 1874",
+          "standard_date": "10 Dec 1874",
+          "place": "Qu\u00e9bec, Canada",
+          "standard_place": "Quebec, Canada"
+        },
+        {
+          "id": "a5fa9350-c3ae-41c6-b952-c92693546f04",
+          "type": "D\u00e9c\u00e8s+du+p\u00e8re+en+1810+et+de+la+m\u00e8re+1804+Tutelle+des+enfants+Leroux+par+\u00c9tienne+Ravary",
+          "value": "Oncle des enfants."
+        },
+        {
+          "id": "262ecf24-6170-4e11-aa54-749f22cb2880",
+          "type": "Evenements+de+novembre+1838+a++Lacolle+et+a++Odeltown",
+          "value": "Il est soup\u00e7onn\u00e9 d'activit\u00e9 subversive et il est arr\u00eat\u00e9 le 8 novembre puis conduit \u00e0  la prison du Pied du Courant \u00e0  Montr\u00e9al. Il passe les f\u00eates en prison avec plusieurs autres patriotes. Peu de temps apr\u00e8s, Joseph Leroux est emmen\u00e9 devant le commissaire enqu\u00eateur. Il se d\u00e9fend lui m\u00eame. Il est acquitt\u00e9 et lib\u00e9r\u00e9 le m\u00eame jour."
+        }
+      ]
+    },
+    {
+      "id": "L7B2-HQ8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Domitille",
+          "surname": "Preise",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f101",
+          "type": "Birth",
+          "date": "8 September 1821",
+          "standard_date": "8 Sep 1821",
+          "place": "Saint-Pierre-les-Becquets, B\u00e9cancour, Quebec, Canada",
+          "standard_place": "Saint-Pierre-les-Becquets, B\u00e9cancour, Quebec, Canada"
+        },
+        {
+          "id": "7a3b23a0-4289-4bd0-bda5-2412587be27a",
+          "type": "Christening",
+          "date": "9 September 1821",
+          "standard_date": "9 Sep 1821",
+          "place": "Saint-Pierre-les-Becquets, B\u00e9cancour, Quebec, Canada",
+          "standard_place": "Saint-Pierre-les-Becquets, B\u00e9cancour, Quebec, Canada"
+        },
+        {
+          "id": "41cebf96-d4ac-4ab3-88d7-40ebc7c8f944",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Lewiston, Androscoggin, Maine, United States",
+          "standard_place": "Lewiston, Androscoggin, Maine, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08923",
+          "type": "Death"
+        },
+        {
+          "id": "232cc470-6bd2-4777-9967-4050fd7977d4",
+          "type": "Marital Status",
+          "value": "Widowed"
+        },
+        {
+          "id": "fbd098a1-59f4-46e5-ac22-433e130d1de7",
+          "type": "Occupation",
+          "value": "Keeping House"
+        },
+        {
+          "id": "a9e17366-3273-49ed-a142-ca07ae759d2f",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "GSKS-H6K",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Jean",
+          "surname": "Jacques"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1146df0d-fa2f-456f-b49e-cc5b46036653",
+          "type": "Birth",
+          "date": "24 March 1901",
+          "standard_date": "24 Mar 1901",
+          "place": "Jay, Franklin, Maine, United States",
+          "standard_place": "Jay, Franklin, Maine, United States"
+        },
+        {
+          "id": "53c9d3f1-1579-439c-a512-e8207ce3371f",
+          "type": "Death",
+          "date": "25 Mar 1901",
+          "standard_date": "25 Mar 1901",
+          "place": "Jay, , Maine, United States",
+          "standard_place": "Jay, Franklin, Maine, United States"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N7",
+          "type": "BirthName",
+          "given": "Athanase",
+          "surname": "Jaque",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N8",
+          "type": "BirthName",
+          "given": "Emile",
+          "surname": "Lessard",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G6GQ-P4F",
+      "person2": "MD1C-48H"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LT17-CGW",
+      "person2": "L7B2-HQ8",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "6 October 1858",
+          "standard_date": "6 Oct 1858",
+          "place": "Saint-Pierre-les-Becquets, B\u00e9cancour, Quebec, Canada",
+          "standard_place": "Saint-Pierre-les-Becquets, B\u00e9cancour, Quebec, Canada"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LT17-CGW",
+      "child": "MD1C-48H",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L7B2-HQ8",
+      "child": "MD1C-48H",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G6GQ-P4F",
+      "child": "GSKS-H6K"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "MD1C-48H",
+      "child": "GSKS-H6K"
+    }
+  ],
+  "sources": [
+    {
+      "id": "72DS-RJN",
+      "title": "Esther Leroux, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MF3X-XFM : Mon Jan 13 12:06:59 UTC 2025), Entry for Dometile Leroux and Leocadie Leroux, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MF3X-XFS"
+    },
+    {
+      "id": "MSMC-8ZD",
+      "title": "Legacy NFS Source: Esther Leroux - birth: about 1874; United States"
+    },
+    {
+      "id": "S8WK-TLS",
+      "title": "Esther Leroux, \"Maine, Vital Records, 1670-1921\"",
+      "citation": "\"Maine, Vital Records, 1670-1921\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VZQJ-TC4 : Sat Mar 01 11:57:19 UTC 2025), Entry for Jacques and Jean Jacques, 24 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VZQJ-TCW"
+    },
+    {
+      "id": "MTLH-FPT",
+      "title": "Esther Leroux in entry for Jean Laque, \"Maine, Marriages, 1771-1907\"",
+      "citation": "\"Maine, Marriages, 1771-1907\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F4FR-BHD : 14 January 2020), Esther Leroux in entry for Jean Laque, 1894.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4FR-BHD"
+    },
+    {
+      "id": "S8WK-Y3F",
+      "title": "Esther Lerout, \"Maine, Vital Records, 1670-1921\"",
+      "citation": "\"Maine, Vital Records, 1670-1921\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VZQJ-131 : Sat Oct 18 01:33:25 UTC 2025), Entry for Jean Jacques and Jean Jacques, 25 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VZQJ-1Q9"
+    },
+    {
+      "id": "S1",
+      "title": "Maine, Marriages, 1771-1907, index entry for Jean Laque and Esther Leroux, 5 November 1894, Lewiston, Androscoggin, Maine",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4FR-BHD",
+      "citation": "\"Maine, Marriages, 1771-1907,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:MP2J-BDK : 14 January 2020), Entry for Jean Laque; citing Lewiston, Androscoggin, Maine, United States; FHL microfilm."
+    },
+    {
+      "id": "S2",
+      "title": "Maine, Vital Records, 1670-1921, Entry for Jean Jacques and Jacques, 05 Nov 1894",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VZQV-W6T",
+      "citation": "\"Maine, Vital Records, 1670-1921,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VZQV-W6T : accessed 24 July 2026), entry for Jean Jacques and Jacques, 05 Nov 1894."
+    },
+    {
+      "id": "S3",
+      "title": "Maine, Vital Records, 1670-1921, Entry for Jean Jacques and Estelle Leroux, 27 October 1894",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q219-YL6L",
+      "citation": "\"Maine, Vital Records, 1670-1921,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q219-YL6L : accessed 2026-07-24), Entry for Jean Jacques and Estelle Leroux, 27 October 1894."
+    }
+  ]
+}

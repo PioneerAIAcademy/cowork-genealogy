@@ -18,7 +18,7 @@
 >    opinion was rarely used, and the viewer (item 2) lets a human verify a
 >    cite-worthy read against the actual scan, a better check than a second
 >    machine read. A user-invoked **Opus** transcription is parked in
->    `docs/TODOs.md`, separate from this Qwen-only workflow.) `image_read`'s
+>    §15.9, separate from this Qwen-only workflow.) `image_read`'s
 >    inline path is unused by the agent (kept only for the Issue #28 eval).
 > 2. **Image persistence + viewing (§8.5).** The backing JPEG is saved for
 >    **retained** sources so the Electron viewer (then the hosted web
@@ -544,7 +544,7 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
   key." Preserve the "reserve image transcription for facts that exist only on
   the image" guidance. (A Sonnet-5 second-opinion escalation was considered and
   **dropped** — the viewer lets a human verify a cite-worthy read against the
-  scan; a user-invoked Opus transcription is parked in `docs/TODOs.md`.)
+  scan; a user-invoked Opus transcription is parked in §15.9.)
 - **`image-reader` subagent: Qwen only.** Its sole reader is `image_transcribe`
   (Qwen) for every image; it never reads a scan inline with Claude's own
   vision. It returns **text only**, so record-extraction's contract is
@@ -658,7 +658,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `dev/try-image-transcribe.ts`
 - `tests/tools/image-transcribe.test.ts`
 - `tests/tools/configure-openrouter.test.ts`
-- Phase 0 results write-up *(done: PR 723; conclusions folded into `docs/TODOs.md` § "Engine — image transcription")*
+- Phase 0 results write-up *(done: PR 723; conclusions folded into `docs/TODOs.md` § "Engine — image reading & transcription")*
 
 **Modify**
 - `src/types/auth.ts` — `openRouterApiKey`, `openRouterModel` on `AppConfig`
@@ -716,11 +716,28 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
    all record types incl. German — no per-record-type split. A Sonnet-5 second
    opinion was considered and dropped (the viewer lets a human verify a
    cite-worthy read against the scan; a user-invoked Opus transcription is
-   parked in `docs/TODOs.md`).
+   parked in §15.9 below).
 7. **Batching / cost.** Worth a multi-image call later, or is one-per-call
    fine? (Kept out of v1.)
 8. **Fallback if OpenRouter is down** at runtime — degrade to a clean
    NOT-READ→pivot-to-indexes, same as any fetch failure.
+9. **User-invoked Opus transcription ("Flow 2") — parked, not requested.**
+   Brainstormed alongside this spec and never asked for by a user, so it is
+   recorded here rather than carried as work. The research workflow stays
+   **Qwen only**; this would let a user ask Claude to transcribe *one specific*
+   image with **Opus** on demand (premium, higher accuracy). Recommended shape:
+   a user-only tool `image_transcribe_opus`, a thin wrapper over the same
+   host-side OCR helper with the model pinned to an Opus slug **via OpenRouter**
+   (so it inherits any-size + text-out + no base64 — the bytes never cross the
+   MCP stdio transport), which the research skills do **not** list in
+   `allowed-tools`; invoked by the main session on request or a
+   `/transcribe-image` command. Present the transcription; optionally write it
+   into the source's `transcription` (the tool can already persist the scan via
+   `projectPath`). Ideal future UX: a "Transcribe with Opus" button in the
+   viewer beside the saved scan — needs a viewer→action channel. Open impl
+   detail: Opus via OpenRouter (reuses the key; may lag the latest 4.8) vs the
+   Anthropic API directly (latest, needs an Anthropic-key path). Revisit only
+   on a real user request.
 
 ## 16. References
 

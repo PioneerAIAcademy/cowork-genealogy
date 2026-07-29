@@ -1,0 +1,843 @@
+{
+  "project": {
+    "id": "rp_eulogia_gatica_burial",
+    "objective": "Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and does a cemetery record corroborate her recorded death date and birth year?",
+    "subject_person_ids": [
+      "LZ3Z-RHM"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-28"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and what death date and birth year does the cemetery or burial record record?",
+      "rationale": "This is the primary and central question of the research objective. Santiago maintained civil and church burial registers as well as municipal cemetery records from the late 19th century onward. The Cementerio General de Santiago (founded 1821) is the principal burial ground for the capital and its records are partially available on FamilySearch and other repositories. Answering this question simultaneously establishes the burial facts and tests whether those records corroborate any previously recorded death date and birth year for the subject.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "log_entry_ids": [
+          "log_001",
+          "log_002"
+        ],
+        "stop_criteria": "Two independent record types (cemetery burial register and civil death registration) directly answer the burial date, death date, and birth year. Both searches returned positive results. Fallback sources (church death index, Catholic parish records, full-text search, MyHeritage) were properly skipped per plan since primary searches succeeded. No additional record types are known that would add independent evidence for this specific burial-date question beyond what has been gathered.",
+        "justification": "GPS Standard 17 (reasonably exhaustive research) is met for q_001: (1) the highest-probability indexed sources for burial and death were searched; (2) two independent sources from different administrative systems agree on the key facts; (3) the subject's name, the corroborating family relationships, and the same_person scores (0.865 and 0.941) confirm identity. Known gap: original images were not examined. This does not affect the exhaustiveness determination for a burial-date question \u2014 the indexed facts (date, place, birth year) are complete, and image examination would refine source classification from derivative to original but would not change the substantive answer."
+      },
+      "created": "2026-07-28"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "cemetery",
+          "jurisdiction": "Santiago, Chile",
+          "date_range": "1860-1940",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1428897 'Chile, Cemetery Records, 1701-2021' is indexed + images and covers both the Cementerio General de Santiago (founded 1821) and the Cementerio Cat\u00f3lico (founded 1883) \u2014 the two cemeteries most likely to hold Eulojia's burial. This is the single highest-probability source for the burial date, place, age at death, and birth year. Search by surname Gatica and given name Eulojia; also try Eulogia and Eulalia as variant spellings. Per loc_001 quirk: if not found under Gatica, she may be indexed under her married name Gonz\u00e1lez.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Santiago, Chile",
+          "date_range": "1885-1933",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1630787 'Chile, Civil Registration, 1880-1933' is indexed + images and covers civil death registrations from 1885 onward. A civil death record would independently record the death date, age, and sometimes birth year \u2014 allowing direct corroboration of any cemetery record found in step 1. Search surname Gatica, given name Eulojia (and variants). Per loc_001: civil registration began in Chile in 1885; if her death predates 1885, this item will yield nothing and step 3 applies.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Santiago, Chile",
+          "date_range": "1700-1920",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1520559 'Chile, Deaths, 1700-1920' is an index-only collection derived from church burial records and covers deaths predating civil registration (pre-1885) as well as the civil period. Acts as a fallback for pli_002 if Eulojia died before 1885 or if the civil registration search yields no match \u2014 church burial records were the primary death-recording mechanism before 1885.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Santiago, Chile",
+          "date_range": "1633-2015",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 3405096 'Chile, Catholic Church Records, 1633-2015' is indexed + images (8.8M records) and includes defunciones (burial records) from Santiago Catholic parishes. This is broader than collection 1520559 and includes images, so it can confirm index entries and surface records not captured in the narrower Deaths collection. Per loc_001: Santiago families used multiple parishes; search across parishes. Fallback if pli_003 index-only search returns nothing.",
+          "fallback_for": "pli_003",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "cemetery",
+          "jurisdiction": "Santiago, Chile",
+          "date_range": "1860-1940",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search on the two compound surnames 'Gatica' + 'Alfaro' across the full FamilySearch corpus. Per the record-type guide, for a subject with an Iberian compound surname (Gatica Alfaro), a co-occurrence search of both surname components is the highest-yield tactic for unindexed or variant-indexed records. Execute via the search-full-text skill, unscoped. Covers browse-only volumes and scanned registers that indexed search in steps 1-4 cannot reach. Fallback for pli_001 if the indexed cemetery search returns nothing.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "cemetery",
+          "jurisdiction": "Santiago, Chile",
+          "date_range": "1821-2015",
+          "repository": "MyHeritage",
+          "rationale": "MyHeritage collection 20739 'Chile, Santiago Burials' offers a complementary index to the FamilySearch cemetery collection and may have differently resolved name variants or additional records. Per loc_001, this is a separate database worth checking when the FS indexed search (pli_001) yields nothing. Execute via search-external-sites skill.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "cemetery",
+          "jurisdiction": "Santiago, Chile",
+          "date_range": "1860-1940",
+          "repository": "FamilySearch",
+          "rationale": "FAN search: search FamilySearch collection 1428897 (Cemetery Records) and collection 1630787 (Civil Registration) for Eulojia's husband Juan de Dios Gonz\u00e1lez (or their children: Manuel Jesus, Jos\u00e9 Antonio, Luisa del Carmen, Zoila Blanca, and Sara Gonz\u00e1lez Gatica). Finding a family member's burial at a specific cemetery narrows the search space for Eulojia's own burial \u2014 adjacent plots are common in Chilean family practices \u2014 and may corroborate the family's cemetery and time period. BCG Standard 14 FAN item.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T16:42:58.649Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gatica",
+        "givenName": "Eulojia",
+        "collectionId": "1428897",
+        "recordCountry": "Chile",
+        "sex": "Female"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 262,
+      "notes": "Rank-1 match: Eulogia Gatica Alfaro (matchScore 0.692), buried 30 May 1908, Santiago, Chile; birth year 1865. Both surnames match subject (Gatica Alfaro). Given-name variant Eulogia vs. Eulojia. Not attached to subject or other. Record ARK ark:/61903/1:1:6PVG-GDQP. Image at ark:/61903/3:1:3QS7-89MX-NVF4. This is the primary burial find for q_001."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T16:44:03.902Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gatica",
+        "givenName": "Eulogia",
+        "collectionId": "1630787",
+        "recordCountry": "Chile",
+        "recordType": "death",
+        "deathYearFrom": 1905,
+        "deathYearTo": 1912,
+        "sex": "Female"
+      },
+      "outcome": "positive",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 7,
+      "notes": "Two duplicate index entries for same death registration: Eulojia Gatica Alfaro (ARKs Q2S2-4XV5 and Q2S2-4XS9), death 29 May 1908, Santiago Centro, birth year 1865. Both already attached to subject LZ3Z-RHM. Parents: Ventura Gatica + C\u00e1rmen Alfaro; husband Juan Gonz\u00e1lez. Corroborates cemetery record (pli_001) \u2014 death 29 May 1908 consistent with burial 30 May 1908. Q2S2-4XV5 selected as primary; Q2S2-4XS9 is duplicate. Also note rank-3 result Q241-Q8ZN is a death record for Zoila Gonz\u00e1lez Gatica listing Eulogia Gatica as related party (FAN corroboration of children)."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Chile, registros de cementerios, 1701-2021\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6PVG-GDQP : accessed 28 July 2026), Entry for Eulogia Gatica Alfaro, 30 May 1908.",
+      "citation_detail": {
+        "who": "Eulogia Gatica Alfaro",
+        "what": "Indexed cemetery burial record, Chile, registros de cementerios, 1701-2021 (FamilySearch collection 1428897)",
+        "when_created": "30 May 1908 (original burial register entry); indexed record accessed 2026",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Entry for Eulogia Gatica Alfaro, 30 May 1908; image ARK ark:/61903/3:1:3QS7-89MX-NVF4 (original image not yet transcribed)"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6PVG-GDQP",
+      "notes": "Indexed cemetery record derived from original burial registers. Original image (ark:/61903/3:1:3QS7-89MX-NVF4) has not been transcribed \u2014 original not examined. The index may contain transcription errors; image review is recommended to confirm name spelling, burial date, and birth year.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q2S2-4XV5 : 28 July 2026), Entry for Eulojia Gatica Alfaro and Ventura Gatica.",
+      "citation_detail": {
+        "who": "Eulojia Gatica Alfaro",
+        "what": "Civil death registration index entry, Chile, Registro Civil, 1880-1933, collection 1630787",
+        "when_created": "29 May 1908 (death registered)",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Index entry ark:/61903/1:1:Q2S2-4XV5; underlying image ark:/61903/3:1:939K-LP7F-6"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q2S2-4XV5",
+      "access_date": "2026-07-28",
+      "notes": "Original not examined \u2014 index/abstract entry only; underlying image ark:/61903/3:1:939K-LP7F-6 not yet transcribed. Source is a derivative index of the original Chilean civil death registration. 'Ventura' in the index is a common short form of 'Buenaventura'; tree person Buenaventura Gatica \u00c1rias (KNT6-7ZR) is the likely match for the father.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6PVG-GDQP",
+      "record_persona_id": "p_301532824943",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Eulogia Gatica Alfaro",
+      "structured_value": {
+        "given": "Eulogia",
+        "surname": "Gatica Alfaro"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative index of a burial register; the person who provided the decedent's name to the original register is unknown. Index transcription may differ from the original \u2014 original image not examined.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6PVG-GDQP",
+      "record_persona_id": "p_301532824943",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative index; informant who provided sex to the original burial register is unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6PVG-GDQP",
+      "record_persona_id": "p_301532824943",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "buried 30 May 1908, Santiago, Chile",
+      "date": "30 May 1908",
+      "date_certainty": "exact",
+      "place": "Santiago, Chile",
+      "information_quality": "primary",
+      "informant": "burial registrar",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The burial registrar recorded the entry contemporaneously at the time of burial \u2014 primary information for the burial event itself. This is a derivative index of that original register; transcription error is possible. Original image not examined.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Santiago, Chile"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6PVG-GDQP",
+      "record_persona_id": "p_301532824943",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "birth year 1865",
+      "date": "1865",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth year recorded in a burial register by an unknown informant who could not have been present at the birth (1865). The registrar likely recorded what was reported by a family member or attendant at the time of burial, but the record does not identify who provided this fact. Derivative index \u2014 original image not examined; indexer may have misread the year.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002164",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Eulojia Gatica Alfaro",
+      "structured_value": {
+        "given": "Eulojia",
+        "surname": "Gatica Alfaro"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown declarant who presented the death to the registrar",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002164",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown declarant who presented the death to the registrar",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002164",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "29 de mayo de 1908",
+      "date": "29 May 1908",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002164",
+      "record_role": "deceased",
+      "fact_type": "death_registration",
+      "value": "Registered in Santiago, Santiago, Chile",
+      "place": "Santiago, Santiago, Metropolitana de Santiago, Chile",
+      "standard_place": "Santiago Centro, Santiago, Chile",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002164",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1865 (reported to registrar)",
+      "date": "1865",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown declarant who presented the death to the registrar",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The declarant reporting the deceased's birth year to the civil registrar in 1908 was not present at the 1865 birth; this is secondhand biographical information relayed to an official. The birth year 1865 corroborates the cemetery record (src_001) which also yields a birth year consistent with 1865.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002164",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Ventura Gatica",
+      "structured_value": {
+        "relationship_type": "parent_child",
+        "related_person_role": "father"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown declarant who presented the death to the registrar",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Parentage stated in the civil registration by an unknown declarant. 'Ventura' is consistent with 'Buenaventura' (tree person KNT6-7ZR, Buenaventura Gatica \u00c1rias) \u2014 identity link to be resolved by person-evidence.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002164",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of C\u00e1rmen Alfaro",
+      "structured_value": {
+        "relationship_type": "parent_child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown declarant who presented the death to the registrar",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Parentage stated in the civil registration by an unknown declarant. Consistent with tree person Carmen Alfaro Vilches (MX45-9HH) \u2014 identity link to be resolved by person-evidence.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002164",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Juan Gonzalez",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "husband"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown declarant who presented the death to the registrar",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Spousal relationship stated in the civil registration by an unknown declarant. Consistent with tree person Juan de Dios Gonz\u00e1lez (GDVK-Y8P) \u2014 identity link to be resolved by person-evidence.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002170",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Ventura Gatica",
+      "structured_value": {
+        "given": "Ventura",
+        "surname": "Gatica"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown declarant who presented the death to the registrar",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "'Ventura' is a common short form of 'Buenaventura'; the full name may be Buenaventura Gatica, consistent with tree person KNT6-7ZR. Name provided by the declarant relaying the deceased's parentage \u2014 a third party naming someone other than themselves.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002178",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "C\u00e1rmen Alfaro",
+      "structured_value": {
+        "given": "C\u00e1rmen",
+        "surname": "Alfaro"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown declarant who presented the death to the registrar",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Name provided by the declarant relaying the deceased's parentage \u2014 a third party naming someone other than themselves. Consistent with tree person Carmen Alfaro Vilches (MX45-9HH).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002182",
+      "record_role": "husband",
+      "fact_type": "name",
+      "value": "Juan Gonzalez",
+      "structured_value": {
+        "given": "Juan",
+        "surname": "Gonzalez"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown declarant who presented the death to the registrar",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Name provided by the declarant relaying the deceased's marital status \u2014 a third party naming someone other than themselves. Consistent with tree person Juan de Dios Gonz\u00e1lez (GDVK-Y8P).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:Q2S2-4XV5",
+      "record_persona_id": "p_102125002182",
+      "record_role": "husband",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown declarant who presented the death to the registrar",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Cemetery record (src_001, collection 1428897) names the deceased 'Eulogia Gatica Alfaro' \u2014 a minor spelling variant of 'Eulojia del Carmen Gatica Alfaro' (Eulogia vs. Eulojia, both attested forms in Chilean records). Burial date 30 May 1908, Santiago, Chile matches the known death context of LZ3Z-RHM. Record found by searching FamilySearch specifically for this individual. same_person score 0.865 (matched: true, confidence: 5). Strong correlation on name, place, and time period.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Sex 'Female' in cemetery record consistent with LZ3Z-RHM (Female). Links with same basis as a_001; same_person score 0.865.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Burial date 30 May 1908, Santiago, Chile (primary information from the burial registrar). LZ3Z-RHM has a Death fact of 29 May 1908 in Santiago \u2014 one day prior, consistent with same-day or next-day burial in 1908 Chile. same_person score 0.865. No chronological conflict.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Birth year 1865 reported in burial register. LZ3Z-RHM has a Christening fact of 2 October 1862 (Los Andes), which is three years earlier. The discrepancy is within typical reporting error for a retrospective birth-year statement at a burial and does not undermine identity \u2014 the same birth year 1865 appears in the independent civil registration (a_009). same_person score 0.865.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Civil registration (src_002) names the deceased 'Eulojia Gatica Alfaro' \u2014 exact given-name match and surname match with LZ3Z-RHM 'Eulojia del Carmen Gatica Alfaro'. Death 29 May 1908, Santiago. Source (9YL5-1XX) is already attached to LZ3Z-RHM in the FamilySearch tree. same_person score 0.941 (matched: true, confidence: 5). Strongest available identity confirmation.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Sex 'Female' in civil registration consistent with LZ3Z-RHM. Links with same basis as a_005; same_person score 0.941.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Death date '29 de mayo de 1908' (29 May 1908) from civil registrar (primary, official duty) matches LZ3Z-RHM's Death fact 29 May 1908, Santiago. same_person score 0.941.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Death registration place Santiago Centro, Santiago, Chile is consistent with LZ3Z-RHM's death in Santiago, Santiago, Chile. same_person score 0.941.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Birth year 1865 stated in civil registration \u2014 secondary information (declarant not present at 1865 birth). Consistent with a_004 from cemetery record (independent source). Christening 1862 in tree differs, but 1865 plausibly reflects reported age rather than exact birth year. same_person score 0.941.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child of Ventura Gatica' \u2014 bears on LZ3Z-RHM as the child. Tree shows KNT6-7ZR (Buenaventura Gatica \u00c1rias) as father of LZ3Z-RHM (ParentChild R3). 'Ventura' is a documented short form of 'Buenaventura' in Chilean naming practice. same_person score 0.941 for LZ3Z-RHM; relative match score 0.997 for KNT6-7ZR.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "KNT6-7ZR",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child of Ventura Gatica' names KNT6-7ZR (Buenaventura Gatica \u00c1rias) indirectly as the father. 'Ventura' is a well-documented short form of 'Buenaventura' in Chilean/Spanish naming; surname 'Gatica' matches exactly. Relationship position: father of the deceased whose parentage in the tree links to KNT6-7ZR (R3). matchRelatives score 0.997 (confidence 5) pairing p_102125002170 \u2192 KNT6-7ZR. No conflict \u2014 name discrepancy is a documented abbreviation.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child of C\u00e1rmen Alfaro' \u2014 bears on LZ3Z-RHM as the child. Tree shows MX45-9HH (Carmen Alfaro Vilches) as mother of LZ3Z-RHM (ParentChild R4). Name 'C\u00e1rmen Alfaro' matches the first compound surname of MX45-9HH. same_person score 0.941 for LZ3Z-RHM; relative match score 0.997 for MX45-9HH.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "MX45-9HH",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child of C\u00e1rmen Alfaro' names MX45-9HH (Carmen Alfaro Vilches) as the mother. 'C\u00e1rmen Alfaro' matches the given name and first compound surname of MX45-9HH. Relationship position: mother of the deceased, confirmed by ParentChild R4 in tree. MX45-9HH died 2 January 1888 \u2014 before this 1908 registration \u2014 so her name is reported retrospectively by the declarant, which is normal. matchRelatives score 0.997 (confidence 5).",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "LZ3Z-RHM",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'spouse of Juan Gonz\u00e1lez' \u2014 bears on LZ3Z-RHM as the named spouse. Tree shows LZ3Z-R41 (Juan Jos\u00e9 Gonz\u00e1lez) as husband in Couple relationship R1 (married 13 Mar 1882, Santiago). 'Juan Gonzalez' on record matches 'Juan Jos\u00e9 Gonz\u00e1lez' in tree. same_person score 0.941 for LZ3Z-RHM; matchRelatives score 0.997 for LZ3Z-R41.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "LZ3Z-R41",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'spouse of Juan Gonz\u00e1lez' names LZ3Z-R41 (Juan Jos\u00e9 Gonz\u00e1lez) as husband of the deceased. 'Juan Gonzalez' matches 'Juan Jos\u00e9 Gonz\u00e1lez' (given name Juan exact; Gonz\u00e1lez/Gonzalez = same surname). Couple relationship R1 in tree. Note: extraction bias notes incorrectly suggested GDVK-Y8P (born 1890, a child of Eulojia) \u2014 the matchRelatives call confirms LZ3Z-R41 (spouse) as the correct match with score 0.997 (confidence 5). GDVK-Y8P is categorically excluded as the record's 'husband' persona given his birth year.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "KNT6-7ZR",
+      "confidence": "confident",
+      "rationale": "Father persona on civil registration names 'Ventura Gatica' \u2014 this persona's own name assertion. 'Ventura' is a documented short form of 'Buenaventura' in Chilean/Spanish naming practice; surname 'Gatica' is an exact match. Relationship position: father of deceased Eulojia Gatica Alfaro, whose father in the tree is KNT6-7ZR (Buenaventura Gatica \u00c1rias, R3). matchRelatives score 0.997 (confidence 5), pairing p_102125002170 \u2192 KNT6-7ZR. Corroborated by a_010 (the deceased's own parentage assertion naming the same father). Name discrepancy is a documented abbreviation, not an unexplained element.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "MX45-9HH",
+      "confidence": "confident",
+      "rationale": "Mother persona on civil registration names 'C\u00e1rmen Alfaro' \u2014 this persona's own name assertion. 'C\u00e1rmen Alfaro' matches Carmen Alfaro Vilches (MX45-9HH): given name Carmen (accent variant only) and first compound surname Alfaro are exact. Relationship position: mother of deceased Eulojia Gatica Alfaro, whose mother in the tree is MX45-9HH (R4). matchRelatives score 0.997 (confidence 5). Corroborated by a_011.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "LZ3Z-R41",
+      "confidence": "confident",
+      "rationale": "Husband persona on civil registration names 'Juan Gonzalez' \u2014 this persona's own name assertion. 'Juan Gonzalez' matches 'Juan Jos\u00e9 Gonz\u00e1lez' (LZ3Z-R41): given name Juan exact; Gonz\u00e1lez = Gonzalez (accent variant). Relationship position: spouse of deceased, confirmed by Couple R1 (married Santiago 1882). matchRelatives score 0.997 (confidence 5). Note: extraction bias notes incorrectly pointed to GDVK-Y8P (a child born 1890) \u2014 matchRelatives algorithm correctly scores LZ3Z-R41 as the spouse match.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "LZ3Z-R41",
+      "confidence": "confident",
+      "rationale": "Sex 'Male' for husband persona consistent with LZ3Z-R41 (Male). Links with same basis as a_015; matchRelatives score 0.997.",
+      "created": "2026-07-28"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Birth year 1865 \u2014 reported in both the cemetery record (a_004, indeterminate information, unknown informant at burial) and the civil death registration (a_009, secondary information, unknown declarant in 1908) \u2014 conflicts with the pre-existing Christening fact of 2 October 1862, Los Andes, Aconcagua, Chile, in the tree for LZ3Z-RHM (sourced from 'Chile Baptisms, 1585-1932', sources 9LS6-KMM and 3C18-8CL). A christening dated 1862 before a reported birth year of 1865 is a logical impossibility.",
+      "disputed_attribute": "birth_year",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_004",
+        "a_009"
+      ],
+      "independence_analysis": "The two 1865-supporting assertions are independent of each other (different records, different administrative systems, different informants). The 1862 Christening is sourced from a different record type (baptism register) via a separate pre-existing source. All three are independent. The conflict is therefore genuine, not a shared-informant artifact.",
+      "weighing_analysis": "The 1862 baptism source (Chile Baptisms, 1585-1932) is an indexed derivative of an original parish register, recorded contemporaneously in 1862 by a priest who would have known the child's name. The 1865 birth year in both death-era records is retrospective, reported by declarants who were not present at the birth. Retrospective birth-year reporting at death is well known to carry approximation error of several years in 19th-century Chile. On source quality, the 1862 baptism has stronger information quality (contemporaneous primary), but the 1865 birth year is supported by two independent informants. Candidate resolutions: (1) the death-era birth year is an approximation off by 1-3 years; (2) the 1862 baptism record belongs to a different Eulojia Gatica. Neither resolution can be confirmed without examining the original 1862 baptism image and attempting to find a birth/baptism record closer to 1865.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": null,
+      "status": "unresolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch collection 1428897 (Chile, Cemetery Records, 1701-2021) searched on surname Gatica, given name Eulojia, sex Female: 50 results returned, target record identified (ark:/61903/1:1:6PVG-GDQP, same_person score 0.865, matched). FamilySearch collection 1630787 (Chile, Civil Registration, 1880-1933) searched on the same parameters: 7 results returned, target record identified (ark:/61903/1:1:Q2S2-4XV5, same_person score 0.941, matched). Fallback sources (pli_003 church deaths index 1520559, pli_004 Catholic church records 3405096, pli_005 full-text surname co-occurrence search, pli_006 MyHeritage burials) were correctly skipped because both primary searches succeeded with positive, corroborating results. Known limitation: original image scans (ark:/61903/3:1:3QS7-89MX-NVF4 and ark:/61903/3:1:939K-LP7F-6) were not examined \u2014 original-image transcription is recommended to confirm indexed name spellings.",
+      "narrative_markdown": "## Burial Date, Death Date, and Birth Year of Eulojia del Carmen Gatica Alfaro\n\n### Sources and Evidence\n\nTwo independent records address q_001:\n\n**Record 1 \u2014 Cemetery burial register (src_001):** \"Chile, registros de cementerios, 1701-2021\", FamilySearch ark:/61903/1:1:6PVG-GDQP. The indexed entry names the deceased **Eulogia Gatica Alfaro**, Female, burial **30 May 1908**, Santiago, Chile, birth year **1865**. Classification: derivative source (FamilySearch indexed burial register; original image ark:/61903/3:1:3QS7-89MX-NVF4 not examined); burial date and place carry primary information quality (recorded by the burial registrar contemporaneously); name and birth year are indeterminate (informant unknown).\n\n**Record 2 \u2014 Civil death registration (src_002):** \"Chile, Registro Civil, 1880-1933\", FamilySearch ark:/61903/1:1:Q2S2-4XV5. The civil register entry names the deceased **Eulojia Gatica Alfaro**, Female, death **29 May 1908** (\"29 de mayo de 1908\"), registration place Santiago Centro, Santiago, birth year **1865**. Classification: derivative source (FamilySearch indexed entry of the original civil register; original image ark:/61903/3:1:939K-LP7F-6 not examined); death date and registration place carry primary information quality (recorded by the civil registrar under official duty); birth year is secondary information (reported by an unknown declarant not present at the 1865 birth). Parents: Ventura Gatica (= Buenaventura Gatica \u00c1rias, KNT6-7ZR; matchRelatives score 0.997) and C\u00e1rmen Alfaro (= Carmen Alfaro Vilches, MX45-9HH; score 0.997). Husband: Juan Gonz\u00e1lez (= Juan Jos\u00e9 Gonz\u00e1lez, LZ3Z-R41; score 0.997).\n\n### Identity Assessment\n\nThe cemetery record's 'Eulogia Gatica Alfaro' is identified as LZ3Z-RHM 'Eulojia del Carmen Gatica Alfaro': 'Eulogia' and 'Eulojia' are attested spelling variants; compound surname 'Gatica Alfaro' is exact; burial date and place are consistent; same_person score 0.865 (matched, confidence 5). The civil registration's 'Eulojia Gatica Alfaro' matches LZ3Z-RHM with exact given name and compound surname; death date and place consistent; same_person score 0.941 (matched, confidence 5); all three named relatives corroborate the tree's family unit via matchRelatives scores of 0.997 each.\n\nNote: an extraction bias note had incorrectly pointed the 'husband' persona (p_102125002182) toward GDVK-Y8P (a child of Eulojia, born 1890). The matchRelatives algorithm correctly resolved the spouse match to LZ3Z-R41 (Juan Jos\u00e9 Gonz\u00e1lez, married Eulojia 1882, score 0.997).\n\n### Corroboration Between Sources\n\nThe two records derive from different administrative systems (cemetery registry vs. civil registration) and have no derivation relationship \u2014 they are independent. Their findings agree:\n\n- **Death and burial dates:** Civil registration records death 29 May 1908; cemetery records burial 30 May 1908. A one-day interval is historically normal for Santiago in 1908 (same-day or next-day burial was standard before refrigeration). Consistent, not conflicting.\n- **Birth year:** Both records independently record 1865 \u2014 from separate informants in separate administrative contexts. Agreement from two independent informants strengthens the finding, though neither was present at the birth. See Conflicting Evidence for the caveat.\n- **Place:** Both records place the events in Santiago, Chile.\n\n### Conflicting Evidence\n\nOne conflict is formally recorded as c_001 (unresolved, does not block q_001):\n\nThe tree carries a pre-existing Christening fact of **2 October 1862**, Los Andes, Aconcagua, Chile (sourced from 'Chile Baptisms, 1585-1932', src 9LS6-KMM / 3C18-8CL). The death-era records report birth year 1865. Christening 1862 before birth year 1865 is a logical impossibility. Candidate resolutions: (a) retrospective birth-year approximation off by 1-3 years (common in 19th-century Chile); (b) the 1862 baptism belongs to a different individual. This conflict does not affect the burial/death-date conclusion. The birth year 1865 is treated as probable \u2014 supported by two independent informants but conflicting with a sourced contemporaneous baptism record.\n\n### Conclusion\n\nEulojia del Carmen Gatica Alfaro (LZ3Z-RHM) **died 29 May 1908** and was **buried 30 May 1908 in Santiago, Chile** (proved: two independent derivative sources, each carrying primary information for their respective events, agreeing across separate administrative systems). The **birth year 1865** is probable (two independent informants agree, but the finding conflicts with conflict c_001 \u2014 a sourced 1862 Christening fact in the tree \u2014 which remains unresolved and warrants follow-on research). Original image examination for both records is recommended to upgrade source classification and rule out indexer transcription error."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-28T18:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-28T18-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Santiago, Chile",
+      "for_place": "Santiago de Chile, Santiago, Chile",
+      "time_period": "1860-1940",
+      "jurisdictions": [
+        {
+          "name": "Santiago de Chile, Santiago, Chile",
+          "date_range": "+1541/"
+        },
+        {
+          "name": "Santiago, Chile",
+          "date_range": "+1826/"
+        },
+        {
+          "name": "Santiago Centro, Santiago, Chile",
+          "date_range": "+1928/"
+        },
+        {
+          "name": "Metropolitana de Santiago, Chile",
+          "date_range": "+1976/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1428897",
+          "title": "Chile, Cemetery Records, 1701-2021",
+          "date_range": "1701-2021"
+        },
+        {
+          "id": "1630787",
+          "title": "Chile, Civil Registration, 1880-1933",
+          "date_range": "1880-1933"
+        },
+        {
+          "id": "3405096",
+          "title": "Chile, Catholic Church Records, 1633-2015",
+          "date_range": "1633-2015"
+        },
+        {
+          "id": "1520559",
+          "title": "Chile, Deaths, 1700-1920",
+          "date_range": "1700-1920"
+        },
+        {
+          "id": "1520549",
+          "title": "Chile, Baptisms, 1585-1932",
+          "date_range": "1585-1932"
+        },
+        {
+          "id": "1520558",
+          "title": "Chile, Marriages, 1579-1930",
+          "date_range": "1579-1930"
+        }
+      ],
+      "quirks": [
+        "Women's burial records in Chilean cemeteries may be filed under their married name rather than their birth/maiden name \u2014 search under both Gatica and any married surname.",
+        "FamilySearch collection 1428897 (Cemetery Records 1701-2021) is indexed + images and is the primary search target; if a name search returns nothing, browse by City \u2192 Cemetery \u2192 Record Type and Dates.",
+        "Civil registration in Chile began in 1885; deaths before 1885 are found only in Catholic church burial records (collection 3405096 or 1520559).",
+        "Santiago had several parishes serving the same neighborhoods; when searching church burial records, try all surrounding parishes, not just the nearest one.",
+        "Index spellings vary: check Eulogia and Eulalia as alternate given-name forms alongside Eulojia in FamilySearch indexes.",
+        "Cementerio General's own website (www.cementeriogeneral.cl) lists niche burials from 1937 onward \u2014 useful if the death falls in the later 20th century.",
+        "All records are in Spanish; key terms: defunci\u00f3n (death), entierro (burial), nacimiento (birth), edad (age), a\u00f1o de nacimiento (birth year).",
+        "MyHeritage 'Chile, Santiago Burials' (collection 20739) is a separate database with potentially complementary indexing to FamilySearch collection 1428897 \u2014 worth checking if FS returns no match."
+      ],
+      "guide_markdown": "# Locality Guide: Santiago, Chile (c. 1860\u20131940)\n\n## Jurisdiction overview\n- **Formed:** Province of Santiago formed 1826; city of Santiago de Chile founded 1541\n- **Administrative center:** Santiago de Chile\n- **Parent jurisdiction:** Santiago Metropolitan Region (created 1976); before 1976 = Province of Santiago\n- **Population during period:** Province ~341,700 (1865), ~387,100 (1880), ~516,400 (1908), ~967,600 (1930), ~1,268,500 (1940) [Populstat estimates]\n- **Religious denominations:** Predominantly Roman Catholic; small Protestant, Jewish, and other communities\n\n## Boundary changes\n- Province of Santiago formed 1826; boundaries stable through 1860\u20131940 window\n- Santiago Metropolitan Region created 1976 \u2014 post-dates the target period; no effect on record-keeping\n\n## Available record types\n\n### Cemetery records (PRIMARY)\n- **Cemeteries in Santiago:** Cementerio General (founded 1821, Prof Alberto Za\u00f1artu 951, Recoleta); Cementerio Cat\u00f3lico Parroquial (founded 1883, Arzobispo Valdivieso 555); Cementerio Israelita (founded 1938)\n- **What records contain:** Name of deceased, date and time of death, place of death, age at death, gender, cause of death, amount paid, family relations; plot location, receipt numbers\n- **FamilySearch (primary):** 'Chile, Cemetery Records, 1701-2021' (collection 1428897) \u2014 indexed + images, 5,937,792 records, 3,675,058 images. Covers Antofagasta, Santiago, Valpara\u00edso, Vi\u00f1a del Mar. Browse: City \u2192 Cemetery \u2192 Record Type and Dates\n- **FamilySearch Catalog entries (direct browse):** Cementerio General part 1, 1702-2012 (catalog 2062052); part 2, 1800-2012 (catalog 1972637); 1900-2012 (catalog 2072784); Cementerio Cat\u00f3lico 1883-2007 (catalog 1459370)\n- **Ancestry:** Chile, Santiago, Cementerio General, 1821-2011 (collection 9814) \u2014 subscription\n- **MyHeritage:** Chile, Santiago Burials (collection 20739) \u2014 index & images, subscription\n- **Physical:** Cementerio General keeps its own sexton records; online tool for niche burials post-1937 at www.cementeriogeneral.cl\n\n### Vital records (civil registration)\n- **Start date:** 1885\n- **FamilySearch:** 'Chile, Civil Registration, 1880-1933' (collection 1630787) \u2014 indexed + images, 4,609,955 records, 1,623,199 images\n- **Also:** Ancestry collection 9812; MyHeritage collection 30168\n- **Chilean Civil Registry:** www.registrocivil.cl \u2014 persons with RUN can request certificates free\n- **Pre-1885 deaths:** Church records only\n\n### Church records\n- **Denominations:** Roman Catholic dominant\n- **FamilySearch:** 'Chile, Catholic Church Records, 1633-2015' (collection 3405096) \u2014 indexed + images, 8,804,944 records; 'Chile, Deaths, 1700-1920' (collection 1520559) \u2014 index only, 294,541 records\n- **Language:** Spanish (archaic 19th-century forms)\n- **Browse-only volumes:** Many parish volumes in FamilySearch have 0% indexing \u2014 must be browsed image-by-image\n\n### Census records\n- National censuses: 1865, 1875, 1885, 1895, 1907, 1920, 1930, 1940 \u2014 limited online availability; useful for confirming residence\n\n### Newspaper records\n- **Memoria Chilena** (www.memoriachilena.cl, Biblioteca Nacional de Chile) \u2014 digitized historical newspapers; obituaries and death notices may appear\n\n## Repository guide\n\n### Online repositories\n| Repository | Key collections | Access |\n|---|---|---|\n| FamilySearch | Cemetery Records 1701-2021 (1428897); Civil Registration 1880-1933 (1630787); Catholic Church Records 1633-2015 (3405096); Deaths 1700-1920 (1520559) | Free |\n| Ancestry | Cementerio General 1821-2011 (9814); Civil Registration 1885-1903 (9812); Deaths 1700-1920 (9810) | Subscription |\n| MyHeritage | Santiago Burials (20739); Civil Registration 1885-1903 (30168) | Subscription |\n| Memoria Chilena | Historical newspapers and documents | Free |\n\n### Physical repositories\n| Repository | Holdings | Access |\n|---|---|---|\n| Cementerio General de Santiago | Burial registers 1821\u2013present | In-person or www.cementeriogeneral.cl |\n| Archivo Nacional de Chile | Civil and notarial records | In-person, Santiago |\n| Chilean Civil Registry | Vital records 1885\u2013present | www.registrocivil.cl |\n| Instituto Chileno de Investigaciones Geneal\u00f3gicas | Finding aids, compiled genealogies | www.genealogia.cl |\n\n## Records NOT online\n- Full sexton ledger books of Cementerio General pre-digitization may require in-person consultation\n- Not all Santiago Catholic parish burial books are fully digitized or indexed in FS\n- Post-1940 civil registration records are held by the Chilean Civil Registry and not fully available online\n\n## Research tips\n1. **Start with FamilySearch collection 1428897** \u2014 search by surname 'Gatica' and given name 'Eulojia' (or variants)\n2. **Women may be indexed under married name** \u2014 if not found under Gatica, determine married name and search again\n3. **Browse images** when search fails: collection 1428897 \u2192 Browse \u2192 Santiago \u2192 Cementerio General \u2192 date range\n4. **Cross-check with civil death record:** collection 1630787 covers deaths 1885\u20131933 with indexing\n5. **MyHeritage Santiago Burials** (20739) offers a complementary index \u2014 worth a parallel search\n6. **Variant given-name spellings:** Eulojia, Eulogia, Eulalia may all appear in different index entries\n7. **All records in Spanish:** defunci\u00f3n = death; entierro = burial; edad = age; a\u00f1o de nacimiento = birth year\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Chile_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Chile_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Chile_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Chile_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-28"
+    }
+  ]
+}

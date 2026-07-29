@@ -158,6 +158,22 @@ orchestrator auto-delegates to the agent. Agents run in fresh context
 explicitly specced otherwise. The first such agent is `gps-mentor`
 (spec: `docs/specs/gps-mentor-agent-spec.md`).
 
+**How each environment loads them, and why the hosted path is the odd one.**
+Both eval harnesses stage `agents/*.md` into the workspace's `.claude/agents/`
+(`eval/harness/harness/workspace.py`, `eval/harness/e2e/orchestrator.py`) and
+load them via `setting_sources=["project"]`. Cowork loads the plugin as a
+plugin. The hosted control plane does **both**: it passes
+`plugins=[{"type": "local", …}]` for the *skills* and separately stages the
+*agents* into the project (`real_agent.stage_plugin_agents`). That is not
+redundancy — SDK plugin loading registers agents **only** under the namespaced
+name `genealogy-research:<agent>`, while every SKILL.md delegates by the bare
+name (`@plugin:record-extractor`), so without the staging the Task call errors
+and the model silently falls back to a general-purpose stand-in that binds none
+of the `tools:`/`disallowedTools:` below (issue #939; skills are unaffected —
+the loader registers *those* under bare names). If you change how the hosted
+agent is configured, run `make agent-smoke`: it is the only check that reads
+what the runtime actually resolved, and no CI job covers this path.
+
 **Dual-spelled tool names.** In `tools:` — and in `disallowedTools:` —
 every MCP tool **must** be listed twice, once under each server spelling:
 
@@ -185,6 +201,15 @@ long as at least one resolves.
 `bypassPermissions` (the hosted path, issue #695), so it is the last line
 of defence keeping `record-extractor` off the broad `research_append` — and
 a deny naming one spelling silently fails to bind under the other.
+
+**Allow-lists are subtractive; hooks are not.** A per-agent `tools:` list can
+only narrow what the session already holds — the session's tool set is always a
+superset — so no allow-list can deny the *main thread* a tool one of its
+subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
+hook layer always could do it: `eval/harness/harness/context_policy.py` denies
+`image_read` when `agent_id` is absent. Don't re-derive a per-context policy
+design; it exists. What is missing is a production port (`docs/TODOs.md` §
+"Guardrail enforcement in production").
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and

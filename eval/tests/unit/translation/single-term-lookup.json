@@ -2,18 +2,19 @@
   "test": {
     "id": "ut_translation_008",
     "skill": "translation",
-    "name": "Single-term meaning question answered directly, no full workflow",
+    "name": "Short Latin burial entry: translate and explain the key term concisely",
     "type": "positive",
-    "description": "The user asks what one term means, with no full record to translate. Tests the skill's 'User asks what does [term] mean? without a full record — answer directly' decision rule: it should give the genealogical meaning and significance concisely, NOT demand a full record or run the whole transcription/translation workflow. Probes scoping, plus the Genealogical context dimension.",
-    "tags": ["latin", "single-term", "vocabulary", "direct-answer", "scoping"]
+    "description": "The user pastes a single short Latin burial entry and asks what it says, flagging one word ('relicta') they don't know. Tests that the skill translates the short entry and — the point of the test — explains the genealogically significant term rather than giving a bare literal gloss. Probes the Genealogical context dimension plus proportionate scoping: a one-line entry warrants a concise translation and a focused term explanation, not a heavyweight multi-phase workflow. Reframed from an earlier no-record 'what does [term] mean?' phrasing: a bare single-word question no longer routes to the skill (the model answers it inline, so activation was a hard 0), whereas embedding the record restores reliable activation while keeping the same Genealogical-context probe.",
+    "tags": ["latin", "burial", "single-term", "vocabulary", "genealogical-context", "scoping"]
   },
   "input": {
-    "user_message": "Quick question — in a Latin burial register I keep seeing the word 'relicta' written before a woman's name. What does it mean?"
+    "user_message": "Can you read this Latin burial entry and tell me what it says? I'm especially stuck on the word 'relicta': 'Die 3 Aprilis 1748 sepulta est Maria, relicta Joannis Hofer.'"
   },
   "judge_context": [
-    "Should answer directly that `relicta` means 'widow' — literally 'the one left behind' / 'relict' — i.e. a woman whose husband has already died.",
-    "Should explain the genealogical significance: it tells the researcher the husband predeceased this record, so they can look for his death or burial before this date, and it confirms a prior marriage.",
-    "Should answer the single-term question concisely and directly WITHOUT demanding a full record or running a full transcription/translation workflow.",
+    "Should translate the short entry faithfully: on 3 April 1748, Maria was buried, the `relicta` (widow) of Joannis Hofer.",
+    "Should explain that `relicta` means 'widow' — literally 'the one left behind' / 'relict' — i.e. a woman whose husband has already died; here Maria is the widow of Joannis Hofer.",
+    "Should explain the genealogical significance: it tells the researcher the husband (Joannis Hofer) predeceased this 1748 burial, so they can look for his death or burial before this date, and it confirms a prior marriage. May note the husband's name is in the genitive case (`Joannis` = of Johannes), so his nominative name is Joannes/Johannes.",
+    "Answer should be proportionate to a one-line entry — a concise translation and a focused explanation of the term, not a heavyweight multi-phase transcription/extraction workflow (offering record-extraction as an optional next step is fine).",
     "May helpfully note the masculine form `relictus` (widower) so the researcher recognizes the term for either spouse."
   ]
 }
