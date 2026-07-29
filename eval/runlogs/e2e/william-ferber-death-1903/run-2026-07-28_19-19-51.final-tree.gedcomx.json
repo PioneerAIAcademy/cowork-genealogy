@@ -21,14 +21,6 @@
           "standard_place": "Ohio, United States"
         },
         {
-          "id": "0677bc72-f54a-425a-a6a3-75482bc79b01",
-          "type": "Death",
-          "date": "11 March 1903",
-          "standard_date": "11 Mar 1903",
-          "place": "Cincinnati, Hamilton, Ohio, United States",
-          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
-        },
-        {
           "id": "f420b918-09db-4c56-ac07-ccb5cbd0eb73",
           "type": "Residence",
           "date": "1870",
@@ -51,10 +43,13 @@
           "standard_place": "Cincinnati, Hamilton, Ohio, United States"
         },
         {
-          "id": "a96396c0-4e00-40c9-ae20-66a4922555d2",
-          "type": "Burial",
+          "type": "Death",
+          "date": "11 Mar 1903",
+          "standard_date": "11 Mar 1903",
           "place": "Cincinnati, Hamilton, Ohio, United States",
-          "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "primary": true,
+          "id": "F2"
         }
       ]
     },
@@ -595,19 +590,35 @@
   ],
   "sources": [
     {
-      "id": "3JRQ-P4W",
-      "title": "Kentucky, U.S., Death Records, 1852-1965",
-      "url": "https://search.ancestry.com/collections/1222/records/451506360"
-    },
-    {
-      "id": "3JRQ-P4Z",
-      "title": "U.S., Find a Grave Index, 1600s-Current",
-      "url": "https://search.ancestry.com/collections/60525/records/32336582"
-    },
-    {
       "id": "3JRQ-P4J",
       "title": "Ohio, U.S., County Marriage Records, 1774-1993",
       "url": "https://search.ancestry.com/collections/61378/records/133554"
+    },
+    {
+      "id": "3JRQ-P4N",
+      "title": "U.S., City Directories, 1822-1995",
+      "url": "https://search.ancestry.com/collections/2469/records/1108917757"
+    },
+    {
+      "id": "3JRQ-P4X",
+      "title": "U.S., City Directories, 1822-1995",
+      "url": "https://search.ancestry.com/collections/2469/records/1352545052"
+    },
+    {
+      "id": "3JRQ-P4D",
+      "title": "1900 United States Federal Census",
+      "url": "https://search.ancestry.com/collections/7602/records/40315247"
+    },
+    {
+      "id": "3JRQ-P48",
+      "title": "1870 United States Federal Census",
+      "citation": "Year: 1870; Census Place: Cincinnati Ward 7, Hamilton, Ohio; Roll: M593_1211; Page: 66B",
+      "url": "https://search.ancestry.com/collections/7163/records/38781016"
+    },
+    {
+      "id": "3JRQ-P4W",
+      "title": "Kentucky, U.S., Death Records, 1852-1965",
+      "url": "https://search.ancestry.com/collections/1222/records/451506360"
     },
     {
       "id": "3BNM-TSG",
@@ -634,37 +645,16 @@
       "url": "https://familysearch.org/ark:/61903/1:1:XZR1-JZP"
     },
     {
-      "id": "3JRQ-P4X",
-      "title": "U.S., City Directories, 1822-1995",
-      "url": "https://search.ancestry.com/collections/2469/records/1352545052"
-    },
-    {
       "id": "SLJ6-DJ6",
       "title": "William Ferber, \"United States, Census, 1900\"",
       "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MM88-DGG : Wed Mar 18 15:54:15 UTC 2026), Entry for William Ferber and Emma Ferber, 1900.",
       "url": "https://familysearch.org/ark:/61903/1:1:MM88-DGG"
     },
     {
-      "id": "SLJX-SCP",
-      "title": "Wm. Ferber, \"Ohio, County Death Records, 1840-2001\"",
-      "citation": "\"Ohio, County Death Records, 1840-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ : Fri Jan 31 18:57:50 UTC 2025), Entry for Wm. Ferber and Gerhard Ferber, 11 Mar 1903.",
-      "url": "https://familysearch.org/ark:/61903/1:1:F66M-8JZ"
-    },
-    {
       "id": "SL2T-6WR",
       "title": "William Faerber, \"United States, Census, 1870\"",
       "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M62Z-87S : Mon Oct 13 21:07:52 UTC 2025), Entry for Gerhardt Faerber and Eva Faerber, 1870.",
       "url": "https://familysearch.org/ark:/61903/1:1:M62Z-87H"
-    },
-    {
-      "id": "3JRQ-P44",
-      "title": "Web: Cincinnati, Ohio, U.S., Spring Grove Cemetery Index, 1845-2012",
-      "url": "https://search.ancestry.com/collections/9246/records/81391"
-    },
-    {
-      "id": "3JRQ-P4N",
-      "title": "U.S., City Directories, 1822-1995",
-      "url": "https://search.ancestry.com/collections/2469/records/1108917757"
     },
     {
       "id": "3BNM-P63",
@@ -677,23 +667,6 @@
       "title": "Wm, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
       "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68LL-3SKJ : Fri Mar 08 14:47:17 UTC 2024), Entry for Emma Ferber and Wm, 1906.",
       "url": "https://familysearch.org/ark:/61903/1:1:68LL-3SKV"
-    },
-    {
-      "id": "QBZV-2V6",
-      "title": "William H Ferber, \"Find a Grave Index\"",
-      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV2R-MD6H : Fri Jul 17 22:51:24 UTC 2026), Entry for William H Ferber.",
-      "url": "https://familysearch.org/ark:/61903/1:1:QV2R-MD6H"
-    },
-    {
-      "id": "3JRQ-P48",
-      "title": "1870 United States Federal Census",
-      "citation": "Year: 1870; Census Place: Cincinnati Ward 7, Hamilton, Ohio; Roll: M593_1211; Page: 66B",
-      "url": "https://search.ancestry.com/collections/7163/records/38781016"
-    },
-    {
-      "id": "3JRQ-P4D",
-      "title": "1900 United States Federal Census",
-      "url": "https://search.ancestry.com/collections/7602/records/40315247"
     },
     {
       "id": "3BNM-TGH",
@@ -712,6 +685,27 @@
       "title": "Wm, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
       "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:684Z-G4J6 : Sun Mar 10 11:48:44 UTC 2024), Entry for Emma Ferber and Wm, 1908.",
       "url": "https://familysearch.org/ark:/61903/1:1:684Z-G4JX"
+    },
+    {
+      "id": "S1",
+      "title": "Entry for Wm. Ferber, \"Ohio, County Death Records, 1840-2001\"",
+      "author": "Ohio, various county probate/health offices",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-66TS-SCS"
+    },
+    {
+      "id": "S2",
+      "title": "United States City and Business Directories, ca. 1749 - ca. 1990 (1904 Cincinnati)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-L3NF-YSY8"
+    },
+    {
+      "id": "S3",
+      "title": "United States City and Business Directories, ca. 1749 - ca. 1990 (1905 Cincinnati)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-L3NF-T96W-L"
+    },
+    {
+      "id": "S4",
+      "title": "United States City and Business Directories, ca. 1749 - ca. 1990 (1910 Cincinnati)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-P3NF-GD9D"
     }
   ]
 }

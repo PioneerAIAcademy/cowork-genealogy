@@ -1,13 +1,13 @@
 {
   "project": {
-    "id": "rp_william_ferber_ancestry",
-    "objective": "What are the ancestral origins and details surrounding the death of William Hubert Ferber (father of Charles Hubert Ferber, b. 1891, Cincinnati, Ohio)?",
+    "id": "rp_william_ferber_origins",
+    "objective": "What were the ancestral origins of William Hubert Ferber (father of Charles Hubert Ferber, b. 1891, Cincinnati, Ohio) - who were his parents, and where did the family come from?",
     "subject_person_ids": [
       "G7JB-YH6"
     ],
     "status": "active",
-    "created": "2026-07-27",
-    "updated": "2026-07-27"
+    "created": "2026-07-28",
+    "updated": "2026-07-28"
   },
   "researcher_profile": {
     "experience_level": "intermediate",
