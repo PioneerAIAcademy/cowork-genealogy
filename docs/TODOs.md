@@ -540,6 +540,24 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   lightweight readiness gates on a faster model and reserve the stronger model for the
   substantive post-proof critique. (The negative-result short-circuit above already
   removes gates entirely for *non-answering* questions; this covers the answering path.)
+  **Not a lever: the ~138s proof-critique call itself.** That one is
+  doctrine-required — a real second model call reviewing the conclusion — so carry
+  it as a known fixed cost in any re-measurement rather than mistaking it for waste.
+
+- [ ] **person-evidence's prose never got the concision pass proof-conclusion did.**
+  `person-evidence/SKILL.md` is 693 lines; `proof-conclusion/SKILL.md` is 231, already
+  trimmed once (#582/#583, measured **−44%** output tokens at the unit-test level).
+  The batching work that closed person-evidence's round-trip tax (`materialize_facts`
+  `ops[]` + the one-call edge write, 2026-07-26) deliberately left this untouched,
+  because **batching cuts round-trips, not generation time** — even a correctly
+  batched 45-entry `research_append` still cost ~60–90s of raw token streaming. So
+  the open question is whether deliberation/output volume, rather than round-trips,
+  is now the dominant remaining cost here. **Do not spend this lever
+  speculatively**: whether the proof-conclusion cut ever showed up in e2e wall-clock
+  was never confirmed (the Phase-0 latency work left "does −44% compound to e2e?"
+  open), and the same hazard as `search-records` applies — the unit suite grades
+  single invocations in fresh context and cannot see multi-hour retention, so it
+  will happily bless a cut that removes something only a long session needs.
 
 - [ ] **The reasoning-effort A/B (C0) is unshipped, and it is the largest single
   lever** — `docs/plan/research-performance-2026-07-27.md` §F0/§C0. 58% of a real
