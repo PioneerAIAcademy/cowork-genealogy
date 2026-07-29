@@ -2,9 +2,11 @@
   "per_finding": {
     "f1": "true",
     "f2": "true",
-    "f3": "partial"
+    "f3": "true",
+    "f4": "false"
   },
   "notes": {
-    "f3": "Burial place confirmed (Naples, Ontario, NY) via Find a Grave; no burial date or cemetery name recovered. Proof narrative explicitly flags this as unresolved and names the deferred sources needed (full Find a Grave memorial page, NY Death Index, newspaper obituaries)."
+    "f3": "Burial place confirmed (Naples, Ontario, NY) via Find A Grave Index; matches the subject's Burial fact in the final tree (place only, no date).",
+    "f4": "Burial date and cemetery name (Rose Ridge Cemetery) not recovered in any of 4 live attempts. Research log (q_003) explicitly states no source supplies a specific burial date or cemetery name; the three external-site sources that could establish them (full Find A Grave memorial page, NY Death Index, newspaper obituaries) are deferred, not accessed."
   }
 }

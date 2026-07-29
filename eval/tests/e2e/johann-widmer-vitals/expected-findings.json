@@ -33,7 +33,21 @@
     {
       "id": "f3",
       "type": "fact",
-      "description": "Johann Frederich Widmer was buried 7 Jul 1914 at Rose Ridge Cemetery, Naples, Ontario, New York, USA.",
+      "description": "Johann Frederich Widmer was buried in Naples, Ontario, New York, USA.",
+      "details": {
+        "subject_person": "Johann Frederich Widmer",
+        "fact_type": "Burial",
+        "place": "Naples, Ontario, New York, USA"
+      },
+      "supporting_sources": [
+        "Find A Grave Index entry for Johann Frederich Widmer"
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "fact",
+      "description": "Johann Frederich Widmer was buried 7 Jul 1914 at Rose Ridge Cemetery.",
       "details": {
         "subject_person": "Johann Frederich Widmer",
         "fact_type": "Burial",
@@ -44,7 +58,7 @@
         "Find A Grave Index entry for Johann Frederich Widmer",
         "Rose Ridge Cemetery burial/sexton record"
       ],
-      "required": true
+      "required": false
     }
   ]
 }

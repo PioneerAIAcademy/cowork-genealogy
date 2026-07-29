@@ -32,3 +32,15 @@ stripping his own facts here — `strip` disambiguates by (person,
 fact-id), and Johann's own fact list has no internal duplicates — but
 it's worth a look before a future fixture strips a *relative's* fact
 from this same tree.
+
+**2026-07-29:** Split the original burial finding (`f3`) into two, per
+PR #928 review feedback. Across 4 live attempts the agent consistently
+recovered the burial *place* (Naples, Ontario, NY) but never the burial
+*date* or *cemetery name* (Rose Ridge Cemetery) — the research log
+(`q_003`) confirms the sources that would establish those (the full
+Find A Grave memorial page, NY Death Index, newspaper obituaries) are
+off-FamilySearch and were deferred rather than accessed. `f3` now
+covers burial place only (`required: true`, consistent with what every
+run has actually recovered); the date + cemetery name moved to a new
+`f4` (`required: false`, bonus credit) since they don't appear reliably
+recoverable from FamilySearch alone.
