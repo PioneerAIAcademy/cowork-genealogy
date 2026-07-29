@@ -2,10 +2,9 @@
 name: timeline
 model: claude-sonnet-4-6
 description: Builds candidate timelines (written to research.json) from assertions, surfaces gaps,
-  checks geographic/travel feasibility, and supports identity-testing by
-  checking whether records cohere into one life. Does NOT judge whether one
-  person's data is logically possible (events after death, birth after death,
-  impossible ages) — that is check-warnings' job. GPS Step 3 — Analysis and
+  and supports identity-testing by checking whether records cohere into one
+  life. Logical-impossibility checks (events after death, impossible ages)
+  belong to check-warnings, not here. GPS Step 3 — Analysis and
   Correlation (chronological analysis). Use when the user says "build a
   timeline", "show me the timeline", "what's the chronology?", "test
   whether a set of records describe one person", "do these events fit one

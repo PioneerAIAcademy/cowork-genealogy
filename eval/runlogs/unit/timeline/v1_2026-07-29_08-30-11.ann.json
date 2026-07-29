@@ -1,5 +1,5 @@
 {
-  "run_log": "v1_2026-07-29_07-50-36.json",
+  "run_log": "v1_2026-07-29_08-30-11.json",
   "annotator": "ernestjacob789@gmail.com",
   "corrections": [
     {
@@ -118,6 +118,14 @@
       "test_id": "ut_timeline_005",
       "dimension_source": "rubric",
       "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
