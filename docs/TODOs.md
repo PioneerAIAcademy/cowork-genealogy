@@ -675,6 +675,43 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   ToolSearch path. Ignore-unrecognized-if-one-resolves is therefore the real
   behavior, and the dual-spelling approach is sound.
 
+- [x] **Plugin agents did not spawn as themselves in the hosted path — FIXED
+  (#939, 2026-07-29).** `apps/server/app/agent/real_agent.py` held the repo's
+  only `plugins=[{"type": "local", …}]` call site, and that mechanism registers
+  the plugin's **agents** under the namespaced name `genealogy-research:<agent>`
+  and nothing else. Every SKILL.md delegates by the bare name
+  (`@plugin:record-extractor`), so the hosted Task call hard-errored — *"Agent
+  type 'record-extractor' not found. Available agents: … genealogy-research:
+  record-extractor …"* — after which the model improvised: guess the namespaced
+  spelling, fall back to `general-purpose`, or inline the work. The fallback is
+  the damaging one, since a general-purpose stand-in carries the session's whole
+  tool set and binds none of the agent's `disallowedTools:` — so #695's
+  `extraction_append` lane split was inert in the one environment that runs
+  `bypassPermissions`. Verified live against CLI 2.1.220 before and after.
+  **Only the hosted path was affected**: Cowork spawns `@plugin:<agent>` fine
+  (the entry above is a live confirmation), and both harnesses stage into
+  `.claude/agents/`. Note the loader's asymmetry — plugin **skills** register
+  under bare names (`research`, `record-extraction`, …); only agents are
+  namespaced.
+  Fix: `build_options` stages `packages/engine/plugin/agents/*.md` into
+  `<project>/.claude/agents/` on every client build — the mechanism both
+  harnesses already use — and `setting_sources=["project"]` loads them. The
+  plugin stays loaded for its skills, and both spellings now resolve to the same
+  definition. Guard: `make agent-smoke`.
+
+- [ ] **`make agent-smoke` is a manual gate — no CI job can catch hosted-path
+  agent-loading drift.** The guard added with #939
+  (`apps/server/tests/test_plugin_agents.py::test_bare_agent_names_are_registered`)
+  reads the runtime's resolved agent list out of the SDK init handshake, which
+  is the only signal that distinguishes "registered" from "registered under a
+  name nobody asks for". It issues no query, so it **bills nothing** — but it
+  still needs a key to start the CLI, plus node and a compiled engine, and CI
+  today neither holds an Anthropic key nor runs the `apps/server` suite at all.
+  The offline tests in the same file do run under `make server-test`, but they
+  only prove the staging happened, not what the runtime made of it. Wire
+  `agent-smoke` into CI if a key ever lands there; until then it is on whoever
+  touches `real_agent.build_options` to run it.
+
 - [ ] **Scope the record-extraction outage window.** `record-extractor` could
   not spawn in Cowork between 2026-07-12 (#650) and this fix. Because the
   runtime refuses rather than launching a toolless agent, the failure was loud
