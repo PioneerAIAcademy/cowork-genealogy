@@ -58,7 +58,7 @@ jobs:
       github.event_name != 'pull_request'
       || github.event.pull_request.head.repo.full_name == github.repository
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         env:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
         with:
@@ -165,8 +165,11 @@ jobs:
                 action = dryRun ? 'WOULD promote' : 'promoted';
                 if (!dryRun) {
                   try {
+                    // `reviewers` is required by both endpoints even when only
+                    // teams are involved; omitting it 422s with
+                    // `"reviewers" wasn't supplied`.
                     await github.rest.pulls.requestReviewers({
-                      owner, repo, pull_number: n, team_reviewers: [TEAM] });
+                      owner, repo, pull_number: n, reviewers: [], team_reviewers: [TEAM] });
                   } catch (e) {
                     core.warning(`#${n}: could not request ${TEAM}: ${e.message}`);
                   }
@@ -181,7 +184,7 @@ jobs:
                 if (!dryRun) {
                   try {
                     await github.rest.pulls.removeRequestedReviewers({
-                      owner, repo, pull_number: n, team_reviewers: [TEAM] });
+                      owner, repo, pull_number: n, reviewers: [], team_reviewers: [TEAM] });
                   } catch (e) {
                     core.warning(`#${n}: could not remove ${TEAM}: ${e.message}`);
                   }
