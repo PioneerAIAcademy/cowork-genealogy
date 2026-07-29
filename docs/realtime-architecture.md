@@ -18,7 +18,7 @@ the eventual durable system-of-record (see §6).
 continuity even though the conclusion is to *drop* Ably; rename can happen
 separately.
 **Read with:** `realtime-rearch-status.md` (current architecture),
-`docs/plan/sandbox-provider-interface.md`,
+`docs/specs/sandbox-provider-spec.md`,
 `docs/plan/neon-postgres-plan.md` (its `count > 1` DB work still applies; its affinity-fix
 references were updated to point here), `docs/plan/fly-deploy-plan.md` (likewise).
 **Reviewers:** Dallan + eng reviewer.

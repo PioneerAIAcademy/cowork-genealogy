@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-06. **Branch:** `hosted-web-workbench`. **Read with:**
 `docs/realtime-rearch-status.md` (current state),
-`sandbox-provider-interface.md` (E2B mapping). Artifacts: `deploy/Dockerfile`,
+`sandbox-provider-spec.md` (E2B mapping). Artifacts: `deploy/Dockerfile`,
 `deploy/fly.toml`.
 
 This is the first hosted deploy of the POC. It replaces the local-server +

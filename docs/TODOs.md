@@ -680,24 +680,37 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   throws a plain `Error` and leaves that mapping to the caller (see
   `tree-forget.ts`'s three-line `readJson` wrapper).
 
-- [ ] **Eight shipped plans still sit in `docs/plan/` because they are the ONLY
-  written contract for the thing they built.** The #953 follow-up moved out the
-  eight files that were never plans and deleted the three shipped plans whose
-  content had a spec to fall back on. These eight are shipped too, but no spec
-  covers them, so deleting them under the "delete a plan once the work ships"
-  rule would destroy the only documentation of live infrastructure:
-  `public-rest-api.md` (the `/v1` API's contract — `docs/TODOs.md` and
-  `DEVELOPMENT.md` both cite it *as* the spec), `sandbox-provider-interface.md`
-  (decisions #1/#2 are cited from `real_agent.py` and `agent_secrets.py`),
-  `neon-postgres-plan.md`, `fly-deploy-plan.md`, `familysearch-login-plan.md`,
-  `3-pane-workbench-ui.md`, `localities-section-plan.md`, and
-  `standard-place-standardization.md`.
-  Each needs a **promote**, not a delete: write (or lift) a spec under
-  `docs/specs/`, then remove the plan. Cheapest first —
-  `3-pane-workbench-ui.md` has zero inbound references;
-  `standard-place-standardization.md` has **22**, mostly source comments citing
-  it for rationale, and is a project of its own. Two are only partially shipped
-  (`fly-deploy-plan.md`, `localities-section-plan.md`) and need their remaining
-  steps split out to entries here before the rest can go.
-  Until then their `Status:` lines are the guard: each says plainly that it is
-  shipped and kept only pending a spec. Do not read them as pending work.
+- [ ] **Four shipped plans still sit in `docs/plan/` awaiting a spec to be
+  promoted into.** The plan cull deleted or promoted everything it could: the
+  `/v1` API and sandbox-provider docs became
+  `docs/specs/public-rest-api-spec.md` and `docs/specs/sandbox-provider-spec.md`
+  (they were specs in all but name), and the `localities`, `no_evidence`,
+  tool-boundary, opus-agent, and search-images plans folded into their specs and
+  were deleted. These four are shipped but have **no spec to fold into**, so
+  deleting them under the "delete a plan once the work ships" rule would destroy
+  the only written record of live infrastructure:
+  - `neon-postgres-plan.md` + `fly-deploy-plan.md` — the deploy/DB setup. Best
+    home is one `docs/specs/hosted-deploy-spec.md`, or sections of
+    `docs/specs/hosted-web-workbench-spec.md`. `fly-deploy-plan.md` is only
+    *partially* shipped, so split its remainder to an entry here first.
+  - `familysearch-login-plan.md` — the hosted front door. `oauth-auth-spec.md`
+    is the **engine-side** MCP OAuth spec and does not cover it; the open
+    follow-ups are already entries under "FamilySearch login" above.
+  - `3-pane-workbench-ui.md` — the workbench UI design. Zero inbound
+    references, so it is the cheapest to finish: extract the durable layout
+    decisions into `docs/specs/hosted-web-workbench-spec.md` and delete.
+  Separately, `standard-place-standardization.md` is shipped but has **22**
+  inbound references, mostly source comments citing it for rationale — folding
+  that trail into the place specs is its own project, not part of this sweep.
+  Until each is promoted, its `Status:` line is the guard: it says plainly that
+  the work shipped and the file is kept only pending a spec. Do not read them as
+  pending work.
+
+- [ ] **Three skills touched by the `localities` work still owe a runlog re-run +
+  annotation.** `locality-guide`, `research-plan`, and `search-records` were
+  edited when the `localities` section shipped (schema, `research_append` +
+  `project_context` support, the persist path, and the viewer tab all landed).
+  The edits flipped each skill's runlog inactive, so the `check-runlogs` gate
+  needs a fresh run plus a genealogist annotation per skill — it needs the judge
+  API and a reviewer, which is why it was left. Nothing about the feature is
+  pending; this is the eval-cadence debt behind it.

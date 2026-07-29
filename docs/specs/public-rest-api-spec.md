@@ -1,6 +1,9 @@
-# Plan: Public `/v1` REST chat API for an external chatbot team
+# Public `/v1` REST chat API — Spec
 
-> **Status:** Implemented in `apps/server/app/v1.py` (+ small hooks in
+> **Status: SHIPPED and this is the contract.** Promoted from `docs/plan/` —
+> it was always the only written spec for the `/v1` surface, which is why
+> deleting it as a "shipped plan" was not an option. Implemented in
+> `apps/server/app/v1.py` (+ small hooks in
 > `config.py`, `auth.py`, `sessions.py`, `main.py`). Server-only; the engine
 > (`packages/engine/`) and its `.mcpb`/plugin CI are untouched.
 >
