@@ -4401,7 +4401,7 @@
               "recordSubdivision": "Massachusetts",
               "recordCountry": "United States"
             },
-            "notes": "KEY FINDING: 1860 MA census for Margret Reagan b.1810 Ireland returned 2 results. Springfield, Hampden MA (ark:/61903/1:1:MZCV-RHN) household of Daniel Ragan shows: head Daniel Ragan b.1800 Ireland + wife Margaret Ragan b.1810 Ireland + daughter Hannah b.1845 MA + son Patrick b.1847 MA. Daniel b.1800 is consistent with being Mary's father (she b.1840 Ireland). Mary (already married to Michael Dwyer by 1854) is absent from the 1860 household, which is expected. Second result: Lowell household of John Ragan (b.1795) with only Margaret \u2014 less likely (older husband, no children). HYPOTHESIS: Daniel Ragan is Mary Dwyer's father."
+            "notes": "KEY FINDING: 1860 MA census for Margret Reagan b.1810 Ireland returned 2 results. Springfield, Hampden MA (ark:/61903/1:1:MZCV-RHN) household of Daniel Ragan shows: head Daniel Ragan b 1800 Ireland, Margaret Ragan b. 1810 Ireland, Hannah Ragan b. 1845 MA, Patrick b. 1847, MA. Daniel b.1800 is consistent with being Mary's father (she b.1840 Ireland). Mary (already married to Michael Dwyer by 1854) is absent from the 1860 household, which is expected. Second result: Lowell household of John Ragan (b.1795) with only Margaret \u2014 less likely (older husband, no children). HYPOTHESIS: Daniel Ragan is Mary Dwyer's father."
           },
           {
             "tool": "record_read",
