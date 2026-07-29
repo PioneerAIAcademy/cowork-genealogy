@@ -182,3 +182,64 @@ def test_live_tool_advertises_build_schema():
     schema = tools_by_name["research_append"].input_schema
     assert "ops" in schema["properties"]
     assert schema["properties"]["ops"]["type"] == "array"
+
+
+def test_record_search_folds_in_ranked_when_subject_given(tmp_path):
+    """record_search ranks host-side when given a subjectId, so the mock must
+    compose the test's own rank fixture in — otherwise a skill that correctly
+    passes subjectId gets nothing to triage and grades badly for it."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {
+            "surname": "Flynn",
+            "givenName": "Patrick",
+            "projectPath": str(tmp_path),
+            "subjectId": "I1",
+        },
+    )
+    body = _extract_response_dict(result)
+    assert body.get("staged"), "staging must still happen"
+    assert "ranked" in body, "ranking should be folded into the search response"
+    assert body["ranked"]["subjectId"] == "I1"
+    assert body["ranked"]["matches"], "the test's own rank fixture supplies the matches"
+
+
+def test_record_search_omits_ranked_without_subject(tmp_path):
+    """No subjectId means no ranking — the same shape the real tool returns."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+    )
+    body = _extract_response_dict(result)
+    assert "ranked" not in body
+
+
+def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path):
+    """A fabricated ranking would be worse than none — the absence is honest."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {
+            "surname": "Flynn",
+            "givenName": "Patrick",
+            "projectPath": str(tmp_path),
+            "subjectId": "I1",
+        },
+    )
+    body = _extract_response_dict(result)
+    assert "ranked" not in body

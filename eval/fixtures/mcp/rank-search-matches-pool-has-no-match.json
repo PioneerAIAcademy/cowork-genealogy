@@ -1,0 +1,66 @@
+{
+  "tool": "rank_search_matches",
+  "description": "The real-negative branch of `subjectResolvable: false`. The subject IS scoreable (it carries dated and placed facts), but nothing in this candidate pool matches it — every score sits at or below the degenerate floor (0.01). Unlike the thin-subject branch, the matches ARE returned: the scores are meaningful, and what they mean is 'your person is not in this pool'. Correct skill response: treat it as a genuine negative for this query, log it honestly, and page deeper (offset) or narrow — NOT hand-re-triage the same stubs looking for a match the ranker already ruled out. Distinguishing this from the thin-subject case is exactly what the `diagnostic` field is for. Matched on subjectId; independent of the stagedResultsRef handle (a per-run uuid).",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 9,
+    "returnedCount": 3,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "subjectResolvable": false,
+    "diagnostic": "Subject 'I1' is scoreable (5 dated/placed fact(s)), but no candidate in this pool scored above 0.01. Treat that as a real negative for this query — page deeper (offset) or narrow the query; do not hand-triage the stubs.",
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 2,
+        "recordId": "ark:/61903/1:1:M9QX-4TD",
+        "primaryId": "P1",
+        "personName": "Patrick Flanagan",
+        "sex": "Male",
+        "birthDate": "1839",
+        "birthPlace": "Ireland",
+        "collectionTitle": "United States Census, 1850",
+        "matchScore": 0.0071,
+        "matchConfidence": 1,
+        "candidateFactCount": 3,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 2,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:M9QX-4TE",
+        "primaryId": "P2",
+        "personName": "P. Flynn",
+        "sex": "Male",
+        "birthDate": null,
+        "birthPlace": null,
+        "collectionTitle": "United States Census, 1850",
+        "matchScore": 0.0034,
+        "matchConfidence": 1,
+        "candidateFactCount": 0,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 3,
+        "searchRank": 3,
+        "recordId": "ark:/61903/1:1:M9QX-4TF",
+        "primaryId": "P3",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1812",
+        "birthPlace": "Pennsylvania, United States",
+        "collectionTitle": "United States Census, 1850",
+        "matchScore": 0.0009,
+        "matchConfidence": 1,
+        "candidateFactCount": 4,
+        "attachedToSubject": false,
+        "attachedToOther": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,1198 @@
+{
+  "persons": [
+    {
+      "id": "9VX4-1C3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Heinrich",
+          "surname": "Dewus"
+        },
+        {
+          "id": "N16",
+          "type": "BirthName",
+          "given": "Henry",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "b8b8e8ee-15d6-46e0-8d70-ee407ac30d0e",
+          "type": "Birth",
+          "place": ", Pommerania, Preussen, Germany",
+          "standard_place": "Pomerania, Prussia, Germany"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "23 Aug 1936",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "place": "Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "F19",
+          "type": "Residence",
+          "place": "Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F20",
+          "type": "Occupation",
+          "value": "Carpenter",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "KJW8-43Q",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Heinrich Charles",
+          "surname": "Dewus"
+        },
+        {
+          "id": "N17",
+          "type": "BirthName",
+          "given": "Heinrich",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "6d40a8d2-a21b-4a91-89b6-e906b05d9ed3",
+          "type": "Birth",
+          "date": "2 Aug 1889",
+          "standard_date": "2 Aug 1889",
+          "place": "Milwaukee, Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "3ed08162-0d78-4524-9d64-29155f1f8de6",
+          "type": "Christening",
+          "date": "2 Aug 1889",
+          "standard_date": "2 Aug 1889",
+          "place": "Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "335bdcb7-fe22-468c-9f49-b12e8b82a6cc",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "26 January 1958",
+          "standard_date": "26 Jan 1958",
+          "place": "Milwaukee, Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        }
+      ]
+    },
+    {
+      "id": "9MNY-WQ1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Alma Friedericka Wilhelmina",
+          "surname": "Dewus"
+        },
+        {
+          "id": "N18",
+          "type": "BirthName",
+          "given": "Alma F",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N22",
+          "type": "BirthName",
+          "given": "Alma",
+          "surname": "Schmidt",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "13 Feb 1882",
+          "standard_date": "13 Feb 1882",
+          "place": "Milwaukee, Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "794de77d-624a-433f-9240-faccf0b1c46a",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "3b95362a-af01-4189-93d9-3b1783c47e88",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Milwaukee Ward 20, Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "a7c0f6f1-a4c0-430b-9c19-9b4157c5942c",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Wauwatosa, Milwaukee, Wisconsin, United States",
+          "standard_place": "Wauwatosa, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "da90444b-30b3-46e0-b264-4c32b0acfec1",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "357ade1a-31f2-492d-81c3-f99a0cccfb2b",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Wauwatosa, Milwaukee, Wisconsin, United States",
+          "standard_place": "Wauwatosa, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "36a20005-754e-4ac0-85d9-1236eeae2c9c",
+          "type": "Burial",
+          "place": "Pinelawn Memorial Park, Milwaukee, Milwaukee, Wisconsin, United States of America",
+          "standard_place": "Pinelawn Memorial Park, Milwaukee, Milwaukee, Wisconsin, United States"
+        }
+      ]
+    },
+    {
+      "id": "9VX4-1ZR",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Augusta",
+          "surname": "Arndt"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "e0cc3635-252c-4418-b909-cf2b2d342e87",
+          "type": "Birth",
+          "place": "Pommerania",
+          "standard_place": "Pomerania, Prussia, Germany"
+        }
+      ]
+    },
+    {
+      "id": "94F3-YQH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Adela Ulricka Augusta",
+          "surname": "Dewus"
+        },
+        {
+          "id": "N23",
+          "type": "BirthName",
+          "given": "Adele",
+          "surname": "Kniophoff",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N24",
+          "type": "BirthName",
+          "given": "Adele",
+          "surname": "Kniepholf",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "23 Dec 1883",
+          "standard_date": "23 Dec 1883",
+          "place": "Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9VX4-1H3",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Hedwig Bertha Anna",
+          "surname": "Dewus"
+        },
+        {
+          "id": "N25",
+          "type": "BirthName",
+          "given": "Hattie",
+          "surname": "Henke",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "12 Sep 1885",
+          "standard_date": "12 Sep 1885",
+          "place": "Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N7",
+          "type": "BirthName",
+          "given": "Walter",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S12",
+              "quality": 3
+            },
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N19",
+          "type": "BirthName",
+          "given": "Walter Henry",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Residence",
+          "date": "1910",
+          "place": "Milwaukee Ward 10, Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S12",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Birth",
+          "date": "~1888",
+          "place": "Wisconsin",
+          "standard_place": "Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S12",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "MaritalStatus",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S12",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Race",
+          "value": "White",
+          "sources": [
+            {
+              "ref": "S12",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N8",
+          "type": "BirthName",
+          "given": "Ida",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N20",
+          "type": "BirthName",
+          "given": "Ida",
+          "surname": "Dewes",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Death",
+          "date": "16 Jul 1947",
+          "place": "Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N9",
+          "type": "BirthName",
+          "given": "Herman",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F6",
+          "type": "Death",
+          "date": "1885",
+          "place": "Milwaukee, Milwaukee, Wisconsin, USA",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Birth",
+          "date": "7 Oct 1882",
+          "place": "Milwaukee, Wisconsin, USA",
+          "standard_place": "Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            },
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "Race",
+          "value": "W",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N10",
+          "type": "BirthName",
+          "given": "Oscar Albert Richard",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N21",
+          "type": "BirthName",
+          "given": "Oscar A",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F9",
+          "type": "Race",
+          "value": "white",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "Birth",
+          "date": "1880",
+          "place": "Milwaukee",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "type": "Death",
+          "date": "1881",
+          "place": "Milwaukee, Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "Birth",
+          "date": "25 Nov 1879",
+          "place": "Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N11",
+          "type": "BirthName",
+          "given": "Wilhelmine",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F12",
+          "type": "Birth",
+          "date": "17 Dec 1880",
+          "place": "Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N12",
+          "type": "BirthName",
+          "given": "Elenora",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S11",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N26",
+          "type": "BirthName",
+          "given": "Eleanor",
+          "surname": "Downs",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F13",
+          "type": "Birth",
+          "date": "24 Apr 1892",
+          "place": "Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S11",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N13",
+          "type": "BirthName",
+          "given": "Emma",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F14",
+          "type": "Birth",
+          "date": "13 Oct 1893",
+          "place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N14",
+          "type": "BirthName",
+          "given": "Clara",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S12",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F15",
+          "type": "Residence",
+          "date": "1910",
+          "place": "Milwaukee Ward 10, Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S12",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Birth",
+          "date": "~1890",
+          "place": "Wisconsin",
+          "standard_place": "Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S12",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N15",
+          "type": "BirthName",
+          "given": "Clerance",
+          "surname": "Dewus",
+          "sources": [
+            {
+              "ref": "S12",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F17",
+          "type": "Residence",
+          "date": "1910",
+          "place": "Milwaukee Ward 10, Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S12",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F18",
+          "type": "Birth",
+          "date": "~1909",
+          "place": "Wisconsin",
+          "standard_place": "Wisconsin, United States",
+          "sources": [
+            {
+              "ref": "S12",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "9VX4-1C3",
+      "person2": "9VX4-1ZR"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "9MNY-WQ1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "9MNY-WQ1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "94F3-YQH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "94F3-YQH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "9VX4-1H3",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "9VX4-1H3",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "KJW8-43Q",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "KJW8-43Q",
+      "subtype": "Biological"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "I1",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R10"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "I1",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S1"
+        }
+      ],
+      "id": "R11"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "I2",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S1"
+        },
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R12"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "I2",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S1"
+        },
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R13"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "I3",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R14"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "I3",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R15"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "I4",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S3"
+        }
+      ],
+      "id": "R16"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "I4",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S3"
+        }
+      ],
+      "id": "R17"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "I5",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R18"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "I5",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R19"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "I6",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S4"
+        },
+        {
+          "ref": "S11"
+        }
+      ],
+      "id": "R20"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "I6",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S4"
+        },
+        {
+          "ref": "S11"
+        }
+      ],
+      "id": "R21"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "I7",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S10"
+        }
+      ],
+      "id": "R22"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "I7",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S10"
+        }
+      ],
+      "id": "R23"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I8",
+      "sources": [
+        {
+          "ref": "S12"
+        }
+      ],
+      "id": "R24"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I9",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S12"
+        }
+      ],
+      "id": "R25"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I8",
+      "child": "I9",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S12"
+        }
+      ],
+      "id": "R26"
+    }
+  ],
+  "sources": [
+    {
+      "id": "MX3X-PMC",
+      "title": "Heinrich Dewus in entry for Adela Ulricka Augusta Dewus, \"Wisconsin, Births and Christenings, 1826-1926\"",
+      "citation": "\"Wisconsin, Births and Christenings, 1826-1926\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XR1G-2M7 : 30 January 2020), Heinrich Dewus in entry for Adela Ulricka Augusta Dewus, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XR1G-2M7"
+    },
+    {
+      "id": "MXWW-JS1",
+      "title": "Heinrich Dewus in entry for Heinrich Dewus, \"Wisconsin, Births and Christenings, 1826-1926\"",
+      "citation": "\"Wisconsin, Births and Christenings, 1826-1926\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XRBV-5PD : 30 January 2020), Heinrich Dewus in entry for Heinrich Dewus, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XRBV-5PD"
+    },
+    {
+      "id": "MXSH-YG4",
+      "title": "Heinrich Dewus in entry for Hedwig Bertha Anna Dewus, \"Wisconsin, Births and Christenings, 1826-1926\"",
+      "citation": "\"Wisconsin, Births and Christenings, 1826-1926\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XR1N-M19 : 30 January 2020), Heinrich Dewus in entry for Hedwig Bertha Anna Dewus, 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XR1N-M19"
+    },
+    {
+      "id": "MX3X-N9K",
+      "title": "Heinrich Dewus in entry for Alma Friedericka Wilhelmina Dewus, \"Wisconsin, Births and Christenings, 1826-1926\"",
+      "citation": "\"Wisconsin, Births and Christenings, 1826-1926\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XR1R-GZ7 : 30 January 2020), Heinrich Dewus in entry for Alma Friedericka Wilhelmina Dewus, 1882.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XR1R-GZ7"
+    },
+    {
+      "id": "S1",
+      "title": "Entry for Henry Dewus, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q5SZ-J9LG"
+    },
+    {
+      "id": "S2",
+      "title": "Entry for Herman Dewus, \"Wisconsin, Death Records, 1867-1907\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MZ5-QBF"
+    },
+    {
+      "id": "S3",
+      "title": "Entry for Oscar Albert Richard Dewus, \"Wisconsin, Death Records, 1867-1907\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XL4B-Q5G"
+    },
+    {
+      "id": "S4",
+      "title": "Entry for Ida Dewus, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QT3T-5QWH"
+    },
+    {
+      "id": "S5",
+      "title": "Entry for Alma F Dewus, \"Wisconsin, Birth Index, 1820-1907\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHN"
+    },
+    {
+      "id": "S6",
+      "title": "Entry for Wilhelmine Dewus, \"Wisconsin, Birth Index, 1820-1907\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHG"
+    },
+    {
+      "id": "S7",
+      "title": "Entry for Oscar A Dewus, \"Wisconsin, Birth Index, 1820-1907\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHL"
+    },
+    {
+      "id": "S8",
+      "title": "Wisconsin, Birth Index, 1820-1907 \u2014 Herman Dewus, 7 Oct 1882",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZH2"
+    },
+    {
+      "id": "S9",
+      "title": "Entry for Heinrich Dewus, \"Wisconsin, Birth Index, 1820-1907\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHK"
+    },
+    {
+      "id": "S10",
+      "title": "Entry for Emma Dewus, \"Wisconsin, Birth Index, 1820-1907\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHV"
+    },
+    {
+      "id": "S11",
+      "title": "Entry for Elenora Dewus, \"Wisconsin, Birth Index, 1820-1907\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VH41-ZHJ"
+    },
+    {
+      "id": "S12",
+      "title": "Household of Walter Dewus, \"United States, Census, 1910\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MPVV-WMW"
+    }
+  ]
+}

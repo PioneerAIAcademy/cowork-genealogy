@@ -18,6 +18,7 @@ description: >-
   when no research.json exists yet (use init-project first).
 allowed-tools:
   - validate_research_schema
+  - research_query
 ---
 
 # /research — Full GPS Research Workflow
@@ -82,11 +83,25 @@ time, regardless of how directly the request named the destination.
 
 ## What to do
 
-1. **Read `research.json`.** Identify the current state: which
-   questions exist, which have plans, which plans have log entries,
-   which entries have produced assertions, which are classified,
-   which are linked to persons, whether conflicts are present, and
-   whether each question is resolved.
+1. **Query `research.json` — don't `Read` the whole file.** Use
+   `research_query` to pull just the slice you need: which questions
+   exist, which have plans, which plans have log entries, which entries
+   have produced assertions, which are classified, which are linked to
+   persons, whether conflicts are present, and whether each question is
+   resolved.
+
+   `research.json` grows all run — dozens of sources, 100+ assertions by
+   late run — so a whole-file `Read` (or a `grep`) costs more context every
+   time you route, and routing happens constantly. `research_query` answers
+   the routing question host-side and returns only the ids, statuses and
+   counts. Reach for `Read` only when you genuinely need a full entry body
+   that `research_query` cannot project.
+
+   **Query what the routing decision needs and no more.** Each call is a turn.
+   Pull the one section that answers the question in front of you rather than
+   surveying several, and don't re-query state you fetched earlier in the same
+   routing pass — sub-skills report what they wrote, so trust their return
+   instead of re-reading after every step.
 
    **Build the log-vs-assertion cross-reference explicitly — do not
    eyeball it.** For every `log[]` entry with `outcome: "positive"` or
