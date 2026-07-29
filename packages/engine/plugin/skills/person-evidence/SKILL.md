@@ -503,16 +503,23 @@ hands a merge set to proof-conclusion to fold. For a household record:
    `matchRelatives` triples from step 2.4 give the persona→tree-person
    pairings; a new member (no tree match) pairs to a fresh id you mint in
    step 3.
-2. **Dry-run `merge_warnings` as the coherence gate — before any write.**
-   On the **pre-materialization** household set (the matched tree persons
-   plus the record personas you are about to pair), dry-run
-   `merge_warnings` and apply its tiers **before** materializing anything:
+2. **Dry-run `merge_warnings` as the coherence gate — before any write
+   (when a candidate record document is available).**
+   If you have the `candidateGedcomx` from a prior `record_read` call,
+   dry-run `merge_warnings` on the pre-materialization household set
+   (the matched tree persons plus the record personas you are about to
+   pair) and apply its tiers **before** materializing anything:
    - **Error tier blocks.** A hard coherence failure (an event outside a
      lifespan, a relationship that cannot hold) stops the materialization —
      resolve it before writing.
    - **Warning tier is advisory.** A softer flag (e.g. a shared-census
      signal that doesn't fully cohere) does not block; note it in the
      affected `pe_` rationale and proceed.
+
+   When working from **pre-extracted assertions** (no candidate record
+   document available), skip the gate and note in the rationale that
+   the coherence dry-run was not possible because the source document
+   is not available in candidate form.
 3. **Materialize every member in ONE batched call.** Only after the gate
    clears the error tier: collect every persona that **needs**
    materializing — the subject *and* each sibling/spouse — as one `ops`
