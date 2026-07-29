@@ -621,7 +621,9 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   advertised in `tool-schemas.ts` but is the only live tool with **no spec**, so
   `spec-review` cannot check it. The 2026-05-07 timeline-distances design doc was the
   de facto stand-in and has been retired; the behavior is currently defined only by
-  `src/tools/place-distance.ts` and its use in `timeline/SKILL.md`.
+  `src/tools/distance.ts` (which exports both `placeDistanceTool` and
+  `placeDistanceToolSchema` — there is no `place-distance.ts`) and its use in
+  `timeline/SKILL.md`.
 
 - [ ] **Optional `site`/`host` filter param on `external_links_search`** — deferred from
   the search-shaping work (option B) as unnecessary while the count cap holds. File it
