@@ -13,9 +13,12 @@ description: >-
   skill for any "how do I find [record type]" question even when the user does
   not name the FamilySearch wiki — do not answer from training knowledge. Do
   NOT use when the user explicitly names Wikipedia (use search-wikipedia),
-  wants a comprehensive locality records-availability guide (use
-  locality-guide), or wants narrative historical background such as migration
-  patterns or boundary changes (use historical-context).
+  wants a comprehensive records-availability survey of a SPECIFIC place — what
+  records exist there and where they are held (use locality-guide; that is a
+  place survey, whereas a generic "how do I find [record type]" question is a
+  research-method how-to and belongs here), or wants narrative historical
+  background such as migration patterns or boundary changes (use
+  historical-context).
 allowed-tools:
   - wiki_search
 ---

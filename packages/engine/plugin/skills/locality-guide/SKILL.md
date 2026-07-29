@@ -12,7 +12,15 @@ description: >-
   records survive for [place] after [an event]?", or when research-plan needs
   jurisdiction context. Do NOT use when the user wants to search records or
   execute a specific search plan (use search-records or
-  search-external-sites), or wants narrative historical context — migration
+  search-external-sites), or asks a "how do I find [record type]" or "how do I
+  research ..." research-method how-to question (use search-familysearch-wiki;
+  that verb form is a method request, not a place survey). A "what records or
+  repositories exist for [place]" / "what would help trace families in
+  [place]" question is a records-availability SURVEY and belongs HERE even when
+  it names a specific record type or religious community (for example Quaker
+  meeting records in Pennsylvania); route by the question form, not by the
+  record type. Also do not use when the user wants narrative historical
+  context — migration
   patterns, naming conventions, or why an event happened (use
   historical-context); but a question about which records survive or help
   trace families affected by an event is a record-availability question and
