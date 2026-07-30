@@ -1,0 +1,238 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Reconstruct the household and children of George Ackerman (b. ~1818, Pennsylvania; resident Berks County) via his 1860 census household record",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-06",
+    "updated": "2026-05-06"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the members of George Ackerman's household in the 1860 census?",
+      "rationale": "The 1860 census enumerates George Ackerman's household. Building out the household (his children and the parent-child edges) extends the family group in the tree.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-06",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-05-06",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Berks County, Pennsylvania",
+          "date_range": "1860",
+          "repository": "FamilySearch",
+          "rationale": "The 1860 census places George Ackerman's household and enumerates its members.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-06T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ackerman",
+        "given": "George",
+        "collection": "1860 Census",
+        "residence_place": "Berks County, Pennsylvania"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "1860 census household of George Ackerman, Cumru Township, Berks County, Pennsylvania. Head George (age 42, b. Pennsylvania) enumerated with two children: Henry (age 9) and Margaret (age 6), both born Pennsylvania.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1860 U.S. Census, Berks County, Pennsylvania, population schedule, Cumru Township, George Ackerman household; digital image, FamilySearch.org, accessed 6 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1860 U.S. Federal Census, population schedule",
+        "when_created": "1860",
+        "when_accessed": "2026-05-06",
+        "where": "FamilySearch.org",
+        "where_within": "Cumru Township, Berks County, George Ackerman household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+      "url_archived": null,
+      "notes": null,
+      "transcription": null,
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+      "record_role": "head_of_household",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "George Ackerman",
+      "structured_value": { "given": "George", "surname": "Ackerman" },
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant (likely George Ackerman himself) reporting to the census enumerator",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Henry Ackerman",
+      "structured_value": { "given": "Henry", "surname": "Ackerman" },
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant (most likely a household member) reporting to the census enumerator",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "age 9",
+      "structured_value": { "year": 1851, "place": "Pennsylvania" },
+      "date": "~1851",
+      "date_certainty": "estimated",
+      "place": "Pennsylvania",
+      "information_quality": "indeterminate",
+      "informant": "Unknown — most likely a household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Listed in household of George Ackerman (head), position and age consistent with child",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
+      "date": "1860",
+      "date_certainty": "exact",
+      "place": "Berks County, Pennsylvania",
+      "information_quality": "indeterminate",
+      "informant": "Inferred from household structure — no explicit informant for relationships in the 1860 census",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "The 1860 census does not state relationships; this parent-child assertion is inferred by the researcher from household position and shared surname. The relationship column was not introduced until the 1880 census.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+      "record_role": "child_2",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Margaret Ackerman",
+      "structured_value": { "given": "Margaret", "surname": "Ackerman" },
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant (most likely a household member) reporting to the census enumerator",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+      "record_role": "child_2",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "age 6",
+      "structured_value": { "year": 1854, "place": "Pennsylvania" },
+      "date": "~1854",
+      "date_certainty": "estimated",
+      "place": "Pennsylvania",
+      "information_quality": "indeterminate",
+      "informant": "Unknown — most likely a household member",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+      "record_role": "child_2",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Listed in household of George Ackerman (head), position and age consistent with child",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
+      "date": "1860",
+      "date_certainty": "exact",
+      "place": "Berks County, Pennsylvania",
+      "information_quality": "indeterminate",
+      "informant": "Inferred from household structure — no explicit informant for relationships in the 1860 census",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "The 1860 census does not state relationships; this parent-child assertion is inferred by the researcher from household position and shared surname. The relationship column was not introduced until the 1880 census.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "The 1860 household head 'George Ackerman' matches the in-tree George Ackerman (I1) by name and Berks County residence, and his age (42, ~b. 1818) is consistent with the tree birth estimate. Matched as the household anchor.",
+      "match_score": null,
+      "created": "2026-05-06",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
