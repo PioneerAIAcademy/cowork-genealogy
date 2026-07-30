@@ -661,22 +661,6 @@
     {
       "test_id": "ut_search_records_011",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_011",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
@@ -704,14 +688,6 @@
       "dimension_name": "Log quality",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 2,
-      "corrected_score": 2,
       "comment": null
     },
     {
@@ -1161,6 +1137,30 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_search_records_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The nil was logged honestly with no sidecar (both validators passed), and completing an external-site search isn't this test's job or possible in the harness, so this is a pass."
+    },
+    {
+      "test_id": "ut_search_records_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The nil was logged honestly with no sidecar (both validators passed), and completing an external-site search isn't this test's job or possible in the harness, so this is a pass."
+    },
+    {
+      "test_id": "ut_search_records_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The nil was logged honestly with no sidecar (both validators passed), and completing an external-site search isn't this test's job or possible in the harness, so this is a pass."
     }
   ]
 }
