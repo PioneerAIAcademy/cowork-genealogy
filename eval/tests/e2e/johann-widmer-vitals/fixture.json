@@ -1,0 +1,19 @@
+{
+  "id": "johann-widmer-vitals",
+  "name": "Johann Frederich Widmer",
+  "genre": "strip",
+  "source_pid": "L7B2-QXX",
+  "captured": "2026-07-25",
+  "researcher_question": "What are Johann Frederich Widmer's birth date/place, death date/place, and burial date/place?",
+  "tags": {
+    "question_type": "other",
+    "era": "1840s-1910s",
+    "geography": "CH / US-NY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Tests cross-continental vitals recovery: Swiss birth record (Hausen, Bellikon, Aargau) + US death/burial records (Naples, Ontario County, NY). Also flag to team: person_read --relatives returns shared/compact fact ids across relatives in this tree (e.g. most children share the subject's own Birth/Death fact ids) -- did not block this strip since strip disambiguates by (person, fact-id), but worth a look for future fixtures stripping a relative's fact."
+}

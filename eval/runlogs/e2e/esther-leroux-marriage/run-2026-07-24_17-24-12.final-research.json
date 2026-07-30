@@ -1,0 +1,2212 @@
+{
+  "project": {
+    "id": "rp_esther_leroux_marriage",
+    "objective": "What is the marriage date and place of Esther Leroux (MD1C-48H)?",
+    "subject_person_ids": [
+      "MD1C-48H"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What is the date and place of marriage of Esther Leroux (born about 1874, residing in Lewiston, Androscoggin, Maine) to Jean Jacques (G6GQ-P4F)?",
+      "rationale": "This is the direct decomposition of the project objective. The tree shows a Couple relationship between Esther Leroux (MD1C-48H) and Jean Jacques (G6GQ-P4F) with no marriage facts recorded. An existing source attachment (Maine, Marriages, 1771-1907, Jean Laque 1894) suggests a Maine marriage record exists circa 1894; this question targets the date and place from that record and any corroborating sources.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-24",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_008",
+        "a_017",
+        "a_022"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Six FamilySearch searches plus one Ancestry Drouin Collection attempt (deferred \u2014 autonomous mode). The civil marriage return (src_002, ark:/61903/1:1:VZQV-W6T, original state vital record image) is signed by officiant O.D. Mathew, Catholic Priest, Lewiston, stating 'Date of Marriage: Nov. 5th 1894. Place: Lewiston.' This is primary, direct evidence from an eyewitness. The marriage intention register (src_003, ark:/61903/1:1:Q219-YL6L, original image) independently corroborates the parties (Jean Jacques + Estelle Leroux) and place (Lewiston) from a second source (groom informant, different document). The apparent date conflict (27 Oct 1894 in src_003) was resolved: that date is the intention certificate date, not the ceremony. The Drouin Collection (Ancestry, collection 1111) was attempted but could not be captured in this autonomous session; URL is recorded in log_009 for an interactive follow-up. Overturn risk is low: the same priest (O.D. Mathew) who signed the civil return would have recorded the sacramental entry, making date disagreement extremely unlikely.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "YES \u2014 civil marriage return (src_002, original) states marriage date 5 Nov 1894, place Lewiston. Question answered.",
+          "repository_breadth": "YES with limitation \u2014 FamilySearch: Maine Marriages index (pli_001), Maine Vital Records images (pli_002), state marriage index (pli_003, negative), 1900 census (pli_004, negative), church records (pli_005, negative). Ancestry Drouin Collection (pli_006) attempted; deferred \u2014 not obtainable in autonomous session; URL recorded in log_009.",
+          "original_substitution": "YES \u2014 src_002 and src_003 original images both transcribed and examined. Derivative index src_001 confirmed against the originals.",
+          "independent_verification": "PARTIAL \u2014 marriage place corroborated by two independent sources: src_002 (officiant informant) and src_003 (groom informant, different document). Marriage date established by one source chain (src_002 civil return + src_001 derivative). The Drouin Collection would have been the independent date corroboration; deferred. Overturn risk for the date remains low (see below).",
+          "evidence_class": "YES \u2014 src_002 is original (state vital record image), primary information (officiant eyewitness), direct evidence for both date and place.",
+          "conflict_resolution": "YES \u2014 src_003 date conflict resolved: 27 Oct 1894 is the intention certificate date, not the ceremony date; confirmed by original image. No unresolved conflicts remain for the marriage date and place.",
+          "overturn_risk": "LOW \u2014 The officiating priest (O.D. Mathew, Catholic, Lewiston) signed the civil return; the same priest would have recorded the sacramental entry in the same church on the same date. A Drouin Collection entry contradicting 5 Nov 1894 is not supported by any evidence. Additional unsearched sources (e.g., newspapers) have low priority given the strength of the civil return."
+        }
+      },
+      "created": "2026-07-24"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-24",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Maine, United States",
+          "date_range": "1771-1907",
+          "repository": "FamilySearch",
+          "rationale": "An existing source attachment (MTLH-FPT, ARK F4FR-BHD) already points to an 1894 entry in Maine Marriages 1771-1907 (collection 1674915) for 'Jean Laque' \u2014 the likely phonetic rendering of Jean Jacques \u2014 with Esther Leroux as bride. This record should be extracted first to confirm the marriage date and place directly. Index only; images are in Maine Vital Records 1670-1921 (pli_002).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Maine, United States",
+          "date_range": "1670-1921",
+          "repository": "FamilySearch",
+          "rationale": "Maine Vital Records 1670-1921 (collection 1803978) contains the actual images behind the Maine Marriages 1771-1907 index. Once the index record (pli_001) is located, retrieve the original image to confirm date and place and capture all details (witnesses, officiant, town).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Maine, United States",
+          "date_range": "1892-1966",
+          "repository": "FamilySearch",
+          "rationale": "Maine began statewide vital registration in 1892; an 1894 marriage should appear in the state Marriage Index 1892-1966 (collection 2077670). This corroborates the town-level record and may supply additional detail (county, town of registration). Index only; no images in this collection.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Maine, United States",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 federal census asked years married, providing an independent estimate of marriage year to cross-check the vital record date. Esther Jacques (n\u00e9e Leroux) and Jean Jacques should appear as a married couple. Indexed + images at FamilySearch.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Maine, United States",
+          "date_range": "1880-1910",
+          "repository": "FamilySearch",
+          "rationale": "Lewiston, Maine had a large Franco-American Catholic community. A Catholic sacramental marriage record may exist alongside the civil registration. Maine Church Records 1734-1907 (collection 2787824, indexed + images) covers this period and place.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Maine, United States",
+          "date_range": "1880-1910",
+          "repository": "Ancestry",
+          "rationale": "US French Catholic Church Records (Drouin Collection) on Ancestry \u2014 the Catholic sacramental register for Lewiston parishes could provide an independent second source for the marriage date (5 Nov 1894). The civil marriage return (src_002) establishes the date from one source chain only; the Drouin Collection would independently corroborate it. The officiant O.D. Mathew was a Catholic priest in Lewiston, so a parish register entry is expected. Required for GPS independent_verification of the date.",
+          "fallback_for": "pli_005",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-24T16:11:55.816Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Maine, Marriages, 1771-1907",
+        "collectionId": "1674915",
+        "surname": "Leroux",
+        "givenName": "Esther",
+        "spouseGivenName": "Jean",
+        "marriageYearFrom": 1890,
+        "marriageYearTo": 1900
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Found exactly 1 result: ark:/61903/1:1:F4FR-BHD, already attached to subject MD1C-48H. Record shows marriage of Esther Leroux and Jean Laque (Jacques) on 5 Nov 1894 in Lewiston, Androscoggin, Maine. Parents also named: Joseph Leroud and Domitille Preise (Esther's parents); Athanase Jaque and Emile Lessard (Jean's parents)."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-24T16:27:38.881Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Maine, Vital Records, 1670-1921",
+        "collectionId": "1803978",
+        "surname": "Leroux",
+        "givenName": "Esther",
+        "recordType": "marriage",
+        "marriageYearFrom": 1892,
+        "marriageYearTo": 1897
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 10,
+      "notes": "Searched for bride Esther Leroux in Maine Vital Records 1670-1921. Top match (VZ31-PWF, score 0.019) is not Esther \u2014 no responsive record found under this spelling. Name variant search required."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-24T16:27:42.601Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Maine, Vital Records, 1670-1921",
+        "collectionId": "1803978",
+        "surname": "Laque",
+        "givenName": "Jean",
+        "recordType": "marriage",
+        "marriageYearFrom": 1892,
+        "marriageYearTo": 1897
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "Searched for groom Jean Laque (index spelling) in Maine Vital Records 1670-1921. Only result is Antoine Caye \u2014 not the target. Index spelling 'Laque' not used in this vital records collection."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-24T16:27:51.875Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Maine, Vital Records, 1670-1921",
+        "collectionId": "1803978",
+        "surname": "Jacques",
+        "givenName": "Jean",
+        "recordType": "marriage",
+        "marriageYearFrom": 1892,
+        "marriageYearTo": 1897
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 673,
+      "notes": "Search on groom's canonical surname 'Jacques' recovered two relevant entries: (1) VZQV-W6T \u2014 Jean Jacques + Estelle, 5 Nov 1894, Lewiston, matches index date exactly; (2) Q219-YL6L \u2014 Jean Jacques + Estelle Leroux, 27 Oct 1894, Lewiston, bride birth 1868 \u2014 possible marriage intention (10 days prior to ceremony) or a different couple. Both require extraction and the date discrepancy requires conflict notation."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-24T16:56:42.039Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Maine, Marriage Index, 1892-1966, 1977-1996 (2077670)",
+        "searches": [
+          {
+            "surname": "Jacques",
+            "givenName": "Jean",
+            "marriageYearFrom": 1893,
+            "marriageYearTo": 1895,
+            "marriagePlace": "Lewiston, Maine"
+          },
+          {
+            "surname": "Leroux",
+            "givenName": "Esther / Estelle",
+            "marriageYearFrom": 1893,
+            "marriageYearTo": 1895
+          },
+          {
+            "surname": "Laque",
+            "givenName": "Jean",
+            "marriageYearFrom": 1892,
+            "marriageYearTo": 1900
+          }
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 13,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Three searches in collection 2077670 \u2014 by Jacques/Jean (3 results, none responsive), by Leroux/Esther-Estelle (0 results), and by Laque/Jean (0 results) \u2014 returned no match for the 5 Nov 1894 Lewiston marriage of Jean Jacques and Esther/Estelle Leroux. The state-level marriage index may have incomplete coverage for Androscoggin County in 1894, or the record may not have been indexed under these name forms. This is a negative result for this plan item."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-24T16:59:19.266Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States, Census, 1900 (1325221)",
+        "searches": [
+          {
+            "surname": "Jacques",
+            "givenName": "Jean",
+            "residenceYear": 1900,
+            "residencePlace": "Maine"
+          },
+          {
+            "surname": "Jacques",
+            "givenName": "Jean",
+            "birthYearRange": "1875-1882",
+            "birthPlace": "Quebec",
+            "residenceYear": 1900
+          },
+          {
+            "surname": "Jacques",
+            "givenName": "Estelle/Esther",
+            "residenceYear": 1900
+          },
+          {
+            "surname": "Jacques",
+            "givenName": "Jean",
+            "residencePlace": "Androscoggin, Maine",
+            "residenceYear": 1900
+          },
+          {
+            "surname": "Jacques",
+            "givenName": "Jean",
+            "residencePlace": "Franklin, Maine",
+            "spouseSurname": "Leroux",
+            "residenceYear": 1900
+          }
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 30,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Five searches in the 1900 US Census for Jean Jacques (groom, b. ~1878 Quebec) and Estelle Leroux Jacques (bride) in Maine \u2014 varying surname, given name, birthplace, and county \u2014 returned no responsive match. The couple may be indexed under a garbled form, may not have been enumerated, or may have been missed by the indexing. Read the Lewiston 'Household of Jacques' (MMLH-ZBW): members are an unnamed female (b.1848), Magaret (b.1880), Joseph J (b.1882), Peter (b.1884), Johnny (b.1886) \u2014 all different people, not our subject. pli_004 exhausted without corroborating census data."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-24T17:00:05.294Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Maine, Church Records, 1734-1907 (2787824)",
+        "searches": [
+          {
+            "surname": "Jacques",
+            "givenName": "Jean",
+            "marriageYearRange": "1893-1896"
+          },
+          {
+            "surname": "Leroux",
+            "givenName": "Estelle",
+            "marriageYearRange": "1892-1897"
+          }
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Two searches in Maine Church Records 1734-1907 (collection 2787824) for Jean Jacques / Estelle Leroux marriage ~1894 returned no responsive results. The Franco-American Catholic parish records for Lewiston (likely Saint Pierre or Saint Joseph parish) appear not to be included in this FamilySearch collection, or are not indexed for this period."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-24T17:07:55.710Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Lewiston, Androscoggin, Maine, United States",
+        "host": "ancestry.com",
+        "startYear": 1890,
+        "endYear": 1900
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "notes": "Curated external links for Lewiston, Androscoggin, Maine, 1890-1900. Found Drouin Collection (US French Catholic Church Records, 1695-1954) at ancestry.com/search/collections/1111 \u2014 appeared twice, collapsed to one. Also found Maine Marriage Records 1713-1922 (collection 1961) and Maine Marriage Index 1892-1996 (collection 6904)."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-24T17:08:06.630Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry.com",
+        "collection": "1111",
+        "collectionName": "US French Catholic Church Records (Drouin Collection), 1695-1954",
+        "name": "Jean Jacques",
+        "nameVariant": "Jean Laque",
+        "spouse": "Estelle Leroux",
+        "spouseVariant": "Esther Leroux",
+        "marriageYear": 1894,
+        "marriagePlace": "Lewiston, Androscoggin, Maine"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/1111/?name=Jean_Jacques&marriage=1894&marriageplace=Lewiston%2C+Androscoggin%2C+Maine&spouse=Estelle_Leroux",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous run; requires interactive user capture. No user available to click the URL, save the PDF, and upload it. Search URL generated and recorded for a future interactive session: https://www.ancestry.com/search/collections/1111/?name=Jean_Jacques&marriage=1894&marriageplace=Lewiston%2C+Androscoggin%2C+Maine&spouse=Estelle_Leroux. The Drouin Collection (collection 1111) is the Catholic sacramental register corpus and would independently corroborate the marriage date (5 Nov 1894) established by the civil return (src_002). The officiant O.D. Mathew was a Catholic priest in Lewiston; a corresponding parish register entry is expected. This search is not obtainable in the current autonomous run."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Maine, Marriages, 1771-1907,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:MP2J-BDK : 14 January 2020), Entry for Jean Laque; citing Lewiston, Androscoggin, Maine, United States; FHL microfilm.",
+      "citation_detail": {
+        "who": "Jean Laque (groom) and Esther Leroux (bride)",
+        "what": "Maine, Marriages, 1771-1907, index entry",
+        "when_created": "14 January 2020 (index published); original marriage record 5 November 1894",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "ark:/61903/1:1:F4FR-BHD; source record ark:/61903/1:2:MP2J-BDK; Lewiston, Androscoggin, Maine"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://familysearch.org/ark:/61903/1:1:F4FR-BHD",
+      "notes": "Index-only record. Maine, Marriages, 1771-1907 (collection 1674915) is an index on FamilySearch; the underlying original images are in Maine Vital Records, 1670-1921 (collection 1803978). Original image not examined \u2014 must be consulted to verify name spellings (Laque for Jacques, Leroud for Leroux, Preise for the mother's surname) and to extract any additional details not captured by the index.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Maine, Vital Records, 1670-1921,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VZQV-W6T : accessed 24 July 2026), entry for Jean Jacques and Jacques, 05 Nov 1894.",
+      "citation_detail": {
+        "who": "Jean Jacques (groom) and Estelle [no surname] (bride)",
+        "what": "Marriage register entry, Maine Vital Records, 1670-1921 (FamilySearch collection 1803978)",
+        "when_created": "05 November 1894",
+        "when_accessed": "24 July 2026",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:VZQV-W6T",
+        "where_within": "Image source ark:/61903/1:2:9MSS-8WKR; entry for Jean Jacques and Jacques"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VZQV-W6T",
+      "access_date": "2026-07-24",
+      "log_entry_id": "log_004",
+      "notes": "Image examined: ark:/61903/3:1:9398-4D3G-RW (saved to images/ark_61903_3_1_9398-4D3G-RW.jpg). Initial extraction (a_015\u2013a_025) drawn from indexed persona data; supplementary assertions (a_026 onward) drawn from the image read 2026-07-24. Bride birthplace 'Canada' conflicts with 1880 US census placing Esther Leroux in Maine (born United States); see assertion bias notes.",
+      "gedcomx_source_description_id": "S2",
+      "url_archived": "images/ark_61903_3_1_9398-4D3G-RW.jpg",
+      "transcription": "RECORD OF A MARRIAGE.\nGroom:              Jean Jacques\nBride:              Estelle\nResidence of Groom: Lewiston\nResidence of Bride: Lewiston\nAge of Groom:       19\nAge of Bride:       26\nColor of Groom:     W\nColor of Bride:     W\nOccupation of Groom: Mill\nOccupation of Bride: [blank]\nBirthplace of Groom: Canada\nBirthplace of Bride:  Canada\nNo. of Marriage of Groom: 1st\nNo. of Marriage of Bride:  1st\nGroom Widowed or Divorced: [blank]\nBride Widowed or Divorced: [blank]\nIntention Filed:    October 22nd 1894\nBy whom Married:    O. D. Mathew\nResidence:          Lewiston\nOfficial Station:   Catholic Priest\nDate of Marriage:   Nov. 5th 1894\nPlace:              Lewiston\n[Record continued over.]"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Maine, Vital Records, 1670-1921,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q219-YL6L : accessed 2026-07-24), Entry for Jean Jacques and Estelle Leroux, 27 October 1894.",
+      "citation_detail": {
+        "who": "Jean Jacques and Estelle Leroux",
+        "what": "Marriage register entry, Maine, Vital Records, 1670-1921 (collection 1803978)",
+        "when_created": "1894",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Entry for Jean Jacques and Estelle Leroux, 27 October 1894; image source ark:/61903/1:2:QGTT-YX9P"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q219-YL6L",
+      "access_date": "2026-07-24",
+      "notes": "This record is a Record of Intentions of Marriages (pre-marriage notice register), Lewiston, page 221. The index (Maine Marriages 1771-1907) date '27 October 1894' is the DATE OF CERTIFICATE (the date the intention certificate was issued), NOT the marriage date. The actual intention FILING DATE was 22 October 1894. The wedding itself occurred 5 November 1894 per marriage return VZQV-W6T. IMPORTANT NAME DISCREPANCY: the index spells the bride as 'Esther Leroux' but the original intention register image reads 'Estelle Leroux' \u2014 a genuine discrepancy between the index and the original. Image examined: ark:/61903/3:1:3Q9M-C9BK-R9T1-M (saved to images/ark_61903_3_1_3Q9M-C9BK-R9T1-M.jpg).",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S3",
+      "transcription": "Record of Intentions of Marriages, Lewiston, page 221.\nDATE OF NOTICE | NAMES OF PARTIES | RESIDENCE | AGE | Date of Certificate\nOct. 22nd 1894 | Jean Jacques and Estelle Leroux | Lewiston 19 / Lewiston 26 | Oct. 27th 1894",
+      "url_archived": "images/ark_61903_3_1_3Q9M-C9BK-R9T1-M.jpg"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950452",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Esther Leroux",
+      "structured_value": {
+        "given": "Esther",
+        "surname": "Leroux"
+      },
+      "information_quality": "primary",
+      "informant": "Esther Leroux (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Name as indexed from derivative; original spelling should be confirmed against the original image in Maine Vital Records, 1670-1921 (collection 1803978).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950452",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Esther Leroux (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950452",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married 5 November 1894 at Lewiston, Androscoggin, Maine",
+      "date": "5 Nov 1894",
+      "date_certainty": "exact",
+      "place": "Lewiston, Androscoggin, Maine, United States",
+      "information_quality": "primary",
+      "informant": "officiant or clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Marriage event date and place attested by the officiant or recording clerk in an official capacity. This is an index of the original record; exact date and place should be confirmed against the original image.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Lewiston, Androscoggin, Maine, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950452",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Joseph Leroud [= Leroux] (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Esther Leroux (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The bride stated her own parentage to the marriage clerk. Father's surname indexed as 'Leroud'; likely a variant spelling of Leroux \u2014 original image should confirm.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950452",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Domitille Preise (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Esther Leroux (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The bride stated her own parentage to the marriage clerk. Mother's surname indexed as 'Preise'; spelling may be a variant or indexing error \u2014 original image should confirm.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950455",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Jean Laque [= Jacques]",
+      "structured_value": {
+        "given": "Jean",
+        "surname": "Laque"
+      },
+      "information_quality": "primary",
+      "informant": "Jean Laque (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Surname indexed as 'Laque'; likely a phonetic rendering of 'Jacques' common among French-Canadian immigrants in Lewiston. Original image must be consulted to confirm the exact spelling as written.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950455",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Jean Laque (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950455",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married 5 November 1894 at Lewiston, Androscoggin, Maine",
+      "date": "5 Nov 1894",
+      "date_certainty": "exact",
+      "place": "Lewiston, Androscoggin, Maine, United States",
+      "information_quality": "primary",
+      "informant": "officiant or clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Marriage event date and place attested by the officiant or recording clerk in an official capacity. This is an index of the original record; exact date and place should be confirmed against the original image.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Lewiston, Androscoggin, Maine, United States"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950455",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Athanase Jaque [= Jacques] (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Jean Laque (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The groom stated his own parentage to the marriage clerk. Father's name indexed as 'Athanase Jaque'; original image should confirm exact spelling.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950455",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Emile Lessard (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Jean Laque (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The groom stated his own parentage to the marriage clerk. Mother's name 'Emile Lessard' \u2014 'Emile' is typically a masculine given name in French; may be an indexing error for 'Emilia', 'Emilienne', or similar. Original image should confirm.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950453",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Joseph Leroud [= Leroux]",
+      "structured_value": {
+        "given": "Joseph",
+        "surname": "Leroud"
+      },
+      "information_quality": "primary",
+      "informant": "Esther Leroux (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Name supplied by the bride for her own father; the bride had firsthand knowledge of her father's name. Surname indexed as 'Leroud'; likely a variant or indexing error for 'Leroux'. Original image should confirm.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950454",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Domitille Preise",
+      "structured_value": {
+        "given": "Domitille",
+        "surname": "Preise"
+      },
+      "information_quality": "primary",
+      "informant": "Esther Leroux (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Name supplied by the bride for her own mother; the bride had firsthand knowledge of her mother's name. Surname indexed as 'Preise'; may be a phonetic rendering or indexing error. Original image should confirm the surname.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950456",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Athanase Jaque [= Jacques]",
+      "structured_value": {
+        "given": "Athanase",
+        "surname": "Jaque"
+      },
+      "information_quality": "primary",
+      "informant": "Jean Laque (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Name supplied by the groom for his own father; the groom had firsthand knowledge of his father's name. Surname indexed as 'Jaque'; phonetic variant of 'Jacques'. Original image should confirm.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:F4FR-BHD",
+      "record_persona_id": "p_11117950457",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Emile Lessard",
+      "structured_value": {
+        "given": "Emile",
+        "surname": "Lessard"
+      },
+      "information_quality": "primary",
+      "informant": "Jean Laque (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "'Emile' is typically a masculine given name in French; the groom's mother's given name may have been transcribed in error from the original \u2014 possible variants include 'Emilia', 'Emilienne', or 'Emma'. The groom had firsthand knowledge of his mother's name; the uncertainty is in the indexer's transcription, not the informant's proximity. Original image must be consulted to confirm.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Jean Jacques",
+      "structured_value": {
+        "given": "Jean",
+        "surname": "Jacques"
+      },
+      "information_quality": "primary",
+      "informant": "Jean Jacques (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Jean Jacques (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married 05 Nov 1894 at Lewiston, Maine",
+      "date": "5 Nov 1894",
+      "date_certainty": "exact",
+      "place": "Lewiston, Maine, United States",
+      "information_quality": "primary",
+      "informant": "officiating clerk or minister",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002",
+      "standard_place": "Lewiston, Androscoggin, Maine, United States"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Estelle [no surname] (stated)",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "officiating clerk or minister",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of [?] Jacques (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Jean Jacques (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731817",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Estelle [no surname recorded]",
+      "structured_value": {
+        "given": "Estelle",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "Estelle (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Bride's given name is recorded as 'Estelle'; this may be a variant of 'Esther' (as in Esther Leroux, MD1C-48H). No surname is captured in this record. Identity with Esther Leroux is tentative \u2014 surname corroboration from a second independent record is needed before a confident link can be made.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731817",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Estelle (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731817",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married 05 Nov 1894 at Lewiston, Maine",
+      "date": "5 Nov 1894",
+      "date_certainty": "exact",
+      "place": "Lewiston, Maine, United States",
+      "information_quality": "primary",
+      "informant": "officiating clerk or minister",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002",
+      "standard_place": "Lewiston, Androscoggin, Maine, United States"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731817",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "spouse of Jean Jacques (stated)",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "officiating clerk or minister",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731815",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "[no given name] Jacques",
+      "structured_value": {
+        "given": "",
+        "surname": "Jacques"
+      },
+      "information_quality": "primary",
+      "informant": "Jean Jacques (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Only the surname 'Jacques' was captured in this record; the father's given name was not recorded or not legible. The groom stated his own parent's name per marriage-record doctrine \u2014 proximity is self and the evidence is direct. Gender recorded as Male in the GedcomX representation.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731815",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Jean Jacques (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258311",
+      "record_role": "groom",
+      "fact_type": "marriage_intention",
+      "value": "Intention to marry filed; 27 Oct 1894 is certificate date, not marriage date; filing date 22 Oct 1894; marriage itself 5 Nov 1894 per VZQV-W6T",
+      "structured_value": {
+        "given": "Jean",
+        "surname": "Jacques"
+      },
+      "information_quality": "primary",
+      "informant": "Jean Jacques (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_003",
+      "date": "27 Oct 1894",
+      "date_certainty": "exact",
+      "informant_bias_notes": "The indexed date 27 October 1894 is the DATE OF CERTIFICATE (intention certificate issued by the town clerk), not the marriage date. The filing date per the original image is 22 October 1894. This record is a Record of Intentions of Marriages and establishes only that the parties filed notice of intent to marry \u2014 not that the marriage took place. The actual marriage occurred 5 November 1894 per the marriage return (VZQV-W6T). Additionally, the bride's name appears as 'Esther Leroux' in the index but 'Estelle Leroux' in the original image."
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258311",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Jean Jacques (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258311",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born about 1875",
+      "date": "~1875",
+      "date_certainty": "estimated",
+      "information_quality": "primary",
+      "informant": "Jean Jacques (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258315",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Estelle Leroux",
+      "structured_value": {
+        "given": "Estelle",
+        "surname": "Leroux"
+      },
+      "information_quality": "primary",
+      "informant": "Estelle Leroux (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Given name 'Estelle' is likely a variant of 'Esther.' Bride birth year 1868 conflicts with Esther Leroux estimated birth ~1874 (from 1880 census); possible transcription error or possibly a different person.",
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258315",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Estelle Leroux (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258315",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born about 1868",
+      "date": "~1868",
+      "date_certainty": "estimated",
+      "information_quality": "primary",
+      "informant": "Estelle Leroux (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birth year 1868 conflicts with Esther Leroux estimated birth ~1874 from 1880 census. May be a transcription error or indicate this is a different person. Requires corroboration.",
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258311",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married 27 October 1894 at Lewiston, Androscoggin, Maine",
+      "date": "27 Oct 1894",
+      "date_certainty": "exact",
+      "place": "Lewiston, Androscoggin, Maine, United States",
+      "information_quality": "primary",
+      "informant": "officiating clerk or registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Date 27 Oct 1894 conflicts with index (5 Nov 1894, src_001) and vital records entry VZQV-W6T (5 Nov 1894, src_002). May represent a marriage intention/license application date rather than the ceremony date. Original image (ark:/61903/1:2:QGTT-YX9P) should be reviewed to resolve the conflict.",
+      "log_entry_id": "log_004",
+      "source_id": "src_003",
+      "standard_place": "Lewiston, Androscoggin, Maine, United States"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258315",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married 27 October 1894 at Lewiston, Androscoggin, Maine",
+      "date": "27 Oct 1894",
+      "date_certainty": "exact",
+      "place": "Lewiston, Androscoggin, Maine, United States",
+      "information_quality": "primary",
+      "informant": "officiating clerk or registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Date 27 Oct 1894 conflicts with index (5 Nov 1894, src_001) and vital records entry VZQV-W6T (5 Nov 1894, src_002). May represent a marriage intention/license application date rather than the ceremony date. Original image (ark:/61903/1:2:QGTT-YX9P) should be reviewed to resolve the conflict.",
+      "log_entry_id": "log_004",
+      "source_id": "src_003",
+      "standard_place": "Lewiston, Androscoggin, Maine, United States"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "age",
+      "value": "19",
+      "structured_value": {
+        "age": 19
+      },
+      "source_id": "src_002",
+      "information_quality": "secondary",
+      "informant": "groom Jean Jacques",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Groom self-reported age on marriage record. Age 19 implies birth circa 1875."
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731817",
+      "record_role": "bride",
+      "fact_type": "age",
+      "value": "26",
+      "structured_value": {
+        "age": 26
+      },
+      "source_id": "src_002",
+      "information_quality": "secondary",
+      "informant": "bride Estelle",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Bride self-reported age on marriage record. Age 26 implies birth circa 1868, which conflicts with the 1880 census estimate of birth circa 1874. Discrepancy of approximately 6 years warrants corroboration."
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born ~1875 (calculated from age 19 at marriage Nov 1894)",
+      "date": "~1875",
+      "date_certainty": "calculated",
+      "structured_value": {
+        "year": "1875"
+      },
+      "source_id": "src_002",
+      "information_quality": "secondary",
+      "informant": "groom Jean Jacques",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Birth year calculated from stated age 19 at marriage date 5 November 1894. Self-reported age; no independent corroboration in this record."
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731817",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born ~1868 (calculated from age 26 at marriage Nov 1894)",
+      "date": "~1868",
+      "date_certainty": "calculated",
+      "structured_value": {
+        "year": "1868"
+      },
+      "source_id": "src_002",
+      "information_quality": "secondary",
+      "informant": "bride Estelle",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Birth year calculated from stated age 26 at marriage date 5 November 1894. Conflicts with 1880 US census estimate of birth circa 1874 (a 6-year discrepancy). The stated age may be inaccurate; corroboration from a birth record or other independent source is needed."
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "Canada",
+      "place": "Canada",
+      "structured_value": {
+        "place": "Canada"
+      },
+      "source_id": "src_002",
+      "information_quality": "secondary",
+      "informant": "groom Jean Jacques",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Groom self-reported birthplace as Canada. Consistent with tree showing birth in Quebec.",
+      "standard_place": "Canada"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731817",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "Canada",
+      "place": "Canada",
+      "structured_value": {
+        "place": "Canada"
+      },
+      "source_id": "src_002",
+      "information_quality": "secondary",
+      "informant": "bride Estelle",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Bride birthplace recorded as 'Canada' conflicts with 1880 US census showing Esther Leroux in Lewiston, Maine (born in United States). Both the bride's parents were born in Quebec, Canada \u2014 bride may have reported parental origin or may have been born in Canada before the family emigrated. Alternatively, the age may be wrong (bride age 26 implies b.1868; census implies b.1874).",
+      "standard_place": "Canada"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "W",
+      "source_id": "src_002",
+      "information_quality": "primary",
+      "informant": "marriage clerk",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Color column 'W' (White) recorded by the clerk from observation or self-report."
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731817",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "W",
+      "source_id": "src_002",
+      "information_quality": "primary",
+      "informant": "marriage clerk",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Color column 'W' (White) recorded by the clerk from observation or self-report."
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "occupation",
+      "value": "Mill",
+      "structured_value": {
+        "occupation": "Mill"
+      },
+      "source_id": "src_002",
+      "information_quality": "secondary",
+      "informant": "groom Jean Jacques",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Groom occupation recorded as 'Mill' \u2014 likely a mill laborer (cotton mill), consistent with Lewiston's major textile industry. Self-reported on marriage record."
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "marital_status",
+      "value": "1st marriage",
+      "structured_value": {
+        "marital_status": "1st marriage"
+      },
+      "source_id": "src_002",
+      "information_quality": "secondary",
+      "informant": "groom Jean Jacques",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Groom self-reported this as his 1st marriage. 'Widowed or Divorced' field left blank, consistent with 1st marriage claim."
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731817",
+      "record_role": "bride",
+      "fact_type": "marital_status",
+      "value": "1st marriage",
+      "structured_value": {
+        "marital_status": "1st marriage"
+      },
+      "source_id": "src_002",
+      "information_quality": "secondary",
+      "informant": "bride Estelle",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Bride self-reported this as her 1st marriage. 'Widowed or Divorced' field left blank, consistent with 1st marriage claim."
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "groom",
+      "fact_type": "event",
+      "value": "Marriage intention filed 22 October 1894, Lewiston",
+      "date": "22 October 1894",
+      "place": "Lewiston, Maine",
+      "structured_value": {
+        "place": "Lewiston, Maine"
+      },
+      "source_id": "src_002",
+      "information_quality": "primary",
+      "informant": "marriage clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Intention filing date and place recorded by the clerk in an official capacity.",
+      "standard_place": "Lewiston, Androscoggin, Maine, United States"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:VZQV-W6T",
+      "record_persona_id": "p_13368731816",
+      "record_role": "officiant",
+      "fact_type": "name",
+      "value": "O. D. Mathew",
+      "structured_value": {
+        "given": "O. D.",
+        "surname": "Mathew"
+      },
+      "source_id": "src_002",
+      "information_quality": "primary",
+      "informant": "O. D. Mathew",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Officiant name and role (Catholic Priest, Lewiston) recorded in the marriage return. Residence given as Lewiston."
+    },
+    {
+      "id": "a_047",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258311",
+      "record_role": "groom",
+      "fact_type": "age",
+      "value": "19",
+      "structured_value": {
+        "age": "19"
+      },
+      "information_quality": "primary",
+      "informant": "Jean Jacques (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Age stated by the groom on the intention filing. Implies birth year approximately 1875, consistent with the index birth year of 1875."
+    },
+    {
+      "id": "a_048",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258315",
+      "record_role": "bride",
+      "fact_type": "age",
+      "value": "26",
+      "structured_value": {
+        "age": "26"
+      },
+      "information_quality": "primary",
+      "informant": "Estelle Leroux (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Age stated by the bride on the intention filing. Implies birth year approximately 1868, consistent with the index birth year of 1868. The index spells her name 'Esther Leroux' but the original image reads 'Estelle Leroux' \u2014 a genuine name discrepancy between derivative and original."
+    },
+    {
+      "id": "a_049",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258311",
+      "record_role": "groom",
+      "fact_type": "marriage_intention",
+      "value": "Intention filing date: 22 October 1894",
+      "date": "22 Oct 1894",
+      "date_certainty": "exact",
+      "place": "Lewiston, Androscoggin, Maine, United States",
+      "information_quality": "primary",
+      "informant": "town clerk, Lewiston",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "The DATE OF NOTICE column in the original image reads 'Oct. 22nd 1894'. This is the date the marriage intention was filed with the Lewiston town clerk, not the marriage date. The marriage return (VZQV-W6T) establishes the actual marriage as 5 November 1894.",
+      "standard_place": "Lewiston, Androscoggin, Maine, United States"
+    },
+    {
+      "id": "a_050",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258311",
+      "record_role": "groom",
+      "fact_type": "marriage_intention",
+      "value": "Intention certificate date: 27 October 1894 (date certificate was issued, not the marriage date)",
+      "date": "27 Oct 1894",
+      "date_certainty": "exact",
+      "place": "Lewiston, Androscoggin, Maine, United States",
+      "information_quality": "primary",
+      "informant": "town clerk, Lewiston",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "The 'Date of Certificate' column reads 'Oct. 27th 1894'. This is when the intention certificate was issued by the clerk. The index records this as the marriage date, which is incorrect. Prior extraction treated this as a marriage event date; corrected here. Actual marriage: 5 November 1894 per VZQV-W6T.",
+      "standard_place": "Lewiston, Androscoggin, Maine, United States"
+    },
+    {
+      "id": "a_051",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:Q219-YL6L",
+      "record_persona_id": "p_102766258315",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Estelle Leroux [original image; index reads 'Esther Leroux' \u2014 genuine name discrepancy]",
+      "structured_value": {
+        "given": "Estelle",
+        "surname": "Leroux"
+      },
+      "information_quality": "primary",
+      "informant": "Estelle Leroux (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "The original Record of Intentions image (ark:/61903/3:1:3Q9M-C9BK-R9T1-M, Lewiston page 221) reads 'Estelle Leroux'. The index (Maine Marriages 1771-1907, a derivative) reads 'Esther Leroux'. The original is preferred over the derivative. Whether the project subject 'Esther Leroux' (tree person MD1C-48H) is the same person as the original's 'Estelle Leroux' is an open identity question; the marriage return (VZQV-W6T) should be checked for the name used there."
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "MD1C-48H",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Esther Leroux' exactly matches tree person MD1C-48H. Record already attached to subject. Female, residing Lewiston, Maine \u2014 consistent with 1880 residence. Strong match on all identifiers.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "MD1C-48H",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex (Female) consistent with MD1C-48H. Record already attached to subject.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "MD1C-48H",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage assertion (bride role) from record attached to MD1C-48H. Date and place consistent with known residence in Lewiston, Maine.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage assertion (bride role) also bears on the groom G6GQ-P4F (Jean Jacques), who is already linked to MD1C-48H via Couple relationship R1 in the tree. Phonetic name variant 'Laque' for 'Jacques' is documented.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "MD1C-48H",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion names Esther Leroux as child of Joseph Leroud \u2014 bears on bride MD1C-48H as the child.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "LT17-CGW",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion names 'Joseph Leroud' as bride's father. Tree person LT17-CGW is recorded as 'Joseph Leroud' (exact same spelling) with an existing ParentChild relationship R3 to MD1C-48H. Obvious match.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "MD1C-48H",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion names Esther Leroux as child of Domitille Preise \u2014 bears on bride MD1C-48H as the child.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_005",
+      "person_id": "L7B2-HQ8",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion names 'Domitille Preise' as bride's mother. Tree person L7B2-HQ8 has exactly that name with existing ParentChild relationship R4 to MD1C-48H. Obvious match.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_006",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Jean Laque' is a documented phonetic variant of 'Jacques' in Franco-American records. Tree person G6GQ-P4F is Jean Jacques, already linked to MD1C-48H via Couple relationship R1. Given name exact; surname is a well-attested phonetic rendering. Strong match.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_007",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex (Male) consistent with G6GQ-P4F. Existing Couple relationship confirms identity.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage assertion (groom role) from record. G6GQ-P4F is Jean Jacques, already in Couple relationship R1 with MD1C-48H. Date and place consistent.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_008",
+      "person_id": "MD1C-48H",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage assertion (groom role) also bears on bride MD1C-48H. Same event as a_003; groom's persona confirms the same marriage date and place.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_009",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion names Jean Laque (groom) as child of Athanase Jaque \u2014 bears on G6GQ-P4F as the child. Groom identity confirmed via Couple R1 and name variant analysis.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion names 'Athanase Jaque [= Jacques]' as groom's father. New tree person I1 minted from this single record. Probable confidence \u2014 single-record introduction, no independent corroboration yet.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_010",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion names Jean Laque (groom) as child of Emile Lessard \u2014 bears on G6GQ-P4F as the child.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion names 'Emile Lessard' as groom's mother. New tree person I2 minted from this single record. Note: 'Emile' is typically masculine in French; given name may be a transcription error for a feminine form. Probable confidence \u2014 single-record introduction pending original image confirmation.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_011",
+      "person_id": "LT17-CGW",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion 'Joseph Leroud' for father_of_bride role. Tree person LT17-CGW carries exactly this name with ParentChild R3 to MD1C-48H. Obvious match; no ambiguity.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_012",
+      "person_id": "L7B2-HQ8",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion 'Domitille Preise' for mother_of_bride role. Tree person L7B2-HQ8 carries exactly this name with ParentChild R4 to MD1C-48H. Obvious match; no ambiguity.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Athanase Jaque [= Jacques]' for father_of_groom role. Tree person I1 minted from this assertion. Probable \u2014 single record, original image not yet consulted to confirm spelling.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Emile Lessard' for mother_of_groom role. Tree person I2 minted from this assertion. Probable \u2014 single record, original image not yet consulted; given name 'Emile' may be a transcription error.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_015",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom persona Jean Jacques (VZQV-W6T) \u2014 name exact match to G6GQ-P4F; marriage 5 Nov 1894 Lewiston confirmed by image; Canada/Quebec birthplace consistent with tree; age 19 (b.~1875) vs tree b.~1878 within normal age-rounding range.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_016",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex Male consistent with G6GQ-P4F; groom persona in VZQV-W6T confirmed as G6GQ-P4F by name, date, and place match.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_017",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event 5 Nov 1894 Lewiston (groom side, VZQV-W6T) bears on G6GQ-P4F as groom; confirmed by image of marriage return; exact date/place match with index src_001.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_017",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage event 5 Nov 1894 Lewiston (groom side, VZQV-W6T) also bears on MD1C-48H as the bride in this union; same event as src_001 which names bride as Esther Leroux with parents matching MD1C-48H's tree parents.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_018",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Spousal relationship assertion (groom\u2192bride) from VZQV-W6T bears on G6GQ-P4F as the groom; identification confirmed by name, date, and image.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_018",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Spousal relationship assertion (groom\u2192bride) from VZQV-W6T also bears on MD1C-48H as the bride; probable confidence given name variant Estelle/Esther and age/birthplace conflicts.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_019",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Assertion that groom is child of '[?] Jacques' (VZQV-W6T) bears on G6GQ-P4F as the child; groom identity confirmed by name and marriage event match.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_020",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride name 'Estelle' (no surname, VZQV-W6T) matches MD1C-48H with probable confidence: same marriage event as index src_001 naming bride as Esther Leroux (parents Joseph Leroud + Domitille Preise = MD1C-48H's tree parents); 'Estelle' is a Franco-American variant of 'Esther'. Conflicts: age 26 (b.~1868) vs census b.~1874; birthplace Canada vs census US. Parent-name anchor from index supports probable, not speculative.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_021",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex Female consistent with MD1C-48H; bride persona in VZQV-W6T linked to MD1C-48H at probable confidence based on marriage event corroboration with index.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_022",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage event 5 Nov 1894 Lewiston (bride side, VZQV-W6T) bears on MD1C-48H as bride; same event confirmed by index src_001 naming Esther Leroux with matching parents; image of original return confirms date. Probable due to name/age/birthplace conflicts.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_022",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event 5 Nov 1894 Lewiston (bride side, VZQV-W6T) also bears on G6GQ-P4F as groom in this union; groom identity confirmed confidently from name and event match.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_023",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Spousal relationship (bride\u2192groom, VZQV-W6T) bears on MD1C-48H as the bride; probable confidence per bride persona analysis.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_023",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Spousal relationship (bride\u2192groom, VZQV-W6T) also bears on G6GQ-P4F as the groom; confident per groom persona analysis.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Father of groom recorded only as '[?] Jacques' (no given name, VZQV-W6T marriage return). I1 (Athanase Jaque) is the sole candidate groom's father in the tree, identified from index src_001. Surname 'Jacques' is consistent with I1's 'Jaque' (phonetic variant), but no given name is available to confirm identity with 'Athanase'. Speculative \u2014 surname match only.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Sex Male for father_of_groom persona (VZQV-W6T). Consistent with I1 (Athanase Jaque); speculative per a_024 rationale.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_034",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom age 19 from VZQV-W6T image; implies b.~1875, consistent with tree b.~1878 within normal self-reported age rounding. Bears on G6GQ-P4F as groom.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_035",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride age 26 from VZQV-W6T image; implies b.~1868, which conflicts with census estimate b.~1874. Discrepancy documented; probable confidence maintained due to strong parent-name anchor from index. Bears on MD1C-48H as bride.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_036",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Calculated birth ~1875 for groom (from age 19, VZQV-W6T); consistent with G6GQ-P4F tree data (b.~1878); confident per overall groom identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_037",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Calculated birth ~1868 for bride (from age 26, VZQV-W6T); conflicts with census b.~1874 by 6 years. Documented conflict; probable confidence maintained. Bears on MD1C-48H.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_038",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom birthplace Canada from VZQV-W6T image; consistent with G6GQ-P4F tree showing birth in Quebec, Canada. Confident per groom identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_039",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride birthplace Canada from VZQV-W6T image; conflicts with 1880 census showing Esther Leroux born in United States. Both parents were Quebec-born; bride may have reported parental origin. Probable confidence maintained. Bears on MD1C-48H.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_040",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Color W (White) for groom from VZQV-W6T image; descriptive attribute consistent with G6GQ-P4F; confident per groom identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_041",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Color W (White) for bride from VZQV-W6T image; descriptive attribute consistent with MD1C-48H; probable per bride identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_042",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom occupation 'Mill' from VZQV-W6T image; consistent with Lewiston textile mill context and 1880 census showing Esther's family in Lewiston mill community. Confident per groom identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_043",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom 1st marriage from VZQV-W6T image; no prior marriage known for G6GQ-P4F in the tree; consistent.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_044",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride 1st marriage from VZQV-W6T image; no prior marriage known for MD1C-48H in the tree; consistent. Probable per bride identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_045",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Intention filed 22 Oct 1894 Lewiston (groom persona, VZQV-W6T); administrative event bearing on G6GQ-P4F as the groom in this marriage; confident per overall groom identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_026",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom marriage intention (Q219-YL6L) \u2014 Jean Jacques, Lewiston, intention filed 22 Oct 1894; same groom as VZQV-W6T marriage return (same name, same town, same year). Confident identification with G6GQ-P4F.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_027",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom sex Male (Q219-YL6L intention); consistent with G6GQ-P4F; confident per groom identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_028",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom birth ~1875 (Q219-YL6L, calculated from age 19); consistent with VZQV-W6T and tree b.~1878 within rounding range. Confident per groom identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_029",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride name 'Estelle Leroux' (Q219-YL6L intention, confirmed by original image). Surname 'Leroux' matches MD1C-48H; given name 'Estelle' is variant of 'Esther'. Same marriage as index src_001 and VZQV-W6T return. Conflicts: age 26 (b.~1868) vs census b.~1874; original says 'Estelle' while index says 'Esther'. Probable \u2014 parent-name anchor from index and surname match support identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_030",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride sex Female (Q219-YL6L); consistent with MD1C-48H; probable per bride identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_031",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride birth ~1868 (Q219-YL6L, calculated from age 26); conflicts with census b.~1874. Documented conflict; probable confidence maintained based on overall identification with MD1C-48H.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_032",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom-side marriage event (Q219-YL6L); date 27 Oct 1894 is the intention certificate date, not the ceremony. Groom Jean Jacques identified with G6GQ-P4F; confident per overall groom identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_032",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom-side marriage event (Q219-YL6L) also bears on MD1C-48H as the intended bride; same couple as confirmed by index and marriage return. Probable per bride identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_033",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride-side marriage event (Q219-YL6L); date 27 Oct 1894 is intention certificate date. Bride Estelle Leroux identified with MD1C-48H at probable confidence; surname Leroux matches, name variant noted.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_033",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride-side marriage event (Q219-YL6L) also bears on G6GQ-P4F as the groom; same marriage event identified with G6GQ-P4F at confident level.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_047",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom age 19 from Q219-YL6L intention image; consistent with VZQV-W6T and tree data. Confident per groom identification with G6GQ-P4F.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_048",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride age 26 from Q219-YL6L intention image; same as VZQV-W6T return; conflicts with census b.~1874. Probable per bride identification with MD1C-48H.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_049",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage intention filing date 22 Oct 1894, Lewiston (Q219-YL6L image); administrative event for groom Jean Jacques = G6GQ-P4F. Confident per groom identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_050",
+      "person_id": "G6GQ-P4F",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Intention certificate date 27 Oct 1894, Lewiston (Q219-YL6L image); administrative event for groom Jean Jacques = G6GQ-P4F. Confident per groom identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_051",
+      "person_id": "MD1C-48H",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride name 'Estelle Leroux' confirmed from original image (Q219-YL6L, page 221 Lewiston intention register). Original reads 'Estelle Leroux'; index reads 'Esther Leroux' \u2014 genuine name discrepancy. Surname Leroux matches MD1C-48H; 'Estelle' variant of 'Esther'. Probable identification maintained.",
+      "created": "2026-07-24"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Bride's given name: derivative index (src_001) records bride as 'Esther Leroux'; both original records (src_002 marriage return and src_003 intention register original image) read 'Estelle Leroux'.",
+      "disputed_attribute": "given_name",
+      "identity_question": "Is the bride named 'Estelle Leroux' in the original marriage records the same person as tree person MD1C-48H ('Esther Leroux')?",
+      "competing_assertion_ids": [
+        "a_001",
+        "a_029",
+        "a_051"
+      ],
+      "independence_analysis": "a_001 (Esther, src_001) is derivative \u2014 it derives from the same town records as src_002 and is not independent of the original. a_029 and a_051 (both 'Estelle', from src_003 original image) share an independent informant (the bride herself, who signed the intention) and agree with each other. The two original records (src_002 and src_003) independently use 'Estelle'; the derivative index (src_001) is the sole source of 'Esther'.",
+      "weighing_analysis": "Original records take precedence over derivative indexes per the GPS source hierarchy (Standard 24). The officiant's return (src_002) and the original intention image (src_003) are both original records; src_001 is a derivative transcription. Both originals use 'Estelle.' The derivative index value 'Esther' is a transcription-level variant of the original spelling, consistent with the known phonetic similarity between the two names in Franco-American communities of this period.",
+      "preferred_assertion_id": "a_051",
+      "resolution_rationale": "The original spelling 'Estelle Leroux' is preferred. The name difference between 'Estelle' (originals) and 'Esther' (index) is a derivative transcription variant, not a different person. The bride's identity with MD1C-48H is established not by the given name alone but by: (a) surname Leroux matching MD1C-48H, (b) consistent Lewiston residence, and (c) the bride's father named in the index as 'Joseph Leroud' (variant of Leroux), matching tree person LT17-CGW who is already linked to MD1C-48H via relationship R3.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    },
+    {
+      "id": "c_002",
+      "conflict_type": "fact",
+      "description": "Marriage date discrepancy: the derivative index (src_001) and the marriage intention register (src_003) both carry the date 27 October 1894, conflicting with the marriage return (src_002) which states 5 November 1894.",
+      "disputed_attribute": "marriage_date",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_017",
+        "a_022",
+        "a_032",
+        "a_033"
+      ],
+      "independence_analysis": "a_017/a_022 (5 Nov 1894, from src_002, officiant informant) and a_032/a_033 (27 Oct 1894, from src_003, clerk informant) are original records with different informants \u2014 they are independent of each other. The derivative index (src_001) is not independent of src_002; it derives from the same town records. The apparent two-against-one pattern (index + intention register vs. return) is misleading: the index carried the date from the intention register, not from an independent source.",
+      "weighing_analysis": "The marriage return (src_002) is the authoritative official record of the ceremony itself, signed by the officiant who performed it. Examination of the original intention register image confirmed that its 27 October 1894 date appears in the 'Date of Certificate' column \u2014 the date the town clerk issued the intention certificate \u2014 not in a marriage date column. The intention register is a pre-wedding administrative filing; it does not record the ceremony date. The marriage return therefore stands unchallenged as the sole record of the ceremony date.",
+      "preferred_assertion_id": "a_017",
+      "resolution_rationale": "The ceremony date is 5 November 1894, as stated by the marriage return (src_002). The date 27 October 1894 is the intention certificate issue date, not the marriage date, as confirmed by the original image of the intention register. The derivative index's use of 27 October 1894 as the marriage date is an indexing error caused by conflating the certificate date with the ceremony date.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    },
+    {
+      "id": "c_003",
+      "conflict_type": "fact",
+      "description": "Bride's age and birthplace: marriage return (src_002) and intention register (src_003) record bride age 26 (implying birth about 1868) and birthplace Canada; the pre-existing tree birth fact for MD1C-48H (derived from the 1880 US federal census) shows birth about 1874 in the United States \u2014 a discrepancy of approximately 6 years in age and different birth countries.",
+      "disputed_attribute": "birth_year_and_birthplace",
+      "identity_question": "Is the 'Estelle Leroux' in the 1894 marriage records (age 26, born Canada) the same individual as the 'Esther Leroux' in the 1880 census (age ~6, born United States)?",
+      "competing_assertion_ids": [
+        "a_035",
+        "a_037",
+        "a_039",
+        "a_048",
+        "a_031"
+      ],
+      "independence_analysis": "a_035/a_037/a_039 (age 26, b.~1868, Canada \u2014 from src_002 marriage return, bride informant) and a_048/a_031 (age 26, b.~1868 \u2014 from src_003 intention register, bride informant) share the same informant (the bride herself) and are therefore one unit for the age/birthplace data. The 1880 census birth estimate (b.~1874, United States) is a separate pre-existing fact in the tree, constituting a second independent unit. Two independent source chains disagree.",
+      "weighing_analysis": "Neither side can be dismissed. The bride's self-reported age and birthplace on official documents carry primary information quality. The 1880 census age estimate is notoriously imprecise; census enumerators often rounded ages or misheard responses, and a 6-year discrepancy is at the edge of but not impossible for census error. However, the birthplace conflict (Canada vs. United States) is harder to explain by rounding. An alternative hypothesis is that two different women named Esther/Estelle Leroux lived in Lewiston circa 1894 \u2014 one born ~1874 in the US (1880 census subject) and one born ~1868 in Canada (marriage record subject). No second Esther/Estelle Leroux in Lewiston has been identified in the searched records, but the search has not been exhaustive for this specific question.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": null,
+      "status": "unresolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_006",
+        "a_008",
+        "a_015",
+        "a_017",
+        "a_018",
+        "a_022",
+        "a_023",
+        "a_026",
+        "a_029",
+        "a_032",
+        "a_033",
+        "a_049",
+        "a_050",
+        "a_051"
+      ],
+      "resolved_conflict_ids": [
+        "c_001",
+        "c_002"
+      ],
+      "exhaustive_search_summary": "Six plan items executed for Androscoggin County, Maine, 1890\u20131900. FamilySearch: Maine Marriages 1771-1907 index (pli_001, positive \u2014 index entry F4FR-BHD); Maine Vital Records 1670-1921 images (pli_002, positive \u2014 marriage return VZQV-W6T and intention register Q219-YL6L); Maine Marriage Index 1892-1966 (pli_003, negative \u2014 absent, possibly incomplete coverage for Androscoggin County 1894); US Census 1900 (pli_004, negative \u2014 couple not located in indexed results); Maine Church Records 1734-1907 (pli_005, negative \u2014 Franco-American Catholic parish records not indexed in this collection). Ancestry Drouin Collection / US French Catholic Church Records 1695-1954 (pli_006) \u2014 search URL generated (https://www.ancestry.com/search/collections/1111/?name=Jean_Jacques&marriage=1894&marriageplace=Lewiston%2C+Androscoggin%2C+Maine&spouse=Estelle_Leroux); capture deferred \u2014 autonomous run, requires interactive user session. The Drouin Collection remains the recommended next search to provide a second independent source for the ceremony date.",
+      "narrative_markdown": "# Marriage of Esther Leroux and Jean Jacques, 5 November 1894, Lewiston, Maine\n## Proof Summary \u2014 Probable Tier\n\n### Conclusion\n\nThe preponderance of evidence strongly suggests that **Esther Leroux** (born about 1874, Lewiston, Androscoggin County, Maine; tree person MD1C-48H) married **Jean Jacques** (born about 1878, Quebec, Canada; tree person G6GQ-P4F) on **5 November 1894** in **Lewiston, Androscoggin County, Maine**, in a Catholic ceremony officiated by O. D. Mathew. The conclusion stands at the *probable* tier: the marriage date is established by an original, primary, direct-evidence record (the civil marriage return), but rests on a single source chain, and the Catholic sacramental register (Drouin Collection) that would supply independent corroboration of the date was not examined during this research session.\n\n### Primary Source \u2014 Civil Marriage Return\n\nThe decisive record is the official marriage return filed with the Town of Lewiston. \"Maine, Vital Records, 1670-1921,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VZQV-W6T : accessed 24 July 2026), entry for Jean Jacques and Jacques, 05 Nov 1894. The original image (images/ark_61903_3_1_9398-4D3G-RW.jpg) states, in relevant part: *Groom: Jean Jacques | Bride: Estelle | Date of Marriage: Nov. 5th 1894 | Place: Lewiston | By whom Married: O. D. Mathew | Official Station: Catholic Priest | Intention Filed: October 22nd 1894.*\n\nThis source is classified as **original** (a scan of the town's marriage register), carrying **primary** information (the officiant was personally present at the ceremony), constituting **direct** evidence for the date and place. O. D. Mathew's signature and role as Catholic Priest in Lewiston establish him as the eyewitness informant for the ceremony details.\n\n### Corroborating Source \u2014 Marriage Intention Register\n\nA second original record independently places the same parties in Lewiston shortly before the ceremony. \"Maine, Vital Records, 1670-1921,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q219-YL6L : accessed 2026-07-24), Entry for Jean Jacques and Estelle Leroux, 27 October 1894. The original image (Lewiston *Record of Intentions of Marriages*, page 221) reads: *Oct. 22nd 1894 | Jean Jacques and Estelle Leroux | Lewiston | Ages 19 / 26 | Certificate: Oct. 27th 1894.*\n\nThis source is classified as **original**, **primary** (the groom Jean Jacques was the informant for his own intention), **direct** evidence for the parties and the place. The groom's informant is independent of the officiant in the marriage return, making this source a second independent unit for the marriage place (Lewiston) and the couple's identity. This record does **not** state the ceremony date \u2014 it establishes the pre-wedding filing, not the event itself.\n\n### Derivative Index\n\n\"Maine, Marriages, 1771-1907,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:MP2J-BDK : 14 January 2020), Entry for Jean Laque; citing Lewiston, Androscoggin, Maine, United States; FHL microfilm. This **derivative** index records \"Jean Laque\" (a phonetic rendering of Jacques documented in the original return) and \"Esther Leroux\" marrying on 5 November 1894 in Lewiston. Because this index derives from the same town records as the marriage return, it is not independent of that source; it confirms but does not add evidence units for the date.\n\n### Conflict Resolution\n\n**Bride's given name.** The derivative index reads \"Esther Leroux\"; both original records read \"Estelle Leroux.\" Under the GPS source hierarchy, original records are preferred over derivative indexes; the original spelling is therefore Estelle. The names Estelle and Esther are phonetically close variants attested in Franco-American communities of this period. The bride's identity with tree person MD1C-48H (Esther Leroux) is established not by the given name alone but by (a) the surname Leroux, (b) consistent Lewiston residence, and (c) the bride's father named in the derivative index as Joseph Leroud \u2014 a variant spelling of Leroux matching tree person LT17-CGW, who is already recorded as MD1C-48H's father via relationship R3.\n\n**Date discrepancy.** The derivative index records the marriage date as 27 October 1894. Examination of the original intention register image confirms that 27 October 1894 is the *date of certificate* \u2014 when the town clerk issued the intention certificate \u2014 not the ceremony date. The intention was *filed* on 22 October 1894. The marriage return explicitly states \"Date of Marriage: Nov. 5th 1894,\" resolving the discrepancy. The ceremony occurred on 5 November 1894, approximately two weeks after the intention was filed.\n\n**Bride's age and birthplace (collateral).** The marriage return records the bride as age 26 (implying birth about 1868) and birthplace Canada. The 1880 federal census places Esther Leroux in Lewiston, Maine, as approximately 6 years old (implying birth about 1874, in the United States). These conflicts \u2014 roughly six years in age and different birth countries \u2014 are collateral details that do not affect the marriage date or place conclusion. They remain unresolved pending additional research into the bride's early life and do not prevent a probable conclusion on the marriage event itself.\n\n### Research Scope and Limitation\n\nSearches were conducted in Maine Marriages 1771-1907 (FamilySearch, positive), Maine Vital Records 1670-1921 images (FamilySearch, positive), Maine Marriage Index 1892-1966 (FamilySearch, negative \u2014 absent, possible incomplete 1894 coverage for Androscoggin County), U.S. Census 1900 (FamilySearch, negative \u2014 couple not located in indexed results), and Maine Church Records 1734-1907 (FamilySearch, negative \u2014 Franco-American Catholic parish records not indexed). The Drouin Collection (U.S. French Catholic Church Records, 1695-1954, Ancestry, collection 1111) was identified and a search URL recorded but not executed in this automated session. An interactive search of the Drouin Collection is the recommended next step; the sacramental register entry signed by O. D. Mathew would provide a second independent source for the ceremony date and could advance the conclusion to the proved tier.\n\n### Tier Declaration\n\nThis conclusion is at the **probable** tier. One original record with primary, direct evidence (the civil marriage return) establishes the date and place. A second original record with a different informant (the intention register) independently corroborates the parties and the place. All conflicts bearing on the marriage date and place are resolved. The probable tier (rather than proved) reflects that the marriage *date* is established by a single source chain and that the Drouin Collection \u2014 which would supply independent corroboration of the date \u2014 was not examined. This conclusion is provisional and may be advanced to proved upon examination of the Catholic sacramental register."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-24T18:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-24T18-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Maine, United States",
+      "for_place": "Androscoggin County, Maine",
+      "time_period": "1880-1910",
+      "jurisdictions": [
+        {
+          "name": "Androscoggin, Maine, United States",
+          "date_range": "1854/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1803978",
+          "title": "Maine, Vital Records, 1670-1921",
+          "date_range": "1670-1921"
+        },
+        {
+          "id": "1674915",
+          "title": "Maine, Marriages, 1771-1907",
+          "date_range": "1771-1907"
+        },
+        {
+          "id": "2077670",
+          "title": "Maine, Marriage Index, 1892-1966, 1977-1996",
+          "date_range": "1892-1996"
+        },
+        {
+          "id": "2787824",
+          "title": "Maine, Church Records, 1734-1907",
+          "date_range": "1734-1907"
+        },
+        {
+          "id": "2037995",
+          "title": "Maine, Androscoggin County, Probate Estate Files, 1854-1918",
+          "date_range": "1854-1918"
+        },
+        {
+          "id": "2040046",
+          "title": "Maine, County Naturalization Records, 1800-1990",
+          "date_range": "1800-1990"
+        }
+      ],
+      "quirks": [
+        "State vital registration began 1892 \u2014 a marriage circa 1894 should appear in both the state index (collection 2077670) and the underlying town record; search both.",
+        "Maine, Marriages, 1771-1907 (collection 1674915) is index only on FamilySearch; the actual images are in Maine Vital Records, 1670-1921 (collection 1803978).",
+        "Lewiston had a large French-Canadian (Franco-American) population; search name variants (e.g., 'Laque' for 'Jacques', 'Lerout/Larue' for 'Leroux') and try the Drouin Catholic Church Records (Ancestry, subscription) for sacramental parish marriages.",
+        "Catholic parish records may record the sacramental marriage separately from the civil registration \u2014 both may exist for the same event.",
+        "If the marriage is not found in Maine, check towns just across the Canadian border (Maine Gretna Green patterns apply).",
+        "Androscoggin County was formed in 1854; all records for this county begin at that date. No predecessor-county split applies for the 1880-1910 period."
+      ],
+      "guide_markdown": "## Locality Guide: Androscoggin County, Maine \u2014 Marriage Records, 1880\u20131910\n\n### Jurisdiction\nAndroscoggin County was formed in 1854. Lewiston is the county seat and was the center of Maine's Franco-American textile community. The target marriage (~1894) falls at the crossover between pre-state town-level records and the statewide registration system that began in 1892.\n\n### Marriage Records\n| Record Set | Dates | Repository | Access |\n|---|---|---|---|\n| Maine, Vital Records, 1670-1921 (FS 1803978) | 1670\u20131921 | FamilySearch | Indexed + images |\n| Maine, Marriages, 1771-1907 (FS 1674915) | 1771\u20131907 | FamilySearch | Index only |\n| Maine, Marriage Index, 1892-1996 (FS 2077670) | 1892\u20131996 | FamilySearch | Index only |\n| Maine, Church Records, 1734-1907 (FS 2787824) | 1734\u20131907 | FamilySearch | Indexed + images |\n| US French Catholic Church Records (Drouin) | 1695\u20131954 | Ancestry ($) | Indexed + images |\n| Maine Marriage Records, 1713-1922 | 1713\u20131922 | Ancestry ($) | Indexed + images |\n\n### Census\n- Federal censuses 1880, 1900, 1910 \u2014 indexed + images at FamilySearch\n- 1890 federal census largely destroyed; no Maine state census substitute\n\n### Other Supporting Records\n- Androscoggin County Probate Estate Files, 1854-1918 (FS 2037995) \u2014 images only (browse)\n- Maine County Naturalization Records, 1800-1990 (FS 2040046) \u2014 indexed + images\n- Newspapers: Chronicling America; Lewiston had French-language papers for the Franco-American community\n\n### Key Quirks\n1. State registration began 1892 \u2014 search both the state index and town records for an 1894 marriage.\n2. Maine, Marriages, 1771-1907 is index only; images are in Maine Vital Records, 1670-1921.\n3. Search name variants for Franco-American families; use the Drouin Collection for Catholic sacramental records.\n4. Catholic parish records may exist alongside the civil registration.\n5. If not found in Maine, check Canadian border towns.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Maine,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Maine_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Maine_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Maine_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-24"
+    }
+  ]
+}

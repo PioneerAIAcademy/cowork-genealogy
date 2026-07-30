@@ -19,8 +19,8 @@ other section body (`project-context-tool-spec.md` §3: "no assertion bodies —
 deliberately excluded"), because its one consumer needs a stable, small,
 unfiltered orientation snapshot, not a lookup.
 
-A different pattern showed up in `docs/plan/tree-materialization-batching-plan.md`'s
-Phase-4 verification: a wilkins-marriage e2e run made **53 `Read` calls on
+A different pattern showed up in the 2026-07-26 batching-work verification
+run: a wilkins-marriage e2e run made **53 `Read` calls on
 research.json**, including hand-paginated reads (`offset: 850/1500/2000/2500`)
 immediately before the run's single longest generation gap (385s) — almost
 certainly a skill (person-evidence, proof-conclusion, or
