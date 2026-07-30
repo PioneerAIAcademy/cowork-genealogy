@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_person_evidence_025",
+    "skill": "person-evidence",
+    "name": "Cold lookup: gather a record's personas via research_query, not a whole-file Read",
+    "type": "positive",
+    "description": "Coverage for the research_query tool (SKILL.md §1). The skill enters cold and is asked to link the personas from the 1860 census record ark:/61903/1:1:MABC. Per §1 it must look up that record's assertions and their link status with SCOPED research_query calls (section: assertions by recordId; section: person_evidence by assertionId/personId), not a whole-file Read of the growing research.json. In mid-research-flynn that record carries a_008 (name) and a_009 (birth), both unlinked, plus a_010 (relationship) already linked to Patrick (I1) via pe_004. Correct outcome: the skill recognises a_010 is already linked and links the still-unlinked a_008/a_009 to Patrick (I1). Guards against a future edit that reverts to a raw Read or passes wrong filter keys (the accompanying deterministic validator asserts a research_query call actually fired).",
+    "tags": ["person-evidence", "research-query-coverage", "cold-lookup", "tool-usage"]
+  },
+  "input": {
+    "user_message": "I've just opened this skill fresh and don't have the record's assertions loaded. Using research_query, pull the assertions extracted from the 1860 census record ark:/61903/1:1:MABC and check which are already linked, then link any still-unlinked ones to the correct tree person.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "This test's purpose is research_query tool coverage. To gather the record's assertions and their existing links the skill should call research_query scoped to the record/assertions (e.g. research_query({ section: 'assertions', recordId: 'ark:/61903/1:1:MABC' }) and research_query({ section: 'person_evidence', assertionId or personId })), NOT a whole-file Read of research.json. If it gathers by issuing a whole-file `Read` of research.json instead of research_query, note it and cap Completeness at 2 — whole-file re-reads are the exact cost §1 exists to avoid. An unfiltered research_query call on a single section still counts as using the tool; do not penalize it as a whole-file read.",
+    "Correct linking outcome: a_010 is ALREADY linked to Patrick (I1) via pe_004, so it must not be re-linked; a_008 (name) and a_009 (birth) are unlinked personas of the same child and should be linked to Patrick Flynn (I1). Creating a duplicate link for a_010, or linking a_008/a_009 to the wrong person, is a Correctness failure.",
+    "An assertion is 'unlinked' when no person_evidence entry references its a_ id — an empty research_query person_evidence result IS the answer (unlinked), not an error."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}

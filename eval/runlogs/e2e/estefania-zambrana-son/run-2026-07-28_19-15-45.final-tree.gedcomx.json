@@ -1,0 +1,365 @@
+{
+  "persons": [
+    {
+      "id": "9QTV-KDZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Estefania",
+          "surname": "Zambrana"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9QTV-KD3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Antonio",
+          "surname": "Beisaga"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9QTV-K8P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Geronimo",
+          "surname": "Beisaga"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "30 SEP 1877",
+          "standard_date": "30 Sep 1877",
+          "place": "Cochabamba,Cochabamba,Bolivia",
+          "standard_place": "Cochabamba, Cochabamba, Cercado, Cochabamba, Bolivia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P89Y-ZJK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Fructuosa",
+          "surname": "Beisaga Zambrana"
+        }
+      ],
+      "facts": [
+        {
+          "id": "bdc63b76-3739-449f-8756-e6fa80a4c265",
+          "type": "Birth",
+          "date": "1867",
+          "standard_date": "1867"
+        },
+        {
+          "id": "88a63feb-32f5-4042-8c8b-a9f0efa7dd5a",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Luis",
+          "surname": "Beisaga Zambrana",
+          "preferred": true,
+          "id": "N5"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Christening",
+          "date": "18 Aug 1871",
+          "standard_date": "18 Aug 1871",
+          "place": "Cochabamba, Cercado, Cochabamba, Bolivia",
+          "standard_place": "Cochabamba, Cercado, Cochabamba, Bolivia",
+          "primary": true,
+          "sources": [
+            {
+              "ref": "S6"
+            }
+          ],
+          "id": "F1"
+        }
+      ],
+      "id": "I1"
+    },
+    {
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Tomaza",
+          "surname": "Beisaga Zambrana",
+          "preferred": true,
+          "id": "N6"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Christening",
+          "date": "28 Dec 1875",
+          "standard_date": "28 Dec 1875",
+          "place": "San Ignacio de Loyola, Cochabamba, Bolivia",
+          "standard_place": "San Ignacio de Loyola, Cochabamba, Cochabamba, Cercado, Cochabamba, Bolivia",
+          "primary": true,
+          "sources": [
+            {
+              "ref": "S7"
+            }
+          ],
+          "id": "F2"
+        }
+      ],
+      "id": "I2"
+    },
+    {
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Maria de la o",
+          "surname": "Beisaga Zambrana",
+          "preferred": true,
+          "id": "N7"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Christening",
+          "date": "17 Dec 1878",
+          "standard_date": "17 Dec 1878",
+          "place": "San Jos\u00e9, Cochabamba, Bolivia",
+          "standard_place": "San Jos\u00e9, Distrito Municipal Nro. 3, Cochabamba, Cercado, Cochabamba, Bolivia",
+          "primary": true,
+          "sources": [
+            {
+              "ref": "S5"
+            }
+          ],
+          "id": "F3"
+        }
+      ],
+      "id": "I3"
+    },
+    {
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Ricardo",
+          "surname": "Beisaga",
+          "preferred": true,
+          "id": "N8"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "~1875",
+          "standard_date": "1875",
+          "primary": true,
+          "sources": [
+            {
+              "ref": "S3"
+            }
+          ],
+          "id": "F4"
+        },
+        {
+          "type": "Residence",
+          "date": "1908-10-03",
+          "place": "Sicaya, Capinota, Cochabamba, Bolivia",
+          "standard_place": "Sicaya, Capinota, Cochabamba, Bolivia",
+          "sources": [
+            {
+              "ref": "S3"
+            }
+          ],
+          "id": "F5"
+        }
+      ],
+      "id": "I4"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "9QTV-KD3",
+      "person2": "9QTV-KDZ"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "9QTV-KD3",
+      "child": "P89Y-ZJK"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "9QTV-KDZ",
+      "child": "P89Y-ZJK"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "9QTV-KD3",
+      "child": "9QTV-K8P",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "9QTV-KDZ",
+      "child": "9QTV-K8P",
+      "subtype": "Biological"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9QTV-KD3",
+      "child": "I1",
+      "id": "R6",
+      "sources": [
+        {
+          "ref": "S6",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9QTV-KDZ",
+      "child": "I1",
+      "id": "R7",
+      "sources": [
+        {
+          "ref": "S6",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9QTV-KD3",
+      "child": "I2",
+      "id": "R8",
+      "sources": [
+        {
+          "ref": "S7",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9QTV-KDZ",
+      "child": "I2",
+      "id": "R9",
+      "sources": [
+        {
+          "ref": "S7",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9QTV-KD3",
+      "child": "I3",
+      "id": "R10",
+      "sources": [
+        {
+          "ref": "S5",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9QTV-KDZ",
+      "child": "I3",
+      "id": "R11",
+      "sources": [
+        {
+          "ref": "S5",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "WW25-GT6",
+      "title": "Estefania Zambrana, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:4FC5-7B3Z : Sun Mar 10 15:12:49 UTC 2024), Entry for Lauriano Torrico and Mariano Torrico, 30 Mar 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4FC5-7BMM"
+    },
+    {
+      "id": "S1",
+      "title": "Registro para Antonio Beizaga y Estefania Zambrana, Marriage Register, San Jos\u00e9 Parish, Cochabamba, Bolivia, 23 Mar 1870",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QL7X-YN65"
+    },
+    {
+      "id": "S2",
+      "title": "Bolivia, Catholic Church Records, 1566-2020 \u2014 Marriage record of Laureano Torrico and Fructuosa Beisaga, 30 March 1890, Cochabamba",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:4FC5-7B6Z"
+    },
+    {
+      "id": "S3",
+      "title": "Registro para Mariano, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QGJC-FX3Y"
+    },
+    {
+      "id": "S4",
+      "title": "Bolivia, Catholic Church Records, 1566-2020 \u2014 Baptism of Jer\u00f3nimo Beisaga Zambrana, San Ignacio de Loyola, Cochabamba, 30 Sep 1877",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QT9Y-38P9"
+    },
+    {
+      "id": "S5",
+      "title": "Registro para Maria de la o Beisaga Zambrana, 17 Dec 1878, Bolivia, Catholic Church Records, 1566-2020",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:7Q5F-VCZM"
+    },
+    {
+      "id": "S6",
+      "title": "Registro de bautismo de Luis Beisaga Zambrana, 18 agosto 1871, Cochabamba, Bolivia \u2014 Bolivia, Catholic Church Records, 1566-2020",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W865-RRT2"
+    },
+    {
+      "id": "S7",
+      "title": "Registro para Tomaza Beisaga Zambrana, \"Bolivia, registros parroquiales, 1566-2020\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:71W1-TCW2"
+    }
+  ]
+}
