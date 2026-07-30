@@ -54,6 +54,10 @@ b. 1915 would slot Manuel in ahead of the two known daughters (1921, 1934) — b
 a single cemetery record with a mismatched mother's name is not enough to add a
 child, and nothing else was found to close the gap.
 
-`expected-findings.json` therefore carries a `polarity: "avoid"` guard against
-asserting Manuel as Santiago's son, plus a `required` finding that the report
-documents the rejection.
+`expected-findings.json` therefore carries a `required` `polarity: "avoid"`
+guard against asserting Manuel as Santiago's son (f1). Documenting the
+rejection as a durable negative conclusion (f2) is credited but **not
+required**: a run that correctly declines the hint but reports the rejection
+only in chat — without persisting a negative conclusion the final
+tree/research cannot durably represent — still passes on f1 alone. f2 gates
+nothing; it is bonus credit for the good-practice write-up.

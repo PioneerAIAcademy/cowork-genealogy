@@ -21,7 +21,7 @@
     {
       "id": "f2",
       "type": "fact",
-      "description": "Having reviewed the hinted cemetery record against the tree person and his attached sources, the agent should document a negative conclusion: the hint is a false match and no record establishes Manuel de Jesus Gonzalez Tumbaco as a son of Santiago Gonzalez and Petra Tumbaco. The name mismatch on the mother (record 'Petita' vs. tree 'Petra'), the child's absence from the tree, and the lack of any independent corroborating record leave the claim unsupported.",
+      "description": "Bonus (not required): the agent may document a durable negative conclusion — that the hinted cemetery record is a false match and no record establishes Manuel de Jesus Gonzalez Tumbaco as a son of Santiago Gonzalez and Petra Tumbaco — by persisting the rejection into research.json/tree. Credited when present, but not required: the required correct behavior is the f1 'avoid' guard (do not add Manuel). A run that declines the hint but records the rejection only in chat still passes on f1 alone.",
       "details": {
         "subject_person": "Santiago Gonzalez (G6MR-VHF)",
         "relation": "research conclusion",
@@ -33,7 +33,7 @@
       "supporting_sources": [
         "Absence of any record beyond the single hinted cemetery entry connecting Manuel de Jesus Gonzalez Tumbaco to Santiago Gonzalez and Petra Tumbaco"
       ],
-      "required": true
+      "required": false
     }
   ]
 }
