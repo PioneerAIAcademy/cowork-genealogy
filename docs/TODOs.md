@@ -399,19 +399,22 @@ Deferred at wrap; see
   either a targeted lint over the run transcript or a deliberate decision to
   leave it to prose. Not a unit suite — see `RUNLOG_GATE_EXEMPT_SKILLS`.
 
-- [ ] **Nothing prevents the eval corpus drifting behind a tool contract again** —
-  it happened twice unnoticed. `search-records`' rubric was TWO contracts stale
-  (still failing runs for not calling `same_person`/`source_attachments`, folded
-  into `rank_search_matches` months earlier and into `record_search` on
-  2026-07-27),
-  and 14 test files' `judge_context` was one contract stale. The corpus was
-  marking the skill down for doing the right thing, and only a regression run
-  surfaced it. A cheap lint would catch both: flag any tool name appearing in a
-  skill's `rubric.md` or per-test `judge_context` that is absent from that
-  skill's `allowed-tools`. That single rule would have fired on
-  `same_person`/`source_attachments` in the rubric the day they were folded away.
-  Same shape as the existing places-guidance byte-lint and the enum-drift lint
-  already queued elsewhere in this file.
+- [ ] **Decide whether `check_rubric_tool_drift.py` needs an allow-comment /
+  suppression mechanism** — it shipped warn-only (#915) alongside
+  `check_tool_coverage.py`. The two mechanically-groundable false-positive
+  shapes found on the first real-corpus run (delegation to a subagent;
+  `login`/`logout` colliding with ordinary English) are already fixed in the
+  same PR, bringing 86 hits down to 68. **Roughly 20% of the remaining 68 are
+  genuine drift** — see the tree-edit issue for the worst case — so the list
+  needs triaging, not suppressing, before anyone decides. The other ~80% are
+  the shape that isn't mechanically fixable: a rubric/judge_context
+  legitimately naming a tool that belongs to a *different* skill — a
+  routing/negative test's `judge_context` naming the destination skill's tool,
+  or a skill's rubric explaining what a downstream skill does with its output
+  (`record-extraction`'s rubric naming `tree_edit` / `materialize_facts`,
+  which are person-evidence's job). Before ever making this blocking, either
+  add a way to mark a mention as intentional, or accept it as a human-triaged
+  warning list rather than a gate.
 
 ## Research latency (e2e `/research` runs)
 Parent plan: `docs/plan/research-latency-reduction-plan.md`. These two levers were
