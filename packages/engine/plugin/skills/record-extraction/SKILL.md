@@ -72,6 +72,14 @@ Record data arrives in one of four ways:
    raw image never enters your context (accumulated base64 overflows the
    transport's ~1 MiB buffer and crashes the run).
 
+   **When the user provides an image ARK or asks you to "pull it up" /
+   compare it, you MUST make the `@plugin:image-reader` delegation** — even
+   if you suspect the scan is unreachable or unreadable. Do NOT decide on
+   your own that the image can't be read and skip the call: whether the
+   scan reads is the subagent's report to make, not yours to pre-empt.
+   Reporting "image unreachable" without an actual delegation attempt is a
+   completeness failure.
+
    If the returned transcription comes back heavy with `[illegible]` marks or
    otherwise looks unreliable (faded ink, difficult handwriting,
    Kurrentschrift), a higher-accuracy but slower and far more expensive

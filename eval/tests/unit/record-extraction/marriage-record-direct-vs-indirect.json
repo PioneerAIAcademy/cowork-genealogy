@@ -13,11 +13,12 @@
   },
   "judge_context": [
     "Marriage date and place are DIRECT evidence — explicitly stated on the record",
-    "Ages, birthplaces, occupations, and parents' names are DIRECT evidence — stated on the record by the parties",
-    "Birth years computed from stated ages (Patrick ~1845, Catherine ~1848) are INDIRECT evidence — requires arithmetic inference from the age",
+    "Ages, birthplaces, and occupations are DIRECT evidence — stated on the record by the parties",
+    "Parent-name facts — the groom's stated parents (father Thomas Flynn, mother Mary Brennan) and the bride's stated parents (father James Gallagher, mother Bridget Dolan) — are DIRECT evidence and take the reporting party as informant (Patrick for his parents, Catherine for hers) at informant_proximity 'self'. This is the record-extractor's marriage-record doctrine: 'self' is correct because the party personally supplied the information on the license, and the record states the names outright so no inference is needed. Grading it as INDIRECT, or requiring 'household_member'/'family_not_present' for these parent-name facts, is the KNOWN failure mode this test guards against — do not ding the doctrine-correct 'direct' + 'self'. (information_quality on the parent-name facts may be 'primary' OR 'secondary' — the party knows their parents firsthand but is not the parent — either is acceptable; do not grade on it.)",
+    "Birth years computed from stated ages (Patrick ~1845, Catherine ~1848) are INDIRECT evidence — requires arithmetic inference from the age. This is the only INDIRECT classification expected on this record.",
     "Should extract assertions for BOTH the groom and bride — this is a two-party record",
     "Witnesses (Thomas Flynn, James Gallagher) should be noted as FAN associates but do not need full assertion sets — identifying facts only",
-    "Informant: the groom and bride are the informants for their own facts (they provided their ages, birthplaces, parents to the clerk). informant_proximity should be 'self' for the party's own facts. For the marriage event itself (date, place), the officiant (Rev. O'Connor) is the informant; his proximity may be 'official_duty' (preferred — matches the record-extractor agent's marriage-record doctrine) or 'witness' (he performed and witnessed the ceremony) — both are acceptable, neither is a deduction. The clerk is the recorder."
+    "Informant summary: the groom and bride are the informants for their own facts AND their own stated parents' names, all at proximity 'self' (see the parent-name bullet above). For the marriage event itself (date, place), the officiant (Rev. O'Connor) is the informant; his proximity may be 'official_duty' (preferred — matches the record-extractor agent's marriage-record doctrine) or 'witness' (he performed and witnessed the ceremony) — both are acceptable, neither is a deduction. The clerk is the recorder."
   ],
   "execution": {
     "max_turns": 40,
