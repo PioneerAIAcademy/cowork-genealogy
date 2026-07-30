@@ -107,75 +107,19 @@ prompt, in a hand-off, or from `research-plan` earlier in this same run, you
 already have it — issue no query at all. Every query is a turn, and a search
 phase has few to spare.
 
-#### Planned search or ad-hoc? Decide this before you search
+**Planned or ad-hoc — decide before you search.** The line is *who chose the
+search*, not whether a plan exists.
 
-Two kinds of search reach this skill, and they carry different obligations.
-Sort the request into one of three before doing anything else.
+| What you have | Do |
+|---|---|
+| A plan item | Execute. Full GPS, including the Step 8 escalation |
+| No plan item, but the **user named this search** | Execute as ad-hoc: log `plan_item_id: null`, note it was user-requested, and stop when done — no escalation, no plan edits |
+| No plan item, and **you** thought of the search | `Skill("research-plan")` and stop. If the user then says yes, it comes back as a plan item — not as ad-hoc |
 
-| What you have | Kind | What to do |
-|---|---|---|
-| A plan item — handed to you by the orchestrator, by `research-plan`, or matched from the user's request | **Planned** | Execute it. Full GPS applies: variant levers, and the Step 8 escalation |
-| **No** plan item, but the **user named this specific search** | **Ad-hoc** | Execute it. Log `plan_item_id: null`. Lighter obligations — see below |
-| No plan item, and the user did **not** ask for this particular search — you thought of it yourself | **Neither** | Not yours to start. `Skill("research-plan")` and stop |
-
-**The line is who chose the search, not whether a plan exists.** A researcher
-following a hunch mid-session is doing real genealogy, and refusing them is
-obstruction, not rigour. What you may not do is *invent* a search nobody asked
-for: choosing what to research is `research-plan`'s job, and quietly widening
-the investigation on your own initiative is how a session drifts off its
-question and burns its budget.
-
-✅ **Ad-hoc, execute it:** "Search FamilySearch for Bartholomew Flynn, a possible
-brother of Patrick." No plan item mentions Bartholomew — irrelevant. The user
-asked for this exact search.
-✅ **Ad-hoc, execute it:** "Try the 1870 census for Patrick in Schuylkill." No
-1870 item is planned. Still the user's call to make.
-❌ **Not yours to start:** you are executing `pli_001` (1850 census), it comes
-back thin, and you decide to go looking for a brother as well. Nobody asked.
-Report what you found, name the search you think is warranted and why, and let
-the caller decide.
-❌ **Not yours to start:** "Find out more about Patrick." That names no search —
-it is a request for a strategy. Route it.
-
-**If the caller says yes to a search you proposed, route it to
-`Skill("research-plan")` — do not run it as ad-hoc.** You only proposed it
-because it advances the active question, so it belongs in that question's plan
-where `research-exhaustiveness` can count it toward `repository_breadth` and
-`goal_alignment`. Run it as ad-hoc and it logs `plan_item_id: null`, which no
-exhaustiveness declaration can cite — so if that search is the one that cracks
-the question, the audit trail cannot show it. `research-plan` adds the item and
-hands back; you execute it on the next pass like any other.
-
-This is the one asymmetry worth holding onto: **a search you proposed gets
-planned; a search the user brought unprompted does not.** Not because approval
-counts for less, but because of what the search is *for*. You proposed yours to
-answer the open question — that is planned work by definition. Theirs may be
-advancing the question or may be idle curiosity, and interrogating them to find
-out would be the obstruction this section exists to prevent.
-
-**In an autonomous `/research` run there are no ad-hoc searches.** The
-orchestrator dispatches this skill only when a plan item is waiting, and there
-is no user present to ask for anything else. If you find yourself wanting a
-search the plan does not contain, that is a finding to report back, not a search
-to run — plan-first is the whole discipline `/research` exists to enforce.
-
-**What an ad-hoc search does NOT do:**
-
-- **It does not escalate to external sites.** Step 8's escalation is for an
-  important *plan item* that has gone nil across 3+ variants. An ad-hoc lookup
-  that finds nothing is finished: log the nil and say so. Going out to Ancestry
-  and MyHeritage is a bigger commitment than the user asked for — surface it as
-  a suggestion if it is warranted, and let them choose.
-- **It does not rewrite the plan.** Log it, report it, stop. If the result turns
-  out to matter, `research-plan` can fold it in properly.
-
-**Say which kind it was.** An ad-hoc entry carries `plan_item_id: null`, and
-`research-exhaustiveness` cannot count it toward `repository_breadth` or
-`goal_alignment` for any question — the search happened, but it is not part of
-the argument for any conclusion. That is fine, and it is exactly why the
-distinction is recorded rather than hidden: a later reader must be able to see
-which searches the plan is accountable for and which were side excursions. Note
-in the entry's `notes` that this was a user-requested ad-hoc search.
+Refusing a researcher's own request is obstruction, not rigour. Inventing a
+search nobody asked for is how a session drifts off its question. An autonomous
+`/research` run has no ad-hoc searches — the orchestrator only dispatches you
+when a plan item is waiting.
 
 ### 2. Construct the search query
 
@@ -254,34 +198,17 @@ to the manual path in Step 4.
 
 **If the search fails due to authentication:** Instruct the user to log in: "The search requires FamilySearch authentication. Please ask me to log you in, or type `login`."
 
-**A zero-result search is NOT an authentication failure — never treat it as one.**
-An auth problem surfaces as a thrown **error**, never as an empty result set: an
-absent or expired session fails with "User is not logged in to FamilySearch. Call
-the login tool to authenticate," and a session the server rejects fails with
-"FamilySearch session not accepted; call the login tool to re-authenticate." A
-response of `results: []` / `total: 0` means the query ran, authenticated, and
-matched nothing. That is **evidence** — the nil finding this skill exists to
-record — not a session problem.
-
-So an implausible-looking nil is not licence to suspect your session. Zero hits
-US-wide on a well-indexed collection is surprising, and the right response is to
-say so in the log `notes` and carry on down whatever path that search's own rules
-already prescribe. **This paragraph settles one question only — whether the
-result is real. It does not tell you what to do next, and it never adds a step
-your search did not already owe.**
-
-**Scope: zero results only.** A search that returned rows is not a nil, whatever
-is wrong with them. Wrong-decade or wrong-collection hits are a **collection
-mismatch** — a different finding with a different, shorter response (log
-`outcome: "partial"`, say which collection came back, stop) — and nothing here
-licenses escalating it.
+**A zero-result search is NOT an authentication failure.** Auth problems throw an
+error ("User is not logged in to FamilySearch…" / "FamilySearch session not
+accepted…"); `results: []` means the query ran, authenticated, and matched
+nothing. That is the nil finding this skill exists to record. An implausible nil
+is not licence to suspect your session — say so in the `notes` and carry on.
+(Rows from the wrong collection are a mismatch, not a nil.)
 
 ❌ WRONG: "Zero results US-wide is implausible for the 1850 census, so the session
 must be dead — please log in and I'll re-run."
 ✅ CORRECT: "Zero results US-wide despite good coverage. The search ran fine, so
-this is a real nil — most likely a transcription error the FamilySearch index
-cannot match. Logging it as such and continuing with this plan item's own
-next step."
+this is a real nil — most likely a transcription error the index cannot match."
 
 ### 4. Triage results — rank by match, then confirm
 
@@ -519,13 +446,7 @@ Never treat an index entry as equivalent to examining the original record.
 6. Check for fallback plan items (`fallback_for`). If none and the question remains open, suggest research-plan for re-planning.
 7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass" on a Q→O error), no FamilySearch variant will ever surface that record. Other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`), so they can recover records FamilySearch cannot — which is exactly why the escalation is triggered by the nil signal here, not planned upfront (planning external items preemptively clutters the plan when FamilySearch works). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, invoke `Skill("search-external-sites")` with the same person attributes to generate Ancestry (and, where the researcher subscribes, MyHeritage/FindMyPast) search URLs. **Do this immediately — do not ask the user first and do not wait until step 9.** This is a tool call you make in this turn, not an option you narrate for the user to approve.
 
-   **All three conditions are required, and the plan item is the one most often skipped.** No plan item → **no escalation**, however many variants came back nil. An ad-hoc search the user asked for (Step 1) ends when you log its nil; you may *say* external sites would be the next move, but you do not invoke them. The escalation exists to keep an important *planned* line of enquiry alive, not to turn every empty lookup into a tour of the commercial sites — that is a bigger commitment than the user asked for, and on a search nobody planned it is scope the caller never agreed to.
-
-   ❌ WRONG: "The user asked me to look for Bartholomew, five spellings came back
-   empty, so I'll generate Ancestry links." No plan item — stop at the nil.
-   ✅ CORRECT: "Five spellings, all empty. Logged. FamilySearch's index has no
-   phonetic fallback, so if you want to keep going, Ancestry fuzzy-matches and
-   could recover a mis-transcribed entry — say the word."
+   **No plan item → no escalation**, however many variants came back nil; an ad-hoc search ends when you log it (Step 1).
 
    ❌ WRONG: Ending your response with "FamilySearch is exhausted — would you like me to check Ancestry?" without having called the skill. Offering the escalation in prose is not escalating.
    ✅ CORRECT: Call `Skill("search-external-sites")` in this same turn, before writing your summary, and present the URLs it returns as part of your results.

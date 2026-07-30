@@ -30,15 +30,11 @@
   ],
   "execution": {
     "max_turns": 35,
-    "max_wall_clock_seconds": 600,
-    "stub_skills": [
-      "search-external-sites"
-    ]
+    "max_wall_clock_seconds": 600
   },
   "judge_context": [
     "This is a POSITIVE test for the FamilySearch-exhaustion → external-sites escalation. After trying 3+ FamilySearch name variants for Patrick Flynn (all returning zero results), the skill MUST call Skill('search-external-sites').",
     "DO NOT grade whether Skill('search-external-sites') was invoked — a deterministic validator (test_escalates_to_external_sites_after_fs_exhaustion) owns that assertion and reads the harness's own record of the call. Judging it from the transcript has produced false failures. Grade only the quality of the surrounding work: the variants tried, the triage, and the log entries.",
-    "EXPECTED, NOT A DEFECT: the Skill('search-external-sites') call is DENIED by the harness with a message saying the skill is stubbed for this eval run. search-external-sites has its own unit suite and is not under test here. The denial is the harness stubbing a dependency — treat the escalation as having succeeded, and do not penalize the skill for the denial or for not producing Ancestry URLs.",
     "The plan item pli_001 must NOT be marked 'completed' as if the search succeeded — it should remain in_progress or be logged as a nil result awaiting external follow-up, because the external search has not yet been run.",
     "The nil log entry must be written (research_log_append called) with outcome 'negative', results_examined 0, and notes that FamilySearch variants were exhausted and external sites should be checked.",
     "Acceptable: the skill may also mention research-plan as an alternative path. But it must escalate — suggestion alone without the Skill call is a Correctness=1 failure.",
