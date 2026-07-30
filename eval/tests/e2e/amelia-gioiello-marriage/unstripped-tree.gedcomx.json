@@ -1,0 +1,327 @@
+{
+  "persons": [
+    {
+      "id": "GCT1-F3Q",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Amelia Frances",
+          "surname": "Gioiello"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e0e44341-518b-4d0d-bcbc-b446089251f8",
+          "type": "Birth",
+          "date": "1936",
+          "standard_date": "1936"
+        },
+        {
+          "id": "3cfa5ff0-423e-4e2f-8bf6-8ad7cabb08be",
+          "type": "Death",
+          "date": "01 Aug 2014",
+          "standard_date": "1 Aug 2014"
+        },
+        {
+          "id": "1f6fdab7-765a-46c6-8cd9-2c87e3757a00",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": ", ,"
+        },
+        {
+          "id": "0aa2a12a-9aa2-45b6-a838-a5bb80d03869",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+          "standard_place": "Niles, Trumbull, Ohio, United States"
+        },
+        {
+          "id": "af13285e-1ba7-46b5-b813-7e4e68547d87",
+          "type": "Burial",
+          "date": "2014",
+          "standard_date": "2014",
+          "place": "Cortland, Trumbull, Ohio, United States of America",
+          "standard_place": "Cortland, Trumbull, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "GCT1-Z84",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Joseph",
+          "surname": "Gioiello"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f42acfd5-0f1c-4b62-9bb6-731f4ccb142a",
+          "type": "Birth",
+          "date": "1898",
+          "standard_date": "1898",
+          "place": "South America",
+          "standard_place": "South America"
+        },
+        {
+          "id": "2731715c-1231-4b85-a043-f962aeff6e9c",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place"
+        },
+        {
+          "id": "a98b4dc2-58d4-4b2f-b525-6b2eb8ffe08f",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+          "standard_place": "Niles, Trumbull, Ohio, United States"
+        },
+        {
+          "id": "02440c7b-1484-421f-b53e-a278ca007d30",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GCT1-CC7",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Lena",
+          "surname": "Manro"
+        }
+      ],
+      "facts": [
+        {
+          "id": "591d7d77-68ec-43fd-ac59-d1d1cb0195fa",
+          "type": "Birth",
+          "date": "1902",
+          "standard_date": "1902",
+          "place": "Illinois",
+          "standard_place": "Illinois, United States"
+        },
+        {
+          "id": "deefce78-413a-4147-a349-f6bbd4ccc87a",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place"
+        },
+        {
+          "id": "4b1d9536-31a8-459a-809e-3cafee04aa16",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+          "standard_place": "Niles, Trumbull, Ohio, United States"
+        },
+        {
+          "id": "a849980f-4698-4d14-b899-834e2b7d9074",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GCTY-R3M",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Stanley",
+          "surname": "Datchuk"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ab17109a-9797-498e-a594-f203f8857d4f",
+          "type": "Birth",
+          "date": "14 September 1932",
+          "standard_date": "14 Sep 1932",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "fbebf0dc-2f90-4291-ba18-5bd7e9a34bf3",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+          "standard_place": "Niles, Trumbull, Ohio, United States"
+        },
+        {
+          "id": "da1fe118-956d-421b-9a3b-58a40f859da1",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+          "standard_place": "Niles, Trumbull, Ohio, United States"
+        },
+        {
+          "id": "9ae9b4bc-9078-4a75-a999-60ce5508d5f8",
+          "type": "Residence",
+          "date": "11 April 1950",
+          "standard_date": "11 Apr 1950",
+          "place": "Niles, Weathersfield Township, Trumbull, Ohio, United States",
+          "standard_place": "Niles, Trumbull, Ohio, United States"
+        },
+        {
+          "id": "a9162121-5cb1-4f8c-8f68-4a2627d4881d",
+          "type": "Prev Res3",
+          "date": "09 Apr 1973-01 Jan 2009",
+          "standard_date": "Bet 9 Apr 1973 and Jan 2009",
+          "place": "Niles, Ohio 44446",
+          "standard_place": "Niles, Trumbull, Ohio, United States"
+        },
+        {
+          "id": "2359da1d-af1d-4162-9c37-dea4bc14c133",
+          "type": "Prev Res2",
+          "date": "1 Dec 1993",
+          "standard_date": "1 Dec 1993",
+          "place": "Niles, Ohio 44446",
+          "standard_place": "Niles, Trumbull, Ohio, United States"
+        },
+        {
+          "id": "912cbdc4-14d1-43bf-9cdc-4d530a0d53b7",
+          "type": "Previous Residence",
+          "date": "3 Nov 2004",
+          "standard_date": "3 Nov 2004",
+          "place": "Niles, Ohio 44446",
+          "standard_place": "Niles, Trumbull, Ohio, United States"
+        },
+        {
+          "id": "b7ed6112-3915-47ed-84dc-b69828f466a2",
+          "type": "Residence",
+          "date": "3 Nov 2004",
+          "standard_date": "3 Nov 2004",
+          "place": "Niles, Trumbull, Ohio, United States",
+          "standard_place": "Niles, Trumbull, Ohio, United States"
+        },
+        {
+          "id": "b7862d52-97f7-4bb7-b7d0-60278aa74363",
+          "type": "Burial",
+          "date": "2013",
+          "standard_date": "2013",
+          "place": "Cortland, Trumbull, Ohio, United States of America",
+          "standard_place": "Cortland, Trumbull, Ohio, United States"
+        },
+        {
+          "id": "b40c5b0a-9f5b-46af-b1ee-1b4df0484d1c",
+          "type": "Death",
+          "date": "28 Nov 2013",
+          "standard_date": "28 Nov 2013",
+          "place": "Trumbull, Ohio, United States",
+          "standard_place": "Trumbull, Ohio, United States"
+        },
+        {
+          "id": "0c873a7a-6b7d-4ffe-b2d0-a69355af0835",
+          "type": "MilitaryService",
+          "date": "Korea",
+          "value": "Pvt  United States Army"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GCTY-R3M",
+      "person2": "GCT1-F3Q",
+      "facts": [
+        {
+          "id": "27d132d0-d3da-40de-bc19-a8639b4b8acb",
+          "type": "Marriage",
+          "date": "20 Aug 1955",
+          "standard_date": "20 Aug 1955",
+          "place": "Trumbull, Ohio, United States",
+          "standard_place": "Trumbull, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GCT1-Z84",
+      "person2": "GCT1-CC7"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GCT1-Z84",
+      "child": "GCT1-F3Q"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GCT1-CC7",
+      "child": "GCT1-F3Q"
+    }
+  ],
+  "sources": [
+    {
+      "id": "77NX-MXM",
+      "title": "Amelia Gioiello, \"United States, Census, 1950\"",
+      "citation": "\"United States, Census, 1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XB7-R19B : Wed Mar 20 15:13:27 UTC 2024), Entry for Pasqualina Gioiello and Concetta I Gioiello, 13 April 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XB7-R1S9"
+    },
+    {
+      "id": "Q4GR-WJY",
+      "title": "Amelia Gioiello, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q21W-DFJM : Sun Mar 10 17:58:15 UTC 2024), Entry for Carmen Martin Datchuk and Debra Inez Manfredi, 17 Jul 1984.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q21W-DFJ3"
+    },
+    {
+      "id": "Q4GR-QSZ",
+      "title": "Amelia Gioiello, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q21Q-NKFS : Fri Mar 08 23:41:40 UTC 2024), Entry for Joseph John Burnham and Julie Anne Peteritis, 07 Jun 2007.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q21Q-NKFJ"
+    },
+    {
+      "id": "Q4GR-SWB",
+      "title": "Amelia Gioiello, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q21W-6234 : Sun Mar 10 04:38:41 UTC 2024), Entry for Christopher Scott Peteritis and Julie Anne Datchuk, 22 Jul 1989.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q21W-D159"
+    },
+    {
+      "id": "3WM1-CYB",
+      "title": "Amielia Gioiello, \"United States, Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KWGH-G21 : Thu Jul 18 01:23:09 UTC 2024), Entry for Joseph Gioiello and Lena Gioiello, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KWGH-GLQ"
+    },
+    {
+      "id": "3WM1-3MK",
+      "title": "Amelia F Gioiello Datchuk, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVG1-PHVM : Mon Jul 13 10:40:12 UTC 2026), Entry for Amelia F Gioiello Datchuk.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVG1-PHVM"
+    },
+    {
+      "id": "3WM1-MTV",
+      "title": "Amelia Gioiella, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q29W-SWN5 : Sun Mar 10 20:10:36 UTC 2024), Entry for Mark C Tepsich and Lisa D Datchuk, 06 Mar 1981.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q29W-SWKM"
+    },
+    {
+      "id": "3WM1-M7D",
+      "title": "Amelia Giorello, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q29W-9H29 : Sun Mar 10 10:06:02 UTC 2024), Entry for Joseph Datchuk and Phyllis Picierro, 17 Jun 1978.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q29W-9HLM"
+    },
+    {
+      "id": "3WMB-5CV",
+      "title": "Amelia Frances Gioiello, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q297-LTGC : Mon Jan 13 08:11:34 UTC 2025), Entry for Stanley Datchuk and Amelia Frances Gioiello, 20 Aug 1955.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q297-LTPT"
+    }
+  ]
+}
