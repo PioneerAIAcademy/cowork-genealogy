@@ -13,13 +13,15 @@ Durability across a sandbox pause/resume (or any agent_runner restart): the
 ResultMessage's session_id is persisted to /project/.agent_session, and a
 relaunched RealAgent passes it as resume= so the SDK reloads the prior
 conversation from the on-disk transcript (which survives the E2B pause). See
-docs/plan/ably-realtime-migration.md is unrelated; the resume contract is
-sandbox-provider-interface.md decision #1.
+docs/realtime-architecture.md is unrelated; the resume contract is
+sandbox-provider-spec.md decision #1.
 
-Config (build_options) — two load-bearing choices: do NOT set skills="all" (the
+Config (build_options) — three load-bearing choices: do NOT set skills="all" (the
 SDK turns it into `--allowedTools Skill`, restricting to only the Skill tool);
 append the project path via system_prompt so the agent reads research.json from
-cwd, not HOME.
+cwd, not HOME; and stage the plugin's agents into the project rather than letting
+plugin discovery name them (see stage_plugin_agents — plugin loading registers
+them ONLY as `genealogy-research:<agent>`, which no SKILL.md asks for).
 
 The Anthropic key comes from the per-connect secrets file, NOT from this
 process's env (see current_api_key + app/agent_secrets.py). A sandbox's env is
@@ -32,6 +34,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sys
 from collections.abc import AsyncIterator
 from pathlib import Path
@@ -59,6 +62,52 @@ def _log(msg: str) -> None:
     print(msg, file=sys.stderr, flush=True)
 
 
+def stage_plugin_agents(project_dir: Path) -> list[str]:
+    """Copy the plugin's agent definitions into ``<project>/.claude/agents/``.
+
+    Returns the bare agent names now registered (one per staged file).
+
+    ``plugins=[{"type": "local", …}]`` below **does** discover
+    ``packages/engine/plugin/agents/*.md`` — but it registers each one under the
+    plugin-NAMESPACED name ``genealogy-research:<agent>``, and nothing under the
+    bare name. Every SKILL.md delegates by the bare name
+    (``@plugin:record-extractor``), so on the plugin path the Task call
+    hard-errors — "Agent type 'record-extractor' not found" — and the model then
+    improvises: guess the namespaced spelling, fall back to ``general-purpose``,
+    or do the work inline. The fallback is the dangerous one, because a
+    general-purpose stand-in holds the session's whole tool set instead of the
+    agent's ``tools:`` allow-list and binds none of its ``disallowedTools:``
+    denies — the deny being the only thing keeping ``record-extractor`` off the
+    broad ``research_append`` under ``bypassPermissions`` (issue #695).
+
+    Staging into ``.claude/agents/`` is exactly what both eval harnesses do
+    (``eval/harness/harness/workspace.py``, ``eval/harness/e2e/orchestrator.py``)
+    and ``setting_sources=["project"]`` is what loads them, so after this the
+    bare name resolves in every environment we run. The plugin stays loaded for
+    its skills; the namespaced agent names remain registered too and resolve to
+    these same definitions, so either spelling is now correct.
+
+    Verified live against CLI 2.1.220 and guarded by
+    ``tests/test_plugin_agents.py``. Issue #939.
+    """
+    src = Path(_PLUGIN_DIR) / "agents"
+    if not src.is_dir():
+        _log(f"[agent] no plugin agents at {src} — subagent delegation will miss")
+        return []
+    dest = project_dir / ".claude" / "agents"
+    staged: list[str] = []
+    try:
+        dest.mkdir(parents=True, exist_ok=True)
+        for agent_file in sorted(src.glob("*.md")):
+            shutil.copy(agent_file, dest / agent_file.name)
+            staged.append(agent_file.stem)
+    except OSError as exc:
+        # Loud, not silent: an unstaged agent degrades to a general-purpose
+        # stand-in, which is precisely the failure this function exists to stop.
+        _log(f"[agent] FAILED to stage plugin agents into {dest}: {exc}")
+    return staged
+
+
 def current_api_key() -> str:
     """The operator's Anthropic key for the next turn.
 
@@ -78,6 +127,14 @@ def current_api_key() -> str:
 
 def build_options(project_dir: Path, resume: str | None = None, api_key: str | None = None):
     from claude_agent_sdk import ClaudeAgentOptions
+
+    # Side effect, deliberately here: the plugin's agents are registered by
+    # staging their .md files into the project, not by plugin discovery (see
+    # stage_plugin_agents). Doing it on every client build keeps a resumed or
+    # rebuilt session on the current definitions after an engine upgrade.
+    staged = stage_plugin_agents(project_dir)
+    if staged:
+        _log(f"[agent] staged plugin agents: {', '.join(staged)}")
 
     project_note = (
         "You are the hosted genealogy research agent. The active research "
