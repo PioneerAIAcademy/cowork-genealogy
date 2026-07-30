@@ -136,6 +136,7 @@ jobs:
       # the architecture no longer lets it make. Caught same_person and
       # source_attachments in search-records' rubric two contracts late.
       - name: Check rubric/judge_context/agent tool-mention drift (warn-only)
+        if: steps.scope.outputs.relevant == 'true'
         run: python eval/harness/scripts/check_rubric_tool_drift.py
 
       # Blocking on hard rules (bad/mismatched name, or a description that

@@ -503,17 +503,17 @@ Deferred at wrap; see
   `check_tool_coverage.py`. The two mechanically-groundable false-positive
   shapes found on the first real-corpus run (delegation to a subagent;
   `login`/`logout` colliding with ordinary English) are already fixed in the
-  same PR, bringing 86 hits down to 68. Every remaining hit is the one shape
-  that isn't mechanically fixable: a rubric/judge_context legitimately
-  naming a tool that belongs to a *different* skill — a routing/negative
-  test's `judge_context` naming the destination skill's tool
-  (`validate_research_schema` in a test that should hand off to
-  `validate-schema`), or a skill's rubric explaining what a downstream skill
-  does with its output (`record-extraction`'s rubric naming `tree_edit` /
-  `materialize_facts`, which are person-evidence's job). Before ever making
-  this blocking, either add a way to mark a mention as intentional, or
-  accept it as a human-triaged warning list rather than a gate. Revisit once
-  someone has tried acting on its warnings for a while.
+  same PR, bringing 86 hits down to 68. **Roughly 20% of the remaining 68 are
+  genuine drift** — see the tree-edit issue for the worst case — so the list
+  needs triaging, not suppressing, before anyone decides. The other ~80% are
+  the shape that isn't mechanically fixable: a rubric/judge_context
+  legitimately naming a tool that belongs to a *different* skill — a
+  routing/negative test's `judge_context` naming the destination skill's tool,
+  or a skill's rubric explaining what a downstream skill does with its output
+  (`record-extraction`'s rubric naming `tree_edit` / `materialize_facts`,
+  which are person-evidence's job). Before ever making this blocking, either
+  add a way to mark a mention as intentional, or accept it as a human-triaged
+  warning list rather than a gate.
 
 ## Research latency (e2e `/research` runs)
 Parent plan: `docs/plan/research-latency-reduction-plan.md`. These two levers were
