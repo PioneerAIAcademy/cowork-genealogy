@@ -77,15 +77,21 @@ function extractDeclarationsFromFile(
   const content = readFileSync(absPath, "utf8");
   const lines = content.split(/\r?\n/);
   const decls: ProseDecl[] = [];
+  // Sort longest-first so "date_certainty_timeline" matches before its
+  // prefix "date_certainty".
+  const closedNamesByLength = [...closedNames].sort(
+    (a, b) => b.length - a.length,
+  );
 
   for (let i = 0; i < lines.length; i++) {
     const elemIdx = lines[i].indexOf("\u2208"); // ∈
     if (elemIdx === -1) continue;
 
     // The enum name must appear before ∈ on the same line.
+    // Check longest names first so a prefix can't shadow a longer name.
     const before = lines[i].slice(0, elemIdx);
     let matchedEnum: string | null = null;
-    for (const name of closedNames) {
+    for (const name of closedNamesByLength) {
       if (before.includes(name)) {
         matchedEnum = name;
         break;
