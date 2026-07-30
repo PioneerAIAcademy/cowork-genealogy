@@ -123,15 +123,22 @@ mocks (no E2B/Anthropic/OAuth needed).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth the `spec-review` agent checks implementations against.
   This is the durable tier; a live tool must have a live spec.
-- `docs/TODOs.md` — the open-work list: deferred items, known gaps, and the
-  residuals a shipped PR leaves behind. Every deferred item gets an entry in
-  the same PR that defers it. The file is **open-only** — when an item ships,
-  **delete** its entry rather than checking it off or moving it to a "Done"
-  section. Durable rationale ("don't re-derive X", "the original premise was
-  wrong") goes to the spec or this file; a residual gap becomes its own entry.
-  Git history keeps the prose. This is the same rule `docs/plan/` follows, and
-  it is not bookkeeping: a Done tier is how the file reached 932 lines with 29
-  open items filed underneath it (#953).
+- `docs/TODOs.md` — a **staging queue for the Backlog column**, not a parallel
+  tracker. Every deferred item gets an entry in the same PR that defers it, and
+  the entry's job is to survive only until someone turns it into a GitHub issue.
+  The team picks work off the project board, so an item that lives only in this
+  file is invisible and will never be assigned.
+  **An entry leaves the file when it becomes an issue** — that is the exit event,
+  not "when the work ships". Delete it outright; never check it off, strike it
+  through, or start a "Done" section (a Done tier is how the file reached 932
+  lines with 29 open items buried underneath it, #953). Four entries were found
+  still sitting there months after becoming #703, #694, #943, and #940.
+  **Rationale does not live in `TODOs.md`.** An entry says what the work is plus
+  enough of *why it is still open* to stop the next person re-opening a settled
+  question. Rationale about **code that already shipped** goes to the tool's spec
+  or a comment at the site it constrains — where the next person will actually be
+  standing. If there is no spec to write it into, the item is spec-shaped, not
+  queue-shaped. Git history keeps the prose either way.
 - **Verification is automated, not a manual playbook.** New tools are
   verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
   and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
@@ -225,8 +232,7 @@ superset — so no allow-list can deny the *main thread* a tool one of its
 subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
 hook layer always could do it: `eval/harness/harness/context_policy.py` denies
 `image_read` when `agent_id` is absent. Don't re-derive a per-context policy
-design; it exists. What is missing is a production port (`docs/TODOs.md` §
-"Guardrail enforcement in production").
+design; it exists. What is missing is a production port (issue #940).
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and

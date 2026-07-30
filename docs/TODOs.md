@@ -1,17 +1,30 @@
 # TODOs — hosted web workbench
 
-Open, deferred work — everything in this file is still to do. Architecture
-context: `docs/realtime-architecture.md`.
+**This file is a staging queue for the Backlog column, not a parallel tracker.**
+An entry here is a candidate that has not yet been turned into a GitHub issue.
+The team picks up work from the project board; an item that lives only in this
+file will never be assigned to anyone. Architecture context:
+`docs/realtime-architecture.md`.
 
-**Retention rule.** When an item ships, **delete it** — do not check it off,
-strike it through, or move it to a "Done" section. If it leaves behind a rule
-worth keeping ("don't re-derive X", "the original premise was wrong"), that
-belongs in the spec, `CLAUDE.md`, or a code comment, where the next person will
-actually be standing when they need it. If it leaves a residual gap, promote the
-residual to its own entry here. Git history keeps the prose either way. This is
-the same rule `docs/plan/` already follows, and it is not optional bookkeeping:
-a Done tier is how this file reached 932 lines with 29 open items filed
-underneath it.
+**An entry leaves this file when it becomes an issue.** That is the exit event —
+not "when the work ships". Delete it outright: do not check it off, strike it
+through, or start a "Done" section. Whoever files the issue deletes the entry in
+the same PR, and the issue number is the record from then on. (A Done tier is how
+this file once reached 932 lines with 29 open items buried underneath it.) Four
+entries were found still sitting here months after they became #703, #694, #943,
+and #940 — that is the failure this rule exists to prevent.
+
+**Rationale does not live here.** An entry says what the work is and enough of
+*why it is still open* to keep the next person from re-opening a settled
+question — a recorded decision, a rejected alternative, a measurement that sized
+it. Rationale about **code that already shipped** goes to the tool's spec or a
+comment at the site it constrains, where the next person will actually be
+standing. If there is no spec to write it into, that is the signal the item is
+spec-shaped, not queue-shaped.
+
+**Length is the signal.** An entry running past ~10 lines is usually one of two
+things: a fully-worked proposal that should just be filed as an issue now, or
+accreted rationale that belongs in a spec. Neither should sit here growing.
 
 ## Alpha readiness — deliberately deferred (2026-07-18)
 Surfaced while preparing for the first alpha testers and consciously left for
@@ -162,32 +175,6 @@ create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
 Plan: `docs/plan/research-guardrail-bypass-plan.md`. The eval-side mechanisms
 have proven out; none of them reach Cowork or the hosted web workbench.
 
-- [ ] **Nothing restrains the MAIN THREAD outside the eval harness.** Three
-  observations that were filed separately are one hole:
-  (1) `extraction_append` (#695) makes the record-extractor structurally unable to
-  write `person_evidence`, but the *router* is unrestrained — e2e grants
-  `mcp__genealogy` wholesale (`eval/harness/e2e/orchestrator.py`) and the hosted
-  path runs `permission_mode="bypassPermissions"` with no allowlist
-  (`apps/server/app/agent/real_agent.py`).
-  (2) The guardrail-bypass fix is harness-only: the caller-id `PreToolUse` hook
-  (§4.1), the `Write`/`Edit` lockdown (§4.3), and the two hard-fail checks (§4.4)
-  all live in the e2e orchestrator, so the bypass that plan documents — and the
-  live `bagley-father-1884` run confirmed — stays fully reachable in Cowork and
-  the hosted web workbench.
-  (3) It is not theoretical. In a live Cowork session the `record-extraction`
-  router correctly recited that it "cannot call ... `research_append` ... or
-  `image_transcribe`/`image_read` directly", then in the next breath: "I'm falling
-  back to `image_read` to pull the scan inline so I can see it directly." Closing
-  a lane on a subagent raises the pressure on the router to do the job itself, so
-  any real fix has to bind the main thread too — this is the exact substitution
-  #695's spec §11.4 names as out of scope.
-  The instrument exists and is proven: a `context_policy` `PreToolUse` rule keyed
-  on `agent_id` (`eval/harness/harness/context_policy.py`, built after the router
-  was observed calling `image_read` directly). What is missing is a production
-  port to `real_agent.build_options` and to whatever Cowork allows. Current
-  mitigation is prose in `record-extraction/SKILL.md`. Plan:
-  `docs/plan/research-guardrail-bypass-plan.md` §§3–5.
-
 - [ ] **Whether `Skill`-tool content injection survives compaction is
   unverified — and there's now real reason to suspect it doesn't.**
   `docs/plan/research-guardrail-bypass-plan.md` §6 flagged this as an open
@@ -231,48 +218,19 @@ have proven out; none of them reach Cowork or the hosted web workbench.
   record-extractor A/B: sonnet-5 at high effort can run away on adaptive thinking, so
   gate on a full suite run, not a spot check.
 
-- [ ] **The inline-image size ceiling is unresolved in production — three
-  entangled questions, one sequence.**
-  **(a) The router must not call `image_read` itself.** The inline base64
-  overflows the transport buffer and crashes the run. *Both harnesses now enforce
-  this* — the `PreToolUse` hook denies the call when `agent_id` is absent (main
-  thread) and a universal validator hard-fails the test
-  (`harness/context_policy.py`). Cowork has no eval hook, so the crash is still
-  reachable there, and because per-agent `tools:` is subtractive, production sits
-  in one of two states e2e cannot distinguish (its allowlist is a `mcp__genealogy`
-  wildcard): either Cowork's session set honors the skill's `allowed-tools` and
-  excludes `image_read` — in which case the image-reader subagent cannot call it
-  either and **image reading is silently broken in production** — or Cowork grants
-  a broader set and **the router can crash a real user's run**. Settling it needs
-  one live Cowork run against an image ARK, not a repo read.
-  **(b) The "~1 MiB wall" is not a protocol constant.** It is
-  `claude_agent_sdk`'s configurable `ClaudeAgentOptions.max_buffer_size`
-  (`_DEFAULT_MAX_BUFFER_SIZE = 1024*1024`, `subprocess_cli.py:30`).
-  `eval/harness/e2e/orchestrator.py:752` already raises it to 10 MiB for exactly
-  this class of crash, and its own comment warns that this is eval-harness-only
-  config. `apps/server/app/agent/real_agent.py` sets no override (still the 1 MiB
-  default), and Cowork/Desktop production does not run through this Python SDK
-  transport at all — a different, closed-source client whose real ceiling is
-  unverified. **Do not infer Cowork's ceiling from the e2e harness's override.**
-  **(c) The 700 KB `MAX_INLINE_IMAGE_BYTES` cap (`image-read.ts`) prices
-  `image-reader-opus` out of most real scans** — confirmed across 7 live attempts
-  (2026-07-24), not one sample: **6 of 7** real FamilySearch scans exceeded 700 KB
-  (1.2–1.5 MB) and `image_read` refused outright — two German civil/church
-  register volumes (`004764543_00001`/`00271` and `ark:/61903/3:2:77P1-FRQ`/
-  `77T6-B33`) plus `3Q9M-CSS8-G345-B` (0.8 MB). The 2 that succeeded were smaller
-  single-sheet US documents (a printed newspaper column, 419 KB; a 1947 Army
-  discharge certificate, 384 KB) — neither a genuine hard-handwriting case.
-  Pattern: **format/collection matters more than legibility** — bound European
-  register books scanned as full high-DPI pages run over the cap regardless of how
-  hard the handwriting is, while single-sheet US-style documents land well under
-  it. A genuinely harder page is likely larger still.
-  **Decision (Dallan, 2026-07-24): leave the cap as-is for now** — the agent's
-  `NOT READ` path already points back to `image_transcribe`. Decide whether to
-  raise the cap, give the agent its own larger ceiling, or explore a
-  downscale-before-read path once there is more usage data.
-  **Sequence: (b) gates (c), and (a) needs the live Cowork run.** Plan:
-  `docs/plan/image-read-context-policy.md` §5; spec:
-  `docs/specs/image-reader-opus-agent-spec.md` §9.
+- [ ] **Settle whether the router can call `image_read` in Cowork — needs one
+  live run, not a repo read.** Inline base64 overflows the transport buffer and
+  crashes the run. Both harnesses now deny it (`harness/context_policy.py`), but
+  Cowork has no eval hook, and because per-agent `tools:` is subtractive,
+  production sits in one of two states e2e cannot distinguish: either Cowork
+  honors the skill's `allowed-tools` and the image-reader subagent cannot call
+  `image_read` either — **image reading silently broken in production** — or
+  Cowork grants a broader set and **the router can crash a real user's run**.
+  One live Cowork run against an image ARK settles it.
+  Everything else about the size ceiling is already written down and decided —
+  the 700 KB cap, the 7-scan measurement, why `max_buffer_size` is not a protocol
+  constant, and Dallan's 2026-07-24 decision to leave the cap as-is: see
+  `docs/specs/image-reader-opus-agent-spec.md` §9. Do not re-derive it here.
 
 - [ ] **Should `image-reader`/`image-reader-opus` compress non-matching pages
   during a `search-images` browse?** Raised while designing `image-reader-opus`:
@@ -314,11 +272,6 @@ Deferred at wrap; see
   snapshot carve-out (e.g. a `playbooks/` subdir exclusion) before creating
   the files. Until then, compact tables live in the extractor agent body.
 
-- [ ] **Fan-out extractor agents** — the extractor runs serially per record;
-  the latency plan's P3 full form fans out one agent per record with parent
-  batch-persist. Do after per-record overhead is measured on multi-record e2e
-  runs.
-
 - [ ] **Extraction→tree materialization gap ownership** — fact-less sibling
   stubs are never enriched, the 5d trigger can't fire on a family's first
   record, and no skill promotes extracted facts onto tree persons (8/27 e2e
@@ -342,13 +295,6 @@ Deferred at wrap; see
   adding concrete point-of-use examples (NOT duplicate rules), then re-run the
   record-extraction unit suite to confirm recovery. Do **not** target the 009
   death-cert case — judge noise, not craft.
-
-- [ ] **Enum-drift lint** — grep prose enum enumerations (agent bodies, cribs,
-  rubrics) against `enums.schema.json` in CI, following the places-guidance
-  byte-lint pattern. Two drift instances shipped 2026-07-12 (the /research crib
-  listed `researcher` as invalid after it became a valid
-  `informant_proximity`; record-extractor's negative-evidence section still
-  said `unknown`).
 
 - [ ] **`evidence_type: "negative"` is not tied to `record_role: "absent"` in
   `validator.ts`** — the runtime validator checks each assertion field
@@ -424,24 +370,6 @@ Deferred at wrap; see
   demonstrably lands runs under $15, drop the `caps` blocks so the default cap
   is the regression gate again.
 
-- [ ] **Verify harness stop-early kill reliability on Windows; robust path if it
-  fails.** The shipped quick path leans on OS process-group signal delivery plus the
-  SDK's `atexit` sweep to kill in-flight subprocesses — reliable on macOS/Linux, but
-  `CTRL_C_EVENT` reaching child console processes on **Windows** (the genealogist
-  team's platform) is murkier. **Verify on a real Windows box.** If in-flight `claude`
-  processes survive a Ctrl-C there, adopt the robust path: run each test in a child
-  process the harness owns — replace the `ThreadPoolExecutor` of `run_one_test` calls
-  with a `ProcessPoolExecutor`/explicit `subprocess`, spawned `start_new_session=True`,
-  and have the stop handler terminate each worker's process group explicitly
-  (`os.killpg` on POSIX, `CTRL_BREAK_EVENT`/`TerminateProcess` on Windows).
-  **Inversion to watch:** putting children in their own session means a terminal
-  Ctrl-C no longer auto-kills them — ship the explicit teardown *with* it or
-  interrupts hang. Cost: `run_one_test` currently shares the parent's imports, auth
-  object, and `OrchestratorPaths` in-process, so inputs must become picklable or be
-  reconstructed in the child. Bonus: owned subprocesses make a SIGKILL under memory
-  pressure one lost test rather than a process-wide hazard. Incremental partial
-  persistence is transport-agnostic and unaffected either way.
-
 - [ ] **Attack the eval stall tax (fix deferred pending data).** Instrumentation is in
   place (`duration_api_ms`, `skill_attempts`, and the harness's post-run "Timing
   breakdown": skill work vs wall, API %, judge time, turns, transient retries). The
@@ -482,10 +410,9 @@ Deferred at wrap; see
   models (`judge.py::JUDGE_PRICING` covers judge models only, and a run spans
   the parent plus each subagent on its own `.md` pin), and a way to see
   subagent tokens — they never appear in the main SDK message stream, so an
-  in-flight estimate built only from streamed usage under-counts by a margin
-  consistent with the unattributed portion of a real run's cost. Deliberately
-  not half-built: a cap that silently fires late is worse than a documented
-  reporting threshold. The spec (`e2e-test-spec.md` §5) now says so explicitly.
+  in-flight estimate built only from streamed usage under-counts. Deliberately
+  not half-built — a cap that silently fires late is worse than a documented
+  reporting threshold; `e2e-test-spec.md` §5 carries the full reasoning.
 
 - [ ] **Nothing checks that `forget-and-rederive` honors its own redaction rule** —
   the skill stays permanently exempt from the runlog gate (a setup utility has no
@@ -579,15 +506,17 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `CLAUDE_EFFORT` env var as what failed, not the SDK option — so it may simply
   predate it. Five-minute check; do it before building C0 the harder way.
 
-- [ ] **`search-records/SKILL.md` is 41.6 KB and wants shrinking** — it was resident
-  for 228 of 309 turns in the measured session, and its unanchored rules decayed
-  under compaction (`research-performance-2026-07-27.md` §5.2–5.3). Shrinking is
-  now *safer* than it was: the two load-bearing rules (ranking, `count: 50`)
-  became tool contracts, so they can no longer be lost with the prose. The
-  hazard that remains is that the unit suite grades single invocations in fresh
-  context and therefore **cannot see** multi-hour retention — so it will happily
-  bless a cut that removes something only a long session needs. Needs a gate
-  other than the unit suite before anyone cuts deeply.
+- [ ] **`search-records/SKILL.md` wants shrinking** — **47.3 KB as of 2026-07-30**
+  and still growing (it was 41.6 KB when this was written; PRs #924 and #929 would
+  take it past 54 KB). Resident for 228 of 309 turns in the measured session, and
+  its unanchored rules decayed under compaction
+  (`research-performance-2026-07-27.md` §5.2–5.3). Shrinking is now *safer*: the
+  two load-bearing rules (ranking, `count: 50`) became tool contracts, so they can
+  no longer be lost with the prose. The hazard is that the unit suite grades single
+  invocations in fresh context and therefore **cannot see** multi-hour retention —
+  it will bless a cut that removes something only a long session needs, and equally
+  bless an addition that earns nothing. Needs a gate other than the unit suite
+  before anyone cuts deeply. Related: #422 (the shorten task), #976 (a size check).
 
 - [ ] **The ranking fold has not been tested under real compaction pressure** — the
   post-change e2e run (`hannah-earnest-children` 2026-07-27) compacted only 4
@@ -601,17 +530,6 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   legitimate (5 of 14 searches were deliberately subject-less broad sweeps, which
   cannot rank), but it is worth checking whether the agent is ignoring rankings
   it now gets for free. That would be the same adoption gap one layer down.
-
-- [ ] **`docs/plan/research-performance-2026-07-27.md` is kept deliberately, against
-  the "delete a plan once the work ships" convention** — because C0 (the
-  reasoning-effort A/B, the largest remaining lever) has not shipped. C1–C7 have,
-  and their rationale is in the tool specs, but three things in that plan belong
-  in neither a spec nor a commit message: §1 (the session decomposition and the
-  output-tokens/wall-clock equation), §5.1 (the live probe that refuted this
-  plan's own F2 — the ranker works; the low scores were correct negatives), and
-  §5.3 (the rule audit showing only unanchored SKILL.md prose decays under
-  compaction). Delete or trim it once C0 is decided, and fold those three
-  findings somewhere durable rather than losing them with the file.
 
 ## Skills / tools
 
@@ -682,31 +600,26 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   throws a plain `Error` and leaves that mapping to the caller (see
   `tree-forget.ts`'s three-line `readJson` wrapper).
 
-- [ ] **Four shipped plans still sit in `docs/plan/` awaiting a spec to be
-  promoted into.** The plan cull deleted or promoted everything it could: the
-  `/v1` API and sandbox-provider docs became
-  `docs/specs/public-rest-api-spec.md` and `docs/specs/sandbox-provider-spec.md`
-  (they were specs in all but name), and the `localities`, `no_evidence`,
-  tool-boundary, opus-agent, and search-images plans folded into their specs and
-  were deleted. These four are shipped but have **no spec to fold into**, so
-  deleting them under the "delete a plan once the work ships" rule would destroy
-  the only written record of live infrastructure:
-  - `neon-postgres-plan.md` + `fly-deploy-plan.md` — the deploy/DB setup. Best
-    home is one `docs/specs/hosted-deploy-spec.md`, or sections of
+- [ ] **Four shipped plans in `docs/plan/` need a spec to be promoted into.**
+  They are shipped but have no spec to fold into, so deleting them under the
+  "delete a plan once the work ships" rule would destroy the only written record
+  of live infrastructure:
+  - `neon-postgres-plan.md` + `fly-deploy-plan.md` → one
+    `docs/specs/hosted-deploy-spec.md`, or sections of
     `docs/specs/hosted-web-workbench-spec.md`. `fly-deploy-plan.md` is only
-    *partially* shipped, so split its remainder to an entry here first.
-  - `familysearch-login-plan.md` — the hosted front door. `oauth-auth-spec.md`
-    is the **engine-side** MCP OAuth spec and does not cover it; the open
-    follow-ups are already entries under "FamilySearch login" above.
-  - `3-pane-workbench-ui.md` — the workbench UI design. Zero inbound
-    references, so it is the cheapest to finish: extract the durable layout
-    decisions into `docs/specs/hosted-web-workbench-spec.md` and delete.
-  Separately, `standard-place-standardization.md` is shipped but has **22**
-  inbound references, mostly source comments citing it for rationale — folding
-  that trail into the place specs is its own project, not part of this sweep.
-  Until each is promoted, its `Status:` line is the guard: it says plainly that
-  the work shipped and the file is kept only pending a spec. Do not read them as
-  pending work.
+    *partially* shipped; split its remainder to an entry here first.
+  - `familysearch-login-plan.md` → the hosted front door. `oauth-auth-spec.md` is
+    the **engine-side** MCP OAuth spec and does not cover it.
+  - `3-pane-workbench-ui.md` → cheapest to finish (zero inbound references):
+    extract the layout decisions into `docs/specs/hosted-web-workbench-spec.md`.
+  **The `Status:` line is supposed to be the guard here, and for these it is not.**
+  `neon-postgres-plan.md`, `fly-deploy-plan.md`, and `image-read-context-policy.md`
+  currently have **no `Status:` line at all** (9 of 15 files in `docs/plan/` don't),
+  so nothing tells a reader they are shipped rather than pending. Adding those lines
+  is the cheap half of this item and should happen first.
+  Separately, `standard-place-standardization.md` is shipped but has **22** inbound
+  references, mostly source comments citing it for rationale — folding that trail
+  into the place specs is its own project, not part of this item.
 
 - [ ] **Three skills touched by the `localities` work still owe a runlog re-run +
   annotation.** `locality-guide`, `research-plan`, and `search-records` were
