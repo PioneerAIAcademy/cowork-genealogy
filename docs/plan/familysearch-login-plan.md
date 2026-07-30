@@ -2,7 +2,7 @@
 
 **Status:** Proposal for review · 2026-06-07
 **Related:** [`neon-postgres-plan.md`](./neon-postgres-plan.md),
-[`hosted-web-workbench-spec.md`](./hosted-web-workbench-spec.md) §5.
+[`docs/specs/hosted-web-workbench-spec.md`](../specs/hosted-web-workbench-spec.md) §5.
 
 ## Context
 

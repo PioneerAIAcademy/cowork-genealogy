@@ -2,7 +2,7 @@
 
 **Project:** Cowork Genealogy — an AI genealogy research assistant
 **Scope:** Next.js app for creating, managing, and reviewing eval tests, scenarios, fixtures, and run results
-**Status:** Draft — structure and key decisions captured, implementation TBD. Aligned to `docs/plan/per-pr-review-workflow.md` (per-PR per-skill iteration model).
+**Status:** Draft — structure and key decisions captured, implementation TBD. Aligned to `docs/per-pr-review-workflow.md` (per-PR per-skill iteration model).
 
 ---
 
@@ -161,7 +161,7 @@ Phase 1: fixtures are read-only in the UI (created by devs). The UI displays the
 
 ## 6. Results Section
 
-Per the per-PR review workflow (`docs/plan/per-pr-review-workflow.md`), the team submits one PR per skill containing the updated skill prompt, tests, one run log, and one `.ann` file (per skill touched). Senior feedback flows through PR comments. There is no separate adjudication artifact.
+Per the per-PR review workflow (`docs/per-pr-review-workflow.md`), the team submits one PR per skill containing the updated skill prompt, tests, one run log, and one `.ann` file (per skill touched). Senior feedback flows through PR comments. There is no separate adjudication artifact.
 
 ### Results home
 
@@ -275,5 +275,5 @@ Resolved (covered above):
 - `eval/CLAUDE.md` — Directory layout, naming conventions, annotation file conventions
 - `docs/specs/research-schema-spec.md` — Research.json schema (for scenario builder)
 - `docs/specs/simplified-gedcomx-spec.md` — GedcomX schema (for scenario builder)
-- `docs/plan/per-pr-review-workflow.md` — The workflow this UI implements
+- `docs/per-pr-review-workflow.md` — The workflow this UI implements
 - `docs/skill-mcp-testing-plan.md` — Master plan covering sequencing, team structure, senior review SLA, calibration, optimizer mechanics, and bootstrap scenarios

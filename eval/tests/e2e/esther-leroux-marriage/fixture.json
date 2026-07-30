@@ -1,0 +1,19 @@
+{
+  "id": "esther-leroux-marriage",
+  "name": "Esther Leroux",
+  "genre": "strip",
+  "source_pid": "MD1C-48H",
+  "captured": "2026-07-24",
+  "researcher_question": "What is the marriage date and place of Esther Leroux (MD1C-48H)?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1890s",
+    "geography": "US-ME"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Single-source recovery: one Maine marriage-record entry directly cited in the tree. The husband's name is indexed as 'Jean Laque' in that record vs. 'Jean Jacques' in the tree -- a name-spelling variant, not a different person."
+}

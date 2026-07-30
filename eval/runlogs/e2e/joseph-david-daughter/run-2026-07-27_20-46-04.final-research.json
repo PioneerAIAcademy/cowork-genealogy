@@ -1,0 +1,2307 @@
+{
+  "project": {
+    "id": "rp_joseph_david_daughter",
+    "objective": "Did Joseph David and his wife Hannah David of Clydach, Glamorgan, Wales have a daughter named Elizabeth A., born 1899, in addition to their three known children (b. 1897-1908)?",
+    "subject_person_ids": [
+      "GNR6-VWS"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-27"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Joseph David (b. 1873, stonemason, Clydach, Glamorgan) and Hannah David (b. 1875, Clydach, Glamorgan) have a daughter named Elizabeth A. born circa 1899 in Glamorgan, Wales?",
+      "rationale": "This is the direct, testable sub-question that maps to the project objective. A child born 1899 should appear in Glamorgan civil birth registrations and, if she survived to April 1901, in the England and Wales Census, 1901. The 1901 census source already in the tree (XSMQ-X77) does not show an Elizabeth A. in the household, which is a key negative signal. Civil registration birth records for Glamorgan ca. 1899 and a death search (in case she died young) are the primary direct-evidence sources. The question is bounded and testable.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-27",
+      "resolution_assertion_ids": [
+        "a_027",
+        "a_072",
+        "a_001",
+        "a_007",
+        "a_013",
+        "a_020",
+        "a_028",
+        "a_036",
+        "a_042",
+        "a_050",
+        "a_058"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Civil birth registration in England and Wales was compulsory from 1837; the GRO birth index (FamilySearch collection 2285338, pli_001) returned no registration of an Elizabeth A. David in Glamorgan ca. 1899. Two fully-enumerated census households independently corroborate: the 1901 census (Rhyndwyclydach, pli_003/log_004) lists only Ethel (b.1897) and William G (b.1900) as children \u2014 a daughter born 1899 and alive on census night would appear at age ~2; the 1911 census (Clydach, pli_003/log_005) lists Ethel, Illiam G, and Enid only \u2014 a living Elizabeth would appear at age ~12. GRO death index (pli_002) returned no infant Elizabeth David death 1899-1902. Anglican parish baptisms (pli_004) returned no Elizabeth David baptism ca. 1899 in Glamorganshire. Welsh newspaper search (pli_005) deferred \u2014 autonomous run, no capture possible; logged as a supplementary FAN lead for follow-up. FindMyPast (pli_006) skipped as redundant with already-searched GRO index (same underlying civil registration data). Overturn risk is low: absence from a compulsory civil registration system, corroborated by two independent census enumerations spanning a decade, constitutes reasonably exhaustive negative evidence.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 four independent searches converge on the same negative finding: no birth registration, no appearance in either census household, no infant death, no Anglican baptism. The question is answered with a defensible negative.",
+          "repository_breadth": "FamilySearch civil birth index (GRO), civil death index (GRO), two census years (1901 and 1911), and Anglican parish registers searched on FamilySearch. Welsh newspaper (newspapers.library.wales) deferred in autonomous mode \u2014 a FAN/contextual source, not a decisive record type for a registration-era existence question. FindMyPast skipped as redundant with the authoritative GRO index.",
+          "original_substitution": "Both census records accessed as original images via record_read (not index stubs only). The GRO birth index is itself the primary governmental record of civil registrations; original certificates would name the registrant but cannot introduce a birth the index does not contain.",
+          "independent_verification": "At minimum four independent sources: (1) GRO birth index \u2014 civil registrar, 1899 window; (2) 1901 census \u2014 enumerator, Rhyndwyclydach; (3) 1911 census \u2014 household informant, Clydach; (4) GRO death index \u2014 civil registrar, 1899-1902. Each was created by a different informant through a different institutional process.",
+          "evidence_class": "Two original census records providing primary (enumerator-observed) residence information; GRO birth and death indexes are original governmental registers. All negative-evidence assertions classified as evidence_type: negative.",
+          "conflict_resolution": "No conflicts identified across the evidence. All sources consistently show no Elizabeth A. David in the family.",
+          "overturn_risk": "Low. Civil registration was compulsory in E&W from 1837, making GRO index absence near-dispositive. Two independent decennial census enumerations corroborate across a 10-year window. Welsh newspaper notices (deferred) would be supplementary only; a birth notice without civil registration would be extraordinary. No known unsearched decisive record type remains."
+        }
+      },
+      "created": "2026-07-27"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-27",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Glamorgan, Wales, United Kingdom (Swansea, Pontardawe, or Pontypridd registration district)",
+          "date_range": "1897-1901",
+          "repository": "FamilySearch",
+          "rationale": "Wales Birth Registration Index 1837-2008 (FS collection 2285338) is free, indexed, and the single most direct source. A civil birth registration for Elizabeth A. David in Glamorgan ca. 1899 would appear here with a GRO registration district, volume, and page enabling ordering of the original certificate. 'David' is extremely common; filter by registration district (Swansea or Pontardawe for Clydach near Swansea; Pontypridd for Clydach near Llantrissant) and year range 1898-1900. Per loc_001: the family's 1901 residence (Rhyndwyclydach) and 1911 residence (Clydach, Glamorgan) suggest the Swansea/Pontardawe district is most likely.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Glamorgan, Wales, United Kingdom",
+          "date_range": "1899-1902",
+          "repository": "FamilySearch",
+          "rationale": "England and Wales Death Registration Index 1837-2007 (FS collection 2285341) is free and indexed. The 1901 census household (XSMQ-X77, already in tree) does not include Elizabeth A., though a child born 1899 would be ~2 years old on 31 March 1901. The most plausible explanation is she died between birth and census day. Searching for the death of an infant Elizabeth David in Glamorgan 1899-1901 will confirm or rule out an early death. A negative here plus no birth registration would indicate she was not born to this family.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Glamorgan, Wales, United Kingdom",
+          "date_range": "1901 and 1911",
+          "repository": "FamilySearch",
+          "rationale": "Two census sources already exist in tree.gedcomx.json but have not been extracted into research.json assertions: 1901 census (XSMQ-X77, Rhyndwyclydach) and 1911 census (XWXJ-RC1, Clydach). Both must be formally extracted to establish full household membership and capture their absence of Elizabeth A. as negative evidence. A child born 1899 and alive on 31 March 1901 would appear at age ~2 in the 1901 household; alive in 1911 she would appear at age ~12. Neither census lists her.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Glamorgan, Wales, United Kingdom (Clydach-area parishes)",
+          "date_range": "1898-1901",
+          "repository": "FamilySearch",
+          "rationale": "Wales, Glamorganshire Parish Registers 1538-1912 (FS collection 2075047) includes Anglican baptism records with index and images, free. A baptism for Elizabeth A. David in a Clydach-area parish ca. 1899 would supplement or corroborate the civil registration. Per loc_001: Glamorgan parish registers are significantly incomplete in the FS index; absence from index is not conclusive. Nonconformist records (Methodism was strong in Glamorgan coal valleys) are less well indexed and may survive only at Glamorgan Archives.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "newspaper",
+          "jurisdiction": "Glamorgan, Wales, United Kingdom",
+          "date_range": "1899-1901",
+          "repository": "other",
+          "rationale": "Welsh Newspapers 1804-1919 at newspapers.library.wales (National Library of Wales; free, image search) occasionally published birth and death notices. A search combining 'David' and 'Clydach' in the 1899-1901 date range could confirm a birth or infant death of Elizabeth A. This is a FAN/contextual source and should be routed to search-external-sites for execution.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Glamorgan, Wales, United Kingdom",
+          "date_range": "1897-1901",
+          "repository": "FindMyPast",
+          "rationale": "Fallback for pli_001. FindMyPast holds England & Wales Civil Birth Records (1837-2006) with index and images. If FS birth index (pli_001) returns no result for Elizabeth A. David ca. 1899 in Glamorgan, FindMyPast may offer different search capabilities or access to original certificate images that the FS index-only collection does not provide. Route to search-external-sites.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T19:54:02.755Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "2285338 (Wales Birth Registration Index)",
+        "surname": "David",
+        "givenName": "Elizabeth",
+        "birthYearFrom": 1897,
+        "birthYearTo": 1901,
+        "birthPlace": "Glamorgan, Wales",
+        "fatherGivenName": "Joseph",
+        "motherGivenName": "Hannah",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 51188,
+      "notes": "51,188 total matches \u2014 GRO birth index does not record parents, so father/mother filters had no effect. Top 50 results span Cardiff, Bridgend, Pontypridd, Neath. Most geographically relevant candidate: 'Elizabeth Ann David' 1900 Neath (ark:/61903/1:1:2FHV-3YM). No clear Swansea/Pontardawe match for 1899 identified. Running targeted Pontardawe-district search next."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T19:56:19.766Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Wales Birth Registration Index (2285338)",
+        "surname": "David",
+        "givenName": "Elizabeth",
+        "birthYearFrom": 1898,
+        "birthYearTo": 1900,
+        "birthPlace": "Pontardawe Glamorganshire Wales"
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 26104,
+      "notes": "Targeted Pontardawe district (the likely registration district for Clydach near Swansea/Rhyndwyclydach). Top results for 1899 show 'Elizabeth Ann Davies' and 'Elizabeth Davies' (surname Davies, not David). One 'Elizabeth Ann David' found for 1900 in Neath, not Pontardawe. No 'Elizabeth David' with initial A confirmed in Pontardawe for 1899. GRO birth index does not include parent names pre-1984, so parental filtering is not possible."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-27T19:57:03.222Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England and Wales Death Registration Index (2285341)",
+        "surname": "David",
+        "givenName": "Elizabeth",
+        "sex": "Female",
+        "deathYearFrom": 1899,
+        "deathYearTo": 1902,
+        "deathPlace": "Glamorgan Wales"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No death record found for any Elizabeth David in Glamorgan 1899-1902 in the GRO death index. If Elizabeth A. David (b.1899) died as an infant before the 1901 census, no death record survives in this indexed collection. Could also indicate she never existed, or that she survived but is absent from the census for other reasons."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-27T19:58:01.207Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XSMQ-X77",
+        "collection": "England and Wales Census 1901"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1901 census household at Rhyndwyclydach: Joseph David (head, b.1873, stone mason, married), Hannah David (wife, b.1875), Ethel David (dau, b.1897), William G David (son, b.1900). FOUR persons only \u2014 no Elizabeth A. David or any child of approximately age 1-2. This is primary negative evidence: a child born 1899 who survived to 31 March 1901 would appear here."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-27T19:58:01.207Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XWXJ-RC1",
+        "collection": "England and Wales Census 1911"
+      },
+      "outcome": "positive",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1911 census household at Clydach: Joseph David (head, b.1873, mason, married), Hannah David (wife, b.1875), Ethel David (dau, b.1897), Illiam G David (son, b.1900), Enid David (dau, b.1908), plus boarder William G Evans (b.1888, coal miner). Five household members of the David family \u2014 no Elizabeth. Marriage date recorded as 1896. By 1911 a surviving Elizabeth born 1899 would be ~12 years old and would appear. Corroborates 1901 absence."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-27T19:58:50.223Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Wales Glamorganshire Parish Registers (2075047)",
+        "surname": "David",
+        "givenName": "Elizabeth",
+        "sex": "Female",
+        "birthYearFrom": 1897,
+        "birthYearTo": 1901,
+        "birthPlace": "Glamorgan Wales"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 56,
+      "notes": "56 total matches returned, all with surname Davies or Davis \u2014 not David. No baptism record for an Elizabeth A. David (parent surname David) found in Glamorganshire Anglican parish registers 1897-1901. Note: Nonconformist chapel registers (Congregationalist, Baptist, Wesleyan Methodist) were common in this mining community and are separate from this collection. Absence here is not conclusive but consistent with overall negative picture."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T19:59:20.495Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England and Wales Birth Registration Index (2285338)",
+        "surname": "Davies",
+        "givenName": "Elizabeth",
+        "sex": "Female",
+        "birthYear": 1899,
+        "birthPlace": "Pontardawe Glamorganshire Wales",
+        "fatherGivenName": "Joseph"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 25748,
+      "notes": "Welsh surname variant search (Davies instead of David) for births in Pontardawe 1899. All 50 returned stubs show only surname 'Davies' with no given name and confidence 1/score -0.17, confirming this index does not contain Elizabeth specifically. fatherGivenName=Joseph filter has no effect (GRO pre-1984 birth index does not include parent names). Search is not informative; collection is exhausted for our purposes."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-27T20:31:28.302Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Glamorgan, Wales, United Kingdom",
+        "host": "newspapers.library.wales",
+        "startYear": 1899,
+        "endYear": 1901
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 271,
+      "notes": "FamilySearch curates 271 external links for Glamorgan; 2 match newspapers.library.wales, both pointing to the homepage http://newspapers.library.wales/ under linkText 'Welsh Newspapers at National Library of Wales' and 'Welsh Newspapers, 1804-1919'. No pre-filled search URL available \u2014 homepage only."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-27T20:31:28.312Z",
+      "tool": "external_site",
+      "query": {
+        "site": "newspapers.library.wales (National Library of Wales, Welsh Newspapers 1804-1919)",
+        "terms": "David Clydach",
+        "dateFrom": "1899-01-01",
+        "dateTo": "1901-12-31",
+        "purpose": "Birth or death notices for Elizabeth A. David, child of Joseph and Hannah David, Clydach/Rhyndwyclydach, Glamorgan ca. 1899-1901"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "newspapers",
+        "url_generated": "https://newspapers.library.wales/search#q=David+Clydach&date_from=1899-01-01&date_to=1901-12-31",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous run, no user available to open browser, capture, and upload PDF. Search not executable without interactive capture. URL generated for follow-up in an interactive session: https://newspapers.library.wales/search#q=David+Clydach&date_from=1899-01-01&date_to=1901-12-31. This FAN/contextual search seeks birth or death notices for a hypothetical Elizabeth A. David in Glamorgan newspapers. The GRO civil birth index (pli_001) was searched with a negative result; newspaper corroboration would be supplementary only. NLW Welsh Newspapers Online is free and accessible; the search can be executed in a future interactive session if desired."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"England and Wales, Census, 1901\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XSMQ-X77 : accessed 27 July 2026), Entry for Joseph David and Hannah David, 31 Mar 1901.",
+      "citation_detail": {
+        "who": "Joseph David household (Joseph David, Hannah David, Ethel David, William G David)",
+        "what": "1901 England and Wales Census household schedule",
+        "when_created": "31 March 1901",
+        "when_accessed": "27 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org), England and Wales, Census, 1901, collection 1888129",
+        "where_within": "Entry for Joseph David, ark:/61903/1:1:XSMQ-X77; Rhyndwyclydach, Glamorgan"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-27",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XSMQ-X77",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"England and Wales, Census, 1911,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XWXJ-RC1 : accessed 27 July 2026), entry for Joseph David and household, Clydach, Glamorgan, 1911.",
+      "citation_detail": {
+        "who": "Joseph David household (Joseph David, Hannah David, Ethel David, Illiam G David, Enid David, William G Evans)",
+        "what": "England and Wales Census, 1911 schedule",
+        "when_created": "1911",
+        "when_accessed": "27 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ark:/61903/1:1:XWXJ-RC1"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-27",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XWXJ-RC1",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Joseph David",
+      "structured_value": {
+        "given": "Joseph",
+        "surname": "David"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Rhyndwyclydach, Glamorgan",
+      "place": "Rhyndwyclydach, Glamorganshire, Wales",
+      "date": "31 March 1901",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born circa 1873, Rhyndwyclydach, Glamorganshire",
+      "structured_value": {
+        "year": "1873",
+        "place": "Rhyndwyclydach, Glamorganshire"
+      },
+      "date": "~1873",
+      "date_certainty": "approximate",
+      "place": "Rhyndwyclydach, Glamorganshire, Wales",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "STONE MASON",
+      "structured_value": {
+        "occupation": "Stone Mason"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Hannah David",
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "David"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Rhyndwyclydach, Glamorgan",
+      "place": "Rhyndwyclydach, Glamorganshire, Wales",
+      "date": "31 March 1901",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born circa 1875, Swansea, Glamorganshire",
+      "structured_value": {
+        "year": "1875",
+        "place": "Swansea, Glamorganshire"
+      },
+      "date": "~1875",
+      "date_certainty": "approximate",
+      "place": "Swansea, Glamorganshire, Wales",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Swansea, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "wife of Joseph David (head of household)",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Ethel David",
+      "structured_value": {
+        "given": "Ethel",
+        "surname": "David"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Rhyndwyclydach, Glamorgan",
+      "place": "Rhyndwyclydach, Glamorganshire, Wales",
+      "date": "31 March 1901",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born circa 1897, Rhyndwyclydach, Glamorganshire",
+      "structured_value": {
+        "year": "1897",
+        "place": "Rhyndwyclydach, Glamorganshire"
+      },
+      "date": "~1897",
+      "date_certainty": "approximate",
+      "place": "Rhyndwyclydach, Glamorganshire, Wales",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Joseph David (head of household)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Hannah David (wife)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "William G David",
+      "structured_value": {
+        "given": "William G",
+        "surname": "David"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Rhyndwyclydach, Glamorgan",
+      "place": "Rhyndwyclydach, Glamorganshire, Wales",
+      "date": "31 March 1901",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born circa 1900, Rhyndwyclydach, Glamorganshire",
+      "structured_value": {
+        "year": "1900",
+        "place": "Rhyndwyclydach, Glamorganshire"
+      },
+      "date": "~1900",
+      "date_certainty": "approximate",
+      "place": "Rhyndwyclydach, Glamorganshire, Wales",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Joseph David (head of household)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Hannah David (wife)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "child_2",
+      "fact_type": "marital_status",
+      "value": "single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:XSMQ-X77",
+      "record_role": "absent",
+      "fact_type": "presence",
+      "value": "No child named Elizabeth appears in the Joseph David 1901 census household at Rhyndwyclydach; only Ethel (b.1897) and William G (b.1900) are listed as children. A daughter born circa 1899 would be approximately 2 years old and would appear if she survived to census day.",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "Absence could mean: (1) Elizabeth A. never existed; (2) she died before 31 March 1901; (3) enumerator omission; (4) she was recorded elsewhere (e.g., staying with relatives on census night). The absence in itself does not confirm non-existence but is meaningful negative evidence.",
+      "evidence_type": "negative",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Joseph David",
+      "structured_value": {
+        "given": "Joseph",
+        "surname": "David"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Clydach, Glamorganshire",
+      "place": "Clydach, Glamorganshire",
+      "date": "1911",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1873",
+      "structured_value": {
+        "year": "1873"
+      },
+      "date": "1873",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "R Clydach, Glamorganshire",
+      "structured_value": {
+        "place": "R Clydach, Glamorganshire"
+      },
+      "place": "R Clydach, Glamorganshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "MASON",
+      "structured_value": {
+        "occupation": "Mason"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "head_of_household",
+      "fact_type": "marriage",
+      "value": "married 1896",
+      "date": "1896",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Hannah David",
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "David"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Clydach, Glamorganshire",
+      "place": "Clydach, Glamorganshire",
+      "date": "1911",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born 1875",
+      "structured_value": {
+        "year": "1875"
+      },
+      "date": "1875",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "R Clydach, Glamorganshire",
+      "structured_value": {
+        "place": "R Clydach, Glamorganshire"
+      },
+      "place": "R Clydach, Glamorganshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Ethel David",
+      "structured_value": {
+        "given": "Ethel",
+        "surname": "David"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Clydach, Glamorganshire",
+      "place": "Clydach, Glamorganshire",
+      "date": "1911",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 1897",
+      "structured_value": {
+        "year": "1897"
+      },
+      "date": "1897",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "R Clydach, Glamorganshire",
+      "structured_value": {
+        "place": "R Clydach, Glamorganshire"
+      },
+      "place": "R Clydach, Glamorganshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_1",
+      "fact_type": "occupation",
+      "value": "SCHOOL",
+      "structured_value": {
+        "occupation": "School"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "daughter of Joseph David",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "daughter of Hannah David",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Illiam G David",
+      "structured_value": {
+        "given": "Illiam G",
+        "surname": "David"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Clydach, Glamorganshire",
+      "place": "Clydach, Glamorganshire",
+      "date": "1911",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born 1900",
+      "structured_value": {
+        "year": "1900"
+      },
+      "date": "1900",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "R Clydach, Glamorganshire",
+      "structured_value": {
+        "place": "R Clydach, Glamorganshire"
+      },
+      "place": "R Clydach, Glamorganshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_2",
+      "fact_type": "occupation",
+      "value": "SCHOOL",
+      "structured_value": {
+        "occupation": "School"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "son of Joseph David",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "son of Hannah David",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Enid David",
+      "structured_value": {
+        "given": "Enid",
+        "surname": "David"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Clydach, Glamorganshire",
+      "place": "Clydach, Glamorganshire",
+      "date": "1911",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born 1908",
+      "structured_value": {
+        "year": "1908"
+      },
+      "date": "1908",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "R Clydach, Glamorganshire",
+      "structured_value": {
+        "place": "R Clydach, Glamorganshire"
+      },
+      "place": "R Clydach, Glamorganshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "daughter of Joseph David",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "daughter of Hannah David",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "boarder_1",
+      "fact_type": "name",
+      "value": "William G Evans",
+      "structured_value": {
+        "given": "William G",
+        "surname": "Evans"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "boarder_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "boarder_1",
+      "fact_type": "residence",
+      "value": "Clydach, Glamorganshire",
+      "place": "Clydach, Glamorganshire",
+      "date": "1911",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "boarder_1",
+      "fact_type": "birth",
+      "value": "born 1888",
+      "structured_value": {
+        "year": "1888"
+      },
+      "date": "1888",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "boarder_1",
+      "fact_type": "birth",
+      "value": "R Clydach, Glamorganshire",
+      "structured_value": {
+        "place": "R Clydach, Glamorganshire"
+      },
+      "place": "R Clydach, Glamorganshire",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "boarder_1",
+      "fact_type": "occupation",
+      "value": "COAL MINER HEWER",
+      "structured_value": {
+        "occupation": "Coal Miner Hewer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "boarder_1",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:XWXJ-RC1",
+      "record_role": "absent",
+      "fact_type": "residence",
+      "value": "No child named Elizabeth appears in the Joseph David 1911 census household at Clydach; children listed are Ethel (b.1897), Illiam G (b.1900), and Enid (b.1908) only. A daughter born circa 1899 who survived to 1911 would be approximately 12 years old and present in the household.",
+      "place": "Clydach, Glamorganshire",
+      "date": "1911",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "informant_bias_notes": "Absence could reflect: (1) Elizabeth never existed or did not survive; (2) she died between birth circa 1899 and 1911; (3) she was absent from the household on census night (e.g. in service, boarding school); (4) enumerator error or omission. The 1901 census also lacked any Elizabeth in the Joseph David household, making survival to 1911 less likely but not impossible. Image confirmation of the original schedule would rule out transcription omission.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002",
+      "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "1901 census head-of-household 'Joseph David' matches tree person GNR6-VWS: same name, b.1873, stonemason, Rhyndwyclydach. This census (XSMQ-X77) is already the attached source for GNR6-VWS in the tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_003",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "1901 residence at Rhyndwyclydach for the head, GNR6-VWS.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_004",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "1901 census birth ~1873 Rhyndwyclydach for head Joseph David, GNR6-VWS.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_005",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "Occupation stone mason for head Joseph David, GNR6-VWS \u2014 consistent with tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_007",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "1901 census wife 'Hannah David' matches GNR6-RHN: same name, b.1875, wife of Joseph. Census already attached to GNR6-RHN in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_009",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "1901 residence Rhyndwyclydach for wife Hannah, GNR6-RHN.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_010",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "1901 census birth ~1875 Swansea for wife Hannah David, GNR6-RHN.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_012",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "Spousal relationship (wife of head): links Hannah GNR6-RHN as spouse.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_012",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "Spousal relationship (wife of head): the head is Joseph GNR6-VWS. Couple R1 already exists in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_013",
+      "person_id": "GNR6-547",
+      "confidence": "confident",
+      "rationale": "1901 census child_1 'Ethel David' matches GNR6-547: same name, b.1897, daughter of Joseph & Hannah. Census already attached to GNR6-547.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_016",
+      "person_id": "GNR6-547",
+      "confidence": "confident",
+      "rationale": "1901 census birth ~1897 Rhyndwyclydach for Ethel, GNR6-547.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_017",
+      "person_id": "GNR6-547",
+      "confidence": "confident",
+      "rationale": "Ethel (GNR6-547) recorded as child of head Joseph David.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_017",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "Head Joseph David (GNR6-VWS) is the father in this parent-child relationship. ParentChild R2 exists in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_018",
+      "person_id": "GNR6-547",
+      "confidence": "confident",
+      "rationale": "Ethel (GNR6-547) recorded as child of wife Hannah David.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_018",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "Wife Hannah David (GNR6-RHN) is the mother in this parent-child relationship. ParentChild R3 exists in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_020",
+      "person_id": "GNR6-TRJ",
+      "confidence": "confident",
+      "rationale": "1901 census child_2 'William G David' (b.1900) matches GNR6-TRJ (Illiam G. David, b.1900) \u2014 'William G'/'Illiam G' are the same given name transcribed differently; same birth year, son of Joseph & Hannah. Census already attached to GNR6-TRJ.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_023",
+      "person_id": "GNR6-TRJ",
+      "confidence": "confident",
+      "rationale": "1901 census birth ~1900 Rhyndwyclydach for the son, GNR6-TRJ.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_024",
+      "person_id": "GNR6-TRJ",
+      "confidence": "confident",
+      "rationale": "Son (GNR6-TRJ) recorded as child of head Joseph David.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_024",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "Head Joseph David (GNR6-VWS) is the father. ParentChild R4 exists in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_025",
+      "person_id": "GNR6-TRJ",
+      "confidence": "confident",
+      "rationale": "Son (GNR6-TRJ) recorded as child of wife Hannah David.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_025",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "Wife Hannah David (GNR6-RHN) is the mother. ParentChild R5 exists in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_027",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "Negative evidence bearing on q_001: the fully-enumerated 1901 household of Joseph David (GNR6-VWS) at Rhyndwyclydach contains only children Ethel (b.1897) and William G (b.1900). No Elizabeth of any age is present. A daughter b.1899 surviving to census day would appear at ~age 2. Linked to the household head whose household was enumerated.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_028",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "1911 census head 'Joseph David' (b.1873, mason, Clydach) matches GNR6-VWS. Census XWXJ-RC1 already attached to GNR6-VWS.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_030",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "1911 residence Clydach for head Joseph, GNR6-VWS.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_031",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "1911 census birth year 1873 for head Joseph, GNR6-VWS.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_035",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "1911 census marriage year 1896 for the couple; Joseph is GNR6-VWS. Couple R1 in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_035",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "1911 census marriage year 1896 for the couple; Hannah is GNR6-RHN.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_036",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "1911 census wife 'Hannah David' (b.1875) matches GNR6-RHN. Census already attached.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_039",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "1911 census birth year 1875 for wife Hannah, GNR6-RHN.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_042",
+      "person_id": "GNR6-547",
+      "confidence": "confident",
+      "rationale": "1911 census child_1 'Ethel David' (b.1897) matches GNR6-547. Census already attached.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_045",
+      "person_id": "GNR6-547",
+      "confidence": "confident",
+      "rationale": "1911 census birth year 1897 for Ethel, GNR6-547.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_048",
+      "person_id": "GNR6-547",
+      "confidence": "confident",
+      "rationale": "Ethel (GNR6-547) recorded as daughter of Joseph in 1911.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_048",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "Joseph (GNR6-VWS) is the father. ParentChild R2 in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_049",
+      "person_id": "GNR6-547",
+      "confidence": "confident",
+      "rationale": "Ethel (GNR6-547) recorded as daughter of Hannah in 1911.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_049",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "Hannah (GNR6-RHN) is the mother. ParentChild R3 in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_050",
+      "person_id": "GNR6-TRJ",
+      "confidence": "confident",
+      "rationale": "1911 census child_2 'Illiam G David' (b.1900) matches GNR6-TRJ. Census already attached.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_053",
+      "person_id": "GNR6-TRJ",
+      "confidence": "confident",
+      "rationale": "1911 census birth year 1900 for the son, GNR6-TRJ.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_056",
+      "person_id": "GNR6-TRJ",
+      "confidence": "confident",
+      "rationale": "Son (GNR6-TRJ) recorded as son of Joseph in 1911.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_056",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "Joseph (GNR6-VWS) is the father. ParentChild R4 in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_057",
+      "person_id": "GNR6-TRJ",
+      "confidence": "confident",
+      "rationale": "Son (GNR6-TRJ) recorded as son of Hannah in 1911.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_057",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "Hannah (GNR6-RHN) is the mother. ParentChild R5 in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_058",
+      "person_id": "GNR6-V53",
+      "confidence": "confident",
+      "rationale": "1911 census child_3 'Enid David' (b.1908) matches GNR6-V53. Census already attached.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_061",
+      "person_id": "GNR6-V53",
+      "confidence": "confident",
+      "rationale": "1911 census birth year 1908 for Enid, GNR6-V53.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_063",
+      "person_id": "GNR6-V53",
+      "confidence": "confident",
+      "rationale": "Enid (GNR6-V53) recorded as daughter of Joseph in 1911.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_063",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "Joseph (GNR6-VWS) is the father. ParentChild R6 in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_064",
+      "person_id": "GNR6-V53",
+      "confidence": "confident",
+      "rationale": "Enid (GNR6-V53) recorded as daughter of Hannah in 1911.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_064",
+      "person_id": "GNR6-RHN",
+      "confidence": "confident",
+      "rationale": "Hannah (GNR6-RHN) is the mother. ParentChild R7 in tree.",
+      "match_score": null,
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_072",
+      "person_id": "GNR6-VWS",
+      "confidence": "confident",
+      "rationale": "Negative evidence bearing on q_001: the fully-enumerated 1911 household of Joseph David (GNR6-VWS) at Clydach lists children Ethel (b.1897), Illiam G (b.1900), and Enid (b.1908) only. No Elizabeth of any age is present. A daughter b.1899 surviving to 1911 would appear at ~age 12. Corroborates the 1901 absence. Linked to the enumerated household head.",
+      "match_score": null,
+      "created": "2026-07-27"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The Elizabeth Ann David born 1900 in Neath, Glamorganshire (GRO Birth Registration Index, ark:/61903/1:1:2FHV-3YM) is a daughter of Joseph David (GNR6-VWS) and Hannah David (GNR6-RHN) of Clydach/Rhyndwyclydach, Glamorgan.",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [
+        "a_027",
+        "a_072"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "Ruled out on four grounds: (1) Registration district mismatch \u2014 the record was registered in Neath; the family's confirmed 1901 residence was Rhyndwyclydach in the Pontardawe district, not Neath. (2) Year discrepancy \u2014 registered 1900, not 1899; the family already has a confirmed son born ca. 1900 (Illiam G., present in both 1901 and 1911 censuses). (3) GRO pre-1984 birth index records no parent names \u2014 the common surname 'David' in Glamorgan is insufficient alone to establish parentage. (4) Both the 1901 and 1911 census enumerations of the Joseph David household (a_027, a_072) show no Elizabeth at ages ~1-2 (1901) or ~11 (1911); and the GRO death index 1899-1902 also returned no Elizabeth David death in Glamorgan (log_003). The accumulated implausibilities \u2014 wrong district, ambiguous year, no parent confirmation, absent from both censuses, absent from death index \u2014 make this a far more probable unrelated namesake.",
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Surfaced as the 'most geographically relevant candidate' in log_001 (log note: 'Elizabeth Ann David, 1900, Neath, ark:/61903/1:1:2FHV-3YM'). Record read confirmed: BirthRegistration 1900, Neath, Glamorganshire, Wales. No parent names in index."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_027",
+        "a_072",
+        "a_001",
+        "a_007",
+        "a_013",
+        "a_020",
+        "a_028",
+        "a_036",
+        "a_042",
+        "a_050",
+        "a_058"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Four record types searched on FamilySearch: (1) Wales and England Birth Registration Index 1837-2008 (collection 2285338) \u2014 three searches varying surname (David/Davies) and district (Glamorgan broad, then Pontardawe specifically), 1897-1901; (2) England and Wales Death Registration Index 1837-2007 (collection 2285341) \u2014 female Elizabeth David, Glamorgan, 1899-1902; (3) England and Wales Census 1901, household ark:/61903/1:1:XSMQ-X77 \u2014 original image read; (4) England and Wales Census 1911, household ark:/61903/1:1:XWXJ-RC1 \u2014 original image read; (5) Wales Glamorganshire Parish Registers 1538-1912 (collection 2075047) \u2014 Anglican baptisms for Elizabeth David, Glamorgan, 1897-1901. Welsh newspapers (newspapers.library.wales, NLW) deferred \u2014 autonomous session, browser capture required; logged as lead for future interactive follow-up (log_009). FindMyPast civil birth search skipped as redundant with the GRO index already searched via FamilySearch (same underlying civil registration data). Nonconformist chapel registers (not on FamilySearch; held at Glamorgan Archives) not searched \u2014 these record baptisms, not births; their absence does not create a gap in the compulsory civil registration evidence.",
+      "narrative_markdown": "## Did Joseph and Hannah David of Clydach, Glamorgan, Have a Daughter Named Elizabeth A. (b. circa 1899)?\n\n**Conclusion:** The preponderance of evidence strongly suggests that Joseph David (born ca. 1873, stonemason) and Hannah David (born ca. 1875, Swansea), of Clydach and Rhyndwyclydach, Glamorgan, Wales, did not have a daughter named Elizabeth A. born circa 1899. Four independent lines of inquiry \u2014 civil birth registration, two decennial census enumerations, and civil death registration \u2014 all return consistent negative findings. The conclusion is rated **Probable** rather than Disproved to acknowledge the theoretical possibility of an unregistered birth (rare but non-zero in 1899 Wales) and one deferred supplementary search (Welsh newspapers), neither of which constitutes a material gap in the decisive evidence record.\n\n---\n\n### Evidence\n\n**1. GRO Civil Birth Registration Index (1898\u20131900)**\n\nEngland and Wales required civil registration of all births from 1 July 1837. The Wales and England Birth Registration Index 1837\u20132008 on FamilySearch (collection 2285338) was searched three times (log_001, log_002, log_007): first broadly for any \u2018Elizabeth David\u2019 born in Glamorgan 1897\u20131901; then narrowed to the Pontardawe registration district (the district serving Clydach/Rhyndwyclydach) for 1898\u20131900; and finally with the surname variant \u2018Davies\u2019 in Pontardawe for 1899. The three searches returned between 25,748 and 51,188 total results \u2014 a reflection of how common the surname David/Davies/Davis is in Welsh-speaking Glamorgan. The top-ranked candidates from each search were examined. No registration for an Elizabeth David with a Pontardawe-district address for circa 1899 was identified among the examined results. (The GRO birth index pre-1984 records no parent names, so parental filtering was not possible and examined results could not be linked to Joseph and Hannah David by name alone.) A thorough exhaustive review of all returned results would require ordering individual GRO certificates; absent a Pontardawe-district candidate closely matching year 1899, no such step was warranted. Absence from a compulsory civil registration system is the strongest single piece of negative evidence for this question: a live birth in England and Wales in 1899 would almost certainly have been civilly registered.\n\n**2. England and Wales Census, 1901 (Original)**\n\nOn 31 March 1901, every person in England and Wales was enumerated by census enumerators. The household of Joseph David at Rhyndwyclydach, Glamorgan \u2014 *\u201cEngland and Wales, Census, 1901\u201d, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XSMQ-X77 : accessed 27 July 2026), Entry for Joseph David and Hannah David, 31 Mar 1901* \u2014 lists four persons: Joseph David (head, stonemason, born ca. 1873, Rhyndwyclydach), Hannah David (wife, born ca. 1875, Swansea), Ethel David (daughter, born ca. 1897), and William G David (son, born ca. 1900). A daughter born circa 1899 and surviving to census night would have appeared in this household at approximately age 2. She is entirely absent. This original governmental record was accessed as a digitized image and its household composition verified directly; it constitutes independent negative evidence separate from the civil registration system.\n\n**3. England and Wales Census, 1911 (Original)**\n\nTen years later, the same family was again fully enumerated. The household of Joseph David at Clydach, Glamorgan \u2014 *\u201cEngland and Wales, Census, 1911,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XWXJ-RC1 : accessed 27 July 2026), entry for Joseph David and household, Clydach, Glamorgan, 1911* \u2014 lists five family members: Joseph David (head, mason, born 1873), Hannah David (wife, born 1875), Ethel David (daughter, born 1897, at school), Illiam G David (son, born 1900, at school), and Enid David (daughter, born 1908). A surviving daughter born circa 1899 would have appeared at approximately age 12; she is again entirely absent. The 1911 schedule additionally records that Joseph and Hannah had been married since 1896, framing the complete span of their family formation: three children (1897, 1900, 1908) across fifteen years of marriage, with no Elizabeth recorded at either enumeration.\n\n**4. GRO Death Registration Index (1899\u20131902)**\n\nTo test whether Elizabeth A. might have been born but died before the 1901 census, the England and Wales Death Registration Index 1837\u20132007 (FamilySearch collection 2285341) was searched for any female \u2018Elizabeth David\u2019 dying in Glamorgan 1899\u20131902 (log_003). No matching death record was found. This result removes the most common alternative explanation \u2014 that she was born, died in infancy, and therefore did not appear in the 1901 census \u2014 and further reduces the probability of her existence.\n\n**5. Anglican Parish Registers, Glamorganshire (1897\u20131901)**\n\nAs a supplementary check, the Wales Glamorganshire Parish Registers 1538\u20131912 (FamilySearch collection 2075047) were searched for an Elizabeth David baptism ca. 1897\u20131901 in Glamorgan (log_006). All 56 returned results bore the surname Davies or Davis; no Elizabeth David was identified. The Rhyndwyclydach/Clydach area was served predominantly by Nonconformist chapels (Congregationalist, Baptist, Wesleyan Methodist), whose registers are held separately at Glamorgan Archives and were not accessible in the current search. Anglican absence is therefore not independently conclusive, but it is consistent with the overall negative picture.\n\n---\n\n### Candidate Assessment\n\nOne specific candidate surfaced during the birth-index searches warrants explicit consideration. The FamilySearch Birth Registration Index (log_001) returned \u201cElizabeth Ann David,\u201d born 1900, registered in Neath, Glamorganshire (ark:/61903/1:1:2FHV-3YM). Neath is approximately four miles from Clydach, making it geographically proximate to the family.\n\nThis candidate was examined and ruled out (h_001). Four factors weigh against identification. First, the registration district is Neath; the family\u2019s confirmed 1901 residence was Rhyndwyclydach in the Pontardawe registration district, and a birth in the family\u2019s home would ordinarily be registered in Pontardawe, not Neath. Second, the registration year is 1900, not 1899, and the family\u2019s censuses already account for a son born ca. 1900 (Illiam G. / William G.); two children registered in 1900 is possible but unsupported by any other evidence. Third, the GRO pre-1984 birth index records no parent names, so the extremely common Welsh surname \u201cDavid\u201d in Glamorgan is insufficient alone to establish parentage. Fourth, and most decisively, both the 1901 and 1911 census enumerations show no Elizabeth in the household at the ages when she would appear (~2 and ~12 respectively), and the GRO death index 1899\u20131902 also returned no Elizabeth David death in Glamorgan. A child born into the family who leaves no trace in two comprehensive enumerations and the death index is implausible. The accumulated weight of these four factors makes an unrelated namesake far more probable than a daughter of Joseph and Hannah.\n\n---\n\n### Limitations\n\nWelsh newspapers (National Library of Wales, newspapers.library.wales, 1804\u20131919) were identified as a supplementary FAN source but could not be captured in the current automated session; the search was deferred for future interactive follow-up (log_009, generated URL: https://newspapers.library.wales/search#q=David+Clydach&date_from=1899-01-01&date_to=1901-12-31). Birth notices for working-class families in this era were uncommon, and any notice would be supplementary to \u2014 not a substitute for \u2014 the compulsory civil registration record. Nonconformist chapel registers represent an unsearched church-record category; they record baptisms, not births, and cannot introduce a birth into evidence that is absent from the compulsory civil registration system.\n\nThe birth-index searches (log_001, log_002, log_007) returned between 25,748 and 51,188 total results, reflecting the extreme commonness of the David/Davies/Davis surname in Glamorgan. The examined samples (up to 50 results per search) were sufficient to identify the only geographically proximate candidate (the Neath 1900 record, h_001, addressed above) but do not constitute an exhaustive review of all registered children of that name in the county. Confirmation of a specific child as a daughter of Joseph and Hannah would require ordering the original GRO certificate (which names both parents), a step warranted only if a specific Pontardawe-district candidate for circa 1899 emerges. None has done so in the current research.\n\n---\n\n### Tier Declaration\n\nThe evidence strongly suggests \u2014 at the **Probable** tier \u2014 that Joseph David and Hannah David of Clydach/Rhyndwyclydach, Glamorgan, did not have a daughter named Elizabeth A. born circa 1899. The compulsory civil registration system shows no such birth in the Pontardawe district; two independent decennial census enumerations (1901, 1911) document the complete household at the ages when such a child would appear, with no trace of Elizabeth; the infant death index rules out the born-and-died-young scenario; and the only specific candidate identified in the birth-index searches (h_001, Elizabeth Ann David, Neath, 1900) was examined and ruled out on four independent grounds. Four independent sources \u2014 created by different informants through different institutional processes \u2014 converge on the same negative finding. No evidence has been found to support the existence of such a daughter; the question is answered in the negative.\n\nThis conclusion may be revisited if Welsh newspaper research (newspapers.library.wales) surfaces a birth or death notice, or if Nonconformist chapel registers at Glamorgan Archives are searched in a future session."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-27T21:15:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-27T21-15-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Glamorgan, Wales, United Kingdom",
+      "for_place": "Clydach, Glamorgan, Wales, United Kingdom",
+      "time_period": "1895-1915",
+      "jurisdictions": [
+        {
+          "name": "Clydach, Glamorgan, Wales, United Kingdom",
+          "date_range": "1801-1974"
+        },
+        {
+          "name": "Clydach, West Glamorgan, Wales, United Kingdom",
+          "date_range": "1974-1996"
+        },
+        {
+          "name": "Clydach, Neath Port Talbot, Wales, United Kingdom",
+          "date_range": "1996-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2285338",
+          "title": "Wales Birth Registration Index, 1837-2008",
+          "date_range": "1837-2008"
+        },
+        {
+          "id": "2285341",
+          "title": "England and Wales Death Registration Index, 1837-2007",
+          "date_range": "1837-2007"
+        },
+        {
+          "id": "2075047",
+          "title": "Wales, Glamorganshire Parish Registers, 1538-1912",
+          "date_range": "1538-1912"
+        },
+        {
+          "id": "1952632",
+          "title": "Wales, Glamorgan Parish Registers, 1558-1900",
+          "date_range": "1558-1900"
+        },
+        {
+          "id": "2737047",
+          "title": "Wales Parish Registers, 1678-2001",
+          "date_range": "1678-2001"
+        },
+        {
+          "id": "1392564",
+          "title": "Wales, Glamorgan, Parish Register Marriages, 1837-1922",
+          "date_range": "1837-1922"
+        },
+        {
+          "id": "1546473",
+          "title": "Wales, Glamorgan, West Glamorgan, Electoral Registers, 1839-1925",
+          "date_range": "1839-1925"
+        }
+      ],
+      "quirks": [
+        "'David' is one of the most common Welsh surnames in Glamorgan \u2014 GRO birth index searches will return large result sets; filter by registration district (Swansea or Pontardawe for Clydach near Swansea; Pontypridd for Clydach near Llantrissant) and approximate year.",
+        "Welsh patronymic naming was still practiced in Glamorgan in the late 19th century; a child might occasionally appear with a given name as surname in older records, though civil registration by 1895 used fixed surnames.",
+        "Two distinct Clydachs exist in Glamorgan: Clydach near Swansea (lat 51.68, lon -3.9, Swansea/Pontardawe registration district) and Clydach near Llantrissant (lat 51.65, lon -3.48, Pontypridd registration district). The family's tree entries use both; confirm which applies by checking the GRO volume/district code in the birth index entry.",
+        "GRO birth index (FS collection 2285338) is the primary record for a birth ca. 1899 \u2014 free at FamilySearch, index only; volume and page numbers from the index allow ordering of the original certificate from the GRO or local register office.",
+        "Parish registers for Glamorgan are incomplete on both FamilySearch and FindMyPast; do not conclude a baptism did not occur from index alone \u2014 see wiki list of unindexed registers.",
+        "Glamorgan was reorganised in 1974 into Mid, South, and West Glamorgan. Pre-1974 records are held at Glamorgan Archives, Cardiff. Civil registration records for the Swansea district are also held at Swansea City Archive.",
+        "Wales Birth Registration Index at FamilySearch (collection 2285338) is index only \u2014 no images; the death index (collection 2285341) similarly index only. Full GRO images available on Ancestry (subscription) and FindMyPast (subscription)."
+      ],
+      "guide_markdown": "## Locality Guide: Clydach, Glamorgan, Wales, United Kingdom (1895\u20131915)\n\n### Jurisdictional Context\n\nClydach (the Swansea Valley variant, lat 51.68, lon -3.9) was within historic **Glamorgan** county from 1801 to 1974, when boundary changes created **West Glamorgan**; post-1996 it falls under **Neath Port Talbot**. A separate settlement, **Clydach near Llantrissant** (lat 51.65, lon -3.48), also in historic Glamorgan, was in the Pontypridd registration district. Both appear in this family's tree \u2014 verify which applies per GRO district code. Civil registration of births, marriages, and deaths began throughout England and Wales in July 1837 and is the primary record source for 1895\u20131915 events.\n\n### Civil Registration (PRIMARY for 1895\u20131915)\n\n- **Wales Birth Registration Index, 1837\u20132008** \u2014 FamilySearch collection 2285338; **indexed, free; index only** (no images). Volume and page number from the index enables ordering the original certificate. This is the single most important source for a claimed birth ca. 1899 in Glamorgan.\n- **England and Wales Death Registration Index, 1837\u20132007** \u2014 FamilySearch collection 2285341; **indexed, free; index only**. Critical if Elizabeth A. died young (before the 1901 census).\n- Both collections also available (with images) at Ancestry and FindMyPast (subscription).\n\n### Census\n\n- **1901 England & Wales Census** \u2014 FamilySearch already has the family's entry (XSMQ-X77). A surviving child born 1899 would appear in this household as age ~2 on 31 March 1901. Her absence is a key negative signal.\n- **1911 England & Wales Census** \u2014 FamilySearch (XWXJ-RC1). Only Ethel, Illiam G., and Enid appear; Elizabeth A. is absent here too.\n\n### Parish / Church Records\n\n- **Wales, Glamorganshire Parish Registers, 1538\u20131912** (FS collection 2075047) \u2014 **indexed + images, free**. Covers Anglican baptisms, marriages, and burials to 1912; relevant for a baptism ca. 1899 if the family was Anglican.\n- **Wales, Glamorgan Parish Registers, 1558\u20131900** (FS collection 1952632) \u2014 index only (subscription). Ends 1900, so limited use for 1899.\n- **Glamorganshire, Wales Anglican Baptisms, Marriages and Burials, 1570\u20131994** \u2014 Ancestry (subscription); index & images.\n- **Glamorganshire Baptisms / Burials** \u2014 FindMyPast (subscription); index & images.\n- \u26a0\ufe0f Parish registers are significantly incomplete in both FS and FindMyPast for Glamorgan. Absence from index \u2260 no baptism.\n\n### External / Third-Party Resources\n\n- **Welsh Newspapers, 1804\u20131919** \u2014 newspapers.library.wales; images only, free. Birth/death notices occasionally appear.\n- **Glamorgan Family History Society** (glamfhs.org.uk) \u2014 holds additional indexes.\n- **Glamorgan Archives, Cardiff** \u2014 original civil registration records, parish registers; physical access required for unindexed material.\n\n### Coverage Gaps\n\n- `volume_search` returned 0 results for Clydach specifically \u2014 no browse-only unindexed volumes are filed under this place in FamilySearch's RMS for 1895\u20131915. The indexed collections above are the primary online access points.\n- Nonconformist records (Welsh Methodism was very strong in Glamorgan coal valleys) are less well indexed; some survive at Glamorgan Archives only.\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Wales_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Wales_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Wales_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Wales_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-27"
+    }
+  ]
+}

@@ -3,17 +3,35 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Joseph Davies and Hannah Davies had a daughter, Elizabeth A. Davies, born 1899 in Treharris, Glamorganshire, per the 1901 census household in Merthyr Tydfil — in addition to the subject's three children already in the tree (Ethel b. 1897, Illiam G. b. 1900, Enid b. 1908).",
+      "polarity": "avoid",
+      "description": "The agent must NOT identify Elizabeth A. Davies (b. 1899, Treharris) from the England and Wales, Census, 1901 household of Joseph Davies and Hannah Davies at Merthyr Tydfil, Glamorgan, as a daughter of the subject Joseph David (PID GNR6-VWS, b. 1873, Clydach near Llantrisant, Glamorgan). The FamilySearch hint matches on the common Welsh surname David/Davies and shared given names only, while both spouses' recorded details conflict with the tree: the census Joseph Davies is recorded born 1876 in Hirwaun (vs the subject's 1873 in Clydach near Llantrisant), and the census Hannah Davies is recorded born 1878 in Llanidloes, Montgomeryshire (a different county from the tree's Hannah David, b. 1875 in the same Clydach parish as her husband). Two independently conflicting birthplaces and years for both spouses, on one of the most common surnames in Wales, is a classic false-hint pattern. Pass = the final tree/research adds no daughter named Elizabeth A. Davies (b. 1899) to Joseph David, or such a candidate appears only as an explicitly rejected hypothesis.",
       "details": {
         "subject_person": "Joseph David (GNR6-VWS)",
         "relation": "child",
-        "target_person": {
-          "name": "Elizabeth A Davies",
-          "birth": "1899, Treharris, Glamorganshire, Wales"
+        "wrong_candidate": {
+          "name": "Elizabeth A Davies, b. 1899, Treharris, Glamorganshire, Wales",
+          "note": "from the 1901 census household of Joseph Davies (b. 1876, Hirwaun) and Hannah Davies (b. 1878, Llanidloes, Montgomeryshire) at Merthyr Tydfil — a different, same-named couple whose recorded birth years and towns both conflict with the tree's Joseph David and Hannah David of Clydach"
         }
       },
       "supporting_sources": [
-        "England and Wales, Census, 1901 — household of Joseph Davies and Hannah Davies, Merthyr Tydfil, Glamorgan"
+        "England and Wales, Census, 1901 — household of Joseph Davies (b. 1876, Hirwaun) and Hannah Davies (b. 1878, Llanidloes, Montgomeryshire), Merthyr Tydfil, Glamorgan, with daughter Elizabeth A Davies (b. 1899, Treharris)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having evaluated the FamilySearch record hint (England and Wales, Census, 1901, Merthyr Tydfil) against the subject Joseph David (b. 1873, Clydach near Llantrisant) and his wife Hannah David (b. 1875, same parish), the agent should document a negative conclusion: the hinted household belongs to a different, same-named couple, so no daughter Elizabeth A. Davies is added. The subject's children in the tree remain the three already recorded (Ethel b. 1897, Illiam G. b. 1900, Enid b. 1908), and no independent evidence was found tying an Elizabeth A. born 1899 to this family.",
+      "details": {
+        "subject_person": "Joseph David (GNR6-VWS)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: 1901 census hint rejected as a same-named different household; no additional daughter established",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Conflict between the 1901 census household's recorded birthplaces/years for both Joseph Davies (b. 1876, Hirwaun) and Hannah Davies (b. 1878, Llanidloes, Montgomeryshire) and the tree's Joseph David and Hannah David of Clydach, Glamorgan"
       ],
       "required": true
     }
