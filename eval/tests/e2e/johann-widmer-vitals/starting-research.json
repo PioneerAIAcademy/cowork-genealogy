@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_johann_widmer_vitals",
+    "objective": "What are Johann Frederich Widmer's birth date/place, death date/place, and burial date/place?",
+    "subject_person_ids": [
+      "L7B2-QXX"
+    ],
+    "status": "active",
+    "created": "2026-07-25",
+    "updated": "2026-07-25"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

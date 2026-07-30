@@ -1,8 +1,8 @@
 # Fly.io deploy plan — hosted genealogy workbench (alpha)
 
 **Date:** 2026-06-06. **Branch:** `hosted-web-workbench`. **Read with:**
-`realtime-rearch-status.md` (current state),
-`sandbox-provider-interface.md` (E2B mapping). Artifacts: `deploy/Dockerfile`,
+`docs/realtime-rearch-status.md` (current state),
+`docs/specs/sandbox-provider-spec.md` (E2B mapping). Artifacts: `deploy/Dockerfile`,
 `deploy/fly.toml`.
 
 This is the first hosted deploy of the POC. It replaces the local-server +
@@ -22,7 +22,7 @@ browser ingress. E2B runs the per-user sandboxes (outbound from the container).
 > - **`REALTIME` is gone.** The realtime path is the in-sandbox WS server the
 >   browser connects to directly (`/connect`); `config.py` has no `realtime`
 >   field, so the `REALTIME=local_ws` env was dead and has been removed from
->   `fly.toml`. Ably was dropped (`ably-realtime-migration.md`). The
+>   `fly.toml`. Ably was dropped (`docs/realtime-architecture.md`). The
 >   "Architecture" / smoke-test mentions of a `/ws` relay on this container are
 >   historical.
 > - **The code is already committed.** The "Server change required" (StaticFiles
@@ -254,7 +254,7 @@ SQLite-on-a-volume: a second Machine cannot share the volume, and the `/ws`
 relay + idle-suspend loop assume one writer of the DB. Horizontal scale waits
 for: (1) Postgres replacing SQLite (`neon-postgres-plan.md`), and (2) removing
 the per-session `LiveSession` pin. The fix is to make **the sandbox the
-per-session server** (`ably-realtime-migration.md`): today's relay (the agent
+per-session server** (`docs/realtime-architecture.md`): today's relay (the agent
 `Process` + `/project` watch + pump) moves *into* the sandbox, which exposes one
 authenticated WSS the browser connects to directly, leaving the control plane
 affinity-free. Ably is dropped (it would unpin only the *fanout*, not the

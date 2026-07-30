@@ -227,7 +227,8 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "max_wall_clock_seconds": "number (optional)",
     "max_tool_calls": "number (optional)",
     "max_input_tokens_per_turn": "number (optional)",
-    "sdk_message_silence_seconds": "number (optional)"
+    "sdk_message_silence_seconds": "number (optional)",
+    "stub_skills": ["string | { skill, response } (optional)"]
   }
 }
 ```
@@ -410,7 +411,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "grade_on_invariant": {
           "type": "boolean",
           "default": false,
-          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous."
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. The runnability gate enforces this: it aborts the test unless one of its tags gates a validator in that file."
         }
       },
       "additionalProperties": false
@@ -438,7 +439,24 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "max_wall_clock_seconds": { "type": "integer", "minimum": 1 },
         "max_tool_calls": { "type": "integer", "minimum": 1 },
         "max_input_tokens_per_turn": { "type": "integer", "minimum": 1 },
-        "sdk_message_silence_seconds": { "type": "integer", "minimum": 1 }
+        "sdk_message_silence_seconds": { "type": "integer", "minimum": 1 },
+        "stub_skills": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "object",
+                "required": ["skill"],
+                "properties": {
+                  "skill": { "type": "string" },
+                  "response": { "type": "string" }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
       },
       "description": "Optional per-test overrides of harness execution limits. Defaults documented in Section 15.",
       "additionalProperties": false
@@ -554,6 +572,35 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
 | `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
+| `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
+
+**`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
+under test delegates via `Skill(...)`, the callee runs inside the caller's turn
+and wall-clock budget. If the callee has its own unit suite, that spends budget
+on coverage which already exists. Naming it here makes the PreToolUse hook
+record the delegation in `skills_invoked`, deny the launch, and let the run
+**continue** — so the caller still finishes its own logging and summary. (This
+is deliberately unlike the negative-test routing short-circuit, which *stops*
+the run: a negative verdict is sealed the moment routing happens, a positive
+test still has work left.)
+
+Two forms, and the choice turns on the **caller's** contract, not the callee's:
+
+| Form | Use when | Example |
+|---|---|---|
+| `"skill-name"` | The caller hands off and never reads the result | `["record-extraction"]` |
+| `{ "skill": …, "response": … }` | The caller's own remaining work **consumes** the callee's output, so a bare deny would strip a deliverable it is specced to produce | `[{"skill": "search-external-sites", "response": "Ancestry: https://…"}]` |
+
+`search-records` is the worked case for the second form: its Step 7 tells it to
+"present the URLs it returns as part of your results", so a bare deny leaves it
+unable to finish — which under the first form required a judge instruction
+("do not penalize the skill for not producing Ancestry URLs") to keep the test
+green. A grading patch over a harness gap is the signal you needed `response`.
+
+Assert the hand-off with a deterministic `skills_invoked` validator, not the
+judge, which reads a transcript and can misread it. Note the limit: the harness
+records the skill **name** only, not the `args` string the caller composed, so
+no validator can currently assert *what* crossed the seam.
 
 ### 5.8 `intentionally_invalid`
 
@@ -821,7 +868,7 @@ The minimum rationale length (20 chars) blocks one-word rationales — those cor
 
 ### Layer 3: Human verification
 
-The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for every judge dimension of every test. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/plan/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
+The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for every judge dimension of every test. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
 
 Per-dimension scores at every layer (judge tool_use, run log, `.ann` file, CRUD UI) use the same integer scale: **`3` = pass, `2` = partial, `1` = fail.** The semantic labels (pass/partial/fail) live in the judge prompt's instruction text and in each dimension's `**pass:** / **partial:** / **fail:**` bullets in `rubric.md`; the data field itself is just the integer. The monthly judge-prompt review (per the per-PR workflow plan §2.6) reads `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)` to identify systematic LLM-judge drift.
 
@@ -1047,7 +1094,7 @@ The timestamp is UTC second-resolution, filename-safe (no colons). Same-second c
 
 Including the model version in the path makes it easy to compare runs across model versions.
 
-**Annotations** use the per-PR convention defined in `docs/plan/per-pr-review-workflow.md` §2.3 and the schema at [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json):
+**Annotations** use the per-PR convention defined in `docs/per-pr-review-workflow.md` §2.3 and the schema at [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json):
 
 ```
 YYYY-MM-DDTHH-MM-SSZ.ann.json    # team's corrected grades for this run
@@ -1080,7 +1127,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
   "judge_model": "string (e.g. claude-haiku-4-5-20251001)",
   "rubric_hash": "string (SHA-256 of eval/tests/unit/<skill>/rubric.md at run time)",
   "judge_prompt_hash": "string (SHA-256 of eval/harness/judge/prompt.md at run time)",
-  "test_content_hash": "string (SHA-256 of the resolved test — test JSON minus cosmetic fields + scenario directory contents + referenced fixture file contents — used by cross-PR comparison to auto-exclude tests whose grading-relevant content changed; see docs/plan/per-pr-review-workflow.md §2.4)",
+  "test_content_hash": "string (SHA-256 of the resolved test — test JSON minus cosmetic fields + scenario directory contents + referenced fixture file contents — used by cross-PR comparison to auto-exclude tests whose grading-relevant content changed; see docs/per-pr-review-workflow.md §2.4)",
 
   "scenario": "string or null (scenario directory name)",
   "mcp_fixtures": ["string (fixture file names used)"],
@@ -1560,7 +1607,7 @@ A skill that calls a tool not in its derived list is rejected by the SDK at call
 
 **The allowlist cannot express a per-*context* rule.** Because the union above makes the session set a superset of every delegated agent's set, the main session is granted every tool its subagents need — including ones only a subagent may safely call (`image_read` returns inline base64 that overflows the transport buffer if it lands in the caller's context). That policy lives in the **PreToolUse hook** instead, which can discriminate by context via `agent_id` — absent on the main thread, present inside a Task-spawned subagent.
 
-The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while `record-extraction` holds `image_read` only through `@plugin:image-reader` and must delegate. (`search-images` used to be the example of a skill declaring `image_read` directly; it has since moved to delegating via `@plugin:image-reader` too — `docs/plan/search-images-base64-accumulation.md` — so no skill currently declares it, though the exemption mechanism remains available for one that legitimately needs to.) `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
+The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while `record-extraction` holds `image_read` only through `@plugin:image-reader` and must delegate. (`search-images` used to be the example of a skill declaring `image_read` directly; it has since moved to delegating via `@plugin:image-reader` too (2026-07-17) — so no skill currently declares it, though the exemption mechanism remains available for one that legitimately needs to.) `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
 
 ### Capturing `skills_invoked` via PreToolUse
 

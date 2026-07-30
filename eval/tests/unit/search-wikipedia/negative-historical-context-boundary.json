@@ -5,7 +5,7 @@
     "name": "Migration history should not route to search-wikipedia",
     "type": "negative",
     "description": "User asks about Irish emigration patterns during the Famine era — narrative genealogical history involving migration patterns. The SKILL.md explicitly says 'Do NOT use when the user wants narrative genealogical history such as migration patterns or boundary changes (use historical-context).' search-wikipedia must not fire.",
-    "tags": ["near-miss", "wiki-vs-historical-context", "boundary", "migration"]
+    "tags": ["near-miss", "wiki-vs-historical-context", "boundary", "migration", "no-wiki-no-write"]
   },
   "input": {
     "user_message": "Tell me about the patterns of Irish emigration to America during the 1840s and 1850s — where did they settle, what ports did they use, and how did chain migration work?",
@@ -13,10 +13,14 @@
   },
   "negative": {
     "correct_skill": ["historical-context"],
-    "explanation": "The user is asking for narrative genealogical history about migration patterns — where emigrants settled, which ports they used, how chain migration worked. This is historical-context territory, not a Wikipedia article lookup. search-wikipedia would return a single Wikipedia article, not the narrative synthesis the user wants."
+    "explanation": "The user is asking for narrative genealogical history about migration patterns — where emigrants settled, which ports they used, how chain migration worked. This is historical-context territory, not a Wikipedia article lookup. search-wikipedia would return a single Wikipedia article, not the narrative synthesis the user wants.",
+    "grade_on_invariant": true
   },
   "mcp_fixtures": [],
   "judge_context": [
-    "The user is asking about migration patterns, settlement, and chain migration — narrative genealogical history. search-wikipedia must not fire. The model may answer from general knowledge or suggest the historical-context skill, but must not invoke search-wikipedia."
+    "This is a grade_on_invariant negative test: PASS/FAIL is decided solely by the deterministic no-wiki-no-write validator (no wikipedia_search call, no .md summary saved). Routing and activation are NOT gated. The judge runs base-only and diagnostically here — its scores do not decide the outcome.",
+    "The user is asking about migration patterns, settlement, and chain migration — narrative genealogical history, which is historical-context territory, not a Wikipedia article lookup. Ideal behavior is to decline the Wikipedia workflow and point to historical-context (or answer from general knowledge); note in your rationale whether the skill did so.",
+    "Known model prior (why this was previously failing): on this genealogy-flavored prompt the model tends to open search-wikipedia before declining, and a thorough (>=30-word) in-place decline trips the harness activation heuristic. Under grade_on_invariant that no longer fails the test as long as no Wikipedia lookup was executed and no summary file was written — treat opening-then-declining as a routing imperfection worth noting, not an automatic failure.",
+    "The real harm this test guards against is search-wikipedia EXECUTING a wikipedia_search and SAVING a summary for a request that belongs to historical-context. That is what the validator fails on."
   ]
 }

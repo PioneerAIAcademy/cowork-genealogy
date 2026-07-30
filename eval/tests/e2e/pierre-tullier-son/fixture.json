@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 6, flag adds_son, confidence 3). Draft transcribed from a French parish/civil register; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 6, flag adds_son, confidence 3). RESOLVED (issue #856): FALSE MATCH — the 1825 marriage hint does not establish a 1796 son of this couple (birth predates their 1800 marriage; their documented children run 1801-1816; parents named only as bare 'Pierre'/'Constance' in the hint vs full 'Pierre Albert'/'Constance Dorothé' on their own children's records). expected-findings.json is a polarity:avoid guard + a required documented-negative-conclusion finding. See README 'Notes for reviewers'."
 }

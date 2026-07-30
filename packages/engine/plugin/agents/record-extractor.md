@@ -134,7 +134,11 @@ classification.
 (closed set — exactly these three values):
 - **original** — first recording or earliest surviving version of the
   event itself. Digital images/microfilm of originals count. Census
-  schedules, marriage licenses, deeds: original. A contemporaneous
+  schedules, marriage licenses, deeds: original **when what you examined
+  is the schedule/register/certificate itself** — its image, or a
+  verbatim transcript of it. A roster or field listing typed or pasted
+  into your prompt with no accompanying image is FamilySearch's indexed
+  transcription of that record, not the record: `derivative`. A contemporaneous
   **death certificate** (the record itself or its image) is ORIGINAL —
   it is the first recording of both the death and the informant's
   statements. The informant's secondhand knowledge is captured at the
@@ -475,7 +479,9 @@ the "who answered" record that would justify it.
   *age fact itself* is indirect too, for the identical reason — the
   informant wasn't there.
 - **Funeral director:** informant for burial date/location, proximity
-  `official_duty`.
+  `official_duty` — **scoped to a death certificate that names one.** A
+  burial or cemetery index entry identifies no informant at all: use
+  `unknown` / `unknown`, never the index compiler or the cemetery.
 
 **Marriage record informants** — the parties speak for themselves:
 - **Groom and bride:** informants for their own identifying facts (age,

@@ -193,6 +193,12 @@ grows all session):
 - `research_query({ section: "person_evidence", personId })` — the existing
   links for a candidate person, when checking for revisions.
 
+**`assertionId` is NOT a valid filter on the `assertions` section.** The
+`assertions` section accepts only `recordId`, `recordRole`, `sourceId`, and
+`questionId`. If you need to check whether an assertion is already linked,
+query `section: "person_evidence"` with `assertionId` — that is where the
+filter lives. Do not guess; a wrong-section filter errors out.
+
 An assertion is "unlinked" if no `pe_` entry references its `a_` ID.
 Group unlinked assertions by `record_id` + `record_role` — all
 assertions from the same persona should be linked together.
@@ -499,20 +505,31 @@ hands a merge set to proof-conclusion to fold. For a household record:
    head/spouse among existing tree persons by name + place +
    relationship position, allowing transcription and name variants. If
    **no household parent is in the tree**, surface that gap plainly and
-   do **not** fabricate a parent to anchor the household on. The
+   do **not** fabricate a parent to anchor the household on. If a person
+   who is **expected** in the household (e.g. a known spouse or child
+   from the tree) is **absent from the record**, flag that absence as an
+   identity question — it may indicate a death, separation, enumeration
+   elsewhere, or a different person entirely. The
    `matchRelatives` triples from step 2.4 give the persona→tree-person
    pairings; a new member (no tree match) pairs to a fresh id you mint in
    step 3.
-2. **Dry-run `merge_warnings` as the coherence gate — before any write.**
-   On the **pre-materialization** household set (the matched tree persons
-   plus the record personas you are about to pair), dry-run
-   `merge_warnings` and apply its tiers **before** materializing anything:
+2. **Dry-run `merge_warnings` as the coherence gate — before any write
+   (when a candidate record document is available).**
+   If you have the `candidateGedcomx` from a prior `record_read` call,
+   dry-run `merge_warnings` on the pre-materialization household set
+   (the matched tree persons plus the record personas you are about to
+   pair) and apply its tiers **before** materializing anything:
    - **Error tier blocks.** A hard coherence failure (an event outside a
      lifespan, a relationship that cannot hold) stops the materialization —
      resolve it before writing.
    - **Warning tier is advisory.** A softer flag (e.g. a shared-census
      signal that doesn't fully cohere) does not block; note it in the
      affected `pe_` rationale and proceed.
+
+   When working from **pre-extracted assertions** (no candidate record
+   document available), skip the gate and note in the rationale that
+   the coherence dry-run was not possible because the source document
+   is not available in candidate form.
 3. **Materialize every member in ONE batched call.** Only after the gate
    clears the error tier: collect every persona that **needs**
    materializing — the subject *and* each sibling/spouse — as one `ops`
@@ -557,6 +574,15 @@ hands a merge set to proof-conclusion to fold. For a household record:
 
 Every household persona ends up **paired** — matched to an existing tree
 person, or minted via create-or-enrich — with none left dangling.
+
+**Both-sided `pe_` entries are mandatory for every relationship-implying
+assertion.** A child-in-household assertion bears on the child AND the
+parent — create a `pe_` entry for each. A marriage assertion bears on both
+spouses. Omitting the other party's `pe_` entry is the single most common
+incompleteness finding in this skill. When you write the `pe_` link for the
+focus persona, immediately write the link for the other party in the same
+`research_append` call. Do not defer it, do not ask first (see §Cardinality).
+
 Present the materialized household plainly.
 
 ### 8. Check warnings and present

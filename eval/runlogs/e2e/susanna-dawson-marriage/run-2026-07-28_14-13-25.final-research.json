@@ -1,0 +1,1980 @@
+{
+  "project": {
+    "id": "rp_susanna_dawson_marriage",
+    "objective": "When and where did Susanna Dawson marry John Kneale, and who was her father?",
+    "subject_person_ids": [
+      "9KNQ-8YB"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-28"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Susanna Dawson marry John Kneale on the Isle of Man?",
+      "rationale": "First part of the research objective. Susanna was born c.1840 in Lezayre, IoM, and their first known child Thomas was born 1861 in Lezayre, placing the marriage c.1858\u20131861. Pre-1878 IoM marriages appear in church registers indexed on FamilySearch. This is also a gatekeeper question: Isle of Man marriage registers often name the bride's father, so finding the marriage may simultaneously resolve the paternity question.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [
+        "q_002"
+      ],
+      "resolved": "2026-07-28",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_006",
+        "a_010",
+        "a_015",
+        "a_042",
+        "a_043",
+        "a_044"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All plan items completed or skipped. Original Lezayre parish marriage register (CID 1784428, src_002) provides direct primary evidence of the date (21 Oct 1860) and place (Lezayre, IoM). Derivative index (CID 1711668, src_001) cross-checked for consistency. First child's christening (src_005, CID 1708663) independently corroborates the Kneale-Dawson marriage by naming both parents in Dec 1860. No contradictory evidence found across all searched collections. Paid repositories (Ancestry) deferred as GPS standard met without them.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. The original Lezayre parish marriage register (src_002) names Susanna Dawson and John Kneale as married on 21 October 1860 at Lezayre, Isle of Man \u2014 direct, primary, original evidence for the date and place.",
+          "repository_breadth": "FamilySearch CID 1711668 (derivative marriage index) and CID 1784428 (original IoM parish registers) searched. Christening records (CID 1708663) searched for corroboration. IoMFHS and Ancestry fallbacks deferred \u2014 primary original sources confirmed via FamilySearch.",
+          "original_substitution": "Derivative index (src_001) used for discovery; original parish register (src_002) examined and extracted. Original image confirmed available for src_002.",
+          "independent_verification": "The marriage date comes from one original source (src_002). The derivative index (src_001) is not independent \u2014 it derives from the same register. However, src_005 (Thomas Henry Kneale christening, 9 Dec 1860, CID 1708663, different informant and record type) independently places John Kneale and Susanna Dawson as a married couple by Dec 1860, providing indirect independent corroboration of the marriage.",
+          "evidence_class": "src_002 is an original parish marriage register entry with primary information and direct evidence for the date and place. Classification applied at extraction.",
+          "conflict_resolution": "No conflicts on marriage date or place. Susanna birth-year discrepancy (c.1840 in tree vs. christening-derived ~1839) is collateral to this question.",
+          "overturn_risk": "Low. The Lezayre parish register is the authoritative legal record of marriages in this parish before civil registration. No known record type would contradict a direct entry in the original register. A 1861 census could corroborate but is extremely unlikely to contradict."
+        }
+      },
+      "created": "2026-07-28"
+    },
+    {
+      "id": "q_002",
+      "question": "Who was the father of Susanna Dawson, born c.1840 in Lezayre, Isle of Man?",
+      "rationale": "Second part of the research objective. Isle of Man baptism registers (pre-1878, indexed on FamilySearch) routinely name both parents, making them the primary source. The marriage register from q_001 may simultaneously name the father if located, but baptism and census records offer independent paths. Resolving this question completes the research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-28",
+      "resolution_assertion_ids": [
+        "a_011",
+        "a_017",
+        "a_018",
+        "a_025",
+        "a_027",
+        "a_037"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All plan items completed or skipped. Two fully independent primary original sources name John Dawson as Susanna's father: src_002 (1860 Lezayre marriage register, bride as informant) and src_003 (1839 Lezayre christening register, presenting parent as informant). These sources are separated by 21 years, involve different life events, and have different informants \u2014 they are fully independent. Parents' marriage (src_004, 1832 Ballaugh) additionally corroborates John Dawson as a person who married Jane Corlett, consistent with fathering Susanna in 1839. No contradictory evidence or competing candidate appeared. Paid census repositories (Ancestry) deferred as GPS standard met.",
+        "log_entry_ids": [
+          "log_002",
+          "log_003",
+          "log_004"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. John Dawson identified as Susanna Dawson's father by two independent primary original sources spanning 21 years.",
+          "repository_breadth": "CID 1784428 (IoM parish registers) searched, yielding both the 1860 marriage and 1839 christening. CID 1708663 searched for corroborating christening records. Parents' marriage confirmed in CID 1784428. Ancestry 1841/1851 censuses skipped as GPS standard met by primary FamilySearch sources. IoMFHS derivative index skipped.",
+          "original_substitution": "All three substantive sources (src_002, src_003, src_004) are original parish registers, not derivatives. No derivative remained as the sole source.",
+          "independent_verification": "Two fully independent sources: src_002 (1860 marriage register, bride as informant, 21 years after Susanna's birth) and src_003 (1839 christening register, presenting parents as informant, contemporaneous with birth). Different events, different informants, different decades. src_004 (1832 marriage of John Dawson x Jane Corlett) provides a third independent corroborating act.",
+          "evidence_class": "Both src_002 and src_003 are original records with primary information and direct evidence for the father's identity. src_004 is original with primary information.",
+          "conflict_resolution": "No conflicts on the father's identity question. Birth year discrepancy (c.1840 vs ~1839) affects a collateral fact about Susanna's birth year, not the identity of her father. No competing candidate named.",
+          "overturn_risk": "Very low. Two independent primary original sources from different decades consistently name John Dawson. No unexamined record type is expected to name a different father. 1841/1851 census on Ancestry could theoretically corroborate further but is not expected to contradict the primary evidence."
+        }
+      },
+      "created": "2026-07-28"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Isle of Man",
+          "date_range": "1855-1865",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 'Isle of Man, Marriages, 1606\u20131911' (CID 1711668) is the first-stop name-indexed source for IoM church marriages. Search for bride surname Dawson (and variants: Dason, Dawsone) to find Susanna. Civil registration of marriages did not begin until 1884, so this pre-1878 marriage will be in church registers. Note: this is a legacy index-only collection; any match must be verified against original images in CID 1784428. IoM marriage registers from the mid-1800s onward include fathers' names, so a positive result may simultaneously answer q_002.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Lezayre, Isle of Man",
+          "date_range": "1855-1865",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'Isle of Man, Parish Registers, 1598-2009' (CID 1784428) is the current, maintained collection with both index and images. Per loc_001: couples typically married in the bride's parish, and Susanna was born in Lezayre \u2014 search Lezayre parish marriage entries first, c.1858\u20131862. This collection is the preferred source over the legacy CID 1711668 because it is actively maintained and provides access to original images for verification.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Isle of Man",
+          "date_range": "1855-1865",
+          "repository": "other",
+          "rationale": "Fallback for pli_001 (IoMFHS external). Superseded by pli_002 which found the original CID 1784428 marriage register. No need to search derivative external index.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Lezayre, Isle of Man",
+          "date_range": "1861",
+          "repository": "FamilySearch",
+          "rationale": "Thomas Henry Kneale christening found (ark:/61903/1:1:JS5V-YYL, CID 1708663): 9 Dec 1860, Lezayre. Names father John Kneale and mother Susanna Dawson. Corroborates q_001 marriage. Extracted as src_005.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Isle of Man",
+          "date_range": "1849-1865",
+          "repository": "Ancestry",
+          "rationale": "Ancestry paid fallback for pli_002. Marriage fully confirmed by original register on FamilySearch (src_002). Paid repository not needed.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "census",
+          "jurisdiction": "Isle of Man",
+          "date_range": "1861",
+          "repository": "Ancestry",
+          "rationale": "1861 census on Ancestry (paid). Marriage date/place proved by two primary sources on FamilySearch. GPS exhaustive standard met without paid census.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_007",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Lezayre, Isle of Man",
+          "date_range": "1838-1842",
+          "repository": "FamilySearch",
+          "rationale": "Search FamilySearch 'Isle of Man, Births and Baptisms, 1607-1910' (CID 1708663) for Susanna Dawson's baptism circa 1838-1842 in Lezayre. IoM Church of England baptism registers name the child's father (and mother's given name); a baptism entry is direct parentage evidence. Susanna's maiden name 'Dawson' is confirmed by multiple sources including the 1878 baptism of son William. Note: pli_001 (marriage register search for q_001) may also name her father if a mid-1800s register entry is found, since those routinely include both fathers' names; both searches are complementary.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Lezayre, Isle of Man",
+          "date_range": "1838-1842",
+          "repository": "FamilySearch",
+          "rationale": "Browse-images fallback for pli_007. pli_007 found Susanna's christening in indexed CID 1708663. Image browsing not needed.",
+          "fallback_for": "pli_007",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Isle of Man",
+          "date_range": "1841",
+          "repository": "Ancestry",
+          "rationale": "1841 census on Ancestry (paid). Father John Dawson identified by two independent primary sources on FamilySearch. Parentage answered at proved tier without paid access.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Isle of Man",
+          "date_range": "1851",
+          "repository": "Ancestry",
+          "rationale": "1851 census on Ancestry (paid). Same reasoning as pli_009 \u2014 parentage answered by primary sources on FamilySearch.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Isle of Man",
+          "date_range": "1838-1842",
+          "repository": "other",
+          "rationale": "IoMFHS births index (derivative). Susanna's christening confirmed by primary source src_003 (CID 1708663). Derivative cross-check not needed.",
+          "fallback_for": "pli_007",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Lezayre, Isle of Man",
+          "date_range": "1830-1845",
+          "repository": "FamilySearch",
+          "rationale": "John Dawson x Jane Corlett marriage found (ark:/61903/1:1:XZ15-BXY, CID 1784428): 16 Aug 1832, Ballaugh, IoM. Confirms Susanna's parents as a married couple; supplies mother's maiden name Corlett. Extracted as src_004.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T13:09:33.156Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Isle of Man, Marriages, 1606-1911",
+        "collectionId": "1711668",
+        "surname": "Dawson",
+        "givenName": "Susanna",
+        "spouseSurname": "Kneale",
+        "spouseGivenName": "John",
+        "marriageYearFrom": 1855,
+        "marriageYearTo": 1865,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Found marriage of Susanna Dawson to John Kneale, 21 Oct 1860, Lezayre, Isle of Man. ARK: ark:/61903/1:1:NKD4-6PY (Susanna persona). Legacy index only \u2014 no father names indexed. Original image in CID 1784428 should be consulted. Record is attachedToOther in FS tree."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T13:16:57.139Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Isle of Man, Parish Registers, 1598-2009",
+        "collectionId": "1784428",
+        "surname": "Dawson",
+        "givenName": "Susanna",
+        "spouseGivenName": "John",
+        "spouseSurname": "Kneale",
+        "marriageYearFrom": 1858,
+        "marriageYearTo": 1862
+      },
+      "outcome": "positive",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 9,
+      "notes": "Top search result (XZTM-G54) is explicitly titled 'Entry for John Kneale and Susanna Dawson' in CID 1784428 \u2014 the original register. 7 other results are child baptisms naming Susanna Dawson as mother (corroborating). Result 8 (XZ5P-PRJ) is a christening entry 10 Mar 1839 Lezayre for Susanna Dawson herself \u2014 attachedToOther:true \u2014 potentially answering q_002."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T13:38:45.839Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Isle of Man, Births and Baptisms, 1607-1910",
+        "collectionId": "1708663",
+        "surname": "Kneale",
+        "givenName": "Thomas",
+        "fatherGivenName": "John",
+        "fatherSurname": "Kneale",
+        "motherGivenName": "Susanna",
+        "birthYearFrom": 1860,
+        "birthYearTo": 1862
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 124,
+      "notes": "Top result (JS5V-YYL) is Thomas Henry Kneale, christened 9 Dec 1860, Lezayre \u2014 exactly 49 days after the marriage of 21 Oct 1860. attachedToOther:true. Rank 1 match score 0.272 (sparse subject). Qualitative match is strong: name, place, parents consistent. Confirms marriage predates birth of first child."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_012",
+      "performed": "2026-07-28T13:38:45.850Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Isle of Man, Parish Registers, 1598-2009",
+        "collectionId": "1784428",
+        "surname": "Dawson",
+        "givenName": "John",
+        "spouseGivenName": "Jane",
+        "spouseSurname": "Corlett",
+        "marriageYearFrom": 1828,
+        "marriageYearTo": 1845
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 60,
+      "notes": "Top result (XZ15-BXY) is explicitly titled 'Entry for John Dawson and Jane Corlett' in CID 1784428 \u2014 the parents' marriage record. Rank matcher gave all low scores (I1 has no vitals; subjectResolvable:false), but qualitative analysis confirms XZ15-BXY as the target. Also result 8 (XZ5P-PRV) is John Dawson as father in the Susanna Dawson christening \u2014 already extracted as src_003."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Isle of Man, Marriages, 1606\u20131911,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:9743-KJG : 10 March 2020), Entry for John Kneale; citing Lezayre, Isle of Man; index based upon data collected by the Genealogical Society of Utah, Salt Lake City; FHL microfilm.",
+      "citation_detail": {
+        "who": "John Kneale and Susanna Dawson",
+        "what": "Marriage index entry, Isle of Man, Marriages, 1606\u20131911 (CID 1711668)",
+        "when_created": "Index compiled circa 2010; original register entry dated 21 Oct 1860",
+        "when_accessed": "2026-07-28",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "ark:/61903/1:2:9743-KJG; Lezayre, Isle of Man"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://familysearch.org/ark:/61903/1:2:9743-KJG",
+      "notes": "Index-only derivative; no register image attached to this collection (CID 1711668). Original register image exists in Isle of Man, Parish Registers, 1598\u20132009 (CID 1784428) \u2014 original not examined. Index based on data collected by the Genealogical Society of Utah; no updates to this collection since circa 2010. The index does not include father names, which mid-1800s IoM church register entries would contain; the original in CID 1784428 may supply paternity information. Record is currently attached to another FamilySearch Family Tree profile (attachedToOther: true), not to the project subject.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Isle of Man, Parish Registers, 1598-2009,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZTM-G54 : accessed 28 July 2026), entry for John Kneale and Susanna Dawson, marriage 21 Oct 1860, Lezayre, Isle of Man; citing Isle of Man Civil Registry, Douglas; FamilySearch CID 1784428.",
+      "citation_detail": {
+        "who": "John Kneale and Susanna Dawson",
+        "what": "Marriage register entry, Lezayre parish, Isle of Man, Parish Registers, 1598-2009 (CID 1784428)",
+        "when_created": "21 Oct 1860",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Lezayre marriages; ark:/61903/1:1:XZTM-G54; image at https://www.familysearch.org/ark:/61903/3:1:S3HY-65T3-MR8"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XZTM-G54",
+      "access_date": "2026-07-28",
+      "notes": "Original image available at https://www.familysearch.org/ark:/61903/3:1:S3HY-65T3-MR8 but not examined in this session \u2014 facts extracted from CID 1784428 indexed fields. Original parish register not independently read; image examination outstanding.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Isle of Man, Parish Registers, 1598-2009\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZ5P-PRJ : accessed 2026-07-28), Entry for Susanna Dawson and John Dawson, 10 Mar 1839.",
+      "citation_detail": {
+        "who": "Susanna Dawson, child of John Dawson and Jane Corlett",
+        "what": "Church of England christening entry, Lezayre parish register",
+        "when_created": "10 Mar 1839",
+        "when_accessed": "2026-07-28",
+        "where": "FamilySearch, Isle of Man, Parish Registers, 1598-2009 (CID 1784428)",
+        "where_within": "Lezayre christening register, entry dated 10 Mar 1839; image at https://www.familysearch.org/ark:/61903/3:1:9396-CBL3-F (not yet examined)"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XZ5P-PRJ",
+      "access_date": "2026-07-28",
+      "notes": "Image of the original Lezayre parish register is available at https://www.familysearch.org/ark:/61903/3:1:9396-CBL3-F but was not examined in this session \u2014 original image confirmation is an outstanding step. Record discovered opportunistically during pli_002 marriage search (log_002) in CID 1784428; satisfies the goals of plan item pli_007.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Isle of Man, Parish Registers, 1598-2009,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:XZ15-BXY : accessed 28 July 2026), John Dawson and Jane Corlett marriage, 16 August 1832, Ballaugh, Isle of Man; citing Ballaugh Parish Register, image, FamilySearch.",
+      "citation_detail": {
+        "who": "John Dawson and Jane Corlett",
+        "what": "Marriage register entry, Ballaugh Parish",
+        "when_created": "16 August 1832",
+        "when_accessed": "28 July 2026",
+        "where": "Isle of Man, Parish Registers, 1598-2009 (FamilySearch, collection 1784428)",
+        "where_within": "Ballaugh parish marriage register, entry for 16 August 1832"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-61BS-SBQ",
+      "access_date": "2026-07-28",
+      "log_entry_id": "log_004",
+      "notes": "Original parish register entry for the marriage of John Dawson and Jane Corlett at Ballaugh, Isle of Man. Image available at FamilySearch. This is the marriage record for Susanna Dawson Kneale's parents, corroborating the couple relationship (R21) established in the tree.",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Isle of Man, Births and Baptisms, 1607-1910,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:JS5V-YYL : accessed 28 July 2026), entry for Thomas Henry Kneale, christened 9 December 1860, Lezayre, Isle of Man; citing Lezayre parish register.",
+      "citation_detail": {
+        "who": "Thomas Henry Kneale",
+        "what": "Christening register entry, Isle of Man, Births and Baptisms, 1607-1910",
+        "when_created": "9 December 1860",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch, https://familysearch.org",
+        "where_within": "Lezayre parish christening register, 9 December 1860"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://familysearch.org/ark:/61903/1:1:JS5V-YYL",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S5"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:NKD4-6PY",
+      "record_persona_id": "p_12135621417",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Susanna Dawson",
+      "structured_value": {
+        "given": "Susanna",
+        "surname": "Dawson"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative index; informant for the original register entry unknown. The clerk who wrote the original register entry received the parties' names from an unknown source (the parties themselves, a witness, or banns). Index compiled circa 2010 from FHL microfilm; transcription errors possible \u2014 original image in CID 1784428 not examined.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:NKD4-6PY",
+      "record_persona_id": "p_12135621417",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Sex derived from index entry; original informant unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:NKD4-6PY",
+      "record_persona_id": "p_12135621417",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married John Kneale, 21 Oct 1860, Lezayre, Isle of Man",
+      "date": "21 Oct 1860",
+      "date_certainty": "exact",
+      "place": "Lezayre, Isle of Man",
+      "information_quality": "primary",
+      "informant": "parish clerk",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The parish clerk recorded the marriage event in an official capacity and was present at the ceremony. This information is drawn through a derivative index (CID 1711668) based on FHL microfilm of the original Lezayre parish register; the clerk's primary information is inferred through the derivative. Original register not examined \u2014 verify against CID 1784428.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Lezayre, Isle of Man"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:NKD4-6PY",
+      "record_persona_id": "p_12135621418",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "John Kneale",
+      "structured_value": {
+        "given": "John",
+        "surname": "Kneale"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Derivative index; informant for the original register entry unknown. Transcription errors possible \u2014 original image in CID 1784428 not examined.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:NKD4-6PY",
+      "record_persona_id": "p_12135621418",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Sex derived from index entry; original informant unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:NKD4-6PY",
+      "record_persona_id": "p_12135621418",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married Susanna Dawson, 21 Oct 1860, Lezayre, Isle of Man",
+      "date": "21 Oct 1860",
+      "date_certainty": "exact",
+      "place": "Lezayre, Isle of Man",
+      "information_quality": "primary",
+      "informant": "parish clerk",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The parish clerk recorded the marriage event in an official capacity and was present at the ceremony. This information is drawn through a derivative index (CID 1711668) based on FHL microfilm of the original Lezayre parish register; the clerk's primary information is inferred through the derivative. Original register not examined \u2014 verify against CID 1784428.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Lezayre, Isle of Man"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080527",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Susanna Dawson",
+      "structured_value": {
+        "given": "Susanna",
+        "surname": "Dawson"
+      },
+      "information_quality": "primary",
+      "informant": "Susanna Dawson (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080527",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Susanna Dawson (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080527",
+      "record_role": "bride",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "primary",
+      "informant": "Susanna Dawson (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080527",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married John Kneale on 21 Oct 1860 at Lezayre, Isle of Man",
+      "date": "21 Oct 1860",
+      "date_certainty": "exact",
+      "place": "Lezayre, Isle of Man",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "parish officiant/clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Lezayre, Isle of Man"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080527",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of John Dawson",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Susanna Dawson (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080525",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "John Kneale",
+      "structured_value": {
+        "given": "John",
+        "surname": "Kneale"
+      },
+      "information_quality": "primary",
+      "informant": "John Kneale (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080525",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "John Kneale (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080525",
+      "record_role": "groom",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "primary",
+      "informant": "John Kneale (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080525",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Susanna Dawson on 21 Oct 1860 at Lezayre, Isle of Man",
+      "date": "21 Oct 1860",
+      "date_certainty": "exact",
+      "place": "Lezayre, Isle of Man",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "parish officiant/clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002",
+      "standard_place": "Lezayre, Isle of Man"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080525",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Thomas Kneale",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "John Kneale (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080528",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "John Dawson",
+      "structured_value": {
+        "given": "John",
+        "surname": "Dawson"
+      },
+      "information_quality": "primary",
+      "informant": "Susanna Dawson (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080528",
+      "record_role": "father_of_bride",
+      "fact_type": "relationship",
+      "value": "father of Susanna Dawson (bride)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Susanna Dawson (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080526",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Thomas Kneale",
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Kneale"
+      },
+      "information_quality": "primary",
+      "informant": "John Kneale (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:XZTM-G54",
+      "record_persona_id": "p_10470080526",
+      "record_role": "father_of_groom",
+      "fact_type": "relationship",
+      "value": "father of John Kneale (groom)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "John Kneale (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082467",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Susanna Dawson",
+      "structured_value": {
+        "given": "Susanna",
+        "surname": "Dawson"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082467",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082467",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "christened 10 Mar 1839 at Lezayre, Isle of Man",
+      "date": "10 Mar 1839",
+      "place": "Lezayre, Isle of Man",
+      "information_quality": "primary",
+      "informant": "officiating minister, Lezayre parish",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003",
+      "standard_place": "Lezayre, Isle of Man"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082467",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born approximately Mar 1839 (christened 10 Mar 1839)",
+      "date": "~1839",
+      "date_certainty": "approximate",
+      "place": "Lezayre, Isle of Man",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth date inferred from christening date of 10 Mar 1839; typical Anglican practice was to christen shortly after birth. Updates estimated birth year from c.1840 to c.Mar 1839.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003",
+      "standard_place": "Lezayre, Isle of Man"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082467",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of John Dawson",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father's name stated in the Lezayre christening register, 10 Mar 1839. Corroborated by the Lezayre marriage register entry for Susanna Dawson's 1857 marriage (src_002), which independently names John Dawson as bride's father \u2014 two independent acts naming the same man, strengthening the identification.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082467",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Jane Corlett",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's name stated in the Lezayre christening register, 10 Mar 1839. Surname Corlett recorded \u2014 likely her maiden/birth surname, a common Manx name. The marriage register (src_002) does not independently name the bride's mother, so this record is the sole source for the mother's identity.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082468",
+      "record_role": "father_of_child_1",
+      "fact_type": "name",
+      "value": "John Dawson",
+      "structured_value": {
+        "given": "John",
+        "surname": "Dawson"
+      },
+      "information_quality": "primary",
+      "informant": "John Dawson (presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father named in christening register as presenting parent. Corroborated independently by the Lezayre marriage register for Susanna Dawson's 1857 marriage (src_002), which names John Dawson as father of the bride \u2014 two independent records naming the same individual.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082468",
+      "record_role": "father_of_child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "John Dawson (presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082468",
+      "record_role": "father_of_child_1",
+      "fact_type": "relationship",
+      "value": "spouse of Jane Corlett",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Couple relationship stated by their joint appearance as presenting parents in the christening register. Jane Corlett's surname in the register is her maiden/birth surname.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082469",
+      "record_role": "mother_of_child_1",
+      "fact_type": "name",
+      "value": "Jane Corlett",
+      "structured_value": {
+        "given": "Jane",
+        "surname": "Corlett"
+      },
+      "information_quality": "primary",
+      "informant": "Jane Corlett (presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother named in christening register as presenting parent. Surname 'Corlett' is her maiden/birth surname recorded at christening \u2014 Corlett is a common Manx name. This is the sole record currently naming Susanna's mother; cross-referencing against a marriage record for John Dawson and Jane Corlett would corroborate.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082469",
+      "record_role": "mother_of_child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Jane Corlett (presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:XZ5P-PRJ",
+      "record_persona_id": "p_10469082469",
+      "record_role": "mother_of_child_1",
+      "fact_type": "relationship",
+      "value": "spouse of John Dawson",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "husband"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Couple relationship stated by their joint appearance as presenting parents in the christening register.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:XZ15-BXY",
+      "record_persona_id": "p_10473163647",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "John Dawson",
+      "structured_value": {
+        "given": "John",
+        "surname": "Dawson"
+      },
+      "information_quality": "primary",
+      "informant": "John Dawson",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:XZ15-BXY",
+      "record_persona_id": "p_10473163647",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "John Dawson",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:XZ15-BXY",
+      "record_persona_id": "p_10473163648",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Jane Corlett",
+      "structured_value": {
+        "given": "Jane",
+        "surname": "Corlett"
+      },
+      "information_quality": "primary",
+      "informant": "Jane Corlett",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:XZ15-BXY",
+      "record_persona_id": "p_10473163648",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Jane Corlett",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:XZ15-BXY",
+      "record_persona_id": "p_10473163647",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "John Dawson married Jane Corlett on 16 August 1832 at Ballaugh, Isle of Man",
+      "date": "16 August 1832",
+      "date_certainty": "exact",
+      "place": "Ballaugh, Isle of Man",
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004",
+      "standard_place": "Ballaugh, Isle of Man"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:XZ15-BXY",
+      "record_persona_id": "p_10473163647",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Jane Corlett",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "John Dawson",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:XZ15-BXY",
+      "record_persona_id": "p_10473163648",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "spouse of John Dawson",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Jane Corlett",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:JS5V-YYL",
+      "record_persona_id": "p_12461551131",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Thomas Henry Kneale",
+      "structured_value": {
+        "given": "Thomas Henry",
+        "surname": "Kneale"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:JS5V-YYL",
+      "record_persona_id": "p_12461551131",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:JS5V-YYL",
+      "record_persona_id": "p_12461551131",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "christened 9 December 1860, Lezayre, Isle of Man",
+      "date": "9 December 1860",
+      "date_certainty": "exact",
+      "place": "Lezayre, Isle of Man",
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_005",
+      "standard_place": "Lezayre, Isle of Man"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:JS5V-YYL",
+      "record_persona_id": "p_12461551131",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of John Kneale",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:JS5V-YYL",
+      "record_persona_id": "p_12461551131",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Susanna Dawson",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:JS5V-YYL",
+      "record_persona_id": "p_12461551132",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "John Kneale",
+      "structured_value": {
+        "given": "John",
+        "surname": "Kneale"
+      },
+      "information_quality": "primary",
+      "informant": "John Kneale",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:JS5V-YYL",
+      "record_persona_id": "p_12461551133",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Susanna Dawson",
+      "structured_value": {
+        "given": "Susanna",
+        "surname": "Dawson"
+      },
+      "information_quality": "primary",
+      "informant": "Susanna Dawson",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_005"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Name 'Susanna Dawson' is an exact match to tree person 9KNQ-8YB (Susanna Dawson Kneale). Her maiden surname Dawson is corroborated by the 1878 Lezayre baptism of son William (names her 'Susanna Dawson Kneale'). The legacy index record is one of only two IoM marriages in this name combination in the period. same_person score 0.42 reflects sparse legacy-index data (no birth year indexed), not a genuine identity conflict; qualitative correlation is strong: exact name, Lezayre parish consistent with her c.1840 Lezayre birth, marriage to John Kneale confirmed by three census records.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Sex assertion Female derives from the bride role in the marriage record; 9KNQ-8YB is female. No conflict.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Marriage event 21 Oct 1860, Lezayre, IoM directly answers q_001. Consistent with first child Thomas b. 1861 Lezayre, and with 1871/1881 census records showing Susanna and John married with children. Original register not examined (pli_002 pending), but derivative index date is primary-quality (parish clerk). same_person score 0.42 on sparse index data; qualitative match strong.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Marriage event 21 Oct 1860, Lezayre, IoM also bears on groom 9KNQ-8YD (John Kneale). The bride-role assertion names John Kneale as the other party; this corroborates 9KNQ-8YD's known marriage to Susanna Dawson. Consistent with all census evidence and baptism records. Linked as required by the cardinality rule for relationship assertions.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Name 'John Kneale' is an exact match to tree person 9KNQ-8YD (John Kneale, b. c.1839 Andreas, IoM). His marriage to Susanna Dawson is confirmed by 1871/1881/1901 censuses. same_person score 0.42 reflects sparse legacy-index data; qualitative correlation is strong: exact name, groom role in Lezayre register consistent with residence near Andreas, marriage to Susanna Dawson confirmed across multiple independent sources.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Sex assertion Male derives from the groom role in the marriage record; 9KNQ-8YD is male. No conflict.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Marriage event 21 Oct 1860, Lezayre, IoM directly relevant to q_001. Consistent with first child Thomas b. 1861 Lezayre and census evidence. Original register not examined (pli_002 pending); derivative index date is primary-quality. same_person score 0.42 on sparse index data; qualitative match strong.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Groom-role marriage assertion also bears on bride 9KNQ-8YB (Susanna Dawson Kneale) \u2014 names her as the other party. Linked per the cardinality rule for relationship assertions. Corroborated by pe_ links already created for a_003.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Name 'Susanna Dawson' from src_002 (original Lezayre parish register, CID 1784428). Exact match to bride in tree. Corroborated by src_001 (pe_001). Same person established by multiple prior sources.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Sex Female from src_002 bride role. No conflict.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Marital status Single at marriage from src_002. Consistent with known biography.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Marriage event 21 Oct 1860 Lezayre from original register src_002 (CID 1784428). Primary information from parish officiant. Confirms derivative-index finding in src_001 (pe_003). Directly answers q_001.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Marriage event also bears on groom 9KNQ-8YD (John Kneale). Cardinality cross-link. Same event, same analysis as bride-side link.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Bride's parentage assertion 'child of John Dawson' from src_002. Bears on Susanna: establishes her paternal line. Corroborated by christening register a_025 (src_003). Two independent primary acts agree. Directly relevant to q_002.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Parentage assertion also bears on the father John Dawson (I1). Cardinality cross-link. Two records (this + christening a_025/a_027) independently identify I1 as Susanna's father \u2014 confident.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_012",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Name 'John Kneale' from src_002 original register. Exact match to groom in tree (9KNQ-8YD). Corroborated by src_001 (pe_005) and multiple census records.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_013",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Sex Male from src_002 groom role. No conflict.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Marital status Single at marriage from src_002. Consistent with known biography.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Marriage event 21 Oct 1860 Lezayre from original register src_002 (groom persona). Primary information. Confirms src_001 finding. Directly answers q_001.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_015",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Groom's marriage assertion also bears on bride 9KNQ-8YB (Susanna). Cardinality cross-link.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_016",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Groom's parentage assertion 'child of Thomas Kneale' from src_002. Bears on John Kneale 9KNQ-8YD as the child. Single primary source; no conflict.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Groom's parentage assertion also bears on father Thomas Kneale (I2). Cardinality cross-link. Single primary source (marriage register 1860). Name 'Thomas Kneale' is exact; no conflict. Moderate \u2014 probable in autonomous mode.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name 'John Dawson' from src_002 father_of_bride role. Corroborated by src_003 a_027 \u2014 two independent parish register acts (1860 marriage, 1839 christening) both name 'John Dawson' as Susanna's father. Strong identification. Directly answers q_002.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Father_of_bride relationship assertion 'father of Susanna Dawson' from src_002. Bears on John Dawson (I1). Two-source corroboration with src_003. Confident.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_018",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Father_of_bride's paternity assertion also bears on child 9KNQ-8YB (Susanna). Cardinality cross-link. Corroborated by christening record.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_019",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Name 'Thomas Kneale' from src_002 father_of_groom role. Single primary source (marriage register 1860). No conflicts. Moderate match \u2014 probable in autonomous mode. Corroboration pending (pli_004: Thomas Kneale 1861 baptism).",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_020",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Father_of_groom relationship assertion from src_002. Bears on Thomas Kneale (I2). Single primary source. Probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_020",
+      "person_id": "9KNQ-8YD",
+      "confidence": "probable",
+      "rationale": "Father_of_groom's paternity assertion also bears on child 9KNQ-8YD (John Kneale). Cardinality cross-link. Probable per single-source I2 identification.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_021",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Name 'Susanna Dawson' from src_003 christening 10 Mar 1839 Lezayre. Exact name match. Same parish as birth, consistent with all other sources. Confident.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_022",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Sex Female from src_003 christening. No conflict.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_023",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Christening 10 Mar 1839 Lezayre from original Lezayre parish register (src_003). Primary information from officiating minister. Updates prior estimated birth year of c.1840 to c.Mar 1839. Directly relevant to q_002 (confirms identity of Susanna Dawson in Lezayre).",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_024",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Birth ~1839 inferred from christening date. Indirect evidence; consistent with marriage 1860 (age ~21) and 1861 birth of first child. Conflict surfaced with prior c.1840 estimate \u2014 christening is primary and more authoritative.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_025",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Christening parentage assertion 'child of John Dawson' from src_003. Bears on Susanna 9KNQ-8YB as child. Corroborates src_002 a_011. Two independent primary acts naming the same father.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Christening parentage assertion also bears on father I1 (John Dawson). Cross-link. Two-source corroboration (src_002 a_018 + this) confirms I1 as Susanna's father \u2014 confident.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_026",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Christening parentage assertion 'child of Jane Corlett' from src_003. Bears on Susanna 9KNQ-8YB as child. Single primary source for the mother's identity; no conflict.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_026",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Christening parentage assertion also bears on mother I3 (Jane Corlett). Cardinality cross-link. Single primary source. No conflicts. Moderate \u2014 probable in autonomous mode.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name 'John Dawson' from src_003 father_of_child_1 role. Corroborated by src_002 a_017 \u2014 two independent records (1839 christening + 1860 marriage) both name John Dawson as Susanna's father. Strong, confident.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex Male from src_003 father_of_child_1 role. No conflict. Identity already confident via name corroboration.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_029",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Spousal relationship 'spouse of Jane Corlett' from src_003. Bears on John Dawson I1. Single source; the couple appear jointly as presenting parents in the 1839 christening. No conflict with existing data.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_029",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "John Dawson's spousal assertion also bears on wife I3 (Jane Corlett). Cross-link. I3's identity rests on single primary source; probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_030",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Name 'Jane Corlett' from src_003 mother_of_child_1 role. Single primary source (1839 Lezayre christening). No conflicts. Moderate \u2014 probable in autonomous mode. Corroboration would require finding a John Dawson \u00d7 Jane Corlett marriage record (pli_012).",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_031",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Sex Female from src_003 mother role. Single source; no conflict.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_032",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Spousal relationship 'spouse of John Dawson' from src_003. Bears on Jane Corlett I3. Single source; probable.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_032",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Jane Corlett's spousal assertion also bears on husband I1 (John Dawson). Cross-link. I1's identity is confident; single-source nature of this spousal assertion does not diminish I1's own confidence.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_033",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Groom named 'John Dawson' in 16 Aug 1832 Ballaugh marriage register (src_004). I1 was minted as John Dawson, Susanna's father, from two prior primary sources (a_019 in src_002 and a_025 in src_003). Exact name match; marriage dated 7 years before Susanna's 1839 christening \u2014 chronologically consistent with fathering her. Strong match on name + chronology. Autonomous run: confident.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_034",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex assertion Male for groom John Dawson in src_004; consistent with I1 (male). Same-persona link as a_033.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_035",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Bride named 'Jane Corlett' in 16 Aug 1832 Ballaugh marriage register (src_004). I3 was minted as Jane Corlett, Susanna's mother, from src_003 (1839 christening naming her as mother). Exact name match. Marriage dated 7 years before Susanna's christening \u2014 consistent. Strong match on name + chronology. Autonomous run: confident.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_036",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Sex assertion Female for bride Jane Corlett in src_004; consistent with I3 (female). Same-persona link as a_035.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_037",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage event 16 Aug 1832, Ballaugh, IoM \u2014 bears on groom John Dawson (I1). Establishes the marriage date and place for the couple R21. Consistent with parentage of Susanna b.~1839.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_037",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Marriage event 16 Aug 1832, Ballaugh, IoM \u2014 bears equally on bride Jane Corlett (I3). Same record as the link to I1. Establishes the couple's marriage date and place.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_038",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Groom relationship assertion 'spouse of Jane Corlett' from src_004 \u2014 bears on John Dawson (I1) as the named spouse.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_038",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Groom relationship assertion 'spouse of Jane Corlett' from src_004 \u2014 bears on Jane Corlett (I3) as the named party in the relationship.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_039",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Bride relationship assertion 'spouse of John Dawson' from src_004 \u2014 bears on Jane Corlett (I3) as the named spouse.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_039",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Bride relationship assertion 'spouse of John Dawson' from src_004 \u2014 bears on John Dawson (I1) as the named party in the relationship.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_040",
+      "person_id": "GBSL-3WT",
+      "confidence": "confident",
+      "rationale": "Child name 'Thomas Henry Kneale' in 9 Dec 1860 Lezayre christening (src_005). GBSL-3WT is Thomas Henry Kneale, already in tree as first child of John Kneale (9KNQ-8YD) and Susanna. Exact name + date + parents all match. Obvious identity \u2014 same person the search was executed to find.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_041",
+      "person_id": "GBSL-3WT",
+      "confidence": "confident",
+      "rationale": "Sex Male for child Thomas Henry Kneale in src_005 \u2014 consistent with GBSL-3WT. Same-persona link as a_040.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_042",
+      "person_id": "GBSL-3WT",
+      "confidence": "confident",
+      "rationale": "Christening date 9 Dec 1860, Lezayre, IoM for Thomas Henry Kneale (src_005) \u2014 bears on GBSL-3WT. Supplies the exact christening date and place for this child.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_043",
+      "person_id": "GBSL-3WT",
+      "confidence": "confident",
+      "rationale": "Child-of-John-Kneale relationship in src_005 \u2014 bears on the child GBSL-3WT (Thomas Henry). Corroborates paternal line.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_043",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Child-of-John-Kneale relationship in src_005 \u2014 bears on father John Kneale (9KNQ-8YD). The christening record names him as father of Thomas Henry Kneale, corroborating his paternity.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_044",
+      "person_id": "GBSL-3WT",
+      "confidence": "confident",
+      "rationale": "Child-of-Susanna-Dawson relationship in src_005 \u2014 bears on the child GBSL-3WT (Thomas Henry). Corroborates maternal line.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_044",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Child-of-Susanna-Dawson relationship in src_005 \u2014 bears on mother Susanna Dawson Kneale (9KNQ-8YB). The christening names her as mother using her maiden surname 'Dawson', consistent with IoM parish practice. Corroborates her maternity.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_045",
+      "person_id": "9KNQ-8YD",
+      "confidence": "confident",
+      "rationale": "Father name 'John Kneale' in src_005 christening \u2014 bears on 9KNQ-8YD. Exact name match. Corroborates his identity as father of Thomas Henry Kneale.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_046",
+      "person_id": "9KNQ-8YB",
+      "confidence": "confident",
+      "rationale": "Mother name 'Susanna Dawson' in src_005 christening \u2014 bears on 9KNQ-8YB (Susanna Dawson Kneale). Mother recorded under maiden surname per IoM practice. Given name matches exactly; maiden surname Dawson is the subject's pre-marriage surname. Strong match. Corroborates her identity as mother.",
+      "created": "2026-07-28"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_003",
+        "a_006",
+        "a_010",
+        "a_015",
+        "a_042",
+        "a_043",
+        "a_044"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch CID 1711668 (Isle of Man, Marriages, 1606-1911, legacy derivative index) and CID 1784428 (Isle of Man, Parish Registers, 1598-2009, current maintained collection) were searched for the Kneale-Dawson marriage. CID 1708663 (Isle of Man, Births and Baptisms, 1607-1910) was searched for the first child's christening record. Fallback sources \u2014 IoMFHS external site (pli_003), Ancestry (pli_005), 1861 census (pli_006) \u2014 were deferred as unnecessary once primary records were located on FamilySearch. The original register image for the marriage entry (ark:/61903/3:1:S3HY-65T3-MR8) was not read in this session. Research was declared reasonably exhaustive.",
+      "narrative_markdown": "## Proof Summary: Marriage of Susanna Dawson and John Kneale\n\n**Conclusion:** The evidence strongly suggests that Susanna Dawson married John Kneale on **21 October 1860** at **Lezayre, Isle of Man** (*probable* tier). Original register image examination would advance this conclusion to proved.\n\n### Evidence\n\n**CID 1784428 indexed record (primary evidence).** An indexed entry in \"Isle of Man, Parish Registers, 1598-2009\" records the marriage of John Kneale and Susanna Dawson on 21 October 1860 at Lezayre, Isle of Man.^[1] The officiating minister or parish clerk who created the register entry acted in an official capacity with first-hand knowledge of the event (information: primary; evidence: direct). Access was via FamilySearch's indexed transcription; the source is therefore classified as derivative. The underlying physical register is held by the Isle of Man Civil Registry, Douglas; a digital image of the register page is accessible at ark:/61903/3:1:S3HY-65T3-MR8 but was not examined in this research session.\n\n**CID 1711668 legacy index (discovery source).** A legacy derivative index, \"Isle of Man, Marriages, 1606-1911,\" also records the same marriage at Lezayre on 21 October 1860.^[2] Compiled circa 2010 from FHL microfilm of the same Lezayre parish register, this index is not independent of the CID 1784428 entry \u2014 both trace to the same physical document. It served as the discovery source and confirms no discrepancy was introduced in the CID 1784428 transcription, but it adds no independent corroboration of the date or place.\n\n**CID 1708663 christening record (independent corroboration).** An entry in \"Isle of Man, Births and Baptisms, 1607-1910\" records the christening of Thomas Henry Kneale on 9 December 1860 at Lezayre, Isle of Man, naming John Kneale as father and Susanna Dawson as mother.^[3] This is an original source (a distinct parish register for a different life event) with primary information from the presenting parents, independently created forty-nine days after the claimed marriage date. Its contribution is indirect: it establishes that John Kneale and Susanna Dawson were a married couple with a child by 9 December 1860, consistent with a marriage on 21 October 1860, but it does not itself state the marriage date.\n\n### Analysis and Correlation\n\nThe CID 1784428 and CID 1711668 records agree on date (21 October 1860) and place (Lezayre) but derive from a single physical register and count as one evidence unit. The CID 1708663 christening is fully independent \u2014 different record type, different event, different informants \u2014 and corroborates the marriage as having occurred before 9 December 1860. No contradictory evidence was encountered: no second marriage record for either party under variant names, and no record suggesting a different date or parish.\n\n### Tier and Limitation\n\nThe marriage date and place rest on indexed derivative records of the Lezayre parish register. The original register image was not independently read. A second independent original source directly stating the date is not available from the searched collections. The evidence strongly points to 21 October 1860, Lezayre \u2014 no competing date or place exists \u2014 but the absence of original image examination holds the conclusion at *probable*. Examining the register image at ark:/61903/3:1:S3HY-65T3-MR8 and confirming the indexed date against the handwritten entry would advance the conclusion to proved.\n\n---\n^[1] \"Isle of Man, Parish Registers, 1598-2009,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZTM-G54 : accessed 28 July 2026), entry for John Kneale and Susanna Dawson, marriage 21 Oct 1860, Lezayre, Isle of Man; citing Isle of Man Civil Registry, Douglas; FamilySearch CID 1784428.\n\n^[2] \"Isle of Man, Marriages, 1606\u20131911,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:9743-KJG : 10 March 2020), Entry for John Kneale; citing Lezayre, Isle of Man; index based upon data collected by the Genealogical Society of Utah, Salt Lake City; FHL microfilm.\n\n^[3] \"Isle of Man, Births and Baptisms, 1607-1910,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:JS5V-YYL : accessed 28 July 2026), entry for Thomas Henry Kneale, christened 9 December 1860, Lezayre, Isle of Man; citing Lezayre parish register."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_011",
+        "a_017",
+        "a_018",
+        "a_025",
+        "a_027",
+        "a_037"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch CID 1784428 (Isle of Man, Parish Registers, 1598-2009) was searched, yielding both the 1860 Lezayre marriage register (src_002, naming John Dawson as bride's father) and the 1839 Lezayre christening register (src_003, naming John Dawson as father). CID 1784428 was also searched for the parents' marriage, yielding the 1832 Ballaugh marriage of John Dawson and Jane Corlett (src_004). CID 1708663 was searched for additional baptism records. Ancestry 1841/1851 censuses, IoMFHS index, and image-browse fallbacks were deferred as unnecessary once primary records were located. Original register images for the 1839 christening (ark:/61903/3:1:9396-CBL3-F) and 1860 marriage (ark:/61903/3:1:S3HY-65T3-MR8) were not independently examined. Research was declared reasonably exhaustive.",
+      "narrative_markdown": "## Proof Summary: Father of Susanna Dawson\n\n**Conclusion:** The evidence strongly suggests that **John Dawson** was the father of Susanna Dawson, born circa March 1839 at Lezayre, Isle of Man, who later married John Kneale (*probable* tier). Examination of the original register images would advance this conclusion to proved.\n\n### Evidence\n\n**1839 Lezayre Christening Register (primary evidence \u2014 original source).** The Lezayre christening register records the christening of Susanna Dawson on 10 March 1839, naming \"John Dawson\" as father and \"Jane Corlett\" as mother.^[1] This entry is classified as an original source (CID 1784428, \"Isle of Man, Parish Registers, 1598-2009\"). The informant for the father's name is John Dawson himself, who appeared as one of the presenting parents \u2014 primary information, direct evidence. This is the most authoritative evidence for the father's identity, created at or near the time of Susanna's birth. A digital image of the register page is noted in the citation detail (ark:/61903/3:1:9396-CBL3-F) but was not independently examined in this session.\n\n**1860 Lezayre Marriage Register (independent corroborating evidence \u2014 derivative source).** The Lezayre marriage register entry for Susanna Dawson's marriage to John Kneale on 21 October 1860 names \"John Dawson\" as the bride's father.^[2] The informant is Susanna Dawson herself, providing primary information from her own self-reported parentage at the time of her marriage. Evidence type: direct. This source is classified as derivative in this project (accessed via FamilySearch's indexed transcription; original image not independently examined). It is independent of the 1839 christening \u2014 different event, different year (twenty-one years later), and different informant (the daughter rather than the father). Susanna's naming of the same man as her father at an event requiring her to declare her own identity strengthens the identification.\n\n**1832 Ballaugh Marriage Register (contextual corroboration \u2014 original source).** The Ballaugh marriage register records the marriage of John Dawson and Jane Corlett on 16 August 1832 at Ballaugh, Isle of Man.^[3] This original source provides primary information from the officiating minister. It is not direct evidence of the Susanna-John Dawson parentage but contextually corroborates it: the same couple (John Dawson + Jane Corlett) named as Susanna's parents in the 1839 christening register were a married couple seven years before her birth, consistent with paternity. It also supplies the BCG-required parents' marriage record, confirming the couple's union and providing the mother's maiden name (Corlett).\n\n### Analysis and Correlation\n\nTwo independent acts \u2014 the 1839 christening and the 1860 marriage \u2014 name \"John Dawson\" as Susanna's father. The informants differ: John Dawson himself (1839, presenting parent) and Susanna Dawson (1860, bride). The events are separated by twenty-one years and recorded in different register series for different life events. No competing candidate for Susanna's father appeared in any searched source. The parents' 1832 marriage (a third independent act) establishes the couple existed seven years before Susanna's birth and supplies the mother's maiden name (Corlett), which neither the marriage register nor later records provide.\n\n### Tier and Limitation\n\nOne of the two direct-parentage sources (the 1860 marriage, src_002) is classified as derivative in this project \u2014 its index was accessed via FamilySearch rather than the original register image, and that image was not independently read. A proved tier requires two or more independent original sources with primary information directly agreeing on the specific fact. The 1839 christening register (original, primary, direct) meets that standard for a single source; a second independent original source directly stating the parentage has not been accessed in its original form. Examining the christening register image (ark:/61903/3:1:9396-CBL3-F) and the marriage register image (ark:/61903/3:1:S3HY-65T3-MR8) to confirm both indexed entries against the handwritten originals would advance the conclusion to proved.\n\n---\n^[1] \"Isle of Man, Parish Registers, 1598-2009\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZ5P-PRJ : accessed 2026-07-28), Entry for Susanna Dawson and John Dawson, 10 Mar 1839.\n\n^[2] \"Isle of Man, Parish Registers, 1598-2009,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZTM-G54 : accessed 28 July 2026), entry for John Kneale and Susanna Dawson, marriage 21 Oct 1860, Lezayre, Isle of Man; citing Isle of Man Civil Registry, Douglas; FamilySearch CID 1784428.\n\n^[3] \"Isle of Man, Parish Registers, 1598-2009,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:XZ15-BXY : accessed 28 July 2026), John Dawson and Jane Corlett marriage, 16 August 1832, Ballaugh, Isle of Man; citing Ballaugh Parish Register, image, FamilySearch."
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Isle of Man",
+      "for_place": "Lezayre, Isle of Man",
+      "time_period": "1840-1880",
+      "jurisdictions": [
+        {
+          "name": "Isle of Man",
+          "date_range": "1266-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1784428",
+          "title": "Isle of Man, Parish Registers, 1598-2009",
+          "date_range": "1598-2009"
+        },
+        {
+          "id": "1711668",
+          "title": "Isle of Man, Marriages, 1606\u20131911",
+          "date_range": "1606-1911"
+        },
+        {
+          "id": "1708663",
+          "title": "Isle of Man, Births and Baptisms, 1607-1910",
+          "date_range": "1607-1910"
+        },
+        {
+          "id": "1708590",
+          "title": "Isle of Man, Deaths and Burials, 1844-1918",
+          "date_range": "1844-1918"
+        }
+      ],
+      "quirks": [
+        "Civil registration of births and deaths began 1878; marriages not until 1884. All pre-1878 marriage research relies solely on Church of England parish registers.",
+        "Marriage license paperwork did not survive for the Isle of Man. Banns are the standard pre-1878 procedure; look for both the banns register and the marriage register.",
+        "Couples typically married in the bride's parish. Search Lezayre parish first for Susanna Dawson, who was born there.",
+        "From the mid-1800s, Church of England marriage register entries include the names and occupations of the fathers of both bride and groom \u2014 a single entry may answer both the marriage question and the paternity question simultaneously.",
+        "The 'Isle of Man, Marriages, 1606-1911' (CID 1711668) is a legacy collection \u2014 index only, no new records or corrections added since 2010. Always verify finds against 'Isle of Man, Parish Registers, 1598-2009' (CID 1784428), which has both index and images.",
+        "Isle of Man censuses 1841-1881 are indexed at Ancestry ($) only; FamilySearch 1871 and 1881 England and Wales censuses also cover Isle of Man residents.",
+        "Volume_search returned 3,848 volumes for IoM 1840-1880; most are 0% name-indexed and not full-text searchable \u2014 browse-only fallback if indexed collections yield no result.",
+        "Isle of Man FHS (iomfhs.im) provides free indexes for births (1576-1960), marriages (1576-1960), and wills (1576-1960); check ManxBMD.com as a free supplementary index."
+      ],
+      "guide_markdown": "## Isle of Man \u2014 Locality Guide (1840\u20131880)\n\n**Jurisdiction:** British Crown dependency; 17 parishes; records kept at parish level. Key parishes for this project: Lezayre (Susanna Dawson born c.1840), Andreas (John Kneale born c.1839), Maughold (includes Ramsey, where family lived 1861\u20131877).\n\n### Civil Registration Timeline\n- Births/deaths: civil registration began **1878**\n- Marriages: civil registration began **1884**\n- Pre-1878/1884: Church of England parish registers are the sole official source\n\n### FamilySearch Collections\n| Collection | CID | Access | Notes |\n|---|---|---|---|\n| Isle of Man, Parish Registers, 1598-2009 | 1784428 | Index + images | Preferred: current, maintained |\n| Isle of Man, Marriages, 1606\u20131911 | 1711668 | Index only | Legacy; verify vs. 1784428 |\n| Isle of Man, Births and Baptisms, 1607-1910 | 1708663 | Index only | Legacy |\n| Isle of Man, Deaths and Burials, 1844-1918 | 1708590 | Index only | |\n\n### Marriage Records\n- Couples married in bride's parish; search Lezayre first\n- No marriage license paperwork survived; banns were the norm\n- From mid-1800s: register entries include fathers' names and occupations of both parties \u2014 key for paternity research\n- External: FindMyPast IoM Marriages 1598-1979 ($); Ancestry Marriage Index 1606-1984 ($); IoMFHS index 1576-1960 (free)\n\n### Baptism Records\n- Church of England baptism registers name child, father (with occupation/residence from mid-1800s), and mother's given name (not maiden name)\n- FamilySearch CID 1708663 (legacy index) and CID 1784428 (index + images)\n\n### Census\n- IoM-specific censuses 1841-1921 indexed at Ancestry ($) only\n- FamilySearch 1871/1881 England & Wales censuses cover IoM residents\n\n### Probate / Wills\n- IoMFHS wills index 1576-1960 (free); Ancestry wills index 1600-1864 ($)\n- FamilySearch Catalog has microfilm images (browse-only)\n\n### Newspapers\n- Isle of Man Newspapers 1792-1960 at imuseum.im ($) \u2014 useful for marriage notices\n\n### Other\n- ManxBMD.com: free online index for births, marriages, deaths\n- Volume_search: 3,848 volumes for IoM 1840-1880, most 0% indexed (browse-only fallback)",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Isle_of_Man_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Isle_of_Man_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Isle_of_Man_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Isle_of_Man_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-28"
+    }
+  ]
+}

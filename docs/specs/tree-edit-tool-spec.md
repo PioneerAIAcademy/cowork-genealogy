@@ -221,8 +221,9 @@ tree_edit({
     from `sourceAssertionId`; a literal edge ref is never auto-propagated onto
     facts (unchanged: each still needs its own ref). Added 2026-07-26 to
     close the retry tax observed when the model hand-resolved the chain and
-    got it wrong on the first attempt (`docs/plan/
-    tree-materialization-batching-plan.md` Phase 3).
+    got it wrong on the first attempt — two independent e2e runs (spriggs,
+    reese-children) each burned a full retry on the session's first
+    `add_relationship` for exactly this.
 - **`add_source`** `{ source }` — append `source` to the tree's `sources`, assigning
   the next `S` id above the tree max (top-level, like `add_relationship` — no person
   scope, no place resolution, no primary swap). A caller-supplied `id` is rejected.
@@ -312,6 +313,19 @@ Semantics (decision from the e2e research-runtime speedup review, §6 Q1):
 
 The persisted tree shape is unchanged — `ops` changes only the number of write calls.
 
+**Relationship batching needs no tool change — if a caller issues one
+`add_relationship` per edge, that is a SKILL.md gap, not a missing capability.**
+Worth stating because it was mis-filed as tool work for a month: `ops` has always
+accepted several `add_relationship` edges in one validated, atomic call, including
+an edge whose endpoint is a person another op in the same batch just minted (see
+the intra-batch id-assignment rule above; exercised by
+`tests/tools/tree-edit.test.ts:950,1012,1020,1037`). What was actually missing was
+that `person-evidence/SKILL.md` §7 never told the caller to *collect* a household's
+edges — it issued ~7–9 separate calls for one census household, which showed up as
+an e2e wall-clock regression. Fixed on the skill side (2026-07-26). Before adding a
+batch axis to any tool here, check whether the caller is simply not using the one
+that exists.
+
 ### 4.4 Stringified-argument tolerance
 
 The model occasionally serializes a large or
@@ -325,6 +339,17 @@ non-empty array ```). Not a supported call form — callers should pass real JSO
 it stops a correct-but-stringified batch from being rejected into a slow
 one-op-per-call fallback. `research_append` applies the same tolerance to its
 `ops`/`entry`/`fields`; see that spec (§3.3) for the originating rationale.
+
+**Singular `name` → `names[]` lift (`add_person`).** The same category of shape
+slip, and it was the single largest driver of recovered validation retries
+(observed on ~15% of `add_person` calls, ut_001/ut_003): the model supplies
+`name: {given, surname, preferred?}` where the schema wants `names: [{…}]`. The
+tool lifts the object into a single-element array before validation. **Shape
+only** — object → one-element array; no flat-string parsing, no name content
+inferred or invented. Supplying **both** `name` and `names` is rejected loudly
+(`add_person: supply `names` (an array) OR a single `name`, not both`) rather
+than silently resolving one, because the downstream one-preferred normalizer
+would otherwise receive ambiguous input.
 
 ---
 

@@ -1,6 +1,17 @@
 # Research-session performance — measured plan
 
-**Status:** DRAFT rev.2, for review (dev + genealogist) · **Date:** 2026-07-27
+**Status:** PARTIALLY SHIPPED — **C1–C7 have landed** (their rationale now lives in
+the tool specs); **C0, the reasoning-effort A/B and the largest remaining lever, has
+not.** · **Date:** 2026-07-27
+
+**Why this file is kept, against the "delete a plan once the work ships" rule:**
+three findings here belong in neither a spec nor a commit message — §1 (the session
+decomposition and the output-tokens/wall-clock equation), §5.1 (the live probe that
+refuted this plan's own F2: the ranker works, the low scores were correct
+negatives), and §5.3 (the rule audit showing that only *unanchored* SKILL.md prose
+decays under compaction, while tool-validated rules hold at 100%). Delete or trim
+this file once C0 is decided, and fold those three somewhere durable rather than
+losing them with it.
 **Source:** alpha-feedback bundle `feedback-2026-07-27T14-24-48-034883Z.zip`
 (project "James L. Stephens's Parents"; tester note: *"This took a long time and
 cost a lot of money. How can we speed things up in the future?"*)
@@ -365,7 +376,7 @@ what is missing ("subject has name only — add a birth year or a county").
 
 **C2c — carry a per-candidate evidence count on each stub** (`toStub`, `:180`).
 Free, additive, no threshold, no behaviour change. It supplies the data behind
-the existing but unbacked guardrail in `record-search-compaction-scope.md`
+the existing but unbacked guardrail in `docs/record-search-compaction-scope.md`
 ("sparse records are unstable — two dateless obituary stubs differing only by a
 middle initial scored 0.086 vs 0.668"). **The skill guidance that consumes it is
 quality doctrine and is excluded here** — same principle as F6, see §6.
