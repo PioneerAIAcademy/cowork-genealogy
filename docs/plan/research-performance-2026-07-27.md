@@ -365,7 +365,7 @@ what is missing ("subject has name only — add a birth year or a county").
 
 **C2c — carry a per-candidate evidence count on each stub** (`toStub`, `:180`).
 Free, additive, no threshold, no behaviour change. It supplies the data behind
-the existing but unbacked guardrail in `record-search-compaction-scope.md`
+the existing but unbacked guardrail in `docs/record-search-compaction-scope.md`
 ("sparse records are unstable — two dateless obituary stubs differing only by a
 middle initial scored 0.086 vs 0.668"). **The skill guidance that consumes it is
 quality doctrine and is excluded here** — same principle as F6, see §6.

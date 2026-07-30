@@ -1,6 +1,6 @@
 # Eval Framework
 
-Systematic evaluation of Cowork Genealogy skills through automated testing with human verification. This file is the agent-facing conventions doc for working inside `eval/`. For the human-facing quick-start, see `eval/README.md`. For the versioning + release workflow, see `docs/plan/eval-runlog-versioning.md`. For the per-PR cadence and team workflow, see `docs/plan/per-pr-review-workflow.md`.
+Systematic evaluation of Cowork Genealogy skills through automated testing with human verification. This file is the agent-facing conventions doc for working inside `eval/`. For the human-facing quick-start, see `eval/README.md`. For the versioning + release workflow, see `docs/plan/eval-runlog-versioning.md`. For the per-PR cadence and team workflow, see `docs/per-pr-review-workflow.md`.
 
 > **TEST-AUTHORING POLICY (current stage): `runs_per_test` is always 1.**
 > When creating or updating ANY unit test, do **not** set `runs_per_test` above 1 —
@@ -215,4 +215,4 @@ End-to-end fidelity testing happens via the layered testing playbooks in `docs/t
 
 ## Workflow
 
-See `docs/plan/eval-runlog-versioning.md` for the canonical release/active/candidate workflow and `docs/plan/per-pr-review-workflow.md` for the per-PR cadence (junior authors tests, runs harness, corrects LLM grades, submits PR; senior reviews and releases the candidate).
+See `docs/plan/eval-runlog-versioning.md` for the canonical release/active/candidate workflow and `docs/per-pr-review-workflow.md` for the per-PR cadence (junior authors tests, runs harness, corrects LLM grades, submits PR; senior reviews and releases the candidate).

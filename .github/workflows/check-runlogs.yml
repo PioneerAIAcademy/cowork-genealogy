@@ -28,20 +28,17 @@ on:
     # types (opened, synchronize, reopened) are listed explicitly because
     # naming any type replaces the defaults.
     types: [opened, synchronize, reopened, labeled, unlabeled]
-    paths:
-      - 'eval/runlogs/unit/**'
-      - 'eval/tests/unit/**'
-      - 'packages/engine/plugin/skills/**'
-      # agents/** so the frontmatter lint (check_skill_frontmatter.py) gates
-      # plugin agent descriptions too, not just skills.
-      - 'packages/engine/plugin/agents/**'
-      - 'eval/fixtures/**'
-      - 'eval/harness/**'
-      # MCP source (packages/engine/mcp-server/src/**) is intentionally not a
-      # trigger: it is no longer embedded in the run-log snapshot, so a
-      # src-only change cannot affect run-log activeness (rule 2).
+    # No `paths:` filter — this check runs on EVERY pull request so it always
+    # reports a conclusion and can be required by branch protection. A workflow
+    # skipped by `paths:` reports nothing at all, and a required check that
+    # never reports leaves its PR stuck on "Expected — waiting for status to be
+    # reported" with no way forward except a ruleset bypass. The former filter
+    # moved verbatim into the `scope` step below; what this check does when it
+    # applies is unchanged.
 
 # `issues: write` lets the auto-strip step remove the bypass label from the PR.
+# `pull-requests: read` is additionally needed by the `scope` step, and is
+# implied by the `write` already granted here.
 permissions:
   contents: read
   issues: write
@@ -55,11 +52,36 @@ permissions:
 # commit it was approved for — the senior must re-apply after each push. The
 # label must exist in the repo once: `gh label create eval-cosmetic-skip`.
 jobs:
-  check:
+  # Renamed from `check`: check-e2e-fixtures.yml also had a job named `check`,
+  # so with both now running on every PR two distinct contexts would share one
+  # name and a required-status-check rule could not tell them apart.
+  runlogs:
     runs-on: ubuntu-latest
     steps:
+      # The former `paths:` filter, moved into the job. `agents/**` is here so
+      # the frontmatter lint gates plugin agent descriptions too, not just
+      # skills. MCP source (packages/engine/mcp-server/src/**) is intentionally
+      # absent: it is no longer embedded in the run-log snapshot, so a src-only
+      # change cannot affect run-log activeness (rule 2).
+      - name: Does this PR touch run logs, unit tests, skills, agents, fixtures, or the harness?
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^\.github/workflows/check-runlogs\.yml$'
+        run: |
+          set -euo pipefail
+          files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
+                     --paginate --jq '.[].filename')"
+          if printf '%s\n' "$files" | grep -qE "$PATTERNS"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No run-log, unit-test, skill, agent, fixture, or harness path changed; reporting success without running the discipline checks."
+          fi
+
       - name: Drop stale cosmetic-skip label on new commits
-        if: github.event.action == 'synchronize'
+        if: steps.scope.outputs.relevant == 'true' && github.event.action == 'synchronize'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -68,6 +90,7 @@ jobs:
             --remove-label "eval-cosmetic-skip" || true
 
       - name: Resolve cosmetic-skip state
+        if: steps.scope.outputs.relevant == 'true'
         id: cosmetic
         env:
           GH_TOKEN: ${{ github.token }}
@@ -84,16 +107,19 @@ jobs:
           fi
 
       - name: Check out PR with full history
+        if: steps.scope.outputs.relevant == 'true'
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Set up Python
+        if: steps.scope.outputs.relevant == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Run runlog discipline checks
+        if: steps.scope.outputs.relevant == 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -101,6 +127,7 @@ jobs:
         run: python eval/harness/scripts/check_runlogs.py
 
       - name: Check skill tool-coverage drift (warn-only)
+        if: steps.scope.outputs.relevant == 'true'
         run: python eval/harness/scripts/check_tool_coverage.py
 
       # The inverse of the check above: a tool name in a skill's rubric.md,
@@ -117,4 +144,5 @@ jobs:
       # they catch a long or `<bracketed>` value on a continuation line. Soft
       # rules (unknown key, unresolvable tool) only warn. The corpus passes today.
       - name: Lint skill + agent frontmatter
+        if: steps.scope.outputs.relevant == 'true'
         run: python eval/harness/scripts/check_skill_frontmatter.py

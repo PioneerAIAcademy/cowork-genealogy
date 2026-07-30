@@ -1,0 +1,1489 @@
+{
+  "persons": [
+    {
+      "id": "L7B2-QXX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Johann Frederich",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "25 JAN 1847",
+          "standard_date": "25 Jan 1847",
+          "place": "Hausen, Bellikon, Aargau, Switzerland",
+          "standard_place": "Hausen, Aargau, Switzerland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": " 4 JUL 1914",
+          "standard_date": "4 Jul 1914",
+          "place": "Naples, Ontario, New York, USA",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "e915c5ed-7055-4ffa-bbaf-3416df6daca7",
+          "type": "Immigration",
+          "date": "1872",
+          "standard_date": "1872"
+        },
+        {
+          "id": "655b1494-df0a-4bfb-9fc9-252986a24922",
+          "type": "Immigration",
+          "date": "1873",
+          "standard_date": "1873"
+        },
+        {
+          "id": "3044b18b-be51-4565-b130-94e7c45781b3",
+          "type": "MARR",
+          "date": "25 May 1874",
+          "standard_date": "25 May 1874",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "ad4d8c97-486e-4411-8d60-d7f1e41f2d98",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 73 Naples Township Naples village, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "0bde5200-167a-47c6-b7ee-1eba5f4a512a",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Naples, , New York",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "7 Jul 1914",
+          "standard_date": "7 Jul 1914",
+          "place": "Rose Ridge Cemetery, Naples, Ontario, New York, United States of America",
+          "standard_place": "Rose Ridge Cemetery, Naples, Naples, Ontario, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "KP47-2MB",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Charles",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1874",
+          "standard_date": "1874",
+          "place": "Naples, Ont, NY",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "       1875",
+          "standard_date": "1875"
+        }
+      ]
+    },
+    {
+      "id": "KNS5-DP7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "John",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "AFTER 1875",
+          "standard_date": "Aft 1875",
+          "place": "Naples, Ont, NY",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9WJG-YZX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Kate",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "23 SEP 1879",
+          "standard_date": "23 Sep 1879"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "19 MAR 1884",
+          "standard_date": "19 Mar 1884",
+          "place": "Naples, Ontario, New York, USA",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "place": "Naples, New York",
+          "standard_place": "Naples, Ontario, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "KZNG-DP9",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Emma",
+          "surname": "Widman"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "17 November 1882",
+          "standard_date": "17 Nov 1882",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "dba9266d-74ff-4bd9-a9e1-4ae48a70c109",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Buffalo, Erie, New York",
+          "standard_place": "Buffalo, Erie, New York, United States"
+        },
+        {
+          "id": "2b764045-8dd7-49c8-ba3a-3d470bc2dbfd",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Buffalo, Ward 05, E.D. 03, Erie, New York",
+          "standard_place": "Buffalo, Erie, New York, United States"
+        },
+        {
+          "id": "0bde5200-167a-47c6-b7ee-1eba5f4a512a",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Buffalo Ward 5, Erie, New York, United States",
+          "standard_place": "Buffalo, Erie, New York, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Miami, Dade, Florida",
+          "standard_place": "Miami, Miami-Dade, Florida, United States"
+        },
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place - Election Precinct 70, Miami, Area C, Dade, Florida",
+          "standard_place": "Election Precinct 70 Miami, Dade, Florida, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Election Precinct 70, Miami, Area C, Dade, Florida",
+          "standard_place": "Miami, Miami-Dade, Florida, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "7 January 1964",
+          "standard_date": "7 Jan 1964",
+          "place": "Florida, United States",
+          "standard_place": "Florida, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "10 Jan 1964",
+          "standard_date": "10 Jan 1964",
+          "place": "Miami, Dade, FL",
+          "standard_place": "Miami, Miami-Dade, Florida, United States"
+        }
+      ]
+    },
+    {
+      "id": "9WJG-YZB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Bessie L",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "25 MAR 1889",
+          "standard_date": "25 Mar 1889",
+          "place": "Naples, Ontario, New York, USA",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "9 Apr 1891",
+          "standard_date": "9 Apr 1891",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Ontario, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "KCNW-J51",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Albert",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "11 Mar 1894",
+          "standard_date": "11 Mar 1894",
+          "place": "Naples, Ont, NY",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 73 Naples Township Naples village, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Naples, , New York",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "3 May 1958",
+          "standard_date": "3 May 1958"
+        },
+        {
+          "id": "be44ac0a-28e5-4f2f-b1a6-653adebec255",
+          "type": "Burial",
+          "date": "1958",
+          "standard_date": "1958",
+          "place": "Rose Ridge Cemetery, Naples, Ontario, New York, United States of America",
+          "standard_place": "Rose Ridge Cemetery, Naples, Naples, Ontario, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "LCF4-RXY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Madeline",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "10 OCT 1877",
+          "standard_date": "10 Oct 1877",
+          "place": "Naples,Ontario,New York",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "64996c8e-0e88-49e9-91d9-36797ae129ca",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": ", Naples, , 01, Ontario, New York",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 73 Naples Township Naples village, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "06 OCT 1954",
+          "standard_date": "6 Oct 1954"
+        },
+        {
+          "id": "2f9b29e3-d4c3-45e4-86f4-2eb04935d30d",
+          "type": "Burial",
+          "place": "Woodlawn Cemetery, New York, United States",
+          "standard_place": "Woodlawn Cemetery, Yonkers, Westchester, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "KP31-XNT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Mary E.",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "7 Jul 1887",
+          "standard_date": "7 Jul 1887",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 73 Naples Township Naples village, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Leicester, Livingston, New York, United States",
+          "standard_place": "Leicester, Leicester, Livingston, New York, United States"
+        },
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Washington, Washington, District of Columbia, United States",
+          "standard_place": "Washington, District of Columbia, United States"
+        },
+        {
+          "id": "0bde5200-167a-47c6-b7ee-1eba5f4a512a",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Jefferson, Ashtabula, Ohio, United States",
+          "standard_place": "Jefferson, Ashtabula, Ohio, United States"
+        },
+        {
+          "id": "f70fdff5-e8c4-45d1-9c0e-1edb3e4d931a",
+          "type": "Immigration",
+          "date": "21 Sep 1931",
+          "standard_date": "21 Sep 1931",
+          "place": "Quebec, Hardin, Iowa, United States",
+          "standard_place": "Quebec, Hardin, Iowa, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Jefferson Village, Jefferson Township, Ashtabula, Ohio, United States",
+          "standard_place": "Jefferson, Ashtabula, Ohio, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "19 Feb 1971",
+          "standard_date": "19 Feb 1971",
+          "place": "Ashtabula, Ashtabula, Ohio, United States",
+          "standard_place": "Ashtabula, Ashtabula, Ohio, United States"
+        },
+        {
+          "id": "1a27c26e-9107-4b9a-a041-271552b6806e",
+          "type": "Residence",
+          "date": "19 Feb 1971",
+          "standard_date": "19 Feb 1971",
+          "place": "Ashtabula, Ohio, United States",
+          "standard_place": "Ashtabula, Ohio, United States"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "date": "1971",
+          "standard_date": "1971",
+          "place": "Jefferson, Ashtabula, Ohio, United States of America",
+          "standard_place": "Jefferson, Ashtabula, Ohio, United States"
+        },
+        {
+          "id": "9f47f8a6-4a01-4c01-94fe-e9b96f9938fd",
+          "type": "Emigration",
+          "place": "France, Cherbourg, France",
+          "standard_place": "France"
+        }
+      ]
+    },
+    {
+      "id": "KG12-2BT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Hans Ulrich",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": " 9 JUN 1812",
+          "standard_date": "9 Jun 1812",
+          "place": "Hausen, Aargau, Switzerland",
+          "standard_place": "Hausen, Meiringen, Bern, Switzerland"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "14 JUN 1812",
+          "standard_date": "14 Jun 1812",
+          "place": "Windisch, Aargau, Switzerland",
+          "standard_place": "Windisch, Aargau, Switzerland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "19 APR 1893",
+          "standard_date": "19 Apr 1893",
+          "place": "Hausen, Aargau, Switzerland",
+          "standard_place": "Hausen, Meiringen, Bern, Switzerland"
+        }
+      ]
+    },
+    {
+      "id": "LHSQ-87D",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "George",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "10 October 1883",
+          "standard_date": "10 Oct 1883",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 73 Naples Township Naples village, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Naples, , New York",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "1914",
+          "standard_date": "1914",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "41709ddf-dfd6-486e-849c-aec6e578fced",
+          "type": "Burial",
+          "place": "Rose Ridge Cemetery, Ontario County, New York, United States",
+          "standard_place": "Rose Ridge Cemetery, Naples, Naples, Ontario, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "K8XH-3MH",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "Joseph B.",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "9 Aug 1889",
+          "standard_date": "9 Aug 1889",
+          "place": "Naples, New York, United States",
+          "standard_place": "Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 73 Naples Township Naples village, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Naples, , New York",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "f97b4758-7956-4a42-a4c5-ce56a694b4c0",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "German Flatts, A.D. 01, E.D. 01, Herkimer, New York, United States",
+          "standard_place": "German Flatts, Herkimer, New York, United States"
+        },
+        {
+          "id": "f767637f-355d-4203-9ce2-ff6bde488bc1",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Herkimer, New York, United States",
+          "standard_place": "Herkimer, New York, United States"
+        },
+        {
+          "id": "d61dcd90-92cf-4691-9691-2b33173cec36",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Herkimer, New York, United States",
+          "standard_place": "Herkimer, New York, United States"
+        },
+        {
+          "id": "03b926d9-8228-443f-90d9-a8bf83870982",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Herkimer, Herkimer, New York, United States",
+          "standard_place": "Herkimer, Herkimer, New York, United States"
+        },
+        {
+          "id": "ce8285ee-05ce-458d-98bb-728f67b74e34",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House - Herkimer, Herkimer Town, Herkimer, New York, United States",
+          "standard_place": "Herkimer, Herkimer, Herkimer, New York, United States"
+        },
+        {
+          "id": "7dec4142-ece8-44d5-b1e8-c55b2dcdf295",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Herkimer, Herkimer Town, Herkimer, New York, United States",
+          "standard_place": "Herkimer, Herkimer, Herkimer, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "26 Jul 1987",
+          "standard_date": "26 Jul 1987",
+          "place": "Albany, New York",
+          "standard_place": "Albany, Albany, New York, United States"
+        },
+        {
+          "id": "4472a74f-5226-464e-960a-033dca14f265",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "f71c7b0d-ea64-4ed2-a8e3-70739b732048",
+          "type": "Burial",
+          "place": "Highland Cemetery, Jordanville, Herkimer, New York, United States of America",
+          "standard_place": "Highland Cemetery, Jordanville, Warren, Herkimer, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "KZ4R-YRB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N13",
+          "given": "Ella",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "29 June 1886",
+          "standard_date": "29 Jun 1886",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 73 Naples Township Naples village, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "730429ea-038c-4f24-bc98-91051ae5ee32",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Niagara Falls Ward 3, Niagara, New York, United States",
+          "standard_place": "Niagara Falls, Niagara, New York, United States"
+        },
+        {
+          "id": "ac2893c5-51ef-404c-911d-463cec939a68",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Wilson, Niagara, New York, United States",
+          "standard_place": "Wilson, Niagara, New York, United States"
+        },
+        {
+          "id": "35e94a72-b908-406d-8d94-d8ae3f1fbd53",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Niagara, New York, United States",
+          "standard_place": "Niagara, New York, United States"
+        },
+        {
+          "id": "9ce0d19d-7fbf-4bdc-acd4-6e26871d175b",
+          "type": "Residence",
+          "date": "11 November 1929",
+          "standard_date": "11 Nov 1929",
+          "place": "Augusta, Richmond, Georgia, United States",
+          "standard_place": "Augusta, Richmond, Georgia, United States"
+        },
+        {
+          "id": "243941b8-49be-4965-9d6f-739d0e83d3f6",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Syracuse, Onondaga, New York, United States",
+          "standard_place": "Syracuse, Onondaga, New York, United States"
+        },
+        {
+          "id": "8d28547a-e1ab-4f8b-853a-af6ffb3b94c6",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Clay, Onondaga, New York, United States",
+          "standard_place": "Clay, Onondaga, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "1 March 1963",
+          "standard_date": "1 Mar 1963",
+          "place": "Salina, Onondaga, New York, United States",
+          "standard_place": "Salina, Onondaga, New York, United States"
+        },
+        {
+          "id": "f75ab46a-847f-46ea-9c1d-e8e4c1f12a10",
+          "type": "Burial",
+          "place": "Saint Helena's Cemetery, Madison County, New York, United States",
+          "standard_place": "Saint Helena's Cemetery, Oneida, Madison, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "KP47-GJB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N14",
+          "given": "Rose Marie",
+          "surname": "Bergman"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "27 JUL 1855",
+          "standard_date": "27 Jul 1855",
+          "place": "Cohocton, Stbn., New York, USA",
+          "standard_place": "Cohocton, Cohocton, Steuben, New York, United States"
+        },
+        {
+          "id": "ac6576c3-c942-4dc1-b0e8-f18a324c63b3",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Cohocton, Steuben, New York, United States",
+          "standard_place": "Cohocton, Cohocton, Steuben, New York, United States"
+        },
+        {
+          "id": "679f1134-ab30-4372-a23c-da1d94dcd63a",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "District 02, Cohocton, Steuben, New York, United States",
+          "standard_place": "Cohocton, Cohocton, Steuben, New York, United States"
+        },
+        {
+          "id": "5a1b6305-6444-434b-bdc0-a0141cf2f396",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 73 Naples Township Naples village, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Naples, , New York",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "0bde5200-167a-47c6-b7ee-1eba5f4a512a",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Brooklyn Assembly District 5, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": " 9 DEC 1932",
+          "standard_date": "9 Dec 1932",
+          "place": "Lockport, Niagara, New York, USA",
+          "standard_place": "Lockport, Niagara, New York, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "13 DEC 1932",
+          "standard_date": "13 Dec 1932",
+          "place": "Naples, Ontario, New York, USA",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "KNS5-DPN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N15",
+          "given": "Isabella",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1895",
+          "standard_date": "1895",
+          "place": "Naples, Ont, NY",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "28 Mar 1898",
+          "standard_date": "28 Mar 1898",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "K82B-312",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N16",
+          "given": "Howard",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "June 1896",
+          "standard_date": "Jun 1896",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "e6d59542-9d3e-48dd-8cfa-3c41749eabe8",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Naples Township Naples village, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "004888e6-07eb-466d-8b7c-32c7b923366d",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "17 May 1919",
+          "standard_date": "17 May 1919",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "dde16e05-6ec0-4944-b9ee-f60335fcc00d",
+          "type": "Burial",
+          "place": "Rose Ridge Cemetery, Ontario County, New York, United States",
+          "standard_place": "Rose Ridge Cemetery, Naples, Naples, Ontario, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "KG12-LS2",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N17",
+          "given": "Verena",
+          "surname": "Schaffner"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "8 Dec 1810",
+          "standard_date": "8 Dec 1810",
+          "place": "Hausen, Aargau, Swtz",
+          "standard_place": "Hausen, Meiringen, Bern, Switzerland"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "16 DEC 1810",
+          "standard_date": "16 Dec 1810",
+          "place": "Windisch, Aargau, Switzerland",
+          "standard_place": "Windisch, Aargau, Switzerland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": " 7 APR 1881",
+          "standard_date": "7 Apr 1881",
+          "place": "Hausen, Aargau, Switzerland",
+          "standard_place": "Hausen, Meiringen, Bern, Switzerland"
+        }
+      ]
+    },
+    {
+      "id": "KZ79-JD9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N18",
+          "given": "Fred E.",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "19 Feb 1891",
+          "standard_date": "19 Feb 1891",
+          "place": "Naples, Ont, NY",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 73 Naples Township Naples village, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Naples, , New York",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "489d906d-fb96-42fb-8bf7-cc37e276cc92",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Niagara, New York, United States",
+          "standard_place": "Niagara, New York, United States"
+        },
+        {
+          "id": "c919589b-8a0a-49e9-b7f7-ff81b098fef9",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Onondaga, New York, United States",
+          "standard_place": "Onondaga, New York, United States"
+        },
+        {
+          "id": "877d0740-0ee8-40c6-9629-c32772571902",
+          "type": "Burial",
+          "date": "1956",
+          "standard_date": "1956",
+          "place": "Rose Ridge Cemetery, Naples, Ontario, New York, United States of America",
+          "standard_place": "Rose Ridge Cemetery, Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "17 Dec 1956",
+          "standard_date": "17 Dec 1956",
+          "place": "Syracuse, Onondaga, New York, United States",
+          "standard_place": "Syracuse, Onondaga, New York, United States"
+        },
+        {
+          "id": "f88ca048-665b-4c83-a895-735873117d6a",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        }
+      ]
+    },
+    {
+      "id": "KHWL-VBS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N19",
+          "given": "Frances",
+          "surname": "Widmer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "15 May 1898",
+          "standard_date": "15 May 1898",
+          "place": "Naples, Ont, NY",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 73 Naples Township Naples village, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Naples, , New York",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "1a27c26e-9107-4b9a-a041-271552b6806e",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Brooklyn Assembly District 5, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "0bde5200-167a-47c6-b7ee-1eba5f4a512a",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Lockport, Niagara, New York",
+          "standard_place": "Lockport, Niagara, New York, United States"
+        },
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Lockport, Niagara, New York",
+          "standard_place": "Lockport, Niagara, New York, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "North Tonawanda City, North Tonawanda, Ward 6, Niagara, New York",
+          "standard_place": "North Tonawanda, Niagara, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "2 Feb 1953",
+          "standard_date": "2 Feb 1953"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "L7B2-QXX",
+      "person2": "KP47-GJB",
+      "facts": [
+        {
+          "id": "c2548be5-44c9-49c5-ae5a-d0a959a813e6",
+          "type": "Marriage",
+          "date": "25 May 1874",
+          "standard_date": "25 May 1874",
+          "place": "Naples, Ontario, New York, United States",
+          "standard_place": "Naples, Naples, Ontario, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KG12-2BT",
+      "person2": "KG12-LS2",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "9 Feb 1838",
+          "standard_date": "9 Feb 1838"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KG12-2BT",
+      "child": "L7B2-QXX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KG12-LS2",
+      "child": "L7B2-QXX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "KP47-2MB",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "KP47-2MB",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "KNS5-DP7",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "KNS5-DP7",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "LCF4-RXY",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "LCF4-RXY",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "9WJG-YZX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "9WJG-YZX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "KZNG-DP9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "KZNG-DP9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "LHSQ-87D",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "LHSQ-87D",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "KZ4R-YRB",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "KZ4R-YRB",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "KP31-XNT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "KP31-XNT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "9WJG-YZB",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "9WJG-YZB",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "K8XH-3MH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "K8XH-3MH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "KZ79-JD9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "KZ79-JD9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R27",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "KCNW-J51",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R28",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "KCNW-J51",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R29",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "KNS5-DPN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R30",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "KNS5-DPN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R31",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "K82B-312"
+    },
+    {
+      "id": "R32",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "K82B-312"
+    },
+    {
+      "id": "R33",
+      "type": "ParentChild",
+      "parent": "L7B2-QXX",
+      "child": "KHWL-VBS",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R34",
+      "type": "ParentChild",
+      "parent": "KP47-GJB",
+      "child": "KHWL-VBS",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R35",
+      "type": "ParentChild",
+      "parent": "LCF4-RXY",
+      "child": "K82B-312"
+    }
+  ],
+  "sources": [
+    {
+      "id": "98F7-71N",
+      "title": "Fred Widmer, \"New York, County Marriages, 1778-1848; 1908-1937\"",
+      "citation": "\"New York, County Marriages, 1778-1848; 1908-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FFRL-BGK : Sun Mar 10 22:15:25 UTC 2024), Entry for Joseph B Widmer and Fred Widmer, 2 October 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FFRL-BG2"
+    },
+    {
+      "id": "98F7-HV2",
+      "title": "Fred J Widner, \"New York, County Marriages, 1778-1848; 1908-1937\"",
+      "citation": "\"New York, County Marriages, 1778-1848; 1908-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FFRC-KY3 : Sat Mar 09 05:39:19 UTC 2024), Entry for F E Widner and Fred J Widner, 22 December 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FFRC-KYQ"
+    },
+    {
+      "id": "SMYH-PF4",
+      "title": "Fred Widmer, \"New York, County Marriages, 1778-1848; 1908-1937\"",
+      "citation": "\"New York, County Marriages, 1778-1848; 1908-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2MT-ZX94 : Sat Jan 18 15:46:33 UTC 2025), Entry for Joseph B Widmer and Fred Widmer, 25 Sep 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2MT-ZX9V"
+    },
+    {
+      "id": "9D74-X27",
+      "title": "Fred Widmer, \"New York, County Marriages, 1778-1848; 1908-1937\"",
+      "citation": "\"New York, County Marriages, 1778-1848; 1908-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZM1-3L7 : Mon Mar 11 01:18:31 UTC 2024), Entry for Sylvester Julian Salisbury and Bert Salisbury, 19 June 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZM1-3LC"
+    },
+    {
+      "id": "98F7-4SX",
+      "title": "Fred J Widmer, \"New York, County Marriages, 1778-1848; 1908-1937\"",
+      "citation": "\"New York, County Marriages, 1778-1848; 1908-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V6HL-LHK : Sun Mar 10 08:57:16 UTC 2024), Entry for F E Widmer and Fred J Widmer, 12 December 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V6HL-LH2"
+    },
+    {
+      "id": "S7VD-K15",
+      "title": "Fred Widmer, \"New York, County Marriages, 1778-1848; 1908-1937\"",
+      "citation": "\"New York, County Marriages, 1778-1848; 1908-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CL-F7JH : Tue Jul 23 12:33:44 UTC 2024), Entry for Sylvester Julian Salisbury and Bert Salisbury, 19 Jun 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CL-F7KS"
+    },
+    {
+      "id": "98F7-QQJ",
+      "title": "Fred Widmer, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MP12-WCZ : Wed Aug 13 18:14:32 UTC 2025), Entry for Fred Widmer and Rose B Widmer, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MP12-WCZ"
+    },
+    {
+      "id": "SK3C-XC6",
+      "title": "Fred Widmer, \"New York, County Marriages, 1778-1848; 1908-1937\"",
+      "citation": "\"New York, County Marriages, 1778-1848; 1908-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2MT-ZXWB : Mon Jan 20 01:28:59 UTC 2025), Entry for Joseph B Widmer and Fred Widmer, 25 Sep 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2MT-ZX44"
+    },
+    {
+      "id": "SLWP-HCJ",
+      "title": "Johann Frederich Widmer, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVPQ-9MRR : Sun Jul 19 02:20:41 UTC 2026), Entry for Johann Frederich Widmer.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVPQ-9MRR"
+    },
+    {
+      "id": "98F7-74N",
+      "title": "Fred Widman, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MSL9-86Y : Thu Jan 01 21:05:18 UTC 2026), Entry for Fred Widman and Rose Widman, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MSL9-86Y"
+    },
+    {
+      "id": "98F7-4PX",
+      "title": "Fred J Widmer, \"New York, County Marriages, 1778-1848; 1908-1937\"",
+      "citation": "\"New York, County Marriages, 1778-1848; 1908-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V6HL-LHY : Fri Mar 08 19:41:25 UTC 2024), Entry for F E Widmer and Fred J Widmer, 12 December 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V6HL-LHB"
+    }
+  ]
+}

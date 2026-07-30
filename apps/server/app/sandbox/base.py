@@ -1,4 +1,4 @@
-"""Vendor-neutral sandbox layer (see docs/plan/sandbox-provider-interface.md).
+"""Vendor-neutral sandbox layer (see docs/specs/sandbox-provider-spec.md).
 
 The control plane talks only to these abstractions; the concrete provider
 (LocalProvider for the POC, E2BProvider for hosted) is config-selected. The

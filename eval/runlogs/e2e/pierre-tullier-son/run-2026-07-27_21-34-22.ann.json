@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "notes": {
+    "f1": "The expected behavior was for the agent to reject the candidate or explicitly document the individual as a rejected hypothesis. Instead, the agent created a new person (I1), gathered evidence supporting that person's relationship, never recorded a rejection, and appeared to be working toward attaching the person before the run timed out. Although it never actually created the ParentChild relationship, the overall behavior was consistent with accepting the hint rather than rejecting it. Because this fixture is designed to verify that the agent avoids a false match, the run should be evaluated based on its research direction, not simply on the fact that the attachment was never completed.",
+    "f2": "The fixture expects the agent to produce a clear, documented negative conclusion. However, the run generated no proof summary and did not include any written statement rejecting the hint. Instead, the available research notes point in the opposite direction, indicating that the agent was building a case in support of the proposed relationship rather than concluding it should be rejected."
+  }
+}
