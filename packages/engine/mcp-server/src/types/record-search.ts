@@ -3,6 +3,7 @@
 
 import type { SimplifiedGedcomX } from "./gedcomx.js";
 import type { RankSearchMatchesResult } from "./rank-search-matches.js";
+import type { JurisdictionCandidate } from "../utils/marriage-jurisdictions.js";
 
 export interface FSDisplay {
   name?: string;
@@ -270,4 +271,15 @@ export interface RecordSearchToolResponse {
   staged?: { resultsRef: string; returnedCount: number } | null;
   // Set only when staging was attempted and failed — the search still succeeded.
   stagingError?: string;
+  // Present only on a NIL marriage search made with `projectPath` + `subjectId`:
+  // the other jurisdictions either spouse is known to have been, earliest first,
+  // read off the project tree. A marriage is filed where the wedding happened,
+  // not where the couple later lived, and marriage usually precedes migration —
+  // so a nil result in one place is a prompt to try the earlier ones, not a
+  // finding. Advisory only; nothing downstream depends on it.
+  jurisdictionHints?: {
+    searchedPlace?: string;
+    candidates: JurisdictionCandidate[];
+    note: string;
+  };
 }

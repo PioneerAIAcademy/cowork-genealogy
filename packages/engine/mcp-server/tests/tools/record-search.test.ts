@@ -835,3 +835,141 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(out.results[0].gedcomx).toBeDefined();
   });
 });
+
+describe("recordSearchTool — jurisdiction hints on a nil marriage search", () => {
+  let dir: string;
+
+  // A couple who married in one place and later lived in another. The decisive
+  // detail is that the EARLIER jurisdiction belongs to the husband, so a hint
+  // that only consulted the subject would never surface it.
+  const TREE = {
+    persons: [
+      {
+        id: "I1",
+        names: [{ given: "James", surname: "Neal" }],
+        facts: [
+          {
+            type: "Birth",
+            date: "1857",
+            place: "Yell, Arkansas, United States",
+            standard_place: "Yell, Arkansas, United States",
+          },
+        ],
+      },
+      {
+        id: "I2",
+        names: [{ given: "Martha", surname: "Wood" }],
+        facts: [
+          {
+            type: "Residence",
+            date: "1900",
+            place: "Hill, Texas, United States",
+            standard_place: "Hill, Texas, United States",
+          },
+        ],
+      },
+    ],
+    relationships: [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [] },
+    ],
+  };
+
+  const nilResult = (): FSSearchResponse => ({
+    results: 0,
+    index: 0,
+    entries: [],
+  });
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-search-juris-"));
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify(TREE),
+      "utf-8",
+    );
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("points at the other spouse's earlier jurisdiction when the marriage search comes back nil", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Hill, Texas, United States",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints).toBeDefined();
+    expect(out.jurisdictionHints?.searchedPlace).toBe(
+      "Hill, Texas, United States",
+    );
+    const places = out.jurisdictionHints?.candidates.map((c) => c.place) ?? [];
+    expect(places).toContain("Yell, Arkansas, United States");
+    // The place already searched is not offered back.
+    expect(places).not.toContain("Hill, Texas, United States");
+  });
+
+  it("stays silent when the marriage search actually returned candidates", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
+    );
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Hill, Texas, United States",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    // A search that found something needs no redirection.
+    expect(out.jurisdictionHints).toBeUndefined();
+  });
+
+  it("stays silent on a nil search that was not about a marriage", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "census",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints).toBeUndefined();
+  });
+
+  it("stays silent without a subjectId, since there is no one to reason about", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Hill, Texas, United States",
+      projectPath: dir,
+    });
+
+    expect(out.jurisdictionHints).toBeUndefined();
+  });
+
+  it("does not fail the search when the project has no readable tree", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+    await rm(join(dir, "tree.gedcomx.json"), { force: true });
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Hill, Texas, United States",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    // Advisory only: an unreadable tree must never turn a good search into an error.
+    expect(out.jurisdictionHints).toBeUndefined();
+    expect(out.totalMatches).toBe(0);
+  });
+});

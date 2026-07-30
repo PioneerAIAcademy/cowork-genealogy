@@ -25,6 +25,8 @@ import {
 } from "../utils/search-helpers.js";
 import { toArk } from "../utils/ark.js";
 import { stageSearchResults } from "../utils/results-staging.js";
+import { readProjectJson } from "../utils/project-io.js";
+import { marriageJurisdictionCandidates } from "../utils/marriage-jurisdictions.js";
 import { rankSearchMatches } from "./rank-search-matches.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
@@ -631,6 +633,56 @@ export async function recordSearchTool(
       });
     } catch (error) {
       out.rankingError = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  // A nil marriage search is a prompt, not a finding. Same reasoning as the
+  // ranking contract above: the rule "when a marriage search comes back empty,
+  // try where the couple were EARLIER, because marriage precedes migration" is
+  // one the model is supposed to remember and measurably does not. Across four
+  // scored `jimmie-jewel-neal` runs every marriage search stayed in the family's
+  // later residence — the jurisdiction the tree's own marriage fact named —
+  // while the answering record sat in the husband's birth state, a fact already
+  // present in the same tree. Computing the alternatives is date arithmetic over
+  // places the tree already holds, so the tool does it instead of asking.
+  //
+  // Deliberately fires only on a NIL result: a search that returned candidates
+  // needs no redirection, and firing on every marriage search would be noise.
+  // Strictly best-effort and advisory — a tree that cannot be read leaves the
+  // search untouched, exactly like the ranking block.
+  const isMarriageSearch =
+    input.recordType === "marriage" ||
+    input.marriagePlace !== undefined ||
+    input.marriageYearFrom !== undefined ||
+    input.marriageYearTo !== undefined;
+
+  if (
+    isMarriageSearch &&
+    out.totalMatches === 0 &&
+    input.subjectId &&
+    input.projectPath
+  ) {
+    try {
+      const tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
+      const candidates = marriageJurisdictionCandidates(
+        tree,
+        input.subjectId,
+        input.marriagePlace,
+      );
+      if (candidates.length > 0) {
+        out.jurisdictionHints = {
+          searchedPlace: input.marriagePlace,
+          candidates,
+          note:
+            "This marriage search returned nothing in the place searched. A marriage is " +
+            "filed where the wedding happened, not where the couple later lived, and a " +
+            "couple usually married BEFORE they migrated. These are the other places " +
+            "either spouse is known to have been, earliest first — try them before " +
+            "concluding no marriage record exists.",
+        };
+      }
+    } catch {
+      // A missing or malformed tree is not a search failure. Stay silent.
     }
   }
 

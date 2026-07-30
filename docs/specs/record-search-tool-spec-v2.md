@@ -243,6 +243,48 @@ Strict surname + birth-place match:
 | `offset` | number | Echo of the input offset (0 if not supplied). |
 | `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). |
 | `results` | RecordSearchResult[] | The ranked results, best-scoring first. |
+| `jurisdictionHints` | object \| undefined | Present **only** on a nil marriage search made with both `projectPath` and `subjectId`. See below. |
+
+### `jurisdictionHints` — where else to look when a marriage search returns nothing
+
+A marriage is filed where the wedding happened, not where the couple later
+lived, and a couple usually married **before** they migrated. So a nil marriage
+search in one jurisdiction is a prompt to try the couple's *earlier* places, not
+a finding that no record exists.
+
+The tool computes those places itself rather than relying on the caller to
+remember the rule. This is the same reasoning as host-side ranking: a documented
+step decays under compaction, a tool contract does not. Measured basis: across
+four scored `jimmie-jewel-neal` benchmark runs, every marriage search stayed in
+the family's later residence — the jurisdiction the tree's own marriage fact
+named — while the answering record sat in the husband's birth state, a fact
+already present in the same tree.
+
+Fires when **all** of: the search was marriage-scoped (`recordType: "marriage"`,
+or any `marriagePlace` / `marriageYearFrom` / `marriageYearTo`), `totalMatches`
+is 0, and both `projectPath` and `subjectId` were supplied. It deliberately does
+**not** fire on a search that returned candidates — that search needs no
+redirection — and firing on every marriage search would be noise.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `searchedPlace` | string \| undefined | Echo of the `marriagePlace` that came back nil. |
+| `candidates` | JurisdictionCandidate[] | Other places either spouse is known to have been, **earliest first**. Undated places sort last. The place already searched is excluded. |
+| `note` | string | Plain-language statement of the rule, so the reason travels with the data. |
+
+Each `JurisdictionCandidate`: `place` (as written, `standard_place` preferred),
+`earliestYear` (number \| null), `whose` (the `persons[].id` that contributed the
+fact), `fromFact` (e.g. `Birth`, `Residence`, `Marriage`).
+
+Both spouses contribute, which is the point: the decisive place is frequently
+the *other* spouse's birthplace, which the subject's own facts never mention.
+
+**Advisory and best-effort.** A missing or malformed `tree.gedcomx.json`, an
+unknown `subjectId`, or a spouse absent from `persons` all leave the field off
+entirely — never an error. Ranking degrading must not take the search down with
+it, and neither must this.
+
+Implementation: `packages/engine/mcp-server/src/utils/marriage-jurisdictions.ts`.
 
 Each `RecordSearchResult`:
 
