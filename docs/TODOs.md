@@ -278,11 +278,6 @@ Deferred at wrap; see
   scenarios; judges penalize the thin tree). Needs an ownership spec:
   `merge_record_into_tree` grows this, or person-evidence does.
 
-- [ ] **person-evidence epistemic gate** — identity over-reach: pe links
-  written at `confident` from one uncorroborated record with `[?]` readings
-  (clark-parents). The extractor agent got a tentative-cap line; person-evidence
-  needs the equivalent gate + mandatory conflicts entry.
-
 - [ ] **Recover the classification-quality drop from the sonnet-4-6 pin.** The
   extractor was re-pinned sonnet-5 → `claude-sonnet-4-6` (2026-07-18) because sonnet-5
   hangs at Cowork/e2e `effortLevel: high` (adaptive-thinking runaway); the 8k
