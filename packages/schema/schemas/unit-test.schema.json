@@ -190,7 +190,12 @@
         "max_wall_clock_seconds": { "type": "integer", "minimum": 1 },
         "max_tool_calls": { "type": "integer", "minimum": 1 },
         "max_input_tokens_per_turn": { "type": "integer", "minimum": 1 },
-        "sdk_message_silence_seconds": { "type": "integer", "minimum": 1 }
+        "sdk_message_silence_seconds": { "type": "integer", "minimum": 1 },
+        "stub_skills": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Positive tests only. Sub-skills this test does not want executed. The PreToolUse hook records the delegation in skills_invoked, denies the launch, and lets the run continue, so the caller still finishes its own logging. Use when the callee has its own unit suite."
+        }
       }
     }
   },
