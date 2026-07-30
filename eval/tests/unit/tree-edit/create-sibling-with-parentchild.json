@@ -5,7 +5,13 @@
     "name": "Create a new person and a ParentChild relationship authorized by a probable-tier proof",
     "type": "positive",
     "description": "Per SKILL.md §'Adding a person' and §'Adding a relationship', combined with relationship-accuracy.md threshold. The merge-pending scenario has ps_003 at `probable` tier authorizing Mary Flynn as Thomas Flynn's daughter (1850 census household evidence, a_016). Mary is NOT yet in tree.gedcomx.json — this test creates her with a fresh I-prefix id, a name, and a ParentChild relationship from Thomas (I2) to her, with S1 (the 1850 census source already in tree.sources) as the relationship source.",
-    "tags": ["tree-edit", "add-person", "parentchild-relationship", "proof-authorized", "synthetic-id"]
+    "tags": [
+      "tree-edit",
+      "add-person",
+      "parentchild-relationship",
+      "proof-authorized",
+      "synthetic-id"
+    ]
   },
   "input": {
     "user_message": "tree-edit: add a relationship. Per ps_003 (probable tier), Mary Flynn is Thomas's daughter. Create Mary in the tree with the next synthetic I-prefix id (gender Female, name 'Mary Flynn' as the preferred BirthName) and add a ParentChild relationship from Thomas (I2) to Mary with S1 as the source (page 'dwelling 84, family 91'). Do NOT add any facts to Mary's person record (no Birth fact, no Residence, nothing) — sourced facts are materialized onto the tree person by person-evidence's materialize_facts (record-extraction is assertion-only), not invented here. This call creates only the person stub + the ParentChild relationship.",
@@ -18,7 +24,7 @@
     "Should NOT add a Birth fact to Mary directly from raw census data — materializing sourced facts onto a tree person is person-evidence's materialize_facts (record-extraction is assertion-only), not this ad-hoc tree-edit call. tree-edit creates the person stub + the sourced relationship edge; assertions in research.json remain the source of truth for facts",
     "Edit-minimality: no existing person, relationship, fact, or source is modified. I3, I4, and the merge-pending state stay intact (this test does not perform the pending merge)",
     "Should reference ps_003 as the proof authorization in the response — relationship-accuracy.md requires the threshold to be met before writing a relationship",
-    "Should call validate_research_schema after the edit to confirm both files remain valid"
+    "Should NOT need a separate validate_research_schema call — tree_edit, tree_correct, and merge_tree_persons all validate-before-persist (SKILL.md § Validation), and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it."
   ],
   "execution": {
     "max_wall_clock_seconds": 600,
