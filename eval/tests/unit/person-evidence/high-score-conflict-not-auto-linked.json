@@ -4,7 +4,7 @@
     "skill": "person-evidence",
     "name": "A high score must not auto-link past a qualitative conflict",
     "type": "positive",
-    "description": "Link assertion a_002 — a baptism record for a 'Patrick Flynn' whose birthplace is recorded as Germany, contradicting the Ireland birthplace in every other source. same_person returns a high score (0.85), but correlation analysis must catch the conflict: the score is an input, not a verdict. person-evidence must NOT create a confident link — confidence is capped and the user is asked.",
+    "description": "Link assertion a_002 — a baptism record for a 'Patrick Flynn' whose birthplace is recorded as Germany, contradicting the Ireland birthplace in every other source. same_person returns a high score (0.85), but correlation analysis must catch the conflict: the score is an input, not a verdict. person-evidence must NOT create a confident link — confidence is capped to speculative; the skill writes the speculative link with the conflict flagged and informs the user, rather than stopping to ask with nothing written.",
     "tags": ["person-evidence", "same-person", "score-conflict", "safety"]
   },
   "input": {
@@ -14,7 +14,8 @@
   "mcp_fixtures": ["same-person-flynn-conflict"],
   "judge_context": [
     "same_person returns 0.85, but the record's birthplace (Germany) contradicts the subject's birthplace (Ireland) attested by every other source — a core-identifier conflict",
-    "person-evidence must NOT create a `confident` person_evidence entry for a_002 — the qualitative conflict caps confidence regardless of the score; the link, if any, is `speculative` and the user is asked",
-    "The rationale must surface the birthplace conflict explicitly rather than deferring to the high score"
+    "person-evidence must NOT create a `confident` or `probable` person_evidence entry for a_002 — the qualitative conflict caps confidence regardless of the 0.85 score",
+    "Because the identity itself is strongly supported (exact name, birth year, and residence agree; only the birthplace contradicts), the correct action is to CREATE a `speculative` person_evidence link — capped by the conflict — then inform the user what was written and recommend conflict-resolution as the follow-up. Stopping at an analysis that merely presents options and asks the user which to do, with NO link written, does not fulfill the explicit 'link this assertion' request and scores as a fail on Completeness (and Correctness).",
+    "The rationale on the speculative link must surface the birthplace conflict explicitly rather than deferring to the high score"
   ]
 }

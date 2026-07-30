@@ -339,21 +339,25 @@ score should pull a tentative Strong back to Moderate. But:
   conflict-resolution's job, not something to smooth over in the match.
 - A **different given name presented as the same person is a
   core-identifier conflict**, not a name variant. The line is *kind*, not
-  spelling distance: a transcription, phonetic, or cross-language rendering
-  — or an **established** diminutive that is genuinely the *same* name
-  (Bill/William, Peggy/Margaret) — stays benign; a record that gives one
-  given name where the tree gives another is a conflict until an
-  **independent** source (not the record in hand, not your own inline
-  assertion) establishes the two as one name. You may **not** dissolve it by
-  stating a linguistic rule ("X is a standard diminutive of Y") from your
-  own knowledge — that is the unsourced rationalization this policy forbids.
-  It **caps confidence at `speculative`**, must be **named explicitly in the
-  `pe_` rationale** as an open conflict, and is conflict-resolution's to
-  adjudicate and hypothesis-tracking's to persist — this skill only surfaces
-  and routes it. If records already in hand carry **both** renderings across
-  different personas, that co-occurrence is corroboration-or-conflict to
-  weigh through that same machinery, never an equivalence to assert
-  unilaterally.
+  spelling distance. A **conventional, widely-attested** rendering of the
+  *same* name — a transcription or phonetic variant, a cross-language form
+  (Johannes/John), or a canonical diminutive (Bill/William, Peggy/Margaret)
+  — is benign: you may recognize it, and when the non-name correlation is
+  independently strong (age, place, relatives all agree) it still carries a
+  Moderate/Strong link. What you may **not** do is *construct* an equivalence
+  to rescue a match — invent "X is a standard diminutive of Y" for an
+  uncommon pair, or lean on such an argument precisely because the match is
+  otherwise weak or single-source. The tell: if you are writing the
+  linguistic argument **in order to make the link work**, treat the names as
+  a conflict. A genuinely different given name (a record's "Petita" against
+  the tree's "Petra") is a conflict until an **independent** source (not the
+  record in hand) attests the two as one name; until then it **caps
+  confidence at `speculative`**, must be **named explicitly in the `pe_`
+  rationale** as an open conflict, and is conflict-resolution's to adjudicate
+  and hypothesis-tracking's to persist — this skill only surfaces and routes
+  it. If records already in hand carry **both** renderings across different
+  personas, that co-occurrence is corroboration-or-conflict to weigh through
+  that same machinery, never an equivalence to assert unilaterally.
 - When **no score is available** (FTS-, image-, PDF-sourced
   assertions, or a search with no sidecar), correlation analysis stands
   alone — the table above applies unchanged.
@@ -362,11 +366,23 @@ score should pull a tentative Strong back to Moderate. But:
 **only** to an autonomous run where no user can ever confirm (an
 autonomous `/research` run). **When a user is present** — a request that
 names an assertion to link, an interactive session — the pause rows
-above apply unchanged: present the evidence, disclose the score and the
-conflict, and create the `speculative` link or leave it for the user's
-confirmation. A high score capped at `speculative` by a qualitative
-conflict is still a pause-for-user, **not** a no-link — do not convert
-it into a hard rejection when a user can adjudicate. In an autonomous
+above apply unchanged, but *how* the pause resolves depends on **why**
+confidence is capped. In both cases present the evidence and disclose the
+score and the conflict, then:
+
+- **Weak identity** — only the name matches, or a low score over thin
+  correlation — is the Weak row's case: the identity itself is in doubt,
+  so **pause and ask before creating anything; never auto-link.**
+- **Strong identity capped only by a qualitative conflict** — name, age,
+  place, and relationship fit all agree and a single attribute
+  contradicts (a birthplace conflict over an otherwise-firm 0.85 match) —
+  is a well-supported connection, not a doubtful one: **create the
+  `speculative` link**, name the conflicting attribute explicitly in the
+  `pe_` rationale, then tell the user what you wrote and recommend
+  conflict-resolution as the follow-up. Do **not** stop at offering
+  options with nothing written — that loses the analysis and stalls the
+  request. A high score capped at `speculative` by a qualitative conflict
+  is a link-and-flag, **not** a no-link and **not** a hard rejection. In an autonomous
 run, by contrast, the two pause rows resolve **downward, never upward**:
 a **Weak** match — or any match whose correlation caps confidence at
 `speculative` — becomes a **no-link**. Do
@@ -667,12 +683,10 @@ When multiple candidates share the same name in the same area:
   as head of household suggests adult"). Mark confidence no higher
   than `probable` without age corroboration.
 - **Name variants across languages:** Treat Johannes/John/Johann,
-  Marguerite/Margaret, etc. as potential matches where the mapping is an
-  **established** rendering of the *same* name; corroborate a claimed
-  diminutive or variant against an independent source rather than asserting
-  it inline. Note the variant mapping in the rationale. A *different* given
-  name presented as the same person is a core-identifier conflict (Step 3),
-  not a language variant.
+  Marguerite/Margaret, and other conventional cross-language renderings of
+  the *same* name as potential matches — you may recognize these on their
+  face; note the mapping in the rationale. A genuinely different given name
+  is a core-identifier conflict (Step 3), not a language variant.
 - **Multiple records, same repository session:** When a single search
   returns multiple records about the same person, link them in one
   batch but evaluate each independently. Do not let one record's
