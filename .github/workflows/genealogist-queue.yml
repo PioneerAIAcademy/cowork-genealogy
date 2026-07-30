@@ -51,6 +51,14 @@ name: genealogist-queue
 # goes green while doing nothing. When touching the readiness rules, verify
 # against a real approved PR, not just a dispatch dry run — the dispatch path
 # does not exercise the self-filter at all.
+#
+# 2026-07-30, same investigation: THE EVENTS ALONE CANNOT KEEP THE QUEUE CURRENT.
+# `check_suite` never fires (see the trigger below), so nothing observes CI
+# turning green. A PR approved WHILE CI is still running gets its last event at
+# approval time and is never re-evaluated — #924 hit this within minutes of the
+# fix above. Hence the `schedule` sweep: the events are the fast path, the sweep
+# is what makes the queue eventually correct. If you ever remove the schedule,
+# something else must answer "what re-checks a PR after CI finishes?"
 
 on:
   pull_request:
@@ -58,7 +66,27 @@ on:
   pull_request_review:
     types: [submitted, dismissed]
   check_suite:
+    # DEAD TRIGGER, kept only to document that it is dead. Every check suite in
+    # this repo is created by an Actions workflow using `GITHUB_TOKEN`, and
+    # GitHub does not start a workflow run from a `GITHUB_TOKEN`-triggered
+    # event. Confirmed 2026-07-30: 0 `check_suite` runs in this workflow's
+    # entire history (66 pull_request, 33 pull_request_review, 1
+    # workflow_dispatch). The `schedule` below is what actually covers
+    # "CI turned green after the last PR event".
     types: [completed]
+  schedule:
+    # WHY A SWEEP AND NOT JUST EVENTS. The per-PR triggers cannot see CI turning
+    # green: the only events left are `pull_request` and `pull_request_review`
+    # (see the dead `check_suite` above), so a PR approved WHILE CI is still
+    # running gets its last event at approval time and is never re-evaluated.
+    # #924 hit exactly that on 2026-07-30. The events are the low-latency path;
+    # this sweep is the one that guarantees the queue converges.
+    #
+    # Every 30 min: a human review queue does not need finer, and it halves the
+    # run-list clutter versus */15. Scheduled runs are best-effort — GitHub
+    # delays or drops them under load — which is fine for a converging
+    # add-only sweep and is the other reason not to rely on the schedule alone.
+    - cron: "*/30 * * * *"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -77,10 +105,13 @@ permissions:
   contents: read
 
 concurrency:
+  # Per-PR events serialize per PR. Sweeps share ONE key ('sweep') so a cron run
+  # that GitHub delayed cannot race the next one; they are add-only and
+  # idempotent, so queueing rather than cancelling costs nothing.
   group: >-
     genealogist-queue-${{ github.event.pull_request.number
       || github.event.check_suite.id
-      || github.run_id }}
+      || 'sweep' }}
   cancel-in-progress: false
 
 jobs:
@@ -113,8 +144,13 @@ jobs:
             const { owner, repo } = context.repo;
 
             // ---- which PRs to evaluate --------------------------------------
+            // `schedule` and `workflow_dispatch` sweep every open PR; both lack a
+            // `pull_request` payload, so neither may reach the single-PR branch.
+            const sweep = context.eventName === 'schedule'
+                       || context.eventName === 'workflow_dispatch';
+
             let numbers = [];
-            if (context.eventName === 'workflow_dispatch') {
+            if (sweep) {
               const open = await github.paginate(github.rest.pulls.list,
                 { owner, repo, state: 'open', per_page: 100 });
               numbers = open.map(p => p.number);
@@ -205,8 +241,7 @@ jobs:
             // try/catch that downgraded failure to a warning. The API then
             // no-op'd with HTTP 200 and the job went green while doing nothing.
             // So: no catch, and read the label back to confirm it landed.
-            const rows = [];
-            for (const n of numbers) {
+            async function act(n) {
               const { pr, labeled, ready, reasons } = await evaluate(n);
               let action;
 
@@ -234,7 +269,31 @@ jobs:
               }
 
               core.info(`#${n} ${action}${reasons.length ? ' — ' + reasons.join('; ') : ''}`);
-              rows.push([`#${n}`, pr.user.login, action, reasons.join('; ') || '—']);
+              return [`#${n}`, pr.user.login, action, reasons.join('; ') || '—'];
+            }
+
+            const rows = [];
+            const errors = [];
+            for (const n of numbers) {
+              if (!sweep) { rows.push(await act(n)); continue; }
+              // A sweep must not lose the other 17 PRs to one PR's transient API
+              // error. This catch is NOT the one the note above warns about: it
+              // never decides whether a label write succeeded — that is settled by
+              // the read-back inside act() — and every error caught here still
+              // fails the job via setFailed below. Nothing is downgraded to a
+              // warning; the sweep just finishes before it reports.
+              try {
+                rows.push(await act(n));
+              } catch (e) {
+                errors.push(`#${n}: ${e.message}`);
+                core.error(`#${n} errored — ${e.message}`);
+                rows.push([`#${n}`, '—', 'ERRORED', e.message]);
+              }
+            }
+            if (errors.length) {
+              core.setFailed(
+                `${errors.length} of ${numbers.length} PR(s) errored during the sweep; ` +
+                `the rest were evaluated. ${errors.join(' | ')}`);
             }
 
             await core.summary
