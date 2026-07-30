@@ -30,7 +30,11 @@ in the `pe_` rationale, and route it to conflict-resolution / hypothesis-trackin
 equivalence is established only by an **independent** corroborating source, not asserted.
 
 Sibling of `norwegian-patronymic-conflict-link` (ut_020), where the core-identifier
-conflict is a patronymic mismatch; here it is a different maternal given name. Regression
-guards that must still link live in the transcription-variant tests (Flynn/Flinn) and the
-cross-language edge case (Johannes/John) — those are the *same* name and must not be
-caught by this rule.
+conflict is a patronymic mismatch; here it is a different maternal given name. The
+must-link direction — a *same-name* variant with strong non-name correlation still links —
+is guarded by the surname-transcription test `ut_person_evidence_013`
+(low-score-strong-correlation-still-links, Flynn/Flinn) and `ut_person_evidence_019`
+(degenerate-score-still-links). There is **not yet** a dedicated cross-language
+*given-name* must-link guard (a Johannes/John-style case) in this skill; adding one is a
+recommended follow-up so the narrowing in this branch can't over-cap a legitimate
+cross-language given-name match undetected.
