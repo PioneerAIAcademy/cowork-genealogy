@@ -5,7 +5,11 @@
     "name": "Extract assertions from the 1890 Ferber–Becker marriage index entry",
     "type": "positive",
     "description": "FamilySearch index entry for the 1890 Hamilton County, Ohio marriage of William H. Ferber and Emma Becker ('Ohio, County Marriages, 1789-2016', ark:/61903/1:1:XZR1-JZP). Real record from the Ferber/Becker research (#799). Sparse index: names + year + county, no parents recorded.",
-    "tags": ["extraction", "marriage-record", "ferber-becker"]
+    "tags": [
+      "extraction",
+      "marriage-record",
+      "ferber-becker"
+    ]
   },
   "input": {
     "user_message": "Extract assertions from this marriage record:\n\nOhio, County Marriages, 1789-2016 — FamilySearch index entry\nark:/61903/1:1:XZR1-JZP\n\nGroom: Wm. H. Ferber\nBride: Emma Becker\nMarriage year: 1890\nEvent place: Hamilton County, Ohio\n\n(This index entry records no parents' names for either party.)",
@@ -19,5 +23,29 @@
     "Informant: the parties are informants for their own facts (proximity 'self'); the clerk is the recorder",
     "'1890' is a year, not a full date — do not fabricate an exact day (the 10 Sep 1890 date lives only on the original register image, a separate record)"
   ],
-  "execution": { "max_turns": 40, "max_wall_clock_seconds": 600, "sdk_message_silence_seconds": 300 }
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "groom",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "attribute": "place",
+      "evidence_type": "direct"
+    }
+  ]
 }

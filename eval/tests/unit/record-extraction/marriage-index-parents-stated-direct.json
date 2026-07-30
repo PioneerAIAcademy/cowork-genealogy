@@ -5,7 +5,12 @@
     "name": "Extract assertions from Frank Becker's 1916 marriage to Catherine Wessel",
     "type": "positive",
     "description": "1916 Hamilton County, Ohio marriage of Frank Becker and Catherine Wessel ('Ohio, County Marriages, 1789-2016', ark:/61903/1:1:XZYQ-VYD). Real record from the Ferber/Becker research (#799). Names both parties' parents; Frank's parents are John Becker and Anna Kramer - part of the Anna/Mary Kramer name conflict.",
-    "tags": ["extraction", "marriage-record", "ferber-becker", "direct-vs-indirect"]
+    "tags": [
+      "extraction",
+      "marriage-record",
+      "ferber-becker",
+      "direct-vs-indirect"
+    ]
   },
   "input": {
     "user_message": "Extract assertions from this marriage record:\n\nOhio, County Marriages, 1789-2016 - Hamilton County, Ohio\nFamilySearch ark:/61903/1:1:XZYQ-VYD\n\nMarriage date: 19 July 1916\nMarriage place: Hamilton County, Ohio\n\nGroom: Frank Becker\n  Marital status: Single\n  Birth: 8 April, Cincinnati, Ohio (no year stated)\n  Father: John Becker\n  Mother: Anna Kramer\n\nBride: Catherine Wessel\n  Marital status: Single\n  Birth: 29 May, Cincinnati, Ohio (no year stated)\n  Father: Henry Wessel\n  Mother: Mary Overberg",
@@ -20,5 +25,52 @@
     "Informant: each party is the informant for their own facts (proximity 'self'); the clerk/officiant is the recorder",
     "Source classification is DERIVATIVE - a FamilySearch indexed transcription of the county marriage register"
   ],
-  "execution": { "max_turns": 40, "max_wall_clock_seconds": 600, "sdk_message_silence_seconds": 300 }
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "groom",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "optional": true,
+      "evidence_type": "direct"
+    },
+    {
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "optional": true,
+      "evidence_type": "direct"
+    }
+  ]
 }
