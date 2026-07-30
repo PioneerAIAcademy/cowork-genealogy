@@ -33,7 +33,9 @@ is out of scope for this mechanism.
 
 What this deliberately does NOT cover: `skills_invoked` records the skill NAME
 only, not the `args` string the caller composed. So no validator can assert
-WHAT was passed across the seam — see docs/TODOs.md.
+WHAT was passed across the seam — a stub sharpens that, since a denied callee
+leaves no output to infer the args from. Widening `skills_invoked` is not the
+fix; existing validators depend on its `list[str]` shape.
 """
 
 from __future__ import annotations

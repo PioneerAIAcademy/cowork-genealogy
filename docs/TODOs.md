@@ -333,17 +333,6 @@ Deferred at wrap; see
 
 ## Eval framework
 
-- [ ] **`skills_invoked` records the skill name but drops the `Skill` tool's
-  `args`, so nothing can assert what crossed a skill-to-skill seam.**
-  `search-records` SKILL.md Step 7 escalates "with the same person attributes";
-  no validator, judge, or CI check verifies it did — both suites stay green if
-  the hand-off passes garbage. Surfaced adding `execution.stub_skills` (#969),
-  which sharpens it: a stubbed callee leaves no output to infer the args from.
-  Fix shape: a parallel `skill_invocations: list[dict]`, not a widened
-  `skills_invoked` — existing validators depend on its `list[str]` shape.
-  Contract and the rest of the reasoning: `unit-test-spec.md` §5.7 and
-  `eval/harness/harness/skill_stubs.py`.
-
 - [ ] **Revert the temporary $25 e2e cost caps** — `bottemiller-parents` and
   `cruz-corona-ancestry` fixtures carry `caps.max_cost_usd: 25` as experiment
   headroom for the extractor-state-diet measurement window (3 of 5 e2e runs
