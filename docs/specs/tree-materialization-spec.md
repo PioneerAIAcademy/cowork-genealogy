@@ -15,7 +15,7 @@
 > specs under `packages/engine/plugin/skills/`.
 >
 > Grounding evidence is the July record-extraction audit (theme T6) and
-> the closing report §3.4 (`docs/plan/record-extraction-consolidation-closing-report.md`),
+> the closing report §3.4 (`docs/record-extraction-consolidation-closing-report.md`),
 > plus a first-hand diagnosis of the `cruz-corona-ancestry` e2e runs
 > (§1.2).
 
@@ -192,8 +192,7 @@ materialize_facts({ projectPath, ops: [{ personId?, recordId, recordRole }, ...]
   the allocator rescans the live document), one `validateParsed`, one
   atomic write. All-or-nothing: any op's failure writes nothing, identified
   as `ops[i]: <msg>`. Mirrors the `ops[]` convention `research_append` and
-  `tree_edit` already have — added 2026-07-26 (`docs/plan/
-  tree-materialization-batching-plan.md`) after per-persona calls were
+  `tree_edit` already have — added 2026-07-26 after per-persona calls were
   measured as a driver of e2e wall-clock regressions on fixtures
   materializing many personas per research question. Simpler than
   `tree_edit`'s batching: since `materialize_facts` never writes
@@ -438,7 +437,7 @@ comes from) rather than a hand-walked literal ref — `tree_edit` resolves
 `utils/source-ref-resolver.ts` (`docs/specs/tree-edit-tool-spec.md`, the
 `add_relationship` entry). Added 2026-07-26 after the model was observed
 getting the hand-walked chain wrong on its first attempt, costing a retry
-(`docs/plan/tree-materialization-batching-plan.md` Phase 3) — a literal
+(`docs/specs/tree-edit-tool-spec.md` §4.1, `add_relationship`) — a literal
 `relationship.sources` remains available but is no longer how person-evidence
 supplies it. `add_household_children` **retires** (§9); person-evidence
 mints household members via `materialize_facts` create-or-enrich and writes
@@ -639,8 +638,7 @@ Each phase is independently reviewable; the suite stays green between them.
   batch `ops[]` form added 2026-07-26 once a real need arrived: e2e runlogs
   showed 8-44 unbatched `materialize_facts` calls per run on
   marriage/vitals/family-reconstitution fixtures, correlating with wall-clock
-  regressions up to +92% (see §4.1, `docs/plan/
-  tree-materialization-batching-plan.md`). This is a **different axis** from
+  regressions up to +92% (see §4.1). This is a **different axis** from
   the `assertionIds[]` variant floated here originally — that would narrow
   *one* persona's assertions; the real need was batching *many* personas in
   one call. `assertionIds[]` remains unbuilt, still deferred until its own

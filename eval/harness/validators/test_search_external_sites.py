@@ -87,6 +87,60 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
     assert not errors, "URL-generation log-shape violations:\n  - " + "\n  - ".join(errors)
 
 
+# --- Tag-gated no-harm invariant (grade_on_invariant negatives) ------
+
+def test_no_external_search_on_planning_request(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (no-search-no-write): the search-external-sites no-harm
+    invariant for a planning/strategy request that should route to
+    research-plan.
+
+    search-external-sites executes a chosen external-site search — it
+    generates a pre-filled URL and logs the step to research.json. A pure
+    planning question ("what external sites should I search next?") must
+    not cause a search to be EXECUTED or logged. This is the deterministic
+    gate for the grade_on_invariant negative ut_search_external_sites_011:
+    the decline phrasing (and whether the model routes to research-plan
+    via the Skill tool or just declines in text) varies run to run, but
+    the state-harm invariant always holds and is what we assert. See
+    docs/specs/unit-test-spec.md and the sibling
+    test_search_records.py::test_no_search_or_writes_on_planning_request.
+
+    Fails iff the run:
+      - made an `external_links_search` MCP call (a search was executed),
+        or
+      - appended a new `log` entry (search-external-sites records every
+        search it runs; research-plan — the acceptable route — never
+        writes `log`, so any new log entry means a search skill actually
+        ran).
+
+    Deliberately does NOT flag other research.json writes: routing to
+    research-plan legitimately writes `plans`/`questions`, which is correct
+    behavior, not harm.
+    """
+    if "no-search-no-write" not in test.get("tags", []):
+        pytest.skip("not a no-search-no-write scenario")
+
+    # 1. No external-site search executed.
+    searched = [
+        c for c in (tool_calls or [])
+        if c.get("tool", "").split("__")[-1] == "external_links_search"
+    ]
+    assert not searched, (
+        "planning request must not execute an external-site search; got "
+        f"external_links_search call(s) with args: "
+        f"{[c.get('args') for c in searched]}"
+    )
+
+    # 2. No new search log entry (research-plan never writes `log`).
+    new_entries = _new_log_entries(before_state, after_state)
+    assert not new_entries, (
+        "planning request must not append a search log entry; new log "
+        f"ids: {[e.get('id') for e in new_entries]}"
+    )
+
+
 # --- Tag-gated site-specific checks ----------------------------------
 
 def test_log_site_ancestry(before_state, after_state, test):
