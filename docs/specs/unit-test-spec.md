@@ -411,7 +411,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "grade_on_invariant": {
           "type": "boolean",
           "default": false,
-          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous."
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. The runnability gate enforces this: it aborts the test unless one of its tags gates a validator in that file."
         }
       },
       "additionalProperties": false

@@ -29,6 +29,11 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 23, flag `adds_daughter`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — México, Oaxaca, Registro Civil, 1861-2002: death registration, 28 October 1879, Tlaxiaco, for Juana Aguilar (b. 1876, d. 1879), naming parents Jose Maria Aguilar and Sebastiana Sandoval. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming Juana Aguilar as the subject's daughter, plus a `required` finding that the report documents the rejection.
+**Resolved: true match.** This fixture came from a hint batch (`filtered-list-samples.csv` row 23, flag `adds_daughter`, confidence 3) in which roughly half the hint records are false matches. A genealogist reviewed the tree person (Sebastiana Sandoval / Jose Aguilar, K2GV-D61) and the hint record (México, Oaxaca, Registro Civil, 1861-2002: death registration, 28 October 1879, Tlaxiaco, for Juana Aguilar, b. 1876, d. 1879, naming parents Jose Maria Aguilar and Sebastiana Sandoval) and confirmed the hint is correct; `expected-findings.json` is unchanged from the draft transcription.
 
-Points a reviewer should weigh: the father's name is recorded with a middle name, "Jose **Maria** Aguilar", in the hint vs. plain "Jose Aguilar" in the tree — a routine expansion, not a conflict. Juana's birth year (1876) is one year before the tree's earliest recorded child, Juan (b. 1877) — close enough to be a full sibling from the same set of pregnancies rather than a contradiction, though a reviewer should confirm the two aren't the same birth event misindexed under two names. The region (Oaxaca) matches the family's other records exactly.
+Two points the review turned on:
+
+- **Father's name.** "Jose **Maria** Aguilar" on the hint record vs. plain "Jose Aguilar" in the tree is a routine middle-name expansion, not a conflict — same person.
+- **Birth-year proximity to an existing child.** Juana's birth year (1876) sits one year before the tree's earliest recorded child, Juan Aguilar Sandoval (male, b. 1877) — close enough to raise the question of whether the hint was the same birth event misindexed under two names. It is not: Juan is recorded male and Juana is recorded female, with distinct birth years (1877 vs. 1876) and Juana's own death record (1879). They are two separate children of the same couple, not a duplicate.
+
+The region (Oaxaca) matches the family's other records exactly.

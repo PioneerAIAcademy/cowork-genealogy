@@ -180,6 +180,7 @@ async def _run_one_test_async(
         fixtures_dir=paths.fixtures_dir,
         skills_dir=paths.skills_dir,
         tests_dir=paths.tests_dir,
+        validators_dir=paths.validators_dir,
     )
     if not gate.runnable:
         return _aborted_entry(

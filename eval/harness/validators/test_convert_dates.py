@@ -42,3 +42,29 @@ def test_only_convert_calendar_called(tool_calls, test):
         f"convert-dates positive tests should only call convert_calendar; "
         f"also called: {bad}"
     )
+
+
+# --- Invariant for the boundary negatives (no spurious conversion) ---
+
+def test_no_spurious_conversion(tool_calls, test):
+    """Invariant behind the `grade_on_invariant` flag on the convert-dates
+    boundary negatives, gated on the `no-spurious-conversion` tag.
+
+    Some near-miss inputs look date-shaped but need no calendar conversion:
+    a cosmetic reformatting request (ut_convert_dates_010), or a question
+    about the *history* of a calendar convention (ut_convert_dates_003).
+    Whether or not the router loads convert-dates, it must NOT perform a
+    calendar conversion on these. Deterministic check: convert_calendar was
+    never invoked. This is the real gate that keeps grade_on_invariant from
+    passing vacuously.
+    """
+    if "no-spurious-conversion" not in (test.get("tags") or []):
+        pytest.skip("only applies to no-spurious-conversion negative tests")
+    converted = [
+        tc["tool"] for tc in tool_calls
+        if "convert_calendar" in tc.get("tool", "")
+    ]
+    assert not converted, (
+        "this boundary negative must not trigger a calendar conversion; "
+        f"convert_calendar was invoked: {converted}"
+    )

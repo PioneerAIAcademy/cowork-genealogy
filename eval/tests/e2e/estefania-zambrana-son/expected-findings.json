@@ -3,17 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Estefania Zambrana and Antonio Beisaga (recorded in the hint as Veizaga) had a son, Ricardo Veizaga Zambrana, baptized 3 April 1874 in Santo Domingo, Cochabamba, Bolivia, in addition to their two children already in the tree (Fructuosa b. 1867, Geronimo b. 1877).",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Estefania Zambrana (PID 9QTV-KDZ) and Antonio Beisaga had a son Ricardo, baptized 3 April 1874 at Santo Domingo, Cochabamba, unless it can positively tie that baptism to this couple. The couple is well-documented in Cochabamba parish records - an 1870 marriage (23 Mar 1870, San Jose; Antonio Beizaga b. 1845 x Estefania Zambrana b. 1848) and children spanning 1867-1878 (Fructuosa 1867, Luis 1871, Tomaza 1875, Geronimo 1877, Maria de la o 1878; surname recorded variantly as Beisaga/Beizaga) - yet NONE of their documented children is a Ricardo, and no record positively ties a 1874 Ricardo baptism to them. The only 'Ricardo Beisaga' locatable is himself a father in a 1908 Sicaya baptism whose own parents are not named. On this evidence the 1874 hint is not proven to be their child; a match on the parents' names alone does not establish the additional son. Pass = the final tree/research contains no son Ricardo attached to this couple, no 1874 child linked to them, and no stub person representing him as their child (or such a candidate appears only as an explicitly unproven/rejected hypothesis).",
       "details": {
-        "subject_person": "Estefania Zambrana (9QTV-KDZ)",
+        "subject_person": "Estefania Zambrana (PID 9QTV-KDZ)",
         "relation": "child",
-        "target_person": {
-          "name": "Ricardo Veizaga Zambrana",
-          "birth": "baptized 3 April 1874, Santo Domingo, Cochabamba, Bolivia"
+        "wrong_candidate": {
+          "name": "Ricardo, baptized 3 Apr 1874, Santo Domingo, Cochabamba, Bolivia",
+          "note": "The couple is real and well-documented (1870 marriage QL7X-YN65 + children 1867-1878), but their documented children do not include a Ricardo and no record ties the 1874 Ricardo baptism to them. Attaching Ricardo on the strength of a parent-name match alone would assert a parent-child link that is not proven."
         }
       },
       "supporting_sources": [
-        "Bolivia, Catholic Church Records, 1566-2020 — baptismal entry, 3 Apr 1874, Santo Domingo, Cochabamba, naming parents Antonio Veizaga and Estefania Zambrana"
+        "Bolivia, Catholic Church Records, 1566-2020 - 1874 Santo Domingo (Cochabamba) baptism of Ricardo, parents 'Antonio Veizaga' + 'Estefania Zambrana' (the hint record)",
+        "1870 marriage of Antonio Beizaga & Estefania Zambrana, 23 Mar 1870, San Jose, Cochabamba (ark QL7X-YN65), plus their indexed children 1867-1878 (Fructuosa, Luis, Tomaza, Geronimo, Maria de la o) - a fully documented family that does NOT include a Ricardo",
+        "Negative search: no Ricardo among the couple's indexed children (1865-1880); the only 'Ricardo Beisaga' found (1908 Sicaya baptism, ark QGJC-FX3Y) appears as a father and does not name his own parents, giving no link to Antonio + Estefania"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having documented the couple (1870 marriage + children 1867-1878) and searched for the 1874 Ricardo, the agent should conclude that Ricardo's membership in this family is not proven: the couple's documented children do not include a Ricardo, and no record ties the 1874 Santo Domingo baptism to them. A match on the parents' names alone (Antonio Veizaga/Beisaga + Estefania Zambrana) does not establish the additional son, so Ricardo should not be added without a record that positively links him to this couple.",
+      "details": {
+        "subject_person": "Estefania Zambrana (PID 9QTV-KDZ)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: the 1874 son (Ricardo) is not proven to be this couple's child; their documented children (1867-1878) include no Ricardo and no record links the hint baptism to them",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "The couple's documented children 1867-1878 (from the 1870 marriage QL7X-YN65 and indexed baptisms) include no Ricardo; no record ties the 1874 Ricardo baptism to Antonio Beisaga/Veizaga + Estefania Zambrana"
       ],
       "required": true
     }
