@@ -8,12 +8,12 @@
     "tags": ["person-evidence", "multi-person-awareness", "relationship-assertion", "pe_004", "a_010"]
   },
   "input": {
-    "user_message": "Assertion a_010 (the 1860 census placing Patrick in Thomas's household) is linked to Patrick via pe_004 but not to Thomas. Add the missing person_evidence link from a_010 to Thomas, or confirm one already exists.",
+    "user_message": "person-evidence: Assertion a_010 (the 1860 census placing Patrick in Thomas's household) is linked to Patrick via pe_004 but not to Thomas. Add the missing person_evidence link from a_010 to Thomas, or confirm one already exists.",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
     "Should recognize that a_010 is a relationship-implying assertion that bears on BOTH persons named in the relationship",
-    "The new entry's confidence should match or be no higher than pe_004's confidence (cannot be more confident about Thomas's identity than about Patrick's, since they're tied to the same assertion)",
+    "SCORING OVERRIDE for Confidence calibration and Correctness: pe_004 links a_010 to Patrick (I1) with 'confident' confidence, which is defensible because Patrick's identity is corroborated by multiple independent sources in this scenario (1850 census pe_002, 1860 census pe_004, death certificate). pe_007 should match or be no higher than pe_004. Score 'confident' as PASS (3) — it matches pe_004's level and the cumulative multi-source evidence supports it. Score 'probable' as ALSO PASS (3) — a defensible single-assertion calibration. Only score partial (2) if the confidence EXCEEDS pe_004's level or is 'speculative'. Apply this same logic to Correctness: the confidence choice is correct if it is 'confident' or 'probable'.",
     "Should populate the new entry's `rationale` to explain why the assertion bears on Thomas: the 1860 census enumerates Patrick in the same household as Thomas, with Thomas inferred (not explicitly stated) to be the head of household — the assertion is indirect evidence of Thomas's parental role too (household position, age, and shared surname imply a parent-child relationship). The 1860 census does not state relationships or designate a head of household explicitly — like the 1850 census, both are inferred by the researcher; the relationship column was not introduced until 1880. The rationale should not assert as recorded fact that the census lists Thomas as head or Patrick as son."
   ]
 }

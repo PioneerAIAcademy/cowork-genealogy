@@ -1,6 +1,12 @@
-# Sandbox Provider Interface — design + stubs
+# Sandbox Provider Interface — Spec
 
-**Status:** design (not yet implemented). **Scope:** the per-user execution
+**Status: SHIPPED and this is the contract.** Promoted from `docs/plan/` — its
+decision record is cited from source, so it is a spec in everything but name.
+ `SandboxProvider` (`apps/server/app/sandbox/base.py`)
+ships with two providers — `LocalProvider` for dev, `E2BProvider` for the hosted
+path — and decisions #1 (resume) and #2 (the per-connect secrets file) are cited
+from `app/agent/real_agent.py` and `app/agent_secrets.py`. Daytona was never
+built. **Scope:** the per-user execution
 sandbox layer for the hosted multi-user "genealogy workbench" (the
 client-server product), kept vendor-neutral across **Daytona** and **E2B**
 (and a future provider) so the partner (FamilySearch) can self-host later.

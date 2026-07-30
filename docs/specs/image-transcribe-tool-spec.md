@@ -50,7 +50,7 @@ JPEG ~33%, so `image_read` hard-**refuses** any scan whose raw bytes exceed
 `MAX_INLINE_IMAGE_BYTES` (700 KB) rather than crash the session.
 
 The closing report's **theme T13**
-(`docs/plan/record-extraction-consolidation-closing-report.md` §1) is the
+(`docs/record-extraction-consolidation-closing-report.md` §1) is the
 evidence this refuse now blocks real work: the image-escalation *behavior*
 is fixed, but the 700 KB floor **failed 7+ read attempts across 4 of the 5
 re-run scenarios** (birk, cruz, zuniga, bottem) — large FamilySearch record
@@ -741,7 +741,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 
 ## 16. References
 
-- `docs/plan/record-extraction-consolidation-closing-report.md` §1 (T13)
+- `docs/record-extraction-consolidation-closing-report.md` §1 (T13)
 - `docs/specs/image-read-spec.md` (`image_read`'s inline-base64 path is no
   longer used by the `image-reader` subagent; it stays only for the Issue #28
   pixel consumer, and its transport floor still guards that single read)

@@ -82,7 +82,7 @@ instance); end users do not need to set this for normal operation.
 ### Hosted web workbench (monorepo overlay)
 
 This repo is also a **pnpm + turborepo monorepo** for the hosted web product
-(see `DEVELOPMENT.md` and `docs/plan/realtime-rearch-status.md`). The engine
+(see `DEVELOPMENT.md` and `docs/realtime-rearch-status.md`). The engine
 (`packages/engine/{mcp-server,plugin}`) is deliberately **kept out of the pnpm
 workspace** via the `!packages/engine/**` negation in `pnpm-workspace.yaml`,
 and stays npm-managed, so the `.mcpb`/plugin release pipeline and CI are unchanged.
@@ -111,10 +111,27 @@ mocks (no E2B/Anthropic/OAuth needed).
   A plan is deleted once the work ships: the spec, the code, and any
   `docs/TODOs.md` entries become the record. Do not keep shipped plans
   as historical artifacts — if a plan's rationale is worth preserving,
-  fold it into the spec instead.
+  fold it into the spec instead. **A plan's `**Status:**` line is load-bearing** —
+  it is what tells the next reader whether the file describes pending work, so
+  update it when the work lands. Two files here spent weeks claiming
+  "not yet implemented" and "not yet branched" for things that had shipped.
+  And **only plans live here.** An architecture note, a status/checkpoint log, a
+  process doc, a measurement write-up, or a spec is *not* a plan: those go in
+  `docs/` (or `docs/specs/`), because a directory holding all five cannot answer
+  "is this still pending?" at a glance. Eight such files were moved out in the
+  #953 follow-up.
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth the `spec-review` agent checks implementations against.
   This is the durable tier; a live tool must have a live spec.
+- `docs/TODOs.md` — the open-work list: deferred items, known gaps, and the
+  residuals a shipped PR leaves behind. Every deferred item gets an entry in
+  the same PR that defers it. The file is **open-only** — when an item ships,
+  **delete** its entry rather than checking it off or moving it to a "Done"
+  section. Durable rationale ("don't re-derive X", "the original premise was
+  wrong") goes to the spec or this file; a residual gap becomes its own entry.
+  Git history keeps the prose. This is the same rule `docs/plan/` follows, and
+  it is not bookkeeping: a Done tier is how the file reached 932 lines with 29
+  open items filed underneath it (#953).
 - **Verification is automated, not a manual playbook.** New tools are
   verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
   and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
@@ -320,7 +337,8 @@ change, with different (and easy-to-undercount) site lists:
   and `packages/schema/schemas/`), the matching TS union in
   `packages/schema/src/index.ts`, the `CLOSED_ENUMS` set in `validator.ts`, and the
   prose tables/discussion in `research-schema-spec.md`. Worked blast-radius and
-  rationale: `docs/plan/no-evidence-evidence-type-decision.md`.
+  rationale: `docs/specs/research-schema-spec.md`, the `no_evidence` note under
+  the `evidence_type` row.
 - **Tree-schema (simplified-GedcomX) change** — a new/renamed field on tree
   persons, names, facts, relationships, or sources: in addition to the spec
   (`docs/specs/simplified-gedcomx-spec.md`) and the schema mirrors above, the

@@ -255,7 +255,7 @@ The record-extraction unit of work is one record = one tree `S` entry + one
 research source + N assertions. The composite makes that ONE call — the tool, not
 the model, owns every id and every cross-file link (decision D1 of the
 record-extraction consolidation; see
-`docs/plan/record-extraction-consolidation-closing-report.md`).
+`docs/record-extraction-consolidation-closing-report.md`).
 
 - **`sourceDescription: { title, author?, url? }`** (camelCase param; the payload
   keys are exactly the simplified-GedcomX `S`-entry fields). When present, the call

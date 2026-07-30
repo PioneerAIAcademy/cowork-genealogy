@@ -1,7 +1,7 @@
 # TODOs — hosted web workbench
 
 Open, deferred work — everything in this file is still to do. Architecture
-context: `docs/plan/ably-realtime-migration.md`.
+context: `docs/realtime-architecture.md`.
 
 **Retention rule.** When an item ships, **delete it** — do not check it off,
 strike it through, or move it to a "Done" section. If it leaves behind a rule
@@ -275,21 +275,19 @@ have proven out; none of them reach Cowork or the hosted web workbench.
   `docs/specs/image-reader-opus-agent-spec.md` §9.
 
 - [ ] **Should `image-reader`/`image-reader-opus` compress non-matching pages
-  during a `search-images` browse?** Raised while designing
-  `docs/plan/image-reader-opus-agent-plan.md`: for a browse with a
-  `looking_for` target, only relay the full transcription for a likely-matching
-  page and a one-line verdict for the rest, so a ten-page browse doesn't
-  accumulate ten full transcriptions in the calling skill's context. **This is
-  the same shape as `docs/plan/search-images-base64-accumulation.md`'s "Option
-  B", which was explicitly rejected on 2026-07-17 for a correctness reason, not
-  cost** — asking the reader to judge relevance and shorten its output was
-  found to encourage hallucination, whereas the current contract (always full,
-  faithful OCR, never slanted) avoids it. `image-reader-opus-agent-plan.md` §7
-  offers one candidate distinction (gate compression on `image_transcribe`'s
-  own deterministic `FOUND`/`NOT FOUND` field, from a forced always-full pass,
-  rather than a fresh relevance judgment by the relaying agent) but does not
-  resolve it. Needs the same genealogist scrutiny Option B got before building
-  anything — NOT investigated.
+  during a `search-images` browse?** Raised while designing `image-reader-opus`:
+  for a browse with a `looking_for` target, only relay the full transcription for
+  a likely-matching page and a one-line verdict for the rest, so a ten-page
+  browse doesn't accumulate ten full transcriptions in the calling skill's
+  context. **This is the same shape as the search-images accumulation work's
+  "Option B", explicitly rejected on 2026-07-17 for a correctness reason, not
+  cost** — asking the reader to judge relevance and shorten its output was found
+  to encourage hallucination, whereas the current contract (always full, faithful
+  OCR, never slanted) avoids it. One candidate distinction was identified but not
+  resolved: gate compression on `image_transcribe`'s own deterministic
+  `FOUND`/`NOT FOUND` field, produced by a forced always-full pass, rather than
+  on a fresh relevance judgment by the relaying agent. Needs the same
+  genealogist scrutiny Option B got before anything is built — NOT investigated.
 
 ## Skill coverage (orphaned tools)
 These MCP tools are shipped, specced, and advertised, but no skill references them
@@ -306,7 +304,7 @@ These MCP tools are shipped, specced, and advertised, but no skill references th
 
 ## Record-extraction consolidation follow-ups (2026-07 window)
 Deferred at wrap; see
-`docs/plan/record-extraction-consolidation-closing-report.md`.
+`docs/record-extraction-consolidation-closing-report.md`.
 
 - [ ] **Record-type playbook files + snapshot carve-out** — per-record-type
   references (census/death/probate/church/marriage) as the parallel-team
@@ -621,7 +619,9 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   advertised in `tool-schemas.ts` but is the only live tool with **no spec**, so
   `spec-review` cannot check it. The 2026-05-07 timeline-distances design doc was the
   de facto stand-in and has been retired; the behavior is currently defined only by
-  `src/tools/place-distance.ts` and its use in `timeline/SKILL.md`.
+  `src/tools/distance.ts` (which exports both `placeDistanceTool` and
+  `placeDistanceToolSchema` — there is no `place-distance.ts`) and its use in
+  `timeline/SKILL.md`.
 
 - [ ] **Optional `site`/`host` filter param on `external_links_search`** — deferred from
   the search-shaping work (option B) as unnecessary while the count cap holds. File it
@@ -681,3 +681,38 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `*Error` type so it surfaces as `{ ok: false, errors }`; `readProjectJson`
   throws a plain `Error` and leaves that mapping to the caller (see
   `tree-forget.ts`'s three-line `readJson` wrapper).
+
+- [ ] **Four shipped plans still sit in `docs/plan/` awaiting a spec to be
+  promoted into.** The plan cull deleted or promoted everything it could: the
+  `/v1` API and sandbox-provider docs became
+  `docs/specs/public-rest-api-spec.md` and `docs/specs/sandbox-provider-spec.md`
+  (they were specs in all but name), and the `localities`, `no_evidence`,
+  tool-boundary, opus-agent, and search-images plans folded into their specs and
+  were deleted. These four are shipped but have **no spec to fold into**, so
+  deleting them under the "delete a plan once the work ships" rule would destroy
+  the only written record of live infrastructure:
+  - `neon-postgres-plan.md` + `fly-deploy-plan.md` — the deploy/DB setup. Best
+    home is one `docs/specs/hosted-deploy-spec.md`, or sections of
+    `docs/specs/hosted-web-workbench-spec.md`. `fly-deploy-plan.md` is only
+    *partially* shipped, so split its remainder to an entry here first.
+  - `familysearch-login-plan.md` — the hosted front door. `oauth-auth-spec.md`
+    is the **engine-side** MCP OAuth spec and does not cover it; the open
+    follow-ups are already entries under "FamilySearch login" above.
+  - `3-pane-workbench-ui.md` — the workbench UI design. Zero inbound
+    references, so it is the cheapest to finish: extract the durable layout
+    decisions into `docs/specs/hosted-web-workbench-spec.md` and delete.
+  Separately, `standard-place-standardization.md` is shipped but has **22**
+  inbound references, mostly source comments citing it for rationale — folding
+  that trail into the place specs is its own project, not part of this sweep.
+  Until each is promoted, its `Status:` line is the guard: it says plainly that
+  the work shipped and the file is kept only pending a spec. Do not read them as
+  pending work.
+
+- [ ] **Three skills touched by the `localities` work still owe a runlog re-run +
+  annotation.** `locality-guide`, `research-plan`, and `search-records` were
+  edited when the `localities` section shipped (schema, `research_append` +
+  `project_context` support, the persist path, and the viewer tab all landed).
+  The edits flipped each skill's runlog inactive, so the `check-runlogs` gate
+  needs a fresh run plus a genealogist annotation per skill — it needs the judge
+  API and a reviewer, which is why it was left. Nothing about the feature is
+  pending; this is the eval-cadence debt behind it.

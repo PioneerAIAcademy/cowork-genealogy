@@ -1,13 +1,16 @@
-# Plan: Public `/v1` REST chat API for an external chatbot team
+# Public `/v1` REST chat API — Spec
 
-> **Status:** Implemented in `apps/server/app/v1.py` (+ small hooks in
+> **Status: SHIPPED and this is the contract.** Promoted from `docs/plan/` —
+> it was always the only written spec for the `/v1` surface, which is why
+> deleting it as a "shipped plan" was not an option. Implemented in
+> `apps/server/app/v1.py` (+ small hooks in
 > `config.py`, `auth.py`, `sessions.py`, `main.py`). Server-only; the engine
 > (`packages/engine/`) and its `.mcpb`/plugin CI are untouched.
 >
 > **History:** the original proposal targeted a control-plane `LiveSession`
 > with an in-process `_publish` listener fanout over pluggable `realtime`
 > backends. That architecture was removed by the realtime re-architecture
-> (`ably-realtime-migration.md`): **the agent
+> (`docs/realtime-architecture.md`): **the agent
 > stream now lives inside the sandbox** (`app/sandbox_server.py`'s `Hub`), and
 > the browser connects a WebSocket straight to it — the control plane is out of
 > the streaming path. This doc has been rewritten to match what shipped.
@@ -73,7 +76,7 @@ Postgres advisory locks would break behind Neon's pooler), **self-heals** via th
 `stale_before` clause (`v1_turn_lock_stale_seconds`, default 600s — a crashed
 instance's lock is reclaimed), and uses only portable SQLModel/SQLAlchemy. It is
 correct on **SQLite today** (SQLite serializes writes globally) and on **Neon
-Postgres later** with zero changes, riding the `neon-postgres-plan.md` migration
+Postgres later** with zero changes, riding the `docs/plan/neon-postgres-plan.md` migration
 cleanly: `create_all()` auto-adds the column (no Alembic, per that plan's decision),
 and the column is declared `DateTime(timezone=True)` to match the datetime-hardening
 that plan applies to the other columns. Release is a guarded `UPDATE … SET
@@ -88,7 +91,7 @@ releases after the request-scoped session closes.
 > in-session object, so SQL-only sync is correct.
 
 **Prerequisite for `count > 1` (not this PR):** the shared-DB migration
-(`neon-postgres-plan.md`) must land first — today's SQLite-on-a-Fly-volume is
+(`docs/plan/neon-postgres-plan.md`) must land first — today's SQLite-on-a-Fly-volume is
 per-machine, so at `count > 1` *all* control-plane state (users, allowlist, sessions,
 ownership) diverges, not just this lock. That plan also calls out moving `init_db()`
 to a one-time Fly `release_command` (two Machines booting otherwise race on

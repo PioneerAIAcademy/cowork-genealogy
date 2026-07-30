@@ -340,6 +340,17 @@ it stops a correct-but-stringified batch from being rejected into a slow
 one-op-per-call fallback. `research_append` applies the same tolerance to its
 `ops`/`entry`/`fields`; see that spec (§3.3) for the originating rationale.
 
+**Singular `name` → `names[]` lift (`add_person`).** The same category of shape
+slip, and it was the single largest driver of recovered validation retries
+(observed on ~15% of `add_person` calls, ut_001/ut_003): the model supplies
+`name: {given, surname, preferred?}` where the schema wants `names: [{…}]`. The
+tool lifts the object into a single-element array before validation. **Shape
+only** — object → one-element array; no flat-string parsing, no name content
+inferred or invented. Supplying **both** `name` and `names` is rejected loudly
+(`add_person: supply `names` (an array) OR a single `name`, not both`) rather
+than silently resolving one, because the downstream one-preferred normalizer
+would otherwise receive ambiguous input.
+
 ---
 
 ## 5. Persistence — validate-before-persist, atomic, tree-only

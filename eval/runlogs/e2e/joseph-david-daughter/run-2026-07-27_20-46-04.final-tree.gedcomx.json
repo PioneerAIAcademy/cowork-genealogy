@@ -1,0 +1,299 @@
+{
+  "persons": [
+    {
+      "id": "GNR6-VWS",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Joseph",
+          "surname": "David"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5fbaf44a-3cd3-4928-af5d-7e9633a463ce",
+          "type": "Birth",
+          "date": "1873",
+          "standard_date": "1873",
+          "place": "Clydach near Llantrissant, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Clydach near Llantrissant, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "8a4fde37-f09b-4086-be43-1a1eae73c1e6",
+          "type": "Death"
+        },
+        {
+          "id": "e690121d-5670-405c-a0b9-d84cc7028a8f",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "b8652ec0-a697-4e1e-9109-dbd93a10f5c7",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Clydach, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "1981b55f-6688-4e68-8cd3-1736b517d67e",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "5cb9c3fd-059f-43eb-975b-1d3432c6ea66",
+          "type": "Occupation",
+          "value": "STONE MASON"
+        }
+      ]
+    },
+    {
+      "id": "GNR6-RHN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Hannah",
+          "surname": "David"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b7ab0f08-c1a4-43ae-8cd1-10c5905c36a7",
+          "type": "Birth",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Clydach near Llantrissant, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Clydach near Llantrissant, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "0b78f0f8-5bc2-45e4-b15a-2e8fff7fc2fb",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "7c42d190-4226-4bbe-a761-6049bb751ea8",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Clydach, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "dceed078-2348-4f7c-a914-99b1b0b68510",
+          "type": "Death"
+        },
+        {
+          "id": "ed5aa5f0-19e8-45c6-988f-def3a30cdbd4",
+          "type": "Marital Status",
+          "value": "Married"
+        }
+      ]
+    },
+    {
+      "id": "GNR6-547",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Ethel",
+          "surname": "David"
+        }
+      ],
+      "facts": [
+        {
+          "id": "640c44fd-c69b-4cde-955b-79914ecf664f",
+          "type": "Birth",
+          "date": "1897",
+          "standard_date": "1897",
+          "place": "Clydach near Llantrissant, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Clydach near Llantrissant, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "d442ebec-078f-47ac-b387-5a952704db0b",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "2bb667b4-c166-41d7-b080-f2cd1642af14",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Clydach, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "9783f423-6c2a-4a46-8a39-485d43926014",
+          "type": "Death"
+        },
+        {
+          "id": "74978d73-5180-4895-a07d-342d19221ca8",
+          "type": "Marital Status",
+          "value": "Single"
+        }
+      ]
+    },
+    {
+      "id": "GNR6-V53",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Enid",
+          "surname": "David"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7aecb1ca-02e5-4715-9db7-823451b95478",
+          "type": "Birth",
+          "date": "1908",
+          "standard_date": "1908",
+          "place": "R Clydach, Glamorganshire",
+          "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "f77c32aa-b288-49eb-8284-da6ba033495b",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Clydach, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "cb749b8d-2aef-4aeb-9848-1537fed1ce3f",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GNR6-TRJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Illiam G",
+          "surname": "David"
+        }
+      ],
+      "facts": [
+        {
+          "id": "50d4b7ad-fbd3-47d4-9a87-0d53a64c7dfd",
+          "type": "Birth",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Clydach near Llantrissant, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Clydach near Llantrissant, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "ae3a1ad7-f163-4701-a29d-9635ef778d50",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Rhyndwyclydach, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "d002efbf-6182-4763-ab66-cab724044c97",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Clydach, Glamorgan, Wales, United Kingdom",
+          "standard_place": "Clydach, Glamorgan, Wales, United Kingdom"
+        },
+        {
+          "id": "ce247752-7814-43bb-a9bb-096f48e02bfd",
+          "type": "Death"
+        },
+        {
+          "id": "6726b733-b10d-4d13-9260-fbb5959b0e1a",
+          "type": "Marital Status",
+          "value": "Single"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GNR6-VWS",
+      "person2": "GNR6-RHN"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GNR6-VWS",
+      "child": "GNR6-547"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GNR6-RHN",
+      "child": "GNR6-547"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GNR6-VWS",
+      "child": "GNR6-TRJ"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GNR6-RHN",
+      "child": "GNR6-TRJ"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GNR6-VWS",
+      "child": "GNR6-V53"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GNR6-RHN",
+      "child": "GNR6-V53"
+    }
+  ],
+  "sources": [
+    {
+      "id": "QYWG-R2N",
+      "title": "Joseph David, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMQ-X77 : Thu Feb 13 02:38:33 UTC 2025), Entry for Joseph David and Hannah David, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMQ-X77"
+    },
+    {
+      "id": "317B-W3M",
+      "title": "Joseph David, \"England and Wales, Census, 1911\"",
+      "citation": "\"England and Wales, Census, 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XWXJ-RC1 : Thu Feb 13 13:01:31 UTC 2025), Entry for Joseph David and Hannah David, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XWXJ-RC1"
+    },
+    {
+      "id": "S1",
+      "title": "England and Wales, Census, 1901",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XSMQ-X77"
+    },
+    {
+      "id": "S2",
+      "title": "England and Wales, Census, 1911",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XWXJ-RC1"
+    }
+  ]
+}
