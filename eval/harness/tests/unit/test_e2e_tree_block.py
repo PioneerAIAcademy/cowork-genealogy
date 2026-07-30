@@ -149,6 +149,24 @@ def test_relative_path_still_matches_on_basename():
     assert direct_project_file_write("Write", {"file_path": "research.json"}) == "research.json"
 
 
+def test_windows_path_matches_on_basename():
+    """The genealogist team runs e2e on Windows, where the workspace is a
+    `C:\\Users\\...\\Temp\\e2e-<id>` path — splitting on "/" alone made this
+    guard a silent no-op there."""
+    from e2e.orchestrator import direct_project_file_write
+    assert direct_project_file_write(
+        "Write", {"file_path": r"C:\Users\Dell\AppData\Local\Temp\e2e-x\research.json"}
+    ) == "research.json"
+
+
+def test_notebook_edit_is_also_a_write_tool():
+    from e2e.orchestrator import direct_project_file_write
+    assert (
+        direct_project_file_write("NotebookEdit", {"file_path": "/tmp/proj/research.json"})
+        == "research.json"
+    )
+
+
 def test_write_to_an_unrelated_file_is_not_blocked():
     from e2e.orchestrator import direct_project_file_write
     assert direct_project_file_write("Write", {"file_path": "/tmp/proj/notes.md"}) is None

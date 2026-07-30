@@ -1,0 +1,19 @@
+{
+  "id": "william-ferber-death-1903",
+  "name": "William Hubert Ferber — death (1903)",
+  "genre": "strip",
+  "source_pid": "G7JB-YH6",
+  "captured": "2026-07-28",
+  "researcher_question": "When and where did William Hubert Ferber (father of Charles Hubert Ferber, b. 1891, Cincinnati, Ohio) die?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1900s",
+    "geography": "US-OH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Single-focus death fixture, split off from the compound william-ferber-ancestry fixture. Full family context is retained, including parents Gerhard Ferber and Eva Engermann - only William's death (and burial) and their sources are stripped. Scoped to the death date/place only: William died 11 Mar 1903 Cincinnati, on the FamilySearch-indexed Ohio County Death Records original (ark 1:1:F66M-8JZ). Burial is deliberately NOT a finding - the burial-attesting records (Find a Grave, Spring Grove cemetery index) are not reliably reachable through the autonomous FamilySearch tools, so a burial finding would fail on tooling reach rather than agent capability. William's burial fact and those burial sources are still stripped because a 1903 burial reveals the 1903 death."
+}

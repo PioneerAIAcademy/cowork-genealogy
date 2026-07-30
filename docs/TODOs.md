@@ -173,7 +173,37 @@ create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
 
 ## Guardrail enforcement in production
 Plan: `docs/plan/research-guardrail-bypass-plan.md`. The eval-side mechanisms
-have proven out; none of them reach Cowork or the hosted web workbench.
+have proven out. Only §4.3 reaches production — everywhere, via the plugin hook;
+§4.1's caller-id gate and §4.4's detectors are still harness-only.
+
+- [ ] **§4.3's lockdown covers `Write`/`Edit`/`NotebookEdit`, not `Bash`.**
+  `real_agent._pretool_hook` matches on `file_path`, so the shell route around it
+  stays open: `cat > research.json`, `sed -i`, `python -c`. Deliberate — the
+  reasoning is the comment on `_FILE_WRITE_TOOLS` in
+  `apps/server/app/agent/real_agent.py` (skills run their scripts through `Bash`
+  so it can't be revoked; matching command text would deny a legitimate
+  `python script.py research.json > out` while still missing a variable-built
+  path, and a false deny is the worse failure mode per the plan's §6). Still
+  open only because nothing has forced that tradeoff: no bypass in the corpus has
+  used the shell. Close it if one shows up in a runlog or a feedback case.
+
+- [ ] **§4.3's rule is enforced in two places, and one of them is only there
+  because the other is unproven.** `packages/engine/plugin/hooks/hooks.json` is
+  verified live in Cowork; the hosted path also loads the plugin, so it *should*
+  bind there too and make `real_agent._pretool_hook` redundant — but "the plugin
+  loader does what you'd expect in the hosted path" is exactly the assumption
+  #939 disproved for agents. Confirm with one hosted run (write to
+  `research.json` via `Write` with the SDK hook removed) before deleting the
+  Python copy. Until then both fire, which is harmless: they deny the same thing
+  with the same reason.
+
+- [ ] **`SessionStart` plugin hooks do not fire in Cowork.** Measured 2026-07-30
+  in the same probe that confirmed `PreToolUse` works: no invocation, and the
+  `additionalContext` never reached the session. Nothing depends on this today —
+  recorded because it is the natural place to put per-session setup (seeding
+  state, injecting project context) and it silently would not run. It is also the
+  inverse of the Cowork report in anthropics/claude-code#16288, so that thread is
+  not a reliable guide to current behavior.
 
 - [ ] **Whether `Skill`-tool content injection survives compaction is
   unverified — and there's now real reason to suspect it doesn't.**
@@ -277,11 +307,6 @@ Deferred at wrap; see
   record, and no skill promotes extracted facts onto tree persons (8/27 e2e
   scenarios; judges penalize the thin tree). Needs an ownership spec:
   `merge_record_into_tree` grows this, or person-evidence does.
-
-- [ ] **person-evidence epistemic gate** — identity over-reach: pe links
-  written at `confident` from one uncorroborated record with `[?]` readings
-  (clark-parents). The extractor agent got a tentative-cap line; person-evidence
-  needs the equivalent gate + mandatory conflicts entry.
 
 - [ ] **Recover the classification-quality drop from the sonnet-4-6 pin.** The
   extractor was re-pinned sonnet-5 → `claude-sonnet-4-6` (2026-07-18) because sonnet-5
