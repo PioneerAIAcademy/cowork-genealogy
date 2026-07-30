@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 
 /**
  * Enum-drift lint (issue #694).
@@ -278,6 +279,88 @@ describe("enum-drift lint", () => {
           }
           expect.fail(
             `${decl.enumName} drift at ${decl.relPath}:${decl.lineNo}\n${parts.join("\n")}`,
+          );
+        }
+      });
+    }
+  });
+});
+
+// ─── The third copy: the validator's enums, in code ────────────────
+
+/**
+ * Prose is not the only hand-maintained copy of enums.schema.json — the MCP
+ * validator carries its own (`CLOSED_ENUMS` + four standalone sets, exported
+ * as VALIDATOR_ENUMS). It is the copy that decides what the writer tools
+ * ACCEPT, so drift here doesn't leave a stale crib note, it lets a bad value
+ * persist or rejects a good one. Same lint, higher stakes.
+ */
+
+/**
+ * Enum names the validator enforces that `enums.schema.json` does NOT define
+ * as a closed `$def`. Verified 2026-07-30, and each is deliberate rather than
+ * an omission:
+ *
+ *   - `experience_level` — defined inline at
+ *     `research.schema.json#/$defs/researcher_profile/properties/experience_level`
+ *     (same four values), never lifted into the shared enums file.
+ *   - `evaluation_focus`, `evaluation_target_type`, `evaluation_verdict`,
+ *     `subscription` — code-only; no schema defines them at all.
+ *
+ * Asserted as an EXACT set, both directions. A new name appearing means
+ * someone added a code-only enum that no schema constrains — decide whether it
+ * belongs in enums.schema.json before adding it here. A name disappearing means
+ * it was promoted into the schema, and it should come off this list so the
+ * value-equality check below starts covering it.
+ */
+const VALIDATOR_ONLY = new Set([
+  "evaluation_focus",
+  "evaluation_target_type",
+  "evaluation_verdict",
+  "experience_level",
+  "subscription",
+]);
+
+describe("validator enums match enums.schema.json", () => {
+  const validatorNames = new Set(Object.keys(VALIDATOR_ENUMS));
+
+  it("every closed enum in the schema is enforced by the validator", () => {
+    const unenforced = [...canonical.keys()]
+      .filter((n) => !validatorNames.has(n))
+      .sort();
+    expect(
+      unenforced,
+      `closed enums in enums.schema.json with no validator check: ${unenforced.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  it("validator-only enum names are exactly the known set", () => {
+    const actual = [...validatorNames].filter((n) => !canonical.has(n)).sort();
+    expect(actual).toEqual([...VALIDATOR_ONLY].sort());
+  });
+
+  describe("values match the schema", () => {
+    for (const [name, values] of Object.entries(VALIDATOR_ENUMS)) {
+      const schemaValues = canonical.get(name);
+      if (!schemaValues) continue; // covered by the two set-level tests above
+      it(name, () => {
+        const stale = [...values].filter((v) => !schemaValues.has(v)).sort();
+        const missing = [...schemaValues].filter((v) => !values.has(v)).sort();
+
+        if (stale.length > 0 || missing.length > 0) {
+          const parts: string[] = [];
+          if (stale.length > 0) {
+            parts.push(
+              `stale (validator accepts, schema does not define): ${stale.join(", ")}`,
+            );
+          }
+          if (missing.length > 0) {
+            parts.push(
+              `missing (schema defines, validator rejects): ${missing.join(", ")}`,
+            );
+          }
+          expect.fail(
+            `${name} drift in src/validation/validator.ts\n${parts.join("\n")}`,
           );
         }
       });
