@@ -381,6 +381,21 @@ Deferred at wrap; see
 
 ## Eval framework
 
+- [ ] **`skills_invoked` records the skill name but not its `args`, so no
+  validator can assert what crossed a skill-to-skill seam.** The `Skill` tool
+  takes `{"skill": …, "args": "<free text>"}` — 936 such calls across the run
+  logs carry a real `args` payload (e.g. `record-extraction` receiving
+  `"Record ark:/61903/1:1:KCLN-H5G — Entry for Morris Jenkins…"`). But
+  `skill_runner.py`'s PreToolUse hook does `skills_invoked.append(skill_name)`,
+  dropping `args`. Consequence: `search-records` SKILL.md Step 7 says to escalate
+  "with the same person attributes", and nothing — validator, judge, or CI — can
+  check that it did. Both suites can be green while the hand-off passes garbage.
+  Surfaced while adding `execution.stub_skills` (#969), which makes it sharper:
+  a stubbed callee produces no downstream output to infer the arguments from.
+  Fix: record a parallel `skill_invocations: list[dict]` (name + args) rather
+  than widening `skills_invoked`, whose `list[str]` shape existing validators
+  (`test_escalates_to_external_sites_after_fs_exhaustion`) already depend on.
+
 - [ ] **Adopt a run-log retention rule — `eval/runlogs/` is 147MB tracked and ~85%
   of it is inert.** Measured 2026-07-18: 190 unit run logs (116MB) + 152 `.ann.json`
   (2.9MB) + 56 e2e runs (~27MB). **Nothing in the repo reads more than the latest 2
