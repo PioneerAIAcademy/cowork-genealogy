@@ -226,6 +226,26 @@ long as at least one resolves.
 of defence keeping `record-extractor` off the broad `research_append` — and
 a deny naming one spelling silently fails to bind under the other.
 
+### Plugin hooks (`packages/engine/plugin/hooks/`)
+
+The plugin ships a `PreToolUse` hook — the **only** guardrail that reaches
+Cowork. `hooks=` is an SDK argument the hosted control plane can set and Cowork
+cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. Verified
+live in Cowork 2026-07-30 (issue #940): the hook loads, fires for `Write` and
+`Bash` under either matcher form, and its `deny` is honored. Two things that
+run counter to the upstream issues — check behavior, don't trust the threads:
+`SessionStart` hooks do **not** fire in Cowork, and the reported drop of plugin
+`PreToolUse` command hooks (anthropics/claude-code#34573) does not reproduce.
+Cowork runs `permission_mode: "default"`; the hosted path runs
+`bypassPermissions`; a hook binds under both.
+
+Hook scripts run in the VM: **stdlib-only Python, no network** — the same rule
+as skill `scripts/`. A hook must never raise; every failure path falls through
+to allowing the call, because an exception here fails a tool call the user was
+entitled to make. `scripts/package-plugin.mjs`'s `INCLUDE` list must carry
+`"hooks"` or the directory never ships, which looks identical to the runtime
+refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
+
 **Allow-lists are subtractive; hooks are not.** A per-agent `tools:` list can
 only narrow what the session already holds — the session's tool set is always a
 superset — so no allow-list can deny the *main thread* a tool one of its
