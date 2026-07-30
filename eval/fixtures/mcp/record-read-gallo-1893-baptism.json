@@ -1,6 +1,6 @@
 {
   "tool": "record_read",
-  "description": "Full record for Jan Gallo's 1893 Turany baptism (ark:/61903/1:1:KHWD-N5R). Mirrors the gedcomx already embedded in record-search-gallo-slovakia-hit — same three persons, same parent-child and couple relationships, no new genealogical claims. Exists because ut_search_records_019 asks the skill to 'report what it says about his father', and reading the record before reporting on parentage is sound practice (the index is a pointer, the record is the evidence). record_read is in search-records' allowed-tools, but 019 stocked only record_search fixtures, so the tool was never registered in the mock and a call to it aborted the whole run as an unregistered tool (Type 1) — one abort in 22 runs, on a run that had otherwise done the job correctly. The coverage originally lived in ut_search_records_006, deleted 2026-06-18 as a side effect of a runlog commit.",
+  "description": "FamilySearch record_read for the 1893 Turany (Turócz County, today Slovakia) Lutheran parish baptism of Jan Gallo — the hit returned by record-search-gallo-slovakia-hit. Names father Andrej Gallo and mother Katarina Križko, with the family resident at Šútovo in Turany parish. Paired with that search fixture because search-records legitimately opens its top hit with record_read (the tool is in its allowed-tools) before reporting; without a record_read fixture the call is unregistered and the run aborts Type 1 (unmatched_tool_call) instead of being graded. Predicate is a substring match on the entity ID so it fires whether the skill passes the full ARK or the bare ID.",
   "args": {
     "recordId": "~KHWD-N5R"
   },
@@ -11,12 +11,7 @@
         "ark": "ark:/61903/1:1:KHWD-N5R",
         "gender": "Male",
         "names": [
-          {
-            "id": "N1",
-            "type": "BirthName",
-            "given": "Jan",
-            "surname": "Gallo"
-          }
+          { "id": "N1", "type": "BirthName", "given": "Jan", "surname": "Gallo" }
         ],
         "facts": [
           {
@@ -26,70 +21,56 @@
             "standard_date": "1893",
             "place": "Turany, Martin, Slovakia",
             "standard_place": "Turany, Martin, Slovakia"
+          },
+          {
+            "type": "Birth",
+            "date": "1893",
+            "standard_date": "1893",
+            "place": "Šútovo, Turany, Martin, Slovakia",
+            "standard_place": "Šútovo, Martin, Slovakia"
           }
         ],
-        "sources": [
-          {
-            "id": "S1",
-            "title": "Slovakia, Church and Synagogue Books, 1592-1935"
-          }
-        ]
+        "sources": [{ "ref": "S1" }]
       },
       {
         "id": "p_14050599143",
         "gender": "Male",
         "names": [
+          { "id": "N2", "type": "BirthName", "given": "Andrej", "surname": "Gallo" }
+        ],
+        "facts": [
           {
-            "id": "N2",
-            "type": "BirthName",
-            "given": "Andrej",
-            "surname": "Gallo"
+            "type": "Residence",
+            "date": "1893",
+            "standard_date": "1893",
+            "place": "Šútovo, Turany, Martin, Slovakia",
+            "standard_place": "Šútovo, Martin, Slovakia"
           }
-        ]
+        ],
+        "sources": [{ "ref": "S1" }]
       },
       {
         "id": "p_14050599144",
         "gender": "Female",
         "names": [
-          {
-            "id": "N3",
-            "type": "BirthName",
-            "given": "Katarina",
-            "surname": "Križko"
-          }
-        ]
+          { "id": "N3", "type": "BirthName", "given": "Katarina", "surname": "Križko" }
+        ],
+        "sources": [{ "ref": "S1" }]
       }
     ],
     "relationships": [
-      {
-        "type": "ParentChild",
-        "parent": "p_14050599143",
-        "child": "p_14050599145"
-      },
-      {
-        "type": "Couple",
-        "person1": "p_14050599143",
-        "person2": "p_14050599144"
-      },
-      {
-        "type": "ParentChild",
-        "parent": "p_14050599144",
-        "child": "p_14050599145"
-      }
+      { "id": "R1", "type": "ParentChild", "parent": "p_14050599143", "child": "p_14050599145" },
+      { "id": "R2", "type": "ParentChild", "parent": "p_14050599144", "child": "p_14050599145" },
+      { "id": "R3", "type": "Couple", "person1": "p_14050599143", "person2": "p_14050599144" }
     ],
     "sources": [
       {
         "id": "S1",
         "title": "Slovakia, Church and Synagogue Books, 1592-1935",
-        "collectionId": "1554443",
-        "ark": "ark:/61903/1:2:9MFH-2SS5"
+        "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935,\" database with images, FamilySearch, entry for Jan Gallo, baptized 1893, Turany, Martin, Slovakia; citing Lutheran parish register, Turany.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R"
       }
     ],
-    "places": [
-      {
-        "id": "PL1",
-        "name": "Turany, Martin, Slovakia"
-      }
-    ]
+    "places": []
   }
 }
