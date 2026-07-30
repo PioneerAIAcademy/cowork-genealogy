@@ -173,7 +173,35 @@ create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
 
 ## Guardrail enforcement in production
 Plan: `docs/plan/research-guardrail-bypass-plan.md`. The eval-side mechanisms
-have proven out; none of them reach Cowork or the hosted web workbench.
+have proven out; only §4.3 reaches the hosted web workbench, and none of them
+reach Cowork.
+
+- [ ] **§4.3's lockdown covers `Write`/`Edit`/`NotebookEdit`, not `Bash`.**
+  `real_agent._pretool_hook` matches on `file_path`, so the shell route around it
+  stays open: `cat > research.json`, `sed -i`, `python -c`. Deliberate — the
+  reasoning is the comment on `_FILE_WRITE_TOOLS` in
+  `apps/server/app/agent/real_agent.py` (skills run their scripts through `Bash`
+  so it can't be revoked; matching command text would deny a legitimate
+  `python script.py research.json > out` while still missing a variable-built
+  path, and a false deny is the worse failure mode per the plan's §6). Still
+  open only because nothing has forced that tradeoff: no bypass in the corpus has
+  used the shell. Close it if one shows up in a runlog or a feedback case.
+
+- [ ] **Cowork has no hook seam — and the plugin route that would give it one is
+  unverified.** The hosted fix is an SDK-level `hooks=` argument
+  (`real_agent.build_options`), and Cowork's session options are not ours to set.
+  The only artifact that could bind all four environments is a plugin-shipped
+  `packages/engine/plugin/hooks/hooks.json`, which is the least-supported cell
+  upstream: anthropics/claude-code **#16288** is open (plugin `hooks/hooks.json`
+  never loaded; a 2026-07-05 comment has Cowork loading `SessionStart` but *not*
+  the prompt-lifecycle hooks from the same file, suspected tied to Cowork spawning
+  the CLI with `--setting-sources user`), and **#34573** reports plugin
+  `PreToolUse`/`PostToolUse` **command** hooks silently dropped while `prompt`
+  hooks on the same events fire (closed by the stale bot, not fixed). Two reported
+  workarounds, both unverified here: inline the `hooks` object in `plugin.json`,
+  or inject into `settings.json`. Settle it with one live Cowork run the way #939
+  was settled, not a repo read. A `prompt` handler is no substitute: an LLM call
+  per tool use, non-deterministic, unfit for a hard deny.
 
 - [ ] **Whether `Skill`-tool content injection survives compaction is
   unverified — and there's now real reason to suspect it doesn't.**
