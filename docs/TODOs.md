@@ -173,8 +173,8 @@ create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
 
 ## Guardrail enforcement in production
 Plan: `docs/plan/research-guardrail-bypass-plan.md`. The eval-side mechanisms
-have proven out; only §4.3 reaches the hosted web workbench, and none of them
-reach Cowork.
+have proven out. Only §4.3 reaches production — everywhere, via the plugin hook;
+§4.1's caller-id gate and §4.4's detectors are still harness-only.
 
 - [ ] **§4.3's lockdown covers `Write`/`Edit`/`NotebookEdit`, not `Bash`.**
   `real_agent._pretool_hook` matches on `file_path`, so the shell route around it
@@ -187,21 +187,23 @@ reach Cowork.
   open only because nothing has forced that tradeoff: no bypass in the corpus has
   used the shell. Close it if one shows up in a runlog or a feedback case.
 
-- [ ] **Cowork has no hook seam — and the plugin route that would give it one is
-  unverified.** The hosted fix is an SDK-level `hooks=` argument
-  (`real_agent.build_options`), and Cowork's session options are not ours to set.
-  The only artifact that could bind all four environments is a plugin-shipped
-  `packages/engine/plugin/hooks/hooks.json`, which is the least-supported cell
-  upstream: anthropics/claude-code **#16288** is open (plugin `hooks/hooks.json`
-  never loaded; a 2026-07-05 comment has Cowork loading `SessionStart` but *not*
-  the prompt-lifecycle hooks from the same file, suspected tied to Cowork spawning
-  the CLI with `--setting-sources user`), and **#34573** reports plugin
-  `PreToolUse`/`PostToolUse` **command** hooks silently dropped while `prompt`
-  hooks on the same events fire (closed by the stale bot, not fixed). Two reported
-  workarounds, both unverified here: inline the `hooks` object in `plugin.json`,
-  or inject into `settings.json`. Settle it with one live Cowork run the way #939
-  was settled, not a repo read. A `prompt` handler is no substitute: an LLM call
-  per tool use, non-deterministic, unfit for a hard deny.
+- [ ] **§4.3's rule is enforced in two places, and one of them is only there
+  because the other is unproven.** `packages/engine/plugin/hooks/hooks.json` is
+  verified live in Cowork; the hosted path also loads the plugin, so it *should*
+  bind there too and make `real_agent._pretool_hook` redundant — but "the plugin
+  loader does what you'd expect in the hosted path" is exactly the assumption
+  #939 disproved for agents. Confirm with one hosted run (write to
+  `research.json` via `Write` with the SDK hook removed) before deleting the
+  Python copy. Until then both fire, which is harmless: they deny the same thing
+  with the same reason.
+
+- [ ] **`SessionStart` plugin hooks do not fire in Cowork.** Measured 2026-07-30
+  in the same probe that confirmed `PreToolUse` works: no invocation, and the
+  `additionalContext` never reached the session. Nothing depends on this today —
+  recorded because it is the natural place to put per-session setup (seeding
+  state, injecting project context) and it silently would not run. It is also the
+  inverse of the Cowork report in anthropics/claude-code#16288, so that thread is
+  not a reliable guide to current behavior.
 
 - [ ] **Whether `Skill`-tool content injection survives compaction is
   unverified — and there's now real reason to suspect it doesn't.**
