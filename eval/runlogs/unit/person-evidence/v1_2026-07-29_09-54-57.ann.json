@@ -1,0 +1,870 @@
+{
+  "run_log": "v1_2026-07-29_09-54-57.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly identifies the missing person_evidence links, grounds the findings in the existing research.json state, and appropriately uses the 1850 census as the comparison model."
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms the audit examined all 1860 census assertions, identified every missing or incomplete person_evidence link, and provided a complete accounting without omissions."
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms all MCP tool calls used the expected arguments, returned the appropriate data, and matched the fixture without errors."
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the audit evaluated existing confidence without introducing new confidence assignments and appropriately avoided overstating incomplete evidence."
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly explains the basis for the existing confidence rating and clearly justifies the need for dual person_evidence links on relationship assertions."
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the missing dual-person linkage, appropriately compares it to the 1850 pattern, and confirms that review mode requested permission before making changes."
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the audit-only scope, confirms the skill complied with the requirement not to modify research.json or tree.gedcomx.json, and appropriately identified the gaps while requesting user permission before any changes."
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline (advisory)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes no same_person scores were applicable, confirms the existing match_score: null was appropriate, and notes that the confidence assessment was based on evidence correlation rather than scoring."
+    },
+    {
+      "test_id": "ut_person_evidence_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the rejection was based on a material identity conflict, confirms the disclosed low same_person score supported the decision, and appropriately notes that no person_evidence or unrelated data was written."
+    },
+    {
+      "test_id": "ut_person_evidence_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill completed the full evaluation workflow, disclosed the same_person score, documented the no-link decision with supporting reasoning, and satisfied the request without substantive omissions."
+    },
+    {
+      "test_id": "ut_person_evidence_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms all MCP tool calls used valid arguments, the same_person request was properly constructed with the expected GedcomX personas and primary IDs, and all calls executed successfully without fixture errors."
+    },
+    {
+      "test_id": "ut_person_evidence_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the no-link decision was appropriate under the threshold policy, properly weighted the birthplace conflict as disqualifying despite other matching evidence, and avoided overstating confidence."
+    },
+    {
+      "test_id": "ut_person_evidence_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the rationale was grounded in specific matching and conflicting evidence, disclosed the same_person score, and clearly justified the no-link decision based on the documented identity conflict."
+    },
+    {
+      "test_id": "ut_person_evidence_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes no multi-person linkage was applicable because a_002 is a single-person assertion, and appropriately credits the skill for avoiding unnecessary or incorrect additional person_evidence links."
+    },
+    {
+      "test_id": "ut_person_evidence_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the no-link outcome was required under the threshold policy, confirms no person_evidence entry or edges should have been created, and appropriately credits the skill for avoiding an incorrect link."
+    },
+    {
+      "test_id": "ut_person_evidence_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline (advisory)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the same_person score was appropriately treated as supporting evidence, while the qualitative correlation analysis and the core birthplace conflict ultimately drove the no-link decision."
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill identified and linked the appropriate people with proper confidence, deferred creation of the ParentChild relationship in accordance with lane boundaries, and avoided fabricating unsupported facts"
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill completed all required tasks, created the expected stub and person_evidence links, and appropriately deferred the ParentChild relationship to the proof-conclusion stage in accordance with the lane boundary."
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly confirms all MCP tool calls used appropriate arguments, the stub creation and batched person_evidence entries were constructed correctly, and all calls executed successfully against the expected live fixtures without errors."
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the confidence tiers were calibrated to the available evidence, with confident applied to the well-corroborated existing person and probable appropriately assigned to the newly minted stub pending independent corroboration."
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the rationales are grounded in specific corroborating evidence, appropriately justify the confidence levels, and clearly explain why no competing candidate required further disambiguation."
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the relationship assertion was linked to both relevant people through separate person_evidence entries and that deferring the ParentChild edge to the proof-conclusion stage followed the required lane boundary."
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill created an appropriately minimal sourced stub, attached the required person_evidence links, respected the lane boundary by deferring the ParentChild relationship, and transparently disclosed the unavailable merge_warnings tool without treating it as a failure."
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline (advisory)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the absence of a match_score was appropriately handled for a non-record_search source, with confidence based on qualitative correlation evidence rather than a numeric score."
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill identified the unlinked assertion, relied on qualitative correlation rather than the degenerate same-person score, appended the appropriate person_evidence entry with match_score=null, and avoided unsupported or fabricated conclusions."
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill fulfilled the user's request by identifying the correct tree person, completing the required matching workflow, persisting the person_evidence link, and providing optional next-step suggestions without omitting any required work."
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes all MCP tool calls used semantically correct arguments, the same_person and research_append calls were properly structured, and every call matched the expected live fixtures without errors."
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the confident confidence level is supported by multiple consistent, independently corroborating attributes within the record and that no conflicting evidence undermines the identification."
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the rationale is grounded in specific corroborating evidence, explicitly explains why the degenerate same_person score was not relied upon, addresses the absence of competing candidates, and supports the conclusion with qualitative correlation rather than generic assertions."
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill linked the single asserted fact to the appropriate person, did not create unnecessary person_evidence entries for existing parents, and appropriately avoided inferring or writing additional relationship evidence beyond the user's request."
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes person minting was not applicable because the relevant individuals already existed in the tree, and the skill appropriately linked the assertion to the existing person without creating unnecessary people or relationship edges."
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill treated the degenerate same_person score appropriately, relied on qualitative correlation for the identification, set match_score=null, and followed the required score-discipline policy."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill handled the full-text assertion appropriately by relying on qualitative correlation without a same_person score, created the required person_evidence links with match_score=null, and avoided unsupported or fabricated conclusions."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill completed all required work by linking the relationship assertion to both relevant people through separate person_evidence entries, grounding the links in appropriate correlation analysis, and correctly handling the absence of a same_person score for a full-text-sourced assertion."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes both MCP calls used the expected arguments, the person_evidence entries contained all required fields with match_score=null for the FTS-sourced assertion, and all calls completed successfully without fixture or identifier errors."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the confident confidence level is supported by the will's explicit parent-child statement, the exact identity match, consistency with existing tree relationships, and the absence of conflicting evidence."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes both rationales are grounded in specific corroborating evidence, explain why each person is linked to the assertion, and appropriately justify the dual-link approach for the relationship assertion."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill identified the assertion as a relationship assertion, created person_evidence links for both relevant people, and satisfied the multi-person linking requirement without omitting either side of the relationship."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes person minting and edge creation were not applicable because the relevant people and relationship already existed in the tree, and the skill appropriately limited its work to creating the required person_evidence links."
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline (advisory)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the absence of a same_person score was handled appropriately for an FTS-sourced assertion, with match_score=null and the confidence determination based entirely on qualitative correlation rather than a numeric score."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill identified the core-identifier conflict, appropriately limited the confidence despite the high same_person score, relied on qualitative correlation rather than the score alone, and avoided unsupported or fabricated conclusions."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill completed the requested analysis, identified and explained the evidence conflict, and appropriately sought user confirmation before creating a link rather than proceeding despite unresolved contradictory evidence."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes all MCP tool calls used the expected arguments, the research_query and same_person requests were properly structured with the relevant identifiers and GedcomX payloads, and no semantic or fixture-matching errors occurred."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill appropriately capped confidence at speculative because the unresolved birthplace conflict outweighs the high same_person score, treating the score as an input rather than overriding contradictory qualitative evidence."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the rationale cites specific corroborating attributes, explicitly analyzes the birthplace conflict, explains why the high same_person score does not outweigh that conflict, and presents plausible interpretations without overstating the evidence."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes no person_evidence links were created because the skill appropriately deferred action pending user confirmation, and that the multi-person linking dimension is not applicable for this single-person assertion."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes person minting and edge creation were not applicable because the assertion concerned an existing tree person, and the skill appropriately deferred any linking action pending user confirmation in light of the unresolved conflict."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill treated the same_person score as one input to the analysis rather than a decision, allowing the qualitative evidence and unresolved birthplace conflict to determine the final confidence level."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the analysis is grounded in the available evidence, appropriately weighs the death certificate alongside the corroborating census records, acknowledges the birthplace conflict and informant limitations, supports a defensible confident conclusion, and avoids fabricated or unsupported claims."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the review comprehensively evaluated the confidence calibration, including the evidence chain, cross-record corroboration, identified conflict, rationale critique, scope clarification, and the missing reciprocal link consideration, without omitting any major aspect of the requested review."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes all four MCP tool calls used the expected arguments, matched the appropriate fixtures, executed successfully without argument or fixture errors, and completed the required data retrieval."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment is largely accurate in recognizing the corroborating evidence and the rationale's limitations, but it also acknowledges that the confidence re-evaluation is incomplete because it stops short of fully resolving whether the birthplace conflict should reduce the confidence from confident to probable."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the strengths and shortcomings of Claude's critique, but it overstates the deficiency by penalizing the analysis for not rewriting the rationale when the task was to review and evaluate it rather than produce a replacement rationale."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes Claude identified the relationship assertion's implications for both Patrick Flynn and Thomas Flynn, appropriately flagged the missing reciprocal person_evidence link without making unauthorized changes during a review, and satisfied the multi-person awareness requirement for an audit context."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes this dimension is not applicable because the review concerns existing tree persons and an existing person_evidence link, with no need for person minting or edge creation during a confidence audit."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline (advisory)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes no same_person score was applicable for this full-text-sourced assertion, and that the confidence evaluation appropriately relied on qualitative cross-record correlation rather than any algorithmic score."
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill treated the low same_person score as a transcription-variant artifact rather than decisive evidence, relied on strong qualitative correlation across core identifiers, correctly identified the household variant, and created the person_evidence entry with the appropriate values and a well-supported rationale."
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill completed all required steps to link assertion a_003, gathered the necessary context, performed qualitative and score-based analysis, created the appropriate person_evidence link, and appropriately identified the household head as a potential future linking task."
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the MCP tool calls used semantically correct arguments, successfully matched the expected fixtures, constructed the required same_person inputs appropriately, and appended the person_evidence entry with the required fields without any fixture mismatches."
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill's confidence calibration was consistent with the available evidence, appropriately treating the low same_person score as a transcription-variant artifact rather than disqualifying evidence and relying on strong corroboration across multiple identifiers to justify a confident match."
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the rationale is specific, evidence-based, and well-calibrated, explicitly documenting the matching identifiers, explaining the surname variant, justifying why the low same_person score does not undermine the match, and grounding the conclusion in independent corroborating evidence."
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly explains why the evidence supports a confident match and appropriately interprets the low same_person score, but it somewhat overstates the justification by asserting that the available evidence definitively warrants the highest confidence tier rather than acknowledging that confidence calibration can reasonably involve judgment."
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes this dimension is not applicable because both record personas matched existing tree persons, no new person minting or relationship creation was required, and the skill appropriately linked the assertion to the existing tree without creating unnecessary stubs or edges."
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline (advisory)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill treated the same_person score as one input to the analysis rather than a deterministic outcome, recorded the score appropriately, and based the confidence decision on qualitative correlation across multiple corroborating identifiers instead of allowing the low score to veto an otherwise strong match."
+    },
+    {
+      "test_id": "ut_person_evidence_022",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill matched Thomas Flynn to the existing tree person, created an appropriate stub for Mary Doyle with a more cautious confidence level, deferred relationship and marriage creation appropriately, and avoided unsupported claims or fabricated evidence."
+    },
+    {
+      "test_id": "ut_person_evidence_022",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Accurate assessment that correctly recognizes the skill completed all required tasks, including evaluating the existing match, creating a new stub person where appropriate, writing the necessary person_evidence entries, documenting the unavailable person_warnings check, and appropriately deferring relationship and marriage creation to downstream workflows."
+    },
+    {
+      "test_id": "ut_person_evidence_022",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the MCP tool calls used appropriate arguments, successfully queried the required data, created the new person with the correct attributes, batched the person_evidence entries correctly, and completed without fixture mismatches or unnecessary parameters."
+    },
+    {
+      "test_id": "ut_person_evidence_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the confidence levels are appropriately calibrated to the available evidence, assigning confident to the well-corroborated match for Thomas Flynn and probable to Mary Doyle based on a single introducing record without overstating the certainty."
+    },
+    {
+      "test_id": "ut_person_evidence_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes both rationales are specific, evidence-based, and appropriately calibrated, citing multiple corroborating attributes for Thomas Flynn, explaining the basis for Mary Doyle's introduction and confidence level, and avoiding generic or unsupported reasoning."
+    },
+    {
+      "test_id": "ut_person_evidence_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill handled both parties named in the marriage assertion by creating person_evidence entries for Thomas and Mary, while appropriately deferring creation of the Couple relationship to a downstream tree-edit step."
+    },
+    {
+      "test_id": "ut_person_evidence_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill minted Mary Doyle as a new person with the appropriate attributes, linked the assertion to both people, correctly deferred marriage and relationship creation to downstream workflows, avoided modifying existing tree persons, and appropriately handled unavailable tooling through manual review."
+    },
+    {
+      "test_id": "ut_person_evidence_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline (advisory)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the absence of a same_person score was appropriate for these entries, that match_score was correctly recorded as null, and that the skill based its confidence decisions on qualitative correlation rather than treating a missing score as determinative."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill resolved assertion a_001 to the appropriate tree person, accurately reported the same_person score, grounded its conclusion in corroborating evidence across multiple matching identifiers, and avoided unsupported or fabricated claims."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill completed the requested workflow end-to-end by resolving assertion a_001, performing the necessary correlation analysis with full household context, and creating the required person_evidence entry with all necessary information."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the MCP tool calls used semantically correct arguments, successfully queried the required sections, constructed the same_person request with the appropriate GedcomX context and primary IDs, and appended the person_evidence entry without argument mismatches or fixture errors."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill calibrated the confidence appropriately, relying on strong corroboration across multiple matching identifiers together with a high same_person score of 0.88, rather than basing the decision on a single source alone."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the rationale cites multiple specific corroborating attributes, incorporates the high same_person score as supporting evidence, explicitly notes the absence of conflicts, and explains the strength of the match with concrete evidence rather than generic statements."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the assertion is a person-specific name assertion rather than a relationship assertion, and therefore only requires a link to Patrick/I1, while demonstrating awareness that relationship assertions would require handling both sides."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes this dimension is not applicable because the assertion matched an existing tree person, no person minting was required, and the skill appropriately linked the assertion without creating an unnecessary stub or bypassing the correlation analysis."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline (advisory)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill treated the same_person score as supporting evidence rather than a substitute for qualitative analysis, basing the confidence decision on the full set of corroborating identifiers while using the score to reinforce—not determine—the match."
+    },
+    {
+      "test_id": "ut_person_evidence_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This dimension is not applicable because the skill correctly declined and routed the request instead of executing its own task, so no MCP tool calls were expected or required."
+    },
+    {
+      "test_id": "ut_person_evidence_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill completed the expected behavior for this negative test by identifying the request as outside the person-evidence skill's scope, appropriately declining execution, and routing the user to the correct downstream record-extraction workflow."
+    },
+    {
+      "test_id": "ut_person_evidence_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes this negative test expected the skill to decline an out-of-scope identity-linking request and route it to the appropriate record-extraction skill, which is exactly the behavior the skill performed."
+    },
+    {
+      "test_id": "ut_person_evidence_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes this negative test expected the skill to decline an out-of-scope identity-linking request and route it to the appropriate tree-edit skill for person merging, which is exactly the expected behavior."
+    },
+    {
+      "test_id": "ut_person_evidence_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the expected behavior for this negative test was to decline the out-of-scope person-evidence task and route the request to the appropriate tree-edit skill, making the routing itself the complete and correct outcome."
+    },
+    {
+      "test_id": "ut_person_evidence_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This dimension is not applicable because the correct behavior was to decline the request and route it to tree-edit, so no MCP tool calls were expected or required."
+    },
+    {
+      "test_id": "ut_person_evidence_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes this negative test expected the skill to decline an out-of-scope identity-linking request and route it to the appropriate conflict-resolution skill for adjudicating conflicting evidence, which is exactly the correct behavior."
+    },
+    {
+      "test_id": "ut_person_evidence_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill appropriately identified the request as a conflict-resolution task outside the scope of person-evidence, declined execution, and fully satisfied its responsibility by routing the user to the correct downstream skill."
+    },
+    {
+      "test_id": "ut_person_evidence_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This dimension is not applicable because the skill correctly declined the request and routed it to the conflict-resolution skill, so no MCP tool calls were expected or required."
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes this negative test expected the skill to decline an out-of-scope identity-linking request and route it to the appropriate search-records skill for locating additional records, which is exactly the correct behavior."
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill identified the request as a search-records task rather than a person-evidence task, appropriately declined to perform out-of-scope work, and fully satisfied its responsibility by routing the user to the correct downstream skill."
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This dimension is not applicable because the skill correctly declined the request and routed it to the search-records skill, so no MCP tool calls were expected or required."
+    },
+    {
+      "test_id": "ut_person_evidence_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill identified the patronymic mismatch as a substantive identity conflict rather than a spelling variant, appropriately limited the influence of the high same_person score in light of the qualitative evidence, and grounded its conclusions in the available record and tree data without unsupported claims."
+    },
+    {
+      "test_id": "ut_person_evidence_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill completed all required steps for a conflict scenario by gathering the relevant evidence, identifying and analyzing the key corroborating and conflicting attributes, and appropriately pausing for user input rather than creating a link in the presence of a substantive identity conflict."
+    },
+    {
+      "test_id": "ut_person_evidence_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the MCP tool calls used the expected arguments, provided the appropriate GedcomX context for the same_person comparison, correctly included the existing parent–child relationship, and successfully matched the required fixtures without argument or scoping errors."
+    },
+    {
+      "test_id": "ut_person_evidence_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill appropriately limited the confidence in light of the patronymic conflict, treating the high same_person score as supporting input rather than decisive evidence and preventing it from overriding a substantive core-identifier mismatch."
+    },
+    {
+      "test_id": "ut_person_evidence_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the rationale is specific, evidence-based, and appropriately balanced, citing both the corroborating attributes and the substantive patronymic conflict, explaining its historical significance, and clearly justifying why the conflict prevents a confident link rather than minimizing it."
+    },
+    {
+      "test_id": "ut_person_evidence_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill treated the patronymic conflict as bearing on both the subject and the existing father relationship, considered the implications for both persons, and appropriately refrained from creating a one-sided person_evidence link while the identity conflict remained unresolved."
+    },
+    {
+      "test_id": "ut_person_evidence_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes this dimension is not applicable because the task involved evaluating an existing person against a record persona rather than minting a new person or creating relationships, and the skill appropriately deferred linking without creating or modifying any persons or edges."
+    },
+    {
+      "test_id": "ut_person_evidence_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline (advisory)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill treated the same_person score as supporting input rather than a substitute for qualitative analysis, explicitly explaining why the patronymic conflict outweighed the high score and appropriately capped the confidence instead of allowing the score to determine the outcome."
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies that the materialized person lacked the expected gender fact despite the rationale recognizing James Flynn as male, but it somewhat overstates the requirement by asserting that omission alone prevents full compliance without acknowledging that the skill otherwise correctly minted the new person and completed the required linking workflow."
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill completed the required work for assertion a_005 by creating a new person when no suitable match existed, linking the assertion through the appropriate person_evidence entries, and appropriately noting the related unlinked assertion as a separate follow-up rather than omitting it."
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the MCP tool calls used appropriate arguments, correctly queried the required research sections, invoked materialize_facts with the proper record and role, appended the person_evidence entries with the required structure, and completed successfully without fixture or argument errors."
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly questions the confident rating for Thomas Flynn given the reliance on a single will record and the absence of a same_person score, but it somewhat overstates the rubric by asserting that a single source can never justify confident, whereas confidence calibration can depend on the overall strength and specificity of the available evidence."
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes both rationales are specific, evidence-based, and well-reasoned, citing concrete details from the will, explaining the basis for each link and confidence level, and avoiding generic or unsupported assertions."
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill created person_evidence entries for both individuals implicated by the relationship assertion, ensuring both James Flynn and Thomas Flynn were represented while appropriately leaving the parent–child relationship itself for downstream processing."
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies that the newly materialized person lacked the expected gender fact despite evidence supporting it, but it overstates the requirements by asserting the skill should also have created a parent–child relationship edge. If relationship creation is reserved for downstream tree-edit/proof-conclusion workflows, the absence of that edge is not necessarily a deficiency in the person-evidence task."
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate assessment that correctly recognizes the skill appropriately recorded match_score as null because no same_person comparison was possible, relied on qualitative evidence from the will to justify the links, and clearly explained why no score was available rather than treating the missing score as evidence against the correlation."
+    }
+  ]
+}
