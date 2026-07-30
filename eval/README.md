@@ -201,7 +201,7 @@ The CRUD UI's run-log detail page (`/results/<skill>/<filename-without-ext>`) is
 
 ## Workflow
 
-See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the canonical release/active/candidate workflow and [`docs/plan/per-pr-review-workflow.md`](../docs/plan/per-pr-review-workflow.md) for the per-PR cadence. Short version:
+See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the canonical release/active/candidate workflow and [`docs/per-pr-review-workflow.md`](../docs/per-pr-review-workflow.md) for the per-PR cadence. Short version:
 
 1. Junior edits a skill / tests / scenarios / fixtures.
 2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` candidate.

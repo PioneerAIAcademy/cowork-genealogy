@@ -1,0 +1,14 @@
+{
+  "tool": "place_distance",
+  "description": "place_distance for an intra-Pennsylvania pair (e.g. the state 'Pennsylvania, United States' and the county 'Schuylkill, Pennsylvania, United States'). Matches when BOTH standard places contain 'Pennsylvania'. Returns a short in-state distance so the timeline's geographic-feasibility check completes instead of hitting fixture_not_found when it computes a state<->county consecutive pair. Distinct from the Ireland<->Pennsylvania fixtures, which require 'Ireland' on one side.",
+  "args": {
+    "standardPlace1": "~Pennsylvania",
+    "standardPlace2": "~Pennsylvania"
+  },
+  "response": {
+    "standardPlace1": "Pennsylvania, United States",
+    "standardPlace2": "Schuylkill, Pennsylvania, United States",
+    "miles": 87,
+    "kilometers": 140
+  }
+}

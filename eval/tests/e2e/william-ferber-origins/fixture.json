@@ -1,0 +1,19 @@
+{
+  "id": "william-ferber-origins",
+  "name": "William Hubert Ferber — ancestral origins",
+  "genre": "strip",
+  "source_pid": "G7JB-YH6",
+  "captured": "2026-07-28",
+  "researcher_question": "Who were the parents of William Hubert Ferber (father of Charles Hubert Ferber, b. 1891, Cincinnati, Ohio)?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1850s",
+    "geography": "US-OH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Single-focus origins fixture, split off from the compound william-ferber-ancestry fixture. Full context is retained, including William's own death and burial - only his parents (Gerhard Ferber, b. 1820 Germany, immigrated ~1849-1850, naturalized 1853 Ohio; and Eva Engermann, b. 1834 Bavaria), their relationships, and the three parent-revealing sources are stripped. The parents are attested in the stripped 1870 census (names both) and the 1903 Ohio death record (names Gerhard as father); the agent must re-find those via record search. The retained 1900 census leaves a legitimate German-origin breadcrumb (parents born in Germany) without naming them. The mother's maiden name Engermann lives only in the stripped 1870 census, so it is the hardest detail; in the compound run the agent recovered both parents but recorded the mother as 'Eva Ferber' (married surname)."
+}
