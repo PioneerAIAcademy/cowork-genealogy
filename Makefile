@@ -283,8 +283,21 @@ agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the pl
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test
 
+# $(ENGINE_BUILD) is a real prerequisite here, not a convenience. The mock MCP
+# server (eval/harness/harness/mock_mcp.py) shells out to the COMPILED build/
+# for its live tool handlers and for the production tool catalog, so part of
+# this suite genuinely executes build/**. CI already builds before running the
+# same pytest (.github/workflows/eval-harness-tests.yml); only this target and
+# scripts/test.sh were missing it.
+#
+# build/ is gitignored, so a freshly-added worktree has none — and
+# link-worktree.sh deliberately does NOT link it (each worktree must compile its
+# own src/, or a branch would silently test another branch's build). Without the
+# prereq the run failed inside test_mock_mcp.py on "AssertionError: staging must
+# still happen": a missing build wearing the costume of a code regression.
+# Python deps still need no stamp — `uv run` auto-syncs the venv.
 .PHONY: harness-test
-harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e; uv auto-syncs the venv)
+harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest, excludes e2e; uv auto-syncs the venv)
 	cd eval/harness && uv run pytest -m 'not e2e' -q
 
 .PHONY: eval-skill

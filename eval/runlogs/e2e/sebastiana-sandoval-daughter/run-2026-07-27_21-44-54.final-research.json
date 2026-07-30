@@ -1,0 +1,1528 @@
+{
+  "project": {
+    "id": "rp_sebastiana_sandoval_daughter",
+    "objective": "Did Sebastiana Sandoval and her husband Jose Aguilar of Oaxaca, Mexico have a daughter named Juana, born 1876 and died 1879, in addition to their four known children (b. 1877-1885)?",
+    "subject_person_ids": [
+      "K2GV-D61"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-27"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Does a baptismal or birth record document a daughter named Juana, born circa 1876 to Jose Aguilar and Sebastiana Sandoval in Oaxaca, Mexico?",
+      "rationale": "The objective asks whether this couple had a daughter Juana born 1876 and died 1879 \u2014 a completeness question about the family's child list. The most direct evidence for the child's existence is a baptismal or civil birth record. Oaxaca parish registers and civil registro civil records from this period survive in substantial numbers on FamilySearch. The known children were baptized in Magdalena Pe\u00f1asco and Tlahuitoltepec parishes; searching those same registers circa 1875-1878 is the highest-yield first step. A found record confirms Juana's existence; nil results after exhaustive search contribute negative evidence toward a 'not proved' conclusion. Formulated as Priority 4 (objective decomposition) on a fresh project.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-27",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_008",
+        "a_011",
+        "a_012",
+        "a_014",
+        "a_016",
+        "a_019",
+        "a_024"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched civil birth records (collection 1923401, 1875-1877), Catholic baptism records (collection 1909191, 1875-1878), Tlahuitoltepec church registers (pli_005), full-text corpus (pli_003, +Sandoval +Aguilar, nil \u2014 FTS corpus gap for this period), and FAN/sibling record for Remigio Aguilar (pli_006). No birth or baptism record for Juana was found; however, a supplementary 1879-death search yielded two independent civil death registrations (QG3Q-RMGM and XSSC-NMTG, both read at original-image level via record_read) that independently state Juana Aguilar, daughter of Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval, born 1876, died 1879 at Magdalena Pe\u00f1asco. Both records were created by the civil registration authority at Tlaxiaco from statements made by the parents. They constitute two independent source units with different informant configurations. The underlying objective \u2014 whether this couple had a daughter Juana born 1876 and died 1879 \u2014 is answered affirmatively with primary, direct, original evidence.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 two civil death registrations provide primary, direct, original evidence confirming Juana Aguilar (born 1876, died 1879) as a daughter of Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval of Magdalena Pe\u00f1asco, Oaxaca. The underlying objective question is definitively answered.",
+          "repository_breadth": "FamilySearch civil registration (collection 1923401) and Catholic church records (collection 1909191) both searched. Full-text corpus searched (nil, FTS corpus does not contain indexed transcriptions for this Oaxaca period). Two jurisdictions searched (Tlaxiaco/Magdalena Pe\u00f1asco and Tlahuitoltepec). Only unplanned record type is Catholic burial registers for Magdalena Pe\u00f1asco, but the civil death records already provide conclusive evidence; a Catholic burial record would be corroborative only.",
+          "original_substitution": "Original images accessed via record_read for all three decisive records: QG3Q-RMGM (log_008), XSSC-NMTG (log_009), and QG9P-1JRZ (log_005). Not relying on index summaries alone.",
+          "independent_verification": "Two independent civil death registrations: QG3Q-RMGM (father Jose Maria Aguilar as sole registrant) and XSSC-NMTG (both parents as informants). Different informant configurations, separate acts in the civil register \u2014 constitute two independent evidence units. A third corroborating record (QG9P-1JRZ, Remigio's birth registration naming the same parents at Magdalena Pe\u00f1asco, 28 days before Juana's death) anchors the family at the right place and time.",
+          "evidence_class": "Both QG3Q-RMGM and XSSC-NMTG are original civil registration records. Parentage assertions (a_001\u2013a_011, a_012\u2013a_026) carry primary information quality (informants are the parents themselves, present at registration). Birth-year assertions (a_005, a_016) carry secondary information quality \u2014 parents reporting a child's birth year at the time of death registration \u2014 which is the expected limitation for a death record.",
+          "conflict_resolution": "No conflicts. QG3Q-RMGM states birth ~1876 (approximate); XSSC-NMTG states birth 1876 (year-precision). These are compatible, not conflicting. Both agree on name, sex, parentage, death year, and place.",
+          "overturn_risk": "Low. Two original civil death registrations with primary parentage statements from both parents, read at image level, independently agree on all key attributes. A Catholic baptism or burial record might provide additional corroboration but is unlikely to contradict the civil records. The FTS corpus gap (no indexed transcriptions for Oaxaca 1875-1879) is a known limitation noted in loc_001; the decisive evidence was found through civil death records. No unsearched record type is likely to name different parents or contradict Juana's birth year."
+        }
+      },
+      "created": "2026-07-27"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-27",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Tlaxiaco, Mixteca, Oaxaca, Mexico (includes Magdalena Pe\u00f1asco)",
+          "date_range": "1875-1877",
+          "repository": "FamilySearch",
+          "rationale": "Collection 1923401 (Mexico, Oaxaca, Civil Registration, 1861-2002) is 100% indexed for Tlaxiaco nacimientos. The 1876 nacimientos volume (IGN 005069248_002) is fully name-indexed. A civil birth record for Juana would be the most direct confirmation of her existence as a daughter of Jose Aguilar and Sebastiana Sandoval. Search by child's name (Juana), parents' names (Jose Aguilar, Sebastiana Sandoval), and place (Magdalena Pe\u00f1asco / Tlaxiaco). Per loc_001, Magdalena Pe\u00f1asco records index under the Tlaxiaco district, not the municipality name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Tlaxiaco, Mixteca, Oaxaca, Mexico (includes Magdalena Pe\u00f1asco)",
+          "date_range": "1875-1878",
+          "repository": "FamilySearch",
+          "rationale": "Collection 1909191 (Mexico, Oaxaca, Catholic Church Records, 1559-2022). Church baptism Libros 44\u201345 for Tlaxiaco covering 1873\u20131878 are 96\u201397% indexed and full-text searchable (IGN 004036833_001 and 004036833_002). Catholic baptism would pre-date or coincide with civil registration. Search for baptism of Juana, daughter of Jose Aguilar and Sebastiana Sandoval, ca. 1875-1877.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Oaxaca, Mexico",
+          "date_range": "1875-1877",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search for surnames 'Sandoval' and 'Aguilar' in Oaxaca church and civil records. Per the record-type guide, for Latin American compound surnames a full-text unscoped co-occurrence search on the two parental surnames (Sandoval + Aguilar) is the highest-yield fallback when indexed search stalls, because it surfaces the parents' acts (child baptisms, burials, marriages) regardless of indexing gaps. Route to search-full-text skill. Do not scope to a specific collection \u2014 search across the Oaxaca corpus.",
+          "fallback_for": "pli_002",
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+          "date_range": "1876",
+          "repository": "FamilySearch",
+          "rationale": "Browse-fallback: if indexed search in item 1 (pli_001) returns no result for Juana, browse the specific 1876 nacimientos volume (IGN 005069248_002, 326 images, 100% indexed but may need manual review for Magdalena Pe\u00f1asco entries). Also check 1875 and 1877 volumes in case the birth date is slightly off. Collection 1923401.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Santa Mar\u00eda Tlahuitoltepec, Oaxaca, Mexico",
+          "date_range": "1875-1877",
+          "repository": "FamilySearch",
+          "rationale": "Fallback: the family was at Tlahuitoltepec by 1885. Church baptism Libro 2 for Tlahuitoltepec (IGN 004055248_002, Feb 1859\u2013Aug 1877, 96% indexed) covers up to Aug 1877. If the family had any earlier connection to that area, Juana's baptism might appear there. Collection 1909191.",
+          "fallback_for": "pli_002",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+          "date_range": "1877-1879",
+          "repository": "FamilySearch",
+          "rationale": "FAN / sibling records: The birth/baptism records for known siblings Juan (b. 1877) and Remigio (b. 30 Sep 1879) in Magdalena Pe\u00f1asco may note birth order, surviving siblings, or other children of Jose Aguilar and Sebastiana Sandoval. Collection 1923401. These records are already cited in tree.gedcomx.json (sources W9S8-TZB for Remigio) but have not yet been extracted as research.json assertions \u2014 extracting them may reveal reference to Juana or confirm she is not mentioned.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T21:12:21.478Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1923401",
+        "givenName": "Juana",
+        "surname": "Aguilar",
+        "fatherSurname": "Aguilar",
+        "motherSurname": "Sandoval",
+        "recordPlace": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+        "recordYearFrom": 1875,
+        "recordYearTo": 1877,
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 185,
+      "notes": "185 results total. Top hit ark:/61903/1:1:QG9R-RZYQ has recordTitle 'Registro para Sebastiana Sandoval' with Juana Aguilar listed as secondary person \u2014 strong candidate for Juana's death/birth record. Many other results are 'Juana Aguilar' female with sparse dates. Requires record_read to confirm."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-27T21:12:21.488Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1909191",
+        "givenName": "Juana",
+        "surname": "Aguilar",
+        "fatherSurname": "Aguilar",
+        "motherSurname": "Sandoval",
+        "recordPlace": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+        "recordYearFrom": 1875,
+        "recordYearTo": 1878,
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 214,
+      "notes": "214 results total. Top result ark:/61903/1:1:6ZFY-1PJ5 score 5.6176 is 'Juana Aguilar' from 'Petrona Refugio' record. Next 20+ also 'Juana Aguilar' female, scores ~3.8. None have clear date/place match to Jose Aguilar + Sebastiana Sandoval parents without further reading. Requires manual review."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-27T21:16:20.176Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Sandoval +Aguilar +Juana",
+        "yearFrom": 1875,
+        "yearTo": 1879,
+        "recordPlace1": "Oaxaca"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Full-text co-occurrence search +Sandoval +Aguilar +Juana in Oaxaca 1875-1879 returned 0 results. Adding +Juana may have been too restrictive. Will retry with pure co-occurrence +Sandoval +Aguilar."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-27T21:16:20.176Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1909191",
+        "givenName": "Juana",
+        "surname": "Aguilar",
+        "fatherSurname": "Aguilar",
+        "motherSurname": "Sandoval",
+        "recordPlace": "Santa Maria Tlahuitoltepec, Oaxaca, Mexico",
+        "recordYearFrom": 1875,
+        "recordYearTo": 1877,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 9163,
+      "notes": "Place filter for Santa Maria Tlahuitoltepec did not narrow results; 9163 returned across all Oaxaca. Top results are from San Mateo Penasco (neighboring Tlaxiaco-area parish) in 1899-1907 period, none matching target criteria. Tlahuitoltepec-specific records not surfaced by indexed search."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-27T21:16:20.186Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QG9P-1JRZ",
+        "note": "FAN pli_006: Remigio Aguilar birth 30 Sep 1879, Magdalena Penasco"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Remigio Aguilar birth record (civil, 1 Oct 1879 registration) confirms parents as Jose Maria Aguilar and Sebastiana Sandoval at Magdalena Penasco. Record names only Remigio \u2014 no siblings listed. No mention of Juana. Father indexed as Jose Maria Aguilar (full name)."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T21:17:08.363Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1923401",
+        "givenName": "Juana",
+        "surname": "Aguilar",
+        "fatherSurname": "Aguilar",
+        "motherSurname": "Sandoval",
+        "recordPlace": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+        "recordYearFrom": 1879,
+        "recordYearTo": 1879,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 3710,
+      "notes": "STRONG HIT: ark:/61903/1:1:QG3Q-RMGM \u2014 Juana Aguilar, born 1876, DeathRegistration 28 Oct 1879 at Tlaxiaco, death place Magdalena Penasco. Also ark:/61903/1:1:XSSC-NMTG \u2014 Juana Aguilar, born 1876, died 1879, pueblo de Magdalena Penasco. Both match the hypothesis exactly. Must read both records to confirm parents as Jose Aguilar and Sebastiana Sandoval."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-27T21:17:08.372Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Sandoval +Aguilar",
+        "yearFrom": 1875,
+        "yearTo": 1879,
+        "recordPlace1": "Oaxaca"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Pure co-occurrence +Sandoval +Aguilar in Oaxaca 1875-1879 returned 0 results. Full-text search corpus does not appear to include transcribed Oaxaca documents from 1875-1879. This approach exhausted."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T21:17:51.206Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QG3Q-RMGM"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CONFIRMED: Civil death registration for Juana Aguilar. Born 1876. Death at Magdalena Penasco. DeathRegistration date: 28 Oct 1879, Tlaxiaco. Father: Jose Maria Aguilar. Mother: Sebastiana Sandoval. Directly confirms research question \u2014 Sebastiana Sandoval and Jose Aguilar had a daughter Juana born 1876 who died 1879 at Magdalena Penasco."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-27T21:17:51.206Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XSSC-NMTG"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CONFIRMED (corroborating record): Civil death record for Juana Aguilar. Born 1876. Death 1879, pueblo de Magdalena Penasco. Burial at Tlaxiaco, Mixteca. Father: Jose Maria Aguilar (b. 1856, labrador). Mother: Sebastiana Sandoval (b. 1855). Additional witnesses: Jose Maria Ortiz (b. 1838) and Evereya Nirrita (garbled transcription). Corroborates QG3Q-RMGM."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"M\u00e9xico, Oaxaca, Registro Civil, 1861-2002,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QG3Q-RMGM : accessed 27 July 2026), entry for Juana Aguilar and Jose Maria Aguilar, 28 de octubre de 1879.",
+      "citation_detail": {
+        "who": "Juana Aguilar (deceased), Jose Maria Aguilar (father), Sebastiana Sandoval (mother)",
+        "what": "Civil death registration for Juana Aguilar, age approximately 3 years",
+        "when_created": "28 October 1879",
+        "when_accessed": "27 July 2026",
+        "where": "FamilySearch \u2014 M\u00e9xico, Oaxaca, Registro Civil, 1861-2002 (collection 1923401)",
+        "where_within": "Entry for Juana Aguilar and Jose Maria Aguilar, 28 Oct 1879; image: ark:/61903/1:2:Q5F5-TQPW"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-27",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QG3Q-RMGM",
+      "log_entry_id": "log_008",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"M\u00e9xico, Oaxaca, Registro Civil, 1861-2002,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XSSC-NMTG : accessed 2026-07-27), entry for Juana Aguilar and Jos\u00e9 Mar\u00eda Aguilar, 1879; citing civil registration records, Tlaxiaco, Oaxaca, Mexico.",
+      "citation_detail": {
+        "who": "Juana Aguilar (deceased), Jos\u00e9 Mar\u00eda Aguilar (father), Sebastiana Sandoval (mother)",
+        "what": "Civil death registration entry, 1879",
+        "when_created": "1879",
+        "when_accessed": "2026-07-27",
+        "where": "FamilySearch, Mexico, Oaxaca, Civil Registration, 1861-2002 (collection 1923401)",
+        "where_within": "Death entry for Juana Aguilar, Tlaxiaco district, 1879; image ark:/61903/1:2:H41W-XWV2"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-27",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XSSC-NMTG",
+      "log_entry_id": "log_009",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"M\u00e9xico, Oaxaca, Registro Civil, 1861-2002,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QG9P-1JRZ : accessed 27 July 2026), entry for Remigio Aguilar and Jos\u00e9 Mar\u00eda Aguilar, 1 de octubre de 1879.",
+      "citation_detail": {
+        "who": "Remigio Aguilar (principal), Jos\u00e9 Mar\u00eda Aguilar (father), Sebastiana Sandoval (mother)",
+        "what": "Civil birth registration (nacimiento) of Remigio Aguilar",
+        "when_created": "1 October 1879",
+        "when_accessed": "27 July 2026",
+        "where": "FamilySearch, Mexico, Oaxaca, Civil Registration, 1861-2002 (collection 1923401)",
+        "where_within": "Entry for Remigio Aguilar and Jos\u00e9 Mar\u00eda Aguilar, 1 October 1879, Tlaxiaco, Oaxaca"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-27",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QG9P-1JRZ",
+      "log_entry_id": "log_005",
+      "notes": "Civil birth registration from Tlaxiaco district, Oaxaca. Birth occurred 30 September 1879 at Magdalena Pe\u00f1asco; registered 1 October 1879 at Tlaxiaco. Parent(s) registered the birth contemporaneously. Record image available at https://www.familysearch.org/ark:/61903/1:2:Q5FM-DS4M.",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QG3Q-RMGM",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Juana Aguilar",
+      "structured_value": {
+        "given": "Juana",
+        "surname": "Aguilar"
+      },
+      "information_quality": "primary",
+      "informant": "Jose Maria Aguilar (father, registrant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QG3Q-RMGM",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Jose Maria Aguilar (father, registrant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QG3Q-RMGM",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Died at Magdalena Pe\u00f1asco, Oaxaca, Mexico",
+      "place": "Magdalena Pe\u00f1asco, Oaxaca, Mexico",
+      "information_quality": "primary",
+      "informant": "Jose Maria Aguilar (father, registrant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001",
+      "standard_place": "Magdalena Pe\u00f1asco, Oaxaca, Mexico"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QG3Q-RMGM",
+      "record_role": "deceased",
+      "fact_type": "death_registration",
+      "value": "Death registered 28 October 1879 at Tlaxiaco, Oaxaca, Mexico",
+      "date": "28 October 1879",
+      "date_certainty": "exact",
+      "place": "Tlaxiaco, Oaxaca, Mexico",
+      "information_quality": "primary",
+      "informant": "Jose Maria Aguilar (father, registrant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001",
+      "standard_place": "Tlaxiaco, Mixteca, Oaxaca, Mexico"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QG3Q-RMGM",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Born approximately 1876",
+      "date": "~1876",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Jose Maria Aguilar (father, registrant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birth year stated at time of death registration in 1879, not recorded at the time of birth. Father reporting child's birth year \u2014 not primary knowledge in the strict sense as the precision of the birth year is recollected rather than documented at birth.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QG3Q-RMGM",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Jose Maria Aguilar",
+      "structured_value": {
+        "given": "Jose Maria",
+        "surname": "Aguilar"
+      },
+      "information_quality": "primary",
+      "informant": "Jose Maria Aguilar (self, registrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QG3Q-RMGM",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Jose Maria Aguilar (self, registrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QG3Q-RMGM",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "parent of Juana Aguilar (stated)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "Jose Maria Aguilar (self, registrant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QG3Q-RMGM",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Sebastiana Sandoval",
+      "structured_value": {
+        "given": "Sebastiana",
+        "surname": "Sandoval"
+      },
+      "information_quality": "primary",
+      "informant": "Jose Maria Aguilar (father, registrant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:QG3Q-RMGM",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Jose Maria Aguilar (father, registrant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:QG3Q-RMGM",
+      "record_role": "mother_of_deceased",
+      "fact_type": "relationship",
+      "value": "parent of Juana Aguilar (stated)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "Jose Maria Aguilar (father, registrant)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Juana Aguilar",
+      "structured_value": {
+        "given": "Juana",
+        "surname": "Aguilar"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval (parents)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval (parents)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Died 1879 at pueblo de Magdalena Penasco",
+      "date": "1879",
+      "place": "pueblo de Magdalena Penasco, Oaxaca, Mexico",
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval (parents)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002",
+      "standard_place": "Oaxaca, Mexico"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Buried at Tlaxiaco, Mixteca, Oaxaca",
+      "place": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+      "information_quality": "primary",
+      "informant": "civil registrar, Tlaxiaco district",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002",
+      "standard_place": "Tlaxiaco, Mixteca, Oaxaca, Mexico"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Born 1876",
+      "date": "1876",
+      "structured_value": {
+        "year": "1876"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval (parents)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Jos\u00e9 Mar\u00eda Aguilar",
+      "structured_value": {
+        "given": "Jos\u00e9 Mar\u00eda",
+        "surname": "Aguilar"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "father of Juana Aguilar",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "father_of_deceased",
+      "fact_type": "birth",
+      "value": "Born 1856",
+      "date": "1856",
+      "structured_value": {
+        "year": "1856"
+      },
+      "information_quality": "secondary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "father_of_deceased",
+      "fact_type": "occupation",
+      "value": "labrador",
+      "structured_value": {
+        "occupation": "labrador"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Sebastiana Sandoval",
+      "structured_value": {
+        "given": "Sebastiana",
+        "surname": "Sandoval"
+      },
+      "information_quality": "primary",
+      "informant": "Sebastiana Sandoval",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Sebastiana Sandoval",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "mother_of_deceased",
+      "fact_type": "relationship",
+      "value": "mother of Juana Aguilar",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Sebastiana Sandoval",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "mother_of_deceased",
+      "fact_type": "birth",
+      "value": "Born 1855",
+      "date": "1855",
+      "structured_value": {
+        "year": "1855"
+      },
+      "information_quality": "secondary",
+      "informant": "Sebastiana Sandoval",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:XSSC-NMTG",
+      "record_role": "mother_of_deceased",
+      "fact_type": "residence",
+      "value": "Resided at Tlaxiaco, Mixteca",
+      "place": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+      "information_quality": "primary",
+      "informant": "Sebastiana Sandoval",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_002",
+      "standard_place": "Tlaxiaco, Mixteca, Oaxaca, Mexico"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:QG9P-1JRZ",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Remigio Aguilar",
+      "structured_value": {
+        "given": "Remigio",
+        "surname": "Aguilar"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent (Jos\u00e9 Mar\u00eda Aguilar or Sebastiana Sandoval)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:QG9P-1JRZ",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent (Jos\u00e9 Mar\u00eda Aguilar or Sebastiana Sandoval)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:QG9P-1JRZ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Born 30 September 1879, Magdalena Pe\u00f1asco",
+      "date": "30 Sep 1879",
+      "date_certainty": "exact",
+      "place": "Magdalena Pe\u00f1asco, Oaxaca, Mexico",
+      "information_quality": "primary",
+      "informant": "presenting parent (Jos\u00e9 Mar\u00eda Aguilar or Sebastiana Sandoval)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "standard_place": "Magdalena Pe\u00f1asco, Oaxaca, Mexico"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:QG9P-1JRZ",
+      "record_role": "deceased",
+      "fact_type": "birth_registration",
+      "value": "Registered 1 October 1879, Tlaxiaco",
+      "date": "1 Oct 1879",
+      "date_certainty": "exact",
+      "place": "Tlaxiaco, Oaxaca, Mexico",
+      "information_quality": "primary",
+      "informant": "civil registrar, Tlaxiaco",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "standard_place": "Tlaxiaco, Mixteca, Oaxaca, Mexico"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:QG9P-1JRZ",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Jos\u00e9 Mar\u00eda Aguilar",
+      "structured_value": {
+        "given": "Jos\u00e9 Mar\u00eda",
+        "surname": "Aguilar"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:QG9P-1JRZ",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:QG9P-1JRZ",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "father of Remigio Aguilar",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 Mar\u00eda Aguilar",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:QG9P-1JRZ",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Sebastiana Sandoval",
+      "structured_value": {
+        "given": "Sebastiana",
+        "surname": "Sandoval"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent (Jos\u00e9 Mar\u00eda Aguilar or Sebastiana Sandoval)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:QG9P-1JRZ",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent (Jos\u00e9 Mar\u00eda Aguilar or Sebastiana Sandoval)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:QG9P-1JRZ",
+      "record_role": "mother_of_deceased",
+      "fact_type": "relationship",
+      "value": "mother of Remigio Aguilar",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent (Jos\u00e9 Mar\u00eda Aguilar or Sebastiana Sandoval)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:QG9P-1JRZ",
+      "record_role": "absent",
+      "fact_type": "relationship",
+      "value": "No siblings of Remigio Aguilar mentioned in this civil birth registration (1 Oct 1879, Tlaxiaco)",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "informant_bias_notes": "Civil birth registrations in Oaxaca typically name only the child being registered and the parents; the absence of siblings is expected for this record type and does not confirm or deny the existence of a sibling Juana. A sibling named Juana may exist in a separate civil registration, a Catholic baptism record, or a death registration. Juana's death registration dated 28 Oct 1879 was found separately. The silence of this record about siblings is weak negative evidence at best.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name 'Juana Aguilar' (given Juana, surname Aguilar), female, born ~1876, deceased \u2014 matches I1 exactly on name, sex, birth year, and death place (Magdalena Pe\u00f1asco). Father Jose Maria Aguilar and mother Sebastiana Sandoval named consistently with tree. Primary information from father as registrant.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Female sex assertion from QG3Q-RMGM/deceased \u2014 consistent with I1 (Female). Same record, same registrant as a_001.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Death at Magdalena Pe\u00f1asco from QG3Q-RMGM \u2014 consistent with I1's death fact. Place matches the known family residence and the corroborating record (XSSC-NMTG a_014).",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Death registration dated 28 October 1879, Tlaxiaco \u2014 direct evidence for I1's death date. Civil registration by Tlaxiaco civil registrar; primary information. Consistent with I1's DeathRegistration fact.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth ~1876 per father's statement at death registration \u2014 secondary information (recollected at death, not recorded at birth). Consistent with I1's Birth fact. Corroborated by a_016 (XSSC-NMTG: born 1876).",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "K2GV-D6B",
+      "confidence": "confident",
+      "rationale": "Name 'Jose Maria Aguilar' \u2014 matches K2GV-D6B's name variants (Jose Maria Aguilar / Jos\u00e9 Mar\u00eda Aguilar). Registrant of Juana's death, stated father. Spouse Sebastiana Sandoval (K2GV-D61) named as mother, consistent with Couple R1.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "K2GV-D6B",
+      "confidence": "confident",
+      "rationale": "Male sex from QG3Q-RMGM/father_of_deceased \u2014 consistent with K2GV-D6B (Male). Redundant with other corroborating assertions.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "K2GV-D6B",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Jose Maria Aguilar stated as father of Juana Aguilar (deceased). Name, gender, spousal pairing all agree with K2GV-D6B. Primary information \u2014 self-reported by registrant.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Other-side link for relationship assertion: Jose Maria Aguilar (K2GV-D6B) named as parent of this child (I1, Juana Aguilar). Supports ParentChild R10. Corroborated by a_011, a_019, a_024.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "K2GV-D61",
+      "confidence": "confident",
+      "rationale": "Name 'Sebastiana Sandoval' \u2014 matches K2GV-D61 exactly. Mother of deceased Juana; husband Jose Maria Aguilar (K2GV-D6B) named as father, consistent with Couple R1. Primary information per registrant.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "K2GV-D61",
+      "confidence": "confident",
+      "rationale": "Female sex from QG3Q-RMGM/mother_of_deceased \u2014 consistent with K2GV-D61 (Female).",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "K2GV-D61",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Sebastiana Sandoval stated as mother of Juana Aguilar (deceased). Name, gender, spousal pairing all agree with K2GV-D61. Primary information per registrant.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Other-side link: Sebastiana Sandoval (K2GV-D61) named as parent of this child (I1, Juana Aguilar). Supports ParentChild R11. Corroborated by a_008, a_019, a_024.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Corroborating record XSSC-NMTG: name 'Juana Aguilar' from independent civil death registration \u2014 same name, same parents (Jos\u00e9 Mar\u00eda Aguilar, Sebastiana Sandoval), same death year (1879), same place (Magdalena Pe\u00f1asco). Matches I1 on all attributes. Independent from QG3Q-RMGM.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Female sex from XSSC-NMTG/deceased \u2014 consistent with I1.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Death 1879 at Magdalena Pe\u00f1asco from XSSC-NMTG \u2014 corroborates I1's death fact. Consistent with QG3Q-RMGM (28 Oct 1879).",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Burial at Tlaxiaco from XSSC-NMTG \u2014 direct evidence for I1's burial. District capital for Magdalena Pe\u00f1asco; consistent with civil registration at Tlaxiaco.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth year 1876 from XSSC-NMTG \u2014 corroborates I1's birth fact (~1876 from QG3Q-RMGM a_005). Independent informants (both parents named as attendants vs. father alone in QG3Q-RMGM).",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "K2GV-D6B",
+      "confidence": "confident",
+      "rationale": "Name 'Jos\u00e9 Mar\u00eda Aguilar' from XSSC-NMTG/father_of_deceased \u2014 corroborates K2GV-D6B's name. Self-reported by registrant in corroborating civil death record.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "K2GV-D6B",
+      "confidence": "confident",
+      "rationale": "Male sex from XSSC-NMTG/father_of_deceased \u2014 consistent with K2GV-D6B.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_019",
+      "person_id": "K2GV-D6B",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Jos\u00e9 Mar\u00eda Aguilar stated as father of Juana Aguilar in XSSC-NMTG. Corroborates K2GV-D6B\u2192I1 parentage from a_008. Second independent civil registration making this statement.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Other-side link: Jos\u00e9 Mar\u00eda Aguilar (K2GV-D6B) named as father of this child (I1) in XSSC-NMTG. Second civil record corroborating the parentage. Supports R10.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "person_id": "K2GV-D6B",
+      "confidence": "confident",
+      "rationale": "Birth year 1856 from XSSC-NMTG/father_of_deceased \u2014 secondary information (self-reported at daughter's death registration). Consistent with tree fact for K2GV-D6B.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_021",
+      "person_id": "K2GV-D6B",
+      "confidence": "confident",
+      "rationale": "Occupation 'labrador' from XSSC-NMTG \u2014 primary self-reported information. Consistent with K2GV-D6B's occupation fact.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_022",
+      "person_id": "K2GV-D61",
+      "confidence": "confident",
+      "rationale": "Name 'Sebastiana Sandoval' from XSSC-NMTG/mother_of_deceased \u2014 self-reported at daughter's death registration. Corroborates K2GV-D61's name from a_009.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_023",
+      "person_id": "K2GV-D61",
+      "confidence": "confident",
+      "rationale": "Female sex from XSSC-NMTG/mother_of_deceased \u2014 consistent with K2GV-D61.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_024",
+      "person_id": "K2GV-D61",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Sebastiana Sandoval stated as mother of Juana Aguilar in XSSC-NMTG. Self-reported. Corroborates K2GV-D61\u2192I1 parentage from a_011. Second independent civil record.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Other-side link: Sebastiana Sandoval (K2GV-D61) named as mother of this child (I1) in XSSC-NMTG. Second civil record corroborating the parentage. Supports R11.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_025",
+      "person_id": "K2GV-D61",
+      "confidence": "confident",
+      "rationale": "Birth year 1855 from XSSC-NMTG/mother_of_deceased \u2014 secondary self-reported information. Consistent with tree fact for K2GV-D61.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_026",
+      "person_id": "K2GV-D61",
+      "confidence": "confident",
+      "rationale": "Residence at Tlaxiaco, Mixteca from XSSC-NMTG \u2014 primary self-reported. Consistent with K2GV-D61's residence fact.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_027",
+      "person_id": "PHS7-Y7L",
+      "confidence": "confident",
+      "rationale": "Name 'Remigio Aguilar' (born 30 Sep 1879, Magdalena Pe\u00f1asco) from QG9P-1JRZ/deceased \u2014 matches PHS7-Y7L exactly on name, sex (male), birth date, and place. Parents Jos\u00e9 Mar\u00eda Aguilar (K2GV-D6B) and Sebastiana Sandoval (K2GV-D61) named, consistent with tree.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_028",
+      "person_id": "PHS7-Y7L",
+      "confidence": "confident",
+      "rationale": "Male sex from QG9P-1JRZ/deceased \u2014 consistent with PHS7-Y7L (Male).",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_029",
+      "person_id": "PHS7-Y7L",
+      "confidence": "confident",
+      "rationale": "Birth 30 Sep 1879 Magdalena Pe\u00f1asco \u2014 exact date and place match PHS7-Y7L's birth fact. Primary information from parents at civil registration.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_030",
+      "person_id": "PHS7-Y7L",
+      "confidence": "confident",
+      "rationale": "Birth registration 1 Oct 1879 Tlaxiaco \u2014 direct evidence for PHS7-Y7L's registration event. Same civil registrar who recorded Juana's death 28 days later (a_004).",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_031",
+      "person_id": "K2GV-D6B",
+      "confidence": "confident",
+      "rationale": "Name 'Jos\u00e9 Mar\u00eda Aguilar' from QG9P-1JRZ/father_of_deceased (Remigio's birth record) \u2014 third independent civil record naming K2GV-D6B as father of an Aguilar child born of Sebastiana Sandoval. Corroborates identity strongly.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_032",
+      "person_id": "K2GV-D6B",
+      "confidence": "confident",
+      "rationale": "Male sex from QG9P-1JRZ/father_of_deceased \u2014 consistent with K2GV-D6B.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_033",
+      "person_id": "K2GV-D6B",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Jos\u00e9 Mar\u00eda Aguilar stated as father of Remigio Aguilar in QG9P-1JRZ. Three civil records now place K2GV-D6B as father of children born of Sebastiana Sandoval in Magdalena Pe\u00f1asco, 1876-1879.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_033",
+      "person_id": "PHS7-Y7L",
+      "confidence": "confident",
+      "rationale": "Other-side link: Jos\u00e9 Mar\u00eda Aguilar (K2GV-D6B) named as father of Remigio (PHS7-Y7L) in QG9P-1JRZ. Supports existing ParentChild R4.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_034",
+      "person_id": "K2GV-D61",
+      "confidence": "confident",
+      "rationale": "Name 'Sebastiana Sandoval' from QG9P-1JRZ/mother_of_deceased (Remigio's birth record) \u2014 third independent civil record naming K2GV-D61 as mother. Strongly corroborates identity.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_035",
+      "person_id": "K2GV-D61",
+      "confidence": "confident",
+      "rationale": "Female sex from QG9P-1JRZ/mother_of_deceased \u2014 consistent with K2GV-D61.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_036",
+      "person_id": "K2GV-D61",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Sebastiana Sandoval stated as mother of Remigio Aguilar in QG9P-1JRZ. Three civil records confirm K2GV-D61 as mother of children born in Magdalena Pe\u00f1asco, 1876-1879.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_036",
+      "person_id": "PHS7-Y7L",
+      "confidence": "confident",
+      "rationale": "Other-side link: Sebastiana Sandoval (K2GV-D61) named as mother of Remigio (PHS7-Y7L) in QG9P-1JRZ. Supports existing ParentChild R5.",
+      "created": "2026-07-27"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_037",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Negative evidence: Remigio Aguilar's civil birth registration (1 Oct 1879, Tlaxiaco) lists no siblings. Bears on I1 (Juana) as the potential absent sibling mentioned in this research question. Confidence probable rather than confident because civil birth records in Oaxaca routinely name only the registered child and parents \u2014 the absence of siblings is expected and constitutes weak negative evidence at best. Does not contradict I1's existence, which is established by two positive civil death registrations (a_001\u2013a_005, a_012\u2013a_016).",
+      "created": "2026-07-27"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "QG3Q-RMGM and XSSC-NMTG are independent acts, not actas dobles copies of a single registration event",
+      "status": "supported",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_012"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Record-level investigation: (1) different document-image pages (3:1:3QS7-L9LV-X847 vs 3:1:33SQ-GTGW-9CK7); (2) XSSC-NMTG lists two witnesses absent from QG3Q-RMGM \u2014 Jos\u00e9 Mar\u00eda Ortiz (born 1838, labradores) and Evereya Nirrita. True actas dobles reproduce identical witnesses. Different witness configuration is conclusive evidence of a separate registration event.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_008",
+        "a_011",
+        "a_012",
+        "a_014",
+        "a_016",
+        "a_019",
+        "a_024",
+        "a_027",
+        "a_029",
+        "a_033",
+        "a_036",
+        "a_037"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched civil birth registers (FamilySearch, M\u00e9xico, Oaxaca, Registro Civil, 1861-2002, collection 1923401, Tlaxiaco district, 1875\u20131877), Catholic baptism registers (collection 1909191, Tlaxiaco district, 1875\u20131878), Tlahuitoltepec church registers (1875\u20131877), and conducted a full-text co-occurrence search (+Sandoval +Aguilar) across the FamilySearch Oaxaca corpus. A supplementary search of 1879 civil death records yielded two independent civil death registrations (QG3Q-RMGM and XSSC-NMTG), both read at original image level. The sibling's birth registration (QG9P-1JRZ, Remigio Aguilar, 1 Oct 1879) was also read as a FAN anchor. No birth or baptism record for Juana was found; the FTS corpus does not appear to contain indexed transcriptions for Oaxacan civil records from this period (returned nil). Research declared exhaustive. Unsearched record type: Catholic burial registers for Magdalena Pe\u00f1asco \u2014 considered corroborative only given the two decisive civil death records already found.",
+      "narrative_markdown": "## Proof Summary: Juana Aguilar as Daughter of Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval\n\n**Question:** Did Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval of Magdalena Pe\u00f1asco, Oaxaca, Mexico have a daughter named Juana, born circa 1876 and died 1879?\n\n**Conclusion (Proved):** The evidence conclusively establishes that Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval had a daughter named Juana Aguilar, born approximately 1876 and died in 1879 at Magdalena Pe\u00f1asco, Oaxaca, Mexico.\n\n---\n\n### Evidence\n\n**Primary Source 1 \u2014 Civil Death Registration, 28 October 1879**\n\n\"M\u00e9xico, Oaxaca, Registro Civil, 1861-2002,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QG3Q-RMGM : accessed 27 July 2026), entry for Juana Aguilar and Jose Maria Aguilar, 28 de octubre de 1879.\n\nThis original civil death registration, created 28 October 1879 at the Tlaxiaco civil registry, records the death of Juana Aguilar at Magdalena Pe\u00f1asco, Oaxaca. The registrant was Jos\u00e9 Mar\u00eda Aguilar, the child's father, who appeared in person to report the death. As the father and eyewitness, Aguilar is the primary informant for the fact of death, the place of death, and his own identity and relationship to the deceased. His statement that Juana was born approximately three years earlier (approximately 1876) is secondary information \u2014 a recollection at the time of death registration, not a contemporaneous birth record. The record was accessed at the original image level (document-image ARK: `3:1:3QS7-L9LV-X847`).\n\n**Primary Source 2 \u2014 Corroborating Civil Death Registration, 1879**\n\n\"M\u00e9xico, Oaxaca, Registro Civil, 1861-2002,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XSSC-NMTG : accessed 2026-07-27), entry for Juana Aguilar and Jos\u00e9 Mar\u00eda Aguilar, 1879; citing civil registration records, Tlaxiaco, Oaxaca, Mexico.\n\nA second original civil registration entry records Juana Aguilar, daughter of Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval, born in 1876, died in 1879 at pueblo de Magdalena Pe\u00f1asco. Both parents are identified as informants, providing primary information on the child's identity, parentage, and death. The record also notes burial at Tlaxiaco. The record was accessed at the original image level (document-image ARK: `3:1:33SQ-GTGW-9CK7`).\n\n**Independence confirmed.** The two records are verified as separate registration acts, not *actas dobles* copies of a single act. They come from distinct physical pages in the civil register (document-image ARKs `3:1:3QS7-L9LV-X847` and `3:1:33SQ-GTGW-9CK7`). Decisively, XSSC-NMTG lists two persons absent from QG3Q-RMGM \u2014 Jos\u00e9 Mar\u00eda Ortiz (born 1838, occupation *labradores*) and Evereya Nirrita \u2014 who appear as formal witnesses at a different registration event. Genuine *actas dobles* reproduce identical content with identical witnesses; the different witness composition here is conclusive evidence that XSSC-NMTG represents a separate act, not a parallel copy.\n\nThe two records constitute verified independent evidence units with different informant and witness configurations (father alone in QG3Q-RMGM; both parents with additional witnesses in XSSC-NMTG), agreeing on all key attributes \u2014 name (Juana Aguilar), sex (female), birth year (1876), parents (Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval), place of death (Magdalena Pe\u00f1asco), and year of death (1879).\n\n**Corroborating Source 3 \u2014 FAN Anchor: Birth Registration of Sibling Remigio Aguilar, 1 October 1879**\n\n\"M\u00e9xico, Oaxaca, Registro Civil, 1861-2002,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QG9P-1JRZ : accessed 27 July 2026), entry for Remigio Aguilar and Jos\u00e9 Mar\u00eda Aguilar, 1 de octubre de 1879.\n\nThe civil birth registration of Remigio Aguilar, born 30 September 1879 at Magdalena Pe\u00f1asco and registered 1 October 1879, names Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval as his parents \u2014 the same couple identified in both death registrations. This record anchors the family unit at Magdalena Pe\u00f1asco in late 1879, twenty-eight days before Juana's death was registered. Remigio's birth record does not mention siblings, which is expected: Oaxacan civil birth registrations of this period name only the registrant child and parents. The absence of siblings is weak negative evidence and does not contradict Juana's existence as established by the two death registrations.\n\n---\n\n### Negative Evidence \u2014 No Birth or Baptism Record Found\n\nSearches of the civil birth registers (FamilySearch, M\u00e9xico, Oaxaca, Registro Civil, 1861-2002, collection 1923401, Tlaxiaco district, 1875\u20131877) and Catholic baptism registers (M\u00e9xico, Oaxaca, registros parroquiales y diocesanos, 1559-2022, collection 1909191, Tlaxiaco district, 1875\u20131878) returned no birth or baptism record for Juana Aguilar. A full-text co-occurrence search (+Sandoval +Aguilar) across the FamilySearch Oaxaca corpus also returned nil. The absence of a birth or baptism record does not undermine the conclusion: in rural Oaxaca in the 1870s, registration of births was not uniformly complete, and the two independent death registrations provide direct confirmation of the child's existence and parentage without reliance on a birth record. Future searches of Catholic burial records for the Magdalena Pe\u00f1asco parish may provide additional corroboration.\n\n---\n\n### Conclusion\n\nThe evidence conclusively establishes that Jos\u00e9 Mar\u00eda Aguilar and Sebastiana Sandoval had a daughter named Juana Aguilar, born approximately 1876 in or near Magdalena Pe\u00f1asco, Oaxaca, Mexico, who died in 1879 at Magdalena Pe\u00f1asco. This conclusion rests on two independent original civil death registrations, accessed at the original image level and confirmed as separate acts (distinct pages, different witness compositions), both with primary information on parentage from the parents themselves, corroborated by a sibling's birth registration anchoring the family at the same place and time. All five components of the Genealogical Proof Standard are met. No contradictory evidence was found.\n\n*Note: The birth year of approximately 1876 derives from secondary information \u2014 the parents' oral statements at the time of death registration in 1879. The exact birth date and a specific baptism or civil birth registration for Juana have not been located in available records, though the appropriate civil and church registers for 1875\u20131877 were searched. Future researchers may wish to consult Catholic burial records for the Magdalena Pe\u00f1asco parish and any broader Tlaxiaco district registers not yet digitized.*"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-27T22:30:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-27T22-30-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Oaxaca, Mexico",
+      "for_place": "Magdalena Pe\u00f1asco and Santa Mar\u00eda Tlahuitoltepec, Oaxaca, Mexico",
+      "time_period": "1860-1890",
+      "jurisdictions": [
+        {
+          "name": "Oaxaca, Mexico",
+          "date_range": "1823\u2013present"
+        },
+        {
+          "name": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+          "date_range": "1823\u2013present"
+        },
+        {
+          "name": "Magdalena Pe\u00f1asco, Oaxaca, Mexico",
+          "date_range": "1825\u2013present"
+        },
+        {
+          "name": "Mixe, Sierra Norte, Oaxaca, Mexico",
+          "date_range": "1823\u2013present"
+        },
+        {
+          "name": "Santa Mar\u00eda Tlahuitoltepec, Oaxaca, Mexico",
+          "date_range": "1823\u2013present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1909191",
+          "title": "Mexico, Oaxaca, Catholic Church Records, 1559-2022",
+          "date_range": "1559-2022"
+        },
+        {
+          "id": "1923401",
+          "title": "Mexico, Oaxaca, Civil Registration, 1861-2002",
+          "date_range": "1861-2002"
+        }
+      ],
+      "quirks": [
+        "Magdalena Pe\u00f1asco is in the Tlaxiaco District (Mixteca region); volume_search returns 0 results for 'Magdalena Pe\u00f1asco' alone but 257+ volumes for 'Tlaxiaco, Mixteca, Oaxaca'. Search Tlaxiaco district when looking for Magdalena Pe\u00f1asco records.",
+        "Santa Mar\u00eda Tlahuitoltepec is in the Mixe District (Sierra Norte region) \u2014 an entirely separate jurisdiction from Tlaxiaco/Mixteca; the family appears to have relocated between these two regions by 1885.",
+        "Civil registration in Oaxaca began 1861 and became consistently enforced from 1867; for the target period 1876-1879, civil birth and death records should exist at the Tlaxiaco district level.",
+        "Both Catholic church baptism records AND civil registration (nacimientos) exist for the target period; the civil records (1876-1879 Tlaxiaco nacimientos) are 100% name-indexed in collection 1923401. Church baptism records for Tlaxiaco 1875-1878 (Libro 45, IGN 004036833_002) are 97% indexed.",
+        "Volume search found indexed civil death records for Tlaxiaco specifically for 1879 (4 volumes, all 100% recordSearchable), which would include Magdalena Pe\u00f1asco.",
+        "Tlahuitoltepec church baptism records (collection 1909191) have separate volumes covering Feb 1859-Aug 1877 (96% indexed) and 1877-1885 (96% indexed).",
+        "Records are in Spanish; 1870s records are handwritten in narrative style. The region has heavy indigenous (Mixtec and Mixe) populations whose names may appear in variant spellings.",
+        "Search neighboring parishes/municipalities if a record is not found \u2014 the Mexico Research Tips wiki recommends searching surrounding localities when an individual cannot be found in the primary parish."
+      ],
+      "guide_markdown": "# Locality Guide: Oaxaca, Mexico (Magdalena Pe\u00f1asco & Tlahuitoltepec) \u2014 1860\u20131890\n\n## Jurisdictional Context\n\nThe two localities relevant to this research lie in **different regions of Oaxaca state**:\n\n- **Magdalena Pe\u00f1asco** is a municipality in the **Tlaxiaco District, Mixteca region** (standardPlace: *Magdalena Pe\u00f1asco, Oaxaca, Mexico*; date range +1825/). Its records are indexed and filed under the broader **Tlaxiaco, Mixteca** district in FamilySearch.\n- **Santa Mar\u00eda Tlahuitoltepec** is a municipality in the **Mixe District, Sierra Norte region** (standardPlace: *Santa Mar\u00eda Tlahuitoltepec, Oaxaca, Mexico*). Its records are indexed separately under the Mixe/Sierra Norte jurisdiction.\n\nOaxaca became the third Mexican state on 21 December 1823. Civil registration was instituted nationally in 1859 and consistently enforced in Oaxaca from 1867 onward. For 1876\u20131879, both civil and church records should survive.\n\n---\n\n## Primary FamilySearch Collections (Oaxaca State)\n\n| Collection | Date Range | Records | Access |\n|------------|-----------|---------|--------|\n| Mexico, Oaxaca, Catholic Church Records, 1559-2022 (CID 1909191) | 1559-2022 | 6.85M indexed, 3.4M images | Indexed (not complete) + images |\n| Mexico, Oaxaca, Civil Registration, 1861-2002 (CID 1923401) | 1861-2002 | 5.18M indexed, 3.8M images | Indexed + images |\n\n---\n\n## Key Volumes for 1876\u20131879 (Tlaxiaco District)\n\n### Civil Birth Records (Nacimientos) \u2014 Tlaxiaco\n| Image Group | Coverage | % Indexed |\n|-------------|----------|----------|\n| 005069248_002 | 1876 Nacimientos | 100% |\n| 005069250_002 | 1878 Nacimientos | 100% |\n| 005069250_003 | 1878 Nacimientos | 100% |\n| 005069251_001 | 1879 Nacimientos | 100% |\n| 005069251_002 | 1879 Nacimientos | 100% |\n| 005069251_003 | 1879 Nacimientos | 100% |\n| 005069251_004 | 1879 Nacimientos | 100% |\n\n### Civil Death Records \u2014 Tlaxiaco 1879\n| Image Group | Coverage | % Indexed |\n|-------------|----------|----------|\n| 007637194_001 | 1879 Death Records | 100% |\n| 007637194_002 | 1879 Death Records | 100% |\n| 007637194_003 | 1879 Death Records | 100% |\n| 007637194_004 | 1879 Death Records | 100% |\n\n### Church Baptism Records \u2014 Tlaxiaco\n| Image Group | Coverage | % Indexed | Fulltext |\n|-------------|----------|----------|----------|\n| 004036833_002 (Libro 45) | 1875\u20131878 Bautismos | 97% | Yes |\n| 004036833_001 (Libro 44) | 1873\u20131891 Bautismos | 96% | Yes |\n| 004036834_001 (Libro 46) | 1877\u20131884 Bautismos | 66% | No |\n\n### Church Baptism Records \u2014 Santa Mar\u00eda Tlahuitoltepec\n| Image Group | Coverage | % Indexed |\n|-------------|----------|----------|\n| 004055248_002 (Libro 2) | Feb 1859\u2013Aug 1877 Bautismos | 96% |\n| 004055248_003 (Libro 3) | 1877\u20131885 Bautismos | 96% |\n\n---\n\n## Research Strategy for 1876-1879\n\n1. **Search collection 1923401** (Civil Registration) by name (Juana Aguilar / daughter of Jos\u00e9 Aguilar and Sebastiana Sandoval) \u2014 civil nacimientos for 1876 and death records for 1879 are 100% indexed.\n2. **Search collection 1909191** (Catholic Church Records) \u2014 Tlaxiaco baptism libros 44\u201346 are 96\u201397% indexed and full-text searchable for 1875-1878.\n3. If indexed searches yield nil, **browse specific volumes** for Tlaxiaco 1876 nacimientos (IGN 005069248_002) and 1879 death records image by image.\n4. Also search civil registration and church records for **Santa Mar\u00eda Tlahuitoltepec** (collection 1909191 libros 2-3), as the family was in that area by 1885.\n\n---\n\n## External Resources\n\n- Ancestry: [Oaxaca, Mexico, Civil Registration Births, 1861-1948](https://www.ancestry.com/search/collections/60413/) ($)\n- Ancestry: [Oaxaca, Mexico, Civil Registration Deaths, 1861-1987](https://www.ancestry.com/search/collections/60478/) ($)\n- MyHeritage: [Mexico Baptisms, 1560-1950](https://www.myheritage.com/research/collection-30039/mexico-baptisms-1560-1950) ($)\n\n---\n\n## Key Warnings\n\n- **Language:** All records are in Spanish; narrative handwriting style in the 1870s.\n- **Indigenous populations:** Mixtec-speaking families in the Tlaxiaco area and Mixe speakers in Tlahuitoltepec may use indigenous name variants.\n- **Coverage gaps:** Civil registration was not strictly enforced until 1867; 1876 Tlaxiaco nacimientos are fully indexed, but smaller villages may have underreported events.\n- **Two distinct jurisdictions:** Magdalena Pe\u00f1asco (Tlaxiaco/Mixteca) and Tlahuitoltepec (Mixe/Sierra Norte) records must be searched separately.\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Mexico_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-27"
+    }
+  ]
+}

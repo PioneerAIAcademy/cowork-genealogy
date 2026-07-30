@@ -5,13 +5,30 @@
     "name": "Build Patrick Flynn's timeline from existing assertions",
     "type": "positive",
     "description": "Build a chronological timeline for I1 from the assertions linked via person_evidence. The skill should produce events for the 1850 census, 1860 census, and 1908 death certificate, identify the 48-year gap between 1860 and 1908 as significant, and not flag any impossibilities (the existing data is internally consistent).",
-    "tags": ["timeline", "chronological", "gap-detection", "I1", "no-impossibilities-expected", "rejected-assertion-id-a_012"]
+    "tags": [
+      "timeline",
+      "chronological",
+      "gap-detection",
+      "I1",
+      "no-impossibilities-expected",
+      "rejected-assertion-id-a_012"
+    ]
   },
   "input": {
     "user_message": "Build a timeline for Patrick Flynn.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["place-search-ireland", "place-search-ireland-by-name", "place-search-ireland-by-place", "place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place"],
+  "mcp_fixtures": [
+    "place-search-ireland",
+    "place-search-ireland-by-name",
+    "place-search-ireland-by-place",
+    "place-search-schuylkill-county",
+    "place-search-schuylkill-by-name",
+    "place-search-schuylkill-by-place",
+    "place-distance-ireland-pennsylvania",
+    "place-distance-pennsylvania-ireland",
+    "place-distance-within-pennsylvania"
+  ],
   "judge_context": [
     "Should produce timeline events covering at least birth (Ireland, estimated from census ages), 1850 census, 1860 census, and 1908 death — with `date_certainty` reflecting source confidence (e.g. `estimated` for census-derived births, `exact` for the death certificate)",
     "Should identify the 1860-to-1908 period as a significant gap in `gaps[]` with `expected_events` populated (1870 census, 1880 census, 1900 census, marriage, residence) and severity reflecting the 48-year span"

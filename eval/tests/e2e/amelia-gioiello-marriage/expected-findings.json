@@ -1,0 +1,39 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Amelia Frances Gioiello's spouse was Stanley Datchuk.",
+      "details": {
+        "subject_person": "Amelia Frances Gioiello (GCT1-F3Q)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Stanley Datchuk",
+          "birth": "14 September 1932, Ohio"
+        }
+      },
+      "supporting_sources": [
+        "Ohio, County Marriages, 1789-2016 -- entry for Stanley Datchuk and Amelia Frances Gioiello, 20 Aug 1955"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Amelia Frances Gioiello and Stanley Datchuk were married 20 August 1955 in Trumbull County, Ohio.",
+      "details": {
+        "subject_person": "Amelia Frances Gioiello (GCT1-F3Q)",
+        "target_person": {
+          "name": "Stanley Datchuk"
+        },
+        "fact_type": "Marriage",
+        "date": "20 August 1955",
+        "place": "Trumbull, Ohio, United States"
+      },
+      "supporting_sources": [
+        "Ohio, County Marriages, 1789-2016 -- entry for Stanley Datchuk and Amelia Frances Gioiello, 20 Aug 1955"
+      ],
+      "required": true
+    }
+  ]
+}
