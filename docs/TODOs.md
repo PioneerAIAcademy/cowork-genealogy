@@ -296,25 +296,6 @@ Deferred at wrap; see
   record-extraction unit suite to confirm recovery. Do **not** target the 009
   death-cert case — judge noise, not craft.
 
-- [ ] **`evidence_type: "negative"` is not tied to `record_role: "absent"` in
-  `validator.ts`** — the runtime validator checks each assertion field
-  independently and has no cross-field rule, so `extraction_append` happily
-  persists a negative assertion carrying a real role. Doctrine is already
-  explicit and correct (`packages/engine/plugin/agents/record-extractor.md`
-  "Negative evidence": "A negative assertion always concerns a *person*
-  (`record_role: "absent"`)"; `research-schema-spec.md:95,378` name `absent`
-  as *the* role for negative evidence) — record-extraction ut_001 violated it
-  anyway on the 2026-07-19 run and self-corrected on the next, i.e. it is
-  unguarded variance, not a prose gap. Deferred from the validator-failure PR
-  because the check does not land cleanly: `eval/fixtures/scenarios/
-  flynn-parentage-not-proved/research.json` `a_012` is `negative` with
-  `record_role: "deceased"` (a "father: not recorded" blank-field negative —
-  itself against doctrine), and proof-conclusion ut_005 calls `research_append`
-  against that scenario, so whole-document validation would reject a currently
-  passing test. To land: retag `a_012` to `record_role: "absent"`, add the
-  cross-field check next to `checkStringOrNull` in the assertions loop, and
-  re-run proof-conclusion (the scenario edit flips its runlog inactive).
-
 - [ ] **Scope the record-extraction outage window.** `record-extractor` could
   not spawn in Cowork between 2026-07-12 (#650) and the dual-spelled-tool-names
   fix (#698, 2026-07-18). Because the runtime refuses rather than launching a
@@ -326,41 +307,6 @@ Deferred at wrap; see
   corresponding assertions.
 
 ## Eval framework
-
-- [ ] **Adopt a run-log retention rule — `eval/runlogs/` is 147MB tracked and ~85%
-  of it is inert.** Measured 2026-07-18: 190 unit run logs (116MB) + 152 `.ann.json`
-  (2.9MB) + 56 e2e runs (~27MB). **Nothing in the repo reads more than the latest 2
-  run logs per skill** — `skill-improver`/`rubric-critic` read the latest released
-  or highest candidate, `skill_latency_report` reads `logs[-1]`/`logs[-2]`,
-  `check_runlogs.py` reads the latest, and the CRUD UI halts on first match. The
-  only all-history readers are the trend view (filters `released === true`) and
-  `calibrate_judge` (reads **only** `.ann.json`, 0.2MB). So 164 of 190 unit logs
-  are read by nothing.
-
-  **Root cause is process, not storage: the release action has never been used** —
-  0 released, 190 candidates, all `v1_`. `docs/plan/eval-runlog-versioning.md`
-  already defines the retention model (released `v{N}.json` kept forever; candidates
-  pruned by hand in the CRUD UI; scratch gitignored), but the candidate tier was
-  left manual and never performed. That also leaves the trend view rendering
-  nothing, since it filters on a flag no file carries. Adopting a rule without
-  closing the `v1` line on the mature skills just re-accumulates the same 108MB.
-
-  Proposed rule: (1) keep every `.ann.json` forever — 195 files, 3.1MB, expensive
-  genealogist labor and the sole `calibrate_judge` input; (2) keep all released
-  `v{N}.json` forever; (3) keep the latest 2 candidates per skill, pruning older
-  ones **that have no sibling `.ann.json`** (~25MB); (4) for older candidates that
-  *do* have an annotation, **strip the inline `snapshot` block instead of deleting
-  the file** — it is 46% of unit-runlog bytes, exists only to support activate /
-  active-detection, and a superseded candidate will never be activated, so this
-  keeps every judge rationale the annotation argues against (~37MB); (5) delete
-  e2e `.transcript.md` older than 60 days where the run has a finalized `.ann.json`
-  — nothing reads transcripts back, `result.py` calls them a lossy summary, and the
-  annotation carries the durable judgment (~5MB). Keep e2e `final-tree` /
-  `final-research` regardless: `grade-e2e-run` reads exactly those to produce future
-  annotations. **≈67MB reclaimed with zero loss of annotations, released logs, or
-  regradeable evidence.** Deleting all 164 superseded candidates outright would
-  reclaim 108MB but orphans 125 annotations from the traces they argue against —
-  not recommended.
 
 - [ ] **Revert the temporary $25 e2e cost caps** — `bottemiller-parents` and
   `cruz-corona-ancestry` fixtures carry `caps.max_cost_usd: 25` as experiment
@@ -560,20 +506,6 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   tool table, and `docs/specs/mcpb-package-spec.md` still tells a manual tester
   to assert 21 tools. No CI reads either, so nothing reds.
 
-- [ ] **`init-project` writes both project files with `Write`, not a writer tool** —
-  its `allowed-tools` is `person_search` / `person_read` / `place_search`, so the
-  initial `research.json` and `tree.gedcomx.json` are hand-serialized with no
-  validate-before-persist. It escapes the universal
-  `test_project_file_changes_route_through_writer_tools` validator only because a
-  new project has no `before_state` to diff against. The cost is real: ut_002
-  (2026-07-19) wrote a name with no `given` key and the invalid tree landed on
-  disk, which in production would make every later `tree_edit` reject the whole
-  document — the same project-wide write block that the D5-invalid
-  `flynn-household-skeleton` fixture caused for person-evidence. The prose bug is
-  fixed; the missing guard is not. Options: give init-project a writer tool for
-  the seed write, or have the validator treat an absent `before_state` as a diff
-  against empty rather than a skip.
-
 - [ ] **A specialized `places-guidance.md` copy is unlinted for drift** — the drift
   lint (`tests/packaging/skill-guidance.test.ts`) holds 8 skills byte-identical
   to `plugin/references/places-guidance.md`, but `research-plan`'s copy is
@@ -585,20 +517,6 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   per-skill "who calls what" section and lint the core, or derive each skill's
   copy from the canonical at plugin-build time using its `allowed-tools`. The
   second kills the duplication problem outright but is a build-step change.
-
-- [ ] **Six private copies of `readJson` / `formatIssues` across the writer tools** —
-  `materialize-facts`, `project-context`, `research-append`, `research-log-append`,
-  and `tree-edit` each carry a byte-identical `readJson(projectPath, filename)`,
-  and five carry `formatIssues` (only `merge-shared.ts` exports its copy).
-  `tree_forget` (2026-07-23) added the shared `readProjectJson` to
-  `src/utils/project-io.ts` — the designated project-IO layer — and uses it, but
-  did not migrate the five incumbents, since that touches the merge and append
-  write paths in a PR scoped to a skill fix. Migrate them onto `readProjectJson`
-  and onto `merge-shared.ts`'s `formatIssues`, then delete the copies. The only
-  wrinkle is the error class: each tool wraps the read failure in its own
-  `*Error` type so it surfaces as `{ ok: false, errors }`; `readProjectJson`
-  throws a plain `Error` and leaves that mapping to the caller (see
-  `tree-forget.ts`'s three-line `readJson` wrapper).
 
 - [ ] **Four shipped plans in `docs/plan/` need a spec to be promoted into.**
   They are shipped but have no spec to fold into, so deleting them under the
