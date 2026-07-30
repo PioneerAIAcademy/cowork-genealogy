@@ -164,6 +164,22 @@ function discoverPluginFiles(): { abs: string; rel: string }[] {
       if (existsSync(p)) {
         files.push({ abs: p, rel: `skills/${d}/SKILL.md` });
       }
+
+      // A skill's references/ hold much of its detailed doctrine — 75 files,
+      // ~3x the SKILL.md count. None carries an ∈ declaration today, so this
+      // adds no assertions; it is here so that one written tomorrow is linted
+      // the day it lands rather than whenever someone remembers this test.
+      const refsDir = join(skillsDir, d, "references");
+      if (existsSync(refsDir)) {
+        for (const f of readdirSync(refsDir)) {
+          if (f.endsWith(".md")) {
+            files.push({
+              abs: join(refsDir, f),
+              rel: `skills/${d}/references/${f}`,
+            });
+          }
+        }
+      }
     }
   }
 
@@ -233,6 +249,27 @@ describe("enum-drift lint", () => {
   it("discovers at least the expected number of ∈ declarations", () => {
     const expectedCount = EXPECTED.reduce((n, e) => n + e.enums.length, 0);
     expect(allDecls.length).toBeGreaterThanOrEqual(expectedCount);
+  });
+
+  // No reference file declares an enum today, so nothing above would fail if
+  // this directory stopped being walked — a mistyped path would be a silent
+  // no-op that reads as coverage. Assert the walk itself instead of its
+  // (currently empty) yield.
+  it("scans agents, SKILL.md bodies, skill references, and rubrics", () => {
+    const count = (prefix: string, suffix: string) =>
+      allFiles.filter((f) => f.rel.startsWith(prefix) && f.rel.endsWith(suffix))
+        .length;
+
+    expect(count("agents/", ".md"), "agent bodies").toBeGreaterThan(0);
+    expect(count("skills/", "/SKILL.md"), "skill bodies").toBeGreaterThan(0);
+    expect(
+      allFiles.filter((f) => /^skills\/[^/]+\/references\/.+\.md$/.test(f.rel))
+        .length,
+      "skill reference files",
+    ).toBeGreaterThan(0);
+    expect(count("eval/tests/unit/", "/rubric.md"), "rubrics").toBeGreaterThan(
+      0,
+    );
   });
 
   describe("expected ∈ declarations are present", () => {
