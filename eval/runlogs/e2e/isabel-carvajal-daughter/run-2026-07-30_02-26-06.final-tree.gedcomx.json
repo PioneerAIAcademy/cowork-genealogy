@@ -1,0 +1,536 @@
+{
+  "persons": [
+    {
+      "id": "LR2Y-X3H",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Isabel",
+          "surname": "Carvajal Chinchilla"
+        },
+        {
+          "id": "N13",
+          "type": "BirthName",
+          "given": "Ysabel",
+          "surname": "Carvajal",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ea152119-c484-4f25-ac12-0346cb7e3101",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LR2Y-FGH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Pastora",
+          "surname": "Delgado Luna"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b7a1cb0c-a3b2-42ec-bce8-448ae68b20fb",
+          "type": "Birth",
+          "place": "Matanza, Santander, Colombia",
+          "standard_place": "Matanza, Santander, Colombia"
+        },
+        {
+          "id": "041917fd-604f-4b2b-9051-baf3702264b7",
+          "type": "Death",
+          "place": "Bogot\u00e1, Santaf\u00e9 de Bogot\u00e1, Cundinamarca, Colombia",
+          "standard_place": "Bogot\u00e1 D. C., Cundinamarca, Colombia"
+        }
+      ]
+    },
+    {
+      "id": "PZZK-M43",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Ram\u00f3n",
+          "surname": "Martinez Carvajal"
+        }
+      ],
+      "facts": [
+        {
+          "id": "73d4e5eb-3ab6-4da1-a8d9-f57b288e5b28",
+          "type": "Christening",
+          "date": "26 de noviembre de 1882",
+          "standard_date": "26 Nov 1882",
+          "place": "La Inmaculada Concepci\u00f3n, Concepci\u00f3n, Santander, Colombia",
+          "standard_place": "La Inmaculada Concepci\u00f3n, Concepci\u00f3n, Santander, Colombia"
+        },
+        {
+          "id": "72f82a3f-eed6-4f14-9472-3cb7ef85a55d",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LR2Y-X9F",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Eugenio",
+          "surname": "Mart\u00ednez Carvajal"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ba5b2532-164c-4c99-a6ab-0ef8b49e6581",
+          "type": "Birth",
+          "date": "11 noviembre 1895",
+          "standard_date": "11 Nov 1895",
+          "place": "El Cerrito, El Carmen, Santander, Colombia",
+          "standard_place": "El Cerrito, El Carmen de Chucur\u00ed, Santander, Colombia"
+        },
+        {
+          "id": "19d315f8-e3a6-4145-bf00-ae01a74cd7c9",
+          "type": "Death",
+          "date": "11 enero 1968",
+          "standard_date": "11 Jan 1968",
+          "place": "Bucaramanga, Bucaramanga, Santander, Colombia",
+          "standard_place": "Bucaramanga, Santander, Colombia"
+        }
+      ]
+    },
+    {
+      "id": "LR2Y-6F1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Ferm\u00edn",
+          "surname": "Delgado Luna"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2ac2762d-5c59-4c0e-b531-6438767763ba",
+          "type": "Death"
+        },
+        {
+          "id": "381787e2-3933-4d19-967b-915349553ad8",
+          "type": "Birth",
+          "place": "Matanza, Santander, Colombia",
+          "standard_place": "Matanza, Santander, Colombia"
+        }
+      ]
+    },
+    {
+      "id": "G5CM-DZW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Emilio",
+          "surname": "Mart\u00ednez"
+        },
+        {
+          "id": "N12",
+          "type": "BirthName",
+          "given": "Emilio",
+          "surname": "",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "873d40ac-ab85-478f-aa14-4237bbbce5a5",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PWJF-XY6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Adelaida",
+          "surname": "Martinez Carvajal"
+        }
+      ],
+      "facts": [
+        {
+          "id": "697fa965-fced-48d8-905a-848b8987fb31",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PH5H-VMJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Ana Mar\u00eda",
+          "surname": "Martinez Carvajal"
+        }
+      ],
+      "facts": [
+        {
+          "id": "10ad3a44-1890-469e-821e-f7b6c00e4025",
+          "type": "Birth",
+          "date": "1881",
+          "standard_date": "1881"
+        },
+        {
+          "id": "f63f7afd-5af0-4c48-be8e-d81adbc81fe2",
+          "type": "Burial",
+          "date": "24 de mayo de 1911",
+          "standard_date": "24 May 1911",
+          "place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia",
+          "standard_place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia"
+        },
+        {
+          "id": "f27470ea-06ff-42a4-8931-ecf92ebab68b",
+          "type": "Death",
+          "date": "24 de mayo de 1911",
+          "standard_date": "24 May 1911",
+          "place": "Matanza, Santander, Colombia",
+          "standard_place": "Matanza, Santander, Colombia"
+        }
+      ]
+    },
+    {
+      "id": "PWJN-MCF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Ramon",
+          "surname": "Martinez Carvajal"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5420adf6-cdf0-48b6-b6f1-9a053186ed58",
+          "type": "Birth",
+          "date": "noviembre de 1886",
+          "standard_date": "Nov 1886"
+        },
+        {
+          "id": "9c1dc249-9517-4c2b-907d-eef6994b7e9d",
+          "type": "Burial",
+          "date": "11 de noviembre de 1911",
+          "standard_date": "11 Nov 1911",
+          "place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia",
+          "standard_place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia"
+        },
+        {
+          "id": "3c1f153a-e9e7-4485-b420-aede917a25bd",
+          "type": "Death",
+          "date": "noviembre de 1911",
+          "standard_date": "Nov 1911"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N10",
+          "type": "BirthName",
+          "given": "Juana",
+          "surname": "Martinez Carvajal",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N11",
+          "type": "BirthName",
+          "given": "Ysmael",
+          "surname": "Alvarez Capacho",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N14",
+          "type": "BirthName",
+          "given": "Belen",
+          "surname": "",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N15",
+          "type": "BirthName",
+          "given": "Laureana",
+          "surname": "Capacho",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G5CM-DZW",
+      "person2": "LR2Y-X3H"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "G5CM-DZW",
+      "child": "PH5H-VMJ"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LR2Y-X3H",
+      "child": "PH5H-VMJ"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "G5CM-DZW",
+      "child": "PZZK-M43"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LR2Y-X3H",
+      "child": "PZZK-M43"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "G5CM-DZW",
+      "child": "PWJN-MCF"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LR2Y-X3H",
+      "child": "PWJN-MCF"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "G5CM-DZW",
+      "child": "LR2Y-X9F"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "LR2Y-X3H",
+      "child": "LR2Y-X9F"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "G5CM-DZW",
+      "child": "PWJF-XY6"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LR2Y-X3H",
+      "child": "PWJF-XY6"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "G5CM-DZW",
+      "child": "LR2Y-6F1"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LR2Y-X3H",
+      "child": "LR2Y-6F1"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "G5CM-DZW",
+      "child": "LR2Y-FGH"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "LR2Y-X3H",
+      "child": "LR2Y-FGH"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "PZZK-M43",
+      "child": "G5CM-DZW"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "G5CM-DZW",
+      "child": "I1",
+      "id": "R17",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "LR2Y-X3H",
+      "child": "I1",
+      "id": "R18",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ],
+      "id": "R19"
+    }
+  ],
+  "sources": [
+    {
+      "id": "71B8-W63",
+      "title": "Isabel Carvajal, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6TBC-XV8H : Tue May 28 12:20:51 UTC 2024), Entry for Eugenio Mart\u00ednez Carvajal and Emilio Martinez, 14 Apr 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6TBC-XV8Z"
+    },
+    {
+      "id": "W3RP-YS1",
+      "title": "Isabel Carvajal, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK1Y-8ZQ1 : Wed Jan 22 11:11:30 UTC 2025), Entry for Ram\u00f3n Martinez and Emilio, 11 Nov 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK1Y-8Z77"
+    },
+    {
+      "id": "7BHX-QGF",
+      "title": "Isabel Carvajal, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6TK6-5L4G : Wed May 15 23:42:53 UTC 2024), Entry for Jairo Angarita and Miguel Angarita, 3 Feb 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6TK6-5L4L"
+    },
+    {
+      "id": "QTGR-KNW",
+      "title": "Isabel Carvajal, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK1Y-ZG4J : Sat Jan 18 13:51:15 UTC 2025), Entry for Eugenio Mart\u00ednez and Mercedes Delgado, 14 Apr 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK1Y-ZGHM"
+    },
+    {
+      "id": "WQJK-FSF",
+      "title": "Isabel Carvajal, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6T25-RPCS : Mon May 20 03:37:35 UTC 2024), Entry for Ana Mar\u00eda Mart\u00ednez Carvajal and Emilio Mart\u00ednez, 24 May 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6T25-RPCQ"
+    },
+    {
+      "id": "7BHX-C3D",
+      "title": "Isabel Carvajal, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6TKN-KFSJ : Thu May 16 09:59:02 UTC 2024), Entry for Ramon Martinez and Emilio Martinez, 11 Nov 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6TKN-KFSK"
+    },
+    {
+      "id": "W74H-T7X",
+      "title": "Isabel Carvajal, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PKB-HF4Q : Wed Dec 31 14:01:48 UTC 2025), Entry for Ram\u00f3n and Emilio Mart\u00ednez, 26 de noviembre de 1882.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6PKB-HF4W"
+    },
+    {
+      "id": "WSR8-Z8T",
+      "title": "Isabel Carvajal, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK1Y-88QK : Mon Oct 13 19:23:07 UTC 2025), Entry for Ana Mar\u00eda Martinez and Emilio Martinez, 24 May 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK1Y-887M"
+    },
+    {
+      "id": "7BH6-1L8",
+      "title": "Isabel Carvajal, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK1Y-ZR19 : Wed Jan 15 10:59:34 UTC 2025), Entry for Trino Angarita and Adelaida Martinez, 11 Jan 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK1Y-ZTMX"
+    },
+    {
+      "id": "7BHX-488",
+      "title": "Isabel Carvajal, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK1Y-Z2BW : Sat Jan 11 23:26:33 UTC 2025), Entry for Trino Angarita and Adelaida Martinez, 3 Feb 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK1Y-Z211"
+    },
+    {
+      "id": "S1",
+      "title": "Colombia, registros parroquiales y diocesanos, 1576-2019 \u2014 index entry for Juana Martinez Carvajal and Ysmael Alvarez Capacho, marriage 9 Oct 1929, Matanza, Santander, Colombia",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6BT8-1TRV"
+    },
+    {
+      "id": "S2",
+      "title": "Entry 123, Marriage Register, Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia, 9 October 1929; original handwritten register image, FamilySearch ark:/61903/3:1:9Q97-YMP3-HQX",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:9Q97-YMP3-HQX"
+    }
+  ]
+}

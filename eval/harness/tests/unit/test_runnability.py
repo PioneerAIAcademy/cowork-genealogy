@@ -194,6 +194,147 @@ def test_blocks_when_negative_correct_skill_has_typo(tmp_path):
     assert "not an existing skill" in result.reason
 
 
+def _invariant_test_dict(tags):
+    d = _runnable_test_dict()
+    d["test"]["type"] = "negative"
+    d["test"]["tags"] = tags
+    d["negative"] = {
+        "correct_skill": ["research-plan"],
+        "explanation": "x",
+        "grade_on_invariant": True,
+    }
+    return d
+
+
+def _validators_dir(tmp_path, body):
+    """A validators dir holding one validator file for search-wikipedia
+    (the skill `_runnable_test_dict` uses)."""
+    v = tmp_path / "validators"
+    v.mkdir()
+    (v / "test_search_wikipedia.py").write_text(body, encoding="utf-8")
+    return v
+
+
+OPT_IN_VALIDATOR = '''
+import pytest
+
+def test_invariant(test):
+    if "no-harm" not in test.get("tags", []):
+        pytest.skip("not a no-harm scenario")
+    assert True
+'''
+
+# The gate must see the tag check even when it is one operand of a
+# compound condition — citation's real validator is written this way, and
+# missing it would falsely abort ut_citation_012.
+COMPOUND_VALIDATOR = '''
+import pytest
+
+def test_invariant(test):
+    if test.get("type") != "positive" and "no-harm" not in test.get("tags", []):
+        pytest.skip("negative test without the no-harm invariant")
+    assert True
+'''
+
+# `"<tag>" in tags -> skip` turns a validator OFF for tagged tests, so it
+# can never be the invariant a grade_on_invariant test leans on.
+EXCLUSION_VALIDATOR = '''
+import pytest
+
+def test_invariant(test):
+    if "no-harm" in test.get("tags", []):
+        pytest.skip("excluded")
+    assert True
+'''
+
+
+@pytest.mark.parametrize("body", [OPT_IN_VALIDATOR, COMPOUND_VALIDATOR])
+def test_allows_grade_on_invariant_with_matching_validator(tmp_path, body):
+    spec = load_test_from_dict(_invariant_test_dict(["no-harm"]))
+    result = check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+        skills_dir=SKILLS, tests_dir=TESTS,
+        validators_dir=_validators_dir(tmp_path, body),
+    )
+    assert result.runnable is True, result.reason
+
+
+@pytest.mark.parametrize(
+    "tags,body",
+    [
+        # Typo'd tag — reaches no validator.
+        (["no-harn"], OPT_IN_VALIDATOR),
+        # Tag omitted entirely.
+        ([], OPT_IN_VALIDATOR),
+        # Tag exists but only as an exclusion gate.
+        (["no-harm"], EXCLUSION_VALIDATOR),
+    ],
+)
+def test_blocks_grade_on_invariant_without_live_validator(tmp_path, tags, body):
+    """grade_on_invariant hands the verdict to the invariant validator, so a
+    tag that reaches no validator passes VACUOUSLY — green forever, asserting
+    nothing. Same silent-unsatisfiability class as a correct_skill typo."""
+    spec = load_test_from_dict(_invariant_test_dict(tags))
+    result = check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+        skills_dir=SKILLS, tests_dir=TESTS,
+        validators_dir=_validators_dir(tmp_path, body),
+    )
+    assert result.runnable is False
+    assert "grade_on_invariant" in result.reason
+    assert "vacuous" in result.reason
+
+
+def test_blocks_grade_on_invariant_when_skill_has_no_validator_file(tmp_path):
+    spec = load_test_from_dict(_invariant_test_dict(["no-harm"]))
+    empty = tmp_path / "validators"
+    empty.mkdir()
+    result = check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+        skills_dir=SKILLS, tests_dir=TESTS, validators_dir=empty,
+    )
+    assert result.runnable is False
+    assert "vacuous" in result.reason
+
+
+def test_grade_on_invariant_check_exempts_xfail(tmp_path):
+    """Matches the correct_skill check's exemption: an xfail test is an
+    explicitly declared known-failing test, not a typo to catch."""
+    d = _invariant_test_dict([])
+    d["test"]["expected_outcome"] = "xfail"
+    d["test"]["xfail_reason"] = "validator not written yet"
+    spec = load_test_from_dict(d)
+    result = check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+        skills_dir=SKILLS, tests_dir=TESTS,
+        validators_dir=_validators_dir(tmp_path, OPT_IN_VALIDATOR),
+    )
+    assert result.runnable is True, result.reason
+
+
+def _corpus_invariant_specs():
+    out = []
+    for path in sorted(TESTS.glob("*/*.json")):
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        if (raw.get("negative") or {}).get("grade_on_invariant"):
+            out.append(pytest.param(path, id=raw["test"]["id"]))
+    return out
+
+
+@pytest.mark.parametrize("path", _corpus_invariant_specs())
+def test_every_corpus_grade_on_invariant_test_has_a_live_validator(path):
+    """The real corpus, against the real validators dir. This is the check
+    that would have caught the compound-condition miss: every shipped
+    grade_on_invariant test must have a validator its tags actually reach."""
+    from harness.loader import load_test
+
+    result = check_runnable(
+        load_test(path), scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+        skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is True, result.reason
+
+
 def test_blocks_when_scenario_research_json_fails_schema(tmp_path):
     """Spec §9: scenario must pass schema validation, not just JSON parse."""
     fake_scenarios = tmp_path / "scenarios"

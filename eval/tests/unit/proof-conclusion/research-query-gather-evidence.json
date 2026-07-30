@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_020",
+    "skill": "proof-conclusion",
+    "name": "Gather a question's evidence via research_query, not a whole-file Read",
+    "type": "positive",
+    "description": "Coverage for the research_query tool (SKILL.md §1). The skill is asked to write/refresh the proof conclusion for q_001 (parentage of Patrick Flynn). Per §1, before tiering it must gather that question's accumulated evidence with SCOPED research_query calls — assertions by questionId, person_evidence per person, conflicts/hypotheses/questions by questionId, timeline by personId — rather than reading (and paginating through) the whole research.json. In mid-research-flynn-no-proof, q_001 has 7 linked assertions (a_004/a_005/a_008/a_009/a_010/a_012/a_013), a supported hypothesis h_001, a resolved birthplace conflict c_001 (which blocks nothing), and no proof_summary yet — so the skill must gather the evidence and write a fresh conclusion. Guards against a future edit that reverts to a raw Read or passes wrong filter keys (the accompanying deterministic validator asserts a research_query call actually fired).",
+    "tags": ["proof-conclusion", "research-query-coverage", "gather-evidence", "tool-usage"]
+  },
+  "input": {
+    "user_message": "Write the proof conclusion for question q_001 — the parentage of Patrick Flynn. I don't have its evidence loaded, so use research_query to gather q_001's assertions, the involved persons' person_evidence, and any conflicts and hypotheses from research.json first, then tier and write the conclusion.",
+    "scenario": "mid-research-flynn-no-proof"
+  },
+  "judge_context": [
+    "This test's purpose is research_query tool coverage. To gather q_001's evidence the skill should call research_query scoped to the question/persons (e.g. research_query({ section: 'assertions', questionId: 'q_001' }), and per §1 the person_evidence/conflicts/hypotheses/questions/timelines companions), NOT a whole-file Read of research.json. If it gathers by issuing a whole-file `Read` of research.json instead of research_query, note it and cap Completeness at 2 — that whole-file re-read is the cost §1 exists to remove. An unfiltered research_query call on a single section still counts as using the tool; do not penalize it as a whole-file read.",
+    "The gathered evidence for q_001 is: assertions a_004/a_005/a_008/a_009/a_010/a_012/a_013; person_evidence for Patrick (I1: pe_001/pe_002/pe_004/pe_005) and Thomas (I2: pe_003/pe_006); hypothesis h_001 (supported); conflict c_001 is resolved and blocks nothing; timeline t_001. A sound conclusion tiers the parentage on this evidence (a defensible tier here is Probable — indirect census parentage plus a secondary-informant death certificate, research not yet exhaustive). Do NOT fail the test on the specific tier chosen as long as it is defensible on the gathered evidence; this test targets the evidence-gathering step, not a single 'right' tier.",
+    "An empty research_query result (e.g. conflicts for q_001) is a legitimate answer — no unresolved conflict blocks the question — not an error or a reason to stall."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 60
+  }
+}
