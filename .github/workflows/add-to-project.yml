@@ -1,0 +1,252 @@
+name: add-to-project
+
+# Puts every new issue on the kanban board (org project
+# PioneerAIAcademy/projects/1) in Backlog, so triage is a column move rather
+# than a periodic archaeology sweep.
+#
+# WHY. Nothing has ever linked issue creation to the board. On 2026-07-30 a
+# sweep found 28 open issues with no card — 13 of them filed in the previous
+# three weeks, including six live bugs (#916, #955, #958, #959, #963, #738).
+# The board is where work is chosen from, so an issue absent from it is
+# invisible no matter how good the report is. Every one of those 13 came from
+# someone who did the right thing by filing.
+#
+# THIS WORKFLOW NEVER CREATES AN ISSUE. It only adds an existing one to the
+# board. The common flow in this repo is the reverse — a human asks Claude for
+# a kanban task, Claude creates the issue and adds it to the project itself.
+# That flow still produces exactly one issue and one card: the `issues: opened`
+# event fires, this workflow looks the issue up, finds a card already there,
+# and stops. `addProjectV2ItemById` is idempotent by design (it returns the
+# existing item when one exists), so even losing the race costs nothing.
+#
+# IT ALSO NEVER DEMOTES A CARD. Status is set to Backlog only when the item's
+# Status is *empty* — read back after the add, not assumed. If Claude created
+# the card in Ready a second earlier, this workflow leaves it in Ready. That
+# read-back is the whole reason this is `github-script` + GraphQL rather than
+# `actions/add-to-project`, which cannot express "only if unset".
+#
+# ── SETUP REQUIRED: the `PROJECT_TOKEN` secret ────────────────────────────
+# The default `GITHUB_TOKEN` CANNOT write to an organization-level Projects V2
+# board — there is no `organization_projects` permission to grant it, so no
+# `permissions:` block here can fix it. This needs one of:
+#
+#   * a classic PAT with `repo` + `project` scopes, or
+#   * a fine-grained PAT with org permission `Projects: Read and write`, or
+#   * a GitHub App installation token with the same.
+#
+# Store it as the repo secret `PROJECT_TOKEN`:
+#
+#     gh secret set PROJECT_TOKEN --repo PioneerAIAcademy/cowork-genealogy
+#
+# A PAT expires. When it does, this workflow fails loudly on every new issue —
+# which is the intended behaviour and the signal to rotate it. It is NOT
+# allowed to degrade to a warning: see below.
+#
+# WHY IT FAILS INSTEAD OF WARNING. Three workflows in this repo have gone green
+# while doing nothing (see the 2026-07-30 header in genealogist-queue.yml,
+# which logs the third). A silent no-op here is worse than a red X, because the
+# symptom — issues quietly missing from the board — is exactly the condition
+# this workflow exists to prevent, and it would take another manual sweep to
+# notice. So: no try/catch around the write, an explicit read-back to confirm
+# the card landed, and a hard failure when the secret is absent.
+
+on:
+  issues:
+    # `reopened` matters: an issue closed as stale and later revived should
+    # come back to the board. `transferred` fires on the issue's arrival in
+    # this repo, which is the first moment it could belong to this board.
+    types: [opened, reopened, transferred]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would change across all open issues, without touching the board"
+        type: boolean
+        default: true
+
+permissions:
+  # Reading the issue only. The board write is authorized by PROJECT_TOKEN,
+  # not by GITHUB_TOKEN — see the setup note above.
+  issues: read
+  contents: read
+
+concurrency:
+  # Per-issue events serialize per issue; every sweep shares one key so a
+  # delayed dispatch cannot race the next. Adds are idempotent, so queueing
+  # rather than cancelling costs nothing.
+  group: add-to-project-${{ github.event.issue.number || 'sweep' }}
+  cancel-in-progress: false
+
+jobs:
+  add:
+    name: add-to-project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v8
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        with:
+          # Reading the issue list needs no special scope, but the same client
+          # does the GraphQL project writes, so it must be the PAT.
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            const ORG            = 'PioneerAIAcademy';
+            const PROJECT_NUMBER = 1;
+            const STATUS_FIELD   = 'Status';
+            const NEW_ITEM_STATUS = 'Backlog';
+
+            const dryRun = process.env.DRY_RUN === 'true';
+            const { owner, repo } = context.repo;
+
+            if (!process.env.PROJECT_TOKEN) {
+              core.setFailed(
+                'PROJECT_TOKEN is not set. GITHUB_TOKEN cannot write to an org-level ' +
+                'Projects V2 board, so this workflow cannot work without it. Create a ' +
+                'PAT with `project` scope and run: ' +
+                'gh secret set PROJECT_TOKEN --repo ' + owner + '/' + repo + ' — ' +
+                'see the setup block at the top of this file.');
+              return;
+            }
+
+            // ---- board metadata ---------------------------------------------
+            // Looked up by name rather than hardcoded as node IDs, so renaming
+            // the board or the Status field fails here with a clear message
+            // instead of silently writing to the wrong field.
+            const meta = await github.graphql(`
+              query($org: String!, $number: Int!) {
+                organization(login: $org) {
+                  projectV2(number: $number) {
+                    id
+                    title
+                    field(name: "${STATUS_FIELD}") {
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        options { id name }
+                      }
+                    }
+                  }
+                }
+              }`, { org: ORG, number: PROJECT_NUMBER });
+
+            const project = meta.organization?.projectV2;
+            if (!project) {
+              core.setFailed(`No project ${PROJECT_NUMBER} on org ${ORG}, or PROJECT_TOKEN cannot see it.`);
+              return;
+            }
+            const statusField = project.field;
+            if (!statusField) {
+              core.setFailed(
+                `Project "${project.title}" has no single-select field named "${STATUS_FIELD}". ` +
+                `Was it renamed? New cards would land with no status.`);
+              return;
+            }
+            const targetOption = statusField.options.find(o => o.name === NEW_ITEM_STATUS);
+            if (!targetOption) {
+              core.setFailed(
+                `"${STATUS_FIELD}" has no option "${NEW_ITEM_STATUS}" — found: ` +
+                statusField.options.map(o => o.name).join(', '));
+              return;
+            }
+
+            // ---- which issues to consider -----------------------------------
+            const sweep = context.eventName === 'workflow_dispatch';
+            let issues = [];
+            if (sweep) {
+              const all = await github.paginate(github.rest.issues.listForRepo,
+                { owner, repo, state: 'open', per_page: 100 });
+              // listForRepo returns PRs too; they are not this board's business.
+              issues = all.filter(i => !i.pull_request)
+                          .map(i => ({ number: i.number, node_id: i.node_id, title: i.title }));
+            } else {
+              const i = context.payload.issue;
+              issues = [{ number: i.number, node_id: i.node_id, title: i.title }];
+            }
+
+            // ---- act ---------------------------------------------------------
+            async function act(issue) {
+              // addProjectV2ItemById returns the EXISTING item when the issue is
+              // already on the board, so this is safe to call unconditionally —
+              // it is also how we learn the item id in both cases.
+              if (dryRun) {
+                return [`#${issue.number}`, 'WOULD add if absent', issue.title.slice(0, 60)];
+              }
+
+              const added = await github.graphql(`
+                mutation($project: ID!, $content: ID!) {
+                  addProjectV2ItemById(input: { projectId: $project, contentId: $content }) {
+                    item { id }
+                  }
+                }`, { project: project.id, content: issue.node_id });
+
+              const itemId = added.addProjectV2ItemById?.item?.id;
+              if (!itemId) {
+                // No catch anywhere in this function: a write that reports
+                // success without an item id is the silent-no-op failure this
+                // workflow is written to avoid.
+                throw new Error(`#${issue.number}: addProjectV2ItemById returned no item id`);
+              }
+
+              // Read the status back. An item that already carries one was put
+              // there by a human or by Claude; do not touch it.
+              const read = await github.graphql(`
+                query($item: ID!) {
+                  node(id: $item) {
+                    ... on ProjectV2Item {
+                      fieldValueByName(name: "${STATUS_FIELD}") {
+                        ... on ProjectV2ItemFieldSingleSelectValue { name }
+                      }
+                    }
+                  }
+                }`, { item: itemId });
+
+              const current = read.node?.fieldValueByName?.name;
+              if (current) {
+                return [`#${issue.number}`, `left in ${current}`, issue.title.slice(0, 60)];
+              }
+
+              await github.graphql(`
+                mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $project, itemId: $item, fieldId: $field,
+                    value: { singleSelectOptionId: $option }
+                  }) { projectV2Item { id } }
+                }`, {
+                  project: project.id, item: itemId,
+                  field: statusField.id, option: targetOption.id });
+
+              return [`#${issue.number}`, `added to ${NEW_ITEM_STATUS}`, issue.title.slice(0, 60)];
+            }
+
+            const rows = [];
+            const errors = [];
+            for (const issue of issues) {
+              if (!sweep) { rows.push(await act(issue)); continue; }
+              // A sweep must not lose the rest of the backlog to one issue's
+              // transient API error. This catch never decides whether a write
+              // succeeded — act() throws on a missing item id and does not
+              // swallow it — and every error still fails the job below.
+              try {
+                rows.push(await act(issue));
+              } catch (e) {
+                errors.push(`#${issue.number}: ${e.message}`);
+                core.error(`#${issue.number} errored — ${e.message}`);
+                rows.push([`#${issue.number}`, 'ERRORED', e.message.slice(0, 60)]);
+              }
+            }
+            if (errors.length) {
+              core.setFailed(
+                `${errors.length} of ${issues.length} issue(s) errored during the sweep; ` +
+                `the rest were processed. ${errors.join(' | ')}`);
+            }
+
+            for (const r of rows) core.info(`${r[0]} ${r[1]} — ${r[2]}`);
+
+            await core.summary
+              .addHeading(dryRun ? 'add-to-project (dry run)' : 'add-to-project', 3)
+              .addRaw(`Board: [${project.title}](https://github.com/orgs/${ORG}/projects/${PROJECT_NUMBER})`)
+              .addTable([
+                [{ data: 'Issue', header: true }, { data: 'Action', header: true },
+                 { data: 'Title', header: true }],
+                ...rows,
+              ])
+              .write();
