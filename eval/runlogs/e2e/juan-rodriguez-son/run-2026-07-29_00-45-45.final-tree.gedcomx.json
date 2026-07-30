@@ -1,0 +1,818 @@
+{
+  "persons": [
+    {
+      "id": "9634-PS9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Juan",
+          "surname": "Rodr\u00edguez Mart\u00ednez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "05efd440-d752-4e8b-9b16-043c51003b3b",
+          "type": "Birth",
+          "date": "16 November 1777",
+          "standard_date": "16 Nov 1777",
+          "place": "Pozuelo, Albacete, Castilla-La Mancha, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death"
+        },
+        {
+          "id": "453dddf0-cce9-4ea8-bf89-7f0161420bc3",
+          "type": "Christening",
+          "date": "19 November 1777",
+          "standard_date": "19 Nov 1777",
+          "place": "San Bartolome, Pozuelo, Albacete, Spain",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "d0f1d84c-0b11-4d6f-b33c-7b3687142d76",
+          "type": "Burial",
+          "date": "18 Jan 1855",
+          "standard_date": "18 Jan 1855",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        }
+      ]
+    },
+    {
+      "id": "963H-88B",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Francisco",
+          "surname": "Rodriguez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "4 December 1801",
+          "standard_date": "4 Dec 1801",
+          "place": "San Bartolome, Pozuelo, Albacete, Spain",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GVZQ-RY9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Severiano",
+          "surname": "Rodr\u00edguez Garc\u00eda"
+        }
+      ],
+      "facts": [
+        {
+          "id": "65957105-c1d2-406c-a075-3bb1e6508e48",
+          "type": "Birth",
+          "date": "8 Nov 1817",
+          "standard_date": "8 Nov 1817"
+        },
+        {
+          "id": "85f17424-bd99-4240-979a-45cb043657f6",
+          "type": "Christening",
+          "date": "9 Nov 1817",
+          "standard_date": "9 Nov 1817",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Espa\u00f1a",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "800cebd9-a7f7-4966-b7d8-7952e2f4edc1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "963H-WVN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Francisca",
+          "surname": "Rodriguez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "09 Mar 1822",
+          "standard_date": "9 Mar 1822",
+          "place": "San Bartolome, Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "453dddf0-cce9-4ea8-bf89-7f0161420bc3",
+          "type": "Christening",
+          "date": "10 Mar 1822",
+          "standard_date": "10 Mar 1822",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "13868ee3-9275-4f38-a04d-f40418b7d8d1",
+          "type": "Baptism",
+          "date": "10 Mar 1822",
+          "standard_date": "10 Mar 1822",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LZZ6-NHR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Antonio",
+          "surname": "Rodriguez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "26aaaf0d-0a64-40f2-bc34-686f9eac94f6",
+          "type": "Residence",
+          "date": "1728",
+          "standard_date": "1728",
+          "place": "Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "09e3fb6a-98ff-4de8-a86f-88e22156f3b1",
+          "type": "Birth",
+          "date": "08 Aug 1728",
+          "standard_date": "8 Aug 1728",
+          "place": "San Bartolome, Pozuelo, Albacete, Spain",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "88a94a0d-c37f-45c5-9b2c-1c95d34b379e",
+          "type": "Baptism",
+          "date": "12 Sep 1728",
+          "standard_date": "12 Sep 1728",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "359e3f55-c055-4509-8741-0a9821fb5c37",
+          "type": "Christening",
+          "date": "12 Sep 1728",
+          "standard_date": "12 Sep 1728",
+          "place": "SAN BARTOLOME, POZUELO, ALBACETE, SPAIN",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "c8b9936b-2d3f-4d6b-b88e-9212f43ce9af",
+          "type": "Unknown",
+          "date": "13 ene 1752",
+          "standard_date": "13 1752"
+        },
+        {
+          "id": "8f634477-7913-4497-840a-c08908a5c028",
+          "type": "Burial",
+          "date": "3 de agosto de 1797",
+          "standard_date": "3 Aug 1797",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Espa\u00f1a",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9634-VXH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Juana",
+          "surname": "Rodr\u00edguez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "06 May 1799",
+          "standard_date": "6 May 1799",
+          "place": "Pozuelo, Albacete, Espa\u00f1a",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "6 May 1799",
+          "standard_date": "6 May 1799",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Espa\u00f1a",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "963H-MBM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Marcelina",
+          "surname": "Garcia"
+        }
+      ],
+      "facts": [
+        {
+          "id": "05efd440-d752-4e8b-9b16-043c51003b3b",
+          "type": "Birth",
+          "date": "25 April 1779",
+          "standard_date": "25 Apr 1779",
+          "place": "San Bartolome, Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "f27d2591-78d8-4d89-a5d0-b6dd615a37eb",
+          "type": "Baptism",
+          "date": "03 May 1779",
+          "standard_date": "3 May 1779",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "453dddf0-cce9-4ea8-bf89-7f0161420bc3",
+          "type": "Christening",
+          "date": "03 May 1779",
+          "standard_date": "3 May 1779",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "8f93d182-5bb4-44a0-8c5d-f40c9d18713d",
+          "type": "Residence",
+          "date": "1779",
+          "standard_date": "1779",
+          "place": "Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9634-JLQ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Bicenta",
+          "surname": "Martinez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a4d6a635-d933-48b9-8d1c-874be9c52d4f",
+          "type": "Birth",
+          "date": "24 May 1735",
+          "standard_date": "24 May 1735",
+          "place": "Pe\u00f1as de San Pedro, Albacete, Castilla-La Mancha, Espa\u00f1a",
+          "standard_place": "Pe\u00f1as de San Pedro, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "cb5a0364-d166-4918-a46f-a5d39fbb7acd",
+          "type": "Baptism",
+          "date": "06 Jun 1735",
+          "standard_date": "6 Jun 1735",
+          "place": "Nuestra Se\u00f1ora de la Esperanza, Pe\u00f1as de San Pedro, Albacete, Spain",
+          "standard_place": "Nuestra Se\u00f1ora de la Esperanza, Pe\u00f1as de San Pedro, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "fda82379-4ad8-4f00-b4a0-62e3385468f5",
+          "type": "Christening",
+          "date": "06 Jun 1735",
+          "standard_date": "6 Jun 1735",
+          "place": "Santa Maria De La Esparanza, Penas De San Pedro, Albacete, Spain",
+          "standard_place": "Pe\u00f1as de San Pedro, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "1a5387c9-43fa-4c59-9aee-a9f8606da763",
+          "type": "Residence",
+          "date": "1735",
+          "standard_date": "1735",
+          "place": "Penas de San Pedro, Albacete, Spain",
+          "standard_place": "Pe\u00f1as de San Pedro, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "17720ed8-564e-479e-a95e-508d4a5e65e1",
+          "type": "Residence",
+          "date": "1735",
+          "standard_date": "1735",
+          "place": "Pe\u00f1as de San Pedro, Albacete, Spain",
+          "standard_place": "Pe\u00f1as de San Pedro, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "5256e017-3809-44a2-8f44-8db9c93fe8c1",
+          "type": "Death",
+          "date": "2 de diciembre de 1801",
+          "standard_date": "2 Dec 1801",
+          "place": "Pozuelo, Albacete, Castilla-La Mancha, Espa\u00f1a",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "5c741325-142b-4833-938b-286fc688e0df",
+          "type": "Burial",
+          "date": "3 de diciembre de 1801",
+          "standard_date": "3 Dec 1801",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Espa\u00f1a",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        }
+      ]
+    },
+    {
+      "id": "9634-P9Y",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Maria",
+          "surname": "Rodriguez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "02 Jul 1804",
+          "standard_date": "2 Jul 1804",
+          "place": "San Bartolome, Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "453dddf0-cce9-4ea8-bf89-7f0161420bc3",
+          "type": "Christening",
+          "date": "04 Jul 1804",
+          "standard_date": "4 Jul 1804",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "fa7b2941-62d0-4727-b56f-dd5d539d5492",
+          "type": "Baptism",
+          "date": "04 Jul 1804",
+          "standard_date": "4 Jul 1804",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GS51-S1P",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Ana Juana",
+          "surname": "Rodriguez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e419c4cd-9bfa-4bff-b0ac-0a311131a757",
+          "type": "Birth",
+          "date": "12 Jul 1811",
+          "standard_date": "12 Jul 1811",
+          "place": "San Bartolome, Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "9f0760ac-b58a-4176-9a40-664fe821f3f9",
+          "type": "Christening",
+          "date": "13 Jul 1811",
+          "standard_date": "13 Jul 1811",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "ddc22ece-fd5e-4518-ae7e-4228bc32f367",
+          "type": "Baptism",
+          "date": "13 Jul 1811",
+          "standard_date": "13 Jul 1811",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "ef943380-5fd8-48b1-9222-dc96fa754bc3",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "963H-MYP",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Vicenta",
+          "surname": "Rodriguez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "26 Oct 1815",
+          "standard_date": "26 Oct 1815",
+          "place": "San Bartolome, Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "26 Oct 1815",
+          "standard_date": "26 Oct 1815",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "1c636ec9-6c31-4b2a-94e9-3b1cfe072022",
+          "type": "Baptism",
+          "date": "26 Oct 1815",
+          "standard_date": "26 Oct 1815",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "9634-PS9",
+      "person2": "963H-MBM",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "4 AGO 1798",
+          "standard_date": "4 1798",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Espa\u00f1a",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        },
+        {
+          "id": "14fa5ec2-daa1-47a3-8b0f-a7a37ec3a3e0",
+          "type": "Marriage",
+          "date": "04 Aug 1798",
+          "standard_date": "4 Aug 1798",
+          "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+          "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LZZ6-NHR",
+      "person2": "9634-JLQ",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "13 Jan 1752",
+          "standard_date": "13 Jan 1752",
+          "place": "Nuestra Se\u00f1ora de la Esperanza, Pe\u00f1as de San Pedro, Albacete, Castilla-La Mancha, Espa\u00f1a",
+          "standard_place": "Nuestra Se\u00f1ora de la Esperanza, Pe\u00f1as de San Pedro, Albacete, Castilla-La Mancha, Spain"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LZZ6-NHR",
+      "child": "9634-PS9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "9634-JLQ",
+      "child": "9634-PS9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "9634-PS9",
+      "child": "9634-VXH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "963H-MBM",
+      "child": "9634-VXH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "9634-PS9",
+      "child": "963H-88B",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "963H-MBM",
+      "child": "963H-88B",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "9634-PS9",
+      "child": "9634-P9Y",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "963H-MBM",
+      "child": "9634-P9Y",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "9634-PS9",
+      "child": "GS51-S1P",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "963H-MBM",
+      "child": "GS51-S1P",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "9634-PS9",
+      "child": "963H-MYP",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "963H-MBM",
+      "child": "963H-MYP",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "9634-PS9",
+      "child": "GVZQ-RY9"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "963H-MBM",
+      "child": "GVZQ-RY9"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "9634-PS9",
+      "child": "963H-WVN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "963H-MBM",
+      "child": "963H-WVN",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "99CB-RRQ",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FRZL-GHF : Wed Mar 05 00:32:19 UTC 2025), Entry for Juana Rodriguez and Juan Rodriguez, 6 May 1799.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FRZL-GHN"
+    },
+    {
+      "id": "Q3NT-D6X",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3QL-PZ5 : Sat Aug 31 09:19:55 UTC 2024), Entry for Pascuala Rivera and Antonio Rivera, 24 Dec 1829.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N3QL-PZ1"
+    },
+    {
+      "id": "Q646-BS8",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N39M-Z3P : Sat Aug 31 08:18:23 UTC 2024), Entry for Francisca Rodriguez and Juan Rodriguez, 10 Mar 1822.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N39M-Z35"
+    },
+    {
+      "id": "Q3VF-GK8",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5F5-P29 : Wed Mar 05 02:19:48 UTC 2025), Entry for Teresa Rivera Rodriguez and Antonio Rivera, 29 Aug 1832.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H8V3-G33Z"
+    },
+    {
+      "id": "QHCJ-DL2",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5JD-DJR : Wed Mar 05 02:18:32 UTC 2025), Entry for Tomas Lopez Rodriguez and Juan Lopez, 9 Mar 1853.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H8V9-JYN2"
+    },
+    {
+      "id": "9M42-GW4",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FRZL-RX8 : Wed Mar 05 00:06:58 UTC 2025), Entry for Francisca Rodriguez and Juan Rodriguez, 10 Mar 1822.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FRZL-RXD"
+    },
+    {
+      "id": "9M6L-PBH",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FRZL-P58 : Wed Mar 05 00:06:27 UTC 2025), Entry for Ana Juana Rodriguez and Juan Rodriguez, 13 Jul 1811.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FRZL-P5D"
+    },
+    {
+      "id": "99S9-WY6",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FRZL-P9G : Wed Mar 05 00:32:30 UTC 2025), Entry for Maria Rodriguez and Juan Rodriguez, 4 Jul 1804.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FRZL-P9P"
+    },
+    {
+      "id": "Q3VF-VBP",
+      "title": "Juan Rodrigues, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5F5-6BW : Wed Mar 05 02:18:16 UTC 2025), Entry for Severiano Rivera Rodrigues and Antonio Rivera, 10 Feb 1837.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H8V7-RX3Z"
+    },
+    {
+      "id": "QHVM-WKB",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N39M-M1F : Sat Aug 31 08:24:48 UTC 2024), Entry for Maria Rodriguez and Juan Rodriguez, 04 Jul 1804.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N39M-M1N"
+    },
+    {
+      "id": "9926-XZV",
+      "title": "Juan Rodriguez, \"Spain, Marriages, 1565-1950\"",
+      "citation": "\"Espa\u00f1a, matrimonios, 1565-1950\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FFLR-65S : 16 February 2020), Juan Rodriguez, 1798.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FFLR-65S"
+    },
+    {
+      "id": "Q3VV-MK6",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VTJQ-SRM : Sat Aug 31 09:27:46 UTC 2024), Entry for Juan Rodriguez and Marcelina Garcia, 18 Jan 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VTJQ-SRM"
+    },
+    {
+      "id": "Q3VV-9SV",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5FP-KRG : Wed Mar 05 02:51:35 UTC 2025), Entry for Severiano Rodriguez Garcia and Juan Rodriguez, 9 Nov 1817.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F5FP-KRP"
+    },
+    {
+      "id": "QHCJ-6QV",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5FP-BC3 : Wed Mar 05 02:51:20 UTC 2025), Entry for Ana Juana Rodriguez Garcia and Juan Rodriguez, 13 Jul 1811.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F5FP-BCQ"
+    },
+    {
+      "id": "QFV8-MDR",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N39M-4DV : Sat Aug 31 09:22:47 UTC 2024), Entry for Severiano Rodriguez and Juan Rodriguez, 09 Nov 1817.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N39M-4DK"
+    },
+    {
+      "id": "S2T3-MQ4",
+      "title": "Juan Rodriguez Martinez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5FP-DXJ : Wed Mar 05 01:18:43 UTC 2025), Entry for Juan Rodriguez Martinez and Antonio Rodriguez, 19 Nov 1777.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F5FP-DXJ"
+    },
+    {
+      "id": "Q3NT-3L1",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5F5-DZL : Wed Mar 05 02:18:34 UTC 2025), Entry for Pascuala Rivera Rodriguez and Antonio Rivera, 24 Dec 1829.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H8VS-N52M"
+    },
+    {
+      "id": "Q3VN-SS3",
+      "title": "Marcelina Garcia, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5F5-PGM : Wed Mar 05 01:18:55 UTC 2025), Entry for Juan Antonio Rivera Rodriguez and Antonio Rivera, 22 Jan 1826.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H8VS-SL6Z"
+    },
+    {
+      "id": "Q3VN-XTY",
+      "title": "Juan, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N39M-DRK : Sat Aug 31 09:22:35 UTC 2024), Entry for Juan Antonio Rivera and Antonio Rivera, 22 Jan 1826.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N39M-DR5"
+    },
+    {
+      "id": "Q3VN-N7B",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5T4-X57 : Wed Mar 05 01:18:56 UTC 2025), Entry for Juana Rodriguez Garcia and Juan Rodriguez, 6 May 1799.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F5T4-X5W"
+    },
+    {
+      "id": "QHCJ-D3R",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N39M-3P8 : Sat Aug 31 09:22:49 UTC 2024), Entry for Ana Juana Rodriguez and Juan Rodriguez, 13 Jul 1811.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N39M-3PD"
+    },
+    {
+      "id": "Q2S8-3DF",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3QT-SHK : Sat Aug 31 09:22:49 UTC 2024), Entry for Juan Rodriguez and Antonio, 04 Aug 1798.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N3QT-SHK"
+    },
+    {
+      "id": "S2TQ-9YS",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3M1-VMG : Sat Aug 31 09:21:03 UTC 2024), Entry for Juan Rodriguez and Antonio Rodriguez, 19 Nov 1777.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N3M1-VMG"
+    },
+    {
+      "id": "Q3VN-9NV",
+      "title": "Juan, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5F5-PGM : Wed Mar 05 01:18:55 UTC 2025), Entry for Juan Antonio Rivera Rodriguez and Antonio Rivera, 22 Jan 1826.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H8VS-SLZM"
+    },
+    {
+      "id": "QJ1V-QC3",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N39M-WCH : Sat Aug 31 08:31:34 UTC 2024), Entry for Vicenta Rodriguez and Juan Rodriguez, 26 Oct 1815.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N39M-WCC"
+    },
+    {
+      "id": "9MRS-PZS",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, bautismos, 1502-1940\"",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FRZL-561 : Wed Mar 05 00:06:52 UTC 2025), Entry for Vicenta Rodriguez and Juan Rodriguez, 26 Oct 1815.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FRZL-5XM"
+    },
+    {
+      "id": "Q3VN-CD1",
+      "title": "Juan Rodrigues, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3QL-BRK : Sat Aug 31 08:23:00 UTC 2024), Entry for Severiano Rivera and Antonio Rivera, 10 Feb 1837.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N3QL-BR5"
+    },
+    {
+      "id": "Q3VN-8DV",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3QL-R6R : Sat Aug 31 08:23:00 UTC 2024), Entry for Teresa Rivera and Antonio Rivera, 29 Aug 1832.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N3QL-RXM"
+    },
+    {
+      "id": "Q3VN-2R3",
+      "title": "Juan Rodriguez, \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\"",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3M1-BS8 : Sat Aug 31 08:28:51 UTC 2024), Entry for Juana Rodriguez and Juan Rodriguez, 06 May 1799.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N3M1-BSD"
+    }
+  ]
+}

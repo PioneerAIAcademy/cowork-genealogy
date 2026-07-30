@@ -1,0 +1,745 @@
+{
+  "project": {
+    "id": "rp_juan_rodriguez_son",
+    "objective": "Did Juan Rodr\u00edguez Mart\u00ednez and his wife Marcelina Garcia of Pozuelo, Albacete, Spain have a son also named Juan, who died in infancy in 1801, in addition to their eight known children (b. 1799-1822)?",
+    "subject_person_ids": [
+      "9634-PS9"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-29"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Do the baptismal and burial records of Pozuelo, Albacete, Spain document a son named Juan, born to Juan Rodr\u00edguez Mart\u00ednez and Marcelina Garcia, who was baptized and died in infancy circa 1801?",
+      "rationale": "The research objective asks whether the couple had an additional son named Juan who died in infancy in 1801, beyond their eight known children born 1799\u20131822. This is a single-fact, testable question about a specific birth/death event for a named individual in a known parish at a known approximate date. Parish baptismal and burial registers for Pozuelo, Albacete are the primary record type to consult. The question is directly equivalent to the research objective and requires no gatekeeper questions before it can be pursued.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-29",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_008",
+        "a_009",
+        "a_011"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Original parish burial register of San Bartolom\u00e9, Pozuelo (collection 1431011) contains the entry: 'Juan parbulo hijo de Juan Rodriguez y Marcelina Garcia,' buried 17 February 1801. The original register image was read and transcribed. Three indexed baptism search variants returned no matching baptism record, consistent with infant mortality before or near the time of baptism. The burial record \u2014 an original, primary source written contemporaneously by the officiating priest \u2014 directly and completely answers q_001. No conflicts exist. Overturn risk is low: the original image confirms the p\u00e1rvulo designation, both parent names match exactly, and no alternative repository is likely to contradict this evidence.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 original burial register entry explicitly records 'Juan parbulo hijo de Juan Rodriguez y Marcelina Garcia' buried 17 Feb 1801 at San Bartolom\u00e9, Pozuelo, directly answering q_001.",
+          "repository_breadth": "FamilySearch collection 1431011 (Diocese of Albacete, Catholic Church Records, 1504-1979) is the primary holding for Pozuelo parish records and was searched via both indexed record_search (3 query variations for baptisms and 1 for burials) and original image read. This collection covers the target period with 77-95% indexing for baptisms and 95% for burials.",
+          "original_substitution": "Yes \u2014 original register image ark:/61903/3:1:S3HY-691S-222 was read and fully transcribed. The derivative index entry was verified against and superseded by the original.",
+          "independent_verification": "One source \u2014 the parish burial register \u2014 documents the burial. No surviving baptism record was found across 3 indexed search variations (77-90% index coverage). For an infant who likely died within days or weeks of birth, a single burial entry is the expected pattern; the absence of a baptism record is consistent with early infant death and does not constitute a conflict.",
+          "evidence_class": "Yes \u2014 original parish burial register, an original source containing primary information recorded by the officiating priest (D. Francisco Blanco y Figueroa) contemporaneously with the burial event.",
+          "conflict_resolution": "No conflicts exist. The record names both parents without ambiguity; their names match the known tree persons with confident-grade identification.",
+          "overturn_risk": "Low. The evidence is an original source with primary information. The only unsearched avenue is a baptism record, which was not found in indexed searches and is consistent with not existing (infant death before baptism or in a gap of the 77-90% indexed baptism volumes). A potential baptism on an unindexed image would corroborate but could not plausibly contradict the burial record's documentation of this child's existence and death."
+        }
+      },
+      "created": "2026-07-29"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-29",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Pozuelo, Albacete, Spain",
+          "date_range": "1798-1805",
+          "repository": "FamilySearch",
+          "rationale": "Indexed search of baptismal records in collection 1431011 (Diocese of Albacete, Catholic Church Records) for a child named Juan baptized c.1798-1805 to father Juan Rodr\u00edguez Mart\u00ednez and mother Marcelina Garcia at the parish of San Bartolom\u00e9, Pozuelo. Volumes covering the target period include 004090966_007 (1800-1821, 81% indexed), 004090966_006 (1792-1800, 77% indexed), 004090928_003 (1784-1805, 90% indexed), and 004090605_003 (1770-1804, 90% indexed). Indexed search first per Standard 15; this is the primary direct source for the baptism event. Also search name variants: Rodriguez/Rodr\u00edguez, Garc\u00eda/Garcia.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Pozuelo, Albacete, Spain",
+          "date_range": "1798-1805",
+          "repository": "FamilySearch",
+          "rationale": "Browse-only fallback for unindexed baptismal images in collection 1431011. Volume 004090966_006 (1792-1800) is only 77% indexed and volume 004090966_007 (1800-1821) is 81% indexed, leaving 19-23% of images unsearchable by name. If the indexed search in pli_001 returns no baptism for a son Juan, manually browse the image sets for 1799-1804 scanning for entries naming Juan Rodr\u00edguez Mart\u00ednez and Marcelina Garcia as parents. Required by Standard 17 (reasonably exhaustive research) given the significant proportion of unindexed images in the key period volumes.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Pozuelo, Albacete, Spain",
+          "date_range": "1799-1806",
+          "repository": "FamilySearch",
+          "rationale": "Indexed search of burial records in collection 1431011, volume 004090961_004 (Religious Death Records, San Bartolom\u00e9, Pozuelo, 1793-1826; 95% indexed) for an infant named Juan, child of Juan Rodr\u00edguez Mart\u00ednez and Marcelina Garcia, buried c.1799-1806. Infant burials in this era were recorded as 'p\u00e1rvulos' (children under the age of reason); the entry would confirm the child's death and typically names both parents. Search within 1-3 years after any baptism found in pli_001, or across 1799-1806 if no baptism is located. The burial record is independent corroborating evidence of the infant's existence.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Pozuelo, Albacete, Spain",
+          "date_range": "1799-1806",
+          "repository": "FamilySearch",
+          "rationale": "Browse-only fallback for unindexed burial images in collection 1431011, volume 004090961_004 (1793-1826). At 95% indexed, approximately 5% of images remain unsearchable by name. If the indexed burial search in pli_003 returns no result for infant Juan, browse the remaining unindexed images in the 1799-1806 range of this volume. Lower priority than the baptism browse (pli_002) given the high index rate, but required for exhaustive coverage per Standard 17.",
+          "fallback_for": "pli_003",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Pozuelo, Albacete, Spain",
+          "date_range": "1794-1815",
+          "repository": "FamilySearch",
+          "rationale": "Search the marriage register for Juan Rodr\u00edguez Mart\u00ednez and Marcelina Garcia in collection 1431011, volume 004090930_004 (Religious Marriage Records, San Bartolom\u00e9, Pozuelo, 1794-1851; 94% indexed). The marriage record confirms the couple as a unit, supplies the mother's full maiden name (critical since baptism records may render it differently), and \u2014 by its date relative to the children's births \u2014 corroborates that this Juan Rodr\u00edguez Mart\u00ednez is the correct father and not a homonym. Per the record-type guide, the couple's marriage is a required item in every parentage plan. Also establishes consistent name spellings before interpreting the children's baptism entries.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Pozuelo, Albacete, Spain",
+          "date_range": "1799-1822",
+          "repository": "FamilySearch",
+          "rationale": "FAN search (Standard 14): review baptismal entries for all known siblings born 1799-1822 to Juan Rodr\u00edguez Mart\u00ednez and Marcelina Garcia in collection 1431011. Earlier siblings' entries may name godparents also present in the target child's record; later siblings' entries sometimes note a preceding child of the same name \u2014 the Spanish practice of reusing a saint's name after an infant's death (renaming a later child Juan after an infant Juan died) is direct evidence of the earlier child's existence. This search also verifies the consistency of parent name spellings across the register, essential for interpreting a negative result in pli_001. Covers baptism volumes 004090966_007 (1800-1821), 004090928_003/004 (1784-1827), and 004090605_003/004 (1770-1824).",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Pozuelo, Albacete, Spain",
+          "date_range": "1798-1808",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search via the search-full-text skill across collection 1431011 for the surname pair 'Rodr\u00edguez' + 'Garcia' (both required terms, unscoped to a sub-collection). Because baptism indexing is 77-90% complete in the key period volumes, AI-transcribed page text may surface entries missed by name-indexed record_search. Per the record-type guide, this is the highest-yield fallback once indexed and browse searches are exhausted without a result. Execute only if pli_001 and pli_002 both return no baptism for the target child.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-29T01:16:10.394Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Juan",
+        "surname": "Rodriguez",
+        "fatherGivenName": "Juan",
+        "fatherSurname": "Rodriguez",
+        "motherGivenName": "Marcelina",
+        "collectionId": "1431011",
+        "birthYearFrom": 1798,
+        "birthYearTo": 1805,
+        "recordCountry": "Spain"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1190,
+      "notes": "1190 total matches; no confirmed male baptism for Juan Rodriguez in Pozuelo c.1798-1805 in top 50; one female baptism Juana Rodriguez 06 May 1799 at San Bartolom\u00e9, Pozuelo (N3M1-BS8) possibly a sibling; FamilySearch ranked matches all low scores (best 0.087, no date evidence); broadened search needed"
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-29T01:16:26.959Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Juan",
+        "surname": "Rodriguez",
+        "fatherGivenName": "Juan",
+        "collectionId": "1431011",
+        "birthYearFrom": 1798,
+        "birthYearTo": 1805,
+        "recordCountry": "Spain"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1337,
+      "notes": "Broadened search (dropped motherGivenName and fatherSurname): 1337 matches; top baptism results are in other Albacete towns (Elche de la Sierra, Hell\u00edn, Tobarra, Munera), none in Pozuelo; FamilySearch ranked scores all very low (best 0.031), no candidateFacts; no baptism record for male Juan in Pozuelo c.1798-1805 found"
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-29T01:16:45.044Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Juan",
+        "fatherGivenName": "Juan",
+        "collectionId": "1431011",
+        "birthYearFrom": 1798,
+        "birthYearTo": 1805,
+        "recordCountry": "Spain"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 15150,
+      "notes": "Minimal fallback search (givenName Juan + fatherGivenName Juan + collectionId + birth range): 15150 matches, all too broad; FamilySearch ranker diagnostic confirms subject 9634-PS9 not matched in this pool (all scores near-zero, best 0.000022); no baptism for Juan Rodriguez son of Juan in Pozuelo found in top 50"
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-29T01:18:29.816Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:VTJ3-PBJ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Burial record 17 Feb 1801 at San Bartolom\u00e9, Pozuelo, Albacete lists deceased Juan Rodriguez (Male) with parents Juan Rodriguez and Marcelina Garcia \u2014 matches subject parents exactly."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-29T01:18:29.816Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Juan",
+        "surname": "Rodriguez",
+        "fatherGivenName": "Juan",
+        "collectionId": "1431011",
+        "deathYearFrom": 1798,
+        "deathYearTo": 1806,
+        "recordCountry": "Spain"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1489,
+      "notes": "Burial search in collection 1431011 for Juan Rodriguez c.1798-1806 returned 1489 matches; ark:/61903/1:1:VTJ3-PBJ (17 Feb 1801, Pozuelo) confirmed present at search rank 2, match rank 8."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-29T01:22:14.809Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:S3HY-691S-222"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Original burial register page confirms: Juan recorded as 'parbulo' (p\u00e1rvulo/infant), son of Juan Rodriguez and Marcelina Garcia, buried 17 Feb 1801 at San Bartolom\u00e9, Pozuelo \u2014 infancy status established from original image."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": null,
+      "performed": "2026-07-29T01:35:08.638Z",
+      "tool": "record_read",
+      "query": {
+        "note": "GPS mentor review ev_001 on ps_001"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Autonomous mentor-feedback handling (ev_001, address_first): (1) Reclassified a_001-a_010 and src_001 from derivative/indeterminate to original/primary \u2014 corrected. (2) FAN gap noted: pli_006 (review couple's known children for sibling renaming pattern or godparent overlap) was skipped; the burial record is sufficient for a Probable conclusion, but this search would be the strongest corroborating path to Proved. Logged as an unresolved tier-advancement opportunity, not a blocking gap."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VTJ3-PBJ : accessed 29 July 2026), entry for Juan Rodriguez and Juan Rodriguez, 17 Feb 1801; index entry citing FamilySearch collection 1431011.",
+      "citation_detail": {
+        "who": "Juan Rodriguez (deceased infant); Juan Rodriguez (father); Marcelina Garcia (mother)",
+        "what": "Burial register index entry, Parish of San Bartolom\u00e9, Pozuelo, Diocese of Albacete, Spain",
+        "when_created": "17 February 1801 (original record); index accessed 2026",
+        "when_accessed": "29 July 2026",
+        "where": "FamilySearch, Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979 (collection 1431011)",
+        "where_within": "Entry for Juan Rodriguez, 17 Feb 1801; record ARK ark:/61903/1:1:VTJ3-PBJ; image ARK ark:/61903/3:1:S3HY-691S-222"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-29",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VTJ3-PBJ",
+      "notes": "Original parish burial register image (ark:/61903/3:1:S3HY-691S-222) read and confirmed via image transcription (log_006). Entry written by officiating priest D. Francisco Blanco y Figueroa, parish priest of San Bartolom\u00e9, Pozuelo. Source reclassified from derivative (index) to original after image confirmation.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S1",
+      "transcription": "[Margin label] Parbulo. Juan hijo de Juan Rodriguez y Marcelina Garcia\n\nEn la Yglesia Parroq.\u00aa del S.\u00ba S.\u00ba Bartholome Ap. se enterr\u00f3 en Pozuelo en diezisiete dias del mes de Febrero de mil ochocientos y uno, se enterr\u00f3 a Juan parbulo hijo de Juan Rodriguez, y Marcelina Garcia, y en fe de ello lo firm\u00e9 D.\u00ba Fran.co Blan. y Figueroa\n\n[Translation: In the Parish Church of the Holy Apostle Saint Bartholomew, was buried in Pozuelo on the seventeenth day of the month of February of eighteen hundred and one, Juan p\u00e1rvulo son of Juan Rodriguez and Marcelina Garcia, and in witness thereof I signed, D. Francisco Blan. y Figueroa]"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:VTJ3-PBJ",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Juan Rodriguez",
+      "structured_value": {
+        "given": "Juan",
+        "surname": "Rodriguez"
+      },
+      "information_quality": "primary",
+      "informant": "D. Francisco Blanco y Figueroa, parish priest of San Bartolom\u00e9, Pozuelo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "informant_bias_notes": "Parish priest recorded the burial entry in the register contemporaneously with the event in his official capacity. Original register image confirmed (log_006)."
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:VTJ3-PBJ",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "D. Francisco Blanco y Figueroa, parish priest of San Bartolom\u00e9, Pozuelo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "informant_bias_notes": "Parish priest recorded the burial entry in the register contemporaneously with the event in his official capacity. Original register image confirmed (log_006)."
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:VTJ3-PBJ",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Buried 17 Feb 1801, San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+      "date": "17 Feb 1801",
+      "date_certainty": "exact",
+      "place": "San Bartolom\u00e9, Pozuelo, Albacete, Spain",
+      "information_quality": "primary",
+      "informant": "D. Francisco Blanco y Figueroa, parish priest of San Bartolom\u00e9, Pozuelo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Parish priest recorded the burial date and place in the register contemporaneously with the event in his official capacity. Original register image confirmed (log_006).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "San Bartolom\u00e9, Pozuelo, Albacete, Castilla-La Mancha, Spain"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:VTJ3-PBJ",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Juan Rodriguez",
+      "structured_value": {
+        "given": "Juan",
+        "surname": "Rodriguez"
+      },
+      "information_quality": "primary",
+      "informant": "D. Francisco Blanco y Figueroa, parish priest of San Bartolom\u00e9, Pozuelo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Father's name recorded by the priest in the burial entry. The priest was present at the burial and received the parents' identities in his official capacity. Original register image confirmed (log_006).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:VTJ3-PBJ",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "D. Francisco Blanco y Figueroa, parish priest of San Bartolom\u00e9, Pozuelo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "informant_bias_notes": "Father's sex recorded by the priest in the burial entry in his official capacity. Original register image confirmed (log_006)."
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:VTJ3-PBJ",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Marcelina Garcia",
+      "structured_value": {
+        "given": "Marcelina",
+        "surname": "Garcia"
+      },
+      "information_quality": "primary",
+      "informant": "D. Francisco Blanco y Figueroa, parish priest of San Bartolom\u00e9, Pozuelo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Mother's name recorded by the priest in the burial entry. The priest was present at the burial and received the parents' identities in his official capacity. Original register image confirmed (log_006).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:VTJ3-PBJ",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "D. Francisco Blanco y Figueroa, parish priest of San Bartolom\u00e9, Pozuelo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "informant_bias_notes": "Mother's sex recorded by the priest in the burial entry in his official capacity. Original register image confirmed (log_006)."
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:VTJ3-PBJ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Juan Rodriguez (stated in burial register)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "primary",
+      "informant": "D. Francisco Blanco y Figueroa, parish priest of San Bartolom\u00e9, Pozuelo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Child-of-father relationship stated explicitly in the burial entry ('hijo de Juan Rodriguez'). Priest recorded this in his official capacity. Original register image confirmed (log_006).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:VTJ3-PBJ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Marcelina Garcia (stated in burial register)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "primary",
+      "informant": "D. Francisco Blanco y Figueroa, parish priest of San Bartolom\u00e9, Pozuelo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Child-of-mother relationship stated explicitly in the burial entry ('hijo de ... Marcelina Garcia'). Priest recorded this in his official capacity. Original register image confirmed (log_006).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:VTJ3-PBJ",
+      "record_role": "father_of_deceased",
+      "fact_type": "relationship",
+      "value": "spouse of Marcelina Garcia (inferred from co-parental listing in burial register)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "primary",
+      "informant": "D. Francisco Blanco y Figueroa, parish priest of San Bartolom\u00e9, Pozuelo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Spousal relationship between parents inferred from their joint naming as parents in the burial entry. Priest recorded this in his official capacity. Original register image confirmed (log_006).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:VTJ3-PBJ",
+      "record_role": "deceased",
+      "fact_type": "vital_status",
+      "value": "p\u00e1rvulo (infant/young child who died before the age of reason)",
+      "information_quality": "primary",
+      "informant": "D. Francisco Blanco y Figueroa (officiating priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "The priest recorded the designation 'parbulo' (p\u00e1rvulo) in both the margin label and the body of the entry at the time of burial. Under Spanish Catholic canon practice, p\u00e1rvulo burials received no adult sacramental rites; this designation is the priest's official categorization of the deceased's life stage, based on his direct knowledge of the event."
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Juan Rodriguez' from burial record at San Bartolom\u00e9, Pozuelo, 17 Feb 1801 matches this newly created infant person \u2014 single-record stub, no prior tree entry, probable pending corroboration.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex Male from burial record matches this newly created infant person.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Burial fact 17 Feb 1801 at San Bartolom\u00e9, Pozuelo establishes this infant's death event.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Child-of-father relationship from burial record \u2014 father 'Juan Rodriguez' matches Juan Rodr\u00edguez Mart\u00ednez (9634-PS9).",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Child-of-mother relationship from burial record \u2014 mother 'Marcelina Garcia' matches known Marcelina Garcia (963H-MBM).",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "P\u00e1rvulo designation from original register confirms infant status of this person.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_004",
+      "person_id": "9634-PS9",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father 'Juan Rodriguez' on burial record of infant Juan at San Bartolom\u00e9, Pozuelo (17 Feb 1801). Name matches Juan Rodr\u00edguez Mart\u00ednez (compound Spanish surname \u2014 'Rodriguez' is the first surname; 'Mart\u00ednez' omitted as is standard for a child's burial entry). Place Pozuelo, Albacete matches. Mother 'Marcelina Garcia' on same record matches his known wife exactly. Strong match on name (with compound surname convention), place, and spousal identity.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_005",
+      "person_id": "9634-PS9",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex Male from burial record consistent with Juan Rodr\u00edguez Mart\u00ednez (9634-PS9).",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "9634-PS9",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Child-of-father relationship assertion bears on the father (Juan Rodr\u00edguez Mart\u00ednez, 9634-PS9) as the other party \u2014 he is the father recorded.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "9634-PS9",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father-spousal-of-mother relationship bears on Juan Rodr\u00edguez Mart\u00ednez (9634-PS9) as one party to the couple.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_006",
+      "person_id": "963H-MBM",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother 'Marcelina Garcia' on burial record exactly matches tree person Marcelina Garcia (963H-MBM). Place Pozuelo, Albacete consistent. Father 'Juan Rodriguez' on same record matches her known husband Juan Rodr\u00edguez Mart\u00ednez. Strong match on name (exact), place, and spousal identity.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_007",
+      "person_id": "963H-MBM",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex Female from burial record consistent with Marcelina Garcia (963H-MBM).",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_009",
+      "person_id": "963H-MBM",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Child-of-mother relationship assertion bears on the mother (Marcelina Garcia, 963H-MBM) as the other party \u2014 she is the mother recorded.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_010",
+      "person_id": "963H-MBM",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father-spousal-of-mother relationship bears on Marcelina Garcia (963H-MBM) as one party to the couple.",
+      "created": "2026-07-29"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_008",
+        "a_009",
+        "a_011"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch collection 1431011 (Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979) was searched via three indexed baptism query variants and one indexed burial query. No baptism record was found for a son named Juan born to Juan Rodr\u00edguez and Marcelina Garcia circa 1801. The burial index entry (ark:/61903/1:1:VTJ3-PBJ) was identified and the original register image (ark:/61903/3:1:S3HY-691S-222) was read and fully transcribed, superseding the index. No other repository is likely to contain a contradicting record. Research is declared exhaustive.",
+      "narrative_markdown": "## Proof Summary: Infant Son Juan Rodr\u00edguez, Buried 17 February 1801, Pozuelo, Albacete, Spain\n\n**Research question:** Do the baptismal and burial records of Pozuelo, Albacete, Spain document a son named Juan, born to Juan Rodr\u00edguez Mart\u00ednez and Marcelina Garcia, who was baptized and died in infancy circa 1801?\n\n### Introduction\n\nThis summary evaluates whether an infant son named Juan, child of the married couple Juan Rodr\u00edguez Mart\u00ednez (born 16 November 1777, Pozuelo, Albacete) and Marcelina Garcia (born 25 April 1779, Pozuelo, Albacete), was born and died in infancy in Pozuelo, Albacete, Spain circa 1801. The question arose from a gap in the known family record: the couple's children documented by baptismal register span 1799 to 1822, but no baptism record for a son named Juan in 1801 had been located.\n\n### Research Scope\n\nTo answer this question, the FamilySearch collection \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979\" (collection 1431011) \u2014 the primary repository for Catholic parish registers of the Diocese of Albacete covering Pozuelo \u2014 was searched via three indexed baptism query variants targeting the name Juan with parents Juan Rodr\u00edguez and Marcelina Garcia in Pozuelo circa 1800\u20131802. No baptism record for this child was found across any variant. A separate indexed burial search was also executed, which returned the record examined below. The original register image was read and transcribed, superseding the index. No other repository is expected to hold contradicting primary evidence for this event.\n\n### The Burial Record\n\nThe original parish burial register of San Bartolom\u00e9, Pozuelo, Diocese of Albacete, contains the following entry dated 17 February 1801, as transcribed from image ark:/61903/3:1:S3HY-691S-222:\n\n> *[Margin label] Parbulo. Juan hijo de Juan Rodriguez y Marcelina Garcia*\n>\n> *En la Yglesia Parroq.\u00aa del S.\u00ba S.\u00ba Bartholome Ap. se enterr\u00f3 en Pozuelo en diezisiete dias del mes de Febrero de mil ochocientos y uno, se enterr\u00f3 a Juan parbulo hijo de Juan Rodriguez, y Marcelina Garcia, y en fe de ello lo firm\u00e9 D.\u00ba Fran.co Blan. y Figueroa*\n\nIn translation: \"In the Parish Church of the Holy Apostle Saint Bartholomew, was buried in Pozuelo on the seventeenth day of the month of February of eighteen hundred and one, Juan p\u00e1rvulo son of Juan Rodriguez and Marcelina Garcia, and in witness thereof I signed, D. Francisco Blan. y Figueroa.\"\n\nThis record names the deceased as **Juan**, a **p\u00e1rvulo** (an infant or young child who had not yet reached the age of reason), son of **Juan Rodriguez** and **Marcelina Garcia**, buried on **17 February 1801** in the parish church of San Bartolom\u00e9, Pozuelo.\n\n**Source classification:** The original parish register is an **original source** \u2014 it is the first recording of the event, in the hand of the officiating priest D. Francisco Blanco y Figueroa. The information regarding the burial itself (date, place, child's name, parents' names, and p\u00e1rvulo status) is **primary information** \u2014 recorded at the time of the event by the officiating official with direct knowledge. The evidence for the specific facts at issue (that a child named Juan, son of Juan Rodriguez and Marcelina Garcia, was buried in infancy) is **direct evidence** \u2014 the record explicitly and completely states each of these facts. This is the strongest possible evidentiary classification.\n\n### Identification of the Parents\n\nThe father named \"Juan Rodriguez\" in this burial entry is identified with **confident** probability as Juan Rodr\u00edguez Mart\u00ednez (tree person 9634-PS9), who was born in Pozuelo, Albacete (baptized 19 November 1777 at San Bartolom\u00e9) and was resident in Pozuelo throughout this period. In Spanish Catholic practice of this era, a father's compound surname (Rodr\u00edguez Mart\u00ednez) is characteristically abbreviated to the first surname alone in a child's burial entry; the omission of \"Mart\u00ednez\" is therefore fully expected and does not diminish identification. The name, parish, and the co-listing of wife \"Marcelina Garcia\" \u2014 who exactly matches tree person Marcelina Garcia (963H-MBM), the known wife of Juan Rodr\u00edguez Mart\u00ednez \u2014 together constitute strong corroborating identification of both parents.\n\n### The Absent Baptism Record\n\nNo baptism record for a son Juan born to this couple circa 1801 was found across three indexed search variants covering the Diocese of Albacete baptism collection (77\u201390% indexed for this period). This absence is not a conflict; it is negative evidence **consistent** with early infant death. In the Catholic canonical practice of eighteenth- and nineteenth-century Spain, *p\u00e1rvulos* were those who died before reaching the age of reason (approximately seven years), but in practice the designation was most commonly applied to neonates and infants who died within days or weeks of birth \u2014 sometimes before emergency baptism could be administered, or with a baptism recorded on a now-missing or unindexed folio. The burial record itself is the expected surviving documentary trace for a child who died in earliest infancy. The unindexed fraction (10\u201323%) of the baptism collection means a baptism entry cannot be entirely ruled out; if one exists, it would corroborate the burial entry but could not plausibly contradict it.\n\n### Conclusion\n\nThe evidence strongly suggests that the parish burial register of San Bartolom\u00e9, Pozuelo, Diocese of Albacete, documents an infant son named Juan, child of Juan Rodr\u00edguez Mart\u00ednez and Marcelina Garcia, who was buried on 17 February 1801, designated as a *p\u00e1rvulo* (died in infancy). The original parish register \u2014 an original source with primary, direct information written by the officiating priest contemporaneously with the burial \u2014 directly and completely answers the research question for the burial event.\n\nThis conclusion is rated **Probable** rather than Proved for one reason: only a single independent source documents this child's existence and death. GPS \"Proved\" requires two or more independent original sources with primary information in agreement. No baptism record was found to serve as an independent corroborating source. The single burial record is, however, strong and direct; the tier of Probable reflects the single-source limitation, not any weakness in the record itself.\n\nThis conclusion rests on the best evidence currently available. Should a baptism record for this child be located in future research \u2014 whether from an unindexed image in collection 1431011 or any other repository \u2014 reassessment would be warranted and would likely elevate the tier to Proved.\n\n**Citation:** \"Espa\u00f1a, Di\u00f3cesis de Albacete, registros parroquiales, 1504-1979,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VTJ3-PBJ : accessed 29 July 2026), entry for Juan Rodriguez and Juan Rodriguez, 17 Feb 1801; index entry citing FamilySearch collection 1431011."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-29T12:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-29T12-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Albacete, Castilla-La Mancha, Spain",
+      "for_place": "Pozuelo, Albacete, Spain",
+      "time_period": "1790-1820",
+      "jurisdictions": [
+        {
+          "name": "Parish of San Bartolom\u00e9, Pozuelo, Diocese of Albacete",
+          "date_range": "c. 1504\u2013present (records confirmed from 1687)"
+        },
+        {
+          "name": "Province of Albacete, Castilla-La Mancha, Spain",
+          "date_range": "1833\u2013present (pre-1833: Intendencia de La Mancha under Castilla-La Nueva)"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1431011",
+          "title": "Spain, Diocese of Albacete, Catholic Church Records, 1504-1979",
+          "date_range": "1504-1979"
+        },
+        {
+          "id": "1784529",
+          "title": "Spain, Catholic Church Records, 1307-2005",
+          "date_range": "1307-2005"
+        },
+        {
+          "id": "1500692",
+          "title": "Spain, Baptisms, 1502-1940",
+          "date_range": "1502-1940"
+        }
+      ],
+      "quirks": [
+        "Pozuelo's parish church is San Bartolom\u00e9; baptism registers survive from 1687 in multiple overlapping volumes \u2014 the 1800\u20131821 volume (imageGroup 004090966_007) is 81% indexed, and the 1792\u20131800 volume (004090966_006) is 77% indexed, so name-search may miss entries; always browse images to confirm. Marriage registers cover 1687\u20131851 in two volumes (93\u201394% indexed). Burial registers cover 1720\u20131826 across two volumes (92\u201395% indexed), giving excellent coverage for 1790\u20131820 burials.",
+        "Civil registration did not begin in Spain until 1870 (effective 1871). For 1800\u20131810 all vital events \u2014 births, marriages, and deaths \u2014 are found exclusively in Catholic parish records. The Catastro de Ensenada (1749\u20131756) is the nearest census-substitute but predates the target period; no municipal padr\u00f3n collection for Albacete covering 1790\u20131820 is available on FamilySearch. The Province of Albacete as a formal jurisdiction was not created until 1833 (Javier de Burgos reform); for the target period the civil administration was the Intendencia de La Mancha, though ecclesiastical records follow the Diocese of Albacete throughout.",
+        "Spanish baptismal entries from this period routinely record three generations: the child, both parents (with mother's maiden name), and both sets of grandparents \u2014 making a single baptism a powerful multi-generational source. Earlier records (pre-1800) may contain Latin passages alongside Castilian Spanish.",
+        "Spelling of surnames was not standardized; search by surname only and check phonetic variants. Records are not full-text searchable (fulltextSearchable = false for all volumes); name indexes cover 77\u201395% of images, so unindexed images must be browsed manually via the FamilySearch Catalog."
+      ],
+      "guide_markdown": "# Locality Guide: Pozuelo, Albacete, Spain (1790\u20131820)\n\n## Jurisdiction overview\n- **Municipality:** Pozuelo, Province of Albacete, Autonomous Community of Castilla-La Mancha, Spain\n- **Coordinates:** 38.8092\u00b0N, 2.1014\u00b0W\n- **FamilySearch place record:** https://www.familysearch.org/en/research/places/?text=Pozuelo&focusedId=9074893\n- **Wikipedia:** https://es.wikipedia.org/wiki/Pozuelo_(Albacete)\n- **Parent province (modern):** Albacete (created 1833). During 1790\u20131820, the civil administration was the **Intendencia de La Mancha** within the kingdom of Castilla-La Nueva.\n- **Ecclesiastical jurisdiction:** **Diocese of Albacete**. Parish church: **San Bartolom\u00e9 de Pozuelo**.\n- **Population during period:** Population data were not returned by the place_population tool for this municipality. The Catastro de Ensenada (1749\u20131756) is the nearest census source but predates the target window; Pozuelo was a small rural municipality.\n- **Economy:** Predominantly agricultural; cereal crops and livestock typical of the Castilian meseta.\n- **Religious denominations:** Roman Catholic (effectively 100% of population); the Catholic Church was the sole record-keeper for vital events through 1869.\n- **Key historical events affecting records:** The Peninsular War (Guerra de la Independencia, 1808\u20131814) \u2014 French occupation of Spain \u2014 may have disrupted local administration and, in some parishes, caused record gaps or losses. Researchers should check image continuity for 1808\u20131814 specifically.\n\n## Boundary changes\n- **Pre-1833:** Pozuelo fell within the Intendencia de La Mancha (Castilla-La Nueva). No separate Province of Albacete existed.\n- **1833:** The Javier de Burgos territorial reform created the modern Province of Albacete. All subsequent civil administration records are provincial.\n- **Ecclesiastical boundaries:** The Diocese of Albacete has administered Pozuelo throughout the period of record; the diocesan archive holds the centralized parish registers.\n- For 1790\u20131820, records follow the **Diocese of Albacete** (ecclesiastical) and the **Intendencia de La Mancha** (civil), not modern provincial lines.\n\n## Available record types\n\n### Church records (primary source for 1790\u20131820)\n- **Denomination:** Roman Catholic exclusively.\n- **Parish:** San Bartolom\u00e9, Pozuelo.\n- **Record types:** Baptisms (bautizos), marriages (matrimonios), burials (entierros/defunciones). Confirmations occasionally recorded with baptisms.\n- **Language:** Castilian Spanish; earlier entries (pre-c.1800) may contain Latin passages.\n\n#### Baptism volumes confirmed by volume_search\n| Image Group | Date Range | Images | % Indexed |\n|---|---|---|---|\n| 004090928_003 | 1784\u20131805 | 331 | 90% |\n| 004090966_006 | 1792\u20131800 | 87 | 77% |\n| 004090928_004 | 1805\u20131827 | 343 | 85% |\n| 004090966_007 | 1800\u20131821 | 224 | 81% |\n| 004090605_003 | 1770\u20131804 | 254 | 90% |\n| 004090605_004 | 1804\u20131824 | 185 | 88% |\n\n*Note: Multiple overlapping volumes exist. All are in the Diocese of Albacete collection (CID 1431011). None are full-text searchable.*\n\n#### Marriage volumes\n| Image Group | Date Range | Images | % Indexed |\n|---|---|---|---|\n| 004090930_003 | 1687\u20131794 | 201 | 93% |\n| 004090930_004 | 1794\u20131851 | 260 | 94% |\n\n#### Burial volumes\n| Image Group | Date Range | Images | % Indexed |\n|---|---|---|---|\n| 004090961_003 | 1720\u20131793 | 305 | 92% |\n| 004090961_004 | 1793\u20131826 | 255 | 95% |\n\n- **Where held (originals):** Archivo Hist\u00f3rico Diocesano de Albacete \u2014 http://censoarchivos.mcu.es/CensoGuia/archivodetail.htm?id=51686\n- **Online access (FamilySearch):**\n  - Indexed + browse: [Spain, Diocese of Albacete, Catholic Church Records, 1504-1979](https://www.familysearch.org/search/collection/1431011) \u2014 index incomplete (77\u201395%); images browsable\n  - Broader index: [Spain, Baptisms, 1502-1940](https://www.familysearch.org/search/collection/1500692) \u2014 index only, no images\n  - Broader index: [Spain, Marriages, 1565-1950](https://www.familysearch.org/search/collection/1500693) \u2014 index only\n  - Broader index: [Spain, Deaths, 1600-1920](https://www.familysearch.org/search/collection/1500694) \u2014 index only\n  - Broader collection: [Spain, Catholic Church Records, 1307-2005](https://www.familysearch.org/search/collection/1784529) \u2014 index & images\n- **Digitization level:** Browse-only images + partial index (77\u201395% by volume). Not full-text searchable.\n\n### Vital records (civil registration)\n- **Start date:** 1870 (effective 1871 in most municipalities).\n- **Not applicable for 1800\u20131810.** Civil registration did not exist. Parish records are the sole vital-event source for this period.\n\n### Census / padr\u00f3n records\n- **Catastro de Ensenada, 1749\u20131756:** [FamilySearch collection 1851392](https://www.familysearch.org/search/collection/1851392) \u2014 images only; predates target period but may establish family names and landholdings.\n- **No indexed municipal padr\u00f3n for Albacete covering 1790\u20131820** is available on FamilySearch or identified via external links.\n- The Archivo Hist\u00f3rico Provincial de Albacete may hold manuscript padrones; contact in person or by correspondence.\n\n### Military records\n- **Peninsular War (1808\u20131814):** Service records for this period are held at the Archivo General Militar de Segovia and the Archivo Hist\u00f3rico Nacional (AHN).\n- [Spain, Soldier Personal Service Files, 1835-1981](https://www.familysearch.org/search/collection/2558684) \u2014 indexed & images on FamilySearch; earliest date 1835, so post-dates 1800\u20131810 window.\n- Officer personal files (1400s\u20131900s, mostly 1700s\u20131800s): http://bibliotecavirtualdefensa.es/BVMDefensa/i18n/consulta/registro.cmd?id=4816\n- Spain Ministry of Defense: http://www.defensa.gob.es\n\n### Notarial records\n- Notarial records for Albacete are referenced in the FamilySearch wiki. Holdings for Pozuelo-area notaries would be at the **Archivo Hist\u00f3rico Provincial de Albacete**. No online collection specifically covering Pozuelo's notarial records for 1790\u20131820 was found.\n- Reference: Ryskamp, George R. *Spanish Notarial Records* (1982) \u2014 WorldCat OCLC 20345287.\n\n### Municipal records\n- A FamilySearch collection, **Spain, Albacete, Municipal Records, 1475-1896** (CID 2322260), is listed as *scheduled* (not yet available). When released, browse for Pozuelo entries.\n- Archive: [Archivo Hist\u00f3rico Provincial de Albacete](http://ccta.jccm.es/dglab/ArchivosHist?opc=1)\n- Archivo Municipal de Albacete (city): http://www.albacete.es/es/ayuntamiento/datos-y-servicios/archivo\n\n### Land records\n- The **Catastro de Ensenada** (1749\u20131756) is the key pre-1820 land/property enumeration; images available on FamilySearch (CID 1851392). Also via PARES: http://pares.mcu.es/Catastro/\n- Deeds and property transfers for the early 19th century would be in notarial records at the Archivo Hist\u00f3rico Provincial de Albacete.\n\n### Newspaper records\n- No local Pozuelo newspaper is known for 1790\u20131820.\n- *Biblioteca Virtual de Prensa Hist\u00f3rica* (national historical press archive): https://prensahistorica.mcu.es\n\n## Repository guide\n\n### Online repositories\n| Repository | Key collections for Pozuelo | Access |\n|---|---|---|\n| FamilySearch | Spain, Diocese of Albacete, Catholic Church Records, 1504-1979 (CID 1431011) \u2014 baptisms, marriages, burials with images | Free |\n| FamilySearch | Spain, Baptisms 1502-1940 (CID 1500692); Marriages 1565-1950 (CID 1500693); Deaths 1600-1920 (CID 1500694) | Free (index only) |\n| FamilySearch | Spain, Catholic Church Records, 1307-2005 (CID 1784529) | Free |\n| FamilySearch | Spain, Catastro de Ensenada, 1749-1756 (CID 1851392) | Free (images only) |\n| Ancestry | Spain, Select Baptisms, 1502-1940 (collection 60164); Select Deaths, 1600-1920 (60165); Select Marriages, 1565-1950 (60168) | Subscription |\n| FindMyPast | Spain Baptisms, Marriages, Deaths (overlapping date ranges) | Subscription |\n| MyHeritage | Spain Marriages 1565-1950; Spain Deaths 1600-1920 | Subscription |\n| PARES (Spain national portal) | Archivos Estatales \u2014 https://pares.culturaydeporte.gob.es/archivos-estatales.html | Free |\n\n### Physical repositories\n| Repository | Holdings relevant to Pozuelo 1790-1820 | Access |\n|---|---|---|\n| Archivo Hist\u00f3rico Diocesano de Albacete | Original parish registers for San Bartolom\u00e9, Pozuelo; older records centralized here | In-person or written inquiry (Spanish preferred); Tel: +34 967 214 478; Email: obalbacete@planalfa.es |\n| Archivo Hist\u00f3rico Provincial de Albacete | Provincial civil and notarial records; manuscript padrones | In-person |\n| Archivo Hist\u00f3rico Nacional (AHN), Madrid | Inquisition, military, and national-level records | In-person / PARES online portal |\n| Archivo General Militar de Segovia | Military service records from the Napoleonic/Peninsular War period | Written inquiry or in-person |\n| Di\u00f3cesis de Albacete | Diocesan office \u2014 can direct to specific parish archive holdings | Tel/Email as above |\n\n## Records NOT online\n- Municipal padrones (census substitutes) for Pozuelo, 1790\u20131820 \u2014 held at Archivo Hist\u00f3rico Provincial de Albacete; no digitization found.\n- Notarial records for Pozuelo-area notaries, 1790\u20131820 \u2014 held at Archivo Hist\u00f3rico Provincial de Albacete.\n- Spain, Albacete, Municipal Records collection (CID 2322260) \u2014 scheduled on FamilySearch but not yet released.\n- Inquisition records (if any) \u2014 Archivo Hist\u00f3rico Nacional via PARES.\n\n## Known record losses\n- The **Peninsular War (1808\u20131814)** caused disruption across Spain. Some parishes experienced record gaps during this period; researchers should check image continuity for 1808\u20131814 in the Pozuelo baptism and burial volumes.\n- The **Spanish Civil War (1936\u20131939)** destroyed some diocesan and parish archives nationwide. The wiki notes some records \"may have been recreated\" from originals that were destroyed. Check collection descriptions for notes on recreated registers.\n- Some records in the Diocese of Albacete collection are described as incomplete (not all parishes fully represented).\n\n## Research tips\n1. **Start with the Diocese of Albacete collection (CID 1431011).** Browse to Pozuelo > San Bartolom\u00e9 > select record type and year range. The index covers 77\u201395% of images, so after any name search, browse surrounding pages to catch unindexed entries.\n2. **Spanish baptismal entries record three generations.** A baptism entry from 1800\u20131810 will typically name: the child, both parents (mother's maiden name), both paternal grandparents, and both maternal grandparents. One record can solve multiple generations.\n3. **No civil registration before 1870.** Do not search civil registers for the 1800\u20131810 period; only parish records apply.\n4. **Spanish naming conventions:** Children were often named after godparents or patron saints. The two-surname system (paternal + maternal) was in use; women retained their birth surname after marriage.\n5. **Spelling was not standardized before the 20th century.** Search by surname root and check variants. Indexers may have transcribed archaic letterforms (e.g., long-s as 'f') incorrectly.\n6. **Earlier records may be in Latin.** Entries from the late 18th century may mix Latin formulaic text with Spanish names and places. Use the Spanish and Latin Genealogical Word Lists on FamilySearch Wiki.\n7. **Write to the diocese in Spanish.** If online images are missing or illegible, contact the Archivo Hist\u00f3rico Diocesano de Albacete directly (address and contact above). Include the ancestor's full name, approximate event date, and parents' names. Enclose a search fee (typically ~$10 USD equivalent).\n8. **Check neighboring parishes.** If Pozuelo records are incomplete for a specific year, search neighboring municipalities in the Diocese of Albacete \u2014 families often crossed parish boundaries for marriages, especially.\n9. **Use the Catastro de Ensenada (1749\u20131756) as a baseline.** This mid-18th-century land census can establish family names in Pozuelo a generation before the 1790\u20131820 target window and identify property and occupation.\n10. **Consult George Ryskamp's guides.** *Tracing a Spanish Family Through Local Records* (1980) and *Finding Your Hispanic Roots* (1997/1984) are standard reference works for Spanish genealogy research strategies.\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Spain_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Spain_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Spain_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Spain_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-29"
+    }
+  ]
+}

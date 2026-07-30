@@ -31,6 +31,7 @@ authoritative source.
 
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -104,9 +105,36 @@ def resolve_auth() -> AuthConfig:
 
 
 def _has_subscription() -> bool:
+    """~/.claude existing is not proof the CLI can actually authenticate: a
+    managed/hosted Claude Code session can leave that directory in place with
+    a stubbed .credentials.json (claudeAiOauth.accessToken == "" and
+    refreshToken == "", real auth injected out-of-band) rather than deleting
+    it. Treating that as "subscription available" makes env_for_sdk blank
+    ANTHROPIC_API_KEY for the spawned e2e agent subprocess with nothing to
+    fall back on — the bare `claude` CLI then fails in ~100ms with 0 tokens
+    and its own "Not logged in · Please run /login" banner, which reads
+    exactly like a FamilySearch auth error in the transcript but isn't one
+    (observed 2026-07-29, juan-rodriguez-son e2e runs). Only treat a present
+    but readable credentials file as disqualifying when it positively shows
+    empty tokens; a missing/unreadable file (e.g. macOS Keychain-backed
+    installs write no such file) falls back to the old dir-exists signal.
+    """
     for candidate in SUBSCRIPTION_DIRS:
-        if candidate.is_dir():
+        if not candidate.is_dir():
+            continue
+        creds_path = candidate / ".credentials.json"
+        if not creds_path.is_file():
             return True
+        try:
+            data = json.loads(creds_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return True
+        oauth = data.get("claudeAiOauth") if isinstance(data, dict) else None
+        if isinstance(oauth, dict) and not (
+            oauth.get("accessToken") or oauth.get("refreshToken")
+        ):
+            continue
+        return True
     return False
 
 
