@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_record_extraction_023",
+    "skill": "record-extraction",
+    "name": "Extract assertions from John Becker's 1926 Vine Street Hill burial index entry",
+    "type": "positive",
+    "description": "Vine Street Hill Cemetery (Cincinnati, Hamilton County, Ohio) burial index entry for John Becker, buried 30 Sep 1926 (ark:/61903/1:1:CRYM-V53Z). Real record from the Ferber/Becker research (#799). The entry associates John with 'Anna' - part of the unresolved Anna/Mary Kramer name conflict.",
+    "tags": ["extraction", "burial", "cemetery", "ferber-becker"]
+  },
+  "input": {
+    "user_message": "Extract assertions from this cemetery burial index entry:\n\nOhio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986\nFamilySearch ark:/61903/1:1:CRYM-V53Z\n\nName: John Becker\nDeath date: 27 September 1926\nBurial date: 30 September 1926\nCemetery: Vine Street Hill Cemetery, Cincinnati, Hamilton County, Ohio\nAssociated person: Anna (recorded as his spouse; no surname given)",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "Death date (27 Sep 1926) and burial date (30 Sep 1926) are DIRECT evidence - recorded at/near the burial event",
+    "Burial place is Vine Street Hill Cemetery, Cincinnati, Hamilton County, Ohio (from the collection/entry)",
+    "The associated spouse is recorded only as 'Anna' with no surname - extract it exactly as stated ('Anna'); do NOT supply a surname or reconcile it with the 'Mary Kramer'/'Anna Kramer' seen on other records (that is a downstream conflict, not an extraction fix)",
+    "Source classification is DERIVATIVE - an index of the cemetery's burial records",
+    "Informant is unknown on this index entry; information quality is indeterminate",
+    "This is a burial index: expect death/burial facts for John, not a full biographical set"
+  ],
+  "execution": { "max_turns": 40, "max_wall_clock_seconds": 600, "sdk_message_silence_seconds": 300 }
+}

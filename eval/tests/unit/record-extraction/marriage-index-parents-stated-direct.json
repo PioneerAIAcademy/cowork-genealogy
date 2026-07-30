@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_record_extraction_025",
+    "skill": "record-extraction",
+    "name": "Extract assertions from Frank Becker's 1916 marriage to Catherine Wessel",
+    "type": "positive",
+    "description": "1916 Hamilton County, Ohio marriage of Frank Becker and Catherine Wessel ('Ohio, County Marriages, 1789-2016', ark:/61903/1:1:XZYQ-VYD). Real record from the Ferber/Becker research (#799). Names both parties' parents; Frank's parents are John Becker and Anna Kramer - part of the Anna/Mary Kramer name conflict.",
+    "tags": ["extraction", "marriage-record", "ferber-becker", "direct-vs-indirect"]
+  },
+  "input": {
+    "user_message": "Extract assertions from this marriage record:\n\nOhio, County Marriages, 1789-2016 - Hamilton County, Ohio\nFamilySearch ark:/61903/1:1:XZYQ-VYD\n\nMarriage date: 19 July 1916\nMarriage place: Hamilton County, Ohio\n\nGroom: Frank Becker\n  Marital status: Single\n  Birth: 8 April, Cincinnati, Ohio (no year stated)\n  Father: John Becker\n  Mother: Anna Kramer\n\nBride: Catherine Wessel\n  Marital status: Single\n  Birth: 29 May, Cincinnati, Ohio (no year stated)\n  Father: Henry Wessel\n  Mother: Mary Overberg",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "Marriage date (19 Jul 1916) and place (Hamilton County, Ohio) are DIRECT evidence - explicitly stated",
+    "Extract assertions for BOTH parties - Frank Becker and Catherine Wessel",
+    "Parents' names stated on a marriage record by the parties follow the marriage-record doctrine (see ut_record_extraction_010): the parties supplied them, so they are DIRECT for this record. Frank's parents = John Becker + Anna Kramer; Catherine's = Henry Wessel + Mary Overberg",
+    "Extract Frank's mother exactly as stated ('Anna Kramer'); do NOT reconcile with 'Mary Kramer' on Louise's burial - the given-name conflict is a downstream matter, not an extraction fix",
+    "Birth entries give a day and month but NO year (8 Apr / 29 May) - extract the partial dates as stated; do NOT fabricate a birth year",
+    "Informant: each party is the informant for their own facts (proximity 'self'); the clerk/officiant is the recorder",
+    "Source classification is DERIVATIVE - a FamilySearch indexed transcription of the county marriage register"
+  ],
+  "execution": { "max_turns": 40, "max_wall_clock_seconds": 600, "sdk_message_silence_seconds": 300 }
+}

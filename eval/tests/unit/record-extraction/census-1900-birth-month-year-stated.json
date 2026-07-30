@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_record_extraction_026",
+    "skill": "record-extraction",
+    "name": "Extract assertions from the 1900 census — John Becker household (stated relationships)",
+    "type": "positive",
+    "description": "1900 U.S. Census household of John Becker, Cincinnati, Hamilton County, Ohio (ark:/61903/1:1:MM8C-43Q). Real record from the Ferber/Becker research (#799). Post-1880: has a relationship-to-head column and month/year of birth, so relationships and birth dates are DIRECT (contrast the 1870 household in ut_record_extraction_022).",
+    "tags": ["extraction", "census", "1900", "ferber-becker", "stated-relationship-direct"]
+  },
+  "input": {
+    "user_message": "Extract assertions from this 1900 U.S. Census household:\n\nUnited States, Census, 1900 - Household of John Becker\nCincinnati, Hamilton, Ohio, United States\nark:/61903/1:1:MM8C-43Q\n\nRelationship - Name - Sex - Birth - Birthplace - Marital status:\n- Head: John Becker, male, born January 1845, Kentucky, Widowed\n- Daughter: Louisa Becker, female, born December 1872, Ohio, Single\n- Son: Edward Becker, male, born October 1876, Ohio, Single\n- Daughter: Clara Becker, female, born December 1880, Ohio, Single\n- Son: Frank Becker, male, born April 1889, Ohio, Single\n\n(1900 U.S. Census - includes a relationship-to-head-of-household column and month/year of birth.)",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The 1900 census HAS a relationship-to-head column, so the parent-child relationships (John as father of Louisa, Edward, Clara, and Frank) are DIRECT evidence - stated on the record, not inferred. This is the mirror image of ut_record_extraction_022 (1870), where relationships are indirect",
+    "The 1900 census uniquely records month and year of birth, so the stated birth dates (e.g., January 1845) are DIRECT",
+    "Marital status (Widowed for John, Single for the children) is DIRECT",
+    "Extract John's birthplace exactly as stated ('Kentucky'); do NOT reconcile it with the 'Ohio' on the 1870 household - that is a downstream conflict, not an extraction fix",
+    "Atomic assertions per person: name, birth date, birthplace, marital status, and the parent-child relationship",
+    "Pre-1940 census: the household informant is unknown, so information quality is indeterminate; the enumerator is the recorder",
+    "Source classification is DERIVATIVE - the FamilySearch indexed transcription of the 1900 population schedule"
+  ],
+  "execution": { "max_turns": 60, "max_wall_clock_seconds": 1200, "sdk_message_silence_seconds": 300 }
+}
