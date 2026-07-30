@@ -19,28 +19,43 @@ name: add-to-project
 # and stops. `addProjectV2ItemById` is idempotent by design (it returns the
 # existing item when one exists), so even losing the race costs nothing.
 #
-# IT ALSO NEVER DEMOTES A CARD. Status is set to Backlog only when the item's
-# Status is *empty* — read back after the add, not assumed. If Claude created
-# the card in Ready a second earlier, this workflow leaves it in Ready. That
-# read-back is the whole reason this is `github-script` + GraphQL rather than
-# `actions/add-to-project`, which cannot express "only if unset".
+# IT ALSO NEVER DEMOTES A CARD. See the three-step sequence in `act()` below.
+# Verified on the first real sweep (2026-07-30, run 30561649597): 101 existing
+# cards reported `left in <status>` — 32 of them in Ready — and only the 12
+# genuinely uncarded issues were added.
 #
-# ── SETUP REQUIRED: the `PROJECT_TOKEN` secret ────────────────────────────
+# ── SETUP REQUIRED: a GitHub App, via two secrets ─────────────────────────
 # The default `GITHUB_TOKEN` CANNOT write to an organization-level Projects V2
 # board — there is no `organization_projects` permission to grant it, so no
-# `permissions:` block here can fix it. This needs one of:
+# `permissions:` block here can fix it.
 #
-#   * a classic PAT with `repo` + `project` scopes, or
-#   * a fine-grained PAT with org permission `Projects: Read and write`, or
-#   * a GitHub App installation token with the same.
+# This uses a GitHub App rather than a PAT because an App installation token is
+# minted per run and expires in an hour, so there is nothing to rotate. The PAT
+# it replaced had a 366-day expiry, and its expiry mode is this workflow going
+# red on every new issue until someone re-mints it by hand.
 #
-# Store it as the repo secret `PROJECT_TOKEN`:
+# One-time setup:
 #
-#     gh secret set PROJECT_TOKEN --repo PioneerAIAcademy/cowork-genealogy
-#
-# A PAT expires. When it does, this workflow fails loudly on every new issue —
-# which is the intended behaviour and the signal to rotate it. It is NOT
-# allowed to degrade to a warning: see below.
+#   1. https://github.com/organizations/PioneerAIAcademy/settings/apps/new
+#      - Name:            cowork-genealogy-project-bot
+#      - Homepage URL:    the repo URL (unused, but the form requires one)
+#      - Webhook:         UNCHECK "Active" — this App is never called back
+#      - Repository permissions:    Issues: Read-only
+#                                   (Metadata: Read-only is added for you)
+#      - Organization permissions:  Projects: Read and write   <- the one that
+#                                   actually authorizes the board write. It is
+#                                   in a separate block from the Repository
+#                                   permissions and is easy to miss.
+#      - Where can this App be installed: Only on this account
+#   2. On the App's page: note the App ID, then "Generate a private key"
+#      (downloads a .pem).
+#   3. Install the App on the PioneerAIAcademy org, granting it this repo.
+#   4. Store both secrets:
+#        gh secret set PROJECT_APP_ID --repo PioneerAIAcademy/cowork-genealogy
+#        gh secret set PROJECT_APP_PRIVATE_KEY --repo PioneerAIAcademy/cowork-genealogy < key.pem
+#      Paste the PEM whole, including the BEGIN/END lines.
+#   5. Delete the superseded PAT secret and revoke the token itself:
+#        gh secret delete PROJECT_TOKEN --repo PioneerAIAcademy/cowork-genealogy
 #
 # WHY IT FAILS INSTEAD OF WARNING. Three workflows in this repo have gone green
 # while doing nothing (see the 2026-07-30 header in genealogist-queue.yml,
@@ -64,8 +79,8 @@ on:
         default: true
 
 permissions:
-  # Reading the issue only. The board write is authorized by PROJECT_TOKEN,
-  # not by GITHUB_TOKEN — see the setup note above.
+  # Reading the issue only. The board write is authorized by the App
+  # installation token minted below, not by GITHUB_TOKEN.
   issues: read
   contents: read
 
@@ -81,14 +96,25 @@ jobs:
     name: add-to-project
     runs-on: ubuntu-latest
     steps:
+      - name: Mint an App installation token
+        id: app-token
+        # `owner:` (rather than the default repo scoping) is what makes the
+        # token carry the installation's ORGANIZATION permissions, which is
+        # where `Projects: Read and write` lives. Without it the token is
+        # repo-scoped and every project mutation 403s.
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.PROJECT_APP_ID }}
+          private-key: ${{ secrets.PROJECT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
       - uses: actions/github-script@v8
         env:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
-          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
         with:
           # Reading the issue list needs no special scope, but the same client
-          # does the GraphQL project writes, so it must be the PAT.
-          github-token: ${{ secrets.PROJECT_TOKEN }}
+          # does the GraphQL project writes, so it must be the App token.
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const ORG            = 'PioneerAIAcademy';
             const PROJECT_NUMBER = 1;
@@ -97,16 +123,6 @@ jobs:
 
             const dryRun = process.env.DRY_RUN === 'true';
             const { owner, repo } = context.repo;
-
-            if (!process.env.PROJECT_TOKEN) {
-              core.setFailed(
-                'PROJECT_TOKEN is not set. GITHUB_TOKEN cannot write to an org-level ' +
-                'Projects V2 board, so this workflow cannot work without it. Create a ' +
-                'PAT with `project` scope and run: ' +
-                'gh secret set PROJECT_TOKEN --repo ' + owner + '/' + repo + ' — ' +
-                'see the setup block at the top of this file.');
-              return;
-            }
 
             // ---- board metadata ---------------------------------------------
             // Looked up by name rather than hardcoded as node IDs, so renaming
@@ -130,7 +146,10 @@ jobs:
 
             const project = meta.organization?.projectV2;
             if (!project) {
-              core.setFailed(`No project ${PROJECT_NUMBER} on org ${ORG}, or PROJECT_TOKEN cannot see it.`);
+              core.setFailed(
+                `No project ${PROJECT_NUMBER} on org ${ORG}, or the App token cannot see it. ` +
+                `Check that the App has Organization > Projects: Read and write, and that the ` +
+                `token step passes owner: — see the setup block at the top of this file.`);
               return;
             }
             const statusField = project.field;
@@ -162,13 +181,53 @@ jobs:
               issues = [{ number: i.number, node_id: i.node_id, title: i.title }];
             }
 
+            // Where this issue already sits on OUR board, or null. An issue can
+            // belong to several projects, hence the filter on project id.
+            async function existingCard(issue) {
+              const q = await github.graphql(`
+                query($content: ID!) {
+                  node(id: $content) {
+                    ... on Issue {
+                      projectItems(first: 50) {
+                        nodes {
+                          id
+                          project { id }
+                          fieldValueByName(name: "${STATUS_FIELD}") {
+                            ... on ProjectV2ItemFieldSingleSelectValue { name }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }`, { content: issue.node_id });
+              const nodes = q.node?.projectItems?.nodes || [];
+              const mine = nodes.find(n => n.project?.id === project.id);
+              return mine ? { id: mine.id, status: mine.fieldValueByName?.name || null } : null;
+            }
+
             // ---- act ---------------------------------------------------------
+            // Three steps, and the order is the whole safety argument:
+            //   1. look the issue up on the board FIRST — so a dry run reports
+            //      what would actually change, and a live run issues no mutation
+            //      at all for the ~90% of issues already carded;
+            //   2. add only when absent (still idempotent, so losing a race with
+            //      Claude costs nothing);
+            //   3. re-read the status and set Backlog ONLY if it is empty — this
+            //      is what makes it impossible to demote a card that Claude or a
+            //      human created in Ready a moment earlier.
+            //
+            // v1 reported "WOULD add if absent" for every issue in a dry run,
+            // because it short-circuited before step 1 — 113 identical rows that
+            // told you nothing. Step 1 is what makes the dry run worth running.
             async function act(issue) {
-              // addProjectV2ItemById returns the EXISTING item when the issue is
-              // already on the board, so this is safe to call unconditionally —
-              // it is also how we learn the item id in both cases.
+              const before = await existingCard(issue);
+              if (before) {
+                return [`#${issue.number}`,
+                        `left in ${before.status || '(no status)'}`,
+                        issue.title.slice(0, 60)];
+              }
               if (dryRun) {
-                return [`#${issue.number}`, 'WOULD add if absent', issue.title.slice(0, 60)];
+                return [`#${issue.number}`, `WOULD add to ${NEW_ITEM_STATUS}`, issue.title.slice(0, 60)];
               }
 
               const added = await github.graphql(`
@@ -186,22 +245,12 @@ jobs:
                 throw new Error(`#${issue.number}: addProjectV2ItemById returned no item id`);
               }
 
-              // Read the status back. An item that already carries one was put
-              // there by a human or by Claude; do not touch it.
-              const read = await github.graphql(`
-                query($item: ID!) {
-                  node(id: $item) {
-                    ... on ProjectV2Item {
-                      fieldValueByName(name: "${STATUS_FIELD}") {
-                        ... on ProjectV2ItemFieldSingleSelectValue { name }
-                      }
-                    }
-                  }
-                }`, { item: itemId });
-
-              const current = read.node?.fieldValueByName?.name;
-              if (current) {
-                return [`#${issue.number}`, `left in ${current}`, issue.title.slice(0, 60)];
+              // Re-read rather than trusting step 1: the add closes a race
+              // window, and an item that acquired a status in between was set
+              // by a human or by Claude. Do not touch it.
+              const after = await existingCard(issue);
+              if (after?.status) {
+                return [`#${issue.number}`, `left in ${after.status}`, issue.title.slice(0, 60)];
               }
 
               await github.graphql(`
@@ -241,9 +290,11 @@ jobs:
 
             for (const r of rows) core.info(`${r[0]} ${r[1]} — ${r[2]}`);
 
+            const changed = rows.filter(r => /^(added|WOULD add)/.test(r[1])).length;
             await core.summary
               .addHeading(dryRun ? 'add-to-project (dry run)' : 'add-to-project', 3)
               .addRaw(`Board: [${project.title}](https://github.com/orgs/${ORG}/projects/${PROJECT_NUMBER})`)
+              .addRaw(` — ${changed} of ${rows.length} issue(s) ${dryRun ? 'would be ' : ''}added`)
               .addTable([
                 [{ data: 'Issue', header: true }, { data: 'Action', header: true },
                  { data: 'Title', header: true }],
