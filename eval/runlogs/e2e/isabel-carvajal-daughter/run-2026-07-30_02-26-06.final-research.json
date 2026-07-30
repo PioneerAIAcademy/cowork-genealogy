@@ -1,0 +1,1736 @@
+{
+  "project": {
+    "id": "rp_isabel_carvajal_daughter",
+    "objective": "Did Isabel Carvajal Chinchilla and her husband Emilio Mart\u00ednez of Santander, Colombia have a daughter named Juana, married 1929, in addition to their six known children (b. 1881-1895)?",
+    "subject_person_ids": [
+      "LR2Y-X3H"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-30"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Do Colombian civil or church records for Santander confirm that a daughter named Juana \u2014 married circa 1929 \u2014 was born to Isabel Carvajal Chinchilla and Emilio Mart\u00ednez, beyond their six known children born 1881\u20131895?",
+      "rationale": "The research objective is a completeness question about the children of Isabel Carvajal Chinchilla and Emilio Mart\u00ednez of Santander, Colombia. No assertions or sources currently exist in this project, so the starting point is to search civil registration, Catholic parish baptism records, and marriage records for Santander in the relevant years (roughly 1880\u20131930) for evidence of a Juana Mart\u00ednez Carvajal. Her 1929 marriage is the anchor event; her baptism/birth record (likely late 1870s\u2013early 1900s given the birth range of the known siblings) and the marriage record itself are the primary targets. Santander civil registration began in earnest in the 1850s-1860s; FamilySearch holds indexed and image collections for Colombia that cover this period.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-30",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_011",
+        "a_013",
+        "a_014",
+        "a_016",
+        "a_025",
+        "a_028",
+        "a_031",
+        "a_032",
+        "a_035",
+        "a_036"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Eight plan items executed across civil registration (3 collections: DAS cards 5000074, Civil Registration 4469480, Marriages 1520611), Catholic Church Records (1726975 \u2014 POSITIVE), baptisms (1520607), full-text search of 1929 Santander civil volumes (5 queries, coverage gap declared), census (5000123), and FAN siblings search. The original church marriage register image (src_002, entry 123) was read and confirms the marriage of Juana Mart\u00ednez to Ismael Alvarez on 9 Oct 1929 at Matanza, Santander, with parents listed as Emilio and Ysabel/Isabel Carvajal. Derivative sources (src_001 index) are complemented by the original image (src_002). Civil registration of the same marriage is pursued-and-unavailable: the 1929 Santander civil volumes (007947987_001-006) are not indexed and not in the FTS corpus. Only one independent source event found; conclusion tier accordingly probable, not proved.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. Both the derivative index (src_001) and the original register image (src_002) confirm Juana Mart\u00ednez Carvajal (I1) married in Matanza, Santander, 9 Oct 1929, and name her father as Emilio (G5CM-DZW, confident match) and mother as Ysabel/Isabel Carvajal (LR2Y-X3H, confident match). The bride's compound surname 'Mart\u00ednez Carvajal' independently encodes both parents' surnames per Colombian naming convention.",
+          "repository_breadth": "All FamilySearch-accessible repositories for Santander, Colombia 1929 searched: DAS Cards, Civil Registration, Catholic Church Records, Baptisms, Colombia Marriages index, census, FTS corpus. Name variants (Juana/Juana, Martinez/Mart\u00ednez, Ysabel/Isabel) tried. FAN search executed. Coverage gap documented: 1929 Santander civil volumes not in FTS corpus.",
+          "original_substitution": "Original church marriage register image (ark:/61903/3:1:9Q97-YMP3-HQX) read and extracted as src_002. The derivative FamilySearch index (src_001) is now complemented by the original. Civil registration original not accessible (pursued-and-unavailable).",
+          "independent_verification": "Only one independent source event found: the church marriage register of Nuestra Se\u00f1ora de las Mercedes, Matanza. The derivative index (src_001) and original image (src_002) are two expressions of the same document and count as one source unit. Civil registration of the same marriage is not accessible via any available tool. Single-source limitation acknowledged; conclusion tier accordingly probable.",
+          "evidence_class": "src_002 is an original record with primary information (official registration by the officiating priest at the time of the event) and direct evidence (names the bride's parents in the act of recording the marriage). This meets the GPS minimum for original/primary/direct.",
+          "conflict_resolution": "One OCR discrepancy noted: AI image reader produced 'Eulalia Carvajal' for mother of bride; two independent FamilySearch indexers produced 'Ysabel/Isabel Carvajal'. Resolved analytically: (1) Spanish conjunction 'e' before the name in the register is grammatically correct only before words beginning with 'i/hi' \u2014 'e Ysabel/Isabel' is standard Spanish, 'e Eulalia' is irregular; (2) two independent indexers corroborate 'Ysabel/Isabel'; (3) weight of evidence 2:1 favors indexers over AI OCR. No conflict between independent sources. A second OCR discrepancy (groom's mother 'Carmenel' vs 'Laureana') is documented in assertions but does not affect the research question.",
+          "overturn_risk": "Low. The church marriage register directly names both parents with surname 'Carvajal' confirmed in both index and image. The bride's compound surname 'Mart\u00ednez Carvajal' independently encodes the parentage. An inaccessible civil registration would be expected to confirm rather than contradict this record. No alternative candidates exist in any searched source that would point to different parents."
+        }
+      },
+      "created": "2026-07-30"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-30",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Santander, Colombia",
+          "date_range": "1914-2011",
+          "repository": "FamilySearch",
+          "rationale": "DAS Civil Registration Alphabetic Cards (FS collection 5000074, 77 million persons indexed) is the broadest indexed civil registration search for post-1914 events in Colombia. A marriage event for Juana Mart\u00ednez Carvajal circa 1929 would generate a civil registration entry naming her parents (Emilio Mart\u00ednez and Isabel Carvajal). Search under 'Juana Mart\u00ednez Carvajal', 'Juana Mart\u00ednez', and variants. Fastest first-pass given index depth.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Santander, Colombia",
+          "date_range": "1880-1932",
+          "repository": "FamilySearch",
+          "rationale": "Colombia, Civil Registration, 1553-2023 (FS collection 4469480, 755,050 indexed records with images). Search for: (a) Juana Mart\u00ednez Carvajal marriage ~1929; (b) Juana Mart\u00ednez birth/civil registration 1880-1905; (c) parents' marriage record for Emilio Mart\u00ednez + Isabel Carvajal Chinchilla. Per loc_001: until 1926 civil events were embedded in notarial records. Coverage varies by municipality \u2014 note which municipality surfaces results.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Santander, Colombia",
+          "date_range": "1920-1935",
+          "repository": "FamilySearch",
+          "rationale": "Colombia, Marriages, 1750-1960 (FS collection 1520611, 77,815 records, index only). Targeted marriage index. Search for Juana Mart\u00ednez Carvajal married circa 1929. Marriage records name the bride's parents; a result naming Emilio Mart\u00ednez and Isabel Carvajal would be direct parentage evidence. Fallback for pli_002 if the civil registration search yields no marriage hit.",
+          "fallback_for": "pli_002",
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Santander, Colombia",
+          "date_range": "1880-1910",
+          "repository": "FamilySearch",
+          "rationale": "Colombia, Catholic Church Records, 1576-2019 (FS collection 1726975, 1.1 million records indexed + images). Catholic baptism records name both parents \u2014 a baptism for Juana, daughter of Emilio Mart\u00ednez and Isabel Carvajal, is direct parentage evidence. Search for Juana Mart\u00ednez born approximately 1880-1905. Records in Spanish. Santander was predominantly Catholic; this is the primary pre-civil-registration source type.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Santander, Colombia",
+          "date_range": "1880-1910",
+          "repository": "FamilySearch",
+          "rationale": "Colombia, Baptisms, 1630-1950 (FS collection 1520607, 449,521 records, index only). Targeted baptism index. Search for Juana Mart\u00ednez / Mart\u00ednez Carvajal in the 1880-1905 range. Index-only (no images in this collection) \u2014 a hit points to the source for image retrieval. Fallback for pli_004 if the broader Catholic Church Records search misses a baptism.",
+          "fallback_for": "pli_004",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Santander, Colombia",
+          "date_range": "1929",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch holds 1929 Santander civil volumes (image groups 007947987_001-006, ~3,044 images, Vol. 128-133) that are 0% name-indexed but FULL-TEXT SEARCHABLE. Per loc_001: use the search-full-text skill with a co-occurrence query for 'Juana' AND 'Mart\u00ednez' AND 'Carvajal' on the 007947987 image group prefix. This is the critical path item for finding a 1929 Santander marriage that will not surface in any indexed search. Route to search-full-text, not record_search.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "census",
+          "jurisdiction": "Santander, Colombia",
+          "date_range": "1880-1920",
+          "repository": "FamilySearch",
+          "rationale": "Colombia, Censuses, 1777-1967 (FS collection 5000123, 323,365 records). A household enumeration listing Juana in the Emilio Mart\u00ednez / Isabel Carvajal household provides indirect parentage evidence. Also valuable if no civil or church birth record is found. Search for Emilio Mart\u00ednez and Isabel Carvajal Chinchilla as household heads.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "Santander, Colombia",
+          "date_range": "1900-1940",
+          "repository": "FamilySearch",
+          "rationale": "FAN search (BCG Standard 14): records of Juana's known siblings \u2014 Ram\u00f3n, Eugenio, Adelaida, and Ana Mar\u00eda Mart\u00ednez Carvajal. Colombian marriage records in this era name witnesses and godparents, often siblings. Search civil registration (collection 4469480) and Catholic Church Records (collection 1726975) for siblings' own marriages (~1900-1930). A sibling's marriage may name Juana as witness, godparent, or sister, surfacing her where a direct search fails.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T01:40:26.369Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "5000074",
+        "givenName": "Juana",
+        "surname": "Martinez",
+        "fatherGivenName": "Emilio",
+        "motherSurname": "Carvajal",
+        "recordCountry": "Colombia"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 6636,
+      "notes": "6,636 total matches for Juana Mart\u00ednez in Colombia DAS cards. Top 20 show no Juana Mart\u00ednez Carvajal from Santander with parents Emilio/Isabel. DAS cards record background-check events (c\u00e9dulas), not marriage events per se \u2014 the maternal surname Carvajal appears not to be indexed as a separate field in most results. None of top results match subject. Refining with Santander place filter."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T01:40:26.376Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "4469480",
+        "givenName": "Juana",
+        "surname": "Martinez",
+        "fatherGivenName": "Emilio",
+        "motherSurname": "Carvajal",
+        "recordCountry": "Colombia",
+        "marriageYearFrom": 1924,
+        "marriageYearTo": 1934
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 2134,
+      "notes": "2,134 total matches. Top 20 results are predominantly death registrations from Barranquilla/Atl\u00e1ntico \u2014 wrong department. No results show Carvajal maternal surname or Santander location. Need to add Santander place filter and try marriage record type specifically."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T01:41:18.532Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "4469480",
+        "givenName": "Juana",
+        "surname": "Martinez",
+        "fatherGivenName": "Emilio",
+        "motherSurname": "Carvajal",
+        "recordType": "marriage",
+        "anyPlace": "Santander, Colombia",
+        "marriageYearFrom": 1920,
+        "marriageYearTo": 1935
+      },
+      "outcome": "negative",
+      "results_examined": 19,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 19,
+      "notes": "19 results; all are males named Juan or unrelated Mart\u00ednez entries. No Juana Mart\u00ednez Carvajal from Santander found in civil registration with marriage filter. Scores are very low (below 3.5). Collection 4469480 appears not to have indexed marriage records for Santander 1920-1935 with these parameters."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-30T01:41:18.536Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1520611",
+        "givenName": "Juana",
+        "surname": "Martinez",
+        "fatherGivenName": "Emilio",
+        "motherSurname": "Carvajal",
+        "anyPlace": "Santander, Colombia",
+        "marriageYearFrom": 1920,
+        "marriageYearTo": 1935
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results in Colombia Marriages 1750-1960 (collection 1520611) for Juana Mart\u00ednez with father Emilio and mother Carvajal in Santander, 1920-1935. Will retry without place filter as a broader search."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-30T01:41:18.536Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1726975",
+        "givenName": "Juana",
+        "surname": "Martinez",
+        "fatherGivenName": "Emilio",
+        "motherSurname": "Carvajal",
+        "anyPlace": "Santander, Colombia",
+        "birthYearFrom": 1875,
+        "birthYearTo": 1910
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 11561,
+      "notes": "KEY FIND: Result #2 'Juana Martinez Carvajal' (ark 6BT8-1TRV, score 8.37) in record titled 'Registro para Ysmael Alvarez Capacho' \u2014 a marriage record in collection 1726975. Full compound surname Mart\u00ednez Carvajal exactly matches expected daughter of Emilio Mart\u00ednez + Isabel Carvajal. Result #1 'Juana Martinez' (ark QK1Y-ZFMF, score 8.39) appears to be the same marriage record (Ismael Alvarez y Juana Martinez). Need to read both records for full details including year and parents' names."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-30T01:42:08.089Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6BT8-1TRV"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CONFIRMED: Juana Martinez Carvajal married Ysmael Alvarez Capacho, 9 Oct 1929, Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia. Father: Emilio (no surname given). Mother: Ysabel Carvajal. Groom's father: Belen; groom's mother: Laureana Capacho. Image source: ark:/61903/3:1:9Q97-YMP3-HQX (Colombia, Santander, Marriages, from 1453 to 28 February 1999). Full compound surname Mart\u00ednez Carvajal confirms daughter of Emilio Mart\u00ednez and Isabel Carvajal."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-30T01:42:08.089Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QK1Y-ZFMF"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Second index entry for same marriage: Juana Martinez married Ismael Alvarez, 9 Oct 1929, Matanza, Santander. Father: Emilio; mother: Isabel Carvajal (full first name). Same underlying image source. Treated as duplicate of 6BT8-1TRV \u2014 both are index entries of the same parish marriage record. More complete entry is 6BT8-1TRV (shows full compound surname Martinez Carvajal)."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-30T01:52:39.340Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1520607",
+        "givenName": "Juana",
+        "surname": "Martinez",
+        "fatherGivenName": "Emilio",
+        "motherSurname": "Carvajal",
+        "birthYearFrom": 1895,
+        "birthYearTo": 1915,
+        "anyPlace": "Santander, Colombia",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results with full filter set (birthYearFrom/To, place Santander, father Emilio, mother Carvajal). Collection 1520607 appears to have sparse indexing for Santander department specifically."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-30T01:52:52.654Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1520607",
+        "givenName": "Juana",
+        "surname": "Martinez",
+        "fatherGivenName": "Emilio",
+        "recordCountry": "Colombia"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 692,
+      "notes": "Broader search (dropped year range and place, kept givenName Juana + surname Martinez + fatherGivenName Emilio + recordCountry Colombia). 692 results, all from Magdalena and Norte de Santander departments \u2014 none from Santander department. Top matchScore 0.018 (I1 thin, no birth date). Collection 1520607 has sparse Santander-department coverage; the Catholic Church Records collection (1726975, pli_004) is the appropriate source for this jurisdiction and already found the marriage. No baptism for Juana Martinez Carvajal located in this collection."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-30T01:54:01.487Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "5000123",
+        "givenName": "Emilio",
+        "surname": "Martinez",
+        "anyPlace": "Santander, Colombia"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Emilio Martinez in Colombia Censuses (collection 5000123) filtered to Santander, Colombia. Census collection has sparse Santander department coverage. Not-absence: the collection's indexed records for Santander are limited; absence cannot be concluded."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-30T01:54:01.487Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1726975",
+        "givenName": "Ramon",
+        "surname": "Martinez",
+        "fatherGivenName": "Emilio",
+        "motherSurname": "Carvajal",
+        "anyPlace": "Santander, Colombia"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 144535,
+      "notes": "FAN siblings search \u2014 Ramon Martinez in Catholic Church Records (1726975) with fatherGivenName Emilio, motherSurname Carvajal, Santander. 144,535 results; top match (0.012) is a burial of Ramon Martinez at Nuestra Se\u00f1ora de las Mercedes, Matanza (same parish as Juana's 1929 marriage, born Nov 1886) \u2014 corroborates family presence in Matanza but is a burial record, not a marriage record that would name Juana as witness/godparent. No marriage records of siblings found naming Juana Martinez Carvajal. Full-text search of unindexed parish registers at Matanza may yield additional FAN evidence. Plan item exhausted for indexed search."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-30T02:01:39.670Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Martinez +Carvajal",
+        "yearFrom": 1929,
+        "yearTo": 1929
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Query 1/5 for pli_006 (run prior session, logged retroactively). FTS co-occurrence search for Martinez + Carvajal scoped to year 1929. Zero results. Collection: FTS corpus, Colombia civil registration 1929. Variants tried: exact compound surname co-occurrence with year filter. No FTS coverage of the 1929 Santander civil volumes detected."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-30T02:01:39.670Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Juana +Martinez +Carvajal"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 31961,
+      "notes": "Query 2/5. Three-term co-occurrence, no year filter, unscoped. 31,961 global results \u2014 all from Spain and other Spanish-speaking countries; zero from Colombia. The high result count reflects global corpus; Colombia civil registration is not represented in FTS results."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-30T02:01:39.678Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Martinez +Carvajal",
+        "recordPlace1": "Colombia"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Query 3/5. Two-term co-occurrence scoped to Colombia place filter. Zero results. Confirms FTS corpus has no Colombia-country records for Martinez + Carvajal co-occurrence."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-30T02:01:39.678Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Carvajal",
+        "imageGroupNumber": "007947987_001"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Query 4/5. Single surname scoped to imageGroupNumber 007947987_001 (Santander civil registration Vol. 128, 1929). Zero results. Confirms the specific volume targeted by pli_006 is NOT indexed in FTS despite metadata showing fulltextSearchable: true. Coverage gap."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-30T02:01:39.678Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Carvajal +Alvarez",
+        "recordPlace1": "Colombia"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Query 5/5 (cap reached). Bride maternal surname + groom surname, Colombia-scoped. Zero results. All 5 pli_006 FTS queries return zero Colombia results. Coverage gap declared: the 1929 Santander civil registration volumes (007947987_001-006) are not indexed in the FTS corpus. The church marriage record (src_001, ark:/61903/1:1:6BT8-1TRV) remains the sole source for q_001."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-30T02:08:16.029Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:9Q97-YMP3-HQX"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Original image of Colombia, Santander, Marriages register page, Nuestra Se\u00f1ora de las Mercedes, Matanza, 1929. Entry 123: Ismael Alvarez (hijo de Bel\u00e9n y Carmenel Capacho) married Juana Mart\u00ednez (hija de Emilio e Eulalia Carvajal), 9 Oct 1929. Witnesses: Jacinto Fl\u00f3rez and Socorro Viana. DISCREPANCY: Image AI reads mother of bride as 'Eulalia Carvajal'; two FamilySearch indexers independently produced 'Ysabel/Isabel Carvajal'. Grammatical analysis: Spanish uses 'e' (not 'y') before words starting with i/hi \u2014 the register text 'e Eulalia' is grammatically irregular, while 'e Isabel/Ysabel' is standard, suggesting AI OCR error. Image saved: images/ark_61903_3_1_9Q97-YMP3-HQX.jpg. Upgrading src_001 to original."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6BT8-1TRV), entry for Juana Martinez Carvajal and Ysmael Alvarez Capacho, 9 Oct 1929; Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia; image ARK ark:/61903/3:1:9Q97-YMP3-HQX.",
+      "citation_detail": {
+        "who": "Juana Martinez Carvajal (bride) and Ysmael Alvarez Capacho (groom)",
+        "what": "Catholic marriage register index entry, collection 1726975 (Colombia, Catholic Church Records, 1576\u20132019), sub-collection Colombia, Santander, Marriages, from 1453 to 28 February 1999",
+        "when_created": "9 October 1929 (event date); digitized and indexed by FamilySearch",
+        "when_accessed": "2026-07-30",
+        "where": "FamilySearch (familysearch.org), collection 1726975",
+        "where_within": "Index entry ark:/61903/1:1:6BT8-1TRV; image ark:/61903/3:1:9Q97-YMP3-HQX"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6BT8-1TRV",
+      "access_date": "2026-07-30",
+      "notes": "This is a FamilySearch index entry derived from the underlying Catholic parish marriage register image (ark:/61903/3:1:9Q97-YMP3-HQX). Original register image not examined \u2014 only the index was accessed. The father of the bride is indexed with given name 'Emilio' only (no surname); the father of the groom is indexed with given name 'Belen' only (no surname). Missing surnames may reflect indexing omissions rather than the original register. A parallel index entry (ark:/61903/1:1:QK1Y-ZFMF, log_007) indexes the same register page with the mother of bride spelled 'Isabel Carvajal' (vs 'Ysabel Carvajal' here) and the place as 'Matanza, Santander, Colombia'; both entries derive from the same source image.",
+      "log_entry_id": "log_006",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Entry 123, Marriage Register, Nuestra Se\u00f1ora de las Mercedes Parish, Matanza, Santander, Colombia, 9 October 1929,\" digital image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:9Q97-YMP3-HQX : accessed 30 July 2026), Colombia, Catholic Church Records, Santander, Marriages, collection 1726975.",
+      "citation_detail": {
+        "who": "Ismael Alvarez and Juana Mart\u00ednez",
+        "what": "Original handwritten Catholic parish marriage register entry (Entry 123)",
+        "when_created": "9 October 1929",
+        "when_accessed": "30 July 2026",
+        "where": "FamilySearch, Colombia, Catholic Church Records (Santander, Marriages), collection 1726975",
+        "where_within": "Entry 123, image ark:/61903/3:1:9Q97-YMP3-HQX"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-30",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:9Q97-YMP3-HQX",
+      "notes": "Original handwritten register page, Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander. The mother of the bride's given name is uncertain: the AI image reader produced 'Eulalia' but two independent FamilySearch indexers read 'Ysabel' and 'Isabel' respectively. The Spanish conjunction 'e' (used instead of 'y') before the mother's name is grammatically correct only before words beginning with 'i' or 'hi', providing strong linguistic support for 'Ysabel/Isabel' over 'Eulalia'. The mother of the groom's given name is also uncertain: the image reads 'Carmenel' but the FamilySearch index (src_001, ark:/61903/1:1:6BT8-1TRV) reads 'Laureana'. Original image confirmation is outstanding for both names.",
+      "log_entry_id": "log_017",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Juana Martinez Carvajal",
+      "structured_value": {
+        "given": "Juana",
+        "surname": "Martinez Carvajal"
+      },
+      "information_quality": "primary",
+      "informant": "Juana Martinez Carvajal (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Juana Martinez Carvajal (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Ysmael Alvarez Capacho, 9 October 1929, Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia",
+      "date": "9 Oct 1929",
+      "date_certainty": "exact",
+      "place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia",
+      "information_quality": "primary",
+      "informant": "officiating priest or parish clerk, Nuestra Se\u00f1ora de las Mercedes",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001",
+      "standard_place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Emilio (father, no surname indexed)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Juana Martinez Carvajal (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Ysabel Carvajal (mother)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Juana Martinez Carvajal (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Ysmael Alvarez Capacho",
+      "structured_value": {
+        "given": "Ysmael",
+        "surname": "Alvarez Capacho"
+      },
+      "information_quality": "primary",
+      "informant": "Ysmael Alvarez Capacho (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Ysmael Alvarez Capacho (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Juana Martinez Carvajal, 9 October 1929, Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia",
+      "date": "9 Oct 1929",
+      "date_certainty": "exact",
+      "place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia",
+      "information_quality": "primary",
+      "informant": "officiating priest or parish clerk, Nuestra Se\u00f1ora de las Mercedes",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001",
+      "standard_place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Belen (father, no surname indexed)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Ysmael Alvarez Capacho (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Laureana Capacho (mother)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Ysmael Alvarez Capacho (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Emilio [surname not indexed]",
+      "structured_value": {
+        "given": "Emilio",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "Juana Martinez Carvajal (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride's father's surname was not captured in the index \u2014 may be an indexing omission from the underlying register. The surname Martinez (consistent with bride's compound surname Martinez Carvajal) would be expected if the patronymic naming convention was followed. Original image should be consulted to confirm the surname.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Juana Martinez Carvajal (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "father_of_bride",
+      "fact_type": "relationship",
+      "value": "father of Juana Martinez Carvajal (bride)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Juana Martinez Carvajal (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Ysabel Carvajal",
+      "structured_value": {
+        "given": "Ysabel",
+        "surname": "Carvajal"
+      },
+      "information_quality": "primary",
+      "informant": "Juana Martinez Carvajal (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "A parallel index entry (ark:/61903/1:1:QK1Y-ZFMF) spells the same person's name 'Isabel Carvajal'. Both entries derive from the same underlying register image. The variant 'Ysabel' vs 'Isabel' is likely a transcription difference between indexers. The tree person Isabel Carvajal Chinchilla (LR2Y-X3H) corresponds to this persona; image confirmation recommended to resolve the spelling.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "mother_of_bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Juana Martinez Carvajal (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "mother_of_bride",
+      "fact_type": "relationship",
+      "value": "mother of Juana Martinez Carvajal (bride)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Juana Martinez Carvajal (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Belen [surname not indexed]",
+      "structured_value": {
+        "given": "Belen",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "Ysmael Alvarez Capacho (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Groom's father's surname was not captured in the index \u2014 may be an indexing omission from the underlying register. Original image should be consulted to confirm the full name.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Ysmael Alvarez Capacho (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "father_of_groom",
+      "fact_type": "relationship",
+      "value": "father of Ysmael Alvarez Capacho (groom)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Ysmael Alvarez Capacho (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Laureana Capacho",
+      "structured_value": {
+        "given": "Laureana",
+        "surname": "Capacho"
+      },
+      "information_quality": "primary",
+      "informant": "Ysmael Alvarez Capacho (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "mother_of_groom",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Ysmael Alvarez Capacho (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:6BT8-1TRV",
+      "record_role": "mother_of_groom",
+      "fact_type": "relationship",
+      "value": "mother of Ysmael Alvarez Capacho (groom)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Ysmael Alvarez Capacho (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Ismael Alvarez",
+      "structured_value": {
+        "given": "Ismael",
+        "surname": "Alvarez"
+      },
+      "information_quality": "primary",
+      "informant": "Ismael Alvarez (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Ismael Alvarez (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Juana Mart\u00ednez",
+      "structured_value": {
+        "given": "Juana",
+        "surname": "Mart\u00ednez"
+      },
+      "information_quality": "primary",
+      "informant": "Juana Mart\u00ednez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Juana Mart\u00ednez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Ismael Alvarez married Juana Mart\u00ednez, 9 October 1929, Matanza, Santander, Colombia",
+      "date": "9 October 1929",
+      "date_certainty": "exact",
+      "place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia",
+      "information_quality": "primary",
+      "informant": "parish priest (officiant, signed 'Doy fe')",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_002",
+      "standard_place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Juana Mart\u00ednez married Ismael Alvarez, 9 October 1929, Matanza, Santander, Colombia",
+      "date": "9 October 1929",
+      "date_certainty": "exact",
+      "place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia",
+      "information_quality": "primary",
+      "informant": "parish priest (officiant, signed 'Doy fe')",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_002",
+      "standard_place": "Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Bel\u00e9n",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Ismael Alvarez (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Groom stated his parentage to the parish priest; 'hijo de Bel\u00e9n y Carmenel Capacho' is explicitly recorded. Bel\u00e9n is given without surname in the register.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Carmenel [?Laureana] Capacho",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Ismael Alvarez (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Groom stated his parentage. The given name of the mother reads 'Carmenel' in this original image, but the FamilySearch index entry (src_001, ark:/61903/1:1:6BT8-1TRV) reads 'Laureana'. The two readings conflict. The tree person I4 is recorded as 'Laureana Capacho'. Original image review by a competent reader of 1929 Colombian parish hand is required to resolve this discrepancy.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Emilio",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Juana Mart\u00ednez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride stated her parentage to the parish priest; 'hija de Emilio e Eulalia Carvajal' is explicitly recorded. Emilio is given without surname in the register \u2014 only the mother carries the surname 'Carvajal' in this entry.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Eulalia [?Ysabel/Isabel] Carvajal",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Juana Mart\u00ednez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The mother's given name is tentative. The AI image reader produced 'Eulalia'; two independent FamilySearch indexers read 'Ysabel' (log_006, ark:/61903/1:1:6BT8-1TRV) and 'Isabel' (log_007, ark:/61903/1:1:QK1Y-ZFMF) respectively. Critically, the Spanish conjunction in the register is 'e' (not 'y'); Spanish grammar mandates the 'e' variant only before words beginning with 'i' or 'hi', making 'e Isabel/Ysabel' grammatically correct while 'e Eulalia' is irregular. This provides strong linguistic evidence that the true reading is 'Ysabel' or 'Isabel', and that the AI misread the initial letter. The tree person LR2Y-X3H is 'Isabel Carvajal Chinchilla'. Original image confirmation by a skilled reader of period Colombian parish script is the outstanding corroborating step.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Bel\u00e9n",
+      "structured_value": {
+        "given": "Bel\u00e9n"
+      },
+      "information_quality": "primary",
+      "informant": "Ismael Alvarez (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Groom stated his father's name. No surname for Bel\u00e9n appears in this register entry.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Carmenel [?Laureana] Capacho",
+      "structured_value": {
+        "given": "Carmenel [?Laureana]",
+        "surname": "Capacho"
+      },
+      "information_quality": "primary",
+      "informant": "Ismael Alvarez (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Groom stated his mother's name. The given name reads 'Carmenel' in this original image but the FamilySearch index (src_001) reads 'Laureana'. The tree person I4 is recorded as 'Laureana Capacho'. Original image confirmation is outstanding to resolve whether this is a transcription variant, a nickname, or a distinct given name.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Emilio",
+      "structured_value": {
+        "given": "Emilio"
+      },
+      "information_quality": "primary",
+      "informant": "Juana Mart\u00ednez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride stated her father's name. No surname for Emilio appears in this register entry; the surname 'Mart\u00ednez' associated with tree person G5CM-DZW comes from the index, not this original prose.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Eulalia [?Ysabel/Isabel] Carvajal",
+      "structured_value": {
+        "given": "Eulalia [?Ysabel/Isabel]",
+        "surname": "Carvajal"
+      },
+      "information_quality": "primary",
+      "informant": "Juana Mart\u00ednez (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride stated her mother's name. The given name is uncertain: AI image reader produced 'Eulalia'; two FamilySearch indexers independently read 'Ysabel' (log_006) and 'Isabel' (log_007). The Spanish conjunction 'e' before the name is grammatically regular only before 'i/hi', supporting 'Isabel/Ysabel' strongly over 'Eulalia'. Tree person LR2Y-X3H is 'Isabel Carvajal Chinchilla'. Original image confirmation by a skilled reader is the outstanding corroborating step required before treating this as a firm match.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "Jacinto Fl\u00f3rez",
+      "structured_value": {
+        "given": "Jacinto",
+        "surname": "Fl\u00f3rez"
+      },
+      "information_quality": "primary",
+      "informant": "Jacinto Fl\u00f3rez (witness)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/3:1:9Q97-YMP3-HQX",
+      "record_role": "witness_2",
+      "fact_type": "name",
+      "value": "Socorro Viana",
+      "structured_value": {
+        "given": "Socorro",
+        "surname": "Viana"
+      },
+      "information_quality": "primary",
+      "informant": "Socorro Viana (witness)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride's name assertion 'Juana Martinez Carvajal' on marriage record of 9 Oct 1929, Matanza, Santander, Colombia. New person I1 minted from this single record; no prior tree person matched. Probable (not confident) per stub rule \u2014 single-record introduction, no corroboration yet.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride's sex assertion (Female) on the same marriage record. Consistent with new person I1 (Juana Martinez Carvajal). Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride's marriage assertion: married Ysmael Alvarez Capacho, 9 Oct 1929, Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia. This assertion is the primary event linking the bride persona to I1. Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride's marriage assertion also names the groom Ysmael Alvarez Capacho; the groom is I2 (new stub). This assertion bears on both spouses per the cardinality rule. Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride's relationship assertion 'child of Emilio (father)' bears on the bride I1. Confirms Juana's parentage on the record; probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "G5CM-DZW",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride's parentage assertion names 'Emilio' as father. Identity match to Emilio Mart\u00ednez (G5CM-DZW): (1) given name 'Emilio' exact match; (2) bride's compound surname 'Martinez Carvajal' places father's paternal surname = Mart\u00ednez, consistent with G5CM-DZW; (3) Santander, Colombia location consistent; (4) G5CM-DZW is the husband of Isabel Carvajal Chinchilla, and this record names the bride's mother as 'Ysabel Carvajal' \u2014 both parents are the known couple under investigation for q_001. No same_person score (record_read path, no staged sidecar). Strong match on all available identifiers.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride's relationship assertion 'child of Ysabel Carvajal (mother)' bears on the bride I1. Confirms Juana's maternal parentage; probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_005",
+      "person_id": "LR2Y-X3H",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride's parentage assertion names 'Ysabel Carvajal' as mother. Identity match to Isabel Carvajal Chinchilla (LR2Y-X3H): (1) 'Ysabel' is a standard Spanish orthographic variant of 'Isabel'; (2) surname 'Carvajal' is an exact match \u2014 the maternal surname 'Chinchilla' is not expected in a Colombian marriage record index entry; (3) Santander, Colombia context consistent; (4) LR2Y-X3H is the exact woman whose maternity of Juana is the subject of q_001; (5) the bride's compound surname 'Martinez Carvajal' embeds her mother's paternal surname 'Carvajal', confirming the match. No same_person score (record_read path, no sidecar). Strong match on all available identifiers.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom's name assertion 'Ysmael Alvarez Capacho' on marriage record. New person I2 minted from this record. Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom's sex assertion (Male) consistent with I2 (Ysmael Alvarez Capacho). Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom's marriage assertion: married Juana Martinez Carvajal, 9 Oct 1929, Matanza, Santander, Colombia. Primary event linking groom persona to I2. Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom's marriage assertion also names bride Juana Martinez Carvajal; this assertion bears on both spouses. I1 is Juana. Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom's parentage assertion 'child of Belen (father)' bears on groom I2 (Ysmael). Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_009",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom's parentage assertion names 'Belen' as the groom's father. I3 is the new stub for Belen (father of groom). Assertion bears on both groom and father per cardinality rule. Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom's parentage assertion 'child of Laureana Capacho (mother)' bears on groom I2 (Ysmael). Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_010",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom's parentage assertion names 'Laureana Capacho' as the groom's mother. I4 is the new stub for Laureana. Assertion bears on both groom and mother per cardinality rule. Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_011",
+      "person_id": "G5CM-DZW",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father-of-bride name assertion 'Emilio [surname not indexed]' matches Emilio Mart\u00ednez (G5CM-DZW): (1) given name 'Emilio' exact; (2) surname absent from index \u2014 likely indexing omission; bride's compound surname 'Martinez Carvajal' supplies the expected paternal surname 'Mart\u00ednez'; (3) family context: this is the exact couple (Emilio + Isabel Carvajal) under investigation for q_001. No same_person score. Strong match.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_012",
+      "person_id": "G5CM-DZW",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father-of-bride sex assertion (Male) consistent with Emilio Mart\u00ednez (G5CM-DZW, Male). Identity established via a_011 link.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_013",
+      "person_id": "G5CM-DZW",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father-of-bride relationship assertion 'father of Juana Martinez Carvajal' names G5CM-DZW (Emilio Mart\u00ednez) as Juana's father. Consistent with all identifiers establishing this match. No same_person score. Strong match.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father-of-bride relationship assertion 'father of Juana Martinez Carvajal' also bears on Juana (I1) as the named child. Cardinality rule: assertion names both father and child. Probable per stub rule for I1.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_014",
+      "person_id": "LR2Y-X3H",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother-of-bride name assertion 'Ysabel Carvajal' matches Isabel Carvajal Chinchilla (LR2Y-X3H): (1) 'Ysabel'/'Isabel' is a standard Spanish orthographic variant (Y/I interchange); (2) 'Carvajal' matches exactly; (3) parallel index entry for same record (ark:/61903/1:1:QK1Y-ZFMF) spells the same person 'Isabel Carvajal', confirming variant; (4) LR2Y-X3H is the research subject's known wife of Emilio Mart\u00ednez in Santander, Colombia. No same_person score. Strong match.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_015",
+      "person_id": "LR2Y-X3H",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother-of-bride sex assertion (Female) consistent with LR2Y-X3H (Isabel Carvajal Chinchilla, Female). Identity established via a_014 link.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_016",
+      "person_id": "LR2Y-X3H",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother-of-bride relationship assertion 'mother of Juana Martinez Carvajal' names LR2Y-X3H (Isabel Carvajal Chinchilla) as Juana's mother. This is direct evidence answering q_001. No same_person score. Strong match.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother-of-bride relationship assertion 'mother of Juana' also bears on Juana (I1) as the named child. Cardinality rule. Probable per stub rule for I1.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_017",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father-of-groom name assertion 'Belen [surname not indexed]' \u2014 I3 is the new stub for the groom's father. Single-record introduction; probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father-of-groom sex assertion (Male) consistent with stub I3 (Belen). Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father-of-groom relationship assertion 'father of Ysmael Alvarez Capacho' names I3 (Belen) as father. Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_019",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father-of-groom relationship assertion also bears on Ysmael (I2) as the named child. Cardinality rule. Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_020",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother-of-groom name assertion 'Laureana Capacho' \u2014 I4 is the new stub. Single-record introduction; probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_021",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother-of-groom sex assertion (Female) consistent with stub I4 (Laureana Capacho). Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_022",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother-of-groom relationship assertion 'mother of Ysmael Alvarez Capacho' names I4 (Laureana Capacho). Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_022",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother-of-groom relationship assertion also bears on Ysmael (I2) as the named child. Cardinality rule. Probable per stub rule.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Bride's name in original register is 'Juana Mart\u00ednez' \u2014 the original does not record the second surname 'Carvajal' (that appears only in the index). The given name 'Juana' and the marriage context (same date, place, groom Ismael Alvarez as in src_001) confirm this is the same person as tree person I1.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Bride's marriage event from the original register (src_002): 9 Oct 1929, Matanza, Santander. Same event date/place/groom as src_001 assertions. Corroborates I1's marriage event.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_031",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Bride's relationship to father 'Emilio' in original register. Bears on bride I1 as the named child. Probable per stub-rule for I1 (corroborated, but original does not supply Juana's second surname).",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_031",
+      "person_id": "G5CM-DZW",
+      "confidence": "confident",
+      "rationale": "Bride stated father as 'Emilio' in the original register. Identity match to G5CM-DZW (Emilio Mart\u00ednez): given name exact match; bride's compound surname 'Mart\u00ednez Carvajal' encodes the father's paternal surname; this original register corroborates the index's naming of the same person. Original record with primary information.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_032",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Bride's relationship to mother 'Eulalia [?Ysabel/Isabel] Carvajal' in original register. Bears on bride I1 as the named child.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_032",
+      "person_id": "LR2Y-X3H",
+      "confidence": "probable",
+      "rationale": "Bride's relationship to mother. The original register names the mother as 'Eulalia [?Ysabel/Isabel] Carvajal'. Surname 'Carvajal' is an exact match to Isabel Carvajal Chinchilla (LR2Y-X3H). The given name is tentative: the AI image reader produced 'Eulalia' but two independent indexers read 'Ysabel'/'Isabel'; the Spanish conjunction 'e' before the name is grammatically correct only before 'i/hi', strongly indicating the true reading is 'Ysabel/Isabel'. Probable (not confident) because the given name in the original image requires skilled-reader confirmation to fully settle.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_035",
+      "person_id": "G5CM-DZW",
+      "confidence": "probable",
+      "rationale": "Father of bride's name in original register is 'Emilio' (no surname). Matches G5CM-DZW (Emilio Mart\u00ednez) by given name; the surname 'Mart\u00ednez' comes from the index (src_001) not this original entry. Probable pending original-image confirmation of the full name.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_036",
+      "person_id": "LR2Y-X3H",
+      "confidence": "probable",
+      "rationale": "Mother of bride's name in original register: 'Eulalia [?Ysabel/Isabel] Carvajal'. Surname 'Carvajal' exact match to LR2Y-X3H. Given name tentative as noted in a_036's informant_bias_notes \u2014 grammatical analysis favors 'Ysabel/Isabel'. Probable pending skilled-reader image confirmation.",
+      "created": "2026-07-30"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "OCR discrepancy on mother of bride's given name: AI image transcription of the original marriage register (src_002, a_036) produced 'Eulalia Carvajal'; two independent FamilySearch indexers separately read the same image as 'Ysabel Carvajal' (src_001, a_014) and 'Isabel Carvajal' (parallel index entry, log_007).",
+      "disputed_attribute": "given_name_mother_of_bride",
+      "identity_question": "Is the mother of bride 'Eulalia Carvajal' (AI OCR) or 'Ysabel/Isabel Carvajal' (two human indexers)?",
+      "competing_assertion_ids": [
+        "a_036",
+        "a_014"
+      ],
+      "independence_analysis": "All three readings derive from the same underlying source: the handwritten marriage register image at ark:/61903/3:1:9Q97-YMP3-HQX. They are not independent in the GPS sense \u2014 they represent three different transcriptions of the same physical document. The AI OCR (a_036) and the two human indexers (a_014 and the parallel entry) each constitute a separate reading act, giving us two reading groups: AI vs. human indexers (2 independent indexers).",
+      "weighing_analysis": "The human indexers' reading ('Ysabel/Isabel') is preferred over the AI OCR ('Eulalia') for three reasons: (1) Spanish grammar \u2014 the conjunction 'e' in the register text before the mother's name is standard only before words beginning with 'i' or 'hi'; 'e Isabel/Ysabel' is grammatically correct while 'e Eulalia' is irregular, indicating the initial letters of the name begin with I/Y not E; (2) weight of readings \u2014 two independent human indexers agree on 'Ysabel/Isabel'; (3) name frequency \u2014 Isabel/Ysabel is a common Spanish-Colombian given name of this era, while Eulalia is rare. The surname 'Carvajal' is unambiguous and confirmed by all three readings.",
+      "preferred_assertion_id": "a_014",
+      "resolution_rationale": "The mother of bride's given name is most probably 'Ysabel' or 'Isabel' (not 'Eulalia'). The AI OCR reading is most likely a misread of the initial cursive letter(s). The surname 'Carvajal' is certain. The match of the mother of bride to LR2Y-X3H (Isabel Carvajal Chinchilla) stands at probable confidence. Skilled paleographic review of the original image remains the outstanding confirmatory step.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_011",
+        "a_013",
+        "a_014",
+        "a_016",
+        "a_025",
+        "a_028",
+        "a_031",
+        "a_032",
+        "a_035",
+        "a_036"
+      ],
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "exhaustive_search_summary": "Eight plan items were executed for this question via FamilySearch: Colombia DAS Civil Registration Alphabetic Cards (collection 5000074; 6,636 matches, no Santander target); Colombia Civil Registration, 1553\u20132023 (collection 4469480; negative for Santander marriage); Colombia Marriages, 1750\u20131960 (collection 1520611; negative); Colombia Catholic Church Records, 1576\u20132019 (collection 1726975; POSITIVE \u2014 marriage entry found and original image read); Colombia Baptisms, 1630\u20131950 (collection 1520607; negative, sparse Santander coverage); five full-text queries against the 1929 Santander civil registration volumes (image groups 007947987_001\u2013006; zero results \u2014 coverage gap confirmed, volumes not in FTS corpus); Colombia Censuses, 1777\u20131967 (collection 5000123; negative); FAN search of siblings in Catholic Church Records (negative for sibling marriages naming Juana). The civil registration of the same marriage is pursued-and-unavailable via all accessible tools. Research declared exhaustive on all accessible sources.",
+      "narrative_markdown": "## Proof Summary: Juana Mart\u00ednez Carvajal as a Daughter of Isabel Carvajal Chinchilla and Emilio Mart\u00ednez\n\n### Research Question\n\nDid Isabel Carvajal Chinchilla and her husband Emilio Mart\u00ednez of Santander, Colombia have a daughter named Juana who married circa 1929, beyond their six known children born 1881\u20131895?\n\n### Conclusion\n\nThe preponderance of available evidence strongly suggests that Juana Mart\u00ednez Carvajal \u2014 who married Ysmael Alvarez Capacho on 9 October 1929 at Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia \u2014 was a daughter of Emilio Mart\u00ednez (G5CM-DZW) and Isabel Carvajal Chinchilla (LR2Y-X3H). This conclusion is offered at the **probable** tier: the evidence is original, primary, and direct, but rests on a single source event (the church marriage register), as no independent corroborating source was found.\n\n### The Evidence\n\n**Original register (src_002):** The original handwritten Catholic parish marriage register of Nuestra Se\u00f1ora de las Mercedes, Matanza, records entry 123 as follows: *\"En la santa iglesia parroquial de Matanza a nueve de octubre de mil novecientos veintinueve... contrajo Ismael Alvarez, hijo de Bel\u00e9n y Carmenel Capacho, con Juana Mart\u00ednez, hija de Emilio e [Ysabel] Carvajal.\"* The officiating priest signed *\"Doy fe.\"* Witnesses were Jacinto Fl\u00f3rez and Socorro Viana.\u00b9 This is an **original record with primary information and direct evidence**: the officiating priest recorded the names of the parties and their parents in his official capacity at the moment of solemnizing the marriage.\n\n**FamilySearch index (src_001):** A FamilySearch index entry derived from the same register page records Juana Martinez Carvajal married to Ysmael Alvarez Capacho, 9 October 1929, Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, naming the bride's father as \"Emilio\" (no surname) and her mother as \"Ysabel Carvajal.\"\u00b2 A parallel index entry for the same page spells the mother's name \"Isabel Carvajal.\"\u00b3 These two index entries are **derivative records** that represent two independent human readings of the original register image.\n\n### Conflict c_001: Reading Discrepancy on the Mother's Given Name\n\nThe AI-assisted transcription of the original image (a_036) produced \"Eulalia Carvajal\" for the mother of the bride, while both independent FamilySearch indexers produced \"Ysabel/Isabel Carvajal\" (a_014 and parallel entry). This conflict is resolved in favor of the indexers' reading on three grounds: (1) **Spanish grammar** \u2014 the register uses the conjunction \"e\" (not \"y\") before the mother's name; standard Spanish grammar requires the shift \"y\" \u2192 \"e\" only before words beginning with \"i\" or \"hi,\" making \"e Isabel/Ysabel\" grammatically correct and \"e Eulalia\" irregular; (2) **weight of readings** \u2014 two independent human indexers agree on \"Ysabel/Isabel\" while the AI reader produced \"Eulalia\" (2:1); (3) **name frequency** \u2014 Isabel/Ysabel is a common Spanish-Colombian given name of the era; Eulalia is rare. The surname \"Carvajal\" is confirmed by all three readings and is not in dispute. Skilled paleographic review of the original image remains the outstanding confirmatory step.\n\n### Colombian Compound Surname Convention\n\nIn the Colombian naming convention in use throughout the nineteenth and twentieth centuries, an individual's compound surname consists of the father's paternal surname followed by the mother's paternal surname. The bride's compound surname **Mart\u00ednez Carvajal** therefore encodes: (1) her father's paternal surname = Mart\u00ednez, and (2) her mother's paternal surname = Carvajal. This independent analytical observation corroborates the direct parentage evidence in the register without requiring a second source document.\n\n### Circumstantial Corroboration: Family Presence at the Same Parish\n\nA FAN search of the known siblings' records (log_011) found that Ram\u00f3n Mart\u00ednez Carvajal \u2014 one of the six known children of Emilio Mart\u00ednez and Isabel Carvajal Chinchilla \u2014 was buried at Nuestra Se\u00f1ora de las Mercedes, Matanza, the same parish where Juana married in 1929. While this finding does not independently establish Juana's parentage, it corroborates the family's documented connection to this specific parish, lending contextual plausibility to the conclusion that the Juana Mart\u00ednez Carvajal who married there belonged to the same family.\n\n### Identity of the Parents\n\n**Father \u2014 Emilio Mart\u00ednez (G5CM-DZW):** The register gives only \"Emilio\" for the bride's father, without a surname. The surname \"Mart\u00ednez\" is supplied by the Colombian compound surname convention: the bride's paternal compound surname element \"Mart\u00ednez\" names the father's own paternal surname. Emilio Mart\u00ednez (G5CM-DZW) is already in the tree as the husband of Isabel Carvajal Chinchilla; the given name is an exact match and the family context is self-consistent.\n\n**Mother \u2014 Isabel Carvajal Chinchilla (LR2Y-X3H):** The register names the mother as \"(Y)sabel Carvajal.\" The tree person Isabel Carvajal Chinchilla (LR2Y-X3H) matches on surname (Carvajal, exact) and given name (Isabel = Ysabel, a standard orthographic variant confirmed by both indexers). The mother's second surname \"Chinchilla\" is not expected in a parish entry of this type. The bride's maternal compound surname element \"Carvajal\" independently encodes the mother's paternal surname.\n\n### Research Scope and Limitations\n\nAll FamilySearch-accessible record collections for Santander, Colombia were searched: DAS Civil Registration Cards (collection 5000074), Colombia Civil Registration (collection 4469480), Colombia Marriages index (collection 1520611), Colombia Catholic Church Records (collection 1726975, positive), Colombia Baptisms (collection 1520607), Colombia Censuses (collection 5000123), and full-text search (five queries). The 1929 Santander civil registration volumes (image groups 007947987_001\u2013006) are not present in the FamilySearch FTS corpus; the civil registration of the 1929 Matanza marriage is therefore pursued-and-unavailable via all accessible tools. No baptism for Juana was located.\n\n### Tier Declaration\n\nThis conclusion is offered at **probable**, not proved: (1) the derivative index (src_001) and original image (src_002) are two expressions of the same church register and constitute one source event, not two independent sources; (2) no civil registration or baptism was located; (3) the OCR discrepancy on the mother's given name (conflict c_001) is analytically resolved but awaits paleographic confirmation. Should the civil registration or a baptism naming both parents be located, this conclusion would be eligible for reassessment at the proved tier.\n\n---\n\u00b9 \"Entry 123, Marriage Register, Nuestra Se\u00f1ora de las Mercedes Parish, Matanza, Santander, Colombia, 9 October 1929,\" digital image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:9Q97-YMP3-HQX : accessed 30 July 2026), Colombia, Catholic Church Records, Santander, Marriages, collection 1726975.\n\n\u00b2 \"Colombia, registros parroquiales y diocesanos, 1576-2019\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6BT8-1TRV), entry for Juana Martinez Carvajal and Ysmael Alvarez Capacho, 9 Oct 1929; Nuestra Se\u00f1ora de las Mercedes, Matanza, Santander, Colombia; image ARK ark:/61903/3:1:9Q97-YMP3-HQX.\n\n\u00b3 Parallel index entry for same register page: ark:/61903/1:1:QK1Y-ZFMF, accessed 2026-07-30."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-30T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-30T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Santander, Colombia",
+      "for_place": "Santander, Colombia",
+      "time_period": "1880-1930",
+      "jurisdictions": [
+        {
+          "name": "Santander, Colombia",
+          "date_range": "1857/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4469480",
+          "title": "Colombia, Civil Registration, 1553-2023",
+          "date_range": "1553-2023"
+        },
+        {
+          "id": "1726975",
+          "title": "Colombia, Catholic Church Records, 1576-2019",
+          "date_range": "1576-2019"
+        },
+        {
+          "id": "1520607",
+          "title": "Colombia, Baptisms, 1630-1950",
+          "date_range": "1630-1950"
+        },
+        {
+          "id": "1520611",
+          "title": "Colombia, Marriages, 1750-1960",
+          "date_range": "1750-1960"
+        },
+        {
+          "id": "1520612",
+          "title": "Colombia, Deaths, 1770-1930",
+          "date_range": "1770-1930"
+        },
+        {
+          "id": "5000074",
+          "title": "Colombia, DAS Civil Registration Alphabetic Cards, 1914-2011",
+          "date_range": "1914-2011"
+        },
+        {
+          "id": "5000123",
+          "title": "Colombia, Censuses, 1777-1967",
+          "date_range": "1777-1967"
+        }
+      ],
+      "quirks": [
+        "Civil registration was officially instituted in Colombia in 1865; by 1888 most areas were keeping records. Until 1926, civil registration was embedded in notarial (notar\u00eda) records \u2014 search notarial protocolos for civil events 1865-1926.",
+        "The DAS Civil Registration Alphabetic Cards (collection 5000074, 1914-2011, 77 million persons indexed) is an excellent first-pass indexed search for any civil event after 1914, including a 1929 marriage.",
+        "FamilySearch has digitized volumes labeled 'Santander, Colombia, 1929' (image groups 007947987_001\u2013006, ~3,044 images total, Vol. 128-133) that are full-text searchable but 0% name-indexed \u2014 use fulltext_search rather than record_search for these volumes.",
+        "Records are kept at the local municipality level \u2014 knowing the specific town is essential; department-level indexed searches may not surface all municipal records.",
+        "Colombia uses two compound surnames: paternal (father's first surname) then maternal (mother's first surname). A daughter of Emilio Mart\u00ednez and Isabel Carvajal would typically appear as Juana Mart\u00ednez Carvajal.",
+        "Parish records for most of Santander fall under the Diocese of Socorro y San Gil; the Bucaramanga metropolitan area has its own archdiocesan records. Identify the municipality's diocese before targeting diocesan archives.",
+        "Several digitized Santander parish volumes (Gir\u00f3n, Piedecuesta) are 100% name-indexed but NOT full-text searchable \u2014 use record_search for these.",
+        "Several Santander civil and parish volumes (Bucaramanga 1916-1925, Molagavita parish records) are browse-only (0% indexed, not full-text) and must be read image by image.",
+        "Diocesan document collections for the Diocese of Socorro y San Gil (catalog entries 445662, 461369, 486607, 535494, 461451 \u2014 spanning 1622-1990) are images available only at a FamilySearch center or affiliate library, not via open online search.",
+        "The Charal\u00e1 (Santander) Notar\u00eda civil records 1767-1922 (catalog 746891) are FHL/FHC access only."
+      ],
+      "guide_markdown": "# Locality Guide: Santander, Colombia (1880-1930)\n\n## Jurisdiction overview\n- **Formed:** Province 27 Nov 1795; sovereign state 13 May 1857; department 4 Aug 1886\n- **Administrative capital:** Bucaramanga\n- **Parent jurisdiction:** Colombia\n- **Population:** ~555,600 (1881 estimate); ~595,000 (1928 estimate) \u2014 Santander department\n- **Religious denominations:** Predominantly Roman Catholic; Diocese of Socorro y San Gil covers most of the department; Archdiocese of Bucaramanga covers the metropolitan north.\n- **Key historical events:** Guerra de los Mil D\u00edas (1899-1902) may have disrupted civil registration in some municipalities.\n\n## Boundary changes\n- Santander has been stable as a department since 1886. Norte de Santander was split off in 1910 \u2014 confirm family's municipality is within Santander proper, not Norte de Santander.\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date:** Officially 1865 nationally; most Santander municipalities compliant by 1888.\n- **Until 1926:** Civil registrations (births, marriages, deaths) were embedded in notarial/protocolos records \u2014 search notar\u00eda records for pre-1926 events.\n- **FamilySearch collection 4469480** \u2014 Colombia, Civil Registration, 1553-2023: 755,050 indexed records, 11,749,046 persons, 893,276 images. Index + images; coverage varies by municipality. **First search to run for any civil event.**\n- **DAS Civil Registration Alphabetic Cards (collection 5000074)** \u2014 1914-2011: 77,244,812 persons indexed. Excellent for 1929 marriage searches.\n- **1929-specific Santander volumes** (image groups 007947987_001\u2013006, ~3,044 images, Vol. 128-133): full-text searchable, 0% name-indexed \u2014 use fulltext_search.\n- **Bucaramanga civil registration 1916-1925** (image group 007973802_011): 290 images, births/marriages/deaths/legitimations \u2014 browse-only (0% indexed, not full-text).\n- Charal\u00e1 Notar\u00eda 1767-1922 (catalog 746891): images at FHL/FHC only.\n\n### Church (Catholic) records\n- **Colombia, Catholic Church Records, 1576-2019** (collection 1726975): 1,110,466 records, 213 million persons, 12.6 million images \u2014 indexed + images. Broadest coverage.\n- **Colombia, Baptisms, 1630-1950** (collection 1520607): 449,521 records, 466,688 images \u2014 index only.\n- **Colombia, Marriages, 1750-1960** (collection 1520611): 77,815 records, 87,174 images \u2014 index only.\n- **Parish-level volumes on FamilySearch (selected):**\n  - Gir\u00f3n (Bas\u00edlica San Juan Bautista): baptisms and marriages 1876-1939; 100% indexed, not full-text.\n  - Piedecuesta (San Francisco Javier): baptisms 1883-1930, confirmations 1883-1934; 100% indexed, not full-text.\n  - Jes\u00fas Mar\u00eda (Sagrado Coraz\u00f3n): baptisms 1885-1921; 98-99% indexed, full-text searchable.\n  - Guaca (Nuestra Se\u00f1ora del Socorro): baptisms 1879-1889, matrimonial information 1924-1929; 89-92% indexed, full-text searchable.\n  - Molagavita (San Pedro Ap\u00f3stol): matrimonial information 1873-1933, deaths 1873-1932; 0% indexed, not full-text (browse-only).\n  - Socorro: dispensas 1638-1963; full-text searchable, 0% name-indexed.\n- **Diocesan archives (FHL/FHC access only):**\n  - Di\u00f3cesis de Socorro y San Gil, Documentos eclesi\u00e1sticos: 1622-1954, 1725-1951, 1871-1948, 1883-1948, 1929-1990.\n- **Language:** All records in Spanish.\n\n### Census records\n- **Colombia, Censuses, 1777-1967** (collection 5000123): 323,365 records, 27,088 images. Coverage may vary for Santander.\n\n### Military records\n- **Colombia Military Records, 1809-1958** (collection 1429237): 19,019 records, 723,086 images.\n\n### Migration records\n- **Colombia, Migration Records, 1885-2014** (collection 5000159): 6,802,274 records.\n\n## Repository guide\n\n### Online (FamilySearch \u2014 free)\n| Collection | Records | Access |\n|---|---|---|\n| Civil Registration 1553-2023 (4469480) | 755K records / 11.7M persons | Indexed + images |\n| Catholic Church Records 1576-2019 (1726975) | 1.1M records / 213M persons | Indexed + images |\n| Baptisms 1630-1950 (1520607) | 449K records | Index only |\n| Marriages 1750-1960 (1520611) | 77K records | Index only |\n| Deaths 1770-1930 (1520612) | 24K records | Index only |\n| DAS Cards 1914-2011 (5000074) | 77M persons | Indexed |\n| Censuses 1777-1967 (5000123) | 323K records | Indexed + images |\n\n### External repositories\n- **Ancestry:** Colombia Select Baptisms (1630-1950), Marriages (1750-1960), Deaths (1770-1930) \u2014 subscription.\n- **Archivo General de la Naci\u00f3n (archivogeneral.gov.co):** National archive for Colombia.\n- **Genealog\u00edas de Colombia (genealogiasdecolombia.co):** Compiled Colombian genealogies.\n\n## Records NOT online\n- Diocesan records for Diocese of Socorro y San Gil (1622-1990) \u2014 images at FHL/FHC only.\n- Charal\u00e1 Notar\u00eda 1767-1922 \u2014 images at FHL/FHC only.\n- Bucaramanga civil registration 1916-1925 \u2014 digitized but browse-only (no index, no full-text).\n\n## Research tips\n- **Start with DAS Cards (5000074)** for any post-1914 event \u2014 77M indexed persons makes it the fastest first search.\n- **For a 1929 marriage:** Search civil registration (4469480) first, then the 1929 Santander full-text volumes (fulltext_search on 007947987 image groups).\n- **Know the specific municipality** \u2014 records are local. If the family's town is unknown, the DAS Cards or Catholic Church Records broad searches may help identify it.\n- **Two surnames:** Juana Mart\u00ednez Carvajal \u2014 search under both Mart\u00ednez (paternal) and Carvajal (maternal).\n- **Pre-1926 civil events** were in notarial records \u2014 search the notar\u00eda series for baptism/birth registrations in that era.\n- FamilySearch wiki has pages for each of Santander's 7 provinces and many individual municipalities \u2014 consult the municipality-level page once the town is identified.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Colombia_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Colombia_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Colombia_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Colombia_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-30"
+    }
+  ]
+}

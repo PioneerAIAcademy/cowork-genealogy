@@ -40,6 +40,7 @@ from harness.runlog import (
     derive_activated,
 )
 from harness.runnability import RunnabilityResult, check_runnable
+from harness.skill_stubs import parse_stub_skills
 from harness.skill_runner import (
     DEFAULT_MODEL,
     DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
@@ -179,6 +180,7 @@ async def _run_one_test_async(
         fixtures_dir=paths.fixtures_dir,
         skills_dir=paths.skills_dir,
         tests_dir=paths.tests_dir,
+        validators_dir=paths.validators_dir,
     )
     if not gate.runnable:
         return _aborted_entry(
@@ -286,6 +288,19 @@ def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
     return set(correct) or None
 
 
+def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
+    """Sub-skills a POSITIVE test declares it doesn't want executed.
+
+    Opt-in per test via `execution.stub_skills`, in either the bare-deny or the
+    canned-response form — see harness/skill_stubs.py for which to pick and why
+    (it turns on whether the CALLER reads the result, not on the callee).
+
+    Assert the hand-off with a `skills_invoked` validator; do not leave it to
+    the judge, which reads a transcript and can misread it.
+    """
+    return parse_stub_skills(spec.execution) or None
+
+
 async def _execute_single_run(
     *,
     run_index: int,
@@ -320,6 +335,7 @@ async def _execute_single_run(
         auth=auth,
         model=model,
         routing_short_circuit_skills=routing_short_circuit,
+        stub_skills=_stub_skills(spec),
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -563,6 +579,7 @@ async def _execute_skill_with_retry(
     auth: AuthConfig,
     model: str,
     routing_short_circuit_skills: set[str] | None = None,
+    stub_skills: dict[str, str | None] | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -641,6 +658,7 @@ async def _execute_skill_with_retry(
                     ),
                     allowed_tools_override=skill_baseline,
                     routing_short_circuit_skills=routing_short_circuit_skills,
+                    stub_skills=stub_skills,
                     # The skill's OWN declaration, not skill_baseline (which
                     # unions in its subagents' tools). The gap between the two
                     # is what the per-context policy guards.
@@ -753,7 +771,7 @@ def _build_warnings(
 # the judge contradicting verified ground truth (the recurring census
 # direct/indirect inversion, and the death-cert evidence-type flip). This is the
 # single biggest source of run-to-run flap: the deterministic check is stable,
-# the fuzzy re-grade is not. See docs/plan/record-extraction-tool-boundary-plan.md.
+# the fuzzy re-grade is not (record-extraction tool-boundary work, 2026-07-16).
 _CLASSIFICATION_DIMENSIONS = frozenset(
     {"Evidence type accuracy", "Informant identification"}
 )
@@ -1071,6 +1089,29 @@ _BEFORE_STATE_STRING_MAX = 4_000
 _BEFORE_STATE_MAX_CHARS = 40_000
 
 
+def _summarize_before_state_sources(sources: Any) -> dict[str, Any]:
+    """Summarize one before-state source array for the judge, keeping the
+    COMPLETE list of ids.
+
+    The judge uses the before-state block to check "references an id that isn't
+    on file" / "fabricated a source" claims, and that check is only sound if it
+    can see *every* id that was on file. The generic `_summarize_response`
+    samples a list down to its first `_RESPONSE_ARRAY_SAMPLE` (=3) entries —
+    which silently dropped the 4th+ source and made the judge (and human
+    annotators reading the same block) flag a correctly-cited later source
+    (`src_004` / `S4`) as fabricated. That is the exact failure this block was
+    written to prevent. So emit the full id list explicitly and only sample the
+    heavy per-source content (citations, notes) for prompt size.
+    """
+    items = sources if isinstance(sources, list) else []
+    ids = [s["id"] for s in items if isinstance(s, dict) and s.get("id")]
+    return {
+        "count": len(items),
+        "all_ids": ids,
+        "detail": _summarize_response(items, string_max=_BEFORE_STATE_STRING_MAX),
+    }
+
+
 def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     """Render the source entries that existed BEFORE the skill ran, so the
     judge can mechanically check "not on file" / "fabricated" claims.
@@ -1081,8 +1122,12 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     `src_` ids) and source descriptions (tree.gedcomx.json, `S` ids) makes
     such claims checkable against what was actually on file.
 
-    Bounded per-field and overall so a large project can't blow the prompt.
-    Returns "(none)" when there was no prior state (e.g. an empty-project
+    The complete `count` + `all_ids` for every block is rendered first and is
+    never truncated — that is the existence-check ground truth, and clipping it
+    is exactly what revived the fabrication misgrade (ut_validate_schema_007/008).
+    The `_BEFORE_STATE_MAX_CHARS` prompt-size cap is spent only on the expendable
+    heavy `detail` sample, which is dropped (never the ids) when the budget runs
+    out. Returns "(none)" when there was no prior state (e.g. an empty-project
     scenario) — itself the correct signal: nothing was on file, so any
     "altered/removed an existing source" claim is unfounded.
     """
@@ -1093,33 +1138,52 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     research_sources = research.get("sources") if isinstance(research, dict) else None
     tree_sources = tree.get("sources") if isinstance(tree, dict) else None
 
-    blocks: list[str] = []
+    labelled: list[tuple[str, dict[str, Any]]] = []
     if research_sources:
-        summarized = _summarize_response(
-            research_sources, string_max=_BEFORE_STATE_STRING_MAX
-        )
-        blocks.append(
-            "research.json sources on file before this run (src_ ids):\n"
-            + json.dumps(summarized, ensure_ascii=False, indent=2)
+        labelled.append(
+            (
+                "research.json sources on file before this run (src_ ids)",
+                _summarize_before_state_sources(research_sources),
+            )
         )
     if tree_sources:
-        summarized = _summarize_response(
-            tree_sources, string_max=_BEFORE_STATE_STRING_MAX
+        labelled.append(
+            (
+                "tree.gedcomx.json source descriptions on file before this run "
+                "(S ids)",
+                _summarize_before_state_sources(tree_sources),
+            )
         )
-        blocks.append(
-            "tree.gedcomx.json source descriptions on file before this run "
-            "(S ids):\n" + json.dumps(summarized, ensure_ascii=False, indent=2)
-        )
-    if not blocks:
+    if not labelled:
         return "(none)"
-    rendered = "\n\n".join(blocks)
-    if len(rendered) > _BEFORE_STATE_MAX_CHARS:
-        rendered = (
-            rendered[:_BEFORE_STATE_MAX_CHARS]
-            + f"\n[before-state truncated by harness for prompt size; "
-            f"full length {len(rendered)} chars]"
+
+    # ids first — complete and never clipped (see docstring).
+    id_blocks = [
+        f"{label}:\n"
+        + json.dumps(
+            {"count": summary["count"], "all_ids": summary["all_ids"]},
+            ensure_ascii=False,
+            indent=2,
         )
-    return rendered
+        for label, summary in labelled
+    ]
+    id_section = "\n\n".join(id_blocks)
+
+    # heavy per-source sample after — this is what the prompt-size cap trims.
+    detail_blocks = [
+        f"{label} — sample detail (heavy fields truncated):\n"
+        + json.dumps(summary["detail"], ensure_ascii=False, indent=2)
+        for label, summary in labelled
+    ]
+    detail_section = "\n\n".join(detail_blocks)
+    budget = _BEFORE_STATE_MAX_CHARS - len(id_section)
+    if len(detail_section) > budget:
+        detail_section = (
+            detail_section[: max(budget, 0)]
+            + f"\n[detail truncated by harness for prompt size; "
+            f"full detail length {len(detail_section)} chars — ids above are complete]"
+        )
+    return id_section + "\n\n" + detail_section
 
 
 def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:

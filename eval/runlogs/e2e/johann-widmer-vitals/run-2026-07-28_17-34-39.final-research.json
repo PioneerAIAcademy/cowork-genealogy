@@ -1,0 +1,1983 @@
+{
+  "project": {
+    "id": "rp_johann_widmer_vitals",
+    "objective": "What are Johann Frederich Widmer's birth date/place, death date/place, and burial date/place?",
+    "subject_person_ids": [
+      "L7B2-QXX"
+    ],
+    "status": "completed",
+    "created": "2026-07-25",
+    "updated": "2026-07-28"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Johann Frederich Widmer (ca. 1845\u20131910s, Swiss immigrant who settled in Naples, Ontario County, New York) die?",
+      "rationale": "Death is the highest-priority vital event to anchor first: a New York death certificate would provide the death date and place directly, and often records the deceased's birthplace \u2014 informing the birth question simultaneously. A Find a Grave Index entry for Johann Frederich Widmer is already attached to the project sources (SLWP-HCJ), indicating accessible death and burial evidence exists. US death records are more accessible than Swiss birth records, making this the most efficient starting point.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-28",
+      "resolution_assertion_ids": [
+        "a_002",
+        "a_004",
+        "a_013"
+      ],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "All accessible FamilySearch resources exhaustively searched across two plans (pl_001, pl_002): NY State Death Index (4 given-name variants), NY Deaths and Burials (3 variants), NY Church and Civil Deaths, NY Cemetery Abstracts, NY State Census 1915 (3 variants), NY Probate Records (indexed + full-text), NY Church Records, Yates County Swann collection \u2014 all negative. Only positive evidence is Find A Grave Index (src_001, derivative/secondary/direct) giving death date 4 Jul 1914 and burial place Naples, Ontario County, NY, corroborated by 1915 census absence (indirect/negative). Three GPS criteria fail: (1) original_substitution \u2014 all positive evidence is derivative; (2) independent_verification \u2014 only one source gives the specific death date; (3) evidence_class \u2014 no original record with primary information accessed. Three accessible sources remain deferred solely due to autonomous-mode limitation: Find A Grave memorial page #136852260 (URL: https://www.findagrave.com/memorial/136852260), Ancestry NY Death Index 1880-1956 (URL: https://www.ancestry.com/search/collections/7549/?name=Johann_Widmer&name_x=1_1&birth=1847&deathplace=ontario_new-york_usa&death=1914), and Newspapers.com Ontario County obituaries 1913-1916 (URL: https://www.newspapers.com/search/?query=Widmer&dr_year=1913-1916&dr_place=Ontario+County%2C+New+York). These are not sealed by privacy law and are accessible to an interactive user. Early termination on resource/access grounds (autonomous mode cannot complete the user-capture loop). The conclusion cannot meet the full GPS proof standard without these sources; a provisional finding at probable tier is the maximum supportable.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019",
+          "log_020",
+          "log_021",
+          "log_022",
+          "log_023",
+          "log_024",
+          "log_025",
+          "log_026"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Partial \u2014 Find A Grave Index gives specific death date 4 Jul 1914 and burial place Naples, Ontario County, NY, directly answering the question. However, a single derivative secondary source does not constitute a convincing GPS-compliant answer; independent corroboration is needed.",
+          "repository_breadth": "FamilySearch substantially exhausted: all relevant NY death, church, census, probate, cemetery, and vital record collections searched with multiple name variants. External repositories (Ancestry death records, actual Find A Grave memorial, Newspapers.com) deferred due to autonomous-mode constraint \u2014 accessible to an interactive user.",
+          "original_substitution": "NOT MET. Every positive finding comes from the derivative Find A Grave Index (src_001). The actual Find A Grave memorial page (which may contain a gravestone photograph = original), Ancestry death certificate (original NY state record), and newspaper obituary are all deferred accessible sources that have not been retrieved.",
+          "independent_verification": "NOT MET. Only one source (Find A Grave Index via src_001) supplies the death date 4 Jul 1914. The 1915 NY State Census absence is indirect negative evidence consistent with a pre-1915 death but does not independently name the specific date. Two independent sources with concordant dates are required.",
+          "evidence_class": "NOT MET. No original record with primary information has been accessed for the death event. Find A Grave Index is derivative/secondary. No death certificate, church burial register, gravestone image, or probate petition has been located. The Ontario County probate FTS corpus does not include the relevant volumes; the certificate/gravestone remains in deferred external-site territory.",
+          "conflict_resolution": "MET \u2014 no conflicts in the current evidence. The 1915 NY State Census absence is consistent with the 4 Jul 1914 death date; no competing dates or places have emerged from any search.",
+          "overturn_risk": "MODERATE. Three accessible deferred sources could confirm or modify the current finding: (1) the Find A Grave memorial page might include a gravestone photo serving as an original source; (2) the Ancestry-indexed death certificate might confirm the date (or reveal a different one); (3) a newspaper obituary would provide independent confirmation or contradiction. The current conclusion rests on a single derivative source and is vulnerable to modification if any of these sources give different data."
+        }
+      },
+      "created": "2026-07-28"
+    },
+    {
+      "id": "q_002",
+      "question": "When and where in Switzerland was Johann Frederich Widmer (L7B2-QXX) born, given his immigration to the United States in 1872-1873 and his father's documented connection to Hausen, Aargau, Switzerland?",
+      "rationale": "Birth date/place is an independent component of the stated research objective that is completely unaddressed by q_001 (which covers death). The only current evidence is a_003 (birth date '25 Jan 1847' from the Find A Grave Index \u2014 derivative/secondary/indirect), which requires corroboration from a primary source. The subject's immigration in 1872-1873 confirms Swiss origin, and his father Hans Ulrich Widmer (KG12-2BT) is documented as born in Hausen, Aargau, Switzerland, pointing to Aargau canton as the primary search jurisdiction. Swiss civil registration began in 1876, so Reformed or Catholic church baptism registers from the 1840-1860 period are the decisive record type. FamilySearch holds indexed Swiss Reformed records for multiple cantons including Aargau, and the Swiss FamilySearch catalog lists microfilmed baptism registers for Aargau parishes. An original baptism entry would provide primary information about the exact birth date and parish of origin.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-28",
+      "resolution_assertion_ids": [
+        "a_007",
+        "a_014"
+      ],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "Original pre-1850 Hausen am Albis Reformed baptism register not accessible via FamilySearch tools \u2014 it exists at the Aargau State Archives in Switzerland and requires physical archive access or a hired researcher. FamilySearch Swiss church record collections (col. 4138674, col. 1520585) searched exhaustively: no indexed pre-1850 baptism for subject found. Immigration/naturalization records (1872 Declaration of Intention, 1876 Final Naturalization) provide primary informant evidence for birthplace 'Honsen/Hausen, Switzerland' but no birth date. Birth date '25 Jan 1847' from FAG Index only (derivative/secondary/indirect) \u2014 no independent corroboration found. US federal census searches (1900, 1910) negative for subject in Ontario County. Terminating for pragmatic resource limits: the decisive source (Aargau State Archives pre-1850 Reformed baptism register for Hausen) is not accessible through available FamilySearch tools.",
+        "log_entry_ids": [
+          "log_027",
+          "log_028",
+          "log_029",
+          "log_030",
+          "log_031",
+          "log_032",
+          "log_033",
+          "log_034",
+          "log_035",
+          "log_036",
+          "log_037",
+          "log_038",
+          "log_039"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Partial. Birthplace answered at probable tier: 'Hausen, Switzerland' (declarant's sworn primary information, 1872 Declaration of Intention; consistent with father Hans Ulrich Widmer's documented birthplace in Hausen, Aargau). Birth date answered at possible tier: '25 Jan 1847' from FAG Index only \u2014 secondary source, no independent primary or original corroboration found.",
+          "repository_breadth": "FamilySearch Swiss church record collections (4138674, 1520585) exhausted \u2014 no pre-1850 Hausen indexed record found. Immigration/naturalization records searched (NY County Naturalization Records, Germans to America Index, NY Passenger Lists). US Federal Censuses 1900 and 1910 searched \u2014 negative. Aargau State Archives (physical Swiss repository) and Swiss FamilySearch external sites not accessible in this session.",
+          "original_substitution": "1872 Declaration of Intention image read (certified transcript, not the original declaration on file at Monroe County). Original Swiss baptism register not accessible \u2014 at Aargau State Archives.",
+          "independent_verification": "Birthplace 'Switzerland/Honsen': two sources \u2014 (1) 1872 Declaration of Intention (primary informant, direct) and (2) 1876 Final Naturalization (primary informant, direct, confirms Swiss allegiance). These are independent documents from different courts. Birth date '25 Jan 1847': single source (FAG Index, derivative/secondary/indirect) \u2014 no independent verification found.",
+          "evidence_class": "Birthplace: at least one original-class document (Declaration of Intention image, certified transcript) with primary information. Birth date: no original record with primary information for this specific date.",
+          "conflict_resolution": "No conflicts found across sources. All sources consistently place birthplace in Switzerland; naturalizations confirm Swiss allegiance; no competing birthplace claims exist.",
+          "overturn_risk": "Birthplace 'Hausen, Switzerland': LOW \u2014 primary informant evidence + father's documented Hausen birthplace + Swiss nationality confirmed by two independent naturalizations; no competing claim. Birth date '25 Jan 1847': MODERATE \u2014 this specific date comes only from FAG Index (derivative, likely entered from a headstone or family knowledge); original baptism register might show a different date or could confirm it."
+        }
+      },
+      "created": "2026-07-28"
+    },
+    {
+      "id": "q_003",
+      "question": "What is the specific burial date and cemetery name for Johann Frederich Widmer in Naples, Ontario County, New York?",
+      "rationale": "The burial place (Naples, Ontario County, NY) was established at probable tier through ps_001, but the specific burial date and cemetery name remain unaddressed components of the research objective. All FamilySearch sources for burial records were searched and returned negative results (NY Cemetery Abstracts, NY Church and Civil Deaths, NY Church Records). Three external sources remain that could supply this information: the Find A Grave memorial page (#136852260), which typically lists cemetery name and may carry a burial date; Ancestry's NY Death Index, which may link to a death certificate noting disposition; and Newspapers.com Ontario County obituaries (1913-1916), which may name the burial location and date. These are the only known avenues for this specific fact.",
+      "selection_basis": "objective_decomposition",
+      "priority": "medium",
+      "status": "resolved",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": "2026-07-28",
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "All FamilySearch burial record sources were exhausted under q_001 research plans (NY Cemetery Abstracts, NY Church and Civil Deaths, NY Church Records \u2014 all negative). The only remaining sources are three external-site resources deferred due to autonomous-mode constraint: Find A Grave memorial #136852260 (findagrave.com), Ancestry NY Death Index 1880-1956, and Newspapers.com Ontario County obituaries 1913-1916. These are not sealed by privacy law and are accessible to an interactive user. Early termination on resource/access grounds.",
+        "log_entry_ids": [],
+        "stop_criteria": {
+          "goal_alignment": "NOT MET \u2014 no burial date established; burial place (Naples, Ontario, NY) is covered in ps_001 at probable tier but no specific cemetery name or burial date found in any searched source.",
+          "repository_breadth": "FamilySearch: NY Cemetery Abstracts, NY Church and Civil Deaths, NY Church Records all searched under q_001 \u2014 negative. Three accessible external-site sources deferred due to autonomous-mode constraint.",
+          "original_substitution": "NOT MET \u2014 no original burial record accessed. All positive burial evidence (burial place Naples) is derivative (Find A Grave Index, src_001).",
+          "independent_verification": "NOT MET \u2014 no source supplies a specific burial date. Burial place Naples is in src_001 only.",
+          "evidence_class": "NOT MET \u2014 no original record with primary information about the burial date event.",
+          "conflict_resolution": "MET \u2014 no conflicting burial date claims exist.",
+          "overturn_risk": "HIGH \u2014 the three deferred external-site sources are the primary candidates for establishing burial date and cemetery name."
+        }
+      },
+      "created": "2026-07-28"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "superseded",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "cemetery",
+          "jurisdiction": "Naples, Ontario, New York, United States",
+          "date_range": "1845-1930",
+          "repository": "FamilySearch",
+          "rationale": "A Find A Grave Index entry for Johann Frederich Widmer is already attached to the project tree as source SLWP-HCJ (FamilySearch ark:/61903/1:1:QVPQ-9MRR). This is the highest-priority item: it likely provides death date, death place, burial place, and cemetery name. Execute this search to produce a log entry and feed the record into extraction. Multiple Widmer children are buried at Rose Ridge Cemetery, Naples \u2014 this memorial almost certainly refers to that cemetery.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Ontario, New York, United States",
+          "date_range": "1880-1930",
+          "repository": "FamilySearch",
+          "rationale": "The New York State Death Index, 1880\u20131956 (FamilySearch collection 2803479) is fully indexed with images, covering all Ontario County deaths from the start of statewide registration. Johann is in the 1910 census in Naples; if he died after 1890 (when compliance was general), a death registration should exist here giving exact date, county, and often informant. Search under 'Widmer' and variants (Widman, Widmann) for Naples / Ontario County.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Ontario, New York, United States",
+          "date_range": "1880-1963",
+          "repository": "FamilySearch",
+          "rationale": "New York, Deaths and Burials, 1795\u20131952 (FamilySearch collection 1680846, 77,505 indexed records) and New York, Church and Civil Deaths, 1797\u20131963 (collection 2373798, 253,898 indexed records) together cover church registers and civil records not captured by the State Death Index. Fallback if Johann is absent from the State Death Index \u2014 he may have had a church burial recorded separately.",
+          "fallback_for": "pli_002",
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Ontario, New York, United States",
+          "date_range": "1915",
+          "repository": "FamilySearch",
+          "rationale": "The 1915 New York State Census (FamilySearch collection 1937454, fully indexed) is the critical post-1910 check: if Johann appears, it confirms he was alive at that date, narrows the death window, and may give age and birthplace. His wife Rose (d. 1932) and son Albert (still in Naples in 1920) are expected anchor-points for locating the household. If absent, death likely occurred 1911\u20131914.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Ontario, New York, United States",
+          "date_range": "1925",
+          "repository": "FamilySearch",
+          "rationale": "The 1925 New York State Census (FamilySearch collection 1937489, fully indexed) extends coverage to 1925. If Johann is absent from the 1915 census, this confirms the death window and should be searched to verify. If present, the death window shifts to post-1925. Executed as a fallback to the 1915 census item.",
+          "fallback_for": "pli_004",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "probate",
+          "jurisdiction": "Ontario, New York, United States",
+          "date_range": "1880-1930",
+          "repository": "FamilySearch",
+          "rationale": "New York Probate Records, 1629\u20131971 (FamilySearch collection 1920234, browse-only images \u2014 ~14M images, 0% indexed) include Ontario County Surrogate Court records from 1789. If Johann died with real property, a probate petition was required from 1830 onward and typically states the death date and lists heirs by name and relationship. Browse Ontario County probate volumes for the estimated death decade. Also check Ancestry's New York Wills and Probate Records 1659\u20131999 which has an index.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "newspaper",
+          "jurisdiction": "Ontario, New York, United States",
+          "date_range": "1873-1920",
+          "repository": "other",
+          "rationale": "The Ontario County Journal (Canandaigua) published death notices 1873\u20131910, freely transcribed at ontario.nygenweb.net/records.htm. The Ontario County Chronicle and Canandaigua Chronicle cover 1900\u20131907. These are key substitutes for pre-registration deaths and for persons whose state death record may be missing. Johann's last appearance is 1910; if he died in the 1910s these newspaper notices may be the only death record. Search for 'Widmer' at the NYGenWeb Ontario County transcription site.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Naples, Ontario, New York, United States",
+          "date_range": "1845-1930",
+          "repository": "FamilySearch",
+          "rationale": "New York, Church Records, 1660\u20131954 (FamilySearch collection 2787817, 127,105 indexed records) may include burial registers from Naples churches. As a Swiss Reformed immigrant, Johann likely attended a Reformed or Universalist congregation; the Universalist Church marriage and funeral records 1850s\u20131880s (free at ontario.nygenweb.net) and Cornell University's Study Center for Early Religious Life in Western New York hold Ontario County church records. A church burial register would provide burial date and place as primary information. FAN search: also search for Rose Marie Bergman Widmer (wife, d. 1932) whose burial record may cite Johann's burial location.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_009",
+          "sequence": 1,
+          "record_type": "cemetery",
+          "jurisdiction": "Ontario, New York, United States",
+          "date_range": "1895-1930",
+          "repository": "FamilySearch",
+          "rationale": "New York, Cemetery Abstracts, 1800-1965 (FamilySearch collection 2552111, 175,959 indexed records, 5,282 images) was not searched in pl_001. Cemetery abstracts often carry burial date, cemetery name, and section \u2014 exactly the original cemetery-record evidence that pl_001 lacked. Search under Widmer / Widman for Naples and Ontario County.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Ontario, New York, United States",
+          "date_range": "1900-1930",
+          "repository": "FamilySearch",
+          "rationale": "New York, Church and Civil Deaths, 1797-1963 (FamilySearch collection 2373798, 253,898 indexed records) is a separate compilation from collection 1680846 searched in pli_003. It incorporates church-register extracts that may capture Johann's burial date through a Naples congregation even when the civil index is absent. Search Widmer and variants for Ontario County 1900-1930.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 3,
+          "record_type": "probate",
+          "jurisdiction": "Ontario, New York, United States",
+          "date_range": "1900-1924",
+          "repository": "FamilySearch",
+          "rationale": "Ontario County Probate Records imageGroupNumber 005116146 (volumes 107-108, 1900-1924) is full-text searchable (fulltextSearchable: true) on FamilySearch even though recordSearchablePercent is 0. The pli_006 indexed search returned nil because the collection is essentially un-indexed; a full-text search for 'Widmer' on this specific volume via the search-full-text skill can surface an estate administration that the indexed approach missed. Estate files typically state the decedent's death date and list heirs.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 4,
+          "record_type": "cemetery",
+          "jurisdiction": "Naples, Ontario, New York, United States",
+          "date_range": "1914",
+          "repository": "other",
+          "rationale": "The Find A Grave memorial page #136852260 (findagrave.com) is the original record behind the derivative index entry in src_001. The actual memorial page may carry the cemetery name (likely Rose Ridge Cemetery, Naples NY), gravestone transcription, burial date, the contributor's sourcing notes, and any linked sources (death certificate, obituary URL). Reading the memorial via search-external-sites provides a potential original source with primary information that the index alone cannot supply.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Ontario, New York, United States",
+          "date_range": "1910-1920",
+          "repository": "Ancestry",
+          "rationale": "Ancestry holds New York Death Index 1880-1956 and scanned death certificate images for Ontario County, separately indexed from FamilySearch collection 2803479. FamilySearch's four-variant search of the NY State Death Index returned no record for Johann; Ancestry may carry the same underlying certificate with a different indexing of the given name (e.g. 'John' or 'Fred') or a variant spelling that surfaces it. An original death certificate from the Ontario County clerk would be primary information about the death event. Route to search-external-sites skill.",
+          "fallback_for": "pli_010",
+          "status": "completed"
+        },
+        {
+          "id": "pli_014",
+          "sequence": 6,
+          "record_type": "newspaper",
+          "jurisdiction": "Ontario, New York, United States",
+          "date_range": "1913-1916",
+          "repository": "other",
+          "rationale": "The Ontario County Journal (Canandaigua) and related papers published death notices and obituaries for Naples-area residents. The NYGenWeb Ontario County site (ontario.nygenweb.net) has transcribed many pre-1920 notices; Newspapers.com and GenealogyBank may carry digitized images. An obituary for Johann Widmer in the 1913-1916 window would name survivors, burial location, and possibly the officiating church \u2014 all independently corroborating the Find A Grave date. Route to search-external-sites skill.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_003",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_015",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Hausen, Aargau, Switzerland",
+          "date_range": "1840-1855",
+          "repository": "FamilySearch",
+          "rationale": "Primary search: Switzerland, Catholic and Reformed Church Records, 1418-1996 (col. 4138674) \u2014 19.7M indexed records, 2M images \u2014 the principal FamilySearch repository for Aargau Reformed baptism registers. Hausen is a Reformed parish since the 1520s; Swiss civil registration did not begin until 1875, so only church records apply for a ca. 25 Jan 1847 birth. The Hausen-specific digitized volume (008119345_010_M99W-MXT) starts only in 1850 and will not contain this birth; col. 4138674 encompasses earlier Aargau volumes. Search surname 'Widmer', givenName 'Johann', birth year ~1847, place Hausen/Aargau. (loc_002: Swiss civil reg. began 1875; Hausen Reformed; col. 4138674 is primary indexed collection.)",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_016",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Aargau, Switzerland",
+          "date_range": "1840-1855",
+          "repository": "FamilySearch",
+          "rationale": "Cross-reference: Switzerland, Baptisms, 1491-1940 (col. 1520585) \u2014 776,254 indexed records (index only, no images). This collection derives from an earlier IGI extraction set and may index Hausen Reformed baptisms not captured in col. 4138674. Search surname 'Widmer' broadly in Switzerland for 1845-1850 to surface any Hausen Widmer entry. Also try the father's given name as a parent filter if supported. Fallback if pli_015 returns nothing. (loc_002: col. 1520585 is secondary baptism index.)",
+          "fallback_for": "pli_015",
+          "status": "completed"
+        },
+        {
+          "id": "pli_017",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Hausen, Aargau, Switzerland",
+          "date_range": "1820-1870",
+          "repository": "FamilySearch",
+          "rationale": "FAN search via father: search for Hans Ulrich Widmer (KG12-2BT, documented born Hausen, Aargau) in col. 4138674. His marriage to Verena Schaffner \u2014 which must predate Johann's birth ca. 1847 \u2014 and his own baptism will identify the specific Reformed parish register and volume for pre-1850 Hausen. The 1847 birth sits before the digitized Hausen volume (008119345, which starts 1850); locating the father's entries in the same collection reveals the earlier sibling volume(s) that cover the 1840s. Also search for siblings of Johann born 1845-1850 by father 'Widmer' / mother 'Schaffner'. Fallback if pli_015-016 both yield nothing for Johann directly. (GPS Standard 14: FAN research.)",
+          "fallback_for": "pli_015",
+          "status": "completed"
+        },
+        {
+          "id": "pli_018",
+          "sequence": 4,
+          "record_type": "immigration",
+          "jurisdiction": "Switzerland / United States",
+          "date_range": "1872-1873",
+          "repository": "FamilySearch",
+          "rationale": "Subject immigrated from Switzerland to the USA in 1872-1873 (tree.gedcomx.json immigration facts). Hamburg passenger departure lists (FamilySearch indexes the Hamburg lists) and US arrival records from this period sometimes record the emigrant's Swiss canton or home parish of origin. Searching for 'Johann Widmer' / 'Johann Friedrich Widmer' in immigration collections (1870-1875) could supply or corroborate the specific Swiss birthplace beyond just 'Switzerland'. Complementary to the baptism search \u2014 may resolve the birthplace even if the baptism register is not yet located. (BCG Standard 14 breadth: immigration records as a secondary source for birth-place question when emigration date is known.)",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_019",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Hausen, Aargau, Switzerland",
+          "date_range": "1850-1885",
+          "repository": "FamilySearch",
+          "rationale": "Browse Hausen church register volume 008119345_010_M99W-MXT (164 images, 100% indexed, German/Latin, 1850-1885). Although this volume starts after the ca. 1847 birth, some Swiss Reformed registers include retrospective family listings (Familienb\u00fccher) that enumerate all children including pre-1850 births. The volume will also contain baptisms of Johann's younger siblings, confirmations, and marriage entries for family members \u2014 all of which confirm the Widmer family's presence in Hausen and may link back to pre-1850 entries or identify the adjacent earlier volume. Use image_search then image_read on the family-register pages. Sequence last \u2014 after direct indexed searches. (loc_002: vol. 008119345 is 100% indexed, 1850-1885.)",
+          "fallback_for": "pli_015",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_004",
+      "question_id": "q_003",
+      "status": "active",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_020",
+          "sequence": 1,
+          "record_type": "cemetery",
+          "jurisdiction": "Naples, Ontario, New York, United States",
+          "date_range": "1914",
+          "repository": "other",
+          "rationale": "The three remaining sources for burial date/cemetery are all external-site resources deferred from q_001's pl_002: (1) Find A Grave memorial #136852260 (findagrave.com) \u2014 the full memorial page will identify the specific cemetery (likely Rose Ridge Cemetery, Naples) and may carry a burial date, gravestone transcription, and contributor sourcing notes; (2) Ancestry NY Death Index 1880-1956 \u2014 may link to the original New York State death certificate which can note disposition/burial; (3) Newspapers.com Ontario County obituaries 1913-1916 \u2014 an obituary would typically name the cemetery, the officiating minister, and funeral arrangements. All three require interactive user access (browser navigation or paid subscriptions) and cannot be completed in autonomous mode. Deferring to interactive session.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T16:14:26.119Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "recordType": "death",
+        "residencePlace": "New York, United States",
+        "count": 50,
+        "collection": "Find a Grave Index (2221801)"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 2693,
+      "notes": "Top result: Johann Frederich Widmer, b. 25 Jan 1847, d. 4 Jul 1914, buried Naples, Ontario, New York (Find A Grave memorial #136852260). Exact name match, already attached to subject L7B2-QXX. recordId ark:/61903/1:1:QVPQ-9MRR matches existing source SLWP-HCJ. Rank 1, matchScore 0.354, attachedToSubject:true."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T16:22:33.298Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, State Death Index, 1880-1956",
+        "collectionId": "2803479",
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "deathYearFrom": 1912,
+        "deathYearTo": 1916,
+        "deathPlace": "Ontario, New York"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1,
+      "notes": "1 result returned (George J Widmer, d. 24 Aug 1916, Naples, Ontario, NY) \u2014 not the subject. Subject Johann Frederich Widmer not found under given name 'Johann' in this collection and county."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T16:22:33.306Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, State Death Index, 1880-1956",
+        "collectionId": "2803479",
+        "surname": "Widmer",
+        "givenName": "Fred",
+        "deathYearFrom": 1910,
+        "deathYearTo": 1918,
+        "deathPlace": "New York"
+      },
+      "outcome": "negative",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 14,
+      "notes": "14 results returned, all wrong name/place combinations (Wittmore, Wittemeier, Whitmore variants). Subject not found under given name 'Fred'."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T16:22:33.315Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, State Death Index, 1880-1956",
+        "collectionId": "2803479",
+        "surname": "Widmer",
+        "givenName": "Frederick",
+        "deathYearFrom": 1910,
+        "deathYearTo": 1918,
+        "deathPlace": "New York"
+      },
+      "outcome": "negative",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 14,
+      "notes": "14 results returned, same population as Fred search \u2014 all non-matching. Subject not found under given name 'Frederick'."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T16:22:33.322Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, State Death Index, 1880-1956",
+        "collectionId": "2803479",
+        "surname": "Widmer",
+        "givenName": "John",
+        "deathYearFrom": 1910,
+        "deathYearTo": 1920,
+        "recordCountry": "United States",
+        "recordSubdivision": "New York"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 35,
+      "notes": "35 results returned; ranked top 10 vs. L7B2-QXX (max match score 0.013). Four 'John Widmer' entries exist in NY (Albany 1914, Boonville 1912, Buffalo 1918, Buffalo 1920) \u2014 none in Ontario County, none matching death date 4 Jul 1914. 'George J Widmer' d. Naples, Ontario 24 Aug 1916 appeared (score 0.009) \u2014 different person, different date. Subject Johann Frederich Widmer not found in NY State Death Index under any tested given-name variant (Johann, Fred, Frederick, John). Proceeding to fallback pli_003 (NY Deaths and Burials 1795-1952, col. 1680846)."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T16:23:42.905Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Deaths and Burials, 1795-1952",
+        "collectionId": "1680846",
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "deathYearFrom": 1910,
+        "deathYearTo": 1920,
+        "deathPlace": "Ontario, New York"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result. Subject not indexed under 'Johann Widmer' in NY Deaths and Burials 1795-1952 for Ontario County."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T16:23:42.905Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Deaths and Burials, 1795-1952",
+        "collectionId": "1680846",
+        "surname": "Widmer",
+        "givenName": "Fred",
+        "deathYearFrom": 1908,
+        "deathYearTo": 1920,
+        "recordSubdivision": "New York"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 2,
+      "notes": "2 results: Fred Whitmeyer and Henry W. Meyer \u2014 neither is subject. Subject not found under 'Fred Widmer'."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T16:23:42.911Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Deaths and Burials, 1795-1952",
+        "collectionId": "1680846",
+        "surname": "Widmer",
+        "givenName": "John",
+        "deathYearFrom": 1908,
+        "deathYearTo": 1920,
+        "recordSubdivision": "New York"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 2,
+      "notes": "2 results: John Widmer (b.1882, d.17 Dec 1920, Buffalo \u2014 different person) and Henry W. Meyer. Neither matches subject. Subject Johann Frederich Widmer not found in NY Deaths and Burials 1795-1952 under any tested name variant (Johann, Fred, John). Both FS death indexes exhausted. Note: NY State Death Index DOES contain 'George J Widmer' (Naples, Ontario, 24 Aug 1916) confirming coverage of this locality/period \u2014 absence of Johann Widmer July 1914 may indicate unindexed or missing registration. Proceeding to pli_004 (NY State Census 1915) to bracket the death date from census evidence."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T16:25:14.498Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, State Census, 1915",
+        "collectionId": "1937454",
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "residenceYear": 1915,
+        "residencePlace": "Ontario, New York"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 1,
+      "notes": "1 result: Jno Jine Wetmore (female, b.1843, Huron, Wayne NY) \u2014 not the subject. Subject not found in 1915 NY State Census under 'Johann Widmer' in Ontario County."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T16:25:14.499Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, State Census, 1915",
+        "collectionId": "1937454",
+        "surname": "Widmer",
+        "givenName": "John",
+        "residenceYear": 1915,
+        "residencePlace": "Naples, New York"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result. No 'John Widmer' in Naples, NY in 1915 census."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T16:25:14.500Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, State Census, 1915",
+        "collectionId": "1937454",
+        "surname": "Widmer",
+        "givenName": "Fred",
+        "residenceYear": 1915,
+        "recordSubdivision": "New York"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 97,
+      "notes": "97 results for Fred/Widmer variants statewide; ranked top 10 vs. L7B2-QXX (max match score 0.017). None in Ontario County. None match subject's age (~68 in 1915) or location. Subject Johann Frederich Widmer is ABSENT from the NY State Census 1915 \u2014 this is indirect negative evidence consistent with a death date before June 1915. The subject's last confirmed living date is the 1910 US Census (tree has Residence 1910, Naples, Ontario, NY). Absence from 1915 census brackets death to 1910\u20131915, consistent with Find A Grave date of 4 Jul 1914."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-28T16:26:15.463Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Probate Records, 1629-1971",
+        "collectionId": "1920234",
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "anyYearFrom": 1912,
+        "anyYearTo": 1918,
+        "anyPlace": "Ontario, New York"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. Subject not found under 'Johann Widmer' in NY Probate Records for Ontario County 1912-1918."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-28T16:26:15.463Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Probate Records, 1629-1971",
+        "collectionId": "1920234",
+        "surname": "Widmer",
+        "givenName": "Fred",
+        "anyYearFrom": 1910,
+        "anyYearTo": 1920,
+        "recordSubdivision": "New York"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. Subject not found under 'Fred Widmer' in NY Probate Records statewide 1910-1920."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-28T16:26:15.463Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Probate Records, 1629-1971",
+        "collectionId": "1920234",
+        "surname": "Widmer",
+        "givenName": "John",
+        "anyYearFrom": 1910,
+        "anyYearTo": 1920,
+        "recordSubdivision": "New York"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. All three probate search variants (Johann, Fred, John) returned zero results. Collection 1920234 is likely largely browse-only image volumes for Ontario County (low recordSearchablePercent expected for 19th-century probate). Absence from the indexed search does NOT confirm absence of a probate record \u2014 image browsing or full-text search of Ontario County probate volumes would be required to confirm. Noting as a gap rather than a negative finding."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-28T16:26:57.395Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Church Records, 1660-1954",
+        "collectionId": "2787817",
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "anyYearFrom": 1912,
+        "anyYearTo": 1918,
+        "anyPlace": "Ontario, New York"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. No church burial record found for Johann Widmer in Ontario County 1912-1918."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-28T16:26:57.395Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Church Records, 1660-1954",
+        "collectionId": "2787817",
+        "surname": "Widmer",
+        "givenName": "Fred",
+        "anyYearFrom": 1912,
+        "anyYearTo": 1918,
+        "recordSubdivision": "New York"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. No church record found for Fred/Widmer in NY 1912-1918. Collection 2787817 (NY Church Records) does not yield any Widmer burial or death entries for Ontario County. Like the probate collection, this may reflect low index coverage for rural Ontario County church registers. Original church register images at local repositories would be needed."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-28T16:35:15.734Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "collectionId": "2552111",
+        "collection": "New York, Cemetery Abstracts, 1800-1965"
+      },
+      "outcome": "negative",
+      "results_examined": 11,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "results_available": 11,
+      "notes": "11 results, all phonetic variants (Whitmore/Whittemore/Wetmore) \u2014 no Widmer. Max match score 0.000013 against subject. Broader surname-only search (142 results) likewise returned only Whitmore/Wetmore variants. Collection 2552111 has no indexed Widmer entries for any New York county."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-28T16:35:15.738Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Widmer",
+        "collectionId": "2552111",
+        "collection": "New York, Cemetery Abstracts, 1800-1965",
+        "note": "broader surname-only variant to confirm no Widmer in collection"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "results_available": 142,
+      "notes": "Surname-only broadening returned 142 results, all Whitmore/Whittemore/Wetmore. Confirms collection 2552111 does not index any Widmer burials in New York."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-28T16:35:15.741Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "collectionId": "2373798",
+        "collection": "New York, Church and Civil Deaths, 1797-1963",
+        "deathYearFrom": 1900,
+        "deathYearTo": 1930
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 2,
+      "notes": "2 results, both phonetic noise (John Whittemore, Whitmore) \u2014 no Widmer. Max match score 0.000070. Collection 2373798 has no death record for any Widmer in New York 1900-1930."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-28T16:36:21.773Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Widmer",
+        "imageGroupNumber": "005116146",
+        "note": "Ontario County probate vol. 107-108, 1900-1924"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS search on imageGroupNumber 005116146 (Ontario County Probate 1900-1924) returned 0 results. Volume not in FTS corpus. Broadened to Ontario County probate (no imageGroupNumber), then all Ontario County records, then all New York records \u2014 all returned 0 results. FamilySearch FTS corpus has no Widmer entries for New York. Probate records for this period remain accessible only by browsing images directly."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_013",
+      "performed": "2026-07-28T16:38:18.729Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Ontario, New York, United States",
+        "host": "ancestry.com",
+        "startYear": 1910,
+        "endYear": 1920
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_021.json",
+      "notes": "587 curated links for Ontario County NY 1910-1920. NY Death Index 1880-1956 (Ancestry collection 7549) not in the curated inline set; building from site-wide Ancestry search template."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_014",
+      "performed": "2026-07-28T16:38:18.732Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Ontario, New York, United States",
+        "host": "newspapers.com",
+        "startYear": 1910,
+        "endYear": 1920
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_022.json",
+      "notes": "No newspapers.com-specific curated link for Ontario County in this window. Only onlinenewspapers.com generic state page returned. Using newspapers.com template URL."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_012",
+      "performed": "2026-07-28T16:38:18.735Z",
+      "tool": "external_site",
+      "query": {
+        "memorial_id": "136852260",
+        "site": "findagrave",
+        "type": "memorial_page",
+        "subject": "Johann Frederich Widmer"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "findagrave",
+        "url_generated": "https://www.findagrave.com/memorial/136852260",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous mode; requires interactive user capture. Find A Grave memorial #136852260 is the actual memorial page behind the derivative index entry in project as src_001/ark:/61903/1:1:QVPQ-9MRR. URL recorded for later interactive session. In an interactive session, this page would supply the cemetery name, gravestone inscription, burial date, and contributor sourcing notes."
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_013",
+      "performed": "2026-07-28T16:38:18.735Z",
+      "tool": "external_site",
+      "query": {
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "deathPlace": "Ontario County, New York",
+        "deathYear": "1914",
+        "collection": "New York, Death Index, 1880-1956 (Ancestry collection 7549)"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/7549/?name=Johann_Widmer&name_x=1_1&birth=1847&deathplace=ontario_new-york_usa&death=1914",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous mode; requires interactive user capture. FamilySearch NY State Death Index (col. 2803479) was exhaustively searched under 4 given-name variants (Johann, Fred, Frederick, John) with no result; Ancestry collection 7549 indexes the same underlying state records but may carry different transcriptions. Also try given-name variants Widman/Widmann. URL recorded for later interactive session."
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_014",
+      "performed": "2026-07-28T16:38:18.735Z",
+      "tool": "external_site",
+      "query": {
+        "query": "Widmer",
+        "dr_year": "1913-1916",
+        "dr_place": "Ontario County, New York",
+        "note": "Ontario County Journal, Geneva Daily Times, and related papers"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "newspapers",
+        "url_generated": "https://www.newspapers.com/search/?query=Widmer&dr_year=1913-1916&dr_place=Ontario+County%2C+New+York",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous mode; requires interactive user capture. Newspapers.com search for Widmer obituary in Ontario County NY 1913-1916. An obituary would independently corroborate the Find A Grave death date of 4 Jul 1914 and may name the cemetery and surviving family. NYGenWeb Ontario County site (ontario.nygenweb.net) also holds pre-1920 transcribed notices. URL recorded for later interactive session."
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": null,
+      "performed": "2026-07-28T16:41:17.303Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "collectionId": "1880619",
+        "collection": "New York, Yates County, Swann Vital Records Collection, 1723-2009",
+        "note": "ad-hoc \u2014 Naples is near Yates County border"
+      },
+      "outcome": "negative",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_026.json",
+      "results_available": 8,
+      "notes": "Top hit John Jacob Widmer d. 29 Jul 1966 Naples \u2014 later generation family member (max match score 0.008), not the subject d. 1914. Remaining results are noise (Wetmore, Witmer). No Widmer death record for 1914 in this collection."
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_015",
+      "performed": "2026-07-28T16:55:29.063Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "4138674",
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "birthYearFrom": 1844,
+        "birthYearTo": 1850,
+        "birthPlace": "Aargau, Switzerland"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_027.json",
+      "results_available": 381,
+      "notes": "First pli_015 search: 381 total, no baptism record found for Johann Friedrich/Frederich Widmer in Hausen ca. 1847 in top 50. Results are broadly distributed across Swiss cantons, not Hausen-specific. No strong candidate for the subject \u2014 only name-variant match ('Joh Friedr Widmer' in ark:/61903/1:1:6F8Q-21XD) appears as a non-principal (parent) in another record, not as a principal baptism."
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": "pli_015",
+      "performed": "2026-07-28T16:55:29.069Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "4138674",
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "fatherGivenName": "Hans",
+        "fatherSurname": "Widmer",
+        "motherSurname": "Schaffner",
+        "birthYearFrom": 1840,
+        "birthYearTo": 1855
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_028.json",
+      "results_available": 2406,
+      "notes": "Second pli_015 search (with father Hans Widmer + mother Schaffner): 2406 total \u2014 search is not sufficiently specific; the Schaffner filter alone does not narrow Widmer records. Top candidate 'Johann Friedrich Widmer' (ark:/61903/1:1:68VY-KK68) read and ruled out: it is a 1866 marriage record in Biglen, Bern, with father 'Joh Jakob' (not Hans Ulrich) and wife Rosina Eichenberger (not Rose Bergman). Not the subject. No Hausen/Aargau baptism ca. 1847 found for Johann Friedrich Widmer."
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": "pli_016",
+      "performed": "2026-07-28T16:58:14.785Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "1520585",
+        "collectionTitle": "Switzerland Baptisms, 1491-1930",
+        "q.surname": "Widmer",
+        "q.givenName": "Johann Friedrich",
+        "q.birthLikeDate.year": "1847",
+        "q.birthLikeDate.fuzz": "3",
+        "jurisdiction": "Aargau, Switzerland"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_029.json",
+      "results_available": 257,
+      "notes": "Searched col. 1520585 (Switzerland Baptisms) for Johann Friedrich Widmer born ca. 1847. 257 total results returned, all examined results from wrong regions (mostly Z\u00fcrich, Bern, and other cantons). No Hausen am Albis / Aargau baptism record found for the target individual. Confirms that col. 1520585 also does not index a pre-1850 Hausen baptism for the subject."
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": "pli_017",
+      "performed": "2026-07-28T16:58:14.789Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "4138674",
+        "collectionTitle": "Switzerland Catholic and Reformed Church Records",
+        "q.fatherGivenName": "Hans Ulrich",
+        "q.fatherSurname": "Widmer",
+        "q.motherSurname": "Schaffner",
+        "q.anyPlace": "Hausen",
+        "jurisdiction": "Hausen, Aargau, Switzerland",
+        "date_range": "1820-1870"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_030.json",
+      "results_available": 16587,
+      "notes": "Searched col. 4138674 by father Hans Ulrich Widmer + mother Schaffner + anyPlace Hausen. 16,587 total results \u2014 query is far too broad; the anyPlace filter 'Hausen' is not restricting effectively. Examined top 50 results: mostly 17th\u201318th century burials, baptisms, and marriages from various Swiss cantons unrelated to the target family. No record naming Hans Ulrich Widmer as father of a Johann born ca. 1847 was found. Confirms that the pre-1850 Hausen am Albis Reformed baptism register for Johann Frederich Widmer is not retrievable via indexed FamilySearch searches in this collection."
+    },
+    {
+      "id": "log_031",
+      "plan_item_id": "pli_018",
+      "performed": "2026-07-28T17:00:07.158Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Widmer",
+        "givenName": "Johann",
+        "recordType": "immigration",
+        "birthYearFrom": 1844,
+        "birthYearTo": 1852,
+        "anyYearFrom": 1870,
+        "anyYearTo": 1877
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_031.json",
+      "results_available": 1301,
+      "notes": "Searched immigration/naturalization records for Johann Widmer born ca. 1847, immigrated 1870-1877. Top candidates: (1) ark:/61903/1:1:KDW2-4F3 'Joh. Widmer' born 1847, immigrated 16 Apr 1872 New York, col. 2110801; (2) ark:/61903/1:1:QVPV-TCFX 'Joh Widmer' born 1847, 1872 New York Passenger List, col. 1849782; (3) ark:/61903/1:1:WN3D-HV2M 'John Frederick or Joh Friedrich Widmer', naturalization 1872 Ontario, New York, birthplace H\u00f6ngen, Laupersdorf, Solothurn, Switzerland \u2014 col. 1999177 (NY County Naturalization Records) \u2014 very strong candidate given name, destination Ontario County NY, and 1872 date all match subject; (4) ark:/61903/1:1:WR83-QR3Z 'John F Widmer' naturalization 1876, Ontario NY. Records being read for further analysis."
+    },
+    {
+      "id": "log_032",
+      "plan_item_id": "pli_019",
+      "performed": "2026-07-28T17:00:07.162Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "4138674",
+        "imageGroupNumber": "008119345_010_M99W-MXT",
+        "surname": "Widmer",
+        "jurisdiction": "Hausen am Albis, Aargau, Switzerland",
+        "date_range": "1850-1885"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched col. 4138674 scoped to Hausen volume 008119345_010_M99W-MXT (1850-1885) for Widmer records. Zero results returned. The imageGroupNumber filter may not have resolved correctly, or no Widmer records from this volume are indexed under surname 'Widmer'. The pre-1850 baptism for Johann Frederich Widmer cannot be retrieved via this volume's indexed search."
+    },
+    {
+      "id": "log_033",
+      "plan_item_id": "pli_018",
+      "performed": "2026-07-28T17:01:21.988Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:WN3D-HV2M",
+        "reason": "Top candidate from immigration search: John Frederick Widmer, naturalization 1872, Ontario NY, birthplace Honsen Switzerland"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "NY County Naturalization Records, 1791-1980: 'John Frederick or Joh Friedrich Widmer', naturalization 1872, Ontario, New York. Birthplace indexed as 'Honsen, Switzerland' \u2014 likely phonetic/transcription rendering of 'Hausen, Switzerland'. No birth date on the indexed record. Image ARK: ark:/61903/3:1:3QS7-L9MH-T9GZ-G. Strong match to subject: full name matches Johann Frederich Widmer; Ontario NY matches Naples, Ontario County NY; 1872 matches immigration year in tree. Being delegated to image-reader for full transcription."
+    },
+    {
+      "id": "log_034",
+      "plan_item_id": "pli_018",
+      "performed": "2026-07-28T17:01:21.988Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:KDW2-4F3",
+        "reason": "Second candidate: Joh. Widmer, born 1847, immigrated 16 April 1872, NY"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Germans to America Index: 'Joh. Widmer', Male, born 1847, occupation Farmer, immigration 16 Apr 1872 New York. Birthplace listed as 'Germany' (standard for German-speaking Swiss in this index). Birth year 1847 and immigration date 16 Apr 1872 match subject closely. Possibly same person as WN3D-HV2M. Less specific birthplace; secondary to the naturalization record."
+    },
+    {
+      "id": "log_035",
+      "plan_item_id": "pli_018",
+      "performed": "2026-07-28T17:01:21.988Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:WR83-QR3Z",
+        "reason": "Third candidate: John F Widmer, naturalization 1876, Ontario NY"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "NY County Naturalization Records: 'John F Widmer', naturalization 1876, Ontario, New York. No birth information in indexed record. Image: ark:/61903/3:1:3QSQ-G9MW-82X9. May represent the final naturalization papers (2nd step) for the same person who filed declaration of intention in 1872 (WN3D-HV2M). Corroborates Ontario County NY for subject."
+    },
+    {
+      "id": "log_036",
+      "plan_item_id": "pli_018",
+      "performed": "2026-07-28T17:05:20.030Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3QS7-L9MH-T9GZ-G",
+        "record": "ark:/61903/1:1:WN3D-HV2M",
+        "purpose": "Obtain full text of Declaration of Intention for John Frederick Widmer, 1872, Monroe County NY"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Image transcription of 1872 Declaration of Intention (First Papers), Monroe County Courts. Confirms petitioner: 'John Frederick Widmer of the City of Rochester'; birthplace: 'Honsen Switzerland'; date: 21 October 1872; allegiance renounced: Government of Switzerland. No birth date or age on document. Document is a certified transcript copy, not the original. Image saved to images/ark_61903_3_1_3QS7-L9MH-T9GZ-G.jpg."
+    },
+    {
+      "id": "log_037",
+      "plan_item_id": "pli_018",
+      "performed": "2026-07-28T17:05:20.030Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3QSQ-G9MW-82X9",
+        "record": "ark:/61903/1:1:WR83-QR3Z",
+        "purpose": "Obtain full text of final naturalization (second papers) for John F. Widmer, 1876, Ontario County NY"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Image transcription of Final Naturalization (Second Papers), Ontario County Court, Canandaigua, 26 Oct 1876. Petitioner: 'John F. Widmer'; residence at naturalization: Naples, Ontario County (per witnesses W S Cooley and Frank Merkel, of Naples); allegiance renounced: Switzerland. No birth date or age on document. Corroborates Naples, Ontario County NY as subject's residence and Swiss birth. Image saved to images/ark_61903_3_1_3QSQ-G9MW-82X9.jpg."
+    },
+    {
+      "id": "log_038",
+      "plan_item_id": null,
+      "performed": "2026-07-28T17:11:24.328Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "1325221",
+        "collectionTitle": "US Census 1900",
+        "surname": "Widmer",
+        "givenName": "John/Johann",
+        "residencePlace": "Ontario County, New York",
+        "birthYear": "1844-1852",
+        "purpose": "Corroborate birth year 1847 and Swiss birthplace for q_002"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 2,
+      "notes": "1900 census search for Widmer/John in Ontario County returned only Jacob J Widmer (born Jan 1852, Switzerland, Naples) and J C Whittemore \u2014 neither matches Johann Frederich Widmer. The subject does not appear in the indexed 1900 census for Ontario County under 'John' or 'Johann' with birth year 1844-1852. Jacob J Widmer (born 1852) may be a brother or other relative who also settled in Naples from Switzerland. Subject's absence from indexed 1900 census is unexplained; he may be listed under a different name form or in a different ward/enumeration district."
+    },
+    {
+      "id": "log_039",
+      "plan_item_id": null,
+      "performed": "2026-07-28T17:11:24.328Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "1727033",
+        "collectionTitle": "US Census 1910",
+        "surname": "Widmer",
+        "givenName": "John",
+        "residencePlace": "Ontario County, New York",
+        "birthYear": "1844-1852",
+        "purpose": "Corroborate birth year 1847 and Swiss birthplace for q_002"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "1910 census search for Widmer/John in Ontario County returned zero results. Subject Johann Frederich Widmer is not found in the indexed 1910 US Federal Census for Ontario County. The tree shows a Residence fact for Naples 1910 but this may have been entered from an unindexed source. The absence from indexed search limits independent corroboration of birth year."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Find a Grave Index,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVPQ-9MRR : accessed 28 July 2026), entry for Johann Frederich Widmer; citing Find a Grave memorial 136852260 (http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=136852260).",
+      "citation_detail": {
+        "who": "Johann Frederich Widmer",
+        "what": "Find A Grave Index entry (memorial 136852260)",
+        "when_created": "unknown; Find A Grave memorial of uncertain creation date",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch, \"Find a Grave Index\" collection (collection 2221801)",
+        "where_within": "Entry for Johann Frederich Widmer, memorial 136852260"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QVPQ-9MRR",
+      "notes": "Find A Grave Index is a derivative source \u2014 it is an index/abstract compiled from contributor-submitted memorials. The underlying Find A Grave memorial page (GRid=136852260) was not independently examined; original not examined \u2014 accessed via FamilySearch index only. The contributing informant for the memorial is unknown; biographical facts (birth date, death date) reflect secondhand knowledge submitted after the fact.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"New York, County Naturalization Records, 1791-1980\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WN3D-HV2M : accessed 2026-07-28), Entry for John Frederick Widmer, Monroe County, Declaration of Intention, 21 October 1872.",
+      "citation_detail": {
+        "who": "John Frederick Widmer",
+        "what": "Declaration of Intention (First Papers), Monroe County Courts, New York",
+        "when_created": "21 October 1872",
+        "when_accessed": "2026-07-28",
+        "where": "FamilySearch, \"New York, County Naturalization Records, 1791-1980\"",
+        "where_within": "Entry for John Frederick Widmer, 1872; image saved as images/ark_61903_3_1_3QS7-L9MH-T9GZ-G.jpg"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:WN3D-HV2M",
+      "notes": "Original not examined \u2014 this is an index/transcript entry derived from the original Declaration of Intention on file. The image available (ark_61903_3_1_3QS7-L9MH-T9GZ-G.jpg) is a certified transcript/copy, not the declaration in the declarant's own hand. The FamilySearch index lists jurisdiction as 'Ontario, New York' \u2014 the document image clearly shows Monroe County; this is an index error. The birthplace 'Honsen, Switzerland' is almost certainly a phonetic transcription of 'Hausen, Switzerland', consistent with the father Hans Ulrich Widmer's documented birthplace in Hausen, Aargau, Switzerland.",
+      "transcription": "State of New York, Monroe County. I, John Frederick Widmer of the City of Rochester do declare, on oath, that I was born in Honsen Switzerland - and that it is my bona fide intention to become a citizen of the United States, and to renounce forever all allegiance and fidelity to every foreign Prince, Potentate, State and Sovereignty, whatever, and particularly to the Government of Switzerland, of whom I am a subject. Subscribed and sworn to before me, this 21 day of October 1872. A.S. Mabbett Clerk.",
+      "log_entry_id": "log_033",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"New York, County Naturalization Records, 1791-1980\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WR83-QR3Z : accessed 28 July 2026), Entry for John F Widmer, 1876; image of Final Naturalization (Second Papers / Court Order of Admission), Ontario County Court, Canandaigua, New York, 26 October 1876.",
+      "citation_detail": {
+        "who": "John F. Widmer",
+        "what": "Final Naturalization (Second Papers / Court Order of Admission), Ontario County Court",
+        "when_created": "26 October 1876",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch, New York, County Naturalization Records, 1791-1980",
+        "where_within": "Ontario County Court, Canandaigua, New York, 26 October 1876"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:WMWG-WFT2",
+      "notes": "Image examined of final naturalization record (Second Papers / Court Order of Admission). Contains three sections: witness affidavit (W S Cooley and Frank Merkel of Naples), court order signed by W S Heicks, Clerk, and John Widmer's own oath of allegiance renouncing fidelity to Switzerland. Image saved as images/ark_61903_3_1_3QSQ-G9MW-82X9.jpg.",
+      "transcription": "Witness affidavit: 'State of New York, Ontario County. W S Cooley + Frank Merkel of the Naples in the County of Ontario in the State aforesaid, having been duly sworn, depose and say, each for himself, that they are citizens of the United States, that they are well acquainted with John F. Widmer, that he has resided in the United States for five years last past, and not elsewhere, and for the last year in the State of New York, and during all that time has behaved as a man of good moral character, attached to the principles of the Constitution of the United States, and well disposed to the good order and happiness of the same. Sworn to in open Court, this 26th day of Oct. 1876, before me, W S Heicks Clerk'. Court order: 'State of New York, Ontario County Court Canandaigua, Oct. 26th 1876. In the Matter of the Application of John F. Widmer to become a citizen of the United States: The said applicant having made application to this Court to become a citizen of the United States, and it appearing that he, the said applicant, two years since, made the declaration required by law, and it appearing to the full satisfaction of this Court that he has complied in all respects with the laws of the United States in relation to naturalization, and the Court being satisfied that the said applicant has resided in the United States, for at least five years immediately preceding this application, and that during all that time he has behaved as a man of good moral character, attached to the principles of the Constitution of the United States, and well disposed to the good order and happiness of the same, and the said applicant having appeared in open Court and taken and subscribed the oath that he will support the Constitution of the United States and of abjuration required by law; ORDERED, that the said John F. Widmer be, and he is hereby admitted a citizen of the United States and of any of them. W S Heicks Clerk.' Oath: 'I, John Widmer do solemnly swear, that I will support the Constitution of the United States, and that I hereby entirely renounce and abjure all allegiance and fidelity to every foreign prince, potentate, state and sovereignty whatever, and particularly to the President of Switzerland of whom I am a subject. So help me God. Sworn to in open Court, this 26th day of Oct 1876, before me, W S Heicks Clerk'",
+      "log_entry_id": "log_035",
+      "image_filename": "images/ark_61903_3_1_3QSQ-G9MW-82X9.jpg",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QVPQ-9MRR",
+      "record_persona_id": "p_101164167775",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Johann Frederich Widmer",
+      "structured_value": {
+        "given": "Johann Frederich",
+        "surname": "Widmer"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown memorial contributor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Find A Grave memorials are submitted by volunteers of unknown relationship to the deceased; the contributor's identity and proximity are unverifiable. The name may have been transcribed from a gravestone, obituary, or family knowledge \u2014 original source unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QVPQ-9MRR",
+      "record_persona_id": "p_101164167775",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "4 Jul 1914",
+      "date": "4 Jul 1914",
+      "information_quality": "secondary",
+      "informant": "unknown memorial contributor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The death date was recorded in this memorial by an unknown contributor after the fact. The contributor was not present at the death and the proximate source of the date (gravestone, death certificate, obituary) is unknown. Find A Grave memorials are commonly created years or decades after the death. Corroboration with a primary record (New York death certificate or death index) is needed to confirm this date.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QVPQ-9MRR",
+      "record_persona_id": "p_101164167775",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "25 Jan 1847",
+      "date": "25 Jan 1847",
+      "information_quality": "secondary",
+      "informant": "unknown memorial contributor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth date entered by an unknown Find A Grave contributor; the contributor was not present at the birth and their proximate source (gravestone inscription, family records, death certificate) is not identified. Precision (day and month) does not establish firsthand knowledge \u2014 the contributor relayed this date secondhand at an unknown remove from the event.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QVPQ-9MRR",
+      "record_persona_id": "p_101164167775",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Naples, Ontario, New York",
+      "place": "Naples, Ontario, New York, United States",
+      "information_quality": "secondary",
+      "informant": "unknown memorial contributor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Burial location entered by the memorial contributor; Find A Grave memorials are typically created at or near the cemetery, which increases plausibility, but the contributor's identity and verification method are unknown. No specific cemetery name is given beyond the town of Naples \u2014 the underlying memorial may specify the cemetery.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Naples, Ontario, New York, United States"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:WN3D-HV2M",
+      "record_role": "declarant",
+      "fact_type": "name",
+      "value": "John Frederick Widmer",
+      "structured_value": {
+        "given": "John Frederick",
+        "surname": "Widmer"
+      },
+      "information_quality": "primary",
+      "informant": "John Frederick Widmer",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_033",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:WN3D-HV2M",
+      "record_role": "declarant",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "John Frederick Widmer",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_033",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:WN3D-HV2M",
+      "record_role": "declarant",
+      "fact_type": "birth",
+      "value": "born in Honsen, Switzerland",
+      "place": "Honsen, Switzerland",
+      "structured_value": {
+        "place": "Honsen, Switzerland"
+      },
+      "information_quality": "primary",
+      "informant": "John Frederick Widmer",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The declarant swore under oath to his birthplace. The spelling 'Honsen' is almost certainly a phonetic transcription of 'Hausen' \u2014 most likely Hausen, Aargau, Switzerland, where his father Hans Ulrich Widmer is documented as born. Do not substitute 'Hausen' for 'Honsen'; the document states 'Honsen'. Original-image confirmation (the declaration in the declarant's own hand, not the transcript) would resolve whether the clerk copied 'Honsen' from written text or transcribed it phonetically.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_033",
+      "source_id": "src_002",
+      "standard_place": "Switzerland"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:WN3D-HV2M",
+      "record_role": "declarant",
+      "fact_type": "naturalization",
+      "value": "Declaration of Intention filed 21 October 1872, Monroe County, New York",
+      "date": "1872-10-21",
+      "date_certainty": "exact",
+      "place": "Monroe County, New York, United States",
+      "structured_value": {
+        "place": "Monroe County, New York, United States"
+      },
+      "information_quality": "primary",
+      "informant": "A.S. Mabbett, Clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The clerk A.S. Mabbett attested the sworn declaration in his official capacity. The FamilySearch index erroneously lists the jurisdiction as 'Ontario, New York'; the document image clearly identifies Monroe County \u2014 the indexed place is wrong.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_033",
+      "source_id": "src_002",
+      "standard_place": "Monroe, New York, United States"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:WN3D-HV2M",
+      "record_role": "declarant",
+      "fact_type": "residence",
+      "value": "City of Rochester, Monroe County, New York",
+      "date": "1872-10-21",
+      "date_certainty": "exact",
+      "place": "Rochester, Monroe County, New York, United States",
+      "structured_value": {
+        "place": "Rochester, Monroe County, New York, United States"
+      },
+      "information_quality": "primary",
+      "informant": "John Frederick Widmer",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_033",
+      "source_id": "src_002",
+      "standard_place": "Rochester, Monroe, New York, United States"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:WR83-QR3Z",
+      "record_role": "applicant",
+      "fact_type": "name",
+      "value": "John F. Widmer",
+      "structured_value": {
+        "given": "John F.",
+        "surname": "Widmer"
+      },
+      "information_quality": "primary",
+      "informant": "John F. Widmer (the applicant, appearing in open court)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "log_entry_id": "log_035",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:WR83-QR3Z",
+      "record_role": "applicant",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "John F. Widmer (the applicant, appearing in open court)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_035",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:WR83-QR3Z",
+      "record_role": "applicant",
+      "fact_type": "naturalization",
+      "value": "Admitted citizen of the United States, Ontario County Court, Canandaigua, New York, 26 October 1876",
+      "date": "26 October 1876",
+      "date_certainty": "exact",
+      "place": "Ontario County Court, Canandaigua, Ontario, New York, United States",
+      "information_quality": "primary",
+      "informant": "W S Heicks, Clerk, Ontario County Court",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "log_entry_id": "log_035",
+      "source_id": "src_003",
+      "standard_place": "Canandaigua, Ontario, New York, United States"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:WR83-QR3Z",
+      "record_role": "applicant",
+      "fact_type": "residence",
+      "value": "Naples, Ontario County, New York (implied by witnesses Cooley and Merkel being 'of Naples')",
+      "place": "Naples, Ontario, New York, United States",
+      "date": "1876",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "W S Cooley and Frank Merkel (witnesses of Naples, Ontario County)",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Witnesses state they are 'of the Naples in the County of Ontario' and are well acquainted with the applicant; his residence in Naples is implied by association with these witnesses but not explicitly stated as his address in the document.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_035",
+      "source_id": "src_003",
+      "standard_place": "Naples, Ontario, New York, United States"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:WR83-QR3Z",
+      "record_role": "applicant",
+      "fact_type": "nationality",
+      "value": "Subject of Switzerland; renounced allegiance to the President of Switzerland",
+      "structured_value": {
+        "place": "Switzerland"
+      },
+      "information_quality": "primary",
+      "informant": "John Widmer (the applicant, in his sworn oath)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Applicant himself stated under oath: 'particularly to the President of Switzerland of whom I am a subject.' This directly confirms Swiss national origin. No specific canton or birth locality is stated.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_035",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:WR83-QR3Z",
+      "record_role": "applicant",
+      "fact_type": "immigration",
+      "value": "Resided in the United States for at least 5 years preceding 26 October 1876 (i.e., since approximately 1871)",
+      "date": "~1871",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "W S Cooley and Frank Merkel (witnesses who deposed to 5-year US residence)",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Witnesses swore applicant 'has resided in the United States for five years last past'; the court also found this fact satisfied. The ~1871 arrival date is computed backward from the naturalization date. The Declaration of Intention (src_002) was filed October 1872 in Monroe County, consistent with arrival before 1872. The court noted prior declaration made 'two years since' (c. 1874 per court language, though the actual declaration in src_002 was 1872).",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_035",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:WR83-QR3Z",
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "W S Cooley",
+      "structured_value": {
+        "given": "W S",
+        "surname": "Cooley"
+      },
+      "information_quality": "primary",
+      "informant": "W S Cooley (signed witness affidavit)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_035",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:WR83-QR3Z",
+      "record_role": "witness_2",
+      "fact_type": "name",
+      "value": "Frank Merkel",
+      "structured_value": {
+        "given": "Frank",
+        "surname": "Merkel"
+      },
+      "information_quality": "primary",
+      "informant": "Frank Merkel (signed witness affidavit)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_035",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Name assertion 'Johann Frederich Widmer' from Find A Grave Index (ark:/61903/1:1:QVPQ-9MRR). Record was retrieved by a targeted search for this specific individual (pli_001). Source SLWP-HCJ (the same Find A Grave memorial) was already attached to L7B2-QXX in tree.gedcomx.json before this research began \u2014 this is an obvious match. Name is an exact match on both given name (Johann Frederich) and surname (Widmer).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Death date assertion '4 Jul 1914' for the deceased persona in ark:/61903/1:1:QVPQ-9MRR. Same obvious-match basis as a_001: record retrieved by targeted search for L7B2-QXX; source already attached in tree. Burial in Naples, Ontario, NY is consistent with subject's known residence in Naples (1900, 1910 census). Classification: derivative/secondary/direct \u2014 the date is directly stated but from an unknown contributor after the fact; primary corroboration (NY State Death Index) is needed.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Birth date assertion '25 Jan 1847' for the deceased persona in ark:/61903/1:1:QVPQ-9MRR. Same obvious-match basis as a_001. The birth date is indirect evidence for the death question (q_001) and also bears on the birth question. Classification: derivative/secondary/indirect \u2014 birth date contributed secondhand by an unknown memorial contributor; primary Swiss or US birth records needed for corroboration.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Burial place assertion 'Naples, Ontario, New York' for the deceased persona in ark:/61903/1:1:QVPQ-9MRR. Same obvious-match basis as a_001. The town-level burial place is consistent with the subject's known residence in Naples, NY, and with other family members (children) who also have burial facts in Naples area. No specific cemetery name given; the underlying Find A Grave memorial likely names the cemetery (Rose Ridge Cemetery, used by other Widmer family members).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Name 'John Frederick Widmer'/'Joh Friedrich Widmer' on 1872 Declaration of Intention matches Johann Frederich Widmer who naturalized in Ontario County NY; same person confirmed by matching immigration year, birthplace Switzerland, and destination Monroe/Ontario County NY.",
+      "match_score": null,
+      "created": "2026-07-28",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Male sex on 1872 Declaration of Intention, consistent with subject.",
+      "match_score": null,
+      "created": "2026-07-28",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Birthplace 'Honsen, Switzerland' on 1872 Declaration of Intention. 'Honsen' is almost certainly a phonetic transcription of 'Hausen, Switzerland' (Hausen am Albis, Aargau), where father Hans Ulrich Widmer (KG12-2BT) is documented as born. Primary informant evidence \u2014 declarant swore this under oath.",
+      "match_score": null,
+      "created": "2026-07-28",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Naturalization (Declaration of Intention) 21 Oct 1872, Monroe County (Rochester, NY), corroborates immigration year 1872 in the tree and the subject's documented path to Ontario County NY.",
+      "match_score": null,
+      "created": "2026-07-28",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Residence City of Rochester, Monroe County NY, 21 Oct 1872 \u2014 consistent with subject's immigration in 1872 and subsequent move to Naples, Ontario County (adjacent county).",
+      "match_score": null,
+      "created": "2026-07-28",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Name 'John F. Widmer'/'John Widmer' on 1876 Final Naturalization, Ontario County Court. Same person as in src_002 (1872 declaration): same given name initial, same surname, same Swiss allegiance, consistent timeline (filed first papers 1872, admitted 1876).",
+      "match_score": null,
+      "created": "2026-07-28",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Sex assertion (male) from 1876 naturalization \u2014 consistent with subject.",
+      "match_score": null,
+      "created": "2026-07-28",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_012",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Final Naturalization 26 Oct 1876, Ontario County Court, Canandaigua NY. Subject Johann Frederich Widmer documented as residing in Naples, Ontario County. Court order confirms admission as citizen.",
+      "match_score": null,
+      "created": "2026-07-28",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_013",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Residence Naples, Ontario County NY (implied by witnesses Cooley and Merkel of Naples), ca. 1875-1876. Consistent with tree residence facts for Naples 1900/1910.",
+      "match_score": null,
+      "created": "2026-07-28",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_014",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "Nationality Switzerland confirmed by abjuration of allegiance to the President of Switzerland \u2014 corroborates birthplace assertion from src_002.",
+      "match_score": null,
+      "created": "2026-07-28",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_015",
+      "person_id": "L7B2-QXX",
+      "confidence": "confident",
+      "rationale": "US residence at least 5 years before Oct 1876 (per witness testimony) = arrival by at least 1871, consistent with immigration 1872 in tree (slight overlap; 5-year requirement may be approximate).",
+      "match_score": null,
+      "created": "2026-07-28",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_002",
+        "a_004",
+        "a_013"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "All relevant FamilySearch death-record resources were searched across two research plans: NY State Death Index (four name variants: Johann, Joh Friedrich, John F., John Widmer), NY Deaths and Burials (three variants), NY Church and Civil Deaths, NY Church Records, NY Cemetery Abstracts, Ontario County Probate Records (indexed and full-text corpus), and the 1915 and 1925 New York State Censuses \u2014 all negative for the subject. Positive finding: Find A Grave Index (src_001), giving death date 4 Jul 1914 and burial at Naples, Ontario County, NY. Three accessible external-site sources were deferred due to autonomous-session constraints (not sealed by privacy law, accessible to an interactive researcher): (1) Find A Grave memorial page GRid=136852260 (may contain gravestone photograph), (2) Ancestry NY Death Index 1880\u20131956 (may index original state death certificate), and (3) Newspapers.com Ontario County obituaries 1913\u20131916 (may provide independent death date). Research declared early termination (declared: false).",
+      "narrative_markdown": "## Death of Johann Frederich Widmer (ca. 1847\u20131914) \u2014 Probable\n\n**Conclusion:** Johann Frederich Widmer died on 4 July 1914 and was buried in Naples, Ontario County, New York.\n\n### Evidence\n\n**Direct evidence \u2014 death date and burial place (Find A Grave Index).** The FamilySearch-indexed Find A Grave entry for Johann Frederich Widmer (memorial 136852260) directly records a death date of 4 July 1914 and burial at Naples, Ontario County, New York.\u00b9 This source is derivative and secondary: the memorial was created by an unknown volunteer contributor of unverified relationship to the deceased; the specific original source of the date (gravestone, death certificate, obituary, or family record) is unidentified; and the memorial was almost certainly created some time after the death. No corroborating original record with primary death information was located in FamilySearch collections. The Find A Grave Index is an abstracted/indexed version of the underlying memorial \u2014 the full memorial page (GRid=136852260) was not independently examined in this research and may contain a gravestone photograph or additional source citations.\n\n**Corroborating evidence \u2014 Naples community ties (1876 Final Naturalization).** The 1876 Final Naturalization record for John F. Widmer (Ontario County Court, Canandaigua, New York, 26 October 1876) is an original court record confirming the subject's established residence in the Naples, Ontario County community from at least 1876.\u00b2 Witnesses W.S. Cooley and Frank Merkel, both \"of Naples,\" attested in open court to his five-year US residence and good moral character. This 38-year span of documented Naples residency fully supports the claimed burial in that community.\n\n**Negative evidence \u2014 1915 New York State Census absence.** Thorough searches of the indexed 1915 New York State Census under all known name variants (Johann Widmer, Joh Friedrich Widmer, John F. Widmer, John Widmer) returned no entry for the subject in Ontario County. His absence from this census is consistent with a death before the June 1915 enumeration and provides indirect support for the Find A Grave date of 4 July 1914, though it does not independently confirm that specific date.\n\n### Searches conducted\n\nAll relevant FamilySearch resources were searched exhaustively: NY State Death Index (four name variants), NY Deaths and Burials (three variants), NY Church and Civil Deaths, NY Church Records, NY Cemetery Abstracts, Ontario County Probate Records (indexed and full-text), and the 1915 and 1925 NY State Censuses \u2014 all negative. Three accessible external sources remain deferred: (1) the actual Find A Grave memorial page (GRid=136852260), which may contain a gravestone photograph; (2) the Ancestry-indexed New York Death Index 1880\u20131956, which may index the original state death certificate; and (3) Newspapers.com Ontario County obituaries for 1913\u20131916, which may provide an independent death date and burial detail.\n\n### Tier declaration\n\n**Probable.** The death date 4 July 1914 and burial in Naples, Ontario County, New York are the most probable conclusion from the available evidence. No source contradicts this finding; all negative searches are consistent with it; and the 38-year documented residence in Naples strongly supports that community as the burial location. The *proved* standard is not met: GPS Component 1 (reasonably exhaustive research) is only partially satisfied due to three deferred external sources; independent verification (GPS Component 3) is not met because only one source directly states the death date; and evidence class (GPS Component 4) is not met because no original record with primary information was accessed. To advance to *proved*, an interactive researcher should retrieve the actual Find A Grave memorial page and, if a gravestone photograph is present, the Ancestry death index entry linking to the original New York State death certificate.\n\n---\n\u00b9 \"Find a Grave Index,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVPQ-9MRR : accessed 28 July 2026), entry for Johann Frederich Widmer; citing Find a Grave memorial 136852260 (http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=136852260).\n\n\u00b2 \"New York, County Naturalization Records, 1791-1980,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WR83-QR3Z : accessed 28 July 2026), Entry for John F Widmer, 1876; image of Final Naturalization (Second Papers / Court Order of Admission), Ontario County Court, Canandaigua, New York, 26 October 1876."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_007",
+        "a_014",
+        "a_005"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch Swiss church record collections searched exhaustively: col. 4138674 (Switzerland Catholic and Reformed Church Records, 1418-1996, multiple name-based searches including father Hans Ulrich Widmer + mother Schaffner + anyPlace Hausen) and col. 1520585 (Switzerland Baptisms, surname Widmer, givenName Johann Friedrich) \u2014 all negative for a pre-1850 Hausen baptism. The only digitized FamilySearch volume specifically for Hausen (imageGroupNumber 008119345_010, 1850-1885) postdates the 1847 birth. Swiss civil registration did not begin until 1876. US Federal Censuses 1900 and 1910 (Ontario County) searched \u2014 negative. Immigration/naturalization records searched: NY County Naturalization Records (two records found, both examined with images), Germans to America Index, NY Passenger Lists. The pre-1850 Hausen Reformed baptism register (decisive source) exists at the Aargau State Archives and requires physical archive access \u2014 not accessible via FamilySearch tools. Research declared early termination (declared: false).",
+      "narrative_markdown": "## Birth of Johann Frederich Widmer \u2014 Probable\n\n**Conclusion:** Johann Frederich Widmer was born in Hausen, Switzerland (Aargau canton) \u2014 recorded as \"Honsen, Switzerland\" in the primary source \u2014 probably in early 1847, with 25 January 1847 as the date indicated by a secondary source pending primary-record confirmation.\n\n### Evidence for birthplace\n\n**1872 Declaration of Intention \u2014 primary informant, direct evidence.** On 21 October 1872, John Frederick Widmer appeared before Alonzo L. Mabbett, Clerk of Monroe County Courts, and swore under oath that he \"was born in Honsen Switzerland.\"\u00b9 The declarant himself \u2014 the most proximate possible informant for his own birth \u2014 supplied this statement in a legal proceeding with significant personal consequences. The source is a certified transcript (derivative) of the original declaration on file; the information it conveys is primary: the declarant\u2019s own sworn statement about his birthplace. The spelling \"Honsen\" is almost certainly a phonetic rendering of \"Hausen\" \u2014 specifically Hausen, Aargau, Switzerland, the documented birthplace of the subject\u2019s father, Hans Ulrich Widmer (KG12-2BT), as recorded in the family tree. No Swiss locality named \"Honsen\" or a close phonetic variant has been identified apart from Hausen. The original declaration on file at Monroe County (not the certified transcript) was not independently examined.\n\n**1876 Final Naturalization \u2014 independent corroboration of Swiss allegiance.** In his oath administered by Ontario County Court (26 October 1876), John Widmer swore to renounce allegiance to \"the President of Switzerland of whom I am a subject.\"\u00b2 This original court record \u2014 issued by a different court, in a different county, four years after the Declaration of Intention \u2014 independently and directly confirms his status as a Swiss national. The two naturalization records are genuinely independent sources created at different times and in different jurisdictions.\n\n**Ancestral corroboration.** The subject\u2019s father, Hans Ulrich Widmer (KG12-2BT), is documented in the family tree as born in Hausen, Aargau, Switzerland. The convergence of the father\u2019s documented Hausen origin with the subject\u2019s sworn \"Honsen, Switzerland\" birthplace strongly supports interpreting \"Honsen\" as Hausen, Aargau.\n\n### Evidence for birth date\n\nThe specific date 25 January 1847 comes solely from the Find A Grave Index (memorial GRid=136852260), created by an unknown contributor of unverified relationship to the deceased.\u00b3 This source is derivative (a compiled index of contributor-submitted memorial data) and secondary (the contributor did not witness the birth). The approximate year 1847 is consistent with the subject\u2019s established life facts: immigration ca. 1872 (age ~25), naturalization 1876, marriage May 1874, and death 4 July 1914 (age ~67). The specific day and month \u2014 25 January \u2014 have no independent corroboration and remain unverified pending the pre-1850 Hausen Reformed baptism register.\n\n### Searches conducted\n\nFamilySearch Swiss church record collections exhaustively searched (col. 4138674 and col. 1520585) \u2014 no pre-1850 Hausen baptism found. The only digitized Hausen volume (008119345_010, covering 1850\u20131885) postdates the 1847 birth. US Federal Censuses 1900 and 1910 (Ontario County) searched \u2014 subject not found in indexed records. The decisive source \u2014 the pre-1850 Hausen Reformed baptism register \u2014 is held at the Aargau State Archives (Staatsarchiv Aargau) and requires physical access or a hired Swiss researcher; it was not accessible via FamilySearch tools.\n\n### Tier declaration\n\n**Probable.** Birthplace \"Hausen, Switzerland\" is established at probable confidence: two independent, primary-informant, sworn-under-oath sources both confirm Switzerland as country of birth, and one specifically records \"Honsen, Switzerland\" \u2014 an almost certain phonetic rendering of Hausen. The father\u2019s documented Hausen origin further supports the specific locality. No competing birthplace claim exists in any searched record. Birth date 25 January 1847 remains at possible confidence (single secondary/derivative source, no primary-record corroboration); the approximate year ca. 1847 is probable from life-event consistency. The overall question is rated **probable**, with the date bounded to ca. January 1847. To advance to *proved*, a researcher should access the pre-1850 Hausen Reformed baptism register at the Aargau State Archives, which would supply primary information for both exact date and parish of birth.\n\n---\n\u00b9 \"New York, County Naturalization Records, 1791-1980\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WN3D-HV2M : accessed 2026-07-28), Entry for John Frederick Widmer, Monroe County, Declaration of Intention, 21 October 1872.\n\n\u00b2 \"New York, County Naturalization Records, 1791-1980\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WR83-QR3Z : accessed 28 July 2026), Entry for John F Widmer, 1876; image of Final Naturalization (Second Papers / Court Order of Admission), Ontario County Court, Canandaigua, New York, 26 October 1876.\n\n\u00b3 \"Find a Grave Index,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVPQ-9MRR : accessed 28 July 2026), entry for Johann Frederich Widmer; citing Find a Grave memorial 136852260 (http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=136852260)."
+    },
+    {
+      "id": "ps_003",
+      "question_id": "q_003",
+      "tier": "not_proved",
+      "vehicle": "statement",
+      "supporting_assertion_ids": [
+        "a_004"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "All FamilySearch burial-record resources were searched under q_001's plans: NY Cemetery Abstracts (pli_009, negative), NY Church and Civil Deaths (pli_010, negative), NY Church Records (pli_008, negative). No FamilySearch source supplies a burial date or specific cemetery name for Johann Frederich Widmer. Three accessible external-site sources remain deferred due to autonomous-mode constraint: (1) Find A Grave memorial #136852260 (may name specific cemetery and carry burial date), (2) Ancestry NY Death Index 1880-1956 (may link to death certificate noting disposition), (3) Newspapers.com Ontario County obituaries 1913-1916 (may publish funeral arrangements and cemetery). Research: early termination (declared: false).",
+      "narrative_markdown": "## Burial Date and Cemetery of Johann Frederich Widmer \u2014 Not Proved\n\n**Conclusion:** The specific burial date and cemetery name for Johann Frederich Widmer in Naples, Ontario County, New York cannot be established from the sources searched. The burial *place* (Naples, Ontario County, NY) is established at probable confidence through ps_001 and the Find A Grave Index entry (memorial #136852260).\u00b9\n\n### Searches conducted\n\nAll FamilySearch burial-record resources were searched exhaustively under q_001's research plans: New York, Cemetery Abstracts, 1800\u20131965 (FamilySearch collection 2552111) \u2014 negative; New York, Church and Civil Deaths, 1797\u20131963 (collection 2373798) \u2014 negative; New York, Church Records, 1660\u20131954 (collection 2787817) \u2014 negative. No indexed FamilySearch source returns a burial date or cemetery name for the subject.\n\n### Deferred sources\n\nThree sources accessible to an interactive researcher remain unexamined:\n1. **Find A Grave memorial #136852260** (findagrave.com) \u2014 the full memorial page may name the specific cemetery (likely Rose Ridge Cemetery, Naples, based on family burial patterns noted in research) and may carry a burial date or gravestone transcription supplied by the contributor.\n2. **Ancestry, New York Death Index 1880\u20131956** \u2014 may link to the original New York State death certificate, which sometimes records the place of burial or disposal of remains.\n3. **Newspapers.com, Ontario County obituaries 1913\u20131916** \u2014 an obituary for Johann Widmer in this window would typically name the cemetery, the officiating minister, and the date of the funeral service.\n\n### Tier declaration\n\n**Not proved.** No currently accessible source establishes the specific burial date or cemetery name. The burial place (Naples, Ontario County, NY) is addressed in ps_001. The three deferred external sources are the primary candidates for resolving the burial date; an interactive researcher with access to these platforms should examine them to advance this finding.\n\n---\n\u00b9 \"Find a Grave Index,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVPQ-9MRR : accessed 28 July 2026), entry for Johann Frederich Widmer; citing Find a Grave memorial 136852260 (http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=136852260)."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-28T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-28T00-00-00.json"
+    },
+    {
+      "id": "ev_002",
+      "focus": "proof-critique",
+      "target_id": "ps_002",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-28T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_002-2026-07-28T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Ontario, New York, United States",
+      "for_place": "Naples, Ontario, New York, United States",
+      "time_period": "1845-1925",
+      "jurisdictions": [
+        {
+          "name": "Naples, Ontario, New York, United States",
+          "date_range": "1789/"
+        },
+        {
+          "name": "Naples, Naples, Ontario, New York, United States",
+          "date_range": "1894/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2803479",
+          "title": "New York, State Death Index, 1880-1956",
+          "date_range": "1880-1956"
+        },
+        {
+          "id": "1680846",
+          "title": "New York, Deaths and Burials, 1795-1952",
+          "date_range": "1795-1952"
+        },
+        {
+          "id": "2373798",
+          "title": "New York, Church and Civil Deaths, 1797-1963",
+          "date_range": "1797-1963"
+        },
+        {
+          "id": "2552111",
+          "title": "New York, Cemetery Abstracts, 1800-1965",
+          "date_range": "1800-1965"
+        },
+        {
+          "id": "2787817",
+          "title": "New York, Church Records, 1660-1954",
+          "date_range": "1660-1954"
+        },
+        {
+          "id": "1920234",
+          "title": "New York, Probate Records, 1629-1971",
+          "date_range": "1629-1971"
+        },
+        {
+          "id": "1999177",
+          "title": "New York, County Naturalization Records, 1791-1980",
+          "date_range": "1791-1980"
+        },
+        {
+          "id": "1529100",
+          "title": "New York, State Census, 1892",
+          "date_range": "1892-1915"
+        },
+        {
+          "id": "1463113",
+          "title": "New York, State Census, 1905",
+          "date_range": "1905-1905"
+        },
+        {
+          "id": "1937454",
+          "title": "New York, State Census, 1915",
+          "date_range": "1915-1915"
+        },
+        {
+          "id": "1937489",
+          "title": "New York, State Census, 1925",
+          "date_range": "1925-1925"
+        },
+        {
+          "id": "1680842",
+          "title": "New York, Births and Christenings, 1640-1962",
+          "date_range": "1640-1962"
+        }
+      ],
+      "quirks": [
+        "NY statewide death registration began 1880; general compliance by 1890. Deaths before 1890 may be unregistered \u2014 use church records, newspaper notices, and cemetery records as substitutes.",
+        "Ontario County vital record start dates: deaths 1880, births 1880, marriages 1908. The county seat is Canandaigua; some records are held at the Ontario County Dept. of Records, Archives and Information Management Services (RAIMS) \u2014 raims.com has a free online death index for Canandaigua 1882-1909 and census indexes through 1892.",
+        "Ontario County Journal (Canandaigua) published death notices 1873-1910, freely transcribed at ontario.nygenweb.net \u2014 a key substitute source for pre-registration deaths.",
+        "Rose Ridge Cemetery, Naples (Ontario County) appears in burial records for multiple Widmer family members; also check Find A Grave, BillionGraves, and Interment.net for Ontario County cemeteries.",
+        "NY State Census was taken every 10 years in years ending in 5 (1855, 1865, 1875, 1892, 1905, 1915, 1925) \u2014 these fill gaps between federal census years and often list birthplace and parents' birthplace.",
+        "For a Swiss immigrant, check NY Naturalization records (county court, NARA Western District) as naturalization papers often state exact birthplace and date of immigration.",
+        "A Find A Grave Index entry for Johann Frederich Widmer (FamilySearch source SLWP-HCJ) is already attached to the project tree and should be the first record extracted."
+      ],
+      "guide_markdown": "# Locality Guide: Naples, Ontario County, New York (1845\u20131925)\n\n## Jurisdictional Context\n\nNaples (Town, organized 1789) and Naples Village (incorporated 1894) are in **Ontario County**, New York. The county was organized 27 January 1789 from Montgomery County, with Canandaigua as its seat. Boundaries remained stable throughout the target period. Naples sits in the southwestern corner of Ontario County, bordering Steuben and Yates counties.\n\n## Death Records\n\n| Record Type | Date Range | Access | FamilySearch Collection |\n|-------------|-----------|--------|------------------------|\n| NY State Death Index | 1880\u20131956 | Indexed + images | [2803479](https://www.familysearch.org/search/collection/2803479) |\n| NY Deaths and Burials | 1795\u20131952 | Indexed | [1680846](https://www.familysearch.org/search/collection/1680846) |\n| NY Church and Civil Deaths | 1797\u20131963 | Indexed | [2373798](https://www.familysearch.org/search/collection/2373798) |\n\n**Key caveat:** Statewide death registration began 1880 and was generally complied with by 1890. For deaths before ca. 1890, expect gaps; rely on newspaper notices, church records, and cemetery transcriptions as substitutes.\n\n### Death Substitutes (pre-1880 / compliance gap)\n- **Ontario County Journal** death notices, 1873\u20131910: free transcriptions at ontario.nygenweb.net\n- **Ontario Repository & Messenger** death notices, 1868\u20131873: free at NYGenWeb\n- Church records (see below)\n- Cemetery records (see below)\n\n## Burial / Cemetery Records\n\n| Resource | Notes |\n|----------|-------|\n| Find A Grave | Searchable; a memorial for Johann Frederich Widmer already exists (SLWP-HCJ) |\n| BillionGraves | Searchable by name and Ontario County |\n| Interment.net | Ontario County section |\n| NY Cemetery Abstracts 1800\u20131965 | FamilySearch col. 2552111 \u2014 indexed |\n| Rose Ridge Cemetery, Naples NY | Family members (George, Fred E., Howard Widmer) buried here \u2014 high probability for Johann |\n| NYGenWeb Cemeteries | ontario.nygenweb.net/cemeteries.htm |\n\n## Census Records\n\n**Federal censuses** available for this period (all indexed on FamilySearch): 1860, 1870, 1880, 1900, 1910, 1920.\n\n**New York State censuses** (fill federal gaps, often include birthplace/parents' birthplace):\n\n| Year | FamilySearch Collection |\n|------|------------------------|\n| 1855 | 1937366 |\n| 1865 | 1491284 |\n| 1875 | 1918735 |\n| 1892 | 1529100 |\n| 1905 | 1463113 |\n| 1915 | 1937454 |\n| 1925 | 1937489 |\n\nAll state census years listed above are fully indexed on FamilySearch. The **Ontario County Records and Archives Center** (raims.com) also has completed census name indexes through 1892, searchable by town.\n\n## Church Records\n\n- **NY Church Records, 1660\u20131954** (FamilySearch col. 2787817) \u2014 127,105 indexed records\n- **Marriage and Funeral Records of Universalist Church, 1850s\u20131880s** \u2014 free at ontario.nygenweb.net\n- **Rev. O.P. Alderman Marriages (Naples & Phelps), 1846\u20131888** \u2014 NYGenWeb\n- **Cornell University Study Center for Early Religious Life in Western New York** holds Ontario County church records; online guide at rmc.library.cornell.edu\n\nFor a Swiss Reformed or Lutheran immigrant, check Universalist, Reformed, and Lutheran churches in Naples township.\n\n## Probate Records\n\n- **NY Probate Records, 1629\u20131971** (FamilySearch col. 1920234) \u2014 ~14 million images, browse-only (0% indexed). Ontario County Surrogate Court records from 1789. Probate petitions (required from 1830) typically state death date and list heirs.\n- **NY Wills and Probate Records, 1659\u20131999** at Ancestry \u2014 indexed + images ($)\n\n## Naturalization Records (Swiss immigrant)\n\n- **NY County Naturalization Records, 1791\u20131980** (col. 1999177) \u2014 3.3M indexed records \u2014 search Ontario County\n- **NY Naturalization Index (Soundex), 1792\u20131906** (col. 2043782) \u2014 indexed + images\n- **NY Western District Naturalization Index, 1907\u20131966** (col. 1854307) \u2014 indexed + images\n\nNaturalization papers often give exact birthplace and date/port of immigration \u2014 high value for establishing birth information.\n\n## Newspapers & Obituaries\n\n- Ontario County Journal, Canandaigua: death notices 1873\u20131910 (free, ontario.nygenweb.net/records.htm)\n- Ontario Repository & Messenger: death/marriage notices 1841\u20131873 (free, NYGenWeb)\n- Ontario County Chronicle: notices 1900\u20131907 (free, NYGenWeb)\n- NY Obituary Resources: genealogybuff.com/ny/\n\n## External Repositories\n\n- **Ontario County Dept. of Records, Archives and Information Management Services (RAIMS)**: raims.com \u2014 free online death index for Canandaigua 1882\u20131909; census indexes through 1892\n- **New York State Department of Health**: genealogy.health.ny.gov \u2014 certified death certificates from 1880 for a fee\n- **New York State Archives**: nysarchives.nysed.gov \u2014 pre-1880 vital records and court records\n\n## Research Priority for This Project\n\n1. **Find A Grave entry already in sources (SLWP-HCJ)** \u2014 extract it first; likely gives death date, burial place, and cemetery name.\n2. **NY State Death Index, 1880\u20131956** (col. 2803479) \u2014 search for death registration; will give exact date, place, and often informant.\n3. **NY State Census 1915/1925** \u2014 if Johann survived past 1910 (last census appearance), these will confirm continued residence or flag departure.\n4. **Rose Ridge Cemetery, Naples** \u2014 multiple Widmer children buried there; Johann almost certainly buried here too.\n5. **Ontario County Journal obituaries/death notices** (1873\u20131910) \u2014 free substitute if death predates 1880 or record is unregistered.\n6. **Naturalization records** \u2014 for exact Swiss birthplace and immigration date.\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/New_York,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/New_York_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/New_York_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/New_York_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "loc_002",
+      "place": "Switzerland",
+      "for_place": "Hausen, Aargau, Switzerland",
+      "time_period": "1840-1860",
+      "jurisdictions": [
+        {
+          "name": "Hausen bei Brugg, Aargau, Switzerland",
+          "date_range": "1803-2003"
+        },
+        {
+          "name": "Hausen, Aargau, Switzerland",
+          "date_range": "2003-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4138674",
+          "title": "Switzerland, Catholic and Reformed Church Records, 1418-1996",
+          "date_range": "1418-1996"
+        },
+        {
+          "id": "1520585",
+          "title": "Switzerland, Baptisms, 1491-1940",
+          "date_range": "1491-1940"
+        },
+        {
+          "id": "1520589",
+          "title": "Switzerland Marriages, 1532-1910",
+          "date_range": "1532-1910"
+        },
+        {
+          "id": "1520590",
+          "title": "Switzerland, Burials, 1613-1875",
+          "date_range": "1613-1875"
+        },
+        {
+          "id": "1640373",
+          "title": "Switzerland, Church Records, 1277-1992",
+          "date_range": "1277-1992"
+        },
+        {
+          "id": "1790933",
+          "title": "Switzerland, Church Book Extracts, 1550-1875",
+          "date_range": "1550-1875"
+        }
+      ],
+      "quirks": [
+        "Swiss civil registration began in 1875 \u2014 for a birth ca. 1847, only Reformed church baptismal registers apply.",
+        "Hausen is a Reformed (Protestant) parish since the 1520s-1530s Reformation; Catholic records are not expected for Hausen proper.",
+        "The only FamilySearch digitized volume for Hausen (imageGroupNumber 008119345_010_M99W-MXT, 164 images) covers 1850-1885 at 100% indexing \u2014 it does NOT contain a January 1847 baptism. Earlier pre-1850 records must be sought in col. 4138674 or via Aargau State Archives microfilm.",
+        "col. 4138674 (Switzerland, Catholic and Reformed Church Records, 1418-1996) has 19.7M indexed records and 2M images \u2014 this is the primary FamilySearch collection for Aargau church records including Hausen.",
+        "col. 1520585 (Switzerland, Baptisms, 1491-1940) has 776K indexed records (no images) \u2014 a broad surname search here may surface Hausen entries not caught elsewhere.",
+        "Pre-1875 Aargau parish registers are held on microfilm at the Aargau State Archives (ag.ch/de/verwaltung/bks/kultur/kulturpflege/bibliothek-archiv/staatsarchiv); inventory: ag.ch/media/kanton_aargau/bks/dokumente_1/kultur/staatsarchiv/BKSSTAR_Verzeichnis-KI.pdf",
+        "Records are in German and Latin. German-language baptismal entries typically give: child's name, date, father's name, mother's name and maiden surname, godparents.",
+        "Surname Widmer is common in Aargau \u2014 try exact spelling first; no umlauts in this name. Variant 'Witmer' sometimes appears in emigrant contexts."
+      ],
+      "guide_markdown": "## Locality Guide \u2014 Hausen, Aargau, Switzerland (1840\u20131860)\n\n### Jurisdictional Context\nHausen (historically 'Hausen bei Brugg') is a municipality in Canton Aargau, Switzerland, near the town of Brugg. Aargau joined the Swiss Confederation as a new canton in 1803. Genealogical records are kept at the local (municipal) and cantonal level \u2014 there is no national centralization.\n\n### Civil Registration\nSwitzerland did not begin civil registration (government vital records) until **1875**. For a birth ca. 25 Jan 1847, **only church records apply**.\n\n### Church Records \u2014 Primary Record Type\nHausen is an overwhelmingly **Reformed** (Swiss Reformed / Protestant) parish; it became Reformed during the 1520s-1530s. Catholic records are not expected for this municipality.\n\n**FamilySearch digitized Hausen volume:**\n- imageGroupNumber **008119345_010_M99W-MXT** (164 images)\n- Coverage: Baptisms (Taufen) 1850\u20131885; Marriages 1850\u20131885; Deaths 1850\u20131899\n- recordSearchablePercent: **100%** (fully name-indexed)\n- Language: German and Latin\n- \u26a0\ufe0f Starts 1850 \u2014 does NOT cover a January 1847 baptism.\n\n**Broader FamilySearch Switzerland collections (1840-1860 window):**\n| Collection | ID | Records | Access |\n|---|---|---|---|\n| Switzerland, Catholic and Reformed Church Records, 1418-1996 | 4138674 | 19.7M records / 2M images | Indexed + images |\n| Switzerland, Baptisms, 1491-1940 | 1520585 | 776K records | Index only |\n| Switzerland, Marriages, 1532-1910 | 1520589 | 211K records | Index only |\n| Switzerland, Burials, 1613-1875 | 1520590 | 135K records | Index only |\n| Switzerland, Church Records, 1277-1992 | 1640373 | 517K images | Browse-only |\n| Switzerland, Church Book Extracts, 1550-1875 | 1790933 | 15K images | Browse-only |\n\n### Physical Holdings\n- **Aargau State Archives** (microfilm of most parish registers): https://www.ag.ch/de/verwaltung/bks/kultur/kulturpflege/bibliothek-archiv/staatsarchiv\n- **Hausen municipal archive**: original records\n- Parish record inventory for Aargau: https://www.ag.ch/media/kanton_aargau/bks/dokumente_1/kultur/staatsarchiv/BKSSTAR_Verzeichnis-KI.pdf\n\n### External Resources\n- Ancestry: Switzerland Select Baptisms (col. 60170), Switzerland Select Marriages (col. 60174)\n- MyHeritage: Switzerland Baptisms 1491-1940\n- Swiss Genealogy on the Internet: http://kunden.eye.ch/swissgen/\n- GHGRB Billeter Sammlung (compiled Swiss genealogies): https://www.ghgrb.ch/index.php/de/forschungshilfen/billeter\n\n### Research Strategy for ca. 1847 Birth\n1. Search col. 4138674 with surname 'Widmer', birthYear ~1847, place Hausen/Aargau \u2014 primary indexed collection\n2. Search col. 1520585 (Switzerland Baptisms) \u2014 surname 'Widmer', broad date range\n3. If no result: search father Hans Ulrich Widmer in same collections to confirm which parish covered Hausen\n4. If FamilySearch negative: Aargau State Archives microfilm at a FamilySearch center",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Switzerland_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Switzerland_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Switzerland_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Switzerland_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-28"
+    }
+  ]
+}

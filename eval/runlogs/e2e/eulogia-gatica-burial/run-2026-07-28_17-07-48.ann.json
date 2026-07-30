@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f2": "1865 birth year present and sourced to the cemetery + civil records, so recovered (true). But the conflicting 1862 christening remains in the tree and the conflict (c_001) was recorded, not resolved — resolved_conflict_ids is empty under a 'proved' tier. Birth year is in the question's own scope, so leaving it unresolved is why proof quality is thin, not sound."
+  },
+  "annotator": "mercyokum"
+}

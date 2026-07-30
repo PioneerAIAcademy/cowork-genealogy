@@ -12,8 +12,8 @@
 // manually paginating through) the whole growing research.json. Evidence: a
 // wilkins-marriage e2e run made 53 Read calls on research.json, including
 // hand-paginated reads (offset 850/1500/2000/2500) immediately before the
-// run's single longest generation gap (385s) — see
-// docs/plan/tree-materialization-batching-plan.md's Phase-4 follow-up.
+// run's single longest generation gap (385s) — measured in the 2026-07-26
+// batching-work verification run; see docs/specs/research-query-tool-spec.md.
 //
 // Deliberately NOT a generic filter (an arbitrary `{field: value}` object) —
 // that is exactly the "jq-style," "open-ended context cost, un-promptable"

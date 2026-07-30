@@ -1,0 +1,879 @@
+{
+  "persons": [
+    {
+      "id": "LZ3Z-RHM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Eulojia del Carmen",
+          "surname": "Gatica Alfaro"
+        },
+        {
+          "id": "N15",
+          "type": "BirthName",
+          "given": "Eulogia",
+          "surname": "Gatica Alfaro",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N16",
+          "type": "BirthName",
+          "given": "Eulojia",
+          "surname": "Gatica Alfaro",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "29 May 1908",
+          "standard_date": "29 May 1908",
+          "place": "Santiago, Santiago, Chile",
+          "standard_place": "Santiago de Chile, Santiago, Chile",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "52729987-b801-4c05-9589-48bab887e5ec",
+          "type": "Christening",
+          "date": "2 October 1862",
+          "standard_date": "2 Oct 1862",
+          "place": "Los Andes, Aconcagua, Chile",
+          "standard_place": "Los Andes, Valpara\u00edso, Chile"
+        },
+        {
+          "id": "f49f8217-39b6-48b9-9412-9043b5fa1fab",
+          "type": "Residence",
+          "place": "Los Andes, Aconcagua, Chile",
+          "standard_place": "Los Andes, Valpara\u00edso, Chile"
+        },
+        {
+          "id": "F2",
+          "type": "Burial",
+          "date": "30 May 1908",
+          "place": "Santiago, Chile",
+          "standard_place": "Santiago, Chile",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Birth",
+          "date": "1865",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "DeathRegistration",
+          "place": "Santiago, Santiago, Metropolitana de Santiago, Chile",
+          "standard_place": "Santiago Centro, Santiago, Chile",
+          "value": "Registered in Santiago, Santiago, Chile",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MX45-9HH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Carmen",
+          "surname": "Alfaro Vilches"
+        },
+        {
+          "id": "N18",
+          "type": "BirthName",
+          "given": "C\u00e1rmen",
+          "surname": "Alfaro",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "79a42bc4-0c43-400c-9527-71a2c9c4d8b7",
+          "type": "Birth",
+          "date": "1828",
+          "standard_date": "1828"
+        },
+        {
+          "id": "071f4ca6-8d83-4d7e-a2cd-ce0cfeb1c45d",
+          "type": "Death",
+          "date": "2 January 1888",
+          "standard_date": "2 Jan 1888",
+          "place": "Santiago, Santiago, Chile",
+          "standard_place": "Santiago de Chile, Santiago, Chile"
+        }
+      ]
+    },
+    {
+      "id": "KNT6-7ZR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Buenaventura",
+          "surname": "Gatica \u00c1rias"
+        },
+        {
+          "id": "N17",
+          "type": "BirthName",
+          "given": "Ventura",
+          "surname": "Gatica",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "12 January 1829",
+          "standard_date": "12 Jan 1829",
+          "place": "Santa Rosa, Los Andes, Aconcagua, Chile",
+          "standard_place": "Santa Rosa, Calle Larga, Los Andes, Valpara\u00edso, Chile"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "b6f5b1b1-3b35-4137-9e83-5a3242422f99",
+          "type": "Residence",
+          "place": "Los Andes, Aconcagua, Chile",
+          "standard_place": "Los Andes, Valpara\u00edso, Chile"
+        }
+      ]
+    },
+    {
+      "id": "GDV2-WWJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Mar\u00eda Lu\u00edsa del Rosario",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "ba096a99-37b5-435c-b144-6a986be1826e",
+          "type": "Birth",
+          "date": "6 de septiembre de 1889",
+          "standard_date": "6 Sep 1889"
+        },
+        {
+          "id": "33a8b685-620a-46f7-9c97-13dbe1e585cd",
+          "type": "Christening",
+          "date": "28 de septiembre de 1889",
+          "standard_date": "28 Sep 1889",
+          "place": "Santiago, Santiago, Chile",
+          "standard_place": "Santiago de Chile, Santiago, Chile"
+        },
+        {
+          "id": "21b00a44-2d14-4f25-bdb1-eab982cb9e0c",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GDVK-Y8P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Juan de Dios",
+          "surname": "Gonz\u00e1lez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1a1e1675-bc82-4410-9337-384248aa1822",
+          "type": "Birth",
+          "date": "11 de diciembre de 1890",
+          "standard_date": "11 Dec 1890"
+        },
+        {
+          "id": "37985ba8-0e72-4c08-b515-e79a3d911afe",
+          "type": "Christening",
+          "date": "16 de diciembre de 1890",
+          "standard_date": "16 Dec 1890",
+          "place": "Santiago, Santiago, Chile",
+          "standard_place": "Santiago de Chile, Santiago, Chile"
+        },
+        {
+          "id": "ecdb4531-b6a6-44c9-a45c-98744305306c",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "L5YK-JVZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Manuel  Jesus",
+          "surname": "Gonzalez Gatica"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1e37564a-5b34-41bc-994a-b1efdcc5de67",
+          "type": "Birth",
+          "date": "17 junio 1898",
+          "standard_date": "17 Jun 1898",
+          "place": "Recoleta, Santiago, Regi\u00f3n Metropolitana de Santiago, Chile",
+          "standard_place": "Recoleta, Santiago, Chile"
+        },
+        {
+          "id": "e0be2c4f-f084-41d6-9620-63c2f0e187d3",
+          "type": "Christening",
+          "date": "21 de junio de 1898",
+          "standard_date": "21 Jun 1898",
+          "place": "Santiago, Santiago, Chile",
+          "standard_place": "Santiago de Chile, Santiago, Chile"
+        },
+        {
+          "id": "7048fa55-d54e-4e02-accc-5169ace2c94a",
+          "type": "Death",
+          "date": "13 January 1900",
+          "standard_date": "13 Jan 1900",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "8f90d18d-3d9d-4510-8576-d19273aabb4c",
+          "type": "Birth+Registration"
+        }
+      ]
+    },
+    {
+      "id": "L5NJ-WPP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Jos\u00e9 Antonio",
+          "surname": "Gonz\u00e1lez Gatica"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0977275f-ec05-47bb-9bf6-a70e3e84bf41",
+          "type": "Birth",
+          "date": "21 October 1892",
+          "standard_date": "21 Oct 1892",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "9cae60e5-c90f-4b63-b0ed-645cf606bbb7",
+          "type": "Death",
+          "date": "04 Oct 1893",
+          "standard_date": "4 Oct 1893"
+        },
+        {
+          "id": "b5b8788b-415c-4bd3-afc3-0f07d1478ff2",
+          "type": "Birth+Registration",
+          "place": "Recoleta, Santiago, Chile",
+          "standard_place": "Recoleta, Santiago, Chile"
+        }
+      ]
+    },
+    {
+      "id": "LZ3Z-R41",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Juan Jos\u00e9",
+          "surname": "Gonz\u00e1lez"
+        },
+        {
+          "id": "N19",
+          "type": "BirthName",
+          "given": "Juan",
+          "surname": "Gonzalez",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "09a070f9-ccc5-4fc6-a462-7d850a6f9af0",
+          "type": "Birth",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Talca, Talca, Maule, Chile",
+          "standard_place": "Talca, Talca, Chile"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "antes de 1908",
+          "standard_date": "1908"
+        }
+      ]
+    },
+    {
+      "id": "G8S3-DC5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Luisa del Carmen",
+          "surname": "Gonz\u00e1lez Gatica"
+        }
+      ],
+      "facts": [
+        {
+          "id": "38eed826-c6a5-483f-8246-c0732d353eb6",
+          "type": "Birth",
+          "date": "31 March 1884",
+          "standard_date": "31 Mar 1884",
+          "place": "Santiago, Santiago, Chile",
+          "standard_place": "Santiago de Chile, Santiago, Chile"
+        },
+        {
+          "id": "567ed504-028b-4ecc-aa5d-9381a10ff096",
+          "type": "Christening",
+          "date": "6 de abril de 1884",
+          "standard_date": "6 Apr 1884",
+          "place": "Santiago, Santiago, Chile",
+          "standard_place": "Santiago de Chile, Santiago, Chile"
+        },
+        {
+          "id": "a80f9035-df34-479a-b307-8e9543b46dde",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LT8G-ZNK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Zoila Blanca De La Luz",
+          "surname": "Gonz\u00e1lez Gatica"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ff5ccf38-1a6d-45b8-b960-da6d5b08c7be",
+          "type": "Birth",
+          "date": "1886",
+          "standard_date": "1886",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "e072f10f-0b65-4ec0-8b38-bfdb232a819c",
+          "type": "Death",
+          "date": "24 December 1902",
+          "standard_date": "24 Dec 1902",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "0372d68c-11c0-4269-8138-aa67cde56cfd",
+          "type": "Death Registration",
+          "place": "Santiago, Regi\u00f3n Metropolitana de Santiago, Chile",
+          "standard_place": "Santiago, Chile"
+        }
+      ]
+    },
+    {
+      "id": "LZ3Z-R4B",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Mercedes",
+          "surname": "Gonzalez Gatica"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "12 septiembre 1886",
+          "standard_date": "12 Sep 1886",
+          "place": "Moneda, Santiago, Chile",
+          "standard_place": "Metropolitana de Santiago, Chile"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        },
+        {
+          "id": "11ba562b-fd8f-47b1-9487-ac6e29fd25fe",
+          "type": "Birth+Registration",
+          "place": "Moneda, Santiago, Chile",
+          "standard_place": "Santiago de Chile, Santiago, Chile"
+        }
+      ]
+    },
+    {
+      "id": "LZ34-S88",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "Sara Del C\u00e1rmen",
+          "surname": "Gonzalez Gatica"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "13 octubre 1890",
+          "standard_date": "13 Oct 1890",
+          "place": "Recoleta, Santiago, Chile",
+          "standard_place": "Recoleta, Santiago, Chile"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "28 Jun 1892",
+          "standard_date": "28 Jun 1892"
+        },
+        {
+          "id": "0f9989b8-bc27-49b1-b8da-f978209bfe15",
+          "type": "Death Registration",
+          "place": "Recoleta, Santiago, Metropolitana de Santiago, Chile",
+          "standard_place": "Recoleta, Santiago, Chile"
+        },
+        {
+          "id": "4b7672de-c363-4fef-bf3f-253e9f9a4ea4",
+          "type": "Birth+Registration",
+          "place": "Recoleta, Santiago, Chile",
+          "standard_place": "Recoleta, Santiago, Chile"
+        }
+      ]
+    },
+    {
+      "id": "LZ3W-DR2",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N13",
+          "given": "Juana De Dios",
+          "surname": "Gonzalez Gatica"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "26 agosto 1896",
+          "standard_date": "26 Aug 1896",
+          "place": "Recoleta, Santiago, Chile",
+          "standard_place": "Recoleta, Santiago, Chile"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "26 August 1896",
+          "standard_date": "26 Aug 1896",
+          "place": "Chile",
+          "standard_place": "Chile"
+        },
+        {
+          "id": "80ccdb34-be06-40e1-85c9-b90881d20ba9",
+          "type": "Death Registration",
+          "place": "Recoleta, Santiago, Metropolitana de Santiago, Chile",
+          "standard_place": "Recoleta, Santiago, Chile"
+        },
+        {
+          "id": "2344fa01-5556-4746-810c-efeec131f7d3",
+          "type": "Birth+Registration",
+          "place": "Recoleta, Santiago, Chile",
+          "standard_place": "Recoleta, Santiago, Chile"
+        }
+      ]
+    },
+    {
+      "id": "LZ3W-DR4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N14",
+          "given": "Juana Maria",
+          "surname": "Gonzalez Gatica"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e0b6e802-cb5f-48f0-a185-4249ab913568",
+          "type": "Christening",
+          "date": "1896",
+          "standard_date": "1896",
+          "place": "Santiago, Santiago, Chile",
+          "standard_place": "Santiago de Chile, Santiago, Chile"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "26 agosto 1896",
+          "standard_date": "26 Aug 1896",
+          "place": "Recoleta, Santiago, Chile",
+          "standard_place": "Recoleta, Santiago, Chile"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        },
+        {
+          "id": "884e7151-b210-4a7a-9a32-3c29db80425d",
+          "type": "Birth+Registration",
+          "place": "Recoleta, Santiago, Chile",
+          "standard_place": "Recoleta, Santiago, Chile"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LZ3Z-R41",
+      "person2": "LZ3Z-RHM",
+      "facts": [
+        {
+          "id": "4276c4cd-89a5-4093-bf50-5b33769eb68d",
+          "type": "Marriage",
+          "date": "13 de marzo de 1882",
+          "standard_date": "13 Mar 1882",
+          "place": "Santiago de Chile, Santiago, Chile",
+          "standard_place": "Santiago de Chile, Santiago, Chile"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KNT6-7ZR",
+      "person2": "MX45-9HH",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "25 October 1852",
+          "standard_date": "25 Oct 1852",
+          "place": "Santa Rosa de los Andes, Aconcagua, Chile",
+          "standard_place": "San Pedro, San Pedro, Melipilla, Metropolitana de Santiago, Chile"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KNT6-7ZR",
+      "child": "LZ3Z-RHM"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "MX45-9HH",
+      "child": "LZ3Z-RHM"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LZ3Z-RHM",
+      "child": "G8S3-DC5"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "LZ3Z-R41",
+      "child": "LT8G-ZNK"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LZ3Z-RHM",
+      "child": "LT8G-ZNK"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LZ3Z-R41",
+      "child": "LZ3Z-R4B"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "LZ3Z-RHM",
+      "child": "LZ3Z-R4B"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LZ3Z-R41",
+      "child": "GDV2-WWJ"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LZ3Z-RHM",
+      "child": "GDV2-WWJ"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "LZ3Z-R41",
+      "child": "LZ34-S88"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LZ3Z-RHM",
+      "child": "LZ34-S88"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "LZ3Z-R41",
+      "child": "GDVK-Y8P"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "LZ3Z-RHM",
+      "child": "GDVK-Y8P"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "LZ3Z-R41",
+      "child": "L5NJ-WPP"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "LZ3Z-RHM",
+      "child": "L5NJ-WPP"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "LZ3Z-R41",
+      "child": "LZ3W-DR2"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "LZ3Z-RHM",
+      "child": "LZ3W-DR2"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "LZ3Z-R41",
+      "child": "LZ3W-DR4"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "LZ3Z-RHM",
+      "child": "LZ3W-DR4"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "LZ3Z-R41",
+      "child": "L5YK-JVZ"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "LZ3Z-RHM",
+      "child": "L5YK-JVZ"
+    }
+  ],
+  "sources": [
+    {
+      "id": "9FTD-NF4",
+      "title": "Eulogia Gatica, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VXPN-8DM : Fri Oct 24 16:06:25 UTC 2025), Entry for Mercedes and Juan Jose Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VXPN-881"
+    },
+    {
+      "id": "9YL5-Y37",
+      "title": "Eulojia Gatica Alfaro, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2S2-4XS9 : Thu Nov 20 02:26:17 UTC 2025), Entry for Eulojia Gatica Alfaro and Ventura Gatica.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2S2-4XS9"
+    },
+    {
+      "id": "3C18-DPZ",
+      "title": "Eulojia Gatica, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZHY-FDKW : Thu Jan 01 09:20:11 UTC 2026), Entry for Lu\u00edsa del Carmen and Miranda Pino del Campo, 6 de abril de 1884.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZHY-FDKH"
+    },
+    {
+      "id": "9FTD-K53",
+      "title": "Eulojia Gatica de Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VXPZ-9G2 : Sat Nov 01 09:45:09 UTC 2025), Entry for Jos\u00e9 Antonio and Juan Jos\u00e9 Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VXPZ-9GK"
+    },
+    {
+      "id": "9LS6-KMM",
+      "title": "Eulojia Del Carmen Gatica, \"Chile Baptisms, 1585-1932\"",
+      "citation": "\"Chile, bautismos, 1585-1932\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FJ8Q-N73 : 14 February 2020), Eulojia del Carmen Gatica, 1862.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FJ8Q-N73"
+    },
+    {
+      "id": "9R4V-P7J",
+      "title": "Eulojia Gatica de Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLX9-LJ2R : Sat Aug 09 01:07:56 UTC 2025), Entry for Zoila Blanca de la Luz Gonzalez Gatica and Juan Jos\u00e9 Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLX9-LJLM"
+    },
+    {
+      "id": "9FTD-27Q",
+      "title": "Eulojia Gatica, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VXP4-DBW : Fri Oct 24 16:47:06 UTC 2025), Entry for Juana de Dios and Juan Jos? Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VXP4-DB7"
+    },
+    {
+      "id": "9R4V-RWQ",
+      "title": "Eulojia Gatica, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLXM-L7J9 : Tue Oct 28 21:17:07 UTC 2025), Entry for Manuel Jesus Gonzalez Gatica and Juan Jos\u00e9 Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLXM-L7J7"
+    },
+    {
+      "id": "7K7C-8QW",
+      "title": "Eulojia Gatica, \"Chile, registros parroquiales y diocesanos, 1633-2015\"",
+      "citation": "\"Chile, registros parroquiales y diocesanos, 1633-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V7S-N7C9 : Sat May 16 00:24:59 UTC 2026), Entry for Juan Jos\u00e9 Gonzalez and Carmen Gonzalez, 13 Mar 1882.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V7S-N7CQ"
+    },
+    {
+      "id": "924R-LGP",
+      "title": "Eulogia Gatica en el registro de Zoila Gonz\u00e1lez Gatica, \"Chile, Registro Civil, 1885-1903\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q241-Q8ZW : Wed Mar 12 03:54:55 UTC 2025), Entry for Zoila Gonzalez Gatica and Juan Jos\u00e9 Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q241-Q8ZN"
+    },
+    {
+      "id": "9YLP-YX9",
+      "title": "Eulojia Gatica, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS6-6NFD : Wed Nov 05 21:44:33 UTC 2025), Entry for Sara del Carmen Gonzalez Gatica and Juan Jos\u00e9 Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPS6-6NFV"
+    },
+    {
+      "id": "9YL5-1XX",
+      "title": "Eulojia Gatica Alfaro, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2S2-4XV5 : Thu Nov 20 02:12:27 UTC 2025), Entry for Eulojia Gatica Alfaro and Ventura Gatica.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2S2-4XV5"
+    },
+    {
+      "id": "3C18-8CL",
+      "title": "Eulojia del Carmen Gatica, \"Chile, Baptisms, 1585-1932\"",
+      "citation": "\"Chile, bautismos, 1585-1932\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FJ2W-S82 : 14 February 2020), Eulojia del Carmen Gatica, 1862.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FJ2W-S82"
+    },
+    {
+      "id": "9FTD-R2D",
+      "title": "Eulojia Gatica de Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VXP4-DBC : Fri Oct 24 16:47:06 UTC 2025), Entry for Juana Maria and Juan Jos? Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VXP4-DBH"
+    },
+    {
+      "id": "9R4V-6W4",
+      "title": "Eulojia Gatica, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLX9-HNJ6 : Tue Oct 28 21:47:44 UTC 2025), Entry for Jose Antonio Gonzalez Gatica and Juan Jose Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLX9-HNV9"
+    },
+    {
+      "id": "9YLP-T4J",
+      "title": "Eulojia Gatica, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS6-LQML : Thu Nov 20 18:15:02 UTC 2025), Entry for Juana de Dios Gonzalez Gatica and Juan Jos\u00e9 Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPS6-LQ99"
+    },
+    {
+      "id": "9FTD-VS3",
+      "title": "Eulojia Gatica de Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VXPC-DR2 : Sat Nov 01 09:43:16 UTC 2025), Entry for Sara del C\u00e1rmen and Juan Jos\u00e9 Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VXPC-DRK"
+    },
+    {
+      "id": "9NVT-QYM",
+      "title": "Eulogia Gatica de Gonzalez, \"Chile, Registro Civil, 1880-1933\"",
+      "citation": "\"Chile, Registro Civil, 1880-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VXP4-PJD : Sat Nov 01 09:45:04 UTC 2025), Entry for Manuel Jesus and Juan Jose Gonzalez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VXP4-PJ8"
+    },
+    {
+      "id": "S1",
+      "title": "Chile, registros de cementerios, 1701-2021",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6PVG-GDQP"
+    },
+    {
+      "id": "S2",
+      "title": "Chile, Registro Civil, 1880-1933 \u2014 Death Registration, Eulojia Gatica Alfaro, 29 May 1908",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q2S2-4XV5"
+    }
+  ]
+}

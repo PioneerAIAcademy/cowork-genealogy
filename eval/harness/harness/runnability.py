@@ -14,6 +14,7 @@ Block a test from executing when:
 
 from __future__ import annotations
 
+import ast
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,10 +29,78 @@ from harness.schema_validator import (
 )
 
 
+# eval/harness/harness/runnability.py -> eval/harness/validators/
+DEFAULT_VALIDATORS_DIR = Path(__file__).resolve().parent.parent / "validators"
+
+
 @dataclass
 class RunnabilityResult:
     runnable: bool
     reason: str | None
+
+
+def tag_gated_validator_tags(validators_dir: Path, skill: str) -> set[str]:
+    """Tags that gate an opt-in validator in the skill's validator file.
+
+    Recognizes the repo-wide opt-in gate idiom — an `if` whose test is
+    `"<tag>" not in test.get("tags", [])` and whose body calls
+    `pytest.skip(...)`:
+
+        if "no-browse-no-write" not in test.get("tags", []):
+            pytest.skip("not a no-browse-no-write scenario")
+
+    The tag check may be one operand of a compound condition, as in
+    citation's `if test.get("type") != "positive" and "no-new-source" not
+    in test.get("tags", []):`, so the whole `if` test is walked rather
+    than shape-matched. Both `test.get("tags", [])` and
+    `(test.get("tags") or [])` spellings are recognized.
+
+    Only the `not in` direction counts. The inverse (`"<tag>" in tags` ->
+    skip) is an *exclusion* gate — it turns a validator OFF for tagged
+    tests (e.g. `redirect-no-browse`), so it can never be the invariant a
+    grade_on_invariant test relies on.
+
+    Static (ast) rather than by import: the validator modules declare
+    pytest fixtures the harness injects by signature, so importing them
+    here to introspect would drag in a fixture-resolution dependency the
+    gate has no business owning.
+
+    Returns an empty set when the file is absent or unparseable — the
+    caller turns that into the same "no invariant validator" failure,
+    which is the correct verdict either way.
+    """
+    path = Path(validators_dir) / f"test_{skill.replace('-', '_')}.py"
+    if not path.exists():
+        return set()
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except SyntaxError:
+        return set()
+
+    tags: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.If):
+            continue
+        if not any(
+            isinstance(sub, ast.Call)
+            and ast.unparse(sub.func).endswith("pytest.skip")
+            for sub in ast.walk(node)
+        ):
+            continue
+        for cmp_node in ast.walk(node.test):
+            if not isinstance(cmp_node, ast.Compare):
+                continue
+            if len(cmp_node.ops) != 1 or not isinstance(cmp_node.ops[0], ast.NotIn):
+                continue
+            if not (
+                isinstance(cmp_node.left, ast.Constant)
+                and isinstance(cmp_node.left.value, str)
+            ):
+                continue
+            if "tags" not in ast.unparse(cmp_node.comparators[0]):
+                continue
+            tags.add(cmp_node.left.value)
+    return tags
 
 
 def check_runnable(
@@ -41,6 +110,7 @@ def check_runnable(
     fixtures_dir: Path,
     skills_dir: Path,
     tests_dir: Path,
+    validators_dir: Path = DEFAULT_VALIDATORS_DIR,
 ) -> RunnabilityResult:
     if spec.scenario_notes and spec.scenario_notes.strip():
         return RunnabilityResult(False, "test has non-empty scenario_notes — scenario doesn't match")
@@ -104,6 +174,33 @@ def check_runnable(
                     False,
                     f"negative.correct_skill[{i}]='{name}' is not an "
                     f"existing skill (no directory at {skills_dir}/{name})",
+                )
+
+        # `grade_on_invariant` hands the whole verdict to the test's
+        # deterministic invariant validator(s): _compute_outcome returns
+        # "pass" once nothing aborted and the validators passed. A tag
+        # that reaches no validator therefore doesn't fail loudly — it
+        # passes VACUOUSLY, green forever, asserting nothing. The spec
+        # warns about it ("REQUIRES a tag-gated invariant validator that
+        # actually runs; without one the pass is vacuous") but nothing
+        # enforced it until now. Same failure mode and same gate-time
+        # treatment as the correct_skill typo above.
+        if spec.negative.get("grade_on_invariant"):
+            gate_tags = tag_gated_validator_tags(validators_dir, spec.skill)
+            matched = sorted(set(spec.tags or []) & gate_tags)
+            if not matched:
+                validator_file = (
+                    f"{validators_dir}/test_{spec.skill.replace('-', '_')}.py"
+                )
+                return RunnabilityResult(
+                    False,
+                    "negative.grade_on_invariant is true but no invariant "
+                    f"validator gates on any of this test's tags "
+                    f"{sorted(spec.tags or [])} — the pass would be vacuous. "
+                    f"Add a validator to {validator_file} opening with "
+                    '`if "<tag>" not in test.get("tags", []): pytest.skip(...)`'
+                    f", then tag the test with it. Tags currently gating a "
+                    f"validator there: {sorted(gate_tags) or 'none'}",
                 )
 
     rubric_path = Path(tests_dir) / spec.skill / "rubric.md"
