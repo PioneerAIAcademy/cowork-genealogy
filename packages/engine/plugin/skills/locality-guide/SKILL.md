@@ -2,29 +2,20 @@
 name: locality-guide
 model: claude-sonnet-4-6
 description: >-
-  Produces a structured locality research guide for a place and time period —
-  what genealogical records exist, where they're held, jurisdictional history,
-  boundary changes, and research tips. Use when the user says "what records
-  exist for [place]?", "tell me about [place] records", "research guide for
-  [jurisdiction]", "what can I find in [county/state/country]?", "where are
-  the records for [place]?", "what records or repositories help trace families
-  affected by a fire, epidemic, flood, war, or disaster in [place]?", "what
-  records survive for [place] after [an event]?", or when research-plan needs
+  Produces a locality research guide for a place and time period — what
+  genealogical records exist, where they're held, jurisdictional history, and
+  boundary changes. Use when the user says "what records exist for [place]?",
+  "research guide for [jurisdiction]", "what can I find in
+  [county/state/country]?", "where are the records for [place]?", "what records
+  help trace families affected by a disaster in [place]?", or "what records
+  survive for [place] after [an event]?", or when research-plan needs
   jurisdiction context. Do NOT use when the user wants to search records or
-  execute a specific search plan (use search-records or
-  search-external-sites), or asks a "how do I find [record type]" or "how do I
-  research ..." research-method how-to question (use search-familysearch-wiki;
-  that verb form is a method request, not a place survey). A "what records or
-  repositories exist for [place]" / "what would help trace families in
-  [place]" question is a records-availability SURVEY and belongs HERE even when
-  it names a specific record type or religious community (for example Quaker
-  meeting records in Pennsylvania); route by the question form, not by the
-  record type. Also do not use when the user wants narrative historical
-  context — migration
-  patterns, naming conventions, or why an event happened (use
-  historical-context); but a question about which records survive or help
-  trace families affected by an event is a record-availability question and
-  belongs here.
+  execute a specific search plan (use search-records or search-external-sites),
+  or asks a generic "how do I find/research [record type]" how-to question (use
+  search-familysearch-wiki); but a records-availability survey for a place
+  belongs here even when it names a record type or community (e.g. Quaker
+  records in Pennsylvania). Also do not use for narrative historical context
+  like migration or why an event happened (use historical-context).
 allowed-tools:
   - wiki_search
   - wiki_read

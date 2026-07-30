@@ -1,5 +1,5 @@
 {
-  "run_log": "v1_2026-07-29_08-02-08.json",
+  "run_log": "v1_2026-07-30_00-42-37.json",
   "annotator": "clack391@gmail.com",
   "corrections": [
     {
@@ -62,8 +62,8 @@
       "test_id": "ut_search_wiki_012",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
@@ -102,8 +102,8 @@
       "test_id": "ut_search_wiki_012",
       "dimension_source": "rubric",
       "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
@@ -478,8 +478,8 @@
       "test_id": "ut_search_wiki_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
@@ -518,8 +518,8 @@
       "test_id": "ut_search_wiki_002",
       "dimension_source": "rubric",
       "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
