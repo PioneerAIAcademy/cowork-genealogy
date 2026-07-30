@@ -37,7 +37,7 @@
               "quality": 3
             }
           ],
-          "place": "Niles, Ohio",
+          "place": "Niles, Trumbull County, Ohio",
           "standard_place": "Niles, Trumbull, Ohio, United States"
         },
         {
@@ -173,7 +173,7 @@
           "surname": "Manro"
         },
         {
-          "id": "N5",
+          "id": "N4",
           "type": "BirthName",
           "given": "Lena",
           "surname": "Mauro",
@@ -224,7 +224,7 @@
       "gender": "Male",
       "names": [
         {
-          "id": "N4",
+          "id": "N5",
           "type": "BirthName",
           "given": "Stanley",
           "surname": "Datchuk",
@@ -249,19 +249,13 @@
             {
               "ref": "S1",
               "quality": 3
-            },
-            {
-              "ref": "S2",
-              "quality": 3
             }
-          ],
-          "place": "Niles, Ohio",
-          "standard_place": "Niles, Trumbull, Ohio, United States"
+          ]
         },
         {
           "id": "F2",
           "type": "Birth",
-          "date": "~1927-09-14",
+          "date": "~1932-09-14",
           "sources": [
             {
               "ref": "S2",
@@ -284,7 +278,7 @@
         {
           "id": "F4",
           "type": "Occupation",
-          "value": "Opp. Garage",
+          "value": "Upp. Carpenter",
           "sources": [
             {
               "ref": "S2",
@@ -324,7 +318,7 @@
         {
           "id": "N8",
           "type": "BirthName",
-          "given": "Nikolas",
+          "given": "Geo.",
           "surname": "Datchuk",
           "sources": [
             {
@@ -355,7 +349,7 @@
           "id": "N9",
           "type": "BirthName",
           "given": "Sarah",
-          "surname": "Frymarchuk",
+          "surname": "Synarehyk",
           "sources": [
             {
               "ref": "S2",
@@ -387,12 +381,13 @@
     },
     {
       "type": "Couple",
-      "person1": "GCT1-F3Q",
-      "person2": "I1",
+      "person1": "I1",
+      "person2": "GCT1-F3Q",
       "facts": [
         {
           "type": "Marriage",
           "date": "20 August 1955",
+          "standard_date": "1955-08-20",
           "place": "Niles, Trumbull County, Ohio",
           "primary": true,
           "sources": [
@@ -429,12 +424,12 @@
     },
     {
       "id": "S1",
-      "title": "Entry for Stanley Datchuk and Amelia Frances Gioiello, \"Ohio, County Marriages, 1789-2016\"",
+      "title": "Ohio, County Marriages, 1789-2016 \u2014 Entry for Stanley Datchuk and Amelia Frances Gioiello, 20 Aug 1955",
       "url": "https://www.familysearch.org/ark:/61903/1:2:Q21Z-MPM2"
     },
     {
       "id": "S2",
-      "title": "Ohio, County Marriage License Application and Certificate, Trumbull County, No. 43517, Stanley Datchuk and Amelia Frances Gioiello, 1955",
+      "title": "Trumbull County, Ohio, Marriage License and Certificate, No. 43517, Stanley Datchuk and Amelia Frances Gioiello, 1955; Probate Court, Trumbull County, Ohio; FamilySearch digital image of original register",
       "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WJ-M3P"
     }
   ]
