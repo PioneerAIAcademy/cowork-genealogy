@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_search_records_024",
     "skill": "search-records",
-    "name": "Nil on a browse-only/low-index probate collection pivots to full-text, not a negative finding",
+    "name": "Nil on a browse-only/low-index probate collection is reported as not-absence, not logged negative",
     "type": "positive",
-    "description": "wilkins-probate-nil: executing pli_001 (probate, Muhlenberg County KY) for a pre-1911 death, record_search returns zero \u2014 because the Kentucky Probate collection is ~1% record-indexed (browse-only images), NOT because no estate record exists. The skill must recognize the low index coverage and pivot to full-text (delegate to search-full-text, or run fulltext_search) on the probate volumes rather than logging the item negative / concluding no death evidence exists. Guards the search-records 'low index coverage -> pivot to full-text' doctrine (issue #657: the headless run that relied on indexed record_search never reached the browse-only estate-administration records that are the ground truth).",
+    "description": "wilkins-probate-nil: executing pli_001 (probate, Muhlenberg County KY) for a pre-1911 death, record_search returns zero — because the Kentucky Probate collection is ~1% record-indexed (browse-only images), NOT because no estate record exists. The skill must recognize the low index coverage, log the nil as not-absence with the plan item left in_progress, and REPORT that full-text is the next step. It must not log negative/absent, and it must not run or delegate the full-text search itself: search-records executes indexed record searches, and choosing to run full-text is the caller's decision.",
     "tags": [
       "search",
       "negative-result",
@@ -16,7 +16,7 @@
     ]
   },
   "input": {
-    "user_message": "Execute pli_001 \u2014 search FamilySearch probate records for Elijah Wilkins in Muhlenberg County, Kentucky.",
+    "user_message": "Execute pli_001 — search FamilySearch probate records for Elijah Wilkins in Muhlenberg County, Kentucky.",
     "scenario": "wilkins-probate-nil"
   },
   "mcp_fixtures": [
@@ -24,10 +24,12 @@
     "fulltext-search-wilkins-probate-empty"
   ],
   "judge_context": [
-    "This is a POSITIVE test for the low-index -> full-text pivot DECISION. record_search on the probate collection returns zero results. The correct behavior is NOT to log pli_001 negative and stop: the Kentucky Probate collection is browse-only / ~1% record-indexed, so a nil there means the record is un-indexed, not absent.",
-    "PASS CONDITION (the routing decision): the skill must recognize the nil as non-absence on a browse-only/low-index collection and pivot to full-text \u2014 observable as delegating to the search-full-text skill (search-full-text appears in skills_invoked) and/or explicitly stating it must full-text-search the probate volumes before any negative finding. Mirrors ut_search_records_018, which grades on the delegation call being made.",
-    "SCOPE: the full-text search's own EXECUTION and results are out of scope for this search-records unit \u2014 they belong to search-full-text's tests, and search-records' allowed-tools does not grant fulltext_search, so the delegated call cannot complete inside this harness. Do NOT fail the test because the downstream full-text call errors, is unavailable, or returns nothing \u2014 grade ONLY the pivot decision.",
-    "FAIL (Correctness 1) if the skill logs pli_001 as outcome 'negative'/absent on the indexed nil WITHOUT pivoting to full-text, or concludes no death evidence exists \u2014 treating a browse-only collection's index nil as a real negative is the exact failure this test guards. Escalating to external sites INSTEAD of FamilySearch full-text is also wrong here (the evidence is in the un-indexed FS probate images). Reasonable name-variant retries before the pivot are fine."
+    "This is a POSITIVE test for the low-index nil DECISION. record_search on the probate collection returns zero results. The Kentucky Probate collection is browse-only / ~1% record-indexed, so an index nil is not evidence of absence.",
+    "OUTCOME VALUE IS NOT THE TEST. `outcome: \"negative\"` is CORRECT here and must not be penalized — that field records what the search returned (zero results), and the taxonomy reserves `partial` for 'results found but incomplete'. Do NOT score any dimension down because the log says `negative`. What is graded is the INTERPRETATION.",
+    "PASS CONDITION: (a) the skill identifies the low index coverage as the reason for the nil, rather than treating it as absence; (b) `notes` on the log entry record that — a reader coming back later must be able to tell a coverage gap from a real negative; (c) the plan item is left `in_progress`, not completed; and (d) full-text search of that collection's volumes (optionally image browsing) is named as the next step, in enough detail to act on.",
+    "SCOPE — search-records must NOT run or delegate the full-text search. It executes indexed FamilySearch record searches; deciding to pivot is the caller's. Do NOT require `fulltext_search` in the tool calls and do NOT require `search-full-text` in skills_invoked. If the skill DOES attempt fulltext_search directly, or hands off on its own initiative, score Correctness 2 — right recommendation, exceeded its remit. A skill that stalls asking the user to change a permissions allowlist has also failed to do its own job.",
+    "FAIL (Correctness 1) only if the skill treats the nil as real absence — concluding no estate or death evidence exists, marking the plan item completed, or logging with notes that give a later reader no way to tell this from a genuine negative.",
+    "Nil escalation: score on whether the nil was correctly classified as non-absence and the right next step named — NOT on whether that next step was executed here."
   ],
   "judge_reads_files": true,
   "execution": {

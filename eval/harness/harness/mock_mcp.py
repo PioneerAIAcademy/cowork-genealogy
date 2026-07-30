@@ -58,6 +58,12 @@ Current live tools:
   record-extractor agent consumes instead of reading project files. A
   deterministic function of workspace state — a canned fixture cannot
   honestly reflect what the skill just wrote.
+- research_query: same rationale as project_context — a read-only projection
+  over the workspace's own research.json, so a fixture could only drift from
+  what the skill just wrote. Registered live when search-records and the
+  research orchestrator were pointed at it in place of whole-file Reads;
+  without it, a skill that follows that instruction hits an uncovered tool
+  call and grades badly for doing the right thing.
 """
 
 from __future__ import annotations
@@ -83,7 +89,14 @@ LIVE_TOOLS: set[str] = {
     "tree_edit",
     "tree_correct",
     "materialize_facts",
+    "merge_warnings",
     "project_context",
+    # Read-only projection over the workspace's own research.json — same shape
+    # as project_context, and deterministic, so mocking it would only invite
+    # drift. Added when search-records / research were pointed at it in place of
+    # whole-file Reads; without it a skill following that instruction hits an
+    # uncovered tool call and grades badly for doing the right thing.
+    "research_query",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -248,6 +261,20 @@ def create_mock_server(
         }
     call_log: list[dict[str, Any]] = []
 
+    # `record_search` now ranks host-side when given a `subjectId`, returning the
+    # result inline as `ranked` — the model makes no separate rank call in the
+    # normal flow. The corpus already carries per-test `rank-search-matches-*`
+    # fixtures, tuned to each test's intent, so the mock composes the two rather
+    # than requiring every record-search fixture to be rewritten with a `ranked`
+    # block. Composition (not duplication) is also the only shape that works:
+    # one record-search fixture is shared by tests that want DIFFERENT rankings
+    # (record-search-1850-census-flynn pairs with both -flynn-census and
+    # -flynn-collection-mismatch), which an inline block could not express.
+    # Fixtures are loaded per test, so the right ranking is the one this test
+    # declared. Same class of simulation as the staging block below: mirror what
+    # the real tool does internally.
+    rank_predicated = list((manifest.get("rank_search_matches") or {}).get("predicated") or [])
+
     tools = []
     for tool_name, bucket in manifest.items():
         predicated = list(bucket["predicated"])
@@ -268,6 +295,7 @@ def create_mock_server(
             _predicated=predicated,
             _name=tool_name,
             _workspace=workspace,
+            _rank_predicated=rank_predicated,
         ):
             entry: dict[str, Any] = {
                 "tool": f"mcp__genealogy__{_name}",
@@ -312,6 +340,23 @@ def create_mock_server(
                 staged = _stage_search_results(_workspace, _name, response)
                 if staged is not None:
                     response = {**response, "staged": staged}
+
+            # Fold in the ranking the real record_search performs when the
+            # caller names a subject. Matched against the test's own
+            # rank_search_matches fixtures so each test keeps the ranking it was
+            # written for. A test that declares no rank fixture gets no `ranked`
+            # key — the same shape the real tool returns when ranking is not
+            # requested — rather than a fabricated one.
+            if (
+                _name == "record_search"
+                and args.get("subjectId")
+                and "error" not in response
+                and response.get("staged")
+            ):
+                for predicate, rank_resp, _src in _rank_predicated:
+                    if matches(predicate, args):
+                        response = {**response, "ranked": rank_resp}
+                        break
 
             entry["response"] = response
             entry["response_fixture"] = source_name
@@ -382,9 +427,17 @@ def _make_live_handler(
         return _make_compiled_tool_handler(
             "materialize_facts", "materialize-facts.js", "materializeFacts", workspace, call_log
         )
+    if tool_name == "merge_warnings":
+        return _make_compiled_tool_handler(
+            "merge_warnings", "merge-warnings.js", "mergeWarnings", workspace, call_log
+        )
     if tool_name == "project_context":
         return _make_compiled_tool_handler(
             "project_context", "project-context.js", "projectContext", workspace, call_log
+        )
+    if tool_name == "research_query":
+        return _make_compiled_tool_handler(
+            "research_query", "research-query.js", "researchQuery", workspace, call_log
         )
     raise ValueError(f"No live handler defined for {tool_name!r}")
 

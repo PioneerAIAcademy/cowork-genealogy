@@ -11,7 +11,9 @@
 > records what that inverts, including two corrections to my own earlier framing
 > that would have sent an implementer down a wrong path.
 >
-> **Not to be confused with** `docs/plan/record-extraction-tool-boundary-plan.md`.
+> **Not to be confused with** the record-extraction tool-boundary work
+> (2026-07-16, shipped — see `docs/specs/research-append-tool-spec.md` and
+> `docs/specs/tree-edit-tool-spec.md` §4.4).
 > That plan's "tool boundary" is the *shape* seam (tolerant coercion of LLM-authored
 > payloads). This plan's boundary is *context* scoping. Different problem, no overlap;
 > that plan never mentions `image_read`. The branch name `rx-tool-boundary` refers

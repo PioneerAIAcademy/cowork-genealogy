@@ -21,6 +21,7 @@ allowed-tools:
   - source_attachments
   - research_log_append
   - research_append
+  - research_query
 ---
 
 # Search Records
@@ -67,32 +68,20 @@ On demand, load:
 | Plan item record_type | MCP tool | When to use |
 |----------------------|----------|-------------|
 | `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `record_search` | Structured searches by person attributes |
-| `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** Use when: searching obituaries/marriage announcements, searching for a person as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records |
-| Parish registers where the target is **unindexed** — an emigrant's origin, a compound-surname parentage, any baptism/marriage/burial reachable only by transcript text | — | **Delegate to search-full-text skill.** When indexed `record_search` on the surname has returned only noise (the person is not name-indexed), the answer is usually in the AI-transcribed page text — reachable by a full-text co-occurrence search on the surnames, not by more indexed queries. |
-| `probate`, `court`, `land` (and other county-court series) in a **browse-only / barely-indexed** collection — `record_search` returns ~0 not because the record is absent but because the collection is mostly un-indexed images (low `recordSearchablePercent`) | `record_search` **then** — | Try `record_search` first. **If it returns nil/near-nil AND the locality survey said this collection covers the place+period, do NOT log negative — the record is un-indexed, not absent.** Pivot to the search-full-text skill on that collection's volumes (probate administration bonds, estate settlements, order books, and deeds are typically full-text-searchable page images even at ~1% record-index coverage), and `search-images` to browse. This is the pre-1911-death path (no death certificate exists — a county estate administration brackets the death), and the general path for any court series that answers a question but isn't name-indexed. |
+| `newspaper`, or any witness/FAN mention search | — | **Not this skill's job — report and stop.** Full-text is the caller's call to make, not a pivot to take mid-search. Say full-text is needed and why, then hand back. Applies when: searching obituaries/marriage announcements, searching for a person as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records |
+| Parish registers where the target is **unindexed** — an emigrant's origin, a compound-surname parentage, any baptism/marriage/burial reachable only by transcript text | — | **Not this skill's job — report and stop.** Full-text is the caller's call to make, not a pivot to take mid-search. When indexed `record_search` on the surname has returned only noise (the person is not name-indexed), the answer is usually in the AI-transcribed page text — reachable by a full-text co-occurrence search on the surnames, not by more indexed queries. |
+| `probate`, `court`, `land` (and other county-court series) in a **browse-only / barely-indexed** collection — `record_search` returns ~0 not because the record is absent but because the collection is mostly un-indexed images (low `recordSearchablePercent`) | `record_search` **then** — | Try `record_search` first. **If it returns nil/near-nil AND the locality survey said this collection covers the place+period, do NOT log negative — the record is un-indexed, not absent.** Log the nil as **not-absence**, say the collection is browse-only and that full-text (and possibly image browsing) is the next step, and hand back — invoking those is the caller's decision, not this skill's. (Probate administration bonds, estate settlements, order books and deeds are typically full-text-searchable page images even at ~1% record-index coverage.) This is the pre-1911-death path (no death certificate exists — a county estate administration brackets the death), and the general path for any court series that answers a question but isn't name-indexed. |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
 
 Additional tools: `rank_search_matches` (the primary triage tool — host-side match-ranking of a staged result set against the subject; folds in match scoring **and** the attachment check); `same_person` / `source_attachments` (fallback for a thin/unresolvable subject, or per-record checks).
 
-**If you run `fulltext_search` yourself instead of delegating** (a quick
-check from the main loop), two rules decide success or failure — the
-`search-full-text` skill carries the full version, but at minimum:
-
-- **Compound (Iberian / Latin-American) surnames → co-occurrence, not a
-  phrase.** For a subject named `Given Paterno Materno` (e.g. "Francisco
-  **Naveda Somarriba**"), require the two surnames as separate terms:
-  `+Naveda +Somarriba`. **Never** the adjacent phrase `+"Naveda
-  Somarriba"` — in the parents' own records the father carries the
-  paternal surname and the mother the maternal one, so the two words sit
-  on different people and are never adjacent; the phrase only matches the
-  child's own written-out name and misses every parentage record.
-- **Do not scope a full-text search to a record `collectionId`.** The FTS
-  corpus is partitioned into its own auto-generated collections; a
-  `collectionId` borrowed from `record_search` or a collections survey
-  routinely excludes the FTS volume that holds the answer and the search
-  returns zero. Search the whole corpus first; narrow with
-  `recordPlace*` / `recordType` / year filters (or a known
-  `imageGroupNumber`) only after you have hits.
+**This skill does not run `fulltext_search`, and does not delegate to
+`search-full-text`.** It executes indexed FamilySearch record searches. When
+the evidence says the answer is in un-indexed page text, that is a finding to
+report — log it honestly, leave the plan item `in_progress`, name full-text as
+the next step, and stop. The caller decides what runs next; the full-text craft
+(compound-surname co-occurrence, never scoping FTS to a record `collectionId`)
+lives in `search-full-text`, which owns that tool.
 
 ## Steps
 
@@ -103,9 +92,20 @@ the current question. If you already hold the active plan and its item
 statuses in context from the same run (e.g. research-plan just wrote it
 and you have its compact return), work from that — don't re-read
 `research.json` "to be safe"; the writer tools validate the whole project
-on every write, so the in-context view can't be silently stale. Re-read
-`research.json` `plans[]` when you're entering this skill cold, or when a
-sub-skill or the user changed the plan since you last saw it. If the user
+on every write, so the in-context view can't be silently stale.
+
+**If you need project state you do not already have, fetch it with
+`research_query` — never a whole-file `Read`, never a `grep`.** `research.json`
+grows all run, so a whole-file read costs more context every time.
+
+**At most one such call per invocation, and only when you are actually missing
+something.** Ask for `plans` — the plan item you are executing and its status —
+and nothing else. Do not also pull `questions`: the question is already in the
+plan item and in your instructions. Do not re-query between searches; the plan
+does not change while you are searching it. If the plan item arrived in your
+prompt, in a hand-off, or from `research-plan` earlier in this same run, you
+already have it — issue no query at all. Every query is a turn, and a search
+phase has few to spare. If the user
 specifies a particular search, match it to a plan item or create an
 ad-hoc search (with `plan_item_id: null` in the log).
 
@@ -159,33 +159,69 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 
 ### 3. Execute the search
 
-Call `record_search` with the constructed params plus `projectPath` (the absolute path of the project directory) and **`count: 50`**. Passing `projectPath` stages the raw results host-side, returns a `staged.resultsRef` handle (pass it to `rank_search_matches` in Step 4 **and** `research_log_append` in Step 5), and returns the inline results as **compact stubs** — the bulk per-result GedcomX lives in the staged file (so a large result set can't overflow; no flag needed). `count: 50` fetches a deep-enough pool for the match re-ranker.
+Call `record_search` with the constructed params plus **`projectPath`** (the
+absolute path of the project directory) and **`subjectId`** (the research
+subject's `persons[].id` in `tree.gedcomx.json`, e.g. `"I1"`).
 
-**Always rank and log the search (Steps 4–5) — never skip them.** `projectPath` on the call is what earns the log entry its results sidecar (the `staged.resultsRef` handle). If you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`, re-run the identical query **with** `projectPath` and use **that** staged re-run for Steps 4 and 5, so the entry gets its sidecar. Why the sidecar matters: a sidecar-less search entry can't feed extraction — `record_persona_id` is auto-filled from the sidecar, `research_append` **rejects** an assertions append against a sidecar-less search, and there is no manual workaround (you cannot set `results_ref` by hand) — so **re-stage before any handoff to extraction**. A missing handle is a reason to re-run, never a reason to skip ranking or logging. If a `stagingError` persists across one retry, surface it to the user. (A nil search correctly has no handle — nothing was found to retain; that is expected.)
+Those two arguments do all of Step 4 for you:
+
+- `projectPath` stages the raw results host-side and returns a
+  `staged.resultsRef` handle (pass it to `research_log_append` in Step 5), and
+  returns the inline results as **compact stubs** — the bulk per-result GedcomX
+  lives in the staged file, so a large result set can't overflow.
+- `subjectId` makes the tool **rank the candidates for you** against that
+  subject and return them under `ranked` (see Step 4). You do not call
+  `rank_search_matches` yourself in the normal flow.
+
+Leave `count` alone. It defaults to 50 when you pass `subjectId` — a deep pool is
+worth fetching precisely because the ranker cuts it back host-side — and to 20
+when you don't. Setting `count: 50` without a `subjectId` just hands you 50 raw
+stubs to read.
+
+Omit `subjectId` only when the search is genuinely not about a specific tree
+person (a broad survey, or a person not yet in the tree). Then triage falls back
+to the manual path in Step 4.
+
+**Always log the search (Step 5) — never skip it.** (Ranking no longer needs a rule: passing `subjectId` above makes it part of the search.) `projectPath` on the call is what earns the log entry its results sidecar (the `staged.resultsRef` handle). If you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`, re-run the identical query **with** `projectPath` and use **that** staged re-run for Steps 4 and 5, so the entry gets its sidecar. Why the sidecar matters: a sidecar-less search entry can't feed extraction — `record_persona_id` is auto-filled from the sidecar, `research_append` **rejects** an assertions append against a sidecar-less search, and there is no manual workaround (you cannot set `results_ref` by hand) — so **re-stage before any handoff to extraction**. A missing handle is a reason to re-run, never a reason to skip ranking or logging. If a `stagingError` persists across one retry, surface it to the user. (A nil search correctly has no handle — nothing was found to retain; that is expected.)
 
 **If the search fails due to authentication:** Instruct the user to log in: "The search requires FamilySearch authentication. Please ask me to log you in, or type `login`."
 
 ### 4. Triage results — rank by match, then confirm
 
-Step 3 returned compact stubs plus a `staged.resultsRef`. **Always call
-`rank_search_matches` after any search that returns one or more results — even
-1–2.** Don't hand-score, eyeball, or skip it for a small result set: one cheap
-host-side call gives a real match score + attachment flag for every candidate
-(which also feeds the match-score log for later threshold calibration) and keeps
-triage uniform.
+**If you passed `subjectId` in Step 3, the ranking is already in the response —
+read `ranked`, don't re-rank.** The tool scored every staged candidate against
+the subject and checked attachments as part of the search. There is no separate
+call to remember, and nothing to skip.
 
-**Rank the staged results:**
+This used to be a rule here — *"always call `rank_search_matches`"* — and it did
+not survive: in a measured session it held while this file was resident in
+context and collapsed to 3% compliance once compaction evicted it, leaving 114
+searches triaged by hand. It is now a property of the tool instead. If you find
+yourself about to hand-score a stub list, check whether you passed `subjectId`.
+
+**Two cases still need the standalone `rank_search_matches` tool:**
+
+1. **Re-ranking a logged search later** — pass the finalized
+   `results/<log_id>.json` as `stagedResultsRef`, e.g. to score an old pool
+   against a subject you have since enriched.
+2. **Ranking against a different subject** than the one you searched for —
+   testing whether a candidate pool matches a *sibling* or a hypothesised parent.
 
 ```
 rank_search_matches({
   projectPath,
-  stagedResultsRef,        // the staged.resultsRef from Step 3
-  subjectId,               // the research subject's id in tree.gedcomx.json (e.g. "I1")
+  stagedResultsRef,        // staged.resultsRef, or results/<log_id>.json
+  subjectId,               // any persons[].id in tree.gedcomx.json
   checkAttachments: true
 })
 ```
 
-It scores **every** staged candidate against the subject with FamilySearch's own
+**If `rankingError` came back on the search**, ranking failed but the search did
+not: `results` is intact and unranked. Re-run the standalone tool with the
+`staged.resultsRef` you already hold; if it fails again, surface it and triage
+by hand for that one search.
+
+Whichever path produced it, the ranking scores **every** staged candidate against the subject with FamilySearch's own
 matcher (the engine `same_person` uses), re-orders by real match quality — **not**
 FamilySearch's search rank, which is unreliable — and returns the **top 10** in
 `matches[]`. Each carries `matchRank`, `searchRank` (its original position — shows
@@ -223,7 +259,35 @@ candidates; you still confirm the top ones:
   because "the other number was only an estimate anyway." Present this pattern
   to the user as `needs-review — possible namesake`, not as a "Top Match," and
   do not phrase the conclusion as "almost certainly the right person" with the
-  date reduced to a footnote.
+  date reduced to a footnote. **Nor as "highly promising," "very likely ours,"
+  or any other warm framing** — the specific words matter less than the posture:
+  a disqualifying conflict makes the record *probably someone else*, and your
+  summary has to say so.
+  **Do not offer extraction as a next step — not even as a question.** "Shall I
+  proceed with extraction?" hands the judgment back to a user who is trusting
+  you to have made it, and a user who says yes has just adopted a namesake's
+  parents. When the cross-check disqualifies, the conclusion is *stated*, not
+  put to a vote: say this is very likely a different same-named person, say
+  which anchor would settle it (a baptism in the expected year window, a
+  matching spouse or child, a later residence), and propose **that narrower
+  search** as the next step. Extraction becomes available again only once an
+  independent anchor confirms identity — until then it is not on the menu.
+  **And do not report the disqualified record's family as findings.** Naming
+  its parents (or spouse, or children) in your results table or narrative
+  adopts the identity in the only way that matters to a reader, whatever the
+  needs-review flag next to it says — they will remember the names, not the
+  caveat. Report the record, the conflict, and what would settle it. The
+  people in it belong to whoever that record is actually about, and until
+  the cross-check clears you do not know that it is your subject.
+- **Cite `matchScore`, never `results[].score` — they are different numbers.**
+  Every raw search stub carries a `score` (and a `confidence`): that is
+  FamilySearch's own *search relevance*, the unreliable ordering the match-ranker
+  exists to replace — a live probe found its top 21 hits sharing one identical
+  value. `matchScore` on a `ranked.matches[]` entry is the content match against
+  your subject. Quoting a stub's `score` as though it were a match score is a
+  reasoning error, not a wording slip: it means the triage rests on the ordering
+  you were supposed to discard. If you are about to cite a number, check which
+  array you read it from.
 - **Needs-review band.** A genuinely *different* same-name/same-place person can
   land inside the match band, and sparse/dateless records score unstably. When the
   top scores don't clearly separate, or a candidate is a thin/dateless stub, treat
@@ -242,18 +306,34 @@ candidates; you still confirm the top ones:
   near-miss, not a finding; log it `partial` (collection-mismatch) per Step 5.
 
 **When nothing in the top 10 is a confident match** — or `rank_search_matches`
-returns `subjectResolvable: false` (a thin/unresolvable subject, so its scores
-carry no signal) — do **not** conclude the record is absent:
+returns `subjectResolvable: false` — do **not** conclude the record is absent:
 
 - The pool caps at 50 by FamilySearch's ranker, and re-ranking only re-orders what
   was fetched — it can't rescue a target FamilySearch buries past rank 50. So
   **page deeper** (`record_search` with `offset: 50`, then rank again) or **narrow**
   the query (collection, place, parent/spouse) so the target ranks into the fetched
   50. For a very broad search (thousands of hits), narrow *first*.
-- On `subjectResolvable: false`, fall back to hand-scoring the promising stubs with
-  `same_person` (`gedcomx1` = the record via `record_read`; `gedcomx2` = the subject
-  from `tree.gedcomx.json`; `primaryId2` = the subject's id) plus the cross-checks
-  above.
+- **`subjectResolvable: false` means one of two things — read the `diagnostic`
+  field, which says which.**
+  - *The subject is too thin to score.* `matches` comes back **empty on
+    purpose**: the ranking would have been FamilySearch's search order wearing
+    match scores, and that order is unreliable (a live probe found the top 21
+    hits sharing one score). **Fix the subject, don't hand-triage 50 stubs.**
+    The tool already folds in every assertion linked to the person through
+    `person_evidence`, so the cure is to give it something to fold: extract and
+    link one dated or placed assertion for this person, or record the fact on
+    the tree person, then rank again. If the subject genuinely cannot be
+    thickened yet, **narrow the query** instead — a smaller, better-targeted
+    pool is worth more than a big unranked one.
+  - *The subject is fine; the pool holds no match.* That is a **real negative**
+    for this query. Log it as such and page deeper or narrow — do not re-triage
+    the same 50 stubs by hand.
+
+  Do **not** fall back to hand-scoring with `same_person` against the same tree
+  subject: that is the identical starved document the ranker just failed on, so
+  it will fail the same way. `same_person` is a fallback only when you have a
+  *richer* subject document than the tree person — e.g. a confirmed record for
+  this person, compared record-to-record.
 
 **Deduplicate.** Multiple index entries may point to one underlying record; check
 identifiers before treating similar matches as independent.
@@ -334,7 +414,7 @@ Never treat an index entry as equivalent to examining the original record.
    (c) the subject should have appeared based on known facts.
    State each condition clearly. If all three hold, note in the log and suggest record-extraction create a negative assertion. If the collection is incomplete or the subject may have been absent, note this as a limitation rather than a conclusion.
 5. **Distinguish "not found" from "does not exist."** A nil result may mean the record is undigitized, unindexed, or indexed under a variant. Note which applies.
-   **Low index coverage → pivot to full-text, do not conclude absent.** When the nil is on a collection the locality survey flagged as covering this place+period but whose index coverage is very low (browse-only image volumes — probate, court order books, land/deeds, many pre-1900 registers; `recordSearchablePercent` near 0), the record is almost certainly present as an **un-indexed page image**, not absent. Before logging `negative`, delegate to the **search-full-text** skill on that collection's volumes (a co-occurrence search — surname plus a distinguishing term like an heir/administrator's name or `deceased`/`estate`) and, if needed, `search-images` to browse. Only after full-text/browse also comes up empty may absence be called. Example: a pre-1911 Kentucky death (no statewide certificate exists) is established from the county **estate administration** — the administrator's bond and settlement, full-text-searchable in the probate image volumes — which `record_search` on the 1%-indexed probate collection will never surface.
+   **Low index coverage → pivot to full-text, do not conclude absent.** When the nil is on a collection the locality survey flagged as covering this place+period but whose index coverage is very low (browse-only image volumes — probate, court order books, land/deeds, many pre-1900 registers; `recordSearchablePercent` near 0), the record is almost certainly present as an **un-indexed page image**, not absent. `outcome` is still **`negative`** — zero results is zero results, and that field records what the search returned, not what it means. The *interpretation* goes in `notes` and in the plan-item status: say the collection is browse-only / near-zero indexed and the record is very likely present as un-indexed page text, and keep the plan item **`in_progress`** rather than completed. **Never let the narrative claim absence** — "no estate record exists" is the error, not the `negative` enum. Then report that a full-text search of that collection's volumes (a co-occurrence search — surname plus a distinguishing term like an heir/administrator's name or `deceased`/`estate`), and possibly image browsing, is the next step. **Do not run or delegate that search yourself** — the caller owns that decision. Absence may only be called after full-text/browse has also come up empty. Example: a pre-1911 Kentucky death (no statewide certificate exists) is established from the county **estate administration** — the administrator's bond and settlement, full-text-searchable in the probate image volumes — which `record_search` on the 1%-indexed probate collection will never surface.
    **Zero results is NOT "service unavailability."** If `record_search` returns `totalMatches: 0` with no error, the search completed — do not attribute this to service issues.
    **Prior log entries finding the record do NOT override current nil results.** A nil with different parameters documents that those query shapes fail. Log each nil honestly as evidence of which query shapes fail.
    ❌ WRONG: "Log_001 found Patrick Flynn, so the current nil with the Flinn variant is not meaningful."

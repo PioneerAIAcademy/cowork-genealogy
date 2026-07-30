@@ -18,21 +18,48 @@ name: Engine tests
 # not strictly need but the tool-dispatch tests do — it also fails the job fast
 # on a type error, before vitest starts.
 
+#
+# Runs on EVERY pull request — no `paths:` filter — so this check always
+# reports a conclusion and can be required by branch protection. A workflow
+# skipped by `paths:` reports nothing at all, and a required check that never
+# reports leaves its PR stuck on "Expected — waiting for status to be reported"
+# with no way forward except a ruleset bypass. The path scope above moved into
+# the first job step verbatim; what this check does when it applies is
+# unchanged, and an unrelated PR pays one ~5s step instead of a full suite.
 on:
   pull_request:
-    paths:
-      - 'packages/engine/mcp-server/**'
-      - 'packages/engine/plugin/**'
-      - '.github/workflows/engine-tests.yml'
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   vitest:
     runs-on: ubuntu-latest
     steps:
+      - name: Does this PR touch the engine or the plugin?
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PATTERNS: '^packages/engine/mcp-server/|^packages/engine/plugin/|^\.github/workflows/engine-tests\.yml$'
+        run: |
+          set -euo pipefail
+          files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
+                     --paginate --jq '.[].filename')"
+          if printf '%s\n' "$files" | grep -qE "$PATTERNS"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No engine or plugin path changed; reporting success without running vitest."
+          fi
+
       - name: Check out PR
+        if: steps.scope.outputs.relevant == 'true'
         uses: actions/checkout@v5
 
       - name: Set up Node
+        if: steps.scope.outputs.relevant == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -40,6 +67,7 @@ jobs:
           cache-dependency-path: packages/engine/mcp-server/package-lock.json
 
       - name: Install the pinned npm (from the packageManager field)
+        if: steps.scope.outputs.relevant == 'true'
         run: |
           # Node 22 bundles npm 10.x; the engine's .npmrc sets engine-strict with
           # an npm >=11.12 bound, so install the pinned npm before any engine
@@ -49,9 +77,11 @@ jobs:
           echo "Using npm $(npm --version)"
 
       - name: Install dependencies
+        if: steps.scope.outputs.relevant == 'true'
         working-directory: packages/engine/mcp-server
         run: npm ci
 
       - name: Run vitest (pretest builds first)
+        if: steps.scope.outputs.relevant == 'true'
         working-directory: packages/engine/mcp-server
         run: npm test

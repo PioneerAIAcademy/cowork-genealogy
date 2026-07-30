@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "easy",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 9, flags adds_birth/adds_burial, confidence 3). Draft transcribed from a Chilean cemetery record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 9, flags adds_birth/adds_burial, confidence 3). Resolved TRUE MATCH: the Chilean cemetery burial record (30 May 1908, Santiago) belongs to Eulojia del Carmen Gatica Alfaro (LZ3Z-RHM); success = that burial record attached to her."
 }
