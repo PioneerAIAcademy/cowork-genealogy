@@ -37,6 +37,20 @@ name: genealogist-queue
 # V1 IS ADD-ONLY. Once labeled a PR stays labeled, even if it later goes red.
 # Demotion would make PRs flicker out of the queue while someone is mid-review.
 # Revisit after a week of real use.
+#
+# 2026-07-30: THE WORKFLOW COUNTED ITSELF AS RUNNING CI. `SELF` was set to the
+# WORKFLOW's name, but a check run is named after the JOB — which was `promote`,
+# since the job had no `name:`. So the self-filter matched nothing, every run saw
+# its own in-progress check run, and `reasons` always contained "CI still running
+# (1)". No automatic trigger ever labelled anything: the only PRs that got the
+# label were the 5 promoted by a manual `workflow_dispatch` sweep, which is spared
+# because a dispatch's check run lands on the default branch's sha, not on any
+# PR's head. PR #921 is the witness — CI green, peer-approved, and still
+# `#921 not ready — CI still running (1)` with its own check run the only thing
+# in flight. Third instance of the same class of failure in this file: the job
+# goes green while doing nothing. When touching the readiness rules, verify
+# against a real approved PR, not just a dispatch dry run — the dispatch path
+# does not exercise the self-filter at all.
 
 on:
   pull_request:
@@ -70,7 +84,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The job name IS the check-run name, and the script below excludes its own
+  # check run by that name. Keep the two in sync — see SELF.
   promote:
+    name: genealogist-queue
     runs-on: ubuntu-latest
     # Fork PRs get a read-only token; the label write would 403.
     if: >-
@@ -84,7 +101,9 @@ jobs:
           script: |
             const LABEL = 'ready-for-senior';
             // This workflow's own check run is always in progress while it
-            // runs; counting it would mean CI is never "green".
+            // runs; counting it would mean CI is never "green". SELF must equal
+            // the JOB's name (the check-run name), not the workflow's — see the
+            // `name:` above and the 2026-07-30 note in the header.
             const SELF  = 'genealogist-queue';
 
             const BAD     = new Set(['failure', 'cancelled', 'timed_out', 'action_required', 'stale']);
@@ -139,7 +158,15 @@ jobs:
                   { owner, repo, ref: pr.head.sha, per_page: 100 }),
                 github.rest.repos.getCombinedStatusForRef({ owner, repo, ref: pr.head.sha }),
               ]);
-              const others   = checks.filter(c => !(c.name || '').startsWith(SELF));
+              // Drop this workflow's own check runs. Two mechanisms, both load-
+              // bearing: the run-id match is exact but only covers THIS run, and
+              // an EARLIER genealogist-queue run on the same sha that ended in
+              // `failure` would otherwise read as "CI failing" — the name prefix
+              // is what catches that one.
+              const isSelf = c =>
+                (c.details_url || '').includes(`/actions/runs/${context.runId}/`)
+                || (c.name || '').startsWith(SELF);
+              const others   = checks.filter(c => !isSelf(c));
               const failed   = others.filter(c => BAD.has(c.conclusion));
               const running  = others.filter(c => PENDING.has(c.status));
               const statuses = status.data.statuses || [];
