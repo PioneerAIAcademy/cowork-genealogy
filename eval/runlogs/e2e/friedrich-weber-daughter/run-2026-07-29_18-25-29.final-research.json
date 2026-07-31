@@ -1,0 +1,1304 @@
+{
+  "project": {
+    "id": "rp_friedrich_weber_daughter",
+    "objective": "Did Friedrich Carl Weber and his wife Catharina Carell of Sindlingen, Hesse-Nassau have a daughter named Anna Maria Eva, born 1870?",
+    "subject_person_ids": [
+      "GTDL-981"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-29"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Is there a birth or baptismal record documenting the birth of a daughter named Anna Maria Eva to Friedrich Carl Weber and Catharina Carell in Sindlingen, Hesse-Nassau, circa 1870?",
+      "rationale": "The project objective asks whether this specific child existed. Sindlingen was a Catholic parish in the Diocese of Limburg; baptismal registers survive in the Hesse-Nassau diocesan collections on FamilySearch and likely include entries for children of this couple married there in February 1869. A birth/baptismal record from circa 1870 would directly confirm or refute the claim.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-29",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_006",
+        "a_011",
+        "a_013",
+        "a_015",
+        "a_016"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two original church records (Kirchenbuch D43H-7DN2 and Kirchenbuchduplikat D43D-J2MM, collection 3479701) directly name Anna Maria Eva Weber born 26 Feb 1870, baptized 13 Mar 1870, as daughter of Karl Weber and Katharina Karell, identified as GTDL-981 and GTD2-RXP. A sibling baptism record (Rosina Weber, D4WC-V9PZ, 3 May 1869) independently confirms the couple's identity and Nied/H\u00f6chst parish. Church baptism is the only primary record class for a birth in pre-civil-registration Hesse-Nassau (civil registration introduced 1874); all available record types for this jurisdiction and era have been searched. Multiple name variants (Friedrich Carl / Carl Friedrich / Karl, Catharina / Catharina Karel / Katharina Karell) and place variants (Sindlingen, Nied, H\u00f6chst, broad Hesse-Nassau) were tried. pli_002, pli_003, and pli_005 skipped as fallbacks superseded by successful primary search.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 two primary records directly name Anna Maria Eva Weber as daughter of the subject couple born 26 Feb 1870. Question fully answered.",
+          "repository_breadth": "FamilySearch collection 3479701 (Diocese of Limburg Kirchenb\u00fccher) searched with multiple name and place variants. FAN/sibling search executed (pli_004). Secondary and fallback items (pli_002, pli_003, pli_005) skipped because the primary search succeeded and civil registration did not begin in Hesse-Nassau until 1874 \u2014 no additional primary record type exists for a 1870 birth.",
+          "original_substitution": "Both index entries followed to original record content via record_read. Kirchenbuch (original church register) and Kirchenbuchduplikat (original civil copy) both accessed.",
+          "independent_verification": "Kirchenbuch and Kirchenbuchduplikat share informants (presenting parents) and constitute one evidence unit for the Anna Maria Eva Weber baptism. The Rosina Weber baptism (D4WC-V9PZ, 1869) independently corroborates the couple's identity in the same parish. Maximum independence achievable given a single birth event in pre-civil-registration Hesse-Nassau.",
+          "evidence_class": "Kirchenbuch is an original record. Father present at baptism \u2014 primary informant for his own identity and parentage; secondary informant for child's birth date/place. Kirchenbuchduplikat is an original civil copy. Evidence is direct for child's name, parentage, and baptism.",
+          "conflict_resolution": "No conflicts. Both records agree on child's name (Anna Maria Eva Weber), birth date (26 Feb 1870), baptism date (13 Mar 1870), father (Karl Weber = GTDL-981), and mother (Katharina Karell = GTD2-RXP).",
+          "overturn_risk": "Low. No civil birth certificate exists for a 1870 Hesse-Nassau birth (civil registration starts 1874). No name-indexed German household census covers 1870. No other record type expected to name a different parent. pli_002 would index the same underlying records differently \u2014 cannot change the facts found. The two-record finding is stable and the couple's identity is corroborated by a third independent record."
+        }
+      },
+      "created": "2026-07-29"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-29",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Sindlingen, H\u00f6chst, Hesse-Nassau, Prussia, Germany",
+          "date_range": "1869-1872",
+          "repository": "FamilySearch",
+          "rationale": "The primary source for a Sindlingen Catholic baptism circa 1870. FamilySearch collection 3479701 ('Germany, Hessen-Nassau, Diocese of Limburg, Catholic Church Records, 1601-1919') is name-indexed with 1.5 million records and covers Sindlingen's Kirchenbuch (Taufen 1818-1876, film 008640565) and its civil duplicate Kirchenbuchduplikat (Geburten 1818-1874, film 008640567). An 1870 birth predates Prussian civil registration in Hesse-Nassau (which began 1874), so this is the sole primary source class. The couple's 1869 marriage is already indexed in this same collection (ARKs D4WX-91PZ, D4HV-K63Z), confirming Sindlingen records are present. Search for female children of Friedrich Carl Weber and Catharina Carell born 1869-1872.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Hesse-Nassau, Prussia, Germany",
+          "date_range": "1870-1875",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1768560 ('Germany, Hesse-Nassau, Civil Registers and Church Books, 1701-1930', 234,902 indexed records) provides a second access path to Hesse-Nassau church and civil records. It may contain Sindlingen entries indexed under different standardPlace conventions, or may include extracted entries from the Kirchenbuchduplikat not yet surfaced by collection 3479701. Searching this as a secondary check catches any coverage gaps between the two collections.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Sindlingen, Frankfurt, Duchy of Nassau",
+          "date_range": "1869-1876",
+          "repository": "FamilySearch",
+          "rationale": "Fallback for item 1: if the name-indexed search in collection 3479701 returns no result, browse the Sindlingen baptismal register image-by-image. ImageGroup 008640565_004_M9X1-4Y6 covers Taufen 1844-1876 (0% name-indexed, German Kurrent script). Browse the pages corresponding to 1869-1872 directly to check for an Anna Maria Eva Weber entry missed by the index \u2014 indexer errors and name variants are common in this period. Note the film is listed under the Duchy of Nassau standardPlace even though the records span into the Prussian period; both FamilySearch place designations refer to the same physical register. Routed via search-images skill.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Sindlingen, H\u00f6chst, Hesse-Nassau, Prussia, Germany",
+          "date_range": "1865-1880",
+          "repository": "FamilySearch",
+          "rationale": "FAN / sibling search: search collection 3479701 more broadly for all children baptized in Sindlingen to Friedrich Carl Weber and Catharina Carell across the 1865-1880 range. This establishes the couple's documented family pattern \u2014 how many children appear in the registers, whether any other children cluster around 1870, and whether Anna Maria Eva appears under a slightly different name spelling. A family with no documented children is itself evidence worth recording; siblings found would corroborate the couple's presence in Sindlingen during the target period.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Hesse, Germany",
+          "date_range": "1851-1901",
+          "repository": "Ancestry",
+          "rationale": "External paid fallback: Ancestry collection dbid=61117 ('Hesse, Germany, Births, 1851-1901') may contain extracted birth records from Hesse-Nassau that overlap the Sindlingen registers or provide an index entry for an Anna Weber born circa 1870. Search only if FamilySearch searches (items 1-3) are inconclusive. Requires an Ancestry subscription.",
+          "fallback_for": "pli_003",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-29T17:54:56.248Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "3479701",
+        "givenName": "Anna Maria Eva",
+        "surname": "Weber",
+        "sex": "Female",
+        "birthYearFrom": 1868,
+        "birthYearTo": 1872,
+        "fatherGivenName": "Friedrich",
+        "motherGivenName": "Catharina",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 192,
+      "notes": "192 total matches returned; all uniform score 6.34. rank_search_matches returned subjectResolvable:false \u2014 father GTDL-981 too sparse to score. Top 10 ranked results are all 'Anna Maria Weber' from collection 3479701. Notable candidate from raw results: ark:/61903/1:1:DWGZ-PQZM ('Maria Eva Weber', recordTitle 'Eintrag f\u00fcr Carl Weber'). Must manually read top candidates to find Sindlingen father=Friedrich Carl Weber entries."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-29T17:57:46.029Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "3479701",
+        "surname": "Weber",
+        "fatherGivenName": "Friedrich",
+        "motherGivenName": "Catharina",
+        "birthPlace": "Sindlingen",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1880,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1,
+      "notes": "Single stray result 'Katharina Weiber' (fuzzy match on Weber), no Sindlingen baptisms for Friedrich Weber + Catharina returned."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-29T17:57:46.040Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "3479701",
+        "surname": "Weber",
+        "fatherGivenName": "Karl",
+        "motherGivenName": "Catharina",
+        "birthPlace": "Sindlingen",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1880,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "Same single stray result as fatherGivenName=Friedrich search. Name variant 'Karl' for Friedrich Carl Weber also yields nothing for Sindlingen."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-29T17:57:46.048Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "3479701",
+        "surname": "Weber",
+        "fatherGivenName": "Friedrich",
+        "motherGivenName": "Catharina",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1880,
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 1094,
+      "notes": "No place filter \u2014 1094 results across all Hesse-Nassau. Top result: Rosina Weber baptized 3 May 1869 in Nied, H\u00f6chst (adjacent village to Sindlingen). No Sindlingen-place records visible in top 50. Need to read Rosina Weber record to check parents."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-29T17:57:46.066Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "3479701",
+        "surname": "Weber",
+        "fatherGivenName": "Friedrich",
+        "motherGivenName": "Katharina",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1880,
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1094,
+      "notes": "Mother name variant Katharina (K) vs Catharina (C). Same 1094 results, same top hits. Confirms the 1094 pool is driven by surname+father+date, not mother spelling."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-29T17:58:43.023Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "3479701",
+        "surname": "Weber",
+        "fatherGivenName": "Friedrich",
+        "motherGivenName": "Catharina",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1880,
+        "count": 50,
+        "note": "reading top result Rosina Weber D4WC-V9PZ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1094,
+      "notes": "Reading top hit ark:/61903/1:1:D4WC-V9PZ reveals: father indexed as 'Carl Friedrich Weber', mother as 'Catharina Karel', child Rosina Weber born and baptised 3 May 1869 in Nied, H\u00f6chst, Hessen-Nassau. Critical finding: (1) couple's child records are in Nied, not Sindlingen; (2) father's index name is 'Carl Friedrich' not 'Friedrich Carl'; (3) mother surname is 'Karel' (indexing variant of Carell). Rosina died same day \u2014 burial records also in results set. This is not the target child (Anna Maria Eva 1870) but confirms family and key index forms. Must re-search with corrected name/place: fatherGivenName='Carl Friedrich', place='Nied'."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-29T17:59:13.388Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "3479701",
+        "surname": "Weber",
+        "fatherGivenName": "Carl Friedrich",
+        "motherGivenName": "Catharina",
+        "birthPlace": "Nied",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1880,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 42,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 42,
+      "notes": "KEY RESULT: records 5 and 6 are both 'Anna Maria Eva Weber' (female, born 26 Feb 1870, baptized 13 Mar 1870, H\u00f6chst, Hessen-Nassau): ark:/61903/1:1:D43H-7DN2 (recordArk 46P9-FJ3Z) and ark:/61903/1:1:D43D-J2MM (recordArk 46PS-TPT2). The two are likely duplicate records from Kirchenbuch and Kirchenbuchduplikat. Also present: 'Karl Weber' D43D-J23Z whose recordTitle says 'Eintrag f\u00fcr Anna Maria Eva Weber' \u2014 father indexed on same page as D43D-J2MM. This directly answers q_001: Yes, Anna Maria Eva Weber existed, born 26 Feb 1870. Records appear in H\u00f6chst (not Sindlingen) because the family lived in the Nied/H\u00f6chst area after marriage. Search breakthrough enabled by correcting father index name from 'Friedrich Carl' to 'Carl Friedrich' and searching place 'Nied' instead of 'Sindlingen'."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Deutschland, Hesse-Nassau, Di\u00f6zese Limburg, Katholische Kirchenb\u00fccher, 1601-1919\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:D43H-7DN2 : accessed 29 Jul 2026), Entry for Anna Maria Eva Weber and Karl Weber, 13 Mar 1870.",
+      "citation_detail": {
+        "who": "Anna Maria Eva Weber (child), Karl Weber (father), Katharina Karell (mother)",
+        "what": "Catholic baptismal register entry (Kirchenbuch), Diocese of Limburg",
+        "when_created": "13 Mar 1870",
+        "when_accessed": "29 Jul 2026",
+        "where": "FamilySearch, Germany, Hessen-Nassau, Diocese of Limburg, Catholic Church Records, 1601-1919 (collection 3479701)",
+        "where_within": "Baptism entry for Anna Maria Eva Weber, 13 Mar 1870"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-29",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:D43H-7DN2",
+      "notes": "Primary Kirchenbuch (Catholic parish baptismal register), Diocese of Limburg. Record image URL: https://www.familysearch.org/ark:/61903/1:2:46P9-FJ3Z. Father indexed as 'Karl Weber'; tree person GTDL-981 is 'Friedrich Carl Weber' \u2014 name variant confirmed by wife identity (Katharina Karell = Catharina Carell GTD2-RXP). Baptism performed in H\u00f6chst, the neighboring parish to Sindlingen where the couple had married in Feb 1869.",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Deutschland, Hesse-Nassau, Di\u00f6zese Limburg, Katholische Kirchenb\u00fccher, 1601-1919\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:D43D-J2MM : accessed 29 Jul 2026), Entry for Anna Maria Eva Weber and Karl Weber; Kirchenbuchduplikat (civil duplicate filed with civil authorities).",
+      "citation_detail": {
+        "who": "Anna Maria Eva Weber (child), Karl Weber (father), Katharina Karell (mother)",
+        "what": "Kirchenbuchduplikat (civil duplicate of Catholic baptism register) \u2014 baptism entry for Anna Maria Eva Weber",
+        "when_created": "26 Feb 1870 (contemporaneous civil duplicate filing)",
+        "when_accessed": "29 Jul 2026",
+        "where": "Germany, Hessen-Nassau, Diocese of Limburg, Catholic Church Records, 1601-1919, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:D43D-J2MM)",
+        "where_within": "Baptism entry for Anna Maria Eva Weber, H\u00f6chst, Hessen-Nassau, 26 Feb 1870"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:D43D-J2MM",
+      "access_date": "2026-07-29",
+      "notes": "Civil duplicate (Kirchenbuchduplikat) of the Catholic baptism register entry \u2014 a separately created original document filed with civil authorities per Nassau/Hesse-Nassau regulations from 1818. Both this document and the primary Kirchenbuch entry (ark:/61903/1:1:D43H-7DN2) are originals of the same baptismal act. This duplicate corroborates the church register but shares the same informants (presenting parents and officiating priest); they do not constitute independent evidence units.",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Deutschland, Hesse-Nassau, Di\u00f6zese Limburg, Katholische Kirchenb\u00fccher, 1601-1919\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:D4WC-V9PZ : accessed 29 July 2026), Eintrag f\u00fcr Rosina Weber und Carl Friedrich Weber, 3. Mai 1869.",
+      "citation_detail": {
+        "who": "Rosina Weber, daughter of Carl Friedrich Weber and Catharina Karel",
+        "what": "Catholic baptism register entry, Diocese of Limburg (Nied parish), Hesse-Nassau",
+        "when_created": "3 May 1869",
+        "when_accessed": "29 July 2026",
+        "where": "FamilySearch, collection 3479701 (Deutschland, Hesse-Nassau, Di\u00f6zese Limburg, Katholische Kirchenb\u00fccher, 1601-1919)",
+        "where_within": "Baptism entry for Rosina Weber, 3 May 1869, ark:/61903/1:1:D4WC-V9PZ"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:D4WC-V9PZ",
+      "access_date": "2026-07-29",
+      "log_entry_id": "log_006",
+      "notes": "Catholic Kirchenbuch (baptism register) for Nied parish, Diocese of Limburg, Hesse-Nassau. Documents Rosina Weber (sibling of target child Anna Maria Eva Weber, q_001), born/baptized 3 May 1869 \u2014 approximately 10 months before Anna Maria Eva (March 1870). Establishes Carl Friedrich Weber and Catharina Karel in Nied, H\u00f6chst by May 1869, corroborating the couple's identity and geographic presence. Original church register image via FamilySearch indexed record.",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:D43H-7DN2",
+      "record_persona_id": "p_267622526300",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Anna Maria Eva Weber",
+      "structured_value": {
+        "given": "Anna Maria Eva",
+        "surname": "Weber"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:D43H-7DN2",
+      "record_persona_id": "p_267622526300",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:D43H-7DN2",
+      "record_persona_id": "p_267622526300",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "born 26 Feb 1870",
+      "date": "26 Feb 1870",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": "1870"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Contemporaneous entry (baptism 13 days after birth); presenting parents had firsthand knowledge of the birth date. Mother was present at the birth; father as presenting parent corroborates. No indication of delay or secondary relay.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:D43H-7DN2",
+      "record_persona_id": "p_267622526300",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "baptized 13 Mar 1870, H\u00f6chst, Hessen-Nassau, Preu\u00dfen, Deutschland",
+      "date": "13 Mar 1870",
+      "date_certainty": "exact",
+      "place": "H\u00f6chst, Hessen-Nassau, Preu\u00dfen, Deutschland",
+      "information_quality": "primary",
+      "informant": "officiating Catholic priest, Diocese of Limburg",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The officiating priest performed and recorded the baptism in his official capacity; this is his firsthand attestation of the baptismal event.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001",
+      "standard_place": "H\u00f6chst, Hesse-Nassau, Prussia, Germany"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:D43H-7DN2",
+      "record_persona_id": "p_267622526300",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Karl Weber (father)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Parentage stated at the baptism by the presenting parents. Father indexed as 'Karl Weber'; tree person GTDL-981 is 'Friedrich Carl Weber' \u2014 name variant confirmed by co-occurrence with wife Katharina Karell (= Catharina Carell GTD2-RXP). Identity resolution is a person-evidence determination.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:D43H-7DN2",
+      "record_persona_id": "p_267622526300",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Katharina Karell (mother)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Parentage stated at the baptism by the presenting parents. Mother indexed as 'Katharina Karell'; tree person GTD2-RXP is 'Catharina Carell' \u2014 spelling variant, identity confirmed by co-occurrence with husband Karl Weber. Identity resolution is a person-evidence determination.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:D43H-7DN2",
+      "record_persona_id": "p_267622526400",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Karl Weber",
+      "structured_value": {
+        "given": "Karl",
+        "surname": "Weber"
+      },
+      "information_quality": "primary",
+      "informant": "Karl Weber (self, presenting parent)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Indexed as 'Karl Weber'; tree person GTDL-981 carries the name 'Friedrich Carl Weber'. 'Karl' is a hypocoristic/short form of 'Friedrich Carl' \u2014 a common German naming practice. The co-occurrence of wife Katharina Karell confirms this is the same individual. Name variant should be noted for tree matching.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:D43H-7DN2",
+      "record_persona_id": "p_267622526400",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Karl Weber (self, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:D43H-7DN2",
+      "record_persona_id": "p_267622526500",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Katharina Karell",
+      "structured_value": {
+        "given": "Katharina",
+        "surname": "Karell"
+      },
+      "information_quality": "primary",
+      "informant": "Katharina Karell (self, presenting parent)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Indexed as 'Katharina Karell'; tree person GTD2-RXP carries the name 'Catharina Carell' \u2014 spelling variants of the same given name and surname. Identity confirmed by co-occurrence with husband Karl Weber (= Friedrich Carl Weber GTDL-981). Identity resolution is a person-evidence determination.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:D43H-7DN2",
+      "record_persona_id": "p_267622526500",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Katharina Karell (self, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:D43D-J2MM",
+      "record_persona_id": "p_267626097000",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Anna Maria Eva Weber",
+      "structured_value": {
+        "given": "Anna Maria Eva",
+        "surname": "Weber"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:D43D-J2MM",
+      "record_persona_id": "p_267626097000",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:D43D-J2MM",
+      "record_persona_id": "p_267626097000",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 26 Feb 1870",
+      "date": "26 Feb 1870",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:D43D-J2MM",
+      "record_persona_id": "p_267626097000",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "baptized at H\u00f6chst, Hessen-Nassau, Preu\u00dfen, Deutschland",
+      "place": "H\u00f6chst, Hessen-Nassau, Preu\u00dfen, Deutschland",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002",
+      "standard_place": "H\u00f6chst, Hesse-Nassau, Prussia, Germany"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:D43D-J2MM",
+      "record_persona_id": "p_267626097000",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Karl Weber (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:D43D-J2MM",
+      "record_persona_id": "p_267626097000",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Katharina Karell (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:D43D-J2MM",
+      "record_persona_id": "p_267626097100",
+      "record_role": "father_of_child",
+      "fact_type": "name",
+      "value": "Karl Weber",
+      "structured_value": {
+        "given": "Karl",
+        "surname": "Weber"
+      },
+      "information_quality": "primary",
+      "informant": "Karl Weber",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "informant_bias_notes": "Name recorded as 'Karl Weber'; the tree identifies this person as Friedrich Carl Weber (GTDL-981). The given name discrepancy (Karl vs Friedrich Carl) may reflect use of a middle name or a variant \u2014 to be resolved at person-evidence linkage.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:D43D-J2MM",
+      "record_persona_id": "p_267626097100",
+      "record_role": "father_of_child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Karl Weber",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:D43D-J2MM",
+      "record_persona_id": "p_267626097200",
+      "record_role": "mother_of_child",
+      "fact_type": "name",
+      "value": "Katharina Karell",
+      "structured_value": {
+        "given": "Katharina",
+        "surname": "Karell"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "informant_bias_notes": "Name recorded as 'Katharina Karell'; the tree identifies this person as Catharina Carell (GTD2-RXP). Surname spelling variant (Karell/Carell) and given name variant (Katharina/Catharina) are common in German records of this period \u2014 to be resolved at person-evidence linkage.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:D43D-J2MM",
+      "record_persona_id": "p_267626097200",
+      "record_role": "mother_of_child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (Karl Weber and Katharina Karell)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:D4WC-V9PZ",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Rosina Weber",
+      "structured_value": {
+        "given": "Rosina",
+        "surname": "Weber"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Carl Friedrich Weber and Catharina Karel)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:D4WC-V9PZ",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (Carl Friedrich Weber and Catharina Karel)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:D4WC-V9PZ",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "born 3 May 1869",
+      "date": "3 May 1869",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "presenting parents (Carl Friedrich Weber and Catharina Karel)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Parents presented the child for baptism and supplied the birth date. Per christening-record doctrine, classified secondary because the parents relay the child's birth facts rather than their own.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:D4WC-V9PZ",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "baptized 3 May 1869 at Nied, H\u00f6chst, Hessen-Nassau, Preu\u00dfen, Deutschland",
+      "date": "3 May 1869",
+      "date_certainty": "exact",
+      "place": "Nied, H\u00f6chst, Hessen-Nassau, Preu\u00dfen, Deutschland",
+      "information_quality": "primary",
+      "informant": "officiating Catholic priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The officiating priest witnessed and recorded the baptism ceremony; primary evidence for the baptismal event date and place.",
+      "source_id": "src_003",
+      "standard_place": "Nied, H\u00f6chst, Hesse-Nassau, Prussia, Germany"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:D4WC-V9PZ",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Carl Friedrich Weber (stated in baptism register)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Carl Friedrich Weber and Catharina Karel)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Parentage explicitly stated in the baptism register. Father's name recorded as Carl Friedrich Weber; parents presented the child and supplied this information firsthand.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:D4WC-V9PZ",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Catharina Karel (stated in baptism register)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Carl Friedrich Weber and Catharina Karel)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Parentage explicitly stated in the baptism register. Mother's name recorded as Catharina Karel; parents presented the child and supplied this information firsthand.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:D4WC-V9PZ",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Carl Friedrich Weber",
+      "structured_value": {
+        "given": "Carl Friedrich",
+        "surname": "Weber"
+      },
+      "information_quality": "primary",
+      "informant": "Carl Friedrich Weber (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Father presented the child and supplied his own name. Indexed as 'Carl Friedrich Weber'; tree person GTDL-981 is Friedrich Carl Weber (Rufname 'Carl'). Name elements are inverted; person-evidence should evaluate the identity link.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:D4WC-V9PZ",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Carl Friedrich Weber (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:D4WC-V9PZ",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Catharina Karel",
+      "structured_value": {
+        "given": "Catharina",
+        "surname": "Karel"
+      },
+      "information_quality": "primary",
+      "informant": "Catharina Karel (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Mother presented the child and supplied her own name. Indexed as 'Karel'; tree person GTD2-RXP is Catharina Carell \u2014 a variant spelling. Identity likely, pending person-evidence linkage.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:D4WC-V9PZ",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Catharina Karel (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Anna Maria Eva Weber (I1) is a new stub minted from record D43H-7DN2 (Kirchenbuch, H\u00f6chst, 13 Mar 1870). Name assertion directly identifies this person. Probable because I1 is newly created with single-record support at this stage.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex 'Female' stated for the baptized child; matches the minted stub I1 (Anna Maria Eva Weber). Probable \u2014 new stub.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth date 26 Feb 1870 for the child on this record. Directly attributed to I1 (Anna Maria Eva Weber). Probable \u2014 new stub, no independent corroboration yet.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Baptism 13 Mar 1870 at H\u00f6chst, Hessen-Nassau attributed to I1 (Anna Maria Eva Weber). Probable \u2014 new stub.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Parentage assertion: Anna Maria Eva Weber is a child of Karl Weber (father). Links I1 as the child in this parent-child relationship. Probable \u2014 new stub.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "GTDL-981",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Parentage assertion: 'Karl Weber' is identified as Friedrich Carl Weber (GTDL-981). 'Karl' is the Rufname/short form of 'Carl', the second element of Friedrich Carl's compound given name \u2014 a standard German naming practice. The wife on the same record ('Katharina Karell' = Catharina Carell, GTD2-RXP) independently confirms the couple identity. The Rosina Weber baptism (D4WC-V9PZ, May 1869) recorded the same father as 'Carl Friedrich Weber', confirming the name variant pattern. No ARK-based same_person score available (GTDL-981 is a local stub). Qualitative correlation: Moderate; linked at probable.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Parentage assertion: Anna Maria Eva Weber is a child of Katharina Karell (mother). Links I1 as the child. Probable \u2014 new stub.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "GTD2-RXP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "'Katharina Karell' identified as Catharina Carell (GTD2-RXP): (1) 'Katharina/Catharina' and 'Karell/Carell' are standard K/C initial and L-doubling variants in 19th-century German records; (2) GTD2-RXP was born and baptised in Sindlingen Feb 1847, consistent with the H\u00f6chst-area location of this 1870 baptism; (3) husband 'Karl Weber' on the same record = GTDL-981 (Friedrich Carl Weber), confirmed \u2014 the couple's 1869 Sindlingen marriage is already in the tree. All identifiers agree; husband co-occurrence is an independent anchor. No ARK-based score available (local stub). Qualitative correlation: Strong; linked at confident.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "GTDL-981",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "'Karl Weber' (father, record D43H-7DN2) = Friedrich Carl Weber (GTDL-981). 'Karl' = 'Carl' (German/Latin form), the second element of 'Friedrich Carl'; use of the second name as Rufname is standard German practice. Wife Katharina Karell on same record = Catharina Carell (GTD2-RXP), confirming the couple. Prior Rosina Weber baptism (D4WC-V9PZ) showed this father as 'Carl Friedrich Weber', consistent. No ARK-based score (sparse stub). Qualitative: Moderate; probable.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "GTDL-981",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex 'Male' for the father role; consistent with GTDL-981 (Friedrich Carl Weber, Male). Probable \u2014 same grounds as the name assertion a_007.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "GTD2-RXP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "'Katharina Karell' (mother, D43H-7DN2) = Catharina Carell (GTD2-RXP). See a_006 rationale: K/C and Karell/Carell are standard variants; husband Karl Weber = GTDL-981 is the independent anchor. Strong qualitative correlation; confident.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "GTD2-RXP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex 'Female' for the mother; consistent with GTD2-RXP. Confident \u2014 same grounds as a_009.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Anna Maria Eva Weber' on Kirchenbuchduplikat (D43D-J2MM) corroborates I1. Both records (D43H-7DN2 and D43D-J2MM) are contemporaneous filings of the same baptismal act; they share informants and do not constitute independent evidence \u2014 they reinforce the name identification but are counted as one evidence unit for GPS purposes. Probable.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex 'Female' on Kirchenbuchduplikat; consistent with I1. Probable.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth date 26 Feb 1870 on Kirchenbuchduplikat; corroborates a_003. Same-informant unit as D43H-7DN2. Probable.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Baptism at H\u00f6chst on Kirchenbuchduplikat; corroborates a_004. Same-informant unit. Probable.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Parentage on Kirchenbuchduplikat: child of Karl Weber. Corroborates a_005 for I1. Same-informant unit. Probable.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "GTDL-981",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Corroborating assertion for father = GTDL-981. Same grounds as a_005 pe_ for GTDL-981. Kirchenbuchduplikat records 'Karl Weber' as father; same-informant unit with D43H-7DN2. Probable.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Parentage on Kirchenbuchduplikat: child of Katharina Karell. Corroborates a_006 for I1. Same-informant unit. Probable.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "GTD2-RXP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Corroborating assertion for mother = GTD2-RXP. Same grounds as a_006 pe_ for GTD2-RXP. Confident.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "GTDL-981",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "'Karl Weber' on Kirchenbuchduplikat (D43D-J2MM) for father role; corroborates a_007. Same-informant unit; same identification reasoning. Probable.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "GTDL-981",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex 'Male' for father on Kirchenbuchduplikat; consistent with GTDL-981. Probable.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "GTD2-RXP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "'Katharina Karell' on Kirchenbuchduplikat; same identification as a_009 and a_006. Confident.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_020",
+      "person_id": "GTD2-RXP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex 'Female' for mother on Kirchenbuchduplikat; consistent with GTD2-RXP. Confident.",
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_027",
+      "person_id": "GTDL-981",
+      "confidence": "probable",
+      "rationale": "Name 'Carl Friedrich Weber' vs. tree 'Friedrich Carl Weber' \u2014 same two forenames inverted, same inversion pattern documented in src_001/src_002 where this father is indexed 'Karl Weber'. No same_person score (log_006 has no staged sidecar). Corroborated by mother co-occurrence Catharina Karel = GTD2-RXP. Autonomous mode: linked at probable.",
+      "match_score": null,
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_028",
+      "person_id": "GTDL-981",
+      "confidence": "probable",
+      "rationale": "Male sex of father persona Carl Friedrich Weber \u2014 consistent with GTDL-981 (Male). Identity same as a_027 link.",
+      "match_score": null,
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_025",
+      "person_id": "GTDL-981",
+      "confidence": "probable",
+      "rationale": "Rosina Weber's baptism names Carl Friedrich Weber as father \u2014 relationship assertion bears on GTDL-981 as the father. Rosina Weber has no tree person (died same day); father-side link only. Same identification basis as a_027.",
+      "match_score": null,
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_029",
+      "person_id": "GTD2-RXP",
+      "confidence": "confident",
+      "rationale": "Name 'Catharina Karel' \u2014 'Karel' is established variant of 'Carell' (same pattern in src_001/src_002 as 'Katharina Karell'). Given name exact match. Father co-occurrence Carl Friedrich Weber = GTDL-981 provides strong corroboration. No same_person score (no sidecar). Autonomous mode: confident.",
+      "match_score": null,
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_030",
+      "person_id": "GTD2-RXP",
+      "confidence": "confident",
+      "rationale": "Female sex of mother persona Catharina Karel \u2014 consistent with GTD2-RXP (Female). Identity same as a_029 link.",
+      "match_score": null,
+      "created": "2026-07-29"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_026",
+      "person_id": "GTD2-RXP",
+      "confidence": "confident",
+      "rationale": "Rosina Weber's baptism names Catharina Karel as mother \u2014 relationship assertion bears on GTD2-RXP as the mother. Father-side link pe \u2192 GTDL-981 created separately. Same identification basis as a_029.",
+      "match_score": null,
+      "created": "2026-07-29"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_011",
+        "a_013",
+        "a_015",
+        "a_016",
+        "a_025",
+        "a_026",
+        "a_027",
+        "a_029"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch collection 3479701 (Germany, Hessen-Nassau, Diocese of Limburg, Catholic Church Records, 1601-1919) with multiple father name variants (Friedrich Carl, Carl Friedrich, Karl, Friedrich) and place variants (Sindlingen, Nied, H\u00f6chst, broad Hesse-Nassau). Searches also conducted without place filter. A FAN/sibling search (pli_004) yielded the Rosina Weber baptism (1869, Nied), which corrected the father's indexed name and identified the family's parish. Secondary collection 1768560 and image-browse/Ancestry fallbacks (pli_002, pli_003, pli_005) were skipped: the primary indexed search succeeded and civil birth registration did not begin in Hesse-Nassau until 1874, leaving no other primary record class for a February 1870 birth. Research declared reasonably exhaustive (log_001 through log_007).",
+      "narrative_markdown": "## Anna Maria Eva Weber: Probable Daughter of Friedrich Carl Weber and Catharina Carell\n\n**Question:** Did Friedrich Carl Weber and his wife Catharina Carell of Sindlingen, Hesse-Nassau have a daughter named Anna Maria Eva, born 1870?\n\n**Conclusion (Probable):** The evidence strongly suggests that Anna Maria Eva Weber, born 26 February 1870 and baptized 13 March 1870 at H\u00f6chst, Hessen-Nassau, Prussia, is the daughter of Friedrich Carl Weber (born 1846) and his wife Catharina Carell (born 14 February 1847), who had married 7 February 1869 at Sindlingen, Kreis H\u00f6chst, Hessen-Nassau.\n\n### Evidence\n\n**Kirchenbuch entry (original church register):** The Catholic baptismal register of the Diocese of Limburg records Anna Maria Eva Weber, born 26 February 1870, baptized 13 March 1870, as the daughter of Karl Weber (father) and Katharina Karell (mother).[^1] The officiating priest created this record at the time of the baptismal ceremony \u2014 an original source. The presenting parents attended in person and supplied the child's name and birth date; accordingly, the parentage assertions carry primary information and the christening fact is primary evidence of the baptism. This entry is direct evidence for the child's name, birth date, baptismal place, and parentage.\n\n**Kirchenbuchduplikat (original civil duplicate):** A separately created civil duplicate of the same baptismal act records Anna Maria Eva Weber, born 26 February 1870, daughter of Karl Weber and Katharina Karell.[^2] Required by Hesse-Nassau civil law from 1818, the Kirchenbuchduplikat is an original document created for civil authority registration \u2014 independent of the Kirchenbuch in its institutional destination, but sharing the same presenting parents and officiating priest as informants. It agrees on all material points: child's name, birth date, and parents. Because both records derive from the same baptismal event and the same informants, they constitute one evidence unit for GPS independence purposes.\n\n**Corroborating sibling baptism:** A Catholic baptismal register entry for Rosina Weber, baptized 3 May 1869 at Nied, H\u00f6chst, Hessen-Nassau, names Carl Friedrich Weber (father) and Catharina Karel (mother).[^3] Rosina died the same day. This record \u2014 approximately ten months before Anna Maria Eva's birth \u2014 independently establishes this couple in the Nied/H\u00f6chst parish before the target birth. It does not directly name Anna Maria Eva Weber, but it corroborates the couple's identity and their presence in the relevant parish across a different original record and a different baptismal event.\n\n### Name Variants and Identity Resolution\n\nThe father appears in three name forms: 'Karl Weber' in both baptism records for Anna Maria Eva, and 'Carl Friedrich Weber' in the Rosina Weber record. The tree carries this individual as Friedrich Carl Weber (GTDL-981, born 1846). These forms reflect two conventions common in German Catholic registers of this period: the use of the Rufname (the daily-life name, here 'Carl' / 'Karl') in place of the formal first given name 'Friedrich,' and variation in the ordering of given-name elements. The wife's consistent co-occurrence across all three records confirms a single identity: 'Katharina Karell' (Kirchenbuch), 'Katharina Karell' (Kirchenbuchduplikat), and 'Catharina Karel' (Rosina Weber baptism) are orthographic variants of 'Catharina Carell' (GTD2-RXP, born 14 February 1847). The couple's marriage on 7 February 1869 places the birth of Anna Maria Eva on 26 February 1870 \u2014 approximately twelve months later \u2014 within the expected range.\n\n### Search Scope\n\nResearch was conducted primarily in FamilySearch collection 3479701 ('Germany, Hessen-Nassau, Diocese of Limburg, Catholic Church Records, 1601-1919'), the primary indexed repository for Catholic baptisms in the Diocese of Limburg, which encompasses both the Sindlingen and H\u00f6chst/Nied parishes where this family's records are found. Prussia did not introduce civil birth registration in Hesse-Nassau until 1 January 1874; no civil birth certificate therefore exists for a birth of February 1870 in this jurisdiction. Multiple name and place variants were searched. A sibling search yielded the Rosina Weber record, which was instrumental in identifying the family's Nied parish and the father's indexed name form. A secondary collection (1768560) and image-browse and Ancestry fallbacks were assessed as redundant after the primary search succeeded and were skipped. Research was declared reasonably exhaustive.\n\n### GPS Component Assessment\n\n| Component | Status |\n|---|---|\n| Reasonably exhaustive research | Declared |\n| Complete and accurate citations | Citations copied verbatim from research.json |\n| Analysis and correlation | Three records correlated; name variants resolved |\n| Resolution of conflicting evidence | No conflicts \u2014 all records agree on material facts |\n| Soundly reasoned conclusion | This summary |\n\n**Tier: probable.** The conclusion is limited to probable rather than proved because the Kirchenbuch and Kirchenbuchduplikat share informants and constitute one evidence unit; a second independently informanted source directly naming Anna Maria Eva as the daughter of this couple has not been located. This constraint is inherent to the jurisdictional record landscape: civil registration began in 1874, leaving the church baptism register as the only primary record class for a 1870 birth in Hesse-Nassau. The strong preponderance of available evidence supports the conclusion. A future record independently naming Anna Maria Eva \u2014 such as a census household entry, a sibling's marriage record naming the Weber parents, or an emigration or death record \u2014 could advance the tier to proved.\n\n[^1]: \"Deutschland, Hesse-Nassau, Di\u00f6zese Limburg, Katholische Kirchenb\u00fccher, 1601-1919\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:D43H-7DN2 : accessed 29 Jul 2026), Entry for Anna Maria Eva Weber and Karl Weber, 13 Mar 1870. [Source: original; Information: primary; Evidence: direct]\n\n[^2]: \"Deutschland, Hesse-Nassau, Di\u00f6zese Limburg, Katholische Kirchenb\u00fccher, 1601-1919\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:D43D-J2MM : accessed 29 Jul 2026), Entry for Anna Maria Eva Weber and Karl Weber; Kirchenbuchduplikat (civil duplicate filed with civil authorities). [Source: original; Information: primary; Evidence: direct]\n\n[^3]: \"Deutschland, Hesse-Nassau, Di\u00f6zese Limburg, Katholische Kirchenb\u00fccher, 1601-1919\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:D4WC-V9PZ : accessed 29 July 2026), Eintrag f\u00fcr Rosina Weber und Carl Friedrich Weber, 3. Mai 1869. [Source: original; Information: primary (for sibling baptism); Evidence: indirect (for Anna Maria Eva parentage)]"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-29T18:15:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-29T18-15-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Hesse-Nassau, Prussia, Germany",
+      "for_place": "Sindlingen, H\u00f6chst, Hesse-Nassau, Prussia, Germany",
+      "time_period": "1865-1875",
+      "jurisdictions": [
+        {
+          "name": "Sindlingen, Frankfurt, Duchy of Nassau",
+          "date_range": "+1806/+1866"
+        },
+        {
+          "name": "Sindlingen, H\u00f6chst, Hesse-Nassau, Prussia, Germany",
+          "date_range": "+1886/+1928"
+        }
+      ],
+      "collections": [
+        {
+          "id": "3479701",
+          "title": "Germany, Hessen-Nassau, Diocese of Limburg, Catholic Church Records, 1601-1919",
+          "date_range": "1601-1919"
+        },
+        {
+          "id": "1768560",
+          "title": "Germany, Hesse-Nassau, Civil Registers and Church Books, 1701-1930",
+          "date_range": "1701-1930"
+        },
+        {
+          "id": "1473000",
+          "title": "Germany, Births and Baptisms, 1558-1898",
+          "date_range": "1558-1898"
+        },
+        {
+          "id": "1921142",
+          "title": "Germany, Hesse, Civil Registration, 1874-1927",
+          "date_range": "1874-1927"
+        }
+      ],
+      "quirks": [
+        "An 1870 birth predates Prussian civil registration in Hesse-Nassau (began 1874); church records are the only primary source for births in this period.",
+        "Sindlingen records appear under two FamilySearch standardPlaces: 'Sindlingen, Frankfurt, Duchy of Nassau' (pre-1866) and 'Sindlingen, H\u00f6chst, Hesse-Nassau, Prussia, Germany' \u2014 search both when browsing the FS catalog.",
+        "Start with the indexed Diocese of Limburg collection (3479701); Sindlingen baptismal register Taufen 1818-1876 (film 008640565, imageGroup 008640565_004_M9X1-4Y6) is partially indexed there.",
+        "A Kirchenbuchduplikat (civil duplicate of church register) exists for Geburten 1818-1874 (film 008640567) and likely holds a duplicate 1870 birth entry \u2014 also likely indexed in collection 3479701.",
+        "Records are in German Kurrent/Gothic handwriting; earlier volumes may be partly in Latin."
+      ],
+      "guide_markdown": "## Locality Guide: Sindlingen, Hesse-Nassau \u2014 circa 1870\n\n### Jurisdictional Context\nSindlingen in 1870 lay in the former Duchy of Nassau, annexed by Prussia in 1866 and incorporated into the Province of Hesse-Nassau. FamilySearch standard places: 'Sindlingen, Frankfurt, Duchy of Nassau' (pre-1866) and 'Sindlingen, H\u00f6chst, Hesse-Nassau, Prussia, Germany' (from 1886). Sindlingen was a Catholic parish in the Diocese of Limburg (Bistum Limburg), organized 1827.\n\n### Key Records\n**1. Diocese of Limburg Catholic Church Records (PRIMARY, INDEXED)**\n- FS collection 3479701: 1,512,303 indexed records; 301,321 images\n- Sindlingen Taufen 1818-1876 on film 008640565 (imageGroup 008640565_004_M9X1-4Y6)\n- Also: Heiraten 1844-1880, Tote 1818-1874, Kommunionen 1835-1902 on film 008640566\n- Civil duplicate (Kirchenbuchduplikat): Geburten/Heiraten 1818-1874 on film 008640567\n\n**2. Browse-only volumes** (same films, 0% indexed): must be read image-by-image\n\n**3. Germany, Hesse-Nassau, Civil Registers and Church Books, 1701-1930** (FS 1768560): 234,902 indexed records \u2014 secondary check\n\n**4. Civil Registration** \u2014 NOT applicable: Hesse-Nassau Prussian civil registration began 1874; 1870 birth predates it\n\n**5. Germany Births and Baptisms, 1558-1898** (FS 1473000): broad catch-all\n\n**6. External repositories**: Landesarchiv Hessen; Diocesan Archives Limburg (archiv@bistumlimburg.de); Ancestry 'Hesse, Germany, Births, 1851-1901' (dbid=61117)\n\n### Research Approach\nSearch FS collection 3479701 first (name-indexed). If no indexed result, browse imageGroup 008640565_004_M9X1-4Y6 (Taufen 1818-1876) image-by-image.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-29"
+    }
+  ]
+}

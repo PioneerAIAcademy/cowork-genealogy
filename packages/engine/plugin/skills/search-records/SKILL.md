@@ -125,7 +125,7 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 | Parameter | Source | Notes |
 |-----------|--------|-------|
 | `surname` | tree.gedcomx.json person name | Try exact first, then fuzzy variants. Anchor — required if `recordCountry` is absent. |
-| `givenName` | tree.gedcomx.json person name | Use first name only — middle names often absent in records |
+| `givenName` | tree.gedcomx.json person name | **Use the full given-name string when a source names one** — "Anna Maria Eva", not just "Anna": a common first name alone returns a large, undifferentiated set, while the full name a source actually used tends to surface the target as a clear top-scoring outlier. Truncate to first-name-only as a **lever** if it nils (see `references/search-strategy-levers.md`), not as the default starting query. |
 | `birthYearFrom` / `birthYearTo` | Assertions or facts | Year range, both required when filtering by birth year (±5 years typical) |
 | `birthPlace` | Assertions or facts | Use the broadest useful level (state, not city) |
 | `residenceYearFrom` / `residenceYearTo` | Plan item year | Census-style anchor. Set both to the same year for a single-census search |
@@ -247,6 +247,13 @@ candidates; you still confirm the top ones:
   residences, FAN network) — before treating it as the subject's. Absent that
   confirmation, flag it `needs-review`, keep the plan item `in_progress`, and do
   not hand the record or its parents to extraction as the subject's.
+  **Exception for civil death registrations:** ages on death certificates are
+  frequently estimates provided by whoever reported the death — non-family
+  informants (a neighbour, a burial agent, a hospital official) are commonly
+  off by 3–7 years. On a death registration, a birth year discrepancy of ≤5
+  years does not by itself disqualify a match, particularly when the full
+  given name — including middle names — is an exact match. Read the image
+  before dismissing.
   **The excuse can point either direction — both are still excuses.** The
   imprecision doesn't have to sit on the *matched record's* side to be a
   rationalization: a same-name match carrying an exact, precise date (a parish
@@ -272,6 +279,13 @@ candidates; you still confirm the top ones:
   matching spouse or child, a later residence), and propose **that narrower
   search** as the next step. Extraction becomes available again only once an
   independent anchor confirms identity — until then it is not on the menu.
+  **Dismissing one result does not close the search.** After ruling out a
+  candidate, move to the next result in the same ranked list — do not jump to
+  the next plan item. Work through every result in the ranked list in score
+  order before declaring the search done. The error is: top result dismissed
+  → move to next plan item. The correct flow is: top result dismissed →
+  evaluate result #2 → evaluate result #3 → only when the full ranked list is
+  triaged, move on.
   **And do not report the disqualified record's family as findings.** Naming
   its parents (or spouse, or children) in your results table or narrative
   adopts the identity in the only way that matters to a reader, whatever the
