@@ -1,8 +1,17 @@
 # Research Guardrail Bypass — Plan
 
 **Project:** Cowork Genealogy — `/research` orchestration
-**Status:** DRAFT, for review (engineering) — adversarially reviewed once;
-findings incorporated, see §8.
+**Status:** PARTLY SHIPPED — not a pending plan in full. §4.2 and §4.3 are in
+production: §4.2 as `proofSummaryInvariants` in
+`packages/engine/mcp-server/src/tools/research-append.ts` (#914, caller-agnostic,
+so it binds in Cowork and hosted alike), §4.3 as the plugin-shipped `PreToolUse`
+hook `packages/engine/plugin/hooks/` plus the SDK hook in
+`apps/server/app/agent/real_agent.py` (#984, #989 — issue #940, now closed).
+§4.1 is shipped **shadow-mode only** and §4.4's detectors are harness-only;
+graduating §4.1 to hard-deny is #911, and porting §4.4 to production is deferred
+behind #1054 (nothing retains hosted tool calls today, so there is nothing to
+detect against). §9 and §10 are the post-ship record, not proposals.
+Adversarially reviewed once before landing; findings incorporated, see §8.
 **Goal:** Close the structural gap that lets autonomous `/research` silently
 bypass `research-exhaustiveness`, `proof-conclusion`, `person-evidence`, and
 `conflict-resolution` — the four sub-skills that own GPS tier/exhaustiveness/

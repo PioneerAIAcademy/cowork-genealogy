@@ -173,13 +173,19 @@ create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
 
 ## Guardrail enforcement in production
 Plan: `docs/plan/research-guardrail-bypass-plan.md`. The eval-side mechanisms
-have proven out. Only §4.3 reaches production — everywhere, via the plugin hook;
-§4.1's caller-id gate and §4.4's detectors are still harness-only.
+have proven out. **§4.2 and §4.3 reach production**: §4.2 as
+`proofSummaryInvariants` in `research-append.ts` — caller-agnostic, so it has
+bound in Cowork and hosted since #914 — and §4.3 everywhere via the plugin hook.
+§4.1's caller-id gate and §4.4's detectors are still harness-only; the §4.4 port
+is deferred behind #1054 (nothing retains hosted tool calls, so a production
+detector would have nothing to read).
 
 - [ ] **§4.3's lockdown covers `Write`/`Edit`/`NotebookEdit`, not `Bash`.**
-  `real_agent._pretool_hook` matches on `file_path`, so the shell route around it
-  stays open: `cat > research.json`, `sed -i`, `python -c`. Deliberate — the
-  reasoning is the comment on `_FILE_WRITE_TOOLS` in
+  Both copies of the rule — `real_agent._pretool_hook` and the plugin's
+  `hooks/guard_project_files.py`, which is the one that reaches Cowork — match on
+  `file_path`, so the shell route around them stays open: `cat > research.json`,
+  `sed -i`, `python -c`. Deliberate — the reasoning is the comment on
+  `_FILE_WRITE_TOOLS` in
   `apps/server/app/agent/real_agent.py` (skills run their scripts through `Bash`
   so it can't be revoked; matching command text would deny a legitimate
   `python script.py research.json > out` while still missing a variable-built
@@ -195,7 +201,10 @@ have proven out. Only §4.3 reaches production — everywhere, via the plugin ho
   #939 disproved for agents. Confirm with one hosted run (write to
   `research.json` via `Write` with the SDK hook removed) before deleting the
   Python copy. Until then both fire, which is harmless: they deny the same thing
-  with the same reason.
+  with the same reason. Note there is a **third** copy in
+  `eval/harness/e2e/orchestrator.py`, and no test asserts the three agree — each
+  is tested alone, so the day `PROTECTED_PROJECT_FILES` gains a file, two of them
+  can silently lag.
 
 - [ ] **`SessionStart` plugin hooks do not fire in Cowork.** Measured 2026-07-30
   in the same probe that confirmed `PreToolUse` works: no invocation, and the
