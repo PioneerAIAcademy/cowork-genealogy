@@ -243,9 +243,9 @@ Strict surname + birth-place match:
 | `offset` | number | Echo of the input offset (0 if not supplied). |
 | `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). |
 | `results` | RecordSearchResult[] | The ranked results, best-scoring first. |
-| `jurisdictionHints` | object \| undefined | Present **only** on a nil marriage search made with both `projectPath` and `subjectId`. See below. |
+| `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
 
-### `jurisdictionHints` — where else to look when a marriage search returns nothing
+### `jurisdictionHints` — where else to look when a marriage search does not find the subject
 
 A marriage is filed where the wedding happened, not where the couple later
 lived, and a couple usually married **before** they migrated. So a nil marriage
@@ -261,16 +261,23 @@ named — while the answering record sat in the husband's birth state, a fact
 already present in the same tree.
 
 Fires when **all** of: the search was marriage-scoped (`recordType: "marriage"`,
-or any `marriagePlace` / `marriageYearFrom` / `marriageYearTo`), `totalMatches`
-is 0, and both `projectPath` and `subjectId` were supplied. It deliberately does
-**not** fire on a search that returned candidates — that search needs no
-redirection — and firing on every marriage search would be noise.
+or any `marriagePlace` / `marriageYearFrom` / `marriageYearTo`); the search did
+not find the subject — either `totalMatches` is 0 **or** ranking reported
+`subjectResolvable: false`, which it sets only for a scoreable subject against a
+pool that genuinely holds no match; and both `projectPath` and `subjectId` were
+supplied.
+
+A nil-**only** trigger was tried first and is too narrow to be useful: in the
+verification run it fired once, at 121 of 180 minutes, with almost no budget left
+to act on. A search returning rows that match nobody puts the caller in the same
+position as a nil search — the subject is not in this jurisdiction — so it gets
+the same hint.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `searchedPlace` | string \| undefined | Echo of the `marriagePlace` that came back nil. |
-| `candidates` | JurisdictionCandidate[] | Other places either spouse is known to have been, **earliest first**. Undated places sort last. The place already searched is excluded. |
-| `note` | string | Plain-language statement of the rule, so the reason travels with the data. |
+| `searchedPlace` | string \| undefined | Echo of the `marriagePlace` searched. |
+| `candidates` | JurisdictionCandidate[] | Other places these people are on record as having been, ordered by distance from the search's date window (see below). The jurisdiction already searched is excluded, including differently-spelled and narrower forms of it. |
+| `note` | string | Plain-language statement of the rule, so the reason travels with the data — including that these are places to look, never evidence. |
 
 Each `JurisdictionCandidate`: `place` (as written, `standard_place` preferred),
 `earliestYear` (number \| null), `whose` (the `persons[].id` that contributed the
@@ -278,6 +285,41 @@ fact), `fromFact` (e.g. `Birth`, `Residence`, `Marriage`).
 
 Both spouses contribute, which is the point: the decisive place is frequently
 the *other* spouse's birthplace, which the subject's own facts never mention.
+
+#### Ordering: distance from the marriage's date window, not earliest-first
+
+With a `marriageYearFrom`/`marriageYearTo` window the candidates sort:
+
+1. places dated at or before the window, **most recent first** — the last known
+   location before a wedding is the best guess for where it happened
+2. undated places
+3. places dated **after** the window, last — they say nothing about the wedding
+
+With no window in the arguments there is no proximity signal, and the ordering
+falls back to earliest-first across the whole set.
+
+**Earliest-first over the whole set was the original design and is wrong.** It
+ranks by absolute age, so a spouse from a much later marriage can top the list on
+nothing but a small birth year. Verified harmful: in the `jimmie-jewel-neal`
+verification run it put the subject's **third** husband's 1847 birthplace above
+the relevant husband's 1857 one, and the caller then scoped nine searches to that
+top candidate against one for the jurisdiction that mattered, finishing by
+minting two wrong parents there. A run of the same fixture *without* the hint had
+correctly declined to name parents at all — so the ordering did not merely fail
+to help, it converted a cautious run into an over-claiming one. Ranking is the
+load-bearing part of this feature; treat a change to it as a behavioural change
+and re-verify with a live run, not unit tests alone.
+
+#### Place matching
+
+`searchedPlace` is compared to each candidate on comma-separated tokens, lowercased,
+with `County`/`Co.` and country suffixes dropped, and matches when one token set
+contains the other. So `"Hill County, Texas"` excludes `"Hill, Texas, United States"`,
+and searching `"Texas, United States"` excludes every Texas place in the tree.
+
+Exact string comparison was the original behaviour and let the jurisdiction just
+searched reappear as its own alternative, because callers spell places the way
+FamilySearch's search expects while the tree stores standardized forms.
 
 **Advisory and best-effort.** A missing or malformed `tree.gedcomx.json`, an
 unknown `subjectId`, or a spouse absent from `persons` all leave the field off
