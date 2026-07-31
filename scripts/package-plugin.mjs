@@ -16,8 +16,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGIN = join(ROOT, "packages", "engine", "plugin");
 const RELEASES = join(ROOT, "releases");
 const OUT = join(RELEASES, "genealogy-plugin.zip");
-// Mirrors the old `zip -r` include list (and order).
-const INCLUDE = [".claude-plugin", "agents", "skills"];
+// Mirrors the old `zip -r` include list (and order). "hooks" is load-bearing:
+// without it the plugin's hooks/ directory is not in the zip at all, and a hook
+// that never shipped is indistinguishable from a hook the runtime refused to
+// load. Asserted by tests/packaging/plugin-hooks.test.ts.
+const INCLUDE = [".claude-plugin", "agents", "skills", "hooks"];
 
 // Gate: validate skill + agent frontmatter (description <=1024 chars, no angle
 // brackets, valid name) BEFORE building a zip Cowork would reject at install

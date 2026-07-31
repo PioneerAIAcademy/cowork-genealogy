@@ -1,0 +1,495 @@
+{
+  "persons": [
+    {
+      "id": "K2GV-D61",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Sebastiana",
+          "surname": "Sandoval",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "F7",
+          "type": "Birth",
+          "date": "1855",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "Residence",
+          "place": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+          "standard_place": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L4DP-TRJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Juan",
+          "surname": "Aguilar Sandoval"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8dddb0b5-4223-495c-9f1d-80f37098429e",
+          "type": "Birth",
+          "date": "1877",
+          "standard_date": "1877",
+          "place": "Magdalena Pe\u00f1asco, Oaxaca, M\u00e9xico",
+          "standard_place": "Magdalena Pe\u00f1asco, Oaxaca, Mexico"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PHS7-Y7L",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Remigio",
+          "surname": "Aguilar",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "20e95df4-f747-4a26-8084-8d2a0f96d76c",
+          "type": "Birth",
+          "date": "30 de septiembre de 1879",
+          "standard_date": "30 Sep 1879",
+          "place": "Magdalena Pe\u00f1asco, Oaxaca, M\u00e9xico",
+          "standard_place": "Magdalena Pe\u00f1asco, Oaxaca, Mexico",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "e0d0f2ab-77ba-44d1-8332-61e91a798547",
+          "type": "Death"
+        },
+        {
+          "id": "F4",
+          "type": "BirthRegistration",
+          "date": "1 Oct 1879",
+          "place": "Tlaxiaco, Oaxaca, Mexico",
+          "standard_place": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+          "value": "Registered 1 October 1879, Tlaxiaco",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K2GV-D6B",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Jose",
+          "surname": "Aguilar"
+        },
+        {
+          "id": "N8",
+          "type": "BirthName",
+          "given": "Jose Maria",
+          "surname": "Aguilar",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N9",
+          "type": "BirthName",
+          "given": "Jos\u00e9 Mar\u00eda",
+          "surname": "Aguilar",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "F5",
+          "type": "Birth",
+          "date": "1856",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Occupation",
+          "value": "labrador",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K2GV-D6Y",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Jose Casimiro Tomas",
+          "surname": "Aguilar Sandoval"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d889f146-9ba7-4106-8597-a74ed0695461",
+          "type": "Birth",
+          "date": "2 de marzo de 1885",
+          "standard_date": "2 Mar 1885",
+          "place": "Santa Mar\u00eda Asunci\u00f3n, Santa Mar\u00eda Tlahuitoltepec, Oaxaca, M\u00e9xico",
+          "standard_place": "Santa Mar\u00eda Asunci\u00f3n, Santa Mar\u00eda Tlahuitoltepec, Oaxaca, Mexico"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "7 de marzo de 1885",
+          "standard_date": "7 Mar 1885",
+          "place": "Santa Mar\u00eda Asunci\u00f3n, Santa Mar\u00eda Tlahuitoltepec, Oaxaca, M\u00e9xico",
+          "standard_place": "Santa Mar\u00eda Asunci\u00f3n, Santa Mar\u00eda Tlahuitoltepec, Oaxaca, Mexico"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PCQ2-MZX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Carpio",
+          "surname": "Aguilar Sandoval"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3f234f3b-52c6-4d13-abdd-81d7404298a7",
+          "type": "Birth",
+          "date": "1884",
+          "standard_date": "1884"
+        },
+        {
+          "id": "57809b1f-034b-47a4-89ef-7097abece845",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N7",
+          "type": "BirthName",
+          "given": "Juana",
+          "surname": "Aguilar",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Death",
+          "place": "Magdalena Pe\u00f1asco, Oaxaca, Mexico",
+          "standard_place": "Magdalena Pe\u00f1asco, Oaxaca, Mexico",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "date": "1879",
+          "primary": true
+        },
+        {
+          "id": "F2",
+          "type": "DeathRegistration",
+          "date": "28 October 1879",
+          "place": "Tlaxiaco, Oaxaca, Mexico",
+          "standard_place": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+          "value": "Death registered 28 October 1879 at Tlaxiaco, Oaxaca, Mexico",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Birth",
+          "date": "~1876",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F9",
+          "type": "Burial",
+          "place": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+          "standard_place": "Tlaxiaco, Mixteca, Oaxaca, Mexico",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "K2GV-D6B",
+      "person2": "K2GV-D61"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "K2GV-D6B",
+      "child": "L4DP-TRJ"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "K2GV-D61",
+      "child": "L4DP-TRJ"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "K2GV-D6B",
+      "child": "PHS7-Y7L"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K2GV-D61",
+      "child": "PHS7-Y7L"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "K2GV-D6B",
+      "child": "PCQ2-MZX"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "K2GV-D61",
+      "child": "PCQ2-MZX"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "K2GV-D6B",
+      "child": "K2GV-D6Y"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "K2GV-D61",
+      "child": "K2GV-D6Y"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "K2GV-D6B",
+      "child": "I1",
+      "id": "R10",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "K2GV-D61",
+      "child": "I1",
+      "id": "R11",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "W8ND-NYL",
+      "title": "Sebastiana Sandoval, \"M\u00e9xico bautismos, 1560-1950\"",
+      "citation": "\"M\u00e9xico bautismos, 1560-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N1JH-1HZ : Fri Mar 27 14:20:14 UTC 2026), Entry for Jose Casimiro Tomas Aguilar and Jose Aguilar, 7 Mar 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N1JH-1HD"
+    },
+    {
+      "id": "W9S8-TZB",
+      "title": "Sebastiana Sandoval, \"M\u00e9xico, Oaxaca, Registro Civil, 1861-2002\"",
+      "citation": "\"M\u00e9xico, Oaxaca, Registro Civil, 1861-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG9P-1JRZ : Wed Mar 12 12:04:46 UTC 2025), Entry for Remigio Aguilar and Jos\u00e9 Maria Aguilar, 1 de octubre de 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QG9P-1JRV"
+    },
+    {
+      "id": "W36H-L1F",
+      "title": "Sebastiana Sandova, \"M\u00e9xico, Oaxaca, registros parroquiales y diocesanos, 1559-2022\"",
+      "citation": "\"M\u00e9xico, Oaxaca, registros parroquiales y diocesanos, 1559-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D2M8-QYMM : Thu Oct 16 19:51:33 UTC 2025), Entry for Carpio Aguilar and Jose Aguilar, 7 Jul 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D2M8-QYW2"
+    },
+    {
+      "id": "WC7L-NSY",
+      "title": "Sebastiana Sandoval, \"M\u00e9xico, Oaxaca, registros parroquiales y diocesanos, 1559-2022\"",
+      "citation": "\"M\u00e9xico, Oaxaca, registros parroquiales y diocesanos, 1559-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DK7P-YBMM : Fri Jul 19 13:00:10 UTC 2024), Entry for Juan Aguilar and Jos\u00e9 Aguilar, 14 Jan 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DK75-W6PZ"
+    },
+    {
+      "id": "7HXT-68R",
+      "title": "Sebastiana Sandoval in entry for Juan Aguilar, \"Mexico, Marriages, 1570-1950\"",
+      "citation": "\"M\u00e9xico matrimonios, 1570-1950\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:JHKV-6RT : 20 May 2021), Sebastiana Sandoval in entry for Juan Aguilar, 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JHKV-6RT"
+    },
+    {
+      "id": "WC7L-Z6P",
+      "title": "Sebastiana Sandoval, \"M\u00e9xico, Oaxaca, registros parroquiales y diocesanos, 1559-2022\"",
+      "citation": "\"M\u00e9xico, Oaxaca, registros parroquiales y diocesanos, 1559-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D2M8-6S3Z : Mon Jan 20 06:02:23 UTC 2025), Entry for Juan Aguilar and Jos\u00e9, 24 Jul 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D2M8-6SZM"
+    },
+    {
+      "id": "7HXT-24Z",
+      "title": "Sebastiana Sandoval, \"M\u00e9xico, Oaxaca, registros parroquiales y diocesanos, 1559-2022\"",
+      "citation": "\"M\u00e9xico, Oaxaca, registros parroquiales y diocesanos, 1559-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DK7K-SD6Z : Mon Jan 20 03:00:47 UTC 2025), Entry for Juan Aguilarl and Jose, 24 Jul 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DK7K-SD2M"
+    },
+    {
+      "id": "WC7L-8QM",
+      "title": "Sebastiana Sandoval, \"M\u00e9xico, Oaxaca, registros parroquiales y diocesanos, 1559-2022\"",
+      "citation": "\"M\u00e9xico, Oaxaca, registros parroquiales y diocesanos, 1559-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D2MZ-243Z : Fri Jan 17 18:00:30 UTC 2025), Entry for Juan Aguilar and Jos\u00e9 Aguilar, 14 Jan 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D2MZ-24ZM"
+    },
+    {
+      "id": "S1",
+      "title": "M\u00e9xico, Oaxaca, Registro Civil, 1861-2002 \u2014 Death registration for Juana Aguilar, 28 Oct 1879",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QG3Q-RMGM",
+      "citation": "\"M\u00e9xico, Oaxaca, Registro Civil, 1861-2002,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QG3Q-RMGM : accessed 27 July 2026), entry for Juana Aguilar and Jose Maria Aguilar, 28 de octubre de 1879."
+    },
+    {
+      "id": "S2",
+      "title": "M\u00e9xico, Oaxaca, Registro Civil, 1861-2002 \u2014 Death entry for Juana Aguilar, 1879",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XSSC-NMTG",
+      "citation": "\"M\u00e9xico, Oaxaca, Registro Civil, 1861-2002,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XSSC-NMTG : accessed 2026-07-27), entry for Juana Aguilar and Jos\u00e9 Mar\u00eda Aguilar, 1879; citing civil registration records, Tlaxiaco, Oaxaca, Mexico."
+    },
+    {
+      "id": "S3",
+      "title": "M\u00e9xico, Oaxaca, Registro Civil, 1861-2002 \u2014 Birth of Remigio Aguilar, 1 Oct 1879, Tlaxiaco",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QG9P-1JRZ",
+      "citation": "\"M\u00e9xico, Oaxaca, Registro Civil, 1861-2002,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QG9P-1JRZ : accessed 27 July 2026), entry for Remigio Aguilar and Jos\u00e9 Mar\u00eda Aguilar, 1 de octubre de 1879."
+    }
+  ]
+}

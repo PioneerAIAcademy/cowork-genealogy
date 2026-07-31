@@ -1,0 +1,14 @@
+# Path-based PR labels, applied by .github/workflows/labeler.yml
+# (actions/labeler v5 config format).
+#
+# Keep this list short. A label here only earns its place if someone
+# actually filters or routes on it.
+
+# Python is the developer-facing half of this repo — the eval harness
+# (eval/harness, eval/triggering) and the FastAPI control plane
+# (apps/server). Nothing a genealogist reviews is written in Python, so
+# "touches a .py file" is a reliable proxy for "needs a developer's eyes".
+developer:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.py'

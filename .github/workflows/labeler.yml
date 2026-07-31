@@ -1,0 +1,34 @@
+name: labeler
+
+# Applies path-based labels to PRs from .github/labeler.yml.
+# Today that is one rule: any PR touching a *.py file gets `developer`.
+#
+# `sync-labels: true` means the label tracks the diff rather than the PR's
+# history — push a commit that drops the last .py change and the label comes
+# off. That also means a human cannot hand-apply `developer` to a PR with no
+# Python in it: the next push will strip it. If you want a label that sticks,
+# it does not belong in labeler.yml.
+#
+# TRIGGER CHOICE: `pull_request`, not `pull_request_target`. The labeler docs
+# suggest the latter because it is the only way to get a writable token on a
+# PR from a fork. This repo has never taken a fork PR (0 of the last 30 were
+# cross-repository) — every branch lives here. If that changes, a fork PR will
+# fail this job red with a 403 on the label write, which is the loud failure
+# we want; switch to `pull_request_target` at that point, and only then. It is
+# safe for this action specifically (labeler v5 checks out no PR code), but it
+# runs with repo secrets in scope, so it is not a default worth carrying.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          sync-labels: true

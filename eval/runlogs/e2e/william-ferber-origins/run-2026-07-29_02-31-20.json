@@ -1,0 +1,61 @@
+{
+  "test_id": "william-ferber-origins",
+  "captured_at": "2026-07-29_02-31-20",
+  "verdict": "fail",
+  "stop_reason": "error",
+  "judge_output": {
+    "per_finding": [
+      {
+        "finding_id": "f1",
+        "matched": "false",
+        "agent_evidence": "",
+        "notes": "The agent's final tree contains no record of Gerhard Ferber as William Hubert Ferber's father. The tree includes William H Ferber (G7JB-YH6) but does not establish his paternal lineage or identify Gerhard Ferber. No ParentChild relationship connecting William to Gerhard appears in the relationships array."
+      },
+      {
+        "finding_id": "f2",
+        "matched": "false",
+        "agent_evidence": "",
+        "notes": "The agent's final tree does not contain Eva Engermann or any mother for William Hubert Ferber. While the tree shows William H Ferber married to Emma Becker, Emma Becker (born 1870) is his wife, not his mother. Eva Engermann (William's actual mother, born ~1834) is entirely absent from the tree."
+      }
+    ],
+    "recall_required": 0.0,
+    "recall_total": 0.0,
+    "verdict": "fail",
+    "rationale": "The agent failed to recover either of the two required findings. The final tree does not establish William Hubert Ferber's parentage: neither his father Gerhard Ferber nor his mother Eva Engermann appears in the persons array, and no ParentChild relationships link William to these parents. The tree instead shows William married to Emma Becker and father to Charles Hubert Ferber, but the ancestral origins\u2014the core of the research question\u2014are entirely absent. This is a complete failure of recall.",
+    "proof_quality": {
+      "score": null,
+      "exhaustiveness": "na",
+      "conflicts_addressed": "na",
+      "corroboration": "na",
+      "tier_appropriate": "na",
+      "rationale": "No proof summary was provided in the agent's research.json output. The proof_quality assessment cannot be performed; score is null and all dimensions are na."
+    }
+  },
+  "usage": {
+    "continue_nudges": 0,
+    "session_id": null,
+    "resumes": 0,
+    "resume_on_stall": true,
+    "timeline": [],
+    "caps": {
+      "wall_clock_seconds": 7200,
+      "inactivity_seconds": 600,
+      "progress_stall_seconds": 600,
+      "tool_calls": 300,
+      "max_turns": 250,
+      "max_cost_usd": 15.0
+    },
+    "wall_clock_seconds": 99.27014910000071,
+    "real_clock_seconds": 99.27015161514282,
+    "slept_seconds": 2.5151421141345054e-06,
+    "judge_seconds": 25.761107099999208
+  },
+  "tool_calls": [],
+  "error": "Exception: Control request timeout: initialize",
+  "tags": {
+    "question_type": "parents",
+    "era": "1850s",
+    "geography": "US-OH"
+  },
+  "blocked_tree_reads": []
+}

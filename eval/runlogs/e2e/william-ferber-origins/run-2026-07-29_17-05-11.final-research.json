@@ -1,0 +1,198 @@
+{
+  "project": {
+    "id": "rp_william_ferber_origins",
+    "objective": "What were the ancestral origins of William Hubert Ferber (father of Charles Hubert Ferber, b. 1891, Cincinnati, Ohio) - who were his parents, and where did the family come from?",
+    "subject_person_ids": [
+      "G7JB-YH6"
+    ],
+    "status": "completed",
+    "created": "2026-07-28",
+    "updated": "2026-07-29"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of William H. Ferber (b. December 1869, Ohio, d. 11 March 1903, Cincinnati, Hamilton County, Ohio)?",
+      "rationale": "Central gatekeeper question for the project objective. William has no parent links in the tree. The 1870 and 1880 US Federal Census records are the primary tools: the 1870 census would capture him as an infant in his parents' household; the 1880 census at age ~10-11. His 1903 death record and Ohio vital records may also name parents. Identifying the parents directly enables research into family geographic origins (the second part of the objective).",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "created": "2026-07-29",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-29",
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All available search tools confirmed unavailable: mcp__genealogy__record_search is TOOL_NOT_FOUND (genealogy MCP server offline); WebFetch, WebSearch, Bash, and PowerShell are permission-denied (don't-ask mode). Confirmed independently across main context, general-purpose agent, record-extractor agent, and gps-mentor agent. No records could be retrieved. Research is exhausted relative to available infrastructure; nine record sets identified in pl_001 remain unexecuted pending tool restoration.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002"
+        ],
+        "stop_criteria": "Infrastructure failure: all search and write tools offline or permission-denied. Cannot execute any of the nine planned searches."
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-29",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Hamilton County, Ohio, United States",
+          "date_range": "1870",
+          "repository": "FamilySearch",
+          "rationale": "William was born December 1869; the June 1870 census would capture him as an infant (under 1 year) in his parents' household. This is the highest-probability record for identifying both parents by name and learning their nativity (German vs. Ohio-born), which directly advances the origins question.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Hamilton County, Ohio, United States",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "William would be approximately 10-11 years old in 1880, almost certainly still residing in parents' household. Nativity columns for both parents would reveal whether they were born in Germany, providing direct evidence for the family origins question.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio, United States",
+          "date_range": "1903",
+          "repository": "FamilySearch",
+          "rationale": "William's death certificate (11 March 1903) may name his parents. Ohio death certificates by 1903 typically recorded father's name and mother's maiden name; the informant was likely his widow Emma, who would have known this information. Direct parentage evidence if complete.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio, United States",
+          "date_range": "1869",
+          "repository": "FamilySearch",
+          "rationale": "Ohio began statewide birth registration in 1867; coverage in Hamilton County by December 1869 was improving. A birth record would directly name both parents. Worth checking even if coverage is spotty.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio, United States",
+          "date_range": "1890",
+          "repository": "FamilySearch",
+          "rationale": "Re-examine the original image of William's 1890 marriage record (source SLJ6-N3L already in project). Marriage records of this period in Ohio sometimes named the groom's father as a consent-giver or witness; the image may contain more than the index entry captures.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "other",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio, United States",
+          "date_range": "1860-1890",
+          "repository": "FamilySearch",
+          "rationale": "Cincinnati city directories from the 1860s through 1880s would show the Ferber household head (William's father) by name, occupation, and address when William was a child. This can confirm a name hypothesis derived from census and give occupational context.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "other",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio, United States",
+          "date_range": "1860-1890",
+          "repository": "Ancestry",
+          "rationale": "Ancestry's U.S. City Directories 1822-1995 may supplement or predate the FamilySearch directory holdings for Cincinnati. Fallback for pli_006 and additional coverage for the 1860s when FamilySearch holdings may be thinner.",
+          "fallback_for": "pli_006",
+          "status": "planned"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio, United States",
+          "date_range": "1860-1875",
+          "repository": "FamilySearch",
+          "rationale": "The surname 'Ferber' is German; Cincinnati had a large German immigrant community with well-maintained Lutheran, Catholic, and Reformed church registers. A baptismal record for William (December 1869) or siblings would directly name both parents. Parents' marriage record in a German church would confirm the family unit and potentially give German hometown of origin.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "probate",
+          "jurisdiction": "Hamilton County, Ohio, United States",
+          "date_range": "1880-1910",
+          "repository": "FamilySearch",
+          "rationale": "If William's father died before 1910, Hamilton County probate records (wills, administrations) would name heirs including William. A will naming William as a son is direct parentage evidence. Useful if census and vital-record approaches yield only a name hypothesis needing confirmation.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-29T00:01:00Z",
+      "tool": "record_search",
+      "query": "surname=Ferber givenName=William birthYear=1864-1874 residenceYear=1870 residencePlace=Hamilton Ohio",
+      "outcome": "error",
+      "results_examined": 0,
+      "results_available": 0,
+      "results_ref": null,
+      "external_site": null,
+      "notes": "Search attempted via general-purpose agent and record-extractor agent \u2014 both confirmed TOOL_NOT_FOUND for mcp__genealogy__record_search. WebFetch and WebSearch are permission-denied (don't-ask mode). Bash and PowerShell are permission-denied. All five search vectors exhausted across three independent agent contexts. No results retrievable. Infrastructure must be restored before this search can proceed."
+    },
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-29T00:00:00Z",
+      "tool": "none",
+      "query": "1870 US Federal Census, Hamilton County, Ohio \u2014 surname: Ferber, givenName: William",
+      "outcome": "error",
+      "results_examined": 0,
+      "results_available": 0,
+      "results_ref": null,
+      "external_site": null,
+      "notes": "INFRASTRUCTURE BLOCKER: The genealogy MCP server (mcp__genealogy__*) is offline and did not connect during this session. WebFetch and WebSearch are permission-denied (don't-ask mode). Confirmed across main agent context, general-purpose agent, and record-extractor agent. No search execution is possible until the genealogy MCP server reconnects and the required permissions are restored. Plan items pli_001 through pli_009 remain 'planned' pending resolution of this blocker."
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "created": "2026-07-29",
+      "tier": "not_proved",
+      "conclusion": "The identity of William H. Ferber's parents cannot be established from this research session. All record-search infrastructure was unavailable: the genealogy MCP server was offline and web/shell access was denied throughout the run. Nine record sets were planned but none could be searched. This not_proved finding reflects an environmental limitation, not an absence of locatable evidence.",
+      "narrative_markdown": "## Research Question\n\nWho were the parents of William H. Ferber (b. December 1869, Ohio, d. 11 March 1903, Cincinnati, Hamilton County, Ohio)?\n\n## Summary of Research Attempted\n\nThis research session established a question (q_001) and a nine-item research plan (pl_001) targeting the records most likely to identify William H. Ferber's parents. The planned searches, in priority order, were: (1) 1870 US Federal Census, Hamilton County \u2014 William as infant in parents' household; (2) 1880 US Federal Census \u2014 William as child, ~age 10\u201311; (3) William's 1903 Ohio death certificate \u2014 may name parents; (4) Ohio birth record, December 1869 \u2014 may name parents directly; (5) re-examination of William's 1890 marriage record image for father's name; (6\u20137) Cincinnati city directories 1860s\u20131880s on FamilySearch and Ancestry; (8) German church records, Cincinnati, 1860\u20131875 \u2014 baptismal and marriage registers; (9) Hamilton County probate records 1880\u20131910.\n\nExecution of every planned search was blocked by complete infrastructure failure. The genealogy MCP server (providing `record_search`, `research_append`, `research_log_append`, and all related tools) was confirmed TOOL_NOT_FOUND across four independent agent contexts. WebFetch, WebSearch, Bash, and PowerShell were all permission-denied in don't-ask mode. Two log entries (log_001, log_002) document the exhausted retry attempts.\n\n## Evidentiary State\n\nNo records were retrieved. No assertions about William H. Ferber's parentage exist in this project. The existing tree (tree.gedcomx.json) records William's birth (December 1869, Ohio), death (11 March 1903, Cincinnati), and marriage (Emma Becker, 10 September 1890), but contains no parent links and no sibling data.\n\n## Conclusion\n\nThe question of William H. Ferber's parentage is **not proved** at this time. This outcome reflects an infrastructure limitation, not a determination that the evidence does not exist. The 1870 and 1880 US Federal Census records are the highest-priority next searches; both are indexed on FamilySearch and should capture William as a child in his parents' household. When the genealogy MCP server reconnects and/or web permissions are restored, this project should be re-invoked \u2014 the research plan (pl_001) is complete and ready to execute.",
+      "sources_cited": [],
+      "assertion_ids_supporting": [],
+      "assertion_ids_contradicting": []
+    }
+  ],
+  "evaluations": []
+}

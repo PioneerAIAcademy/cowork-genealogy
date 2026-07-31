@@ -5,7 +5,7 @@
     "name": "Planning which volumes to browse should not trigger search-images",
     "type": "negative",
     "description": "User asks which unindexed volumes to browse next and to help plan — that's research-plan. search-images executes a browse of a specific volume; it does not decide research strategy.",
-    "tags": ["near-miss", "browse-vs-plan", "boundary"]
+    "tags": ["near-miss", "browse-vs-plan", "boundary", "no-browse-no-write"]
   },
   "input": {
     "user_message": "Which unindexed record sets should I browse next for the Flynn research? Help me plan the strategy.",
@@ -16,9 +16,13 @@
   },
   "negative": {
     "correct_skill": ["research-plan"],
-    "explanation": "Deciding which record sets to browse and in what order is planning work — research-plan's job. search-images executes a browse of an already-chosen volume; it does not author or prioritize plan items."
+    "explanation": "Deciding which record sets to browse and in what order is planning work — research-plan's job. search-images executes a browse of an already-chosen volume; it does not author or prioritize plan items.",
+    "grade_on_invariant": true
   },
   "judge_context": [
-    "Should route to research-plan rather than browsing — the user is asking what to search, not asking to execute a specific browse."
+    "This is a grade_on_invariant negative test: PASS/FAIL is decided solely by the deterministic no-browse-no-write validator (no volume_search or image_search call, no new browse log entry, no results/ sidecar written). Routing and activation are NOT gated. The judge runs base-only and diagnostically here — its scores do not decide the outcome.",
+    "Ideal behavior is to route the planning question to research-plan via an actual Skill('research-plan') tool call, without producing the browsing strategy, tier list, or prioritized plan inline.",
+    "Known model prior (why this test was routing-flaky): the user's wording ('which unindexed record sets should I browse next') lexically overlaps search-images' own description, so on some runs the router invokes search-images first. The skill then correctly emits the one-line redirect its ROUTING section mandates ('That's planning — please use research-plan') and stops — spec §6 lists exactly that as non-activation — but research-plan never fires, which used to fail the routing check. On other runs the model detours through project-status and answers the planning question itself. Under grade_on_invariant neither fails the test as long as no browse ran and nothing was written; treat a search-images redirect as correct behavior, and a project-status detour as a routing imperfection worth noting, not an automatic Correctness=1.",
+    "The real harm this test guards against is search-images EXECUTING a browse (volume_search / image_search) or persisting a browse log entry or results sidecar when only planning advice was requested. That is what the validator fails on."
   ]
 }
