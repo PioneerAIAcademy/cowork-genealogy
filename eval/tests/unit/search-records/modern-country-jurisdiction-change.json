@@ -24,7 +24,8 @@
     "record-read-gallo-1893-baptism"
   ],
   "execution": {
-    "max_turns": 35
+    "max_turns": 35,
+    "max_wall_clock_seconds": 600
   },
   "judge_context": [
     "POSITIVE test. The plan item pli_001's rationale STAGES the successor jurisdiction — it states the Turany parish is indexed by FamilySearch under present-day Slovakia (not the Kingdom of Hungary). search-records should act on that staged jurisdiction and search Slovakia.",

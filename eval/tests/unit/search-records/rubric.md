@@ -11,9 +11,17 @@ Grading dimensions for search-records unit tests. Evaluated by the LLM judge alo
 ### Tool Arguments — this rubric owns the name-variant case
 
 **A `fixture_not_found` on a *name-variant* `record_search` is a gap in this
-test's fixtures, not a Tool Arguments defect. Do not score Tool Arguments below
-3 for it. Grade Tool Arguments on the arguments of the searches that DID match a
-fixture — above all the primary query.**
+test's fixtures, not a Tool Arguments defect. When the searches that DID match a
+fixture — above all the primary query — carry correct arguments, score Tool
+Arguments exactly 3. Not 2. A `fixture_not_found` of this kind contributes
+nothing to the score, so it cannot be the reason for a deduction of any size.**
+
+**Do not split the difference.** On 2026-07-31 a judge quoted this override,
+agreed the variant misses "are not Tool Arguments defects", confirmed "the
+primary search arguments were correct", and then scored **2** — reading "do not
+score below 3" as "do not score *fail*" and settling one band down. Partial is a
+deduction; if the only blemish is a name-variant fixture miss, there is nothing
+to deduct for. The score is 3.
 
 This overrides the global "Critical: Tool Usage Errors" rule for this one case,
 under that prompt's own provision for a skill's rubric to claim an axis and be
