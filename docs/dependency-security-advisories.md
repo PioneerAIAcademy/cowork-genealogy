@@ -131,9 +131,24 @@ shipped artifact. Weigh fix churn against that before treating a HIGH as urgent.
 Until then GitHub raised security *alerts* from the dependency graph but nothing
 opened routine version-update PRs — which is how 24 open alerts accumulated, most
 of them a plain lockfile refresh that no upstream constraint was blocking. The
-config covers five manifests across three ecosystems (`npm` × 3 directories,
-`github-actions`, `uv` × 2), weekly, with minor/patch grouped into one PR per
-ecosystem so majors are the ones that arrive individually.
+config covers seven manifests across five ecosystems (`npm` × 3 directories,
+`github-actions`, `docker` × 2, `uv` × 2), weekly, with minor/patch grouped into
+one PR per ecosystem so majors are the ones that arrive individually.
+
+That grouping *is* the safety mechanism, and it is worth stating why. Dependabot
+has no semantic knowledge of this codebase — it reads version ranges, so it will
+propose a major that typechecks and still breaks behavior (`mcp` 2.0.0 removing
+`Server.list_tools` is exactly that shape). Grouping minor/patch means every
+**major arrives as its own individual PR**, never buried in a batch. Read those,
+especially for the engine's production dependencies, which ship inside the
+`.mcpb`, and hardest of all for `@modelcontextprotocol/sdk` — same failure class
+as the mcp break, and it ships. Note also that no CI job exercises the Cowork
+plugin path; run `make agent-smoke` before merging an Agent-SDK-chain major.
+
+The `docker` entry is deliberately narrow. Both Dockerfiles pin *floating* tags,
+not digests, so it catches tag moves (`python:3.12` → `3.13`) and nothing else —
+patch-level base-image CVEs land when upstream rebuilds the same tag, which a
+rebuild picks up and Dependabot never sees. Pin by digest if that ever matters.
 
 Two `ignore` rules protect load-bearing upper bounds in
 `eval/harness/pyproject.toml` — `mcp>=1.29,<2` (PR #932; mcp 2.0.0 removed
