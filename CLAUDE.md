@@ -252,7 +252,10 @@ superset — so no allow-list can deny the *main thread* a tool one of its
 subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
 hook layer always could do it: `eval/harness/harness/context_policy.py` denies
 `image_read` when `agent_id` is absent. Don't re-derive a per-context policy
-design; it exists. What is missing is a production port (issue #940).
+design; it exists. What is missing is a production port — issue #911, which
+gates it on calibrating the shadow window first (#940, which used to carry this,
+is closed: its raw-write half shipped in #984/#989 and its detector half moved
+to #1054).
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
