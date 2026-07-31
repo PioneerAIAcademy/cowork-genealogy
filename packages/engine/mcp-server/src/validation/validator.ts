@@ -94,6 +94,26 @@ const EXTERNAL_SITE_VALUES = new Set([
   "findagrave", "newspapers",
 ]);
 
+/**
+ * Every closed-enum value set above, keyed by the `enums.schema.json` `$defs`
+ * name it mirrors — the four standalone sets included, since their const names
+ * don't carry the schema name.
+ *
+ * Exported for `tests/packaging/enum-drift.test.ts`, which diffs it against the
+ * schema. The comment on CLOSED_ENUMS calls itself the single source of truth;
+ * it isn't — `enums.schema.json` is, and this is a hand-maintained copy of it in
+ * code. That copy drifting silently ships *bad validation*, which is strictly
+ * worse than the stale prose crib note the same lint was built to catch, so it
+ * gets the same guard. Nothing at runtime reads this.
+ */
+export const VALIDATOR_ENUMS: Record<string, ReadonlySet<string>> = {
+  ...CLOSED_ENUMS,
+  selection_basis: SELECTION_BASIS_VALUES,
+  date_certainty: DATE_CERTAINTY_VALUES,
+  date_certainty_timeline: DATE_CERTAINTY_TIMELINE,
+  external_site: EXTERNAL_SITE_VALUES,
+};
+
 // research.schema.json binds these fields to enums.schema.json#/$defs/iso_date
 // (^\d{4}-\d{2}-\d{2}$): project.created/updated, known_holdings[].created,
 // questions[].created/resolved, plans[].created, sources[].access_date, and
