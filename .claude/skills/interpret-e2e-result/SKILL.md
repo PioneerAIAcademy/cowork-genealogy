@@ -15,7 +15,7 @@ Each run writes four files to `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<ts>.json` | Structured result. **Read only the harness facts from it — `stop_reason`, `tool_calls[]`, `usage`, `blocked_tree_reads[]`, `error`. Do NOT read `judge_output` (see "Stay blind to the judge").** |
+| `run-<ts>.json` | Structured result. **Read only the harness facts from it — `stop_reason`, `tool_calls[]`, `usage`, `blocked_tree_reads[]`, `error`, `compliance`, `guardrail_bypass_violations[]`. Do NOT read `judge_output`, `verdict`, or `outcome` (see "Stay blind to the judge").** |
 | `run-<ts>.transcript.md` | Readable transcript of the agent's turns |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — the ground truth for what it recovered |
 | `run-<ts>.final-research.json` | The agent's final `research.json`, including the proof conclusion it wrote |
@@ -24,12 +24,32 @@ This skill reads files; it does not call any MCP tools.
 
 ## Stay blind to the judge
 
-**Do not read or report `judge_output` — the judge's `verdict`, `per_finding`
-labels, or `proof_quality` score.** Those are the judge's *grades*: the thing
-the maintainer calibrates, and unnecessary for explaining what the agent did.
-The user runs `/grade-e2e-run` right after this to grade the run **blind**; if
-you surface the judge's labels here, that grade is no longer independent and the
-calibration number is corrupted.
+**Do not read or report the judge's grade for the run you are interpreting.**
+That means all of:
+
+- `judge_output` — the `per_finding` labels, `rationale`, and `proof_quality`
+  score;
+- the top-level **`verdict`** — this is the judge's genealogical conclusion
+  verbatim;
+- the top-level **`outcome`** — the combined gate, which equals `verdict`
+  whenever `compliance` is `pass`, so reporting it leaks the verdict.
+
+Those are the judge's *grades*: the thing the maintainer calibrates, and
+unnecessary for explaining what the agent did. The user runs `/grade-e2e-run`
+right after this to grade the run **blind**; if you surface the judge's labels
+here, that grade is no longer independent and the calibration number is
+corrupted.
+
+**`compliance` and `guardrail_bypass_violations` are NOT judge output** — read
+and report them freely (Step 2d). They are a deterministic harness check on
+whether the GPS guardrail skills ran, computed from the tool-call log and the
+final project files, and the grader does not score them.
+
+**This prohibition covers the run under interpretation, not the corpus.** When
+Step 5 asks you to compare against a previously-passing run, identify that
+prior run from its committed `.ann.json` — a human's grade, which cannot leak
+the current run's judge output. Do not open a prior run's `run-<ts>.json`
+`verdict` to find one.
 
 You have everything the user needs without the judge:
 
@@ -69,7 +89,7 @@ Read it alongside the run so you can compare expected vs found yourself.
 Compare the final tree to each `required: true` finding in
 `expected-findings.json` and state, as facts, which the tree contains and which
 it doesn't. This is recall — *did the tree end up with the stripped facts?* Do
-not quote a judge verdict; describe the outcome:
+not quote a judge verdict; describe what you see:
 
 - **All required findings present** — the run recovered the answer. Say so in a
   sentence, then describe the proof conclusion (Step 2b): a recovered answer
@@ -111,7 +131,27 @@ from records). Each entry is a denied attempt.
   autonomous run. Repeated attempts may indicate the skill is leaning on
   tree-reading instead of records, which is worth a look at the `/research` primer.
 
-### Step 2d — Note whether the answer came from provided documents
+### Step 2d — Note any GPS guardrail bypasses
+
+Check `compliance` and `guardrail_bypass_violations[]` in `run-<ts>.json`.
+This is a harness check, not a judge grade: it asks whether the agent actually
+invoked the GPS guardrail skills whose effects appear in the final project
+state — `person-evidence`, `conflict-resolution`, `proof-conclusion`,
+`research-exhaustiveness`, and the mandatory `gps-mentor` proof critique.
+
+- **`compliance: "pass"`** — nothing to say.
+- **`compliance: "fail"`** — report each violation string as a fact. This is
+  worth calling out even when the tree recovered everything: the agent reached
+  the right answer by a route that skipped the doctrine, so the *result* is
+  fine and the *process* is not. Say both plainly; they are separate findings
+  and this skill is the only place the user will see the second one.
+- **`compliance` absent** (a run log written before this axis existed) — say
+  nothing; it was never checked.
+
+Do not translate a compliance failure into a pass/fail judgement of the run
+overall — that is the `outcome` gate, which is judge-derived and off-limits.
+
+### Step 2e — Note whether the answer came from provided documents
 
 If the fixture has a `provided-documents/` folder (bundled external
 captures — Ancestry PDFs, Find A Grave pages the FS tools can't reach),
@@ -240,13 +280,16 @@ ambiguity:
 **Then remind the user to grade this run.** Whatever the outcome — the run
 recovered everything, some, or none — it's committed and owes a calibration
 grade: tell the user to run `/grade-e2e-run` next to label the findings blind
-and write `run-<ts>.ann.json`. Because you stayed blind to `judge_output`, that
+and write `run-<ts>.ann.json`. Because you stayed blind to the judge's grade, that
 grade is still independent. Grading is same-PR, and CI blocks committing a run
 that produced a tree without its `.ann.json` (a treeless skip run is exempt).
 
 ## What you do not do
 
-- Do not read or report `judge_output` (verdict / per_finding / proof_quality).
+- Do not read or report the judge's grade for this run: `judge_output`
+  (per_finding / rationale / proof_quality), the top-level `verdict`, or the
+  `outcome` gate. `compliance` and `guardrail_bypass_violations[]` are harness
+  facts and ARE reportable (Step 2d).
   Explain the run from the tree, the agent's proof conclusion, and the harness
   facts — never the judge's grades.
 - Do not edit fixtures or skills — interpretation only. If the
@@ -265,7 +308,7 @@ User: "Why did the smith-parents-1850 run fail?"
 
 You should:
 1. Read `eval/runlogs/e2e/smith-parents-1850/run-<latest>.json` (harness
-   fields only — skip `judge_output`).
+   fields only — skip `judge_output`, `verdict`, and `outcome`).
 2. Read `eval/tests/e2e/smith-parents-1850/expected-findings.json` and the
    final tree; the tree contains **none** of the required findings.
 3. See `stop_reason: tool_cap`.
@@ -283,7 +326,8 @@ You should:
 ## Re-invocation behavior
 
 **Writes:** nothing. This skill is read-only — it reads an e2e run
-log (harness fields only, never `judge_output`), the agent's final tree and
+log (harness fields only, never `judge_output` / `verdict` / `outcome`), the
+agent's final tree and
 research files, and the fixture's `expected-findings.json`, and explains the
 result in-session. It calls no MCP tools and edits no fixtures, skills, or
 project files.

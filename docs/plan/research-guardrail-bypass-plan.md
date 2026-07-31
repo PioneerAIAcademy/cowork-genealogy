@@ -275,6 +275,13 @@ config change, and is not scoped into this plan.
 
 ### 4.4 Extend the e2e hard detector
 
+> **Shipped.** The behavior below is live and is now specified in
+> `docs/specs/e2e-test-spec.md` §7.5 (with the result shape in §7.2.1).
+> Read the spec for what the checks do today; this section is the design
+> rationale that produced them. One change since: a violation no longer
+> overwrites the judge's `verdict` — it sets a separate `compliance` axis
+> and fails the combined `outcome` gate (GitHub issue #972).
+
 The isolated unit harness already fails a positive test when a skill's
 effect is present but the skill was never invoked
 (`eval/harness/tests/unit/test_orchestrator.py::test_positive_fails_when_skill_not_in_skills_invoked`).
