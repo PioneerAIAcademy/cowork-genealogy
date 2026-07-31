@@ -66,13 +66,6 @@ export default function TimelinesSection(): React.JSX.Element {
                         )
                       : null
 
-                  // Check if there's an impossibility involving this event
-                  const impossibility = tl.impossibilities.find(
-                    (imp) =>
-                      event.assertion_ids.includes(imp.event_1_assertion_id) ||
-                      event.assertion_ids.includes(imp.event_2_assertion_id)
-                  )
-
                   const distanceKm = idx > 0 ? (event.distance_from_previous_km ?? null) : null
 
                   return (
@@ -145,17 +138,6 @@ export default function TimelinesSection(): React.JSX.Element {
                         </div>
                       </div>
 
-                      {impossibility && (
-                        <div className={styles.impossibility}>
-                          <div className={styles.impossibilityDesc}>
-                            <Linkify text={impossibility.description} />
-                          </div>
-                          <div className={styles.impossibilityLinks}>
-                            <CrossLink id={impossibility.event_1_assertion_id} label="Event 1" />
-                            <CrossLink id={impossibility.event_2_assertion_id} label="Event 2" />
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )
                 })}

@@ -1,0 +1,147 @@
+name: JS workspace tests
+
+# Runs the pnpm workspace's own checks (apps/web, apps/electron,
+# packages/schema, packages/viewer-ui) and, as a second job, the separately
+# npm-managed eval/app tree.
+#
+# Neither had any CI. engine-tests.yml covers packages/engine/mcp-server, which
+# is deliberately NOT a workspace member (see pnpm-workspace.yaml), so every
+# other JS tree in the repo was unchecked — `turbo run test` and
+# `pnpm --filter web build` existed but nothing called them. Dependency PRs
+# against them therefore arrived green off unrelated scoped-out jobs, which is
+# no signal at all. Same gap this repo just closed for apps/server
+# (server-tests.yml).
+#
+# Three checks, because each catches a different class of breakage and all three
+# together take well under a minute:
+#   test       apps/electron + packages/viewer-ui vitest suites. apps/web has no
+#              tests, which is exactly why the next two matter.
+#   typecheck  the only coverage apps/web and packages/schema have.
+#   build      `pnpm --filter web build` is verbatim what deploy/Dockerfile runs
+#              to produce the production client. A Vite/plugin major can
+#              typecheck cleanly and still fail here, so this is the check that
+#              actually stands behind a @vitejs/plugin-react-shaped bump.
+#
+# `--frozen-lockfile` / `npm ci`: the committed lockfile is installed exactly as
+# written, never re-resolved. That is what makes this a real check on a
+# Dependabot PR — it tests the lock in the diff rather than whatever a fresh
+# resolve picks up that morning.
+#
+# Node 22, matching .nvmrc, the root package.json `engines` floor, and every
+# other workflow in this repo.
+
+#
+# Runs on EVERY pull request — no `paths:` filter — so these checks always
+# report a conclusion and can be required by branch protection. A workflow
+# skipped by `paths:` reports nothing at all, and a required check that never
+# reports leaves its PR stuck on "Expected — waiting for status to be reported".
+# The path scope lives in each job's first step instead; an unrelated PR pays
+# one ~5s step rather than a full install.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  workspace:
+    name: pnpm workspace
+    runs-on: ubuntu-latest
+    steps:
+      - name: Does this PR touch the pnpm workspace?
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          # packages/engine/** is excluded on purpose — it is npm-managed and
+          # covered by engine-tests.yml, not by turbo.
+          PATTERNS: '^apps/web/|^apps/electron/|^packages/schema/|^packages/viewer-ui/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^turbo\.json$|^tsconfig\.base\.json$|^\.github/workflows/js-tests\.yml$'
+        run: |
+          set -euo pipefail
+          files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
+                     --paginate --jq '.[].filename')"
+          if printf '%s\n' "$files" | grep -qE "$PATTERNS"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No pnpm workspace path changed; reporting success without running checks."
+          fi
+
+      - if: steps.scope.outputs.relevant == 'true'
+        uses: actions/checkout@v5
+
+      # pnpm BEFORE setup-node so the npm-cache step can find it. Version is
+      # read from the root package.json `packageManager` field.
+      - if: steps.scope.outputs.relevant == 'true'
+        uses: pnpm/action-setup@v4
+
+      - if: steps.scope.outputs.relevant == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        if: steps.scope.outputs.relevant == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Run workspace tests
+        if: steps.scope.outputs.relevant == 'true'
+        run: pnpm turbo run test
+
+      - name: Typecheck
+        if: steps.scope.outputs.relevant == 'true'
+        run: pnpm turbo run typecheck
+
+      - name: Build the production web client
+        if: steps.scope.outputs.relevant == 'true'
+        run: pnpm --filter web build
+
+  eval-app:
+    name: eval CRUD UI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Does this PR touch eval/app?
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PATTERNS: '^eval/app/|^\.github/workflows/js-tests\.yml$'
+        run: |
+          set -euo pipefail
+          files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
+                     --paginate --jq '.[].filename')"
+          if printf '%s\n' "$files" | grep -qE "$PATTERNS"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No eval/app path changed; reporting success without running checks."
+          fi
+
+      - if: steps.scope.outputs.relevant == 'true'
+        uses: actions/checkout@v5
+
+      - if: steps.scope.outputs.relevant == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'eval/app/package-lock.json'
+
+      # `npm ci` runs eval/app's postinstall (scripts/gen-zod.ts), which
+      # generates the Zod schemas the tests import.
+      - name: Install dependencies
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/app
+        run: npm ci
+
+      - name: Run tests
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/app
+        run: npm test
+
+      - name: Typecheck
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/app
+        run: npm run typecheck

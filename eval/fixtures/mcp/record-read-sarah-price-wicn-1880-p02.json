@@ -1,0 +1,64 @@
+{
+  "tool": "record_read",
+  "description": "Full record for Sarah Price (Sarah Price in household of Thomas Price), United States Census, 1880. Mirrors the gedcomx already embedded in record-search-1880-census-price-sarah — same persons, same relationships, no new genealogical claims. record_read is in search-records' allowed-tools and the skill sometimes reads a record it has just found before reporting on it, which is sound practice. Without a stocked fixture the tool is never registered in the mock, so that call aborts the whole run as an unregistered tool (Type 1) even when the search work was correct and validators passed — observed on 019, 023 and 014. Coverage for record_read used to be ut_search_records_006, deleted 2026-06-18 as a side effect of a runlog commit.",
+  "args": {
+    "recordId": "~WICN-1880-P02"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P4",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N4",
+            "preferred": true,
+            "given": "Sarah",
+            "surname": "Price",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F7",
+            "type": "Birth",
+            "date": "1870",
+            "place": "New York"
+          },
+          {
+            "id": "F8",
+            "type": "Residence",
+            "date": "1880",
+            "place": "Milwaukee County, Wisconsin"
+          }
+        ],
+        "ark": "ark:/61903/1:1:WICN-1880-P02",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "United States Census, 1880"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "United States Census, 1880",
+        "collectionId": "1417683",
+        "ark": "ark:/61903/1:1:WICN-1880-P02"
+      }
+    ],
+    "places": [
+      {
+        "id": "PL1",
+        "name": "Milwaukee County, Wisconsin"
+      },
+      {
+        "id": "PL2",
+        "name": "New York"
+      }
+    ]
+  }
+}

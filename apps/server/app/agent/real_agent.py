@@ -110,7 +110,7 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
     return staged
 
 
-# ── Raw-write lockdown (research-guardrail-bypass-plan §4.3, issue #940) ──
+# ── Raw-write lockdown (guardrail-enforcement-spec §6, issue #940) ──
 
 # The two project files no raw Write/Edit may touch. Every write to them goes
 # through the MCP writer tools (research_append, research_log_append, tree_edit,
