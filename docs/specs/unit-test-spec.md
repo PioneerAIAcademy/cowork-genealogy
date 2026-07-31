@@ -227,7 +227,8 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "max_wall_clock_seconds": "number (optional)",
     "max_tool_calls": "number (optional)",
     "max_input_tokens_per_turn": "number (optional)",
-    "sdk_message_silence_seconds": "number (optional)"
+    "sdk_message_silence_seconds": "number (optional)",
+    "stub_skills": ["string | { skill, response } (optional)"]
   }
 }
 ```
@@ -438,7 +439,24 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "max_wall_clock_seconds": { "type": "integer", "minimum": 1 },
         "max_tool_calls": { "type": "integer", "minimum": 1 },
         "max_input_tokens_per_turn": { "type": "integer", "minimum": 1 },
-        "sdk_message_silence_seconds": { "type": "integer", "minimum": 1 }
+        "sdk_message_silence_seconds": { "type": "integer", "minimum": 1 },
+        "stub_skills": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "object",
+                "required": ["skill"],
+                "properties": {
+                  "skill": { "type": "string" },
+                  "response": { "type": "string" }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
       },
       "description": "Optional per-test overrides of harness execution limits. Defaults documented in Section 15.",
       "additionalProperties": false
@@ -554,6 +572,35 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
 | `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
+| `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
+
+**`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
+under test delegates via `Skill(...)`, the callee runs inside the caller's turn
+and wall-clock budget. If the callee has its own unit suite, that spends budget
+on coverage which already exists. Naming it here makes the PreToolUse hook
+record the delegation in `skills_invoked`, deny the launch, and let the run
+**continue** — so the caller still finishes its own logging and summary. (This
+is deliberately unlike the negative-test routing short-circuit, which *stops*
+the run: a negative verdict is sealed the moment routing happens, a positive
+test still has work left.)
+
+Two forms, and the choice turns on the **caller's** contract, not the callee's:
+
+| Form | Use when | Example |
+|---|---|---|
+| `"skill-name"` | The caller hands off and never reads the result | `["record-extraction"]` |
+| `{ "skill": …, "response": … }` | The caller's own remaining work **consumes** the callee's output, so a bare deny would strip a deliverable it is specced to produce | `[{"skill": "search-external-sites", "response": "Ancestry: https://…"}]` |
+
+`search-records` is the worked case for the second form: its Step 7 tells it to
+"present the URLs it returns as part of your results", so a bare deny leaves it
+unable to finish — which under the first form required a judge instruction
+("do not penalize the skill for not producing Ancestry URLs") to keep the test
+green. A grading patch over a harness gap is the signal you needed `response`.
+
+Assert the hand-off with a deterministic `skills_invoked` validator, not the
+judge, which reads a transcript and can misread it. Note the limit: the harness
+records the skill **name** only, not the `args` string the caller composed, so
+no validator can currently assert *what* crossed the seam.
 
 ### 5.8 `intentionally_invalid`
 
