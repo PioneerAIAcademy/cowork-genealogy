@@ -3,17 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Mátyás Muck and Erzsébet Farkas (recorded in the tree as Erzsébet Wolf — Farkas is the Hungarian translation of the German surname Wolf) had a second son named András, baptized about 1881 in Bogyiszló, Pest-Pilis-Solt-Kis-Kun — a necronym for their first son András, who died in infancy in 1873 (also already in the tree).",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Mátyás Muck (PID 97M5-6H8) and his wife Erzsébet Wolf had a second son named András, baptized/born about 1881-1887 in Bogyiszló, Pest-Pilis-Solt-Kis-Kun, per FamilySearch's hint (record ARK 1:1:VJRW-GQR — a 22 September 1887 Evangelical baptism). That record names the father as 'Mátyás Misch,' a different surname and denomination than this family's documented Reformed Church baseline in Bikács, Tolna, and omits the mother's surname entirely, so nothing ties it to this particular Mátyás Muck rather than another man of the same common name. The couple's only son named András is the infant born 5 February 1873 and died 1 April 1873 under the Reformed Church, already documented in the tree. Pass = the final tree/research contains no second András for this couple, and no assertion tying the Bogyiszló/Evangelical baptism (ARK 1:1:VJRW-GQR) to this family.",
       "details": {
-        "subject_person": "Mátyás Muck (97M5-6H8)",
+        "subject_person": "Mátyás Muck (PID 97M5-6H8)",
         "relation": "child",
-        "target_person": {
-          "name": "András Muck",
-          "birth": "about 1881, Bogyiszló, Pest-Pilis-Solt-Kis-Kun, Hungary"
+        "wrong_candidate": {
+          "name": "a second son named András, baptized about 1881-1887 in Bogyiszló, Pest-Pilis-Solt-Kis-Kun, per FamilySearch hint ARK 1:1:VJRW-GQR",
+          "note": "the baptism record (22 September 1887, Evangelical faith, Bogyiszló) names the father as 'Mátyás Misch,' a different surname and denomination than this family's Reformed Church baseline in Bikács, and omits the mother's surname — nothing ties it to this particular Mátyás Muck"
         }
       },
       "supporting_sources": [
-        "Hungary, Reformed Church Christenings, 1624-1895 — baptismal entry for András Muck, naming parents Mátyás Muck and Erzsébet Farkas"
+        "FamilySearch hint record ARK 1:1:VJRW-GQR — 22 September 1887 Evangelical baptism, Bogyiszló, Pest-Pilis-Solt-Kis-Kun, naming father Mátyás Misch (not Muck) and omitting the mother's surname",
+        "Existing tree source for András Muck, born 5 February 1873, died 1 April 1873, Bikács, Tolna (Reformed Church) — the only son named András for this couple"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having checked FamilySearch's hint record against Mátyás Muck's documented family (Reformed Church records in Bikács, Tolna), the agent should document a negative/exhausted-search conclusion: no second son named András exists for Mátyás Muck and Erzsébet Wolf. Their only son by that name is the infant who died in 1873; the 1887 Bogyiszló Evangelical baptism belongs to an unrelated family (a different father, 'Mátyás Misch').",
+      "details": {
+        "subject_person": "Mátyás Muck (PID 97M5-6H8)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: no second András found",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Absence of any Reformed Church or civil record in Bikács, Tolna (the family's home parish) documenting a second son named András for Mátyás Muck and Erzsébet Wolf after 1873",
+        "FamilySearch hint record ARK 1:1:VJRW-GQR shown to belong to a different father ('Mátyás Misch'), Evangelical faith, Bogyiszló — not this family"
       ],
       "required": true
     }
