@@ -61,11 +61,11 @@ jobs:
 
       - name: Check out PR
         if: steps.scope.outputs.relevant == 'true'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Install uv (+ pinned Python)
         if: steps.scope.outputs.relevant == 'true'
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: '3.12'
           enable-cache: true
