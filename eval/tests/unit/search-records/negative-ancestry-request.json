@@ -23,9 +23,6 @@
     ],
     "explanation": "Ancestry is a commercial database explicitly named in the skill's Do NOT use clause (alongside MyHeritage, FindMyPast, FindAGrave, Newspapers.com). search-records only searches FamilySearch. Calling record_search here would be wrong — that tool queries FamilySearch, not Ancestry."
   },
-  "execution": {
-    "max_wall_clock_seconds": 600
-  },
   "judge_context": [
     "This is a NEGATIVE routing test. The ONLY correct behavior is to call Skill('search-external-sites') and stop — nothing else.",
     "Must NOT call record_search — that tool queries FamilySearch, not Ancestry",

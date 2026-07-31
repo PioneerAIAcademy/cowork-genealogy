@@ -24,9 +24,6 @@
     "explanation": "The user is asking for a research strategy — what records to search, in what order, targeting what question. That is research-plan's job. search-records only executes items that are already in an existing plan; it does not generate or revise plans.",
     "grade_on_invariant": true
   },
-  "execution": {
-    "max_wall_clock_seconds": 600
-  },
   "judge_context": [
     "This is a grade_on_invariant negative test: PASS/FAIL is decided solely by the deterministic no-search-no-write validator (no record_search call, no new search log entry, no results/ sidecar written). Routing and activation are NOT gated. The judge runs base-only and diagnostically here — its scores do not decide the outcome.",
     "Ideal behavior is to route the planning question to research-plan via an actual Skill('research-plan') tool call, without doing research-plan's work (evidence summaries, recommended searches) inline. Note in your rationale whether the skill routed cleanly.",

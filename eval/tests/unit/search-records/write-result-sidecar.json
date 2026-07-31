@@ -18,9 +18,6 @@
     "user_message": "Search the 1850 census for Patrick Flynn in Schuylkill County, per plan item pli_001.",
     "scenario": "flynn-record-matching"
   },
-  "execution": {
-    "max_wall_clock_seconds": 600
-  },
   "mcp_fixtures": [
     "record-search-1850-census-flynn",
     "rank-search-matches-flynn-census",

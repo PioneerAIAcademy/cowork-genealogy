@@ -19,9 +19,6 @@
     "user_message": "Execute the 1880 census search for plan item pli_001. The subject is Sarah Ann Mullen Price — but note that 'Mullen' is her middle given name (her mother's maiden surname), not her own surname. Her surname is Price. Search accordingly.",
     "scenario": "mullen-price-child-middle-name"
   },
-  "execution": {
-    "max_wall_clock_seconds": 600
-  },
   "mcp_fixtures": [
     "record-search-1880-census-price-sarah",
     "record-search-1860-census-mullen-sarah",
