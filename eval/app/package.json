@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@mantine/core": "7.15.1",
-    "@mantine/form": "7.15.1",
+    "@mantine/form": "9.5.0",
     "@mantine/hooks": "7.15.1",
     "@mantine/notifications": "7.15.1",
     "@tabler/icons-react": "^3.45.0",
