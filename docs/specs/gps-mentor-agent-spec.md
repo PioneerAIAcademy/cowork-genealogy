@@ -114,10 +114,12 @@ The agent file `packages/engine/plugin/agents/gps-mentor.md` must open with this
 ```yaml
 ---
 name: gps-mentor
-description: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research once per proof — an advisory `proof-critique` after `proof-conclusion` writes a summary — and on-demand when the user says "review my work", "is this defensible?", "what would a senior genealogist say?", "mentor", "second opinion", "critique my proof", "am I ready to conclude?". Advisory only: it never blocks the flow or forces rework. Never modifies research.json (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for schema validation (use validate-schema), to execute new searches (use search-records or search-external-sites), or to write proof conclusions (use proof-conclusion).
+description: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research once per proof — a mandatory `proof-critique` after `proof-conclusion` writes a summary (must be invoked and recorded) — and on-demand when the user says "review my work", "is this defensible?", "what would a senior genealogist say?", "mentor", "second opinion", "critique my proof", "am I ready to conclude?". Advisory in what it recommends: it never blocks the flow or forces rework. Never modifies research.json (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for schema validation (use validate-schema), to execute new searches (use search-records or search-external-sites), or to write proof conclusions (use proof-conclusion).
 model: claude-sonnet-5
 tools:
   - Read
+  - mcp__genealogy__research_query
+  - mcp__genealogy__project_context
   - mcp__genealogy__research_append
   - mcp__genealogy__validate_research_schema
   - mcp__genealogy__place_search
@@ -126,6 +128,8 @@ tools:
   - mcp__genealogy__external_links_search
   - mcp__genealogy__wiki_place_page
   - mcp__genealogy__wiki_search
+  - mcp__remote-devices__Genealogy_Research__research_query
+  - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__remote-devices__Genealogy_Research__validate_research_schema
   - mcp__remote-devices__Genealogy_Research__place_search
@@ -158,7 +162,28 @@ model; do not silently downgrade below Sonnet-5-class analytical reasoning.
 
 **Tools list is closed:** The agent does not have `record_search`, `fulltext_search`,
 `person_read`, or any write tool. It evaluates evidence the researcher has gathered; it
-does not gather new evidence itself.
+does not gather new evidence itself. `research_query` and `project_context` are not an
+exception — they are read-only projections of what the researcher already recorded.
+
+**Why the two read tools are on the list (added 2026-07-31, issue #693).** Without
+them the agent's only way to see project state was `Read`, and its body told it to
+read `research.json` directly. Measured across 24 e2e runs (2026-07-25 → 07-30), that
+made the mentor the **largest single reader of `research.json` in the system — 112 of
+178 reads (63%), 92 of them hand-paginated**, in a linear front-to-back scan issued
+once per proof, at the point in a run where the file is largest. One captured
+delegation (`wilkins-marriage`) spent 15 reads before its single write. In 10 of 10
+captured delegations the agent's first tool call was a bare `Read(research.json)`. The
+grant plus the **Reading project state** section of the agent body replaces that scan;
+`Read` stays for the rare body no projection carries (a verdict file under
+`evaluations/`, an entry already located by id).
+
+**What the scan was silently providing, and how it is preserved.** A whole-file read
+also showed the agent *project-wide absences* — the `wilkins-marriage` verdict's
+`must_address` turned on "both `conflicts[]` and `hypotheses[]` are empty
+project-wide." A question-scoped recipe list would not surface that. The agent body
+therefore requires **unfiltered** `conflicts` and `hypotheses` count checks, and
+requires checking `count` against `research_query`'s 50-item cap. Do not remove those
+two habits when editing the recipes.
 
 ---
 
@@ -213,7 +238,9 @@ agent catches what the mechanical check cannot: a plan that was too narrow to be
 
 **Rubric checks (in order):**
 
-1. **Topical breadth (Standard 14).** Read the log entries for this question. Call
+1. **Topical breadth (Standard 14).** Get the log entries for this question —
+   `research_query({ section: "plans", questionId })` for its plan items, then
+   `research_query({ section: "log", planItemId })` per item. Call
    `wiki_place_page` (`section: "online_records"`) and `collections_search` for the primary jurisdiction to
    identify record types that exist for the place+period but were not searched. Flag missing
    high-value types (probate, land, church, newspaper) as `must_address` with the specific
@@ -280,7 +307,8 @@ would judge. The agent acts as the peer reviewer.
 
 **Rubric checks (in order):**
 
-1. **Tier defensibility (Standards 64–67).** Read the assertions referenced in the proof.
+1. **Tier defensibility (Standards 64–67).** Get the assertions referenced in the proof
+   via `research_query({ section: "assertions", questionId })`.
    Does the evidence actually support the chosen tier? Both inflation (`proved` on hedged
    language) AND deflation (`possible` when the evidence is strong) are `must_address`.
    Standard 43: follow the evidence, not the hope.
@@ -289,7 +317,9 @@ would judge. The agent acts as the peer reviewer.
    "likely" signal tier `probable` or below. If they appear in a `proved` narrative, that
    is `must_address`.
 
-3. **Narrative self-containment.** Read the `narrative_markdown` as if you have never seen
+3. **Narrative self-containment.** Get the proof summary via
+   `research_query({ section: "proof_summaries", questionId })` and read its
+   `narrative_markdown` as if you have never seen
    the JSON. Can you follow the argument? Are citations inline? Could you locate every source
    referenced? A narrative that requires the JSON to make sense is `must_address`.
 
@@ -465,8 +495,28 @@ in `research.json` so the refusal is part of the audit trail.
 ## 10. Existing-Verdict Skip Logic
 
 Before evaluating, the agent must check whether a verdict already exists for the same
-focus + target_id combination by scanning for files matching
-`evaluations/<focus>-<target_id>-*.json` in the project folder.
+focus + target_id combination:
+
+```
+research_query({ projectPath, section: "evaluations", targetId, focus })
+```
+
+It then selects the entry whose `superseded_by` is `null` and `Read`s that entry's
+`file_path` for the prior verdict body.
+
+**The null check is the agent's step, not the tool's** — deliberately.
+`research_query`'s filter layer compares a string against a field, and
+`superseded_by` is `string | null`, so "is null" is not expressible without a
+sentinel value (ambiguous against a real `ev_` id) or a second filter kind. Neither
+is warranted for a result set that is a handful of entries by construction. See
+`research-query-tool-spec.md` §3. The agent body states the step explicitly, and
+`tests/tools/research-query.test.ts` pins the boundary.
+
+**Match on the `evaluations[]` array, not by listing the `evaluations/` directory.**
+The array is the authoritative index and is what the agent can actually read. (Earlier
+revisions of this spec described a directory scan for
+`evaluations/<focus>-<target_id>-*.json`; the shipped agent has matched on the array
+since before this spec was last revised. The array is correct.)
 
 ### 10.1 Interactive mode behavior
 
@@ -671,6 +721,9 @@ specific, not as a box-checking ritual.
 
 | Tool | When to use |
 |------|-------------|
+| `project_context` | The opening call of every invocation — project status, open questions, tree persons with the sources they cite, sources with their record ids, locality knowledge. Replaces the orientation the agent used to get by scanning `research.json`. |
+| `research_query` | Every specific state lookup, one section per call (`assertions`, `person_evidence`, `conflicts`, `hypotheses`, `proof_summaries`, `questions`, `plans`, `log`, `timelines`, `evaluations`). Two required habits: run `conflicts` and `hypotheses` **unfiltered** to catch project-wide absences, and check `count` against the 50-item cap before calling a set complete. |
+| `Read` | Exception only — a body no projection carries (a verdict file under `evaluations/`, an entry already located by id). **Never** `research.json` front-to-back. |
 | `collections_search` | When flagging a missing record type — quote the specific collection name FamilySearch offers for the jurisdiction. "FamilySearch has 'Pennsylvania Probate Records, 1683–1994'" beats "consider probate." |
 | `wiki_place_page` (`section: "online_records"`) | When auditing topical breadth (pre-exhaustiveness rubric check 1). |
 | `wiki_place_page` (`section: "research_tips"`) | When flagging repository diversity gaps or suggesting strategy improvements. |
@@ -738,16 +791,17 @@ proof-critique) to a single conclusion gate to cut the cost of an autonomous
 `docs/TODOs.md` § "Research latency (e2e `/research` runs)".
 **That change is explicitly NOT adopted**, for three reasons:
 
-1. **It is unmeasurable today.** The e2e harness does not stage
-   `packages/engine/plugin/agents/` into the sandbox — `build_workspace`
-   (`eval/harness/e2e/orchestrator.py`) copies only `plugin/skills/` into
-   `.claude/skills/`. So the mentor is absent from every benchmark run, both
-   passing e2e runs recorded `evaluations: []`, and gate deferral saves the
-   benchmark nothing while shipping a quality-affecting change with no test
-   coverage.
-2. **The agent is not yet conformant.** `agents/gps-mentor.md` is still the
-   pre-spec draft (see §2) pending the implementation PR. Optimizing a
-   component that has not landed is premature.
+1. ~~**It is unmeasurable today.**~~ **Stale — reasons 1 and 2 no longer hold
+   (corrected 2026-07-31).** `build_workspace`
+   (`eval/harness/e2e/orchestrator.py:350-392`) *does* stage
+   `packages/engine/plugin/agents/*.md` into `.claude/agents/`, and the mentor
+   runs in benchmark runs: **20 delegations across the 24 e2e runs of
+   2026-07-25 → 07-30.** The agent is also conformant now. So gate count *is*
+   measurable, and the surviving `docs/TODOs.md` entry ("Cut gps-mentor gate
+   count") should be re-costed against real data rather than deferred as
+   unmeasurable — note its "3–4 gates per answering question" is itself stale
+   against ~0.8 delegations/run.
+2. ~~**The agent is not yet conformant.**~~ See above.
 3. **The final gate is the only production backstop.** There is no eval judge
    in production Cowork, so the `proof-critique` gate is the only fresh-context
    adversarial proof-quality check a real user receives. Trimming gates trades
