@@ -3,17 +3,17 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Mátyás Muck and Erzsébet Farkas (recorded in the tree as Erzsébet Wolf — Farkas is the Hungarian translation of the German surname Wolf) had a second son named András, born 19 October 1887 (baptized 22 October 1887) in Bikács, Tolna — a necronym for their first son András, who died in infancy in 1873 (also already in the tree). The entry names the father's occupation as farmer (\"földmíves\"), matching Mátyás Muck's own profile, and states the family's faith as Evangelical, though the record is cataloged within FamilySearch's \"Reformed Church Christenings\" collection, whose index metadata mistakenly gives the year as 1881 and the place as Bogyiszló (the parish seat, not Bikács, the residence named in the entry itself).",
+      "description": "Mátyás Muck and Erzsébet Farkas (recorded in the tree as Erzsébet Wolf — Farkas is the Hungarian translation of the German surname Wolf) had a second son named András, born 19 October 1881 (baptized 22 October 1881) in Bikács, Tolna — a necronym for their first son András, who died in infancy in 1873 (also already in the tree). The entry names the father's occupation as farmer (\"földmíves\"), matching Mátyás Muck's own profile, and states the family's faith as Evangelical, though the record is cataloged within FamilySearch's \"Reformed Church Christenings\" collection. The collection's index metadata gets the year right (1881) but gives the place as Bogyiszló (the parish seat, not Bikács, the residence named in the entry itself).",
       "details": {
         "subject_person": "Mátyás Muck (97M5-6H8)",
         "relation": "child",
         "target_person": {
           "name": "András Muck",
-          "birth": "19 October 1887 (baptized 22 October 1887), Bikács, Tolna, Hungary"
+          "birth": "19 October 1881 (baptized 22 October 1881), Bikács, Tolna, Hungary"
         }
       },
       "supporting_sources": [
-        "Hungary, Reformed Church Christenings, 1624-1895 (ARK 1:1:VJRW-GQY / 1:1:VJRW-GQR), entry #44 — baptismal entry for András, naming father Mátyás Muck (farmer, Bikács) and mother Erzsébet Farkas, of Evangelical faith; the collection's index metadata (year 1881, place Bogyiszló) does not match the entry's own handwritten date and place"
+        "Hungary, Reformed Church Christenings, 1624-1895 (ARK 1:1:VJRW-GQY / 1:1:VJRW-GQR), entry #44 — baptismal entry for András, naming father Mátyás Muck (farmer, Bikács) and mother Erzsébet Farkas, of Evangelical faith; the collection's index metadata gives the place as Bogyiszló, which does not match the entry's own handwritten place (Bikács)"
       ],
       "required": true
     }
