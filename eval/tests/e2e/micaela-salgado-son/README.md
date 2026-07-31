@@ -29,6 +29,24 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 18, flag `adds_son`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — Honduras, Catholic Church Records, 1633-1978: baptismal entry, 20 October 1889, San Miguel, Tegucigalpa, for Guillermo Salgado, naming mother Micaila Salgado with no father recorded. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming Guillermo Salgado as the subject's son, plus a `required` finding that the report documents the rejection.
+**Resolved: true match.** Guillermo Salgado, baptized 20 October 1889 in San
+Miguel, Tegucigalpa (Honduras, Catholic Church Records, 1633-1978), is a son of
+the subject Micaela Salgado (`9XGG-PW4`), in addition to her two daughters
+already in the tree (Raimunda b. 1874, Maria Norberta b. 1884). The
+`expected-findings.json` transcribed from the hint record stands as written.
 
-Points a reviewer should weigh: the tree does not record a spouse for Micaela Salgado at all, and the hint baptismal record likewise names no father — an internally consistent pattern (a single mother's baptismal entry) rather than a contradiction. The parish (Tegucigalpa, Francisco Morazán) matches the tree's other children exactly, and a 1889 baptism fits neatly after the tree's two known daughters (1874, 1884) as a later child. The surname "Salgado" alone, without a father to cross-check, leaves some risk of a different same-named Micaela Salgado in the same parish.
+What decided it:
+- **The record is already attached to Micaela** (`9XGG-PW4`) on FamilySearch —
+  the hint has been confirmed as a source, not just a machine-matched guess.
+- **Place matches exactly.** The 1889 baptism is in the same parish
+  (San Miguel, Tegucigalpa, Francisco Morazán) as Micaela's two known daughters.
+- **No father recorded is consistent, not contradictory.** The tree records no
+  spouse for Micaela, and the baptismal entry names no father — an internally
+  consistent single-mother pattern.
+- **Chronology fits.** An 1889 birth falls neatly after the two known daughters
+  (1874, 1884) as a later child.
+
+The one risk weighed at draft — a different same-named Micaela Salgado in the
+same parish, since the surname alone can't be cross-checked against a father —
+was resolved by the record already being attached to this specific person and
+by the exact parish + chronological fit against her known children.
