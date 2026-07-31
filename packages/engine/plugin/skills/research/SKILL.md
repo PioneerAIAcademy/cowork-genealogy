@@ -123,7 +123,14 @@ time, regardless of how directly the request named the destination.
 
 2. **Pick the next sub-skill based on state.** Use these routing
    cues — defer to each sub-skill's own "Use when" guidance when
-   state is ambiguous:
+   state is ambiguous. **Every entry in the "Invoke" column is a
+   `Skill` tool call, by that name — not a narrated intention.**
+   Writing "proceed to research-exhaustiveness" or "proceed directly
+   to proof-conclusion" and then hand-authoring the fields that skill
+   would have written (an `exhaustive_declaration`, a `proof_summaries`
+   entry, the concluded tree relationship/fact) is not invoking it — it
+   is skipping it while leaving state that looks like it ran. See the
+   **Exhaustiveness/proof-conclusion contract** below.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
@@ -168,6 +175,24 @@ time, regardless of how directly the request named the destination.
    the reverse. A proof narrative that names an elimination or an identity
    comparison with no backing `hypotheses`/`conflicts` entry is incomplete,
    whatever tier it claims.
+
+   **Exhaustiveness/proof-conclusion contract — enforced, not advisory.**
+   `research-exhaustiveness` and `proof-conclusion` are `Skill` tool calls,
+   never inline writes from this context — the same rule as
+   record-extraction and person-evidence above, and for the same reason:
+   each of those skills carries analysis this context does not (the 5
+   threshold questions and 7-point stop criteria for exhaustiveness; the
+   citation and tier checks for proof-conclusion), and a hand-authored
+   `research_append` reproducing their expected output fields skips that
+   analysis while still passing schema validation. Concretely: never write
+   `exhaustive_declaration` on a question, a `proof_summaries` entry, or the
+   tree relationship/fact a proof concludes, except as the direct result of
+   invoking `research-exhaustiveness` or `proof-conclusion` in this same
+   run. If you catch yourself narrating "proceed to research-exhaustiveness"
+   or "proceed directly to proof-conclusion" and the next tool call is
+   `research_append` rather than `Skill`, stop — that is the orchestrator
+   doing the sub-skill's job by hand, and it is exactly what this contract
+   forbids.
 
    **Hard rules held in this context** (for any residual inline
    judgment — reading state, weighing routes — never for writing):

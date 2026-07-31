@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 13, flag adds_daughter, confidence 3). Draft transcribed from a Danish baptismal record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 13, flag adds_daughter, confidence 3). Resolved true match: corroborated by an independent confirmation record naming the same parents, in addition to the original baptismal record."
 }
