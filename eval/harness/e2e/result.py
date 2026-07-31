@@ -103,7 +103,7 @@ class E2eResult:
     # See subagent_capture.py.
     subagents: list[dict[str, Any]] = field(default_factory=list)
 
-    # docs/plan/research-guardrail-bypass-plan.md §4.4 — the HARD guardrail
+    # docs/specs/guardrail-enforcement-spec.md §8 — the HARD guardrail
     # detector's findings: a guardrail skill's effect present in the final
     # project state with no matching successful invocation anywhere in the run.
     # Lives at the top level, NOT inside `judge_output`, because it is a
@@ -128,7 +128,7 @@ class E2eResult:
     # "fail" when compliance failed. This is what the exit code keys on.
     outcome: str = field(init=False, default="pass")
 
-    # docs/plan/research-guardrail-bypass-plan.md §4.1 — SHADOW MODE ONLY:
+    # docs/specs/guardrail-enforcement-spec.md §7 — SHADOW MODE ONLY:
     # protected writes (a proof_summaries/person_evidence/conflicts/
     # exhaustive_declaration write, or a tree_edit/tree_correct/
     # materialize_facts write one of the four GPS guardrail skills owns) with
