@@ -43,6 +43,59 @@ const here = dirname(fileURLToPath(import.meta.url));
 const mcpRoot = join(here, "..", "..");
 const pluginRoot = join(mcpRoot, "..", "plugin");
 const agentsDir = join(pluginRoot, "agents");
+const repoRoot = join(mcpRoot, "..", "..", "..");
+
+// Every place the MCP server is registered, and how each spells the key.
+//
+// The bridge prefix is derived from manifest.display_name, so renaming the
+// extension fails loudly below. The OTHER prefix — `mcp__genealogy__` — had no
+// such guard: it was a constant here and a claim in the comment above, while
+// the actual key lives in five files across two languages. Rename it in any one
+// of them and this suite stays green while that environment's agents spawn
+// with zero matching tools and the runtime refuses them ("would be spawned with
+// zero tools — refusing"). That is #650/#698 approached from the other side:
+// those broke because the agents were qualified against the wrong key; this
+// would break because a key moved out from under correctly-qualified agents.
+//
+// Grepping source for a dict key is brittle by nature. It is the pragmatic
+// option because the five sites span TypeScript, JSON and Python and share no
+// importable constant; the robust fix is a single shared MCP_SERVER_KEY that
+// all five read. If these patterns start missing, fix the pattern — do not
+// delete the assertion.
+const SERVER_KEY_SITES: { file: string; pattern: RegExp; what: string }[] = [
+  { file: ".mcp.json", pattern: /"mcpServers"\s*:\s*\{\s*"([^"]+)"/, what: "Claude Code project config" },
+  {
+    file: "apps/server/app/agent/real_agent.py",
+    pattern: /mcp_servers\s*=\s*\{\s*"([^"]+)"/,
+    what: "hosted web control plane",
+  },
+  {
+    file: "eval/harness/e2e/orchestrator.py",
+    pattern: /mcp_servers\s*=\s*\{\s*"([^"]+)"/,
+    what: "e2e harness",
+  },
+  {
+    file: "eval/harness/harness/skill_runner.py",
+    pattern: /mcp_servers\s*=\s*\{\s*"([^"]+)"/,
+    what: "unit harness",
+  },
+  {
+    file: "eval/harness/harness/mock_mcp.py",
+    pattern: /create_sdk_mcp_server\(\s*name\s*=\s*"([^"]+)"/,
+    what: "unit harness mock server",
+  },
+];
+
+/** The server key each registration site actually uses, or null if unreadable. */
+function registeredServerKey(site: (typeof SERVER_KEY_SITES)[number]): string | null {
+  let text: string;
+  try {
+    text = readFileSync(join(repoRoot, site.file), "utf8");
+  } catch {
+    return null;
+  }
+  return site.pattern.exec(text)?.[1] ?? null;
+}
 
 const manifest = JSON.parse(
   readFileSync(join(mcpRoot, "manifest.json"), "utf8"),
@@ -95,6 +148,43 @@ describe("plugin agent tool names", () => {
     // Pinned so a display_name rename fails loudly here, next to the
     // explanation, rather than as a mystery spawn failure in Cowork.
     expect(BRIDGE_PREFIX).toBe("mcp__remote-devices__Genealogy_Research__");
+  });
+
+  describe("harness prefix vs. the keys the environments actually register", () => {
+    for (const site of SERVER_KEY_SITES) {
+      it(`${site.file} (${site.what}) still registers under a readable key`, () => {
+        expect(
+          registeredServerKey(site),
+          `could not read an MCP server key out of ${site.file}. Either the file moved ` +
+            `or its registration form changed; fix the pattern in SERVER_KEY_SITES rather ` +
+            `than dropping the site — an unchecked site is one that can silently rename.`,
+        ).not.toBeNull();
+      });
+    }
+
+    it("all five environments agree on one key", () => {
+      const found = SERVER_KEY_SITES.map((s) => ({ file: s.file, key: registeredServerKey(s) })).filter(
+        (r): r is { file: string; key: string } => r.key !== null,
+      );
+      const distinct = [...new Set(found.map((r) => r.key))];
+      expect(
+        distinct.length,
+        `the MCP server is registered under more than one key: ` +
+          found.map((r) => `${r.file} → "${r.key}"`).join(", ") +
+          `. Agent tools: entries name ONE harness spelling, so whichever environment ` +
+          `disagrees will spawn its agents toolless.`,
+      ).toBe(1);
+    });
+
+    it("HARNESS_PREFIX matches the registered key", () => {
+      const key = registeredServerKey(SERVER_KEY_SITES[0]);
+      expect(
+        HARNESS_PREFIX,
+        `agent frontmatter is qualified against "${HARNESS_PREFIX}" but the environments ` +
+          `register the server as "${key}". Every agent's tools: list would miss, and the ` +
+          `runtime refuses to spawn an agent whose entries all miss.`,
+      ).toBe(`mcp__${key}__`);
+    });
   });
 
   for (const file of agentFiles) {
