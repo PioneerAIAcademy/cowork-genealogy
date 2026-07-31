@@ -96,6 +96,37 @@ updates:
   # which a rebuild picks up and Dependabot never sees. This entry is cheap and
   # worth having; it is NOT a base-image security net. Pin by digest if that is
   # ever wanted, and Dependabot will track digests instead.
+  #
+  # ── Why runtime-line moves are ignored ────────────────────────────────────────
+  # Those tag moves are never routine here, because each tag IS a pin that other
+  # files in the repo are written against:
+  #
+  #   ubuntu:24.04       e2b.Dockerfile's own header says 24.04 is chosen because
+  #                      "Python 3.12 is Ubuntu 24.04's system python ... (Debian
+  #                      bookworm is only 3.11; deadsnakes would be required
+  #                      there)". Moving the base silently moves the agent's
+  #                      interpreter and makes that comment false.
+  #   python:3.12-*      apps/server/.python-version pins 3.12. requires-python is
+  #                      only ">=3.12", so a bump resolves fine and diverges
+  #                      silently from what anyone develops against.
+  #   node:22-*          .nvmrc is 22, package.json engines is ">=22", and all four
+  #                      CI workflows use 22.
+  #
+  # Nothing in CI builds either Dockerfile, so such a PR arrives green and the
+  # first real signal is a failed `fly deploy` or E2B template build. PR #1035
+  # (closed) proposed all three at once, including node 25 — an odd-numbered,
+  # non-LTS line — for the production web build.
+  #
+  # Moving a runtime line is a coordinated change: bump the tag together with
+  # .python-version / .nvmrc / the pyproject floor, and rebuild the E2B template.
+  # Do it deliberately, not by merging a bot PR.
+  #
+  # Both major AND minor are ignored, deliberately. Dependabot reads a docker tag
+  # as a version, so ubuntu 24.04 -> 26.04 and node 22 -> 25 are semver-MAJOR but
+  # python 3.12 -> 3.14 is semver-MINOR — a major-only ignore would let exactly the
+  # Python bump through. Patch moves (e.g. 3.12.1 -> 3.12.2) still open PRs, and
+  # because both ignores are scoped to `version-update:*`, a genuine security
+  # advisory on a base image still does too.
   - package-ecosystem: docker
     directories:
       - "/deploy"
@@ -108,6 +139,11 @@ updates:
       - dependencies
     commit-message:
       prefix: "ci(docker)"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
     groups:
       docker-base-images:
         patterns:
