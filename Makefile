@@ -283,8 +283,21 @@ agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the pl
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test
 
+# $(ENGINE_BUILD) is a real prerequisite here, not a convenience. The mock MCP
+# server (eval/harness/harness/mock_mcp.py) shells out to the COMPILED build/
+# for its live tool handlers and for the production tool catalog, so part of
+# this suite genuinely executes build/**. CI already builds before running the
+# same pytest (.github/workflows/eval-harness-tests.yml); only this target and
+# scripts/test.sh were missing it.
+#
+# build/ is gitignored, so a freshly-added worktree has none — and
+# link-worktree.sh deliberately does NOT link it (each worktree must compile its
+# own src/, or a branch would silently test another branch's build). Without the
+# prereq the run failed inside test_mock_mcp.py on "AssertionError: staging must
+# still happen": a missing build wearing the costume of a code regression.
+# Python deps still need no stamp — `uv run` auto-syncs the venv.
 .PHONY: harness-test
-harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e; uv auto-syncs the venv)
+harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest, excludes e2e; uv auto-syncs the venv)
 	cd eval/harness && uv run pytest -m 'not e2e' -q
 
 .PHONY: eval-skill
@@ -419,6 +432,21 @@ e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate
 .PHONY: e2e-calibrate
 e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
 	cd eval/harness && uv run python -m e2e.calibrate_judge
+
+.PHONY: e2e-corpus
+e2e-corpus: ## Three-axis totals (recall / compliance / gate) across every committed e2e run: make e2e-corpus | TEST=<slug>
+	# Pure analysis over committed run JSONs — no live run, no API. The
+	# cross-run aggregate the per-invocation roll-up can't give (run_e2e runs
+	# one fixture at a time). Reads every log through e2e.result.axes_from_runlog,
+	# so pre-#972 runs whose verdict was overwritten by a guardrail bypass show
+	# their real genealogical verdict. Runs with unknown compliance are reported
+	# as `not_checked` and never counted as clean.
+	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),)
+
+.PHONY: e2e-guardrail-shadow
+e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over committed runs (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40
+	# Also pure analysis, no API. Existed with no make target until #972.
+	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),)
 
 .PHONY: e2e-latency
 e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown

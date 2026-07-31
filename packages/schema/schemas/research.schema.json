@@ -574,7 +574,7 @@
     },
     "timeline": {
       "type": "object",
-      "required": ["id", "label", "person_ids", "generated", "events", "gaps", "impossibilities"],
+      "required": ["id", "label", "person_ids", "generated", "events", "gaps"],
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string", "pattern": "^t_" },
@@ -597,10 +597,6 @@
         "gaps": {
           "type": "array",
           "items": { "$ref": "#/$defs/timeline_gap" }
-        },
-        "impossibilities": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/timeline_impossibility" }
         }
       }
     },
@@ -640,16 +636,6 @@
         },
         "severity": { "$ref": "enums.schema.json#/$defs/severity" },
         "notes": { "type": ["string", "null"] }
-      }
-    },
-    "timeline_impossibility": {
-      "type": "object",
-      "required": ["description", "event_1_assertion_id", "event_2_assertion_id"],
-      "additionalProperties": false,
-      "properties": {
-        "description": { "type": "string" },
-        "event_1_assertion_id": { "type": "string", "pattern": "^a_" },
-        "event_2_assertion_id": { "type": "string", "pattern": "^a_" }
       }
     },
     "proof_summary": {

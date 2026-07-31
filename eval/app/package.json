@@ -34,10 +34,10 @@
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
-    "eslint": "^9.17.0",
+    "eslint": "^10.8.0",
     "eslint-config-next": "16.2.11",
     "json-schema-to-zod": "2.6.1",
-    "postcss": "^8.4.49",
+    "postcss": "^8.5.25",
     "postcss-preset-mantine": "^1.17.0",
     "postcss-simple-vars": "^7.0.1",
     "tsx": "^4.19.2",
@@ -45,6 +45,8 @@
     "vitest": "^4.1.9"
   },
   "overrides": {
-    "react-textarea-autosize": "8.5.9"
+    "react-textarea-autosize": "8.5.9",
+    "postcss": "$postcss",
+    "sharp": "^0.35.3"
   }
 }

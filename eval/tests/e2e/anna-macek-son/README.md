@@ -29,6 +29,21 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 12, flag `adds_son`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — Czech Republic, Church Books, 1552-1981: baptismal entry, 26 June 1867, Rohovládova Bělá, Pardubice, naming parents Váčlav Jičinsky and Anna. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming the 1867 František baptism, plus a `required` finding that the report documents the rejection.
+**Resolved: false match.** This fixture came from a hint batch
+(`filtered-list-samples.csv` row 12, flag `adds_son`, confidence 3) in which
+roughly half the hint records are false matches. The genealogist reviewed
+both the tree person and the hint record and confirmed this is one of them.
 
-**Strong reason to doubt this match**: the tree records Anna Macek's own birth as **1851** and her marriage to Václav Jičinský as **7 February 1871**. A son baptized in **1867** would make Anna only 16 years old and would predate her recorded marriage by four years — a serious internal inconsistency. Either the tree's 1851 birth year for Anna is wrong, this "Anna" and "Václav Jičinský" (a bare-forename mother and a very common Czech husband-surname pairing) are a different couple in the same region, or the baptismal date was misindexed. This fixture is a strong candidate for outcome (c) (false match) but is left as a recover-type draft finding pending the genealogist's review of the underlying parish register.
+**Why it's rejected**: the tree records Anna Macek's own birth as **1851**
+and her marriage to Václav Jičinský as **7 February 1871**. The hint's
+baptismal entry — Czech Republic, Church Books, 1552-1981, 26 June 1867,
+Rohovládova Bělá, Pardubice, naming parents Václav Jičinsky and Anna —
+dates nearly four years *before* that marriage, and would require Anna to
+have given birth at age 16. Both facts independently rule out the match:
+a child cannot predate his parents' marriage, and the age is
+biologically implausible on top of that. The baptismal entry's bare-forename
+mother ("Anna") and common Czech husband-surname ("Jičinský") point to a
+different couple of the same names in the same parish, not this Anna Macek.
+No substitute son was found for Anna Macek and Václav Jičinský; the tree
+currently records no children for her, and that stands as the negative
+conclusion.

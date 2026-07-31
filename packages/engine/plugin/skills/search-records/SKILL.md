@@ -105,9 +105,21 @@ plan item and in your instructions. Do not re-query between searches; the plan
 does not change while you are searching it. If the plan item arrived in your
 prompt, in a hand-off, or from `research-plan` earlier in this same run, you
 already have it — issue no query at all. Every query is a turn, and a search
-phase has few to spare. If the user
-specifies a particular search, match it to a plan item or create an
-ad-hoc search (with `plan_item_id: null` in the log).
+phase has few to spare.
+
+**Planned or ad-hoc — decide before you search.** The line is *who chose the
+search*, not whether a plan exists.
+
+| What you have | Do |
+|---|---|
+| A plan item | Execute. Full GPS, including the Step 8 escalation |
+| No plan item, but the **user named this search** | Execute as ad-hoc: log `plan_item_id: null`, note it was user-requested, and stop when done — no escalation, no plan edits |
+| No plan item, and **you** thought of the search | `Skill("research-plan")` and stop. If the user then says yes, it comes back as a plan item — not as ad-hoc |
+
+Refusing a researcher's own request is obstruction, not rigour. Inventing a
+search nobody asked for is how a session drifts off its question. An autonomous
+`/research` run has no ad-hoc searches — the orchestrator only dispatches you
+when a plan item is waiting.
 
 ### 2. Construct the search query
 
@@ -125,7 +137,7 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 | Parameter | Source | Notes |
 |-----------|--------|-------|
 | `surname` | tree.gedcomx.json person name | Try exact first, then fuzzy variants. Anchor — required if `recordCountry` is absent. |
-| `givenName` | tree.gedcomx.json person name | Use first name only — middle names often absent in records |
+| `givenName` | tree.gedcomx.json person name | **Use the full given-name string when a source names one** — "Anna Maria Eva", not just "Anna": a common first name alone returns a large, undifferentiated set, while the full name a source actually used tends to surface the target as a clear top-scoring outlier. Truncate to first-name-only as a **lever** if it nils (see `references/search-strategy-levers.md`), not as the default starting query. |
 | `birthYearFrom` / `birthYearTo` | Assertions or facts | Year range, both required when filtering by birth year (±5 years typical) |
 | `birthPlace` | Assertions or facts | Use the broadest useful level (state, not city) |
 | `residenceYearFrom` / `residenceYearTo` | Plan item year | Census-style anchor. Set both to the same year for a single-census search |
@@ -190,6 +202,18 @@ to the manual path in Step 4.
 
 **If the search fails due to authentication:** Instruct the user to log in: "The search requires FamilySearch authentication. Please ask me to log you in, or type `login`."
 
+**A zero-result search is NOT an authentication failure.** Auth problems throw an
+error ("User is not logged in to FamilySearch…" / "FamilySearch session not
+accepted…"); `results: []` means the query ran, authenticated, and matched
+nothing. That is the nil finding this skill exists to record. An implausible nil
+is not licence to suspect your session — say so in the `notes` and carry on.
+(Rows from the wrong collection are a mismatch, not a nil.)
+
+❌ WRONG: "Zero results US-wide is implausible for the 1850 census, so the session
+must be dead — please log in and I'll re-run."
+✅ CORRECT: "Zero results US-wide despite good coverage. The search ran fine, so
+this is a real nil — most likely a transcription error the index cannot match."
+
 ### 4. Triage results — rank by match, then confirm
 
 **If you passed `subjectId` in Step 3, the ranking is already in the response —
@@ -251,6 +275,13 @@ candidates; you still confirm the top ones:
   residences, FAN network) — before treating it as the subject's. Absent that
   confirmation, flag it `needs-review`, keep the plan item `in_progress`, and do
   not hand the record or its parents to extraction as the subject's.
+  **Exception for civil death registrations:** ages on death certificates are
+  frequently estimates provided by whoever reported the death — non-family
+  informants (a neighbour, a burial agent, a hospital official) are commonly
+  off by 3–7 years. On a death registration, a birth year discrepancy of ≤5
+  years does not by itself disqualify a match, particularly when the full
+  given name — including middle names — is an exact match. Read the image
+  before dismissing.
   **The excuse can point either direction — both are still excuses.** The
   imprecision doesn't have to sit on the *matched record's* side to be a
   rationalization: a same-name match carrying an exact, precise date (a parish
@@ -276,6 +307,13 @@ candidates; you still confirm the top ones:
   matching spouse or child, a later residence), and propose **that narrower
   search** as the next step. Extraction becomes available again only once an
   independent anchor confirms identity — until then it is not on the menu.
+  **Dismissing one result does not close the search.** After ruling out a
+  candidate, move to the next result in the same ranked list — do not jump to
+  the next plan item. Work through every result in the ranked list in score
+  order before declaring the search done. The error is: top result dismissed
+  → move to next plan item. The correct flow is: top result dismissed →
+  evaluate result #2 → evaluate result #3 → only when the full ranked list is
+  triaged, move on.
   **And do not report the disqualified record's family as findings.** Naming
   its parents (or spouse, or children) in your results table or narrative
   adopts the identity in the only way that matters to a reader, whatever the
@@ -426,6 +464,8 @@ Never treat an index entry as equivalent to examining the original record.
    ✅ CORRECT: "Log_001 found Patrick under 'Flynn'. The nil under 'Flinn' documents that FamilySearch does not alias Flynn→Flinn for this record — both findings stand as independent evidence."
 6. Check for fallback plan items (`fallback_for`). If none and the question remains open, suggest research-plan for re-planning.
 7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass" on a Q→O error), no FamilySearch variant will ever surface that record. Other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`), so they can recover records FamilySearch cannot — which is exactly why the escalation is triggered by the nil signal here, not planned upfront (planning external items preemptively clutters the plan when FamilySearch works). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, invoke `Skill("search-external-sites")` with the same person attributes to generate Ancestry (and, where the researcher subscribes, MyHeritage/FindMyPast) search URLs. **Do this immediately — do not ask the user first and do not wait until step 9.** This is a tool call you make in this turn, not an option you narrate for the user to approve.
+
+   **No plan item → no escalation**, however many variants came back nil; an ad-hoc search ends when you log it (Step 1).
 
    ❌ WRONG: Ending your response with "FamilySearch is exhausted — would you like me to check Ancestry?" without having called the skill. Offering the escalation in prose is not escalating.
    ✅ CORRECT: Call `Skill("search-external-sites")` in this same turn, before writing your summary, and present the URLs it returns as part of your results.

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_william_ferber_death_1903",
+    "objective": "When and where did William Hubert Ferber (father of Charles Hubert Ferber, b. 1891, Cincinnati, Ohio) die?",
+    "subject_person_ids": [
+      "G7JB-YH6"
+    ],
+    "status": "active",
+    "created": "2026-07-28",
+    "updated": "2026-07-28"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

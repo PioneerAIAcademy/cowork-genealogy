@@ -20,7 +20,7 @@ Did the skill make only the requested change without modifying unrelated data? E
 
 ## Merge correctness
 
-For person merges, did the skill rewrite ALL references to the deprecated person across BOTH project files, and remove the deprecated person from `tree.gedcomx.json` `persons[]`? A missed reference creates a broken foreign key that propagates silently until `validate_research_schema` (or downstream readers) catches it.
+For person merges, did the skill rewrite ALL references to the deprecated person across BOTH project files, and remove the deprecated person from `tree.gedcomx.json` `persons[]`? A missed reference creates a broken foreign key that propagates silently until a downstream reader trips over it.
 
 The full rewrite scope is enumerated in SKILL.md §"Person merging" Step 3:
 
@@ -31,13 +31,13 @@ The full rewrite scope is enumerated in SKILL.md §"Person merging" Step 3:
 | `research.json` | `person_evidence[].person_id` |
 | `research.json` | `timelines[].person_ids` |
 
-After the rewrite, the deprecated person must be deleted from `tree.gedcomx.json` `persons[]`, and `validate_research_schema` must pass.
+After the rewrite, the deprecated person must be deleted from `tree.gedcomx.json` `persons[]`, and both project files must be left structurally valid. `merge_tree_persons` validates before persisting, so a separate `validate_research_schema` call is neither required nor available to this skill (SKILL.md § Validation).
 
 **When the test is NOT a merge** (no-op verify, value correction, add fact, create person, refuse-merge, negative routing, match-checking), this dimension has nothing to grade and scores `pass`. Judges must NOT score partial on a non-merge test for the absence of merge mechanics.
 
-- **pass:** Either (a) the test is not a merge and this dimension has nothing to grade, OR (b) every reference enumerated above is rewritten from the deprecated ID to the keep ID, the deprecated person is removed from `persons[]`, and post-merge `validate_research_schema` is clean.
+- **pass:** Either (a) the test is not a merge and this dimension has nothing to grade, OR (b) every reference enumerated above is rewritten from the deprecated ID to the keep ID, the deprecated person is removed from `persons[]`, and no unresolved cross-file reference is left behind.
 - **partial:** Most references rewritten, but one location is missed (e.g., a relationship updated and `subject_person_ids` updated but a `timelines.person_ids` entry still references the deprecated ID).
-- **fail:** Multiple references unrewritten, OR the deprecated person remains in `persons[]` after the merge, OR `validate_research_schema` surfaces an unresolved cross-file reference and the skill does not fix it.
+- **fail:** Multiple references unrewritten, OR the deprecated person remains in `persons[]` after the merge, OR an unresolved cross-file reference to the deprecated ID is left behind.
 
 ## Evidence grounding
 

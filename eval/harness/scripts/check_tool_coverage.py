@@ -70,6 +70,14 @@ EXEMPT_TOOLS: dict[str, str] = {
         "supersede-not-delete, so its result reflects the actual file the "
         "skill wrote. No fixture needed; it is always available."
     ),
+    "research_query": (
+        "registered as a LIVE_TOOL in mock_mcp.py (#919) — a read-only, "
+        "deterministic projection over the workspace's own research.json, "
+        "same class as project_context. It calls the real compiled "
+        "implementation rather than matching a fixture, so mocking it would "
+        "only invite drift from the scenario's actual state. No fixture "
+        "needed; it is always available."
+    ),
     "extraction_append": (
         "registered as a LIVE_TOOL in mock_mcp.py — the record-extraction "
         "lane's writer (research_append restricted to sources + assertions). "

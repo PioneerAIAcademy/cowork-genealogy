@@ -132,7 +132,7 @@ active ──► supported ──► (to proof-conclusion)
   assertion with `evidence_type: "direct"` in the supporting list)
 - No unresolved contradictions remain (contradicting assertions have
   been explained, resolved via conflict-resolution, or outweighed)
-- The evidence is consistent — no timeline impossibilities
+- The evidence is consistent — no logical impossibilities (check-warnings) or geographic infeasibilities (timeline)
 
 **Do NOT downgrade from `supported` to `active` for minor
 discrepancies.** Census age rounding (e.g., a 5-year birth year

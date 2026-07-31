@@ -40,6 +40,7 @@ from harness.runlog import (
     derive_activated,
 )
 from harness.runnability import RunnabilityResult, check_runnable
+from harness.skill_stubs import parse_stub_skills
 from harness.skill_runner import (
     DEFAULT_MODEL,
     DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
@@ -179,6 +180,7 @@ async def _run_one_test_async(
         fixtures_dir=paths.fixtures_dir,
         skills_dir=paths.skills_dir,
         tests_dir=paths.tests_dir,
+        validators_dir=paths.validators_dir,
     )
     if not gate.runnable:
         return _aborted_entry(
@@ -286,6 +288,19 @@ def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
     return set(correct) or None
 
 
+def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
+    """Sub-skills a POSITIVE test declares it doesn't want executed.
+
+    Opt-in per test via `execution.stub_skills`, in either the bare-deny or the
+    canned-response form — see harness/skill_stubs.py for which to pick and why
+    (it turns on whether the CALLER reads the result, not on the callee).
+
+    Assert the hand-off with a `skills_invoked` validator; do not leave it to
+    the judge, which reads a transcript and can misread it.
+    """
+    return parse_stub_skills(spec.execution) or None
+
+
 async def _execute_single_run(
     *,
     run_index: int,
@@ -320,6 +335,7 @@ async def _execute_single_run(
         auth=auth,
         model=model,
         routing_short_circuit_skills=routing_short_circuit,
+        stub_skills=_stub_skills(spec),
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -413,6 +429,7 @@ async def _execute_single_run(
         tool_calls=result.tool_calls,
         blocked_context_calls=result.blocked_context_calls,
         skill_frontmatter=skill_frontmatter,
+        skills_invoked=result.skills_invoked,
         test={
             **spec.raw.get("test", {}),
             # Top-level validator-facing block threaded in alongside the
@@ -563,6 +580,7 @@ async def _execute_skill_with_retry(
     auth: AuthConfig,
     model: str,
     routing_short_circuit_skills: set[str] | None = None,
+    stub_skills: dict[str, str | None] | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -641,6 +659,7 @@ async def _execute_skill_with_retry(
                     ),
                     allowed_tools_override=skill_baseline,
                     routing_short_circuit_skills=routing_short_circuit_skills,
+                    stub_skills=stub_skills,
                     # The skill's OWN declaration, not skill_baseline (which
                     # unions in its subagents' tools). The gap between the two
                     # is what the per-context policy guards.
