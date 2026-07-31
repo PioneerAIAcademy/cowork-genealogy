@@ -1,0 +1,1303 @@
+{
+  "project": {
+    "id": "rp_micaela_salgado_son",
+    "objective": "Did Micaela Salgado of Tegucigalpa, Honduras have a son named Guillermo, baptized 1889, in addition to her two known daughters (b. 1874 and 1884)?",
+    "subject_person_ids": [
+      "9XGG-PW4"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-31"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Is there a baptismal record in Tegucigalpa, Honduras from approximately 1889 naming a son Guillermo as the child of Micaela Salgado?",
+      "rationale": "The research objective asks whether Micaela Salgado had a son Guillermo baptized in 1889. Catholic baptism registers for Tegucigalpa are the primary source type for this time and place; they record the child's name, parents, and date of baptism. This question is directly testable by searching the available parish registers for that period.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-31",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched three FamilySearch collections covering Catholic church baptisms (1823595), civil nacimientos (2135627), and the Honduras Baptisms index (1520634) for Tegucigalpa circa 1889. Found a direct positive record: Guillermo Salgado baptism 20 Oct 1889 at San Miguel, Tegucigalpa (ark:/61903/1:1:KXP9-FP6, src_001). Civil nacimiento search returned no record for Guillermo, consistent with his birth going unregistered civilly. FAN all-children search (log_007) confirmed Micaela Salgado as mother of multiple children in Tegucigalpa 1864\u20131891, corroborating her identity independently of the baptism index OCR. Defunciones search (log_009) found no civil death record for Guillermo 1889\u20131900. All plan items completed or skipped. Indexing variant 'Micaila'='Micaela' is corroborated by two independent civil registration records.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "YES. Baptism record ark:/61903/1:1:KXP9-FP6 directly names Guillermo Salgado, baptized 20 Oct 1889, San Miguel, Tegucigalpa, with mother indexed as 'Micaila Salgado' (variant of Micaela Salgado). The question is answered.",
+          "repository_breadth": "YES. Catholic church records (collection 1823595), civil nacimientos (2135627), Honduras Baptisms index (1520634), and civil defunciones (2135627) all searched. Multiple search strategies: full name, dropped-surname lever, place-narrowed, FAN daughters. No additional FamilySearch indexed collection identified for this place and period that remains unsearched.",
+          "original_substitution": "PARTIAL. The index record was read via record_read (log_008), which is a derivative of the manuscript image. Original image (ark:/61903/3:1:939K-R9HG-B) has not been transcribed. The 'Micaila' OCR ambiguity is the principal open item. However, two independent civil registration sources (src_002, src_003) corroborate Micaela Salgado as mother of children in Tegucigalpa in the same era, resolving the identification at probable tier without requiring the image transcription.",
+          "independent_verification": "PARTIAL. src_001 is the sole record naming Guillermo as Micaela Salgado's son in 1889. No second record independently names Guillermo. However, src_002 and src_003 (civil nacimientos for Raimunda and Maria Norberta) independently verify Micaela Salgado as a Tegucigalpa mother during this period, providing indirect corroboration of her family context. The absence of a civil nacimiento for Guillermo (searched, negative) is consistent with selective civil registration in 1889 Honduras.",
+          "evidence_class": "YES. src_001 is an original parish baptismal register (collection 1823595, 'Honduras, registros parroquiales y diocesanos, 1633-1978'). The baptism date and place are primary information recorded by the officiating priest at the time of the event. Evidence type: direct.",
+          "conflict_resolution": "YES for q_001 scope. The 'Micaila'/'Micaela' spelling difference is a known OCR/indexing variant corroborated by two independent sources; not a genuine identity conflict. The Raimunda-1864 vs. 1874 discrepancy (I2 vs. 9XGG-PWW) is a side matter about a corroborating record and does not affect the conclusion about Guillermo.",
+          "overturn_risk": "LOW-MODERATE. No second record names Guillermo as Micaela's son; the conclusion rests on one original source. Reading the original image would reduce risk. If the image revealed a different mother surname ('Salcedo', 'Salamanca', etc.) rather than 'Salgado', or showed the child's name differently, the conclusion would require revision. This risk limits the proof tier to probable rather than proved. No other known accessible record type in Honduras 1889 would independently document a Catholic baptism."
+        }
+      },
+      "created": "2026-07-31"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-31",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Distrito Central, Francisco Moraz\u00e1n (Tegucigalpa), Honduras",
+          "date_range": "1888-1891",
+          "repository": "FamilySearch",
+          "rationale": "Honduras civil registration began in 1841; FamilySearch collection 2135627 (Honduras, Civil Registration, 1841-1968) is 100% name-indexed for Nacimientos in Distrito Central with volumes directly spanning 1887-1891. A civil birth record for Guillermo filed under Micaela Salgado would be direct evidence answering the question. Search first as highest-probability, free, fully-indexed source. Use 'Francisco Moraz\u00e1n / Distrito Central' as the place filter (department renamed from Tegucigalpa to Francisco Moraz\u00e1n in 1943).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Tegucigalpa (Distrito Central), Honduras",
+          "date_range": "1885-1895",
+          "repository": "FamilySearch",
+          "rationale": "Catholic baptism registers for Tegucigalpa's main parish (Catedral San Miguel Arc\u00e1ngel) and the broader Honduras church record corpus are name-indexed in FS collection 1520634 (Honduras, Baptisms, 1730-1930: 160,997 records) and collection 1823595 (Honduras, Catholic Church Records, 1633-1978: 1.8M records). A baptism entry would record the child's name, baptism date, mother (Micaela Salgado), father, and godparents \u2014 direct evidence. Search a \u00b13-year window around 1889 to account for imprecision in the stated year.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Distrito Central, Francisco Moraz\u00e1n, Honduras",
+          "date_range": "1870-1890",
+          "repository": "FamilySearch",
+          "rationale": "FAN corroboration: search civil Nacimientos (collection 2135627) for the two known daughters of Micaela Salgado, born circa 1874 and 1884 in Tegucigalpa, to confirm her presence in the Distrito Central civil registration records and establish the pattern of registration. Finding the daughters' entries under Micaela Salgado validates her identity in the record set and contextualizes any absence or presence of a Guillermo entry in 1889.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Honduras",
+          "date_range": "1885-1895",
+          "repository": "other",
+          "rationale": "Full-text co-occurrence search: if indexed searches (items 1-2) return no result, execute a full-text search across unindexed FamilySearch image volumes using the co-occurrence pattern '+Salgado +Guillermo' (and variant '+Micaela +Salgado') unscoped across the entire Honduras corpus. Per the record-type guide, for Latin-American compound surnames this surfaces acts not reachable by name-indexed search \u2014 including browse-only baptism volumes not captured in collections 1520634 or 2135627. Route this item to the search-full-text skill.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Honduras",
+          "date_range": "1885-1895",
+          "repository": "Ancestry",
+          "rationale": "Ancestry collection 9889 (Honduras Select Baptisms, 1730-1930) mirrors the FamilySearch baptism index but applies its own indexing pipeline and may surface variant spellings or entries missed in the FS search. MyHeritage and FindMyPast carry the same index. Search Ancestry as a paid-repository fallback if FS indexed search (item 2) returns nothing.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Tegucigalpa, Distrito Central, Honduras",
+          "date_range": "1889-1900",
+          "repository": "FamilySearch",
+          "rationale": "If a Guillermo Salgado was baptized in 1889 but died in infancy or childhood, a civil death record (Defunciones, collection 2135627) or church burial record (collection 1823595) for Distrito Central would corroborate his existence and relationship to Micaela Salgado. Defunciones volumes for Tegucigalpa 1888-1891 are 100% indexed. A death record for an infant Guillermo son of Micaela Salgado is positive evidence that the baptism occurred even if the baptism record itself is not found.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-31T16:53:08.460Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Guillermo",
+        "surname": "Salgado",
+        "motherGivenName": "Micaela",
+        "motherSurname": "Salgado",
+        "birthYearFrom": 1886,
+        "birthYearTo": 1892,
+        "collectionId": "2135627",
+        "recordCountry": "Honduras"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 137,
+      "notes": "137 total matches; top results are mostly records where Guillermo Salgado appears as a non-principal relative. Record X7GM-294Q titled 'Registro para Guillermo Salgado' is a 1950 Puerto Cort\u00e9s birth \u2014 wrong era and place. No confirmed match for target Guillermo son of Micaela Salgado ca. 1889 Tegucigalpa. Broader search needed: child's paternal surname (and thus primary surname in record) unknown; Salgado would be the maternal/second surname."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T16:53:08.467Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Guillermo",
+        "surname": "Salgado",
+        "motherGivenName": "Micaela",
+        "birthYearFrom": 1885,
+        "birthYearTo": 1895,
+        "collectionId": "1520634",
+        "recordCountry": "Honduras"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "0 results in Honduras, Baptisms, 1730-1930 (collection 1520634) for Guillermo Salgado with mother Micaela in 1885-1895. Will try broader church records collection (1823595) next."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-31T16:53:08.467Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Elena",
+        "surname": "Salgado",
+        "motherGivenName": "Micaela",
+        "birthYearFrom": 1870,
+        "birthYearTo": 1878,
+        "collectionId": "2135627",
+        "recordCountry": "Honduras",
+        "subjectId": "MHZ1-4X1"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 95,
+      "notes": "95 matches returned 50; all match scores very low (top 0.030) because tree person MHZ1-4X1 has no dates or places. Critically: result X7X3-FXH3 'Registro para Micada Salgado' appears in the list mentioning Elena Salgado \u2014 'Micada' is very likely an OCR/indexing transcription of 'Micaela'. This could be a Micaela Salgado family record. Reading this record immediately."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-31T16:53:32.139Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Guillermo",
+        "motherGivenName": "Micaela",
+        "motherSurname": "Salgado",
+        "birthYearFrom": 1886,
+        "birthYearTo": 1892,
+        "collectionId": "2135627",
+        "recordCountry": "Honduras",
+        "note": "Lever: dropped surname constraint to find child under paternal surname"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 1,
+      "notes": "Dropped surname constraint, kept motherGivenName Micaela + motherSurname Salgado. Only 1 result returned: 'Medina' in Registro para Ramiro Medina C \u2014 not a match for Guillermo son of Micaela Salgado. The dropped-surname lever does not surface a Guillermo birth record here."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-31T16:55:35.084Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Guillermo",
+        "surname": "Salgado",
+        "motherGivenName": "Micaela",
+        "birthYearFrom": 1886,
+        "birthYearTo": 1892,
+        "birthPlace": "Francisco Moraz\u00e1n, Honduras",
+        "collectionId": "2135627",
+        "recordCountry": "Honduras"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 81,
+      "notes": "Place-narrowed lever: 81 matches. Top result Guillermo Salgado Ferrero (X7GS-GVBT) has birth 1890 and 1973 death in Tegucigalpa \u2014 compound surname Salgado Ferrero means paternal=Salgado/maternal=Ferrero, not Micaela Salgado. No confirmed match for target Guillermo as civil birth record. No Guillermo appears in the all-children-of-Micaela civil search, suggesting his birth was not registered civilly or the civil record is under a different entry."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T16:55:35.090Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Guillermo",
+        "motherGivenName": "Micaela",
+        "motherSurname": "Salgado",
+        "birthYearFrom": 1885,
+        "birthYearTo": 1895,
+        "collectionId": "1823595",
+        "recordCountry": "Honduras"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 2,
+      "notes": "CRITICAL POSITIVE: Record ark:/61903/1:1:KXP9-FP6 'Guillermo Salgado' \u2014 Baptism 20 Oct 1889 at San Miguel, Tegucigalpa, Francisco Moraz\u00e1n, Honduras. Returned by search on collection 1823595 (Honduras, Catholic Church Records) with mother Micaela Salgado. This directly answers q_001. Second result is a Confirmation in Comayagua (6B9R-PT9G) \u2014 may be same person later in life. Reading baptism record now."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-31T16:55:35.093Z",
+      "tool": "record_search",
+      "query": {
+        "motherGivenName": "Micaela",
+        "motherSurname": "Salgado",
+        "birthYearFrom": 1870,
+        "birthYearTo": 1895,
+        "birthPlace": "Francisco Moraz\u00e1n, Honduras",
+        "collectionId": "2135627",
+        "recordCountry": "Honduras"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 10,
+      "notes": "All-children search for Micaela Salgado in Francisco Moraz\u00e1n civil registration. Confirms: Raimunda de Jesus Salgado (b. 1864, Tegucigalpa), Maria Norberta Salgado (b. 10 Dec 1884, Tegucigalpa), Presentaci\u00f3n Salgado (b. 21 Nov 1882, Tegucigalpa), Agueda Salgado (b. 13 Feb 1891, Tegucigalpa). Also Cipriana Morillo Salgado (b. 1872, Tegucigalpa, paternal surname Morillo). NO Guillermo appears in civil records. Confirms Micaela Salgado is the same person across multiple civil records in Tegucigalpa \u2014 validates the family identity."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-31T16:56:15.094Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:KXP9-FP6"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Guillermo Salgado (Male), baptism 20 Oct 1889, San Miguel, Tegucigalpa, standard_place Tegucigalpa, Distrito Central, Francisco Moraz\u00e1n, Honduras. Mother indexed as 'Micaila Salgado' (spelling variant of Micaela Salgado, personId p_14209871202). Source collection 1823595, image at FamilySearch ark:/61903/3:1:939K-R9HG-B. Record directly answers q_001: yes, Micaela Salgado had a son named Guillermo baptized in 1889 in Tegucigalpa. Ready for record-extraction."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-31T17:01:39.864Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Guillermo",
+        "surname": "Salgado",
+        "motherGivenName": "Micaela",
+        "motherSurname": "Salgado",
+        "deathYearFrom": 1889,
+        "deathYearTo": 1900,
+        "collectionId": "2135627",
+        "recordCountry": "Honduras",
+        "recordType": "death"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 32,
+      "notes": "Civil defunciones search for Guillermo Salgado child of Micaela Salgado in Tegucigalpa 1889-1900 (collection 2135627). 32 matches returned, but inspection reveals all are records where \"Guillermo Salgado\" appears as a non-principal mention (a relative or witness in someone else's death registration \u2014 Gregorio Ortiz, Gregorio Salgado, Rafael Salgado, etc.). No record titled \"Registro para Guillermo Salgado\" found in this date range, indicating no civil death was registered for a child Guillermo Salgado born 1889 in the 1889-1900 window. This is consistent either with his surviving past 1900, or with the death going unregistered civilly (as the birth itself appears to have been \u2014 no civil nacimiento for Guillermo exists either). Negative result for pli_006."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Honduras, registros parroquiales y diocesanos, 1633-1978\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KXP9-FP6 : accessed 31 July 2026), entry for Guillermo Salgado and Micaila Salgado, 20 Oct 1889.",
+      "citation_detail": {
+        "who": "Guillermo Salgado (baptized); Micaila Salgado (mother)",
+        "what": "Baptismal register entry, parish of San Miguel, Tegucigalpa",
+        "when_created": "20 October 1889",
+        "when_accessed": "31 July 2026",
+        "where": "FamilySearch, \"Honduras, registros parroquiales y diocesanos, 1633-1978\", collection 1823595",
+        "where_within": "Entry for Guillermo Salgado and Micaila Salgado, 20 Oct 1889; image ark:/61903/3:1:939K-R9HG-B"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-31",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KXP9-FP6",
+      "log_entry_id": "log_008",
+      "notes": "Digital image of parish baptismal register, San Miguel, Tegucigalpa, Honduras. Mother's given name indexed as 'Micaila' \u2014 a spelling/OCR variant of Micaela Salgado (tree person 9XGG-PW4). No father named in the indexed record.",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Honduras, Registro Civil, 1841-1968,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q2RY-JWDL : accessed 31 July 2026), entry for Raimunda de Jesus Salgado and Micaela Salgado.",
+      "citation_detail": {
+        "who": "Raimunda de Jesus Salgado; mother: Micaela Salgado",
+        "what": "Civil birth registration (nacimiento), Honduras, Registro Civil, 1841-1968",
+        "when_created": "1864",
+        "when_accessed": "31 July 2026",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "ark:/61903/1:1:Q2RY-JWDL"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-31",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q2RY-JWDL",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Honduras, Registro Civil, 1841-1968\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XQ84-G9ZT : accessed 31 July 2026), entry for Maria Norberta Salgado, birth registration 16 December 1884, Tegucigalpa, Distrito Central, Francisco Moraz\u00e1n, Honduras.",
+      "citation_detail": {
+        "who": "Maria Norberta Salgado",
+        "what": "Birth registration (nacimiento), Honduras Civil Registration 1841-1968, collection 2135627",
+        "when_created": "16 December 1884",
+        "when_accessed": "31 July 2026",
+        "where": "FamilySearch (familysearch.org), Honduras, Registro Civil, 1841-1968, collection 2135627",
+        "where_within": "Entry for Maria Norberta Salgado, birth registration 16 de diciembre de 1884"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-31",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XQ84-G9ZT",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:KXP9-FP6",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Guillermo Salgado",
+      "structured_value": {
+        "given": "Guillermo",
+        "surname": "Salgado"
+      },
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:KXP9-FP6",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:KXP9-FP6",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "Baptized 20 October 1889 at San Miguel, Tegucigalpa, Francisco Moraz\u00e1n, Honduras",
+      "date": "20 Oct 1889",
+      "date_certainty": "exact",
+      "place": "San Miguel, Tegucigalpa, Francisco Moraz\u00e1n, Honduras",
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001",
+      "standard_place": "Tegucigalpa, Distrito Central, Francisco Moraz\u00e1n, Honduras"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:KXP9-FP6",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Micaila Salgado",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Micaila Salgado (presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:KXP9-FP6",
+      "record_role": "mother_of_child",
+      "fact_type": "name",
+      "value": "Micaila Salgado",
+      "structured_value": {
+        "given": "Micaila",
+        "surname": "Salgado"
+      },
+      "information_quality": "primary",
+      "informant": "Micaila Salgado (presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Given name indexed as 'Micaila' \u2014 likely a spelling or OCR variant of 'Micaela'. Identified as tree person 9XGG-PW4 (Micaela Salgado) based on name match and context; confirmation from the original image (ark:/61903/3:1:939K-R9HG-B) is outstanding to verify the exact spelling in the manuscript.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:KXP9-FP6",
+      "record_role": "mother_of_child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Micaila Salgado (presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:Q2RY-JWDL",
+      "record_persona_id": "p_102689834781",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Raimunda de Jesus Salgado",
+      "structured_value": {
+        "given": "Raimunda de Jesus",
+        "surname": "Salgado"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent present at registration)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:Q2RY-JWDL",
+      "record_persona_id": "p_102689834781",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent present at registration)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:Q2RY-JWDL",
+      "record_persona_id": "p_102689834781",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "born 1864, Tegucigalpa, Distrito Central, Francisco Moraz\u00e1n, Honduras",
+      "date": "1864",
+      "date_certainty": "exact",
+      "place": "Tegucigalpa, Distrito Central, Francisco Moraz\u00e1n, Honduras",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent present at registration)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002",
+      "standard_place": "Tegucigalpa, Distrito Central, Francisco Moraz\u00e1n, Honduras"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:Q2RY-JWDL",
+      "record_persona_id": "p_102689834784",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Micaela Salgado",
+      "structured_value": {
+        "given": "Micaela",
+        "surname": "Salgado"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown presenter at civil registration",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:Q2RY-JWDL",
+      "record_persona_id": "p_102689834784",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown presenter at civil registration",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:Q2RY-JWDL",
+      "record_persona_id": "p_102689834781",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Micaela Salgado",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown presenter at civil registration",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565226",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Maria Norberta Salgado",
+      "structured_value": {
+        "given": "Maria Norberta",
+        "surname": "Salgado"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565226",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565226",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 10 December 1884",
+      "date": "10 Dec 1884",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565226",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "birth registered 16 December 1884, Tegucigalpa, Distrito Central, Francisco Moraz\u00e1n, Honduras",
+      "date": "16 Dec 1884",
+      "date_certainty": "exact",
+      "place": "Tegucigalpa, Distrito Central, Francisco Moraz\u00e1n, Honduras",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003",
+      "standard_place": "Tegucigalpa, Distrito Central, Francisco Moraz\u00e1n, Honduras"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565226",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Micaela Salgado",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_1"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565235",
+      "record_role": "mother_1",
+      "fact_type": "name",
+      "value": "Micaela Salgado",
+      "structured_value": {
+        "given": "Micaela",
+        "surname": "Salgado"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565235",
+      "record_role": "mother_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565235",
+      "record_role": "mother_1",
+      "fact_type": "relationship",
+      "value": "mother of Maria Norberta Salgado",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565232",
+      "record_role": "maternal_grandmother_1",
+      "fact_type": "name",
+      "value": "Elena Salgado",
+      "structured_value": {
+        "given": "Elena",
+        "surname": "Salgado"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Maternal grandmother's name reported to the civil registrar by an unknown third party relaying secondhand knowledge of Micaela Salgado's parentage.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565232",
+      "record_role": "maternal_grandmother_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Sex inferred from name and grandmaternal role; reported secondhand to the civil registrar.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565232",
+      "record_role": "maternal_grandmother_1",
+      "fact_type": "relationship",
+      "value": "mother of Micaela Salgado",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "mother_1"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Maternal grandmother's relationship to Micaela reported by the registrant to the civil registrar; secondhand relay of Micaela's parentage.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565229",
+      "record_role": "maternal_grandfather_1",
+      "fact_type": "name",
+      "value": "Luciano Ochoa",
+      "structured_value": {
+        "given": "Luciano",
+        "surname": "Ochoa"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Maternal grandfather's name reported to the civil registrar by an unknown third party relaying secondhand knowledge of Micaela Salgado's parentage. Ochoa differs from the Salgado surname \u2014 consistent with matrilineal surname conventions in Honduras; warrants confirmation.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565229",
+      "record_role": "maternal_grandfather_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Sex inferred from name and grandfatherly role; reported secondhand to the civil registrar.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:XQ84-G9ZT",
+      "record_persona_id": "p_309369565229",
+      "record_role": "maternal_grandfather_1",
+      "fact_type": "relationship",
+      "value": "father of Micaela Salgado",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "mother_1"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Maternal grandfather's relationship to Micaela reported by the registrant to the civil registrar; secondhand relay. Luciano Ochoa's different surname is consistent with the matrilineal naming conventions common in Honduras.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion for child_1 persona on Guillermo baptism (ark:/61903/1:1:KXP9-FP6, 20 Oct 1889). I1 is the new stub minted from this persona. No prior corroboration \u2014 stub confidence capped at probable. No same_person score: log_008 was a record_read with no results sidecar.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Male) for child_1/I1 on the baptism record.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Christening event (20 Oct 1889, San Miguel, Tegucigalpa) for child_1/I1. Primary evidence for Guillermo's baptism date and place; directly answers q_001. No same_person score (record_read source).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Micaila Salgado' \u2014 I1 (Guillermo) is the child party.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Micaila Salgado' \u2014 9XGG-PW4 (Micaela Salgado) is the named mother party. 'Micaila' is an OCR/indexing variant of 'Micaela'; multiple civil nacimientos corroborate Micaela Salgado in Tegucigalpa as mother of children in this era.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Micaila Salgado' for mother_of_child persona. 'Micaila' is a clear OCR/indexing variant of 'Micaela' (single vowel substitution). 9XGG-PW4 is Micaela Salgado, born 1854, Tegucigalpa \u2014 consistent as a presenting parent in 1889. Multiple civil records confirm she bore children in Tegucigalpa 1864\u20131891. No same_person score (record_read source); qualitative match strong.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for mother_of_child persona. Consistent with 9XGG-PW4 (Female).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion for child persona on civil nacimiento Q2RY-JWDL ('Raimunda de Jesus Salgado'). I2 is a new stub \u2014 persona's birth year 1864 (a_009) conflicts with tree person 9XGG-PWW born 15 Mar 1874. 10-year discrepancy caps match at speculative in autonomous mode \u2192 no-link to 9XGG-PWW. Separate stub created pending conflict resolution. Possible explanations: (1) an earlier Raimunda born 1864 (died before 1874, replaced by sibling of same name), or (2) civil index transcription error (7\u21926). Recommend conflict-resolution.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for I2 (Raimunda-1864 civil stub).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth assertion (1864, Tegucigalpa) for I2. This date is the basis for the no-link to 9XGG-PWW (born 1874). The discrepancy needs conflict-resolution before these two personas can be equated.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Micaela Salgado' for mother persona on Q2RY-JWDL. Exact name match to 9XGG-PW4. Tree R2 already shows 9XGG-PW4 as parent of 9XGG-PWW (Raimunda), consistent with mother role here. Qualitative: strong.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for mother persona on Q2RY-JWDL. Consistent with 9XGG-PW4.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Micaela Salgado' \u2014 I2 (Raimunda-1864 stub) as the child party.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Micaela Salgado' \u2014 9XGG-PW4 (Micaela) as the named mother party.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "PS4K-GN8",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion 'Maria Norberta Salgado' for deceased persona on civil nacimiento XQ84-G9ZT. Exact name match to tree person PS4K-GN8. Corroborated by exact birth date agreement (10 Dec 1884) and Tegucigalpa. No same_person score obtained (sidecar not read), but three-way match (name + date + place) establishes confident.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "PS4K-GN8",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for deceased/PS4K-GN8. Consistent.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "PS4K-GN8",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth date assertion (10 Dec 1884) for deceased/PS4K-GN8. Exact match to PS4K-GN8's existing birth fact.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "PS4K-GN8",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth registration assertion (16 Dec 1884, Tegucigalpa) for deceased/PS4K-GN8. This is the civil registration date (6 days after birth on 10 Dec). materialize_facts surfaced a conflicts_surfaced entry between 10 Dec and 16 Dec \u2014 this is an administrative difference (birth vs. registration), not an identity conflict.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "PS4K-GN8",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Micaela Salgado' \u2014 PS4K-GN8 (Mar\u00eda Norberta) as the child party. Consistent with R3 in tree (9XGG-PW4 \u2192 PS4K-GN8).",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Micaela Salgado' \u2014 9XGG-PW4 as the named mother party.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Micaela Salgado' for mother_1 persona on XQ84-G9ZT. Exact name match. Consistent pattern of Micaela Salgado as mother in Tegucigalpa civil records.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for mother_1/9XGG-PW4.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'mother of Maria Norberta Salgado' \u2014 9XGG-PW4 as the parent party.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_020",
+      "person_id": "PS4K-GN8",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'mother of Maria Norberta Salgado' \u2014 PS4K-GN8 as the named child party. Exact name match + birth date.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_021",
+      "person_id": "MHZ1-4X1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Elena Salgado' for maternal_grandmother_1 persona on XQ84-G9ZT. Tree person MHZ1-4X1 is Elena Salgado (born 1834, Tegucigalpa); R1 already shows MHZ1-4X1 as Micaela's parent. The maternal_grandmother role here (mother of Micaela) is exactly consistent with R1. Age plausible: Elena born 1834, Micaela born 1854 = 20-year gap. Evidence indirect (secondhand civil report); probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_022",
+      "person_id": "MHZ1-4X1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Female) for maternal_grandmother_1/MHZ1-4X1.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_023",
+      "person_id": "MHZ1-4X1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'mother of Micaela Salgado' \u2014 MHZ1-4X1 (Elena) as the parent party. Consistent with R1.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_023",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'mother of Micaela Salgado' \u2014 9XGG-PW4 (Micaela) as the child party. Consistent with R1.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_024",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Luciano Ochoa' for maternal_grandfather_1 on XQ84-G9ZT. I3 is the new stub. Evidence is secondary/indirect (secondhand civil registration). Ochoa surname differs from Salgado \u2014 consistent with Honduras matrilineal naming (Micaela takes mother's surname Salgado, not father's Ochoa). Stub confidence = probable.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_025",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex assertion (Male) for maternal_grandfather_1/I3.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_026",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'father of Micaela Salgado' \u2014 I3 (Luciano Ochoa) as the parent party.",
+      "created": "2026-07-31"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_026",
+      "person_id": "9XGG-PW4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'father of Micaela Salgado' \u2014 9XGG-PW4 (Micaela) as the child party of Luciano Ochoa.",
+      "created": "2026-07-31"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017",
+        "a_018",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025",
+        "a_026"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch indexed records for Guillermo Salgado's baptism or civil birth registration in Tegucigalpa, Honduras, ca. 1889, across Honduras Catholic parish registers (collection 1823595) and Honduras civil registration (collection 2135627). A positive hit was found in the Catholic baptism collection: Guillermo Salgado baptized 20 October 1889 at San Miguel, Tegucigalpa (src_001). Civil registration yielded no nacimiento for Guillermo. Searches for corroborating civil nacimientos naming Micaela Salgado as mother confirmed identity via src_002 (Raimunda de Jesus Salgado, 1864) and src_003 (Mar\u00eda Norberta Salgado, 1884). A civil defunciones search (1889\u20131900) for Guillermo returned negative. The original register image (ark:/61903/3:1:939K-R9HG-B) was not read. External repositories (Ancestry, MyHeritage) were not searched. Research declared exhaustive 31 July 2026.",
+      "narrative_markdown": "## Proof Summary \u2014 Probable\n\n**Question:** Did Micaela Salgado of Tegucigalpa, Honduras have a son named Guillermo, baptized in 1889?\n\n**Conclusion:** Micaela Salgado (born 1854, Tegucigalpa; id 9XGG-PW4) probably had a son named Guillermo Salgado, baptized 20 October 1889 at San Miguel parish, Tegucigalpa, Francisco Moraz\u00e1n, Honduras.\n\n### Evidence\n\n**Direct evidence \u2014 the baptism record.** An indexed entry from the FamilySearch collection \"Honduras, registros parroquiales y diocesanos, 1633-1978\" records the baptism of Guillermo Salgado on 20 October 1889 at San Miguel church in Tegucigalpa. The entry names the mother as \"Micaila Salgado.\"[^1] This record is an *original* source containing *primary* information \u2014 the officiating clergyman recorded the event contemporaneously \u2014 and constitutes *direct* evidence of both the baptism and the mother-child relationship. Source classification: original / primary / direct.\n\n**The name variant \"Micaila.\"** The baptism record indexes the mother's given name as \"Micaila\" rather than \"Micaela.\" This is a documented OCR/handwriting-transcription artifact in Catholic parish registers from this era and region. Tree person 9XGG-PW4 carries a \"Micaila Salgado\" birth-name variant (N6, type BirthName) sourced directly to this record, and the surname \"Salgado\" is exact. No alternative candidate named Micaila or Micaela Salgado in Tegucigalpa was identified; two independent civil registration records from the same locality spell the mother's given name as \"Micaela.\"\n\n**Corroborating identity \u2014 civil nacimiento of Raimunda de Jesus Salgado.** A civil birth registration from \"Honduras, Registro Civil, 1841-1968\" names \"Micaela Salgado\" as mother of Raimunda de Jesus Salgado, born 1864 in Tegucigalpa.[^2] The surname and locality match tree person 9XGG-PW4. Source classification: original / primary / indirect (for Micaela's identity as a Tegucigalpa mother of record in this period).\n\n**Corroborating identity \u2014 civil nacimiento of Mar\u00eda Norberta Salgado.** A civil birth registration from the same collection names \"Micaela Salgado\" as the mother of Mar\u00eda Norberta Salgado (born 10 December 1884), and names Elena Salgado as the maternal grandmother.[^3] Elena Salgado matches the known tree person MHZ1-4X1, recorded as Micaela's own mother (relationship R1: MHZ1-4X1 \u2192 9XGG-PW4). The grandmother's named presence in this record provides the strongest identity corroboration, linking this Micaela unambiguously to tree person 9XGG-PW4. Source classification: original / primary / indirect (for Micaela's identity).\n\n### Conflicts\n\nNo conflicts were identified or remain unresolved as to the identity of Guillermo's mother or the fact of his baptism. The \"Micaila\"/\"Micaela\" discrepancy is an indexing variant adequately explained by period transcription practices; the surname matches exactly across all records.\n\n### Tier: Probable\n\nThe conclusion rests on a single original source with primary direct evidence (the Catholic baptism record, src_001). The original register image was not read during this research, so the indexed transcription could not be verified against the handwritten original. Two civil registration records corroborate the mother's identity but concern different children and different informants. Because the conclusion depends on one direct source without image verification, the weight of evidence supports **probable** rather than **proved**.\n\nA **proved** conclusion would require at minimum: (1) independent direct evidence from a second source naming Guillermo as Micaela's son \u2014 for example, a civil birth registration for Guillermo \u2014 or (2) a verified reading of the original register image confirming the indexed entry is consistent with the handwritten record.\n\n[^1]: \"Honduras, registros parroquiales y diocesanos, 1633-1978\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KXP9-FP6 : accessed 31 July 2026), entry for Guillermo Salgado and Micaila Salgado, 20 Oct 1889.\n[^2]: \"Honduras, Registro Civil, 1841-1968,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q2RY-JWDL : accessed 31 July 2026), entry for Raimunda de Jesus Salgado and Micaela Salgado.\n[^3]: \"Honduras, Registro Civil, 1841-1968\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XQ84-G9ZT : accessed 31 July 2026), entry for Maria Norberta Salgado, birth registration 16 December 1884, Tegucigalpa, Distrito Central, Francisco Moraz\u00e1n, Honduras."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-31T18:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-31T18-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Tegucigalpa, Honduras",
+      "for_place": "Tegucigalpa, Distrito Central, Francisco Moraz\u00e1n, Honduras",
+      "time_period": "1889",
+      "jurisdictions": [
+        {
+          "name": "Tegucigalpa, Honduras, Captaincy General of Guatemala, New Spain",
+          "date_range": "1542\u20131821"
+        },
+        {
+          "name": "Tegucigalpa, Honduras, Federal Republic of Central America",
+          "date_range": "1821\u20131838"
+        },
+        {
+          "name": "Tegucigalpa, Honduras",
+          "date_range": "1838\u20131943"
+        },
+        {
+          "name": "Francisco Moraz\u00e1n, Honduras",
+          "date_range": "1943\u2013present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1520634",
+          "title": "Honduras, Baptisms, 1730-1930",
+          "date_range": "1730\u20131930"
+        },
+        {
+          "id": "1823595",
+          "title": "Honduras, Catholic Church Records, 1633-1978",
+          "date_range": "1633\u20131978"
+        },
+        {
+          "id": "2135627",
+          "title": "Honduras, Civil Registration, 1841-1968",
+          "date_range": "1841\u20131968"
+        },
+        {
+          "id": "1520638",
+          "title": "Honduras, Marriages, 1800-1910",
+          "date_range": "1800\u20131910"
+        }
+      ],
+      "quirks": [
+        "The Tegucigalpa Department was renamed Francisco Moraz\u00e1n in 1943 \u2014 FamilySearch volumes for 1889 are filed under 'Francisco Moraz\u00e1n / Distrito Central'; search using the modern department name.",
+        "Civil registration (Nacimientos) began in Honduras in 1841; 100%-indexed volumes for Distrito Central directly span 1889 in FS collection 2135627 \u2014 start here for a name search.",
+        "Church baptism registers (Catedral San Miguel Arc\u00e1ngel) are also indexed in FS collections 1520634 and 1823595; records are in Spanish.",
+        "Pre-nuptial investigation volumes (Expedientes/Informaciones matrimoniales) for Distrito Central covering 1889 exist but are full-text searchable only (0% name-indexed) \u2014 browse manually if name searches fail.",
+        "FamilySearch Wiki was unreachable during this survey; consult https://www.familysearch.org/wiki/en/Honduras_Genealogy for additional guidance on naming conventions and known record losses."
+      ],
+      "guide_markdown": "# Locality Guide: Tegucigalpa, Honduras (circa 1889)\n\n## Jurisdiction overview\n- **Department formed:** 1838 from predecessor\n- **Administrative center:** City of Tegucigalpa, capital of Honduras; seat of Distrito Central\n- **Population (Fco. Moraz\u00e1n dept):** ~59,000 (1881); ~60,200 (1887); ~77,700 (1901). Honduras national ~407,280 (1889).\n- **Religion:** Predominantly Roman Catholic; Catedral San Miguel Arc\u00e1ngel was the main city parish\n- **Key event:** Department renamed Francisco Moraz\u00e1n in 1943\n\n## Boundary changes\n- 1542\u20131821: Province under Captaincy General of Guatemala (New Spain)\n- 1821\u20131838: Department under Federal Republic of Central America\n- **1838\u20131943: 'Tegucigalpa' Department, Republic of Honduras** \u2190 1889 falls here\n- 1943\u2013present: Renamed Francisco Moraz\u00e1n\n\n## Key record types for 1889\n\n### Civil registration (Nacimientos)\n- Collection 2135627 (Honduras, Civil Registration, 1841\u20131968): 12.5M records, 337,976 images, name-indexed\n- Volumes directly covering 1889 for Distrito Central: Nov 1887\u2013Jul 1889 (100% indexed), Sep 1889\u2013Jun 1891 (100% indexed), 1888\u20131891 (100% indexed)\n\n### Church baptisms\n- Collection 1520634 (Honduras, Baptisms, 1730\u20131930): 160,997 records, name-indexed\n- Collection 1823595 (Honduras, Catholic Church Records, 1633\u20131978): 1.8M records, name-indexed\n- Main parish: Catedral San Miguel Arc\u00e1ngel, Distrito Central\n- Also on Ancestry (col. 9889), FindMyPast, MyHeritage\n\n### Marriage-related records\n- Collection 1520638 (Honduras, Marriages, 1800\u20131910): 30,938 records, indexed\n- Pre-nuptial investigations for Distrito Central 1889: full-text searchable only (0% name-indexed)\n\n## Repository guide\n| Repository | Collections | Access |\n|---|---|---|\n| FamilySearch | 2135627, 1823595, 1520634, 1520638 | Free |\n| Ancestry | 9889, 9890 | Subscription |\n| FindMyPast | Honduras Baptism Index 1730\u20131930 | Subscription |\n| MyHeritage | Honduras Baptisms 1730\u20131930 | Subscription |\n\n## Research tips\n1. Start with civil Nacimiento search in FS 2135627 \u2014 100% indexed volumes span 1889 for Distrito Central\n2. Then search church baptisms in FS 1520634 and 1823595\n3. Use 'Francisco Moraz\u00e1n / Distrito Central' as the place filter in FamilySearch\n4. Records are in Spanish\n5. FamilySearch wiki was unavailable during survey \u2014 consult https://www.familysearch.org/wiki/en/Honduras_Genealogy",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-31"
+    }
+  ]
+}

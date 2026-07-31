@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Tree records ParentChild 9XGG-PW4 (Micaela Salgado) -> Guillermo Salgado, Christening 20 Oct 1889 San Miguel/Tegucigalpa, sourced. Exact match to the expected baptism; no father recorded, consistent with the single-mother pattern."
+  }
+}
