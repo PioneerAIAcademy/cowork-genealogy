@@ -2,7 +2,7 @@
 
 > Implementation plan for a redesign of the eval test harness, CRUD UI,
 > and PR review process. Supersedes parts of `docs/specs/eval-crud-ui-spec.md`
-> and `docs/plan/per-pr-review-workflow.md` (see "Supersessions" below).
+> and `docs/per-pr-review-workflow.md` (see "Supersessions" below).
 
 ## Context
 
@@ -510,7 +510,7 @@ log's snapshot and diffs vs working tree, using the same
 
 ## Supersessions
 
-This plan changes parts of `docs/plan/per-pr-review-workflow.md`:
+This plan changes parts of `docs/per-pr-review-workflow.md`:
 
 - **§2.4 (per-test `test_content_hash`)** — replaced by the
   whole-snapshot model. The per-test hash field goes away; equivalence
@@ -576,7 +576,7 @@ those sections so future readers know which doc is authoritative.
 - `docs/specs/eval-runlog-versioning-spec.md` (new) — schema,
   naming, normalization contract, active / releasable / complete
   rules.
-- `docs/plan/per-pr-review-workflow.md` — superseded notes on
+- `docs/per-pr-review-workflow.md` — superseded notes on
   §2.4, §2.8, §2.10.
 
 **Reuse existing**:
@@ -672,7 +672,7 @@ nothing depends on later commits to be correct in isolation:
 3. **CRUD UI writes + GH Action.** Activate / release / delete API
    routes; three-rule `check-runlogs.yml` (with the `--diff-filter=AR`
    fix and warn-only judge hash); `.gitignore` additions; superseded
-   notes in `per-pr-review-workflow.md`. Vitest covers `lib/activate.ts`
+   notes in `docs/per-pr-review-workflow.md`. Vitest covers `lib/activate.ts`
    (skill-only scope, modal-payload shape), `lib/release.ts` (atomic
    rename of both `.json` and `.ann.json`). Playwright E2E covers the
    release path (scenario steps 6–11). GH Action gets a self-test

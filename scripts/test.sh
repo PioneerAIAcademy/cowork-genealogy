@@ -9,10 +9,10 @@
 # TS2307 "Cannot find module" errors instead of "deps not installed", on the
 # one command the PR template tells every contributor to run.
 #
-# The harness suite stays a direct `uv run`: uv auto-syncs its venv, so it has
-# no equivalent failure mode, and `make harness-test` deliberately runs a
-# NARROWER set (`-m 'not e2e'`). Delegating it would silently shrink this
-# gate's coverage.
+# The harness suite stays a direct `uv run` — `make harness-test` deliberately
+# runs a NARROWER set (`-m 'not e2e'`), so delegating it would silently shrink
+# this gate's coverage — but it is preceded by `make engine-build`, because part
+# of that suite really does execute the compiled build/ (see below).
 
 set -uo pipefail   # not -e: run every suite, then report all failures together
 
@@ -63,6 +63,14 @@ make -C "$ROOT" eval-ui-test || failed=1
 
 echo ""
 echo "=== Eval harness tests (pytest) ==="
+# The harness's mock MCP server shells out to the COMPILED
+# packages/engine/mcp-server/build/ for its live tool handlers, so the build is
+# a real dependency of this suite. build/ is gitignored and link-worktree.sh
+# does not link it, so a freshly-added worktree has none and the run fails on
+# "AssertionError: staging must still happen" — a missing build wearing the
+# costume of a code regression. `make engine-build` is a no-op once the build
+# is current.
+make -C "$ROOT" engine-build || failed=1
 (cd "$ROOT/eval/harness" && uv run --frozen pytest) || failed=1
 
 echo ""

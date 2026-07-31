@@ -1,0 +1,19 @@
+{
+  "id": "amelia-gioiello-marriage",
+  "name": "Amelia Frances Gioiello",
+  "genre": "strip",
+  "source_pid": "GCT1-F3Q",
+  "captured": "2026-07-28",
+  "researcher_question": "Who did Amelia Frances Gioiello marry, and what evidence is found for their marriage?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1950s",
+    "geography": "US-OH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Marriage to Stanley Datchuk (20 Aug 1955, Trumbull, Ohio) is directly attested by one 'Ohio, County Marriages' entry and independently confirmed by a Find a Grave index entry recording her married name (Amelia F Gioiello Datchuk). Five other 'Ohio, County Marriages' sources on Amelia's profile are unrelated -- almost certainly her children's later marriages, not corroborating copies of her own. A straightforward record-recovery exercise, but the source-title clutter is worth noting."
+}

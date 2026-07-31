@@ -176,17 +176,24 @@ PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
 
 
 def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
-    """The protected filename a Write/Edit call targets, or None.
+    """The protected filename a raw file-write call targets, or None.
 
-    Only Write/Edit are candidates — every other tool (including the MCP
-    writer tools) is a different code path. Matched on the `file_path`
+    Only the file-write tools are candidates — every other tool (including the
+    MCP writer tools) is a different code path. Matched on the `file_path`
     argument's basename, so it doesn't matter whether the model passed an
     absolute or relative path.
+
+    Both path separators are handled. Splitting on "/" alone made this a no-op
+    on Windows, where the workspace is a `C:\\Users\\...\\Temp\\e2e-<id>` path
+    and the model composes `C:\\...\\research.json` — the basename never
+    matched, so the guard silently did nothing on the platform the genealogist
+    team runs. Kept in sync with `real_agent.direct_project_file_write`
+    (issue #940), which cannot import from here.
     """
-    if tool_name not in ("Write", "Edit"):
+    if tool_name not in ("Write", "Edit", "NotebookEdit"):
         return None
     file_path = str((tool_input or {}).get("file_path") or "")
-    name = file_path.rsplit("/", 1)[-1]
+    name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
     return name if name in PROTECTED_PROJECT_FILES else None
 
 

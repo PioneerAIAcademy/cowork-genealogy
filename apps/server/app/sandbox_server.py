@@ -5,7 +5,7 @@ browser opens ONE authenticated WSS directly here — chat in/out + viewer delta
 all of it — so the control plane is out of the streaming data path (affinity-free
 on AWS-no-sticky). This is the relocated relay (the old ws.py + live_session pump)
 WITHOUT the multiplexing: one session per sandbox, local /project, one
-agent_runner. See docs/plan/ably-realtime-migration.md.
+agent_runner. See docs/realtime-architecture.md.
 
 Run:  python -m app.sandbox_server
 Env (injected at sandbox create / by LocalProvider):

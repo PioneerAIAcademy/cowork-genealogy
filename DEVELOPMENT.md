@@ -234,7 +234,7 @@ The hosted web control plane (`apps/server/`, FastAPI / Python / uv —
 **bearer-only** REST surface at `/v1` so an external chatbot client can
 drive sessions over plain HTTP — no browser cookie, no WebSocket.
 Source: `apps/server/app/v1.py`. Design + spec:
-[`docs/plan/public-rest-api.md`](./docs/plan/public-rest-api.md).
+[`docs/specs/public-rest-api-spec.md`](./docs/specs/public-rest-api-spec.md).
 
 Endpoints (all require `Authorization: Bearer <key>`):
 

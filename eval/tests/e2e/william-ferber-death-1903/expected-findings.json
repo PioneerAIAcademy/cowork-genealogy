@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "William Hubert Ferber died 11 March 1903 in Cincinnati, Hamilton County, Ohio. The indexed Ohio death record gives the exact date and place; this is the central answer.",
+      "details": {
+        "subject_person": {
+          "name": "William Hubert Ferber"
+        },
+        "fact_type": "Death",
+        "date": "11 March 1903",
+        "place": "Cincinnati, Hamilton, Ohio, United States"
+      },
+      "supporting_sources": [
+        "Ohio, County Death Records, 1840-2001, entry for Wm. Ferber, died 11 Mar 1903, Cincinnati, Hamilton County, Ohio.",
+        "Find a Grave Index, memorial for William H Ferber."
+      ],
+      "required": true
+    }
+  ]
+}
