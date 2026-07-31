@@ -1,0 +1,140 @@
+# Dependabot configuration.
+#
+# Until this file existed, GitHub raised security *alerts* from the dependency
+# graph but nothing opened routine version-update PRs — which is how 24 open
+# alerts accumulated by 2026-07-31 (see docs/dependency-security-advisories.md).
+# Most of them turned out to be a plain lockfile refresh that no upstream
+# constraint was blocking; they were open only because nobody ran the refresh.
+#
+# Everything is grouped and weekly. A separate PR per dependency across five
+# manifests is how a config like this gets muted, so minor/patch updates land as
+# one grouped PR per ecosystem and only majors arrive individually — a major is
+# the one that deserves to be read.
+#
+# ── Pins that must NOT be floated ─────────────────────────────────────────────
+# Two upper bounds in eval/harness/pyproject.toml are load-bearing and have
+# explicit `ignore` rules below. They are correctness pins, not staleness:
+#
+#   mcp>=1.29,<2          mcp 2.0.0 removed/renamed Server.list_tools, which
+#                         claude_agent_sdk.create_sdk_mcp_server calls. It broke
+#                         CI the day it shipped (PR #932). Delete the ignore only
+#                         when claude-agent-sdk itself supports mcp 2.x.
+#   claude-agent-sdk<0.2  workspace.py depends on behavior present since 0.1.x.
+#                         For a 0.x package Dependabot classifies 0.1 -> 0.2 as
+#                         semver-MINOR, so the ignore must cover minor as well as
+#                         major or the bound gets raised anyway.
+#
+# Both ignores are scoped to `version-update:*` update-types, so they suppress
+# only routine version bumps — a genuine *security* advisory on either package
+# still opens a PR.
+#
+# ── Engine lockfile caveat ────────────────────────────────────────────────────
+# packages/engine/mcp-server pins `npm@11.12.1` via its packageManager field, and
+# .github/workflows/check-engine-lockfile.yml fails any PR whose lockfile would be
+# rewritten by that exact npm. Dependabot resolves with its own npm build, so an
+# engine PR from Dependabot can trip that gate through no fault of the bump. The
+# fix is mechanical, not a reason to distrust the PR: check the branch out, run
+# `npm install` under npm 11.12.1, and commit the re-normalized lockfile.
+
+version: 2
+
+updates:
+  # ── JavaScript / TypeScript ─────────────────────────────────────────────────
+  # Three separate trees by design (see CLAUDE.md): the root pnpm workspace for
+  # the web/electron side, and two npm-managed trees — the engine, kept out of
+  # the workspace so the .mcpb release pipeline is untouched, and the Eval CRUD
+  # UI. Dependabot reads pnpm-lock.yaml and package-lock.json alike.
+  - package-ecosystem: npm
+    directories:
+      - "/"
+      - "/packages/engine/mcp-server"
+      - "/eval/app"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - javascript
+    commit-message:
+      prefix: deps
+      include: scope
+    groups:
+      npm-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # ── GitHub Actions ──────────────────────────────────────────────────────────
+  # Action majors (actions/checkout@v5, setup-node@v4, …) drift silently and are
+  # a supply-chain surface; group them so the bump is one reviewable PR.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # ── Python: hosted control plane (apps/server) ──────────────────────────────
+  - package-ecosystem: uv
+    directory: "/apps/server"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - python:uv
+      - developer
+    commit-message:
+      prefix: "deps(server)"
+    groups:
+      uv-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # ── Python: eval harness ────────────────────────────────────────────────────
+  # CI runs `uv sync --frozen` / `uv run --frozen` (PR #932), so the committed
+  # uv.lock is authoritative and never re-resolved on CI. That makes a Dependabot
+  # PR the deliberate, reviewable way this lock moves — which is the point.
+  - package-ecosystem: uv
+    directory: "/eval/harness"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - python:uv
+      - developer
+    commit-message:
+      prefix: "deps(eval)"
+    ignore:
+      # See "Pins that must NOT be floated" above. Security updates still fire.
+      - dependency-name: mcp
+        update-types:
+          - version-update:semver-major
+      - dependency-name: claude-agent-sdk
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    groups:
+      uv-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch

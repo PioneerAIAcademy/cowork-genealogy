@@ -125,12 +125,27 @@ shipped artifact. Weigh fix churn against that before treating a HIGH as urgent.
   migration, not a dep bump, for near-zero security gain.
   **Revisit when** the workspace moves to vite 8 for unrelated reasons.
 
-## Not configured: automated dependency updates
+## Automated dependency updates
 
-There is **no `.github/dependabot.yml`** in this repo. GitHub still raises security
-*alerts* from the dependency graph, but nothing opens routine version-update PRs,
-which is how 24 open alerts accumulated by 2026-07-31. Adding a config for the
-three JS manifests (plus `github-actions`, and `uv`/pip for `apps/server` and
-`eval/harness`) would keep this file short. Note that `eval/harness` deliberately
-pins `mcp>=1.29,<2` and runs `uv sync --frozen` (PR #932) — any Dependabot config
-must not be allowed to float that pin.
+`.github/dependabot.yml` was added 2026-07-31, in the same PR as the fixes above.
+Until then GitHub raised security *alerts* from the dependency graph but nothing
+opened routine version-update PRs — which is how 24 open alerts accumulated, most
+of them a plain lockfile refresh that no upstream constraint was blocking. The
+config covers five manifests across three ecosystems (`npm` × 3 directories,
+`github-actions`, `uv` × 2), weekly, with minor/patch grouped into one PR per
+ecosystem so majors are the ones that arrive individually.
+
+Two `ignore` rules protect load-bearing upper bounds in
+`eval/harness/pyproject.toml` — `mcp>=1.29,<2` (PR #932; mcp 2.0.0 removed
+`Server.list_tools`, which `claude_agent_sdk.create_sdk_mcp_server` calls) and
+`claude-agent-sdk<0.2`. Both are scoped to `version-update:*`, so a genuine
+security advisory on either package still opens a PR. Note that Dependabot
+classifies `0.1 → 0.2` as semver-**minor** for a 0.x package, so the
+`claude-agent-sdk` ignore must cover minor as well as major.
+
+One known rough edge: `packages/engine/mcp-server` pins `npm@11.12.1` and
+`check-engine-lockfile.yml` fails any PR whose lockfile that exact npm would
+rewrite. Dependabot resolves with its own npm, so an engine PR can trip the gate
+through no fault of the bump — check the branch out, run `npm install` under
+11.12.1, commit the re-normalized lockfile. See the header comment in
+`dependabot.yml`.
