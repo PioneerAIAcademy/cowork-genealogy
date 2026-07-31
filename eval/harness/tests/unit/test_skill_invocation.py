@@ -1,6 +1,6 @@
 """Unit tests for harness/skill_invocation.py.
 
-docs/plan/research-guardrail-bypass-plan.md §4.1/§4.4 — pure matching logic
+docs/specs/guardrail-enforcement-spec.md §7/§8 — pure matching logic
 over the harness's `tool_calls` list shape, no I/O, no SDK types.
 """
 

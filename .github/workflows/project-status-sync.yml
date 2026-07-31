@@ -1,0 +1,378 @@
+name: project-status-sync
+
+# Keeps a card's Status column honest about its issue's actual state, which
+# GitHub's built-in project workflows do not.
+#
+# WHY. Two symptoms, one root cause each, both found on the board 2026-07-31.
+#
+#   1. CLOSED ISSUES STRANDED IN "In Progress". The built-in workflow "Pull
+#      request linked to issue" is enabled, and it sets Status = In Progress
+#      UNCONDITIONALLY — it never asks whether the issue is already closed.
+#      Issue #4 was closed and moved to Done in April; on 2026-07-29 PR #923
+#      referenced it, and two seconds later `github-project-automation[bot]`
+#      dragged the closed issue back to In Progress. Nothing ever moves it
+#      forward again: the built-in "Item closed" workflow fires on the CLOSE
+#      event, which happened months earlier, so the card sits there until a
+#      human notices. Four cards were stranded this way (#3, #4, #26, #609).
+#      This is a permanent trap for any completed issue that a later PR cites
+#      — follow-up fixes, regression tests, "see also" links.
+#
+#   2. NOTHING EVER REACHED "Review". None of the six enabled built-in
+#      workflows sets Status = Review; the two that conceptually could
+#      ("Code review approved", "Code changes requested") are not configured
+#      on this project at all. So Review was reachable only by dragging a card
+#      by hand, and cards with a PR up for review sat in In Progress (#849,
+#      with PR #981 open and non-draft, was the live example).
+#
+# WHY NOT JUST DISABLE THE BUILT-IN. "Pull request linked to issue" is right
+# most of the time — an OPEN issue that gains a PR genuinely is in progress.
+# Its only defect is the missing closed-issue guard, and the Projects API has
+# no mutation to reconfigure or disable a built-in workflow (only
+# `deleteProjectV2Workflow`, which is irreversible). So this workflow runs on
+# the same events and CORRECTS the result rather than racing to prevent it:
+# the built-in sets In Progress, this sets Done a moment later. The end state
+# is what matters, and it self-heals if the built-in is ever changed.
+#
+# WHAT IT WILL NOT DO. It acts only on issues a PR *links* — GitHub's
+# `closingIssuesReferences`, populated by a closing keyword ("Closes #123") or
+# by the Development sidebar. It deliberately does NOT scan PR bodies for bare
+# `#123` mentions: on 2026-07-31, 10 of 14 open PRs mentioned an issue number
+# with no link, and those mentions included sibling PRs (#1021 -> #969, #924)
+# and "related to" context (#1010 -> #867, #914, #963). Moving those issues to
+# Review would be wrong. The consequence is worth stating plainly: a PR with
+# no linked issue moves no card, and only 4 of 14 open PRs carried a real link
+# when this shipped. The fix for that is `Closes #N` in the PR body, not a
+# looser matcher here.
+#
+# TRIGGER CHOICE: `pull_request_target`, switched from `pull_request` on
+# 2026-07-31 when we started taking PRs from developers who have no write
+# access to this repo and therefore contribute from forks. GitHub passes NO
+# secrets to a fork PR under `pull_request`, so the App-token step below would
+# fail on an empty `PROJECT_APP_ID` before a single board read happened —
+# failing this job red on every outside contribution. Unlike
+# genealogist-queue.yml there is no cron sweep here, so the card would then
+# simply never move until someone ran the dispatch by hand.
+#
+# Safe here for the same two reasons as labeler.yml: no `actions/checkout` and
+# no `run:` step, just one inline `actions/github-script`, so nothing
+# fork-authored executes; and the script is read from the base branch. Adding a
+# checkout of PR content would turn this into a pwn-request vector, and the
+# blast radius here is worse than usual — the App token in scope is
+# org-scoped with Projects: Read and write.
+#
+# TWO TOKENS, ON PURPOSE. The App minted below (see add-to-project.yml for the
+# one-time setup) holds Organization > Projects: Read and write, which is the
+# only way to write an org-level board — GITHUB_TOKEN cannot, at any
+# permission level. But that App was created with `Issues: Read-only` and no
+# Pull requests permission, so it cannot read `closingIssuesReferences`.
+# Rather than widen the App, repo reads go through GITHUB_TOKEN and only the
+# board reads/writes use the App token. If you ever see a 403 on the repo
+# read, grant GITHUB_TOKEN the permission below — not the App.
+
+on:
+  pull_request_target:
+    # `edited` is not noise: it is the event that fires when someone adds
+    # "Closes #123" to an existing PR body, which is how most links here are
+    # created. `converted_to_draft` walks a card back from Review.
+    types: [opened, reopened, edited, ready_for_review, converted_to_draft, closed]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would change across the whole board, without touching it"
+        type: boolean
+        default: true
+
+permissions:
+  # Repo reads only. The board write is authorized by the App installation
+  # token minted below, not by GITHUB_TOKEN.
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  # Per-PR events serialize per PR; every sweep shares one key. Two PRs
+  # touching the same issue can still interleave, but each run recomputes the
+  # desired status from live state, so the last writer is also the correct one.
+  group: project-status-sync-${{ github.event.pull_request.number || 'sweep' }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: project-status-sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint an App installation token
+        id: app-token
+        # `owner:` is what makes the token carry the installation's
+        # ORGANIZATION permissions, where Projects: Read and write lives.
+        # Without it the token is repo-scoped and every project mutation 403s.
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.PROJECT_APP_ID }}
+          private-key: ${{ secrets.PROJECT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - uses: actions/github-script@v9
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This client is the App token: it does every project read and write.
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const ORG            = 'PioneerAIAcademy';
+            const PROJECT_NUMBER = 1;
+            const STATUS_FIELD   = 'Status';
+
+            const dryRun = process.env.DRY_RUN === 'true';
+            const { owner, repo } = context.repo;
+
+            // Repo-side GraphQL on GITHUB_TOKEN — see the two-token note above.
+            async function repoGraphql(query, variables) {
+              const res = await fetch('https://api.github.com/graphql', {
+                method: 'POST',
+                headers: {
+                  authorization: `bearer ${process.env.REPO_TOKEN}`,
+                  'content-type': 'application/json',
+                },
+                body: JSON.stringify({ query, variables }),
+              });
+              const body = await res.json();
+              if (body.errors) {
+                throw new Error(`repo GraphQL: ${body.errors.map(e => e.message).join('; ')}`);
+              }
+              return body.data;
+            }
+
+            // ---- board metadata ---------------------------------------------
+            // Looked up by name, not hardcoded as node ids, so a rename fails
+            // here with a clear message instead of writing the wrong field.
+            const meta = await github.graphql(`
+              query($org: String!, $number: Int!) {
+                organization(login: $org) {
+                  projectV2(number: $number) {
+                    id
+                    title
+                    field(name: "${STATUS_FIELD}") {
+                      ... on ProjectV2SingleSelectField { id options { id name } }
+                    }
+                  }
+                }
+              }`, { org: ORG, number: PROJECT_NUMBER });
+
+            const project = meta.organization?.projectV2;
+            if (!project) {
+              core.setFailed(
+                `No project ${PROJECT_NUMBER} on org ${ORG}, or the App token cannot see it. ` +
+                `Check Organization > Projects: Read and write, and that the token step ` +
+                `passes owner: — see the setup block in add-to-project.yml.`);
+              return;
+            }
+            const statusField = project.field;
+            if (!statusField) {
+              core.setFailed(
+                `Project "${project.title}" has no single-select field named "${STATUS_FIELD}".`);
+              return;
+            }
+            const option = name => {
+              const o = statusField.options.find(x => x.name === name);
+              if (!o) {
+                throw new Error(
+                  `"${STATUS_FIELD}" has no option "${name}" — found: ` +
+                  statusField.options.map(x => x.name).join(', '));
+              }
+              return o;
+            };
+            // Resolve every column this workflow can write, up front: a
+            // renamed column should fail the run, not go silently unwritten.
+            const DONE        = option('Done');
+            const REVIEW      = option('Review');
+            const IN_PROGRESS = option('In Progress');
+
+            // ---- the rule ----------------------------------------------------
+            // Desired column for an issue, given a PR that links it. Returns
+            // null for "this workflow has no opinion — leave the card alone".
+            //
+            // A closed issue is Done no matter what the PR is doing: that is
+            // symptom 1's fix, and it must outrank every other branch.
+            // A merged PR is deliberately NOT its own rule — merging closes
+            // the issue, which the built-in "Item closed" workflow already
+            // handles, and a PR merged to a non-default branch leaves the
+            // issue genuinely open and still in progress.
+            function desiredStatus(issueState, pr) {
+              if (issueState === 'CLOSED')          return DONE;
+              if (pr.state !== 'OPEN')              return null;
+              if (pr.isDraft)                       return IN_PROGRESS;
+              return REVIEW;
+            }
+
+            // ---- board lookup -------------------------------------------------
+            // An issue can belong to several projects; filter to ours.
+            async function card(issueNodeId) {
+              const q = await github.graphql(`
+                query($content: ID!) {
+                  node(id: $content) {
+                    ... on Issue {
+                      projectItems(first: 50) {
+                        nodes {
+                          id
+                          project { id }
+                          fieldValueByName(name: "${STATUS_FIELD}") {
+                            ... on ProjectV2ItemFieldSingleSelectValue { name }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }`, { content: issueNodeId });
+              const mine = (q.node?.projectItems?.nodes || [])
+                .find(n => n.project?.id === project.id);
+              return mine ? { id: mine.id, status: mine.fieldValueByName?.name || null } : null;
+            }
+
+            async function move(itemId, opt) {
+              await github.graphql(`
+                mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $project, itemId: $item, fieldId: $field,
+                    value: { singleSelectOptionId: $option }
+                  }) { projectV2Item { id } }
+                }`, {
+                  project: project.id, item: itemId,
+                  field: statusField.id, option: opt.id });
+            }
+
+            // One issue + the PR that links it -> a row for the summary.
+            // No try/catch: a write that throws must fail the job. Three
+            // workflows in this repo have gone green while doing nothing.
+            async function reconcile(issue, pr) {
+              const want = desiredStatus(issue.state, pr);
+              if (!want) {
+                return [`#${issue.number}`, 'no opinion', `PR #${pr.number} ${pr.state.toLowerCase()}`];
+              }
+              const before = await card(issue.id);
+              if (!before) {
+                // add-to-project.yml owns putting cards on the board; an issue
+                // with no card is its bug to report, not ours to paper over.
+                return [`#${issue.number}`, 'not on board', `PR #${pr.number}`];
+              }
+              if (before.status === want.name) {
+                return [`#${issue.number}`, `already ${want.name}`, `PR #${pr.number}`];
+              }
+              if (dryRun) {
+                return [`#${issue.number}`,
+                        `WOULD move ${before.status || '(none)'} -> ${want.name}`, `PR #${pr.number}`];
+              }
+              await move(before.id, want);
+              return [`#${issue.number}`,
+                      `moved ${before.status || '(none)'} -> ${want.name}`, `PR #${pr.number}`];
+            }
+
+            const LINKED = `
+              closingIssuesReferences(first: 20) {
+                nodes { id number state title }
+              }`;
+
+            const rows = [];
+
+            if (context.eventName === 'workflow_dispatch') {
+              // ---- sweep: reconcile the whole board -------------------------
+              // Two passes, because the two symptoms have different entry
+              // points. Closed-issue drift is only visible from the board (the
+              // PR that caused it may be long merged); Review drift is only
+              // visible from the open PR list.
+
+              // Pass 1: every card whose issue is closed belongs in Done.
+              let cursor = null;
+              for (;;) {
+                const page = await github.graphql(`
+                  query($project: ID!, $cursor: String) {
+                    node(id: $project) {
+                      ... on ProjectV2 {
+                        items(first: 100, after: $cursor) {
+                          pageInfo { hasNextPage endCursor }
+                          nodes {
+                            id
+                            fieldValueByName(name: "${STATUS_FIELD}") {
+                              ... on ProjectV2ItemFieldSingleSelectValue { name }
+                            }
+                            content { ... on Issue { number state } }
+                          }
+                        }
+                      }
+                    }
+                  }`, { project: project.id, cursor });
+                const items = page.node.items;
+                for (const item of items.nodes) {
+                  const c = item.content;
+                  if (!c || c.state !== 'CLOSED') continue;
+                  const status = item.fieldValueByName?.name || null;
+                  if (status === DONE.name) continue;
+                  if (dryRun) {
+                    rows.push([`#${c.number}`, `WOULD move ${status || '(none)'} -> Done`, 'closed issue']);
+                    continue;
+                  }
+                  await move(item.id, DONE);
+                  rows.push([`#${c.number}`, `moved ${status || '(none)'} -> Done`, 'closed issue']);
+                }
+                if (!items.pageInfo.hasNextPage) break;
+                cursor = items.pageInfo.endCursor;
+              }
+
+              // Pass 2: every open PR, through the same rule as the event path.
+              let prCursor = null;
+              for (;;) {
+                const page = await repoGraphql(`
+                  query($owner: String!, $repo: String!, $cursor: String) {
+                    repository(owner: $owner, name: $repo) {
+                      pullRequests(states: OPEN, first: 50, after: $cursor) {
+                        pageInfo { hasNextPage endCursor }
+                        nodes { number state isDraft ${LINKED} }
+                      }
+                    }
+                  }`, { owner, repo, cursor: prCursor });
+                const prs = page.repository.pullRequests;
+                for (const pr of prs.nodes) {
+                  for (const issue of pr.closingIssuesReferences.nodes) {
+                    rows.push(await reconcile(issue, pr));
+                  }
+                }
+                if (!prs.pageInfo.hasNextPage) break;
+                prCursor = prs.pageInfo.endCursor;
+              }
+            } else {
+              // ---- event: just this PR's linked issues ----------------------
+              const number = context.payload.pull_request.number;
+              const data = await repoGraphql(`
+                query($owner: String!, $repo: String!, $number: Int!) {
+                  repository(owner: $owner, name: $repo) {
+                    pullRequest(number: $number) { number state isDraft ${LINKED} }
+                  }
+                }`, { owner, repo, number });
+              const pr = data.repository.pullRequest;
+              const linked = pr.closingIssuesReferences.nodes;
+              if (!linked.length) {
+                // Not a failure — most PRs here link nothing. Say so loudly
+                // enough that the habit is visible in the run log.
+                core.info(
+                  `PR #${pr.number} links no issue, so no card moves. ` +
+                  `Add "Closes #<issue>" to the PR body to connect it to the board.`);
+              }
+              for (const issue of linked) {
+                rows.push(await reconcile(issue, pr));
+              }
+            }
+
+            for (const r of rows) core.info(`${r[0]} ${r[1]} — ${r[2]}`);
+
+            const changed = rows.filter(r => /^(moved|WOULD move)/.test(r[1])).length;
+            await core.summary
+              .addHeading(dryRun ? 'project-status-sync (dry run)' : 'project-status-sync', 3)
+              .addRaw(`Board: [${project.title}](https://github.com/orgs/${ORG}/projects/${PROJECT_NUMBER})`)
+              .addRaw(` — ${changed} of ${rows.length} card(s) ${dryRun ? 'would move' : 'moved'}`)
+              .addTable([
+                [{ data: 'Issue', header: true }, { data: 'Action', header: true },
+                 { data: 'Why', header: true }],
+                ...rows,
+              ])
+              .write();

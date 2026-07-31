@@ -152,7 +152,6 @@ async function main() {
             notes: "Missing decade of records",
           },
         ],
-        impossibilities: [],
       },
     ],
   };

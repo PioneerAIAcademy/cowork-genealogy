@@ -134,8 +134,8 @@ significant — but note the boundary with **check-warnings**:
   (its `person_warnings` tool detects them deterministically and
   distinguishes a genuine identity mix-up from a posthumous mention).
   When the chronology makes such a violation visible, **note it in your
-  reply and recommend a check-warnings pass** — do **not** record it in
-  `impossibilities[]` or adjudicate it yourself.
+  reply and recommend a check-warnings pass** — do **not** adjudicate it
+  yourself (the timeline schema has no field to persist it, by design).
 - **Travel is constrained by period technology** is **this skill's own**
   check — it depends on arranging events across sources and place
   distances, which check-warnings does not do. Report a violation as a

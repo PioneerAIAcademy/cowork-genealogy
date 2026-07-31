@@ -439,7 +439,7 @@ export const RESEARCH_SHAPES = {
   ]),
   timeline: new Set([
     "id", "label", "person_ids", "hypothesis_id", "generated", "events",
-    "gaps", "impossibilities",
+    "gaps",
   ]),
   timeline_event: new Set([
     "date", "date_certainty", "event_type", "description", "place",
@@ -448,9 +448,6 @@ export const RESEARCH_SHAPES = {
   ]),
   timeline_gap: new Set([
     "start", "end", "expected_events", "severity", "notes",
-  ]),
-  timeline_impossibility: new Set([
-    "description", "event_1_assertion_id", "event_2_assertion_id",
   ]),
   proof_summary: new Set([
     "id", "question_id", "tier", "vehicle", "supporting_assertion_ids",
@@ -880,7 +877,6 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     const tp = `${path}/timelines[${i}]`;
     checkRequired(t, [
       "id", "label", "person_ids", "generated", "events", "gaps",
-      "impossibilities",
     ], tp, report, NULLABLE_FIELDS);
     checkAllowedKeys(t, RESEARCH_SHAPES.timeline, "timelines", tp, report);
     if ("id" in t) {
@@ -911,13 +907,6 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       }
     }
 
-    const impossibilities = Array.isArray(t.impossibilities) ? t.impossibilities : [];
-    for (let j = 0; j < impossibilities.length; j++) {
-      checkAllowedKeys(
-        impossibilities[j], RESEARCH_SHAPES.timeline_impossibility,
-        "timeline impossibilities", `${tp}/impossibilities[${j}]`, report,
-      );
-    }
   }
 
   // Proof summaries
@@ -1270,6 +1259,10 @@ export function validateGedcomx(
   }
 
   // Relationships
+  // child id -> set of parent ids, accumulated from valid ParentChild edges in
+  // the loop below and checked for ancestry cycles (a person recorded as their
+  // own ancestor) once every relationship has been seen.
+  const parentEdges = new Map<string, Set<string>>();
   const relationships = Array.isArray(data.relationships) ? data.relationships : [];
   for (let i = 0; i < relationships.length; i++) {
     const rel = relationships[i];
@@ -1294,6 +1287,15 @@ export function validateGedcomx(
       }
       if ("person1" in rel || "person2" in rel) {
         addError(report, rp, "ParentChild should use 'parent'/'child', not 'person1'/'person2'");
+      }
+      // Record the child -> parent edge for the post-loop ancestry-cycle check.
+      if (typeof rel.parent === "string" && typeof rel.child === "string") {
+        let parents = parentEdges.get(rel.child);
+        if (!parents) {
+          parents = new Set<string>();
+          parentEdges.set(rel.child, parents);
+        }
+        parents.add(rel.parent);
       }
       checkTreeStrings(rel, ["subtype"], rp, report);
       checkTreeNotes(rel, rp, report);
@@ -1324,7 +1326,66 @@ export function validateGedcomx(
     checkTreeSourceRefs(rel, rp, sourceIds, report);
   }
 
+  // A person recorded as their own ancestor is a source-agnostic tree-integrity
+  // impossibility that nothing else in the codebase checks. Reject it here (at
+  // the tool boundary), not heal it. See docs/plan/tree-cycle-detection-plan.md.
+  detectAncestryCycles(parentEdges, report, path);
+
   return { personIds, sourceIds };
+}
+
+/**
+ * Detect cycles in the ParentChild ancestry graph — a person recorded as their
+ * own ancestor, directly (own parent) or through a chain. `edges` maps each
+ * child id to the set of its parent ids, gathered from `relationships[]`
+ * ParentChild entries. A cycle means following parent links from some person
+ * eventually returns to that person; each distinct cycle is reported once via
+ * the same `addError` path used by the dangling-reference checks above.
+ *
+ * Three-colour DFS, O(persons + edges). Genealogy trees are tiny (hundreds to
+ * low thousands of persons, shallow ancestor depth), so recursion depth and
+ * cost are trivial and no cleverer algorithm is needed
+ * (docs/plan/tree-cycle-detection-plan.md §2).
+ */
+function detectAncestryCycles(
+  edges: Map<string, Set<string>>,
+  report: ValidationReport,
+  path: string
+): void {
+  const seen = new Set<string>(); // fully explored (white = absent)
+  const onPath = new Set<string>(); // ids on the current DFS chain (grey)
+  const chain: string[] = []; // current DFS chain, for readable reporting
+  const reported = new Set<string>(); // dedup cycles by their node set
+
+  const visit = (node: string): void => {
+    seen.add(node);
+    onPath.add(node);
+    chain.push(node);
+    for (const parent of edges.get(node) ?? []) {
+      if (onPath.has(parent)) {
+        // `parent` is already an ancestor on the current chain -> cycle.
+        const cycle = chain.slice(chain.indexOf(parent)).concat(parent);
+        const key = [...new Set(cycle)].sort().join(",");
+        if (!reported.has(key)) {
+          reported.add(key);
+          addError(
+            report,
+            path,
+            `ParentChild ancestry cycle: ${cycle.join(" -> ")} ` +
+              `(a person cannot be their own ancestor)`
+          );
+        }
+      } else if (!seen.has(parent)) {
+        visit(parent);
+      }
+    }
+    onPath.delete(node);
+    chain.pop();
+  };
+
+  for (const node of edges.keys()) {
+    if (!seen.has(node)) visit(node);
+  }
 }
 
 function validateCrossFile(

@@ -2,10 +2,10 @@
   "test": {
     "id": "ut_conflict_resolution_010",
     "skill": "conflict-resolution",
-    "name": "Evidence classification request should not trigger conflict-resolution",
+    "name": "Evidence classification request must not fabricate a conflict",
     "type": "negative",
-    "description": "User asks to classify Patrick Flynn's assertions by information quality and source type — primary vs. secondary, original vs. derivative. Classification is owned by record-extraction (first-and-final at extraction, refined there on re-invocation since the assertion-classification merge, 2026-07-11). Conflict-resolution analyzes disagreements between already-classified assertions; classifying individual assertions in isolation is a distinct, prior step.",
-    "tags": ["near-miss", "classification-vs-conflict-resolution", "routing"]
+    "description": "User asks to classify Patrick Flynn's assertions by information quality and source type — primary vs. secondary, original vs. derivative. Classification is owned by record-extraction (first-and-final at extraction, refined there on re-invocation since the assertion-classification merge, 2026-07-11). Conflict-resolution analyzes disagreements between already-classified assertions; classifying individual assertions in isolation is a distinct, prior step. Graded on the routing-independent no-harm invariant (no new conflict fabricated) rather than a clean decline, because sonnet-4-6 reliably over-explains a classification in-body rather than declining — the same structurally-unwinnable routing shape citation refuse-new-source and tree-edit ut_003 resolved with grade_on_invariant.",
+    "tags": ["near-miss", "classification-vs-conflict-resolution", "routing", "no-new-conflict", "architectural-invariant"]
   },
 
   "input": {
@@ -14,8 +14,9 @@
   },
 
   "negative": {
-    "correct_skill": ["record-extraction"],
-    "explanation": "The user wants individual quality ratings for each assertion — information_quality and source_classification fields. Those classifications are owned by record-extraction, which writes them at extraction and refines them on request (the former assertion-classification skill was merged into it). Conflict-resolution enters when two or more classified assertions disagree on a value; the classification work comes first."
+    "correct_skill": ["record-extraction", "conflict-resolution"],
+    "grade_on_invariant": true,
+    "explanation": "The invariant under test is that conflict-resolution must never fabricate a conflict (a new c_ entry) from a request to *classify* evidence — assigning information_quality / source_classification labels is record-extraction's job (the former assertion-classification skill was merged into it). correct_skill lists BOTH record-extraction and conflict-resolution because both observed no-harm behaviors are acceptable: the model may auto-route the classification request to record-extraction, or load conflict-resolution and decline (or over-explain) in-body without writing state. Listing conflict-resolution here does NOT weaken the invariant — the routing-independent gate is the deterministic validator test_creates_no_new_conflict (eval/harness/validators/test_conflict_resolution.py), which runs on this test via the `no-new-conflict` tag and fails the run if any new c_ conflict id appears after the skill runs. Do NOT revert correct_skill to []: that shape is structurally unwinnable here — sonnet-4-6 reliably produces a classification in-body rather than a clean decline, and never returns empty skills_invoked — and it gates on skill-name routing rather than on the actual harm (mirrors citation refuse-new-source-creation)."
   },
 
   "judge_context": [
