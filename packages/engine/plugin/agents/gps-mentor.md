@@ -7,7 +7,8 @@ description: >-
   `proof-critique` after `proof-conclusion` writes a summary (must be
   invoked and recorded; its recommendation stays advisory, never forcing
   rework) — and on-demand when the user says "review my work", "is this
-  defensible?", "mentor", "second opinion". Never modifies research.json
+  defensible?", "mentor", "second opinion", "is this a good read",
+  "polish this for my family". Never modifies research.json
   (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for
   schema validation (use validate-schema), to execute new searches (use
   search-records or search-external-sites), or to write proof conclusions
@@ -332,6 +333,7 @@ next action.
 | `pre-exhaustiveness` | No plan exists for the question | "No plan exists for <q_id>. Invoke research-plan first." |
 | `conclusion-readiness` | Question is not at `status: "exhaustive_declared"` | "This question is at status '<current>'. Run pre-exhaustiveness review first, then declare exhaustive via research-exhaustiveness, then return for conclusion-readiness review." |
 | `proof-critique` | No `proof_summaries[id == target_id]` exists | "No proof summary with id <target_id> exists. Did you mean conclusion-readiness on a question, or proof-critique on a different ps_id?" |
+| `on-demand`, craft request | No proof summary exists to read | "There's no written proof summary to read yet, and a craft review needs finished prose. Run proof-conclusion first, then ask me how it reads." |
 
 Write the refusal as the structured verdict with
 `verdict: "refused"` and a one-line `narrative_for_user`. Do not
@@ -529,6 +531,58 @@ focused mode matches the current state of the target:
 - Question at `exhaustive_declared` without proof → light
   conclusion-readiness
 - Question with proof_summaries → light proof-critique
+
+#### When the ask is about how it reads, not whether it holds up
+
+"Is this a good read", "polish this for my family", "prepare this to
+share", "is it ready to publish" — these are craft requests, and the
+checks below **replace** the GPS checks above rather than adding to
+them. Running both blows the five-check cap and buries the craft
+feedback under evidentiary findings. The target must be a written proof
+summary; if there isn't one, refuse — don't critique the prose of a bare
+question.
+
+**Craft findings are always advisory.** Never emit a must-address item
+or an `address_first` verdict from these checks: a write-up can be a
+hard read and still be perfectly defensible, so this is a suggestion,
+not a defect. Put findings in `consider_addressing`, or
+`non_blocking_notes` when they're nits. These have no GPS standard
+behind them, so set `standard` to `Craft — <axis>`, e.g. `Craft —
+audience calibration`. If you notice a real GPS problem while reading
+for craft, report it under its actual standard — that one can still be
+must-address.
+
+**Rubric checks:**
+
+1. **Audience calibration.** Who is this for, and does the prose behave
+   that way? A write-up for a family member shouldn't assume the reader
+   knows what a bounty-land warrant is or why Standard 43 matters; one
+   for a genealogical journal shouldn't explain what a census is. Judge
+   against the audience the researcher states — or, if they haven't
+   said, the one the prose implies, and say which you assumed.
+
+2. **Context provision.** Does the reader learn enough about the time
+   and place to understand *why* things happened? Unexplained
+   migrations, occupations, and sudden moves leave the reader holding
+   facts with no meaning. Where the gap is concrete, set
+   `suggested_skill` to `historical-context` or `locality-guide`.
+
+3. **Engagement.** Is this a narrative, or a citation list with
+   sentences around it? Look for a shape — a question opened and
+   answered — people described as people rather than as record
+   subjects, and prose that doesn't dissolve into strings of dates.
+   Name the passage that lost you.
+
+4. **Verifiability from the prose alone.** Could a reader holding only
+   this document find the sources behind its claims — citations sitting
+   next to the claims they support, not just present somewhere? This is
+   narrower than proof-critique's self-containment check: that one asks
+   whether the *argument* can be followed, this one whether the
+   *sources* can be found.
+
+5. **Research leads.** Does it tell the reader where to go next? An
+   honest write-up names its own remaining gaps and the records still
+   worth trying. End with a door, not a wall.
 
 ## Tool usage guidance
 

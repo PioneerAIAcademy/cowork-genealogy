@@ -58,6 +58,14 @@ directly by the user. Trigger phrases for direct invocation:
 - "critique my proof"
 - "am I ready to conclude?"
 
+Presentation-framed requests route here too, and resolve to `on-demand` with the
+narrative-craft checks of §6.4:
+
+- "is this a good read?"
+- "polish this for my family"
+- "prepare this to share"
+- "is this ready to publish?"
+
 ### 3.2 Input convention
 
 The invoker (orchestrator or user) supplies parameters in the delegation message:
@@ -114,7 +122,7 @@ The agent file `packages/engine/plugin/agents/gps-mentor.md` must open with this
 ```yaml
 ---
 name: gps-mentor
-description: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research once per proof — an advisory `proof-critique` after `proof-conclusion` writes a summary — and on-demand when the user says "review my work", "is this defensible?", "what would a senior genealogist say?", "mentor", "second opinion", "critique my proof", "am I ready to conclude?". Advisory only: it never blocks the flow or forces rework. Never modifies research.json (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for schema validation (use validate-schema), to execute new searches (use search-records or search-external-sites), or to write proof conclusions (use proof-conclusion).
+description: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research once per proof — an advisory `proof-critique` after `proof-conclusion` writes a summary — and on-demand when the user says "review my work", "is this defensible?", "what would a senior genealogist say?", "mentor", "second opinion", "critique my proof", "am I ready to conclude?", "is this a good read", "polish this for my family". Advisory only: it never blocks the flow or forces rework. Never modifies research.json (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for schema validation (use validate-schema), to execute new searches (use search-records or search-external-sites), or to write proof conclusions (use proof-conclusion).
 model: claude-sonnet-5
 tools:
   - Read
@@ -317,6 +325,54 @@ If the user's request is vague, default to the focus that matches the target's c
 | Question at `exhaustive_declared` without proof | Light `conclusion-readiness` |
 | Question with a proof summary | Light `proof-critique` |
 
+#### Narrative-craft checks (presentation requests only)
+
+When the request is about how a finished write-up **reads** rather than whether it
+holds up — "is this a good read", "polish this for my family", "prepare this to
+share", "is it ready to publish" — apply the five checks below **instead of** the
+GPS rubric above, not in addition to it. The ~five-check cap is unchanged: this is
+a craft read, and stacking it on top of a `proof-critique` pass would blow both the
+cap and the mentor voice. The target must be a written proof summary; if none
+exists, refuse per §9 rather than critique the prose of a bare question.
+
+Every narrative-craft finding is **advisory**. These checks never produce a
+`must_address` item and never yield an `address_first` verdict — a write-up can be
+a hard read and still be perfectly defensible, which makes this a suggestion, not
+a defect. Findings go in `consider_addressing` (or `non_blocking_notes` for
+nit-level ones). Because these findings have no GPS standard behind them, the
+`standard` field (§7.4) carries `Craft — <axis>`, e.g. `Craft — audience
+calibration`. A GPS problem noticed incidentally during a craft read is still
+reported under its real standard and may still be `must_address`.
+
+**Rubric checks (in order):**
+
+1. **Audience calibration.** Who is this written for, and does the prose behave
+   that way? A write-up for a family member should not assume the reader knows
+   what a bounty-land warrant is or why Standard 43 matters; one intended for a
+   genealogical journal should not over-explain what a census is. Judge against
+   the audience the researcher states, or — if none is stated — the audience the
+   prose itself implies, and say which one was assumed.
+
+2. **Context provision.** Does the reader learn enough about the time and place to
+   understand *why* the events happened? Unexplained migrations, occupations, and
+   sudden moves leave the reader with facts and no meaning. Where the gap is
+   concrete, set `suggested_skill` to `historical-context` or `locality-guide`.
+
+3. **Engagement.** Is this a narrative, or a citation list with sentences around
+   it? Look for a shape (a question opened and answered), people described as
+   people rather than as record subjects, and prose that does not dissolve into
+   strings of dates. Name the specific passage that lost you.
+
+4. **Verifiability from the prose alone.** Could a reader holding only this
+   document find the sources behind its claims — citations adjacent to the claims
+   they support, not merely present somewhere? This is a narrower question than
+   §6.3's narrative self-containment, which asks whether the *argument* can be
+   followed; this asks whether the *sources* can be located.
+
+5. **Research leads.** Does the write-up tell the reader where to go next? An
+   honest one names its own remaining gaps and the records still worth trying. It
+   should end with a door, not a wall.
+
 ---
 
 ## 7. Verdict JSON Schema
@@ -456,6 +512,7 @@ focus. A refusal writes a verdict with `verdict: "refused"` and a one-line
 | `pre-exhaustiveness` | No plan exists for the question | "No plan exists for q_XXX. Invoke research-plan first." |
 | `conclusion-readiness` | Question is not at `status: "exhaustive_declared"` | "This question is at status '<current>'. Run pre-exhaustiveness review first, then declare exhaustive via research-exhaustiveness, then return for conclusion-readiness review." |
 | `proof-critique` | No `proof_summaries[id == target_id]` in research.json | "No proof summary with id <target_id> exists. Did you mean conclusion-readiness on a question, or proof-critique on a different ps_id?" |
+| `on-demand`, narrative-craft request (§6.4) | No proof summary exists to read | "There's no written proof summary to read yet, and a craft review needs finished prose. Run proof-conclusion first, then ask me how it reads." |
 
 A refused verdict is still written to `evaluations/` and added to the `evaluations` array
 in `research.json` so the refusal is part of the audit trail.
@@ -728,6 +785,7 @@ These items are acknowledged but not specified here. They belong in future issue
 | Wiring into `/research` orchestrator skill | Depends on `/research` landing on main. DallanQ noted this explicitly in the implementation commit. |
 | Commit pending per-action approval | Not yet understood well enough to specify. Defer to DallanQ for clarification. |
 | Reducing per-gate mentor cost | Do not defer gates ad hoc to chase speed. Follow the staged sequence in §17.1. |
+| `narrative-craft` as its own `focus` value | Considered and deliberately not taken. See §17.2. |
 
 ### 17.1 Reducing per-gate mentor cost (defer until measurable)
 
@@ -767,3 +825,23 @@ by deferring gates first:
   production cost. If measurement shows the two early gates (pre-exhaustiveness,
   conclusion-readiness) never change an outcome, that is the evidence to
   collapse to the single final `proof-critique` gate — earned, not assumed.
+
+### 17.2 `narrative-craft` as a fourth focus mode (deferred, not dropped)
+
+The narrative-craft checks of §6.4 could instead have been a fourth `focus`
+value (`"narrative-craft"` or `"publication-readiness"`), invocable by the
+orchestrator alongside the existing three. **Not adopted**, for two reasons:
+
+1. **`focus` is a closed enum in three places** — `$defs/evaluation_entry.focus`
+   in *both* schema trees (§12.5), the `evaluation_focus` set in `validator.ts`
+   (§12.6), and the mirrored TS union in `packages/schema/src/index.ts`. That is
+   real multi-file cost for a check nobody has run yet.
+2. **It forces a decision too early.** A standing mode has to answer whether it
+   can *block* progress the way `proof-critique`'s `address_first` does. Under
+   §6.4 the answer is settled and cheap — advisory, always. Deciding "mandatory
+   gate or not" before the check has been used once would be assumed, not earned.
+
+Promote to a real focus value only if usage shows it should be a standing gate
+rather than something the user asks for. That is a new spec delta on top of this
+one, not a reopening of it — keep the audit trail the way
+`evaluations[].superseded_by` already does for re-evaluations.
