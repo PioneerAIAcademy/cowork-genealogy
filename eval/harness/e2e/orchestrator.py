@@ -124,7 +124,7 @@ BLOCKED_TREE_TOOLS = frozenset(
 )
 
 
-# docs/plan/research-guardrail-bypass-plan.md §4.1/§6 — trailing tool-call
+# docs/specs/guardrail-enforcement-spec.md §7/§10 — trailing tool-call
 # window for the shadow-mode guardrail check: a first-cut default, not yet
 # empirically tuned against the runlog corpus. Generous on purpose — a
 # guardrail skill legitimately does several reads/searches/writes before its
@@ -171,7 +171,7 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
 # The two project files that must never be touched by raw Write/Edit — all
 # writes go through the MCP writer tools (research_append, research_log_append,
 # tree_edit, tree_correct), which validate before persisting. See
-# docs/plan/research-guardrail-bypass-plan.md §4.3.
+# docs/specs/guardrail-enforcement-spec.md §6.
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
 
 
@@ -645,7 +645,7 @@ async def _run_agent(
         # incremented separately below.
         activity_count["n"] += 1
 
-        # docs/plan/research-guardrail-bypass-plan.md §4.3 — no skill's
+        # docs/specs/guardrail-enforcement-spec.md §6 — no skill's
         # allowed-tools lists bare Write/Edit, and research/SKILL.md already
         # prose-forbids direct writes to these two files ("all writes go
         # through the writer tools"). This closes that as a real denial
@@ -1091,7 +1091,7 @@ async def _run_agent(
             "max_cost_usd": fixture.caps.max_cost_usd,
         },
     }
-    # docs/plan/research-guardrail-bypass-plan.md §4.1 — SHADOW MODE ONLY:
+    # docs/specs/guardrail-enforcement-spec.md §7 — SHADOW MODE ONLY:
     # computed once over the completed `tool_calls` list (equivalent to
     # checking live at each call, since the check only ever looks backward),
     # so this ships without touching pretool_hook's decision path at all.
@@ -1155,9 +1155,9 @@ def check_guardrail_compliance(
     *,
     starting_tree: dict[str, Any] | None = None,
 ) -> list[str]:
-    """The §4.4 HARD guardrail detector — every non-windowed check, in one call.
+    """The §8 HARD guardrail detector — every non-windowed check, in one call.
 
-    docs/plan/research-guardrail-bypass-plan.md §4.4. A guardrail skill's
+    docs/specs/guardrail-enforcement-spec.md §8. A guardrail skill's
     effect present in the FINAL project state with no matching successful
     invocation anywhere in the run, or a resolved question's proof_summary
     missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
@@ -1235,10 +1235,10 @@ async def run_e2e_test(
             fixture, Path(tmp), skills_dir, effort_level=effort_level, agent_model=agent_model
         )
         # Snapshot BEFORE the agent touches the workspace — build_workspace just
-        # copied fixture.starting_tree_path in. Lets the §4.4 guardrail-effects
+        # copied fixture.starting_tree_path in. Lets the §8 guardrail-effects
         # check (below) tell a fixture's own seeded persons apart from persons
         # the agent created/enriched this run (docs/plan/
-        # research-guardrail-bypass-plan.md §4.4).
+        # guardrail-enforcement-spec.md §8).
         starting_tree = read_tree_json(workspace)
 
         (
