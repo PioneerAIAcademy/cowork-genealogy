@@ -1148,6 +1148,55 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
+def check_guardrail_compliance(
+    tool_calls: list[dict[str, Any]],
+    final_research: dict[str, Any] | None,
+    final_tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[str]:
+    """The §4.4 HARD guardrail detector — every non-windowed check, in one call.
+
+    docs/plan/research-guardrail-bypass-plan.md §4.4. A guardrail skill's
+    effect present in the FINAL project state with no matching successful
+    invocation anywhere in the run, or a resolved question's proof_summary
+    missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
+    harness's `test_positive_fails_when_skill_not_in_skills_invoked`, which
+    had no e2e equivalent. Unlike §4.1's shadow-mode recency check, this only
+    asks whether the skill ran AT ALL across the whole run, so it is far less
+    prone to false positives and was safe to hard-fail on immediately rather
+    than rolling out in shadow mode first.
+
+    `find_person_evidence_missing_same_person` is a separate, also-hard,
+    also-non-windowed check added after the first real run of
+    bagley-father-1884 showed the gap in "invoked anywhere": that run linked a
+    brand-new person across 13 person_evidence entries with zero same_person
+    calls in the whole run, while person-evidence ITSELF was invoked 52 tool
+    calls later for unrelated work — passing the "invoked anywhere" bar while
+    still skipping the identity-scoring doctrine entirely. It checks the
+    specific required tool for the specific person instead of the skill's mere
+    presence in the run.
+
+    Note this is NOT vacuous on a treeless run: `find_missing_mentor_verdicts`
+    takes no tree at all, and the exhaustiveness arm reads only
+    `research["questions"]`. That is why compliance is always a real result
+    and never "not checked" for a run this harness performed.
+
+    Extracted from `run_e2e_test` so it is unit-testable — the fused-verdict
+    bug this replaced (issue #972) lived in an assembly statement buried in a
+    1200-line async function that needs the SDK and a live FamilySearch session.
+    """
+    return (
+        find_effects_without_invocation(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
+        )
+        + find_missing_mentor_verdicts(final_research)
+        + find_person_evidence_missing_same_person(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
+        )
+    )
+
+
 async def run_e2e_test(
     *,
     fixture_dir: Path,
@@ -1246,41 +1295,12 @@ async def run_e2e_test(
                 verdict = "skipped"
             judge_seconds = time.monotonic() - judge_start
 
-        # docs/plan/research-guardrail-bypass-plan.md §4.4 — HARD FAIL, not
-        # shadow: a guardrail skill's effect present in the FINAL project
-        # state with no matching successful invocation anywhere in the run,
-        # or a resolved question's proof_summary missing its mandatory
-        # gps-mentor proof-critique verdict. Overrides the judge's verdict
-        # regardless of what it said — mirrors the unit harness's
-        # `test_positive_fails_when_skill_not_in_skills_invoked`, which has no
-        # e2e equivalent otherwise (`skills_invoked` has zero hits in this
-        # module family before this). Unlike §4.1's shadow-mode recency
-        # check, this only looks at whether the skill ran AT ALL across the
-        # whole run, so it's far less prone to false positives and safe to
-        # hard-fail on immediately rather than roll out in shadow mode first.
-        #
-        # find_person_evidence_missing_same_person is a separate, also-hard,
-        # also-non-windowed check added after the first real run of
-        # bagley-father-1884 showed the gap in "invoked anywhere": that run
-        # linked a brand-new person across 13 person_evidence entries with
-        # zero same_person calls in the whole run, while person-evidence
-        # ITSELF was invoked 52 tool calls later for unrelated work — passing
-        # the "invoked anywhere" bar while still skipping the identity-scoring
-        # doctrine entirely. This checks the specific required tool for the
-        # specific person instead of the skill's mere presence in the run.
-        guardrail_effects_without_invocation = (
-            find_effects_without_invocation(tool_calls, final_research, final_tree, starting_tree=starting_tree)
-            + find_missing_mentor_verdicts(final_research)
-            + find_person_evidence_missing_same_person(
-                tool_calls, final_research, final_tree, starting_tree=starting_tree
-            )
+        # The COMPLIANCE axis (§4.4). Deliberately does not touch `verdict` —
+        # `E2eResult` derives `compliance` and the combined `outcome` gate
+        # from these violations. See check_guardrail_compliance.
+        guardrail_bypass_violations = check_guardrail_compliance(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
-        if guardrail_effects_without_invocation:
-            verdict = "fail"
-            judge_output = {
-                **judge_output,
-                "guardrail_bypass_violations": guardrail_effects_without_invocation,
-            }
 
         # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
         # matches the wall-clock cap and the stall watchdog (also monotonic) and
@@ -1326,6 +1346,7 @@ async def run_e2e_test(
             error=error,
             tags=fixture.tags,
             blocked_tree_reads=blocked_tree_reads,
+            guardrail_bypass_violations=guardrail_bypass_violations,
             guardrail_shadow_violations=guardrail_shadow_violations,
             subagents=subagents,
         )

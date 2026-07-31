@@ -15,11 +15,14 @@ tree, strips a focused subset of the information (the "answer"), and
 asks the agent to recover what was removed. The starting state and
 the expected findings are committed; the agent's research runs live.
 
-Tests are **benchmarks**, not regression checks. They measure **two
+Tests are **benchmarks**, not regression checks. The judge measures **two
 axes** (§7): **recall** — did the agent recover the stripped facts,
 graded from the tree (this is the verdict) — and **proof quality** — is
 the agent's written GPS proof statement sound, graded from the research
-log (an advisory score that does not gate the verdict). Per-PR
+log (an advisory score that does not gate the verdict). The harness adds a
+third, non-judge axis: **compliance** — did the GPS guardrail skills
+actually run (§7.5). Recall and compliance are reported separately and
+combined into an `outcome` gate (§7.2.1). Per-PR
 regression coverage is the job of unit tests (see `unit-test-spec.md`);
 e2e is run on demand, one test at a time.
 
@@ -723,6 +726,29 @@ harness overrode, and the matching final-tree person ids), the affected
 findings' `notes` gain an `[avoid-guard]` annotation, and
 `recall_*`/`verdict` reflect the recompute.
 
+### 7.2.1 The three axes
+
+A run is graded on **two independent axes**, and reported with a third field
+that combines them. They are separate because a run can get the genealogy
+completely right while bypassing the process guardrails, and collapsing that
+into one boolean made a correct run and a wrong one read identically
+(GitHub issue #972).
+
+| field | values | meaning |
+|---|---|---|
+| `verdict` | `pass` \| `partial` \| `fail` \| `skipped` | **Genealogical.** The judge's recall conclusion (§7.1), or `skipped` when the judge didn't run. Never modified by anything else. |
+| `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
+| `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
+| `outcome` | `pass` \| `partial` \| `fail` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
+| `harness_schema_version` | integer | `1` for the shape above. Absent on pre-#972 logs. |
+
+Committed run logs are never rewritten, so readers of historical data must go
+through `e2e.result.axes_from_runlog`, which resolves all four shapes the
+corpus contains. Pre-detector runs (see §7.5) resolve to
+`compliance: not_checked` — an unknown, which is **never** counted as clean.
+
+`make e2e-corpus` prints the three axes across every committed run.
+
 ### 7.3 Variance and Calibration
 
 Single run per test. Pass rates will jitter run-to-run from LLM
@@ -807,7 +833,20 @@ Three integrity rules make the agreement number trustworthy:
   siblings, writes the `.ann.json`, and self-checks it before commit).
 - **Graded blind.** The grade flow reads the fixture and the run's two `final-*`
   siblings, **never `run-<ts>.json`** (where the judge's own labels live), so the
-  human label is independent of the judge under test.
+  human label is independent of the judge under test. Blindness is a property of
+  the whole path from run to grade, not just of which files the grader opens:
+  the same person usually runs the fixture and then grades it, so **the console
+  must not print the grade either**. `run_e2e.py` reports `stop_reason` and the
+  compliance axis and stops there; `verdict`, `outcome` and `proof_quality` are
+  deferred to `/interpret-e2e-result`, which is itself blind to them.
+
+  > **Caveat on annotations collected before 2026-07-31.** Until then the
+  > harness printed the judge's verdict *and* its `proof_quality` score to the
+  > console the moment a run finished. Any `.ann.json` written by someone who
+  > watched their own run was drawn with the judge's answer already on screen —
+  > `proof_quality_score` most directly, since the console printed the very
+  > number the annotator then records. Treat pre-2026-07-31 proof-quality
+  > agreement as an upper bound, not a clean measurement.
 - **Incomplete never counts.** Any `null` `per_finding` value marks the grade
   unfinished; it is warned about and skipped.
 
@@ -850,13 +889,56 @@ The headline percentage is the least useful number in it.
 
 ---
 
+### 7.5 Compliance axis (the GPS guardrail check)
+
+The judge grades the research **product**. It cannot see whether the agent
+followed the **process** — and an agent that writes a conclusion without ever
+invoking `person-evidence`, `conflict-resolution`, `proof-conclusion` or
+`research-exhaustiveness` has skipped the doctrine those skills exist to
+enforce, however good the answer looks. The unit harness has always failed a
+positive test whose skill was never invoked; this is the e2e equivalent.
+
+After the agent stops, the harness runs three deterministic, **non-windowed**
+checks over the final project state and the run's tool-call log
+(`e2e.orchestrator.check_guardrail_compliance`, implemented in
+`harness/skill_invocation.py`):
+
+1. **`find_effects_without_invocation`** — a guardrail skill's documented
+   effect is present in `research.json` or `tree.gedcomx.json` (a
+   `proof_summaries` entry, `person_evidence` link, resolved `conflicts`
+   entry, `exhaustive_declaration.declared`, or a tree write one of them
+   owns) with no successful `Skill` call for it anywhere in the run.
+2. **`find_missing_mentor_verdicts`** — a resolved question's
+   `proof_summaries` entry has no matching `proof-critique` entry in
+   `evaluations[]`, i.e. the mandatory `gps-mentor` gate never fired.
+3. **`find_person_evidence_missing_same_person`** — a brand-new tree person
+   received a `person_evidence` link without a single `same_person` call for
+   it. Narrower than check 1 on purpose: a run can invoke `person-evidence`
+   somewhere and still skip identity scoring for the person that matters.
+
+Any violation sets `compliance: fail`, which forces `outcome: fail`. The
+checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
+and check 1's exhaustiveness arm reads only `research.json` — so every run the
+harness performs gets a real compliance result.
+
+**Historical runs.** These checks landed 2026-07-27; runs before that were
+never subject to them, and two runs from the days after predate later
+additions to the check set. `axes_from_runlog` reports all of them
+`not_checked` rather than `pass`, distinguishing pre-detector code by the
+presence of the `guardrail_shadow_violations` key (the two shipped in the same
+commit). Retroactively scoring the corpus is tracked as issue #913, and needs
+the checks replayed at a pinned version to be meaningful.
+
+Design rationale and the §4.1 shadow-mode sibling:
+`docs/plan/research-guardrail-bypass-plan.md` §4.4.
+
 ## 8. Result Artifacts
 
 Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; **`usage_source`** — `result_message` when the SDK's `ResultMessage` arrived (authoritative), or `streamed_fallback` when it did not. Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts the stream before that message, which used to leave `usage` with no turns, duration or tokens at all — blinding exactly the runs worth investigating. The fallback reconstructs the block from the streamed assistant messages: token counts are **exact** (deduplicated by message id — the SDK re-emits one message per content block, each copy repeating that message's cumulative usage, so summing on arrival multiplies the totals), `duration_ms` comes from the monotonic clock, and the distinct-message count is reported as `assistant_messages`. `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** in a fallback block rather than synthesized — the SDK counts turns differently from distinct assistant messages, only it knows the API/local split, and a run spans several models so one price lookup would be wrong. Never compare a `streamed_fallback` cost against a clean run's; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
+| `run-<timestamp>.json` | Structured result. The three axes first — `verdict` (genealogical), `compliance`, `guardrail_bypass_violations`, `outcome` (the gate), and `harness_schema_version`; see §7.2.1. Then `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; **`usage_source`** — `result_message` when the SDK's `ResultMessage` arrived (authoritative), or `streamed_fallback` when it did not. Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts the stream before that message, which used to leave `usage` with no turns, duration or tokens at all — blinding exactly the runs worth investigating. The fallback reconstructs the block from the streamed assistant messages: token counts are **exact** (deduplicated by message id — the SDK re-emits one message per content block, each copy repeating that message's cumulative usage, so summing on arrival multiplies the totals), `duration_ms` comes from the monotonic clock, and the distinct-message count is reported as `assistant_messages`. `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** in a fallback block rather than synthesized — the SDK counts turns differently from distinct assistant messages, only it knows the API/local split, and a run spans several models so one price lookup would be wrong. Never compare a `streamed_fallback` cost against a clean run's; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
 | `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
@@ -885,16 +967,40 @@ the run. The roll-up is shaped to aggregate across fixtures — grouping by the
 fixtures back to back (§6: there is no built-in sweep):
 
 ```
-E2E suite: 7/10 passed, 2 partial, 1 fail
-  by question_type:  parents 4/5  siblings 2/3  birth_date 1/2
-  by era:            1800s 3/4    1850s 3/4    1900s 1/2
-  by geography:      US 5/7       UK 2/3
+E2E suite: 1/1 recall pass
+  compliance: 0/1 clean — 1 guardrail bypass (isabel-carvajal-daughter)
+  overall gate: 0/1 pass
+  by question_type:  parents 1/1
   avg cost: $3.40 / run     avg wall-clock: 28 min / run
-  total cost: $34            total wall-clock: 4h 40min
 ```
 
-Single function reading the just-written runlogs. No dashboard, no
-database. The console output is also the artifact stakeholders see.
+The recall line, the compliance line and the gate line are always all three
+printed — a silent compliance line puts us back to one number meaning two
+things (§7.2.1).
+
+**This roll-up is per-invocation, and an invocation is one fixture** (§6:
+there is no built-in sweep), so it always reports `n/1`. The by-tag
+breakdowns exist for a shell loop that runs several fixtures back to back,
+but each iteration prints its own roll-up — the loop does not aggregate.
+
+For totals **across** runs, use `make e2e-corpus`
+(`eval/harness/e2e/corpus_report.py`), which reads every committed run log
+through `axes_from_runlog` and reports all three axes, holding `not_checked`
+compliance separate from clean:
+
+```
+126 committed run(s)
+  recall (genealogy): 86 pass / 24 partial / 16 fail
+  compliance:         8 fail / 118 not_checked
+  gate (outcome):     81 pass / 22 partial / 23 fail
+```
+
+(A snapshot taken 2026-07-31, not a live figure — run the command for
+current totals. The gap between the recall line and the gate line is the
+whole point: five of those eight non-compliant runs recovered the answer.)
+
+No dashboard, no database — two functions reading committed runlogs. The
+console output is also the artifact stakeholders see.
 
 ---
 
@@ -976,7 +1082,22 @@ The only thing that proves recoverability is a real run that recovered
 the findings.
 
 **Standard: a fixture is not *validated* until at least one committed run
-log under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** For a
+log under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** Validity
+is a claim about the *fixture* — is this answer recoverable from live
+FamilySearch? — so it keys on the **genealogical** axis (§7.5) alone. A run
+that recovered the answer while bypassing a GPS guardrail skill still proves
+the fixture solvable; it fails the `outcome` gate for a reason that says
+nothing about the fixture.
+
+> **Reading a pre-#972 run log for this:** in logs written before the axis
+> split, a guardrail bypass overwrote the top-level `verdict` with `fail`, so
+> four committed runs read `"verdict": "fail"` on disk while being
+> genealogically `pass`. Resolve any log through
+> `e2e.result.axes_from_runlog` (or just run `make e2e-corpus`) rather than
+> reading the raw field, or the same fixture validates or doesn't depending
+> on when it was run.
+
+For a
 fixture that is *entirely* negative findings (`polarity: "avoid"`),
 "pass" still means the agent behaved correctly — it declined the wrong
 candidates — so the same standard holds. This is the bar for a fixture to
