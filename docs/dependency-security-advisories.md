@@ -131,8 +131,10 @@ shipped artifact. Weigh fix churn against that before treating a HIGH as urgent.
 Until then GitHub raised security *alerts* from the dependency graph but nothing
 opened routine version-update PRs — which is how 24 open alerts accumulated, most
 of them a plain lockfile refresh that no upstream constraint was blocking. The
-config covers seven manifests across five ecosystems (`npm` × 3 directories,
-`github-actions`, `docker` × 2, `uv` × 2), weekly, with minor/patch grouped into
+config covers **four ecosystems in five update blocks** — `npm` (the three
+package.json trees), `github-actions` (`.github/workflows`), `docker` (both
+Dockerfiles), and `uv` twice (`apps/server` and `eval/harness`, split so the
+harness can carry its own `ignore` rules). Weekly, with minor/patch grouped into
 one PR per ecosystem so majors are the ones that arrive individually.
 
 That grouping *is* the safety mechanism, and it is worth stating why. Dependabot
