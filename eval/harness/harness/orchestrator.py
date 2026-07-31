@@ -114,6 +114,8 @@ FILE_VALIDITY_VALIDATORS = frozenset(
         "test_research_json_validates_schema",
         "test_tree_gedcomx_json_validates_schema",
         "test_id_references_resolve",
+        "test_project_files_pass_full_validation",
+        "test_no_duplicate_tree_ids",
     }
 )
 

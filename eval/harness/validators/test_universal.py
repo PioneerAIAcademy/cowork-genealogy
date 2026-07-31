@@ -40,6 +40,7 @@ from harness.schema_validator import (
     validate_research_json,
     validate_tree_gedcomx_json,
 )
+from harness.ts_validator import validate_parsed
 
 
 # Top-level sections of research.json — the diff-aware tests below
@@ -90,6 +91,68 @@ def test_tree_gedcomx_json_validates_schema(after_state):
     assert not errors, (
         "tree.gedcomx.json failed schema validation:\n  - "
         + "\n  - ".join(errors)
+    )
+
+
+def test_project_files_pass_full_validation(after_state):
+    """research.json + tree.gedcomx.json must pass the FULL runtime validator,
+    not just jsonschema.
+
+    The schema validators above (jsonschema) cannot express reference
+    integrity: a dangling `ParentChild`/`Couple` endpoint, a tree `source` ref
+    with no `sources[]` entry, a cross-file `subject_person_ids` /
+    `relates_to_person_ids` / `gedcomx_source_description_id` that names nothing
+    in the tree, or an ancestry cycle. A writer-tool write is validated by the
+    runtime validator before it persists; a from-scratch hand-serialized write
+    (init-project's `Write`) is not — #987. This closes that gap
+    path-agnostically by running the SINGLE source of truth, the compiled TS
+    `validateParsed`, on the output files.
+
+    Needs both files (cross-file checks). Skips — never fails — when the
+    compiled validator is unavailable (build absent), since `build/` is not in
+    the run-log snapshot; a missing build must not red the suite.
+    """
+    research = after_state.get("research_json")
+    tree = after_state.get("tree_gedcomx_json")
+    if research is None or tree is None:
+        pytest.skip("both research.json and tree.gedcomx.json required for full cross-file validation")
+
+    errors = validate_parsed(research, tree)
+    if errors is None:
+        pytest.skip("compiled TS validator unavailable (build/ missing) — skip, not fail")
+    assert not errors, (
+        "project files failed full validation (reference integrity / cross-file "
+        "/ cycles that jsonschema cannot catch):\n  - " + "\n  - ".join(errors)
+    )
+
+
+def test_no_duplicate_tree_ids(after_state):
+    """tree.gedcomx.json person / relationship / source ids must be unique.
+
+    The runtime `validateGedcomx` does NOT check this — it only `.add()`s ids,
+    never `.has()`-checks — so `test_project_files_pass_full_validation` above
+    would miss it. A from-scratch hand-serialized tree (init-project mints
+    `I1..` / `R1..` / `S1..` by hand) can repeat a number. Pure Python, so it
+    runs even when the compiled validator is unavailable.
+    """
+    tree = after_state.get("tree_gedcomx_json")
+    if tree is None:
+        pytest.skip("No tree.gedcomx.json in output")
+
+    dups = []
+    for section in ("persons", "relationships", "sources"):
+        seen = set()
+        for item in tree.get(section) or []:
+            if not isinstance(item, dict):
+                continue
+            _id = item.get("id")
+            if _id is None:
+                continue
+            if _id in seen:
+                dups.append(f"{section}: duplicate id '{_id}'")
+            seen.add(_id)
+    assert not dups, (
+        "duplicate ids in tree.gedcomx.json:\n  - " + "\n  - ".join(dups)
     )
 
 

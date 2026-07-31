@@ -759,3 +759,64 @@ def test_as_dicts_shape():
         {"name": "a", "passed": True, "error": None},
         {"name": "b", "passed": False, "error": "boom"},
     ]
+
+
+# --- #987: full project-file validation + duplicate-id universal validators ---
+
+_VALID_TREE = {
+    "persons": [
+        {"id": "I1", "gender": "Male", "names": [{"id": "N1", "given": "A", "surname": "B", "preferred": True}]},
+        {"id": "I2", "gender": "Female", "names": [{"id": "N2", "given": "C", "surname": "B", "preferred": True}]},
+    ],
+    "relationships": [{"id": "R1", "type": "ParentChild", "parent": "I2", "child": "I1"}],
+    "sources": [],
+}
+
+
+def _run_universal(after_tree):
+    before = _empty_research_state()
+    after = {**before, "tree_gedcomx_json": after_tree, "tree_gedcomx": after_tree}
+    return run_validators(
+        skill="x",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+    )
+
+
+def _named(results, name):
+    return next((r for r in results if r.name == name), None)
+
+
+def test_no_duplicate_tree_ids_flags_a_repeat():
+    dup = {
+        **_VALID_TREE,
+        "persons": _VALID_TREE["persons"]
+        + [{"id": "I1", "gender": "Male", "names": [{"id": "N3", "given": "D", "surname": "B", "preferred": True}]}],
+    }
+    bad = _named(_run_universal(dup), "test_no_duplicate_tree_ids")
+    assert bad is not None and not bad.passed, "a repeated person id must fail test_no_duplicate_tree_ids"
+    ok = _named(_run_universal(_VALID_TREE), "test_no_duplicate_tree_ids")
+    assert ok is not None and ok.passed
+
+
+def test_full_validation_catches_reference_integrity():
+    # Drives the compiled TS validateParsed; skip (never fail) when build/ is
+    # absent, matching the validator's own skip-not-fail contract.
+    from harness.ts_validator import validate_parsed
+
+    if validate_parsed({}, {}) is None:
+        pytest.skip("compiled TS validator (build/) unavailable — skip, not fail")
+
+    # A dangling ParentChild endpoint passes jsonschema but must fail full
+    # validation (reference integrity jsonschema cannot express).
+    dangling = {
+        **_VALID_TREE,
+        "relationships": [{"id": "R1", "type": "ParentChild", "parent": "GONE", "child": "I1"}],
+    }
+    bad = _named(_run_universal(dangling), "test_project_files_pass_full_validation")
+    assert bad is not None and not bad.passed, "a dangling ParentChild endpoint must fail full validation"
+
+    ok = _named(_run_universal(_VALID_TREE), "test_project_files_pass_full_validation")
+    assert ok is not None and ok.passed, "a clean project must pass full validation"
