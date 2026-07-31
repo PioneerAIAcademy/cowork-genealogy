@@ -14,7 +14,7 @@
 # the plugin/skills are baked into this image.
 
 # ── Stage 1: build the web client ────────────────────────────────
-FROM node:22-bookworm-slim AS web
+FROM node:25-bookworm-slim AS web
 RUN corepack enable
 WORKDIR /repo
 
@@ -37,7 +37,7 @@ COPY tsconfig.base.json turbo.json ./
 RUN pnpm --filter web build   # -> apps/web/dist
 
 # ── Stage 2: Python deps via uv ──────────────────────────────────
-FROM python:3.12-slim-bookworm AS pydeps
+FROM python:3.14-slim-bookworm AS pydeps
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app/server
 ENV UV_PROJECT_ENVIRONMENT=/app/server/.venv
@@ -46,7 +46,7 @@ COPY apps/server/pyproject.toml apps/server/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 # ── Final image ──────────────────────────────────────────────────
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.14-slim-bookworm AS runtime
 WORKDIR /app/server
 ENV PATH="/app/server/.venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1
