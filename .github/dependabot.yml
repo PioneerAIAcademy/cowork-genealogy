@@ -85,6 +85,34 @@ updates:
         patterns:
           - "*"
 
+  # ── Container base images ───────────────────────────────────────────────────
+  # /deploy is the production Fly path (`fly deploy --dockerfile deploy/Dockerfile`,
+  # see the Makefile); /apps/server/sandbox is the E2B sandbox image.
+  #
+  # Scope this honestly: both files pin *floating* tags (node:22-bookworm-slim,
+  # python:3.12-slim-bookworm, ubuntu:24.04), not digests, so Dependabot will
+  # propose tag moves — python 3.12 -> 3.13, ubuntu 24.04 -> 26.04 — and nothing
+  # else. Patch-level base-image CVEs land via upstream rebuilding the same tag,
+  # which a rebuild picks up and Dependabot never sees. This entry is cheap and
+  # worth having; it is NOT a base-image security net. Pin by digest if that is
+  # ever wanted, and Dependabot will track digests instead.
+  - package-ecosystem: docker
+    directories:
+      - "/deploy"
+      - "/apps/server/sandbox"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "ci(docker)"
+    groups:
+      docker-base-images:
+        patterns:
+          - "*"
+
   # ── Python: hosted control plane (apps/server) ──────────────────────────────
   - package-ecosystem: uv
     directory: "/apps/server"
