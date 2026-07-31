@@ -20,6 +20,9 @@
     "user_message": "Execute plan item pli_001 — search FamilySearch's Wiltshire church records for the baptism of Job Purnell (born about 1826 in Trowbridge, Wiltshire) to identify his parents.",
     "scenario": "job-purnell-parents-identity"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "record-search-purnell-1821-decoy",
     "rank-search-matches-purnell-1821-decoy",

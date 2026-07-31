@@ -24,6 +24,9 @@
     ],
     "explanation": "Newspapers.com is explicitly listed in the skill description's Do NOT use clause. Obituary searches on commercial newspaper archives go to search-external-sites. FamilySearch has some digitized newspapers but Newspapers.com is a separate commercial service — record_search would not query it."
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "judge_context": [
     "This is a NEGATIVE routing test. The ONLY correct behavior is to call Skill('search-external-sites') and stop — nothing else.",
     "Must NOT call record_search — that tool queries FamilySearch collections, not Newspapers.com",

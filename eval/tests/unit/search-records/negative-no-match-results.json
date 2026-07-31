@@ -38,6 +38,7 @@
     "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ],
   "execution": {
+    "max_wall_clock_seconds": 600,
     "max_turns": 15
   }
 }

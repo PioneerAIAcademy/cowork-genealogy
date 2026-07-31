@@ -19,6 +19,9 @@
     "user_message": "Execute plan item pli_001 — the 1860 census search for Sarah in Dodge County. She has two name entries in the tree: her birth name 'Sarah Ann Mullen' and her married name 'Sarah Mullen Price'. Since 1860 is before her 1872 marriage, use the birth name for the search.",
     "scenario": "maiden-to-married-name-shift"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "record-search-1860-census-mullen-sarah",
     "record-search-price-no-results",
