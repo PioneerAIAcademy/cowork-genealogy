@@ -27,6 +27,9 @@
     "rank-search-matches-anders-unna-marriage",
     "record-read-urna-anders-1786-marriage"
   ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "judge_context": [
     "Ground truth: the real marriage record indexes the bride as 'Urna Halsteinsdr' -- both the given name AND the surname are transcription-abbreviated from the tree's 'Unna Halsteinsdatter'. references/collection-quirks.md (Norway section) documents both quirks and instructs varying the given name and surname TOGETHER in the same record_search call, not one at a time across separate calls.",
     "The mock is rigged so that ONLY a call with surname exactly 'Halsteinsdr' returns the positive match, regardless of which given-name spelling is used in the same call; every other combination -- the original spelling, a given-name-only variant with surname still 'Halsteinsdatter', a principal-only search with no surname filter, or any other query shape -- returns zero results. This means the ONLY way to recover the record is a record_search call with surname: 'Halsteinsdr', proving the skill tried the collection-specific surname abbreviation, not just the already-fixed given-name variant.",

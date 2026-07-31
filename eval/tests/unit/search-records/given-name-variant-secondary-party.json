@@ -26,6 +26,9 @@
     "rank-search-matches-anders-unna-marriage",
     "record-read-urna-anders-1786-marriage"
   ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "judge_context": [
     "Ground truth: the marriage record exists in collection 1468080 and is indexed as bride 'Urna Halsteinsdr' (a transcription variant of 'Unna Halsteinsdatter'), groom 'Anders Monsen', 25 Jun 1786, Hamre, Hordaland, Norway.",
     "The fixture 'record-search-unna-exact-zero-results' fires only when givenName is exactly 'Unna' — it always returns zero results, no matter how surname/place/collection filters are varied. The fixture 'record-search-urna-variant-marriage-match' fires on any other givenName against the same collection and returns the positive match. This means the ONLY way to recover the record is to change the spelling of the given name itself (e.g. Unna -> Urna, Udna, Una, Anna) — reshuffling which parameter holds 'Unna', dropping the surname, or dropping the place filter will keep re-triggering the zero-result fixture.",
