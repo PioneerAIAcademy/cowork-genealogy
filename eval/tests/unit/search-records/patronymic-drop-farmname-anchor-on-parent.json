@@ -22,14 +22,16 @@
   "mcp_fixtures": [
     "record-search-moen-surname-nil",
     "record-search-anders-patronymic-hit",
-    "rank-search-matches-anders-christening"
+    "rank-search-matches-anders-christening",
+    "record-read-anders-9xkt-m2p"
   ],
   "judge_context": [
     "CORE (Tool Arguments): the christening search must NOT keep 'Moen' as the surname constraint. 'Moen' is an Americanized farm name; a Norwegian church book indexes the child under a patronymic, so a surname-anchored search nils. Score Tool Arguments 3 if a record_search drops the surname and anchors on givenName Anders + recordCountry Norway + a recovered parent's given name (motherGivenName 'Marit' and/or fatherGivenName 'Hans') and/or the ~1868 birth year. Score 1 if the skill keeps surname='Moen' as the anchor and does not re-anchor. (recordCountry Norway supplies the required search anchor once the surname is dropped.)",
     "CORE (Correctness): the skill should recognize that for a patronymic-culture subject the farm/Americanized surname is the least stable identifier, and re-anchor on the given name + exact date + the parents' given names already recovered from US records (Hans, Marit) — the search-by-parent move. Reaching the christening (record-search-anders-patronymic-hit), which names Hans Olsen and Marit Pedersdatter, is the successful outcome.",
     "If the skill first tries the surname 'Moen' and gets nil, it should treat that as a query-shape failure (the farm surname is the wrong anchor) and re-anchor — NOT conclude the christening is unindexed or does not exist. Concluding 'unindexed / not found' from the surname-nil alone is a FAIL.",
     "Completeness: the search should be logged (a nil surname attempt and/or the successful parent-anchored attempt). Finding the christening under patronymics is a complete answer; do NOT require the skill to also complete extraction/attachment in this test.",
-    "Do NOT penalize the skill for not calling place_search or collections_search — recordCountry 'Norway' is a sufficient anchor for the church search, and a validate_research_schema call is acceptable if made."
+    "Do NOT penalize the skill for not calling place_search or collections_search — recordCountry 'Norway' is a sufficient anchor for the church search, and a validate_research_schema call is acceptable if made.",
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ],
   "judge_reads_files": true,
   "execution": {

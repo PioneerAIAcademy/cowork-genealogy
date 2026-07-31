@@ -24,11 +24,16 @@ identical to it so `snapshot --check` can audit upstream drift.
 
 ## Expected difficulty
 
-medium — see "Notes for reviewers" below for the reviewer's read on
-match strength.
+medium — a confirmed true match (spouse + son); see "Notes for reviewers"
+below for the corroboration that decided it.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 17, flags `adds_spouse`/`adds_son`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — France, Nord, Parish and Civil Registration, 1524-1893: death registration, 8 September 1809, Pecquencourt, for Julien Désobri (infant), naming parents Pierre Henri Désobri and Clemence Sauselle. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming Clemence Sauselle as the subject's wife, plus a `required` finding that the report documents the rejection.
+**Resolved (issue #867): TRUE MATCH.** The hint — France, Nord, Parish and Civil Registration, 1524-1893: death registration, 8 September 1809, Pecquencourt, for the infant Julien Désobri, naming parents Pierre Henri Désobri and Clémence Sauselle — establishes **both** findings: Clémence was the wife of Pierre Henri Désobry (`L6L3-BB8`), and Julien was their son, who died in infancy in 1809 at Pecquencourt.
 
-Points a reviewer should weigh: a son born 1808 and dying 1809 fits neatly between the tree's Philibert (b. 1800) and Jean Baptiste Aimé (b. 1813), and the parish (Pecquencourt) matches every other record for this family exactly. The tree oddly carries **two conflicting baptismal facts** for Pierre Henri Désobry himself (1753 and 1774, a 21-year gap, possibly two different men already conflated in the starting tree — a pre-existing tree data-quality issue, not something this fixture introduces or resolves), which should make a reviewer cautious about how reliable the existing tree profile is before trusting a new spouse/child hint against it. This is the family's first recorded spouse in the tree.
+What confirmed it:
+- **The wife, across a five-record cluster.** Clémence is recorded with surname variants **Lancelle / Sauselle / Sanselle — all the same woman** — and five records converge to confirm her as Pierre Henri's wife. This is the family's first recorded spouse in the tree.
+- **Julien is a genuine son.** The 8 September 1809 Pecquencourt death registration of the infant Julien names both parents (Pierre Henri Désobri + Clémence); his 1808 birth / 1809 death fits neatly between the tree's Philibert (b. 1800) and Jean Baptiste Aimé (b. 1813), in the same parish, with no chronological strain.
+- **The couple identity holds despite the tree's conflation.** Pierre Henri's profile carries two conflicting baptismal facts (1753 and 1774, a 21-year gap — possibly two men already conflated in the starting tree, a pre-existing data-quality issue this fixture neither introduces nor resolves). The record cluster nonetheless links the child-bearing Pierre Henri (children 1800–1813) to Clémence consistently, so the 1809 Julien belongs to that same couple, not a namesake.
+
+Accordingly `expected-findings.json` keeps both original findings: f1 (wife Clémence Sauselle) and f2 (son Julien, b. 1808, d. 7 Sep 1809, Pecquencourt).

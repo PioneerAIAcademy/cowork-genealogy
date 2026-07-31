@@ -212,10 +212,15 @@ def rule2_active(skill: str, log: dict, filename: str) -> int:
     because a senior applied the `eval-cosmetic-skip` label on this PR), a
     snapshot mismatch is downgraded to a warning instead of a block — the
     prior run log + its already-complete annotations stand without a re-run.
-    The label is auto-removed on every new push (see check-runlogs.yml), so
-    the bypass can never outlive the commit it was approved for. Only rule 2
-    is relaxed: rules 1 and 3 still run, so an unannotated baseline can't be
-    waved through.
+    The bypass can never outlive the commit it was approved for: on a new push
+    the workflow sets COSMETIC_SKIP=0 from the event itself, without consulting
+    the label, so a senior must re-apply after every push. (Until 2026-07-31
+    that was enforced by the workflow deleting the label and re-reading it,
+    which silently did nothing on a fork PR's read-only token — see the header
+    comment in check-runlogs.yml. The label is still removed, by
+    cosmetic-skip-strip.yml, but only so the PR's UI matches; nothing here
+    depends on it.) Only rule 2 is relaxed: rules 1 and 3 still run, so an
+    unannotated baseline can't be waved through.
     """
     snapshot = log.get("snapshot") or {}
     diffs = diff_snapshot_vs_disk(snapshot, REPO_ROOT)

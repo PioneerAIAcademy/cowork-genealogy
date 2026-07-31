@@ -44,10 +44,21 @@ name: project-status-sync
 # when this shipped. The fix for that is `Closes #N` in the PR body, not a
 # looser matcher here.
 #
-# TRIGGER CHOICE: `pull_request`, not `pull_request_target` — same reasoning
-# as labeler.yml. Every branch lives in this repo (0 of the last 30 PRs were
-# cross-repository). A fork PR would fail this job red on the project write,
-# which is the loud failure we want; switch then, and only then.
+# TRIGGER CHOICE: `pull_request_target`, switched from `pull_request` on
+# 2026-07-31 when we started taking PRs from developers who have no write
+# access to this repo and therefore contribute from forks. GitHub passes NO
+# secrets to a fork PR under `pull_request`, so the App-token step below would
+# fail on an empty `PROJECT_APP_ID` before a single board read happened —
+# failing this job red on every outside contribution. Unlike
+# genealogist-queue.yml there is no cron sweep here, so the card would then
+# simply never move until someone ran the dispatch by hand.
+#
+# Safe here for the same two reasons as labeler.yml: no `actions/checkout` and
+# no `run:` step, just one inline `actions/github-script`, so nothing
+# fork-authored executes; and the script is read from the base branch. Adding a
+# checkout of PR content would turn this into a pwn-request vector, and the
+# blast radius here is worse than usual — the App token in scope is
+# org-scoped with Projects: Read and write.
 #
 # TWO TOKENS, ON PURPOSE. The App minted below (see add-to-project.yml for the
 # one-time setup) holds Organization > Projects: Read and write, which is the
@@ -59,7 +70,7 @@ name: project-status-sync
 # read, grant GITHUB_TOKEN the permission below — not the App.
 
 on:
-  pull_request:
+  pull_request_target:
     # `edited` is not noise: it is the event that fires when someone adds
     # "Closes #123" to an existing PR body, which is how most links here are
     # created. `converted_to_draft` walks a card back from Review.
@@ -95,13 +106,13 @@ jobs:
         # `owner:` is what makes the token carry the installation's
         # ORGANIZATION permissions, where Projects: Read and write lives.
         # Without it the token is repo-scoped and every project mutation 403s.
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.PROJECT_APP_ID }}
           private-key: ${{ secrets.PROJECT_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@v9
         env:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}

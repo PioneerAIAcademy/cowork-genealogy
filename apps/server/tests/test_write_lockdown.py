@@ -1,5 +1,5 @@
 """Raw Write/Edit must not reach research.json / tree.gedcomx.json — issue #940,
-`docs/plan/research-guardrail-bypass-plan.md` §4.3.
+`docs/specs/guardrail-enforcement-spec.md` §6.
 
 Every write to the two project files has to go through the MCP writer tools,
 which validate before persisting. That rule was prose plus, in the e2e harness,
