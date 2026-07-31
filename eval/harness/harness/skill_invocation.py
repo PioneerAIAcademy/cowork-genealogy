@@ -399,6 +399,76 @@ def find_missing_mentor_verdicts(research: dict[str, Any] | None) -> list[str]:
     ]
 
 
+def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
+    """Every record/tree id a SUCCESSFUL `same_person` call has scored so far
+    (its `primaryId1`/`primaryId2` args). When one side of a call is the tree,
+    that side's `primaryId` equals the tree `person_id` (see
+    `find_person_evidence_missing_same_person` for the confirmed-live basis of
+    that equality), so this doubles as "which tree persons have been scored."
+    Errored calls don't count — the plan's success-gating (§4.1)."""
+    scored: set[str] = set()
+    for entry in tool_calls:
+        if entry.get("is_error") is True:
+            continue
+        if bare_tool_name(entry.get("tool", "")) != "same_person":
+            continue
+        args = entry.get("args") or {}
+        for key in ("primaryId1", "primaryId2"):
+            v = args.get(key)
+            if isinstance(v, str):
+                scored.add(v)
+    return scored
+
+
+def _person_id_from_pe_op(op: dict[str, Any]) -> str | None:
+    """The tree `person_id` a `person_evidence` append op links. The shape in
+    committed runlogs is `{section: 'person_evidence', op: 'append',
+    entry: {person_id: ...}}`; also tolerate a `fields`/flat shape."""
+    for container in ("entry", "fields"):
+        c = op.get(container)
+        if isinstance(c, dict) and isinstance(c.get("person_id"), str):
+            return c["person_id"]
+    return op.get("person_id") if isinstance(op.get("person_id"), str) else None
+
+
+def unguarded_new_person_evidence_links(
+    tool: str,
+    args: dict[str, Any] | None,
+    *,
+    scored_ids: set[str],
+    starting_ids: set[str],
+) -> list[str]:
+    """Pre-write check (issue #963, plan §4.1/§9): the NEW tree person id(s)
+    this pending `research_append` would link via `person_evidence` that have
+    NOT been scored by `same_person` yet. Empty => allow the write.
+
+    Scoped exactly like `find_person_evidence_missing_same_person`, so the
+    deny fires only where that post-run hard-fail already would — no NEW
+    false-positive class:
+    - a person id already in the starting (seed) tree is never flagged
+      (linking an assertion to a pre-existing person isn't a new identity);
+    - a person id already scored by a prior successful `same_person` passes.
+
+    Fact-based, no proximity window (unlike `find_unguarded_protected_writes`)
+    — `same_person` is a required tool call, so "was it called for this
+    person" is a fact, which is why the plan (§9) never gave it a shadow
+    period. Returns ids in first-seen order, de-duped."""
+    args = args or {}
+    if bare_tool_name(tool) != "research_append":
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for op in _iter_ops(args):
+        if op.get("section") != "person_evidence":
+            continue
+        pid = _person_id_from_pe_op(op)
+        if not pid or pid in starting_ids or pid in scored_ids or pid in seen:
+            continue
+        seen.add(pid)
+        out.append(pid)
+    return out
+
+
 def find_person_evidence_missing_same_person(
     tool_calls: list[dict[str, Any]],
     research: dict[str, Any] | None,
@@ -458,17 +528,7 @@ def find_person_evidence_missing_same_person(
     if not linked_new_person_ids:
         return []
 
-    scored_ids: set[str] = set()
-    for entry in tool_calls:
-        if entry.get("is_error") is True:
-            continue
-        if bare_tool_name(entry.get("tool", "")) != "same_person":
-            continue
-        args = entry.get("args") or {}
-        for key in ("primaryId1", "primaryId2"):
-            v = args.get(key)
-            if isinstance(v, str):
-                scored_ids.add(v)
+    scored_ids = same_person_scored_ids(tool_calls)
 
     missing = sorted(pid for pid in linked_new_person_ids if pid not in scored_ids)
     return [

@@ -46,6 +46,8 @@ from harness.skill_invocation import (
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
     find_unguarded_protected_writes,
+    same_person_scored_ids,
+    unguarded_new_person_evidence_links,
 )
 
 from e2e.result import E2eResult, timestamp_slug, write_result_files
@@ -567,6 +569,18 @@ async def _run_agent(
     tool_calls: list[dict[str, Any]] = []
     transcript: list[str] = []
     pending_tool_uses: dict[str, dict[str, Any]] = {}
+    # Seed-tree person ids, read once from the IMMUTABLE fixture file (not the
+    # workspace copy the run mutates). The issue #963 same_person-provenance
+    # deny (in pretool_hook) uses this to flag only persons that are NEW this
+    # run — a person_evidence link to a pre-existing seed person is not a new
+    # identity and never needs scoring. See skill_invocation.
+    try:
+        _seed_tree = json.loads(fixture.starting_tree_path.read_text(encoding="utf-8"))
+        starting_person_ids: set[str] = {
+            p.get("id") for p in _seed_tree.get("persons", []) if isinstance(p, dict)
+        }
+    except (OSError, json.JSONDecodeError):
+        starting_person_ids = set()
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
@@ -735,6 +749,46 @@ async def _run_agent(
                     ),
                 },
             }
+
+        # docs/plan/research-guardrail-bypass-plan.md §4.1/§9, issue #963 — a
+        # person_evidence link for a BRAND-NEW tree person must be preceded by
+        # a same_person call scoring that identity. Unlike §4.1's windowed
+        # conflict/proof/exhaustiveness checks (still shadow-mode, issue #911),
+        # same_person is a REQUIRED tool call, not a proximity heuristic:
+        # "was it called for this person" is a fact, not a window judgment, so
+        # this graduates straight to a hard deny — the same reasoning that
+        # wired find_person_evidence_missing_same_person into the post-run
+        # hard-fail (§9). The deny fires only where that post-run gate already
+        # would (new, unscored persons; seed persons excluded), so it adds no
+        # new false-positive class — it just converts a silent end-of-run
+        # failure into an in-run nudge to call same_person first.
+        if bare == "research_append":
+            unguarded = unguarded_new_person_evidence_links(
+                tool_name,
+                input_data.get("tool_input") or {},
+                scored_ids=same_person_scored_ids(tool_calls),
+                starting_ids=starting_person_ids,
+            )
+            if unguarded:
+                ids = ", ".join(unguarded)
+                transcript.append(
+                    f"\n**[BLOCKED]** person_evidence link for new person(s) "
+                    f"{ids} denied — score the identity with `same_person` first.\n"
+                )
+                _emit(f"[blocked person_evidence w/o same_person] {ids}")
+                return {
+                    "hookSpecificOutput": {
+                        "hookEventName": "PreToolUse",
+                        "permissionDecision": "deny",
+                        "permissionDecisionReason": (
+                            f"Cannot write a person_evidence link for new tree "
+                            f"person(s) {ids}: a brand-new identity must be scored "
+                            "with same_person before it is asserted. Call same_person "
+                            "for the identity first, then write the person_evidence "
+                            "entry (research/SKILL.md doctrine; issue #963)."
+                        ),
+                    },
+                }
 
         tool_call_count["n"] += 1
         if tool_call_count["n"] > fixture.caps.tool_calls:

@@ -15,7 +15,9 @@ from harness.skill_invocation import (
     find_unguarded_protected_writes,
     owning_skills,
     recently_succeeded,
+    same_person_scored_ids,
     skill_name_if_skill_call,
+    unguarded_new_person_evidence_links,
 )
 
 
@@ -537,3 +539,95 @@ def test_no_starting_tree_treats_every_current_person_as_new():
 def test_empty_tree_and_research_have_no_violations():
     assert find_person_evidence_missing_same_person([], {}, {}) == []
     assert find_person_evidence_missing_same_person([], None, None) == []
+
+
+# --- same_person_scored_ids --------------------------------------------------
+
+
+def test_scored_ids_collects_both_primary_id_sides():
+    calls = [_same_person_call(primary_id1="I1", primary_id2="p_999")]
+    assert same_person_scored_ids(calls) == {"I1", "p_999"}
+
+
+def test_scored_ids_ignores_errored_calls():
+    calls = [_same_person_call(primary_id1="I1", primary_id2="p_999", is_error=True)]
+    assert same_person_scored_ids(calls) == set()
+
+
+def test_scored_ids_ignores_non_same_person_tools():
+    calls = [_mcp_call("research_append", {"section": "person_evidence", "entry": {"person_id": "I1"}})]
+    assert same_person_scored_ids(calls) == set()
+
+
+# --- unguarded_new_person_evidence_links (issue #963 pre-write deny) ----------
+
+
+def _pe_append(person_id):
+    return {"section": "person_evidence", "op": "append", "entry": {"person_id": person_id}}
+
+
+def test_pending_pe_link_for_new_unscored_person_is_flagged():
+    args = _pe_append("I1")
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids=set()
+    )
+    assert out == ["I1"]
+
+
+def test_pending_pe_link_allowed_when_already_scored():
+    args = _pe_append("I1")
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids={"I1"}, starting_ids=set()
+    )
+    assert out == []
+
+
+def test_pending_pe_link_to_a_seed_person_is_never_flagged():
+    """Linking an assertion to a pre-existing (seed) tree person is not a new
+    identity, so it needs no same_person scoring."""
+    args = _pe_append("L6L3-BB8")
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids={"L6L3-BB8"}
+    )
+    assert out == []
+
+
+def test_pending_batch_flags_only_the_new_unscored_persons():
+    args = {
+        "ops": [
+            _pe_append("I1"),          # new, unscored -> flag
+            _pe_append("I2"),          # new, scored   -> allow
+            _pe_append("L6L3-BB8"),   # seed          -> allow
+        ]
+    }
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        args,
+        scored_ids={"I2"},
+        starting_ids={"L6L3-BB8"},
+    )
+    assert out == ["I1"]
+
+
+def test_non_person_evidence_write_is_not_flagged():
+    args = {"section": "proof_summaries", "op": "append", "entry": {"id": "ps_001"}}
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids=set()
+    )
+    assert out == []
+
+
+def test_non_research_append_tool_is_not_flagged():
+    args = _pe_append("I1")
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__materialize_facts", args, scored_ids=set(), starting_ids=set()
+    )
+    assert out == []
+
+
+def test_pending_pe_link_deduped_when_same_new_person_appears_twice():
+    args = {"ops": [_pe_append("I1"), _pe_append("I1")]}
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids=set()
+    )
+    assert out == ["I1"]
