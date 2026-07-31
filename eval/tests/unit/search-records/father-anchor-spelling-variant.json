@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_search_records_q7f",
+    "skill": "search-records",
+    "name": "Retry a relative-anchor's given name with a spelling variant instead of concluding the anchor field doesn't work",
+    "type": "positive",
+    "description": "Modeled on the real manoel-oliveira-daughter e2e run: a plain given-name search for the subject (not yet in the tree) returns too many undifferentiated results, so the skill anchors on her father's distinctive given name instead. The exact-spelling anchor search ('Melquiades', the tree's modern spelling) returns zero results because the real index uses a period-accurate spelling ('Melchiades'). The skill must retry the anchor's given name with a spelling variant, not conclude that relative-anchor fields (fatherGivenName/motherGivenName) simply don't work as filters. The live run drew exactly that wrong conclusion and never found the record.",
+    "tags": ["search", "marriage", "name-variation", "given-name", "brazil", "relative-anchor", "regression"]
+  },
+
+  "input": {
+    "user_message": "Execute plan item pli_002 — the plain given-name search for Josefa returned too many undifferentiated results (log_001, 84 matches, no parent names visible). Search FamilySearch's Brazil, Rio Grande do Norte marriage collections using her father Manoel Melquiades de Oliveira's (GHJ6-2WV) distinctive given name as a search anchor, since Josefa is not yet in the tree and can't be searched as a ranked principal.",
+    "scenario": "josefa-oliveira-father-anchor-search",
+    "scenario_notes": null
+  },
+
+  "mcp_fixtures": [
+    "record-search-melquiades-anchor-zero-results",
+    "record-search-melchiades-anchor-marriage-match",
+    "record-search-josefa-broad-undifferentiated"
+  ],
+
+  "judge_context": [
+    "Ground truth: the real 1926 marriage record indexes the father's given name as 'Melchiades' — a period-accurate spelling differing from the tree's modernized 'Melquiades'. Searching fatherGivenName 'Melchiades' (or another letter-level variant) surfaces the real record naming the subject's parents.",
+    "The fixture 'record-search-melquiades-anchor-zero-results' fires on any record_search call whose fatherGivenName contains 'Melquiades' and always returns zero results, no matter how other fields (surname, country, subdivision, record type) are varied. The fixture 'record-search-melchiades-anchor-marriage-match' fires on any other fatherGivenName paired with fatherSurname 'Oliveira' and returns the positive match. This means the ONLY way to recover the record is to change the spelling of the father's given name itself (e.g. Melquiades -> Melchiades, Melquiadis) — reshuffling which field holds 'Melquiades', dropping the surname, or dropping the country/subdivision filters will keep re-triggering the zero-result fixture.",
+    "CRITICAL for Correctness: score 1 if the skill runs one or more fatherGivenName 'Melquiades' searches, gets zero results, and concludes (or effectively treats it as established) that relative-anchor fields like fatherGivenName/motherGivenName aren't useful filters for this collection — abandoning the anchor approach or escalating to another repository/record type — without ever trying a spelling variant of the father's given name. This is precisely the failure mode from the real live manoel-oliveira-daughter e2e run (see eval/runlogs/e2e/manoel-oliveira-daughter/run-2026-07-30_20-51-24.transcript.md).",
+    "Score 3 if the skill retries with at least one record_search call whose fatherGivenName is a letter-level spelling variant of 'Melquiades' (Melchiades, Melquiadis, etc.) after the first exact-spelling anchor call returns zero results, and recovers the positive match naming Josefa Dias Da Conceição, Elfridio Justino Da Silva, and her parents. Score 2 if it eventually stumbles onto the positive match (e.g. by dropping the fatherGivenName filter entirely and eyeballing an unfiltered or broad-surname-only dump) without ever deliberately trying a spelling variant of the father's name.",
+    "Tool Arguments: expect at least two record_search calls anchored on the father's given name — one with fatherGivenName 'Melquiades' (zero results) and at least one call whose fatherGivenName is a different, letter-level spelling (e.g. contains 'ch') that recovers the positive match.",
+    "Log quality: research_log_append entries should record both the negative (exact-spelling anchor) and positive (variant-spelling anchor) queries as distinct log entries, not overwrite or omit the negative one.",
+    "It is acceptable for the skill to also try other approaches in parallel or in sequence (full-text search, dropping the anchor for a principal-only search, escalating to civil registration) — that is good practice. What must NOT happen is treating a single zero-result search on the exact tree-spelling of a relative-anchor field as proof that the field category doesn't work, without ever touching the letters of that name.",
+    "This test isolates the relative-anchor half of the spelling-variant discipline that ut_search_records_022/023 isolate for the search-principal's own given name/surname. Passing 022/023 does not imply passing this test — a skill that only ever varies the principal's own name will fail here, since Josefa (the principal) is not the field that needs varying; her father's name, used as an anchor, is."
+  ]
+}

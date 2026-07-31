@@ -1,0 +1,61 @@
+{
+  "tool": "record_search",
+  "description": "Plain given-name search for 'Josefa' in the Rio Grande do Norte marriage collections, with no father/mother anchor — matches log_001's already-logged result: too many undifferentiated results (84), none of the stubs expose parent names. Safety net in case the skill re-runs this style of search instead of (or in addition to) trying the father-anchor approach; does not by itself demonstrate the corrected behavior. Fires on any record_search call whose givenName contains 'Josefa' and that has no fatherGivenName/fatherSurname set.",
+  "args": {
+    "givenName": "~Josefa"
+  },
+  "response": {
+    "query": {
+      "givenName": "Josefa",
+      "recordCountry": "Brazil",
+      "recordSubdivision": "Rio Grande do Norte",
+      "recordType": "marriage"
+    },
+    "totalMatches": 84,
+    "paginationCappedAt": 4999,
+    "returned": 3,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "personId": "p_stub_1",
+        "recordId": "ark:/61903/1:1:STUB-0001",
+        "personName": "Josefa Maria da Silva",
+        "score": 0.9,
+        "sex": "Female",
+        "events": [{ "type": "Marriage", "date": "1928", "place": "Mossoró, Rio Grande do Norte, Brasil" }],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:STUB-0001",
+        "collectionId": "2177294",
+        "collectionTitle": "Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019",
+        "recordTitle": "Entry for Josefa Maria da Silva, 1928",
+        "treeMatches": []
+      },
+      {
+        "personId": "p_stub_2",
+        "recordId": "ark:/61903/1:1:STUB-0002",
+        "personName": "Josefa Alves de Souza",
+        "score": 0.85,
+        "sex": "Female",
+        "events": [{ "type": "Marriage", "date": "1922", "place": "Caicó, Rio Grande do Norte, Brasil" }],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:STUB-0002",
+        "collectionId": "2177294",
+        "collectionTitle": "Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019",
+        "recordTitle": "Entry for Josefa Alves de Souza, 1922",
+        "treeMatches": []
+      },
+      {
+        "personId": "p_stub_3",
+        "recordId": "ark:/61903/1:1:STUB-0003",
+        "personName": "Josefa Bezerra Lima",
+        "score": 0.81,
+        "sex": "Female",
+        "events": [{ "type": "Marriage", "date": "1925", "place": "Natal, Rio Grande do Norte, Brasil" }],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:STUB-0003",
+        "collectionId": "2177294",
+        "collectionTitle": "Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019",
+        "recordTitle": "Entry for Josefa Bezerra Lima, 1925",
+        "treeMatches": []
+      }
+    ]
+  }
+}

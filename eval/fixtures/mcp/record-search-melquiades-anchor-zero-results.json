@@ -1,0 +1,22 @@
+{
+  "tool": "record_search",
+  "description": "Brazil, Rio Grande do Norte marriage collections searched using the father's given name, under the tree's exact modern spelling 'Melquiades', as an anchor — zero results, because the real 1926 marriage-register index spells his given name 'Melchiades' (period-accurate orthography). Used to force a search-records retry-with-spelling-variant decision on a relative-anchor field, not just the search principal. Fires on any record_search call whose fatherGivenName contains 'Melquiades'.",
+  "args": {
+    "fatherGivenName": "~Melquiades"
+  },
+  "response": {
+    "query": {
+      "fatherGivenName": "Melquiades",
+      "fatherSurname": "Oliveira",
+      "recordCountry": "Brazil",
+      "recordSubdivision": "Rio Grande do Norte",
+      "recordType": "marriage"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 4999,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

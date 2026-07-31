@@ -1,0 +1,90 @@
+{
+  "project": {
+    "id": "rp_josefa_oliveira_daughter",
+    "objective": "Did Manoel Melquiades de Oliveira and his wife Cândida Damasceno de Oliveira of Rio Grande do Norte, Brazil have a daughter named Josefa, married circa 1926, in addition to their other known children?",
+    "subject_person_ids": ["GHJ6-2WV"],
+    "status": "active",
+    "created": "2026-07-30",
+    "updated": "2026-07-30"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Manoel Melquiades de Oliveira (GHJ6-2WV) and Cândida Damasceno de Oliveira (GHJ6-L4F) have a daughter named Josefa, married circa 1926 in Rio Grande do Norte, Brazil?",
+      "rationale": "A hint suggests an additional daughter, Josefa, married circa 1926. Josefa is not yet a tree person, so she can't be searched as a ranked principal — a plain given-name search returns too many undifferentiated results (log_001).",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-30",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-30",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Brazil, Rio Grande do Norte",
+          "date_range": "1900-1930",
+          "repository": "FamilySearch",
+          "rationale": "Plain given-name search for a marriage of Josefa in the Rio Grande do Norte civil registration and Catholic church record collections.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Brazil, Rio Grande do Norte",
+          "date_range": "1900-1930",
+          "repository": "FamilySearch",
+          "rationale": "The plain given-name search returned too many undifferentiated results (log_001) with no parent names visible in the stubs. Re-run the same collections using the father's distinctive given name, Manoel Melquiades de Oliveira (GHJ6-2WV), as a search anchor to disambiguate.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T20:07:00Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Josefa",
+        "recordCountry": "Brazil",
+        "recordSubdivision": "Rio Grande do Norte",
+        "recordType": "marriage"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "results_available": 84,
+      "notes": "84 results for a plain 'Josefa' marriage search in Rio Grande do Norte — too many to disambiguate. None of the returned stubs expose parent names, so this search alone can't confirm or rule out a match. Need a more distinctive anchor.",
+      "external_site": null
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

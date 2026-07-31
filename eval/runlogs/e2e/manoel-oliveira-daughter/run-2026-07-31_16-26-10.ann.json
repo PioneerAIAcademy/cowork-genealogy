@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Correct person (Josefa Dias Da Conceição) was identified, researched, and extracted into research.json (46 assertions, person_evidence links written) via the correct 'Melchiades' spelling variant — the search-records fix worked. But the tree was never updated with the actual relationships: Josefa exists as a disconnected person with no ParentChild link to the parents and no Couple/Marriage link to Elfridio (who isn't even a tree person). The relationship claim itself is entirely unencoded, so this is not even a partial recovery of f1 as a tree finding.",
+    "f2": "No Marriage fact exists in the tree at all. Separately, the record this run actually cited (ark:.../6XWH-BNG7) gives the marriage date as 15 December 1924, a different FamilySearch index entry than the original hint record (ark:.../6XWC-328L, 12 March 1926) — a genuine, unresolved date discrepancy between two index entries naming the same bride, groom, and both sets of parents."
+  },
+  "annotator": "Ikennaya1"
+}
