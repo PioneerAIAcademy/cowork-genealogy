@@ -646,8 +646,14 @@ export async function recordSearchTool(
   // present in the same tree. Computing the alternatives is date arithmetic over
   // places the tree already holds, so the tool does it instead of asking.
   //
-  // Deliberately fires only on a NIL result: a search that returned candidates
-  // needs no redirection, and firing on every marriage search would be noise.
+  // Fires on a search that did not find the subject here — either literally no
+  // hits, or hits that ranking judged to hold no match (`subjectResolvable`
+  // false, which the ranker sets only for a scoreable subject against a pool
+  // that genuinely lacks one — a real negative worth acting on). Nil-only was
+  // too narrow to be useful: in the verification run it fired once, at 121 of
+  // 180 minutes, with almost no budget left to act on. A search that returned
+  // rows but matched nobody is an equally good moment to offer the alternative.
+  //
   // Strictly best-effort and advisory — a tree that cannot be read leaves the
   // search untouched, exactly like the ranking block.
   const isMarriageSearch =
@@ -656,29 +662,34 @@ export async function recordSearchTool(
     input.marriageYearFrom !== undefined ||
     input.marriageYearTo !== undefined;
 
-  if (
-    isMarriageSearch &&
-    out.totalMatches === 0 &&
-    input.subjectId &&
-    input.projectPath
-  ) {
+  const foundNobody =
+    out.totalMatches === 0 || out.ranked?.subjectResolvable === false;
+
+  if (isMarriageSearch && foundNobody && input.subjectId && input.projectPath) {
     try {
       const tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
-      const candidates = marriageJurisdictionCandidates(
-        tree,
-        input.subjectId,
-        input.marriagePlace,
-      );
+      const candidates = marriageJurisdictionCandidates(tree, input.subjectId, {
+        searchedPlace: input.marriagePlace,
+        marriageYearFrom: input.marriageYearFrom,
+        marriageYearTo: input.marriageYearTo,
+      });
       if (candidates.length > 0) {
         out.jurisdictionHints = {
           searchedPlace: input.marriagePlace,
           candidates,
           note:
-            "This marriage search returned nothing in the place searched. A marriage is " +
-            "filed where the wedding happened, not where the couple later lived, and a " +
-            "couple usually married BEFORE they migrated. These are the other places " +
-            "either spouse is known to have been, earliest first — try them before " +
-            "concluding no marriage record exists.",
+            "This marriage search did not find the subject in the place searched. A " +
+            "marriage is filed where the wedding happened, not where the couple later " +
+            "lived, and a couple usually married BEFORE they migrated. Listed below are " +
+            "other places these people are on record as having been, ordered by how " +
+            "close they sit to this search's date window — most recent BEFORE the " +
+            "window first, since that is the best guess for where they were when they " +
+            "married; places dated after the window come last. Search these before " +
+            "concluding no marriage record exists. " +
+            "These are places to LOOK, not evidence of anything: a jurisdiction " +
+            "appearing here is not a reason to attach a person found there. Each entry " +
+            "says whose fact it came from and when, because a place contributed by a " +
+            "spouse from a much later marriage may have no bearing on this one.",
         };
       }
     } catch {

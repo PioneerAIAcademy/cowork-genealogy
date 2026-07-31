@@ -10,18 +10,38 @@ import { earliestYear } from "./date-helpers.js";
  * Candidate jurisdictions for a marriage search, derived from the tree.
  *
  * A marriage is filed where the wedding happened, not where the couple later
- * lived — and marriage usually *precedes* migration. So when a marriage search
- * has been scoped to one place, every other place either spouse is known to
- * have been is a candidate, earliest first.
+ * lived. So when a marriage search comes back empty in one place, the other
+ * places these people are known to have been are worth trying.
  *
  * This exists because the alternative is asking the model to remember it on
- * every search, which it does not do reliably: across four scored runs of the
- * `jimmie-jewel-neal` benchmark, every marriage search was anchored to the
- * family's *later* residence (Hill County, Texas) because that is where the
- * tree's own marriage fact pointed, while the record that answers the question
- * sits in the husband's birth state (Arkansas) — a fact already present in the
- * same tree. Choosing which jurisdictions to try is date arithmetic over places
- * the tree already holds, so the tool can just do it.
+ * every search, which it does not do: across four scored runs of the
+ * `jimmie-jewel-neal` benchmark every marriage search stayed in the family's
+ * later residence — the jurisdiction the tree's own marriage fact named — while
+ * the answering record sat in the husband's birth state, a fact already present
+ * in the same tree.
+ *
+ * ## Ordering, and why it is not "earliest first"
+ *
+ * The first version of this ranked candidates by absolute earliest year. That is
+ * wrong, and measurably harmful: it ranked the subject's THIRD husband's 1847
+ * birthplace above the relevant husband's 1857 one, because 1847 is simply
+ * smaller. In the verification run the agent followed that top candidate — nine
+ * searches scoped to it against one for the jurisdiction that mattered — and
+ * ended up minting two wrong parents there. A run *without* this hint had
+ * correctly declined to name parents at all, so the bad ordering turned a
+ * cautious run into an over-claiming one.
+ *
+ * What actually discriminates is **distance from the marriage's own date
+ * window**. The last place someone is known to have lived *before* a wedding is
+ * a good guess for where they married; a place they were twenty years earlier,
+ * or forty years later, is not. So:
+ *
+ *   1. places dated at or before the window, most recent first
+ *   2. undated places
+ *   3. places dated after the window — they say nothing about the wedding
+ *
+ * With no window in the search arguments there is no proximity signal, and the
+ * function falls back to earliest-first over the whole set.
  */
 export interface JurisdictionCandidate {
   /** The place as written on the fact (`standard_place` preferred). */
@@ -34,30 +54,57 @@ export interface JurisdictionCandidate {
   fromFact: string;
 }
 
+/** What the calling search knew, used for exclusion and ranking. */
+export interface MarriageSearchContext {
+  /** `marriagePlace` as the caller spelled it — excluded from the results. */
+  searchedPlace?: string;
+  marriageYearFrom?: number;
+  marriageYearTo?: number;
+}
+
 /** The subset of a simplified-GedcomX tree this reads. */
 interface TreeLike {
   persons?: SimplifiedPerson[];
   relationships?: SimplifiedRelationship[];
 }
 
-/** Case- and whitespace-insensitive place key, so "  hill, TEXAS " matches. */
-function placeKey(place: string): string {
-  return place.trim().toLowerCase().replace(/\s+/g, " ");
+/**
+ * Comparable tokens for a place string, so differently-spelled forms of one
+ * jurisdiction match. `"Hill County, Texas"` and `"Hill, Texas, United States"`
+ * both reduce to `["hill","texas"]`.
+ *
+ * Necessary because the caller spells places however FamilySearch's search
+ * expects, while the tree stores standardized forms — and an exact-string
+ * comparison let the place just searched reappear as its own alternative.
+ */
+function placeTokens(place: string): string[] {
+  const DROP = new Set(["county", "co", "united states", "usa", "us", ""]);
+  return place
+    .toLowerCase()
+    .split(",")
+    .map((part) => part.trim().replace(/\s+/g, " "))
+    .map((part) => part.replace(/\bcounty\b|\bco\.?\b/g, "").trim())
+    .filter((part) => !DROP.has(part));
 }
 
 /**
- * Other jurisdictions worth searching for this subject's marriage, earliest
- * first. Undated places sort last — they are still worth trying, just with no
- * evidence they precede anything.
- *
- * Never throws: a malformed tree, an unknown `subjectId`, or a spouse missing
- * from `persons` all yield `[]`. This runs inside a search response, so a bad
- * tree must not turn a successful search into an error.
+ * True when two place strings denote the same jurisdiction, or one contains the
+ * other. Containment counts in both directions: searching a whole state should
+ * suppress its counties, and searching a county should suppress the bare state
+ * form of the same place.
  */
+function samePlace(a: string, b: string): boolean {
+  const ta = placeTokens(a);
+  const tb = placeTokens(b);
+  if (ta.length === 0 || tb.length === 0) return false;
+  const [shorter, longer] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+  return shorter.every((token) => longer.includes(token));
+}
+
 export function marriageJurisdictionCandidates(
   tree: TreeLike,
   subjectId: string,
-  searchedPlace: string | undefined,
+  context: MarriageSearchContext,
 ): JurisdictionCandidate[] {
   if (!tree || typeof tree !== "object") return [];
 
@@ -69,8 +116,8 @@ export function marriageJurisdictionCandidates(
     ? tree.relationships
     : [];
 
-  // Spouses, plus the couple's own facts (a Marriage fact names a jurisdiction
-  // in its own right, and is often the earliest dated place the couple share).
+  // Spouses, plus the couple's own facts — a Marriage fact names a jurisdiction
+  // in its own right.
   const spouseIds = new Set<string>();
   const coupleFacts: SimplifiedFact[] = [];
   for (const rel of relationships) {
@@ -82,9 +129,10 @@ export function marriageJurisdictionCandidates(
     for (const fact of rel.facts ?? []) coupleFacts.push(fact);
   }
 
-  // Both spouses contribute. Looking only at the subject is the specific way
-  // this goes wrong: the decisive place is frequently the *other* spouse's
-  // birthplace, which the subject's own facts never mention.
+  // Every spouse contributes. Filtering to "the spouse in this marriage" is not
+  // possible in practice: the search that exposed the ordering bug named no
+  // spouse at all, only the subject plus a year range. Ranking, not exclusion,
+  // is what keeps an irrelevant spouse's places out of the way.
   const contributions: Array<{ whose: string; fact: SimplifiedFact }> = [];
   for (const fact of subject.facts ?? [])
     contributions.push({ whose: subjectId, fact });
@@ -96,27 +144,35 @@ export function marriageJurisdictionCandidates(
   for (const fact of coupleFacts)
     contributions.push({ whose: subjectId, fact });
 
-  const searchedKey = searchedPlace ? placeKey(searchedPlace) : null;
+  const windowStart = context.marriageYearFrom ?? context.marriageYearTo;
+  const windowEnd = context.marriageYearTo ?? context.marriageYearFrom;
+  const hasWindow = windowStart !== undefined && windowEnd !== undefined;
+
+  /** Lower sorts earlier. Distance from the window when we have one. */
+  const rankKey = (year: number | null): number => {
+    if (year === null) return Number.POSITIVE_INFINITY;
+    if (!hasWindow) return year;
+    if (year > (windowEnd as number)) {
+      // After the wedding: keep, but behind everything informative.
+      return Number.MAX_SAFE_INTEGER - (windowEnd as number) + year;
+    }
+    return (windowStart as number) - year; // most recent before → smallest
+  };
 
   const byPlace = new Map<string, JurisdictionCandidate>();
   for (const { whose, fact } of contributions) {
     const place = fact?.standard_place || fact?.place;
     if (!place) continue;
-
-    const key = placeKey(place);
-    if (searchedKey && key === searchedKey) continue;
+    if (context.searchedPlace && samePlace(place, context.searchedPlace))
+      continue;
 
     const standardized = getStandardDate(fact);
     const year = standardized ? earliestYear(standardized) : null;
 
+    // Key on tokens so two spellings of one jurisdiction collapse together.
+    const key = placeTokens(place).join("|") || place.toLowerCase();
     const existing = byPlace.get(key);
-    const isEarlier =
-      year !== null &&
-      (existing?.earliestYear === null ||
-        existing === undefined ||
-        year < existing.earliestYear);
-
-    if (!existing || isEarlier) {
+    if (!existing || rankKey(year) < rankKey(existing.earliestYear)) {
       byPlace.set(key, {
         place,
         earliestYear: year,
@@ -126,10 +182,7 @@ export function marriageJurisdictionCandidates(
     }
   }
 
-  return [...byPlace.values()].sort((a, b) => {
-    if (a.earliestYear === null && b.earliestYear === null) return 0;
-    if (a.earliestYear === null) return 1;
-    if (b.earliestYear === null) return -1;
-    return a.earliestYear - b.earliestYear;
-  });
+  return [...byPlace.values()].sort(
+    (a, b) => rankKey(a.earliestYear) - rankKey(b.earliestYear),
+  );
 }

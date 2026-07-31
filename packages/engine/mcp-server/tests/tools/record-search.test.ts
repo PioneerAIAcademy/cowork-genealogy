@@ -913,7 +913,11 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
     expect(places).not.toContain("Hill, Texas, United States");
   });
 
-  it("stays silent when the marriage search actually returned candidates", async () => {
+  // Widened deliberately after the verification run: a nil-only trigger fired
+  // once, at 121 of 180 minutes, far too late to act on. A search that returns
+  // rows but matches nobody is the same situation as a nil search — the subject
+  // is not in this jurisdiction — so it gets the same hint.
+  it("fires when the search returned rows but ranking matched nobody", async () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
     );
@@ -926,8 +930,9 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
       subjectId: "I2",
     });
 
-    // A search that found something needs no redirection.
-    expect(out.jurisdictionHints).toBeUndefined();
+    expect(out.totalMatches).toBe(1);
+    expect(out.ranked?.subjectResolvable).toBe(false);
+    expect(out.jurisdictionHints).toBeDefined();
   });
 
   it("stays silent on a nil search that was not about a marriage", async () => {
