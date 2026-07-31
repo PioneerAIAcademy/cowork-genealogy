@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 19, flag adds_son, confidence 3). Resolved: false match, no findable substitute — the hint record (ARK 1:1:VJRW-GQR) belongs to a different father ('Mátyás Misch'), not this family; no second son named András exists."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 19, flag adds_son, confidence 3). Resolved: true match — the hint record (ARK 1:1:VJRW-GQR/GQY, Hungary Reformed Church Christenings) names father Mátyás Muck and mother Erzsébet Farkas (= Wolf), a second son András baptized 1881, Bikács residence within the Bogyiszló parish."
 }
