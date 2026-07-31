@@ -116,7 +116,6 @@ describe("Project Validator", () => {
                 notes: "Missing decade of records",
               },
             ],
-            impossibilities: [],
           },
         ],
       };
@@ -347,7 +346,6 @@ describe("Project Validator", () => {
               },
             ],
             gaps: [],
-            impossibilities: [],
           },
         ],
       };
@@ -1756,13 +1754,6 @@ describe("Research closed shapes", () => {
               notes: "Missing decade",
             },
           ],
-          impossibilities: [
-            {
-              description: "Birth after own census appearance",
-              event_1_assertion_id: "a_001",
-              event_2_assertion_id: "a_002",
-            },
-          ],
         },
       ],
       proof_summaries: [
@@ -1863,10 +1854,6 @@ describe("Research closed shapes", () => {
     { site: "timelines", plant: (r) => (r.timelines[0].zz_extra = true) },
     { site: "timeline events", plant: (r) => (r.timelines[0].events[0].zz_extra = true) },
     { site: "timeline gaps", plant: (r) => (r.timelines[0].gaps[0].zz_extra = true) },
-    {
-      site: "timeline impossibilities",
-      plant: (r) => (r.timelines[0].impossibilities[0].zz_extra = true),
-    },
     { site: "proof_summaries", plant: (r) => (r.proof_summaries[0].zz_extra = true) },
     { site: "evaluations", plant: (r) => (r.evaluations[0].zz_extra = true) },
     { site: "localities", plant: (r) => (r.localities[0].zz_extra = true) },
@@ -1918,7 +1905,6 @@ describe("Research closed shapes", () => {
       timeline: schema.$defs.timeline,
       timeline_event: schema.$defs.timeline_event,
       timeline_gap: schema.$defs.timeline_gap,
-      timeline_impossibility: schema.$defs.timeline_impossibility,
       proof_summary: schema.$defs.proof_summary,
       evaluation_entry: schema.$defs.evaluation_entry,
       locality: schema.$defs.locality,

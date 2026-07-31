@@ -439,7 +439,7 @@ export const RESEARCH_SHAPES = {
   ]),
   timeline: new Set([
     "id", "label", "person_ids", "hypothesis_id", "generated", "events",
-    "gaps", "impossibilities",
+    "gaps",
   ]),
   timeline_event: new Set([
     "date", "date_certainty", "event_type", "description", "place",
@@ -448,9 +448,6 @@ export const RESEARCH_SHAPES = {
   ]),
   timeline_gap: new Set([
     "start", "end", "expected_events", "severity", "notes",
-  ]),
-  timeline_impossibility: new Set([
-    "description", "event_1_assertion_id", "event_2_assertion_id",
   ]),
   proof_summary: new Set([
     "id", "question_id", "tier", "vehicle", "supporting_assertion_ids",
@@ -880,7 +877,6 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     const tp = `${path}/timelines[${i}]`;
     checkRequired(t, [
       "id", "label", "person_ids", "generated", "events", "gaps",
-      "impossibilities",
     ], tp, report, NULLABLE_FIELDS);
     checkAllowedKeys(t, RESEARCH_SHAPES.timeline, "timelines", tp, report);
     if ("id" in t) {
@@ -911,13 +907,6 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       }
     }
 
-    const impossibilities = Array.isArray(t.impossibilities) ? t.impossibilities : [];
-    for (let j = 0; j < impossibilities.length; j++) {
-      checkAllowedKeys(
-        impossibilities[j], RESEARCH_SHAPES.timeline_impossibility,
-        "timeline impossibilities", `${tp}/impossibilities[${j}]`, report,
-      );
-    }
   }
 
   // Proof summaries
