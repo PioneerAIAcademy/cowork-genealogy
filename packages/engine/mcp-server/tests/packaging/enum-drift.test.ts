@@ -62,6 +62,13 @@ interface ProseDecl {
   values: Set<string>;
 }
 
+/** A line that names a closed enum before ∈ but whose values wouldn't parse. */
+interface UnparsedDecl {
+  relPath: string;
+  enumName: string;
+  lineNo: number;
+}
+
 /**
  * Scan a single file for lines containing `∈` whose left-hand side names
  * a closed enum, then extract the value set from the right-hand side.
@@ -69,11 +76,20 @@ interface ProseDecl {
  * Two prose patterns are handled:
  *   Pattern A (spaced pipes):  `name` ∈ `v1` | `v2` | `v3` (closed set …)
  *   Pattern B (compact pipes): `name` ∈ `v1|v2|v3` ·
+ *
+ * Values are read only out of backtick spans, but the enum *name* match is
+ * plain text — so a declaration written without backticks is recognized as a
+ * declaration and then yields nothing. Appending unparsed lines to `unparsed`
+ * (asserted empty below) is what keeps that from being silent: dropping them
+ * here would make a declaration this scan cannot read indistinguishable from a
+ * file that declares no enum at all. Same reasoning as the discovery-guard
+ * test — a silent no-op reads as coverage.
  */
 function extractDeclarationsFromFile(
   absPath: string,
   relPath: string,
   closedNames: Set<string>,
+  unparsed: UnparsedDecl[],
 ): ProseDecl[] {
   const content = readFileSync(absPath, "utf8");
   const lines = content.split(/\r?\n/);
@@ -136,6 +152,8 @@ function extractDeclarationsFromFile(
 
     if (values.size > 0) {
       decls.push({ relPath, enumName: matchedEnum, lineNo: i + 1, values });
+    } else {
+      unparsed.push({ relPath, enumName: matchedEnum, lineNo: i + 1 });
     }
   }
 
@@ -207,8 +225,11 @@ const closedNames = new Set(canonical.keys());
 
 const allFiles = [...discoverPluginFiles(), ...discoverRubricFiles()];
 const allDecls: ProseDecl[] = [];
+const unparsedDecls: UnparsedDecl[] = [];
 for (const { abs, rel } of allFiles) {
-  allDecls.push(...extractDeclarationsFromFile(abs, rel, closedNames));
+  allDecls.push(
+    ...extractDeclarationsFromFile(abs, rel, closedNames, unparsedDecls),
+  );
 }
 
 // Minimum-coverage registry: these (file, enum) pairs must be present.
@@ -270,6 +291,19 @@ describe("enum-drift lint", () => {
     expect(count("eval/tests/unit/", "/rubric.md"), "rubrics").toBeGreaterThan(
       0,
     );
+  });
+
+  // The EXPECTED registry only protects the two files listed in it. Everywhere
+  // else — the 75 references/ files and the rubrics — a declaration this scan
+  // can't parse would otherwise vanish without a trace, which is exactly the
+  // surface the registry does not cover. Fail on the parse instead of on the
+  // absence, so the author who wrote the line is the one who hears about it.
+  it("every ∈ declaration naming a closed enum parses into values", () => {
+    expect(
+      unparsedDecls.map((d) => `${d.relPath}:${d.lineNo} (${d.enumName})`),
+      "declaration found but no values extracted — write the values in " +
+        "backticks: `v1` | `v2` | `v3`, or `v1|v2|v3`",
+    ).toEqual([]);
   });
 
   describe("expected ∈ declarations are present", () => {
