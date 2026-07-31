@@ -36,21 +36,54 @@ on:
     # moved verbatim into the `scope` step below; what this check does when it
     # applies is unchanged.
 
-# `issues: write` lets the auto-strip step remove the bypass label from the PR.
-# `pull-requests: read` is additionally needed by the `scope` step, and is
-# implied by the `write` already granted here.
+# READ-ONLY, on purpose. Nothing in this job writes any more — the bypass label
+# is stripped by cosmetic-skip-strip.yml, not here. That matters because this is
+# the one PR job that checks out and executes PR-authored Python (the harness
+# scripts at the bottom), so it is the one job that should hold no write token
+# at all. `pull-requests: read` is what the `scope` and `cosmetic` steps need.
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
+  pull-requests: read
 
 # Cosmetic-skip escape hatch (rule 2 only). A senior applies the
 # `eval-cosmetic-skip` label on a PR whose only skill-side change is
 # behavior-neutral (rewording, typo) to keep the prior run log active without
-# a re-run + re-grade. Safety: any NEW commit auto-removes the label (the
-# strip step below runs on `synchronize`), so the bypass can never outlive the
-# commit it was approved for — the senior must re-apply after each push. The
-# label must exist in the repo once: `gh label create eval-cosmetic-skip`.
+# a re-run + re-grade. The label must exist in the repo once:
+# `gh label create eval-cosmetic-skip`.
+#
+# SAFETY PROPERTY: a new commit voids the bypass, so it can never outlive the
+# commit a senior approved it for — they must re-apply after each push.
+#
+# HOW THAT PROPERTY IS ENFORCED, AND WHY IT CHANGED (2026-07-31). It used to be
+# enforced by a write: a step in THIS job removed the label on `synchronize`,
+# and the `cosmetic` step below then re-read the labels API to observe the
+# result. Two problems with that shape, and the second is the one that bit.
+#
+#   1. It is a read-after-write that only holds because both halves sit in one
+#      job — a fragile footing for the property the whole hatch rests on.
+#   2. On a PR from a fork, GitHub hands this workflow a READ-ONLY token no
+#      matter what `permissions:` says. The removal 403s, the `|| true` on it
+#      swallowed the failure, the re-read still saw the label, and rule 2
+#      stayed bypassed across every later push. Green check, no annotation,
+#      and the only output was a warning telling the reviewer to "confirm the
+#      change is behavior-neutral" — the exact claim that had stopped being
+#      true. We started taking PRs from contributors without write access on
+#      2026-07-31, which turned that from theory into a live gap.
+#
+# So the property is now decided from the EVENT, not from the label: on
+# `synchronize`, skip=0 unconditionally. No token needed, so it holds
+# identically on a fork PR and an in-repo branch. Removing the label is now
+# purely cosmetic — it keeps the PR's UI honest so nobody misreads a lapsed
+# label as an active bypass — and lives in cosmetic-skip-strip.yml, which runs
+# on `pull_request_target` and therefore has the write token forks deny this
+# workflow.
+#
+# KNOWN COST of the split: if that companion workflow fails, the label lingers,
+# and a senior "re-applying" it is a no-op — GitHub fires no `labeled` event
+# for a label already present — so the PR sits red with no obvious way forward.
+# Recovery is to remove and re-add the label (that does fire `unlabeled` +
+# `labeled`), or to re-run this job. Loud and recoverable, which is the trade
+# we want against the silent green bypass it replaces.
 jobs:
   # Renamed from `check`: check-e2e-fixtures.yml also had a job named `check`,
   # so with both now running on every PR two distinct contexts would share one
@@ -80,23 +113,24 @@ jobs:
             echo "::notice::No run-log, unit-test, skill, agent, fixture, or harness path changed; reporting success without running the discipline checks."
           fi
 
-      - name: Drop stale cosmetic-skip label on new commits
-        if: steps.scope.outputs.relevant == 'true' && github.event.action == 'synchronize'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr edit "${{ github.event.pull_request.number }}" \
-            --repo "${{ github.repository }}" \
-            --remove-label "eval-cosmetic-skip" || true
-
       - name: Resolve cosmetic-skip state
         if: steps.scope.outputs.relevant == 'true'
         id: cosmetic
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Read labels FRESH (post-strip), not from the event payload, so a
-          # `synchronize` run that just removed the label sees skip=0.
+          # A new commit voids the bypass, decided from the EVENT and without
+          # consulting the labels API at all. Doing it this way needs no write
+          # token, which is what makes the rule hold on a fork PR — see the
+          # header note. Do not "improve" this by reading the label here.
+          if [ "${{ github.event.action }}" = "synchronize" ]; then
+            echo "skip=0" >> "$GITHUB_OUTPUT"
+            echo "::notice::New commit pushed — any eval-cosmetic-skip bypass is void until a senior re-applies the label."
+            exit 0
+          fi
+
+          # Every other event (opened / reopened / labeled / unlabeled) reads
+          # the live label. Reading is available to a fork token too.
           labels=$(gh pr view "${{ github.event.pull_request.number }}" \
             --repo "${{ github.repository }}" --json labels --jq '.labels[].name')
           if echo "$labels" | grep -qx "eval-cosmetic-skip"; then
