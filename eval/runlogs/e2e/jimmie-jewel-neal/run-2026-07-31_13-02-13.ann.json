@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Not recovered, and over-claimed. 'Sampson' appears zero times in the final tree. The run asserted Joseph B Wood (I3, b.~1836 Georgia) as Martha's father and linked him by a ParentChild relationship, declaring the objective answered at probable tier. This is the fixture's central trap taken at face value: a same-surname household in the 1870 Georgia census read as a birth family, when 'Wood' is a married name. Worth noting the internal weakness the run did not flag — parents born ~1836 and ~1841 against a daughter born 1855 makes the mother 14, which should have been caught as implausible.",
+    "f2": "Not recovered, same basis: Mary E Wood (I4, b.~1841 Georgia) linked as mother. Two things are useful for calibration here. First, this is the same wrong couple run 2 reached, so it is a stable attractor rather than a one-off. Second, and more interesting: mid-run this agent DID disprove the Wood/Lanham chain — at 98m the GPS mentor caught it over-claiming, it corrected the proof summary and recorded a hypothesis entry eliminating that identification, and it independently established from the marriage image that the 1869 Lanham bride was born too early to be Martha. So it dismantled the tree's Wood premise and then re-adopted a different Wood parentage from a census household anyway. The missing step is not doubt about the tree, which it now has; it is the inference that a married surname cannot be used to find a birth family. The jurisdiction hint never fired this run: all five marriage searches returned records, so the trigger correctly stayed quiet."
+  },
+  "annotator": "edesonchristopher@gmail.com"
+}
