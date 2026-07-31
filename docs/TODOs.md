@@ -172,39 +172,30 @@ create. Google is gone. Follow-ups (`docs/plan/familysearch-login-plan.md`):
   use) so an allowlisted email can't be claimed on a throwaway FS account.
 
 ## Guardrail enforcement in production
-Plan: `docs/plan/research-guardrail-bypass-plan.md`. The eval-side mechanisms
-have proven out. **§4.2 and §4.3 reach production**: §4.2 as
-`proofSummaryInvariants` in `research-append.ts` — caller-agnostic, so it has
-bound in Cowork and hosted since #914 — and §4.3 everywhere via the plugin hook.
-§4.1's caller-id gate and §4.4's detectors are still harness-only; the §4.4 port
-is deferred behind #1054 (nothing retains hosted tool calls, so a production
-detector would have nothing to read).
+Spec: `docs/specs/guardrail-enforcement-spec.md` — §4's table is the layer map,
+and the rationale behind every item below lives there rather than here. §5 (the
+write-boundary invariant) and §6 (the raw-write lockdown) enforce in every
+environment; §7 is shadow-mode only and §8's detectors are harness-only. Porting
+§8 to production is deferred behind #1054, which is about retaining a hosted
+tool-call ledger first — there is nothing to detect against today.
 
-- [ ] **§4.3's lockdown covers `Write`/`Edit`/`NotebookEdit`, not `Bash`.**
-  Both copies of the rule — `real_agent._pretool_hook` and the plugin's
-  `hooks/guard_project_files.py`, which is the one that reaches Cowork — match on
-  `file_path`, so the shell route around them stays open: `cat > research.json`,
-  `sed -i`, `python -c`. Deliberate — the reasoning is the comment on
-  `_FILE_WRITE_TOOLS` in
-  `apps/server/app/agent/real_agent.py` (skills run their scripts through `Bash`
-  so it can't be revoked; matching command text would deny a legitimate
-  `python script.py research.json > out` while still missing a variable-built
-  path, and a false deny is the worse failure mode per the plan's §6). Still
-  open only because nothing has forced that tradeoff: no bypass in the corpus has
-  used the shell. Close it if one shows up in a runlog or a feedback case.
+- [ ] **The raw-write lockdown does not cover `Bash`.** All three copies of the
+  rule match on `file_path`, so `cat > research.json`, `sed -i`, and `python -c`
+  still get through. Deliberate, for the reasons in the spec's §6 (skills need
+  `Bash`; matching command text would false-deny while still missing a
+  variable-built path). Open only because nothing has forced the tradeoff — no
+  bypass in the corpus has used the shell. Close it if one shows up in a runlog
+  or a feedback case.
 
-- [ ] **§4.3's rule is enforced in two places, and one of them is only there
-  because the other is unproven.** `packages/engine/plugin/hooks/hooks.json` is
-  verified live in Cowork; the hosted path also loads the plugin, so it *should*
-  bind there too and make `real_agent._pretool_hook` redundant — but "the plugin
-  loader does what you'd expect in the hosted path" is exactly the assumption
-  #939 disproved for agents. Confirm with one hosted run (write to
-  `research.json` via `Write` with the SDK hook removed) before deleting the
-  Python copy. Until then both fire, which is harmless: they deny the same thing
-  with the same reason. Note there is a **third** copy in
-  `eval/harness/e2e/orchestrator.py`, and no test asserts the three agree — each
-  is tested alone, so the day `PROTECTED_PROJECT_FILES` gains a file, two of them
-  can silently lag.
+- [ ] **Confirm the plugin hook binds in the hosted path, then delete the Python
+  copy.** One hosted run settles it: `Write` to `research.json` with
+  `real_agent`'s SDK hook removed. The hosted path loads the plugin, so the copy
+  *should* be redundant — but "the plugin loader does what you'd expect in the
+  hosted path" is exactly the assumption #939 disproved for agents. Until then
+  both fire, which is harmless (same deny, same reason). Related: a **third**
+  copy lives in `eval/harness/e2e/orchestrator.py` and no test asserts the three
+  agree, so a future addition to `PROTECTED_PROJECT_FILES` can silently lag in
+  two of them.
 
 - [ ] **`SessionStart` plugin hooks do not fire in Cowork.** Measured 2026-07-30
   in the same probe that confirmed `PreToolUse` works: no invocation, and the
@@ -216,8 +207,8 @@ detector would have nothing to read).
 
 - [ ] **Whether `Skill`-tool content injection survives compaction is
   unverified — and there's now real reason to suspect it doesn't.**
-  `docs/plan/research-guardrail-bypass-plan.md` §6 flagged this as an open
-  question (proof-conclusion/research-exhaustiveness/person-evidence/
+  `docs/specs/guardrail-enforcement-spec.md` §10 carries this as a residual
+  risk (proof-conclusion/research-exhaustiveness/person-evidence/
   conflict-resolution all do an on-demand `Read` of their own
   `references/*.md`, unverified for reliability). The `feedback-2026-07-27-perf`
   branch's compaction audit (commits `3455ce84`/`f05757ef`,
@@ -236,16 +227,16 @@ detector would have nothing to read).
   but does nothing to prevent the orchestrator from silently skipping the
   `@plugin:gps-mentor` invocation under the same context-pressure conditions
   that caused the other four skips. No runlog evidence has been checked
-  either way (`docs/plan/research-guardrail-bypass-plan.md` §6).
+  either way (`docs/specs/guardrail-enforcement-spec.md` §10).
 
 - [ ] **`research-append.ts`'s batch-ordering was only audited for one
-  TOCTOU case.** The §4.2 fix (tier vs. `exhaustive_declaration`, checked
+  TOCTOU case.** The tier gate (tier vs. `exhaustive_declaration`, checked
   against pre-call state) closes the specific same-batch establish-and-
   consume hole found during adversarial review. Other same-batch orderings
   that could similarly self-satisfy a precondition within one atomic write
   (e.g. adding a `person_evidence` link and consuming it for an assertion in
   the same batch) were not exhaustively checked — flagged, not audited, in
-  the plan's §6.
+  `guardrail-enforcement-spec.md` §10.
 
 ## Engine — image reading & transcription
 
