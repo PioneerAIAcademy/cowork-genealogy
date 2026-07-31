@@ -40,6 +40,7 @@ def run_validators(
     skill_frontmatter: dict[str, Any] | None = None,
     test: dict[str, Any] | None = None,
     blocked_context_calls: list[dict[str, Any]] | None = None,
+    skills_invoked: list[str] | None = None,
 ) -> list[ValidatorRunResult]:
     """Run universal validators + the per-skill validator file if present."""
     results: list[ValidatorRunResult] = []
@@ -49,6 +50,16 @@ def run_validators(
         "after_state": after_state,
         "tool_calls": tool_calls,
         "skill_frontmatter": skill_frontmatter or {},
+        # Every skill invoked through the SDK's `Skill` tool, in call order,
+        # captured by the PreToolUse hook in skill_runner. Ground truth for
+        # "did the skill delegate to X" — the hook fires on the real call, so
+        # this cannot be fooled by narration that merely *offers* to delegate.
+        # `tool_calls` can't answer this: it records only `mcp__` calls, and
+        # `Skill` is an SDK built-in, not an MCP tool. Use it to assert a
+        # required hand-off deterministically instead of leaving that fact to
+        # the LLM judge, which has misread it (a judge scored "failed to call
+        # search-external-sites" on a run where the hook recorded the call).
+        "skills_invoked": list(skills_invoked or []),
         # Main-thread calls to subagent-only tools that the PreToolUse hook
         # denied (harness.context_policy). Non-empty means the skill broke the
         # context boundary. Note this is the *denied* set: because the hook

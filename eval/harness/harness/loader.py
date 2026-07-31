@@ -39,7 +39,9 @@ class TestSpec:
     expected_outcome: str
     xfail_reason: str | None
     runs_per_test: int
-    execution: dict[str, int]
+    # Not `dict[str, int]`: most keys are integer limits, but `stub_skills`
+    # is a list of strings/objects.
+    execution: dict[str, Any]
     intentionally_invalid: bool = False
     judge_reads_files: bool = False
     source_path: Path | None = None

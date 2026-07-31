@@ -105,9 +105,21 @@ plan item and in your instructions. Do not re-query between searches; the plan
 does not change while you are searching it. If the plan item arrived in your
 prompt, in a hand-off, or from `research-plan` earlier in this same run, you
 already have it — issue no query at all. Every query is a turn, and a search
-phase has few to spare. If the user
-specifies a particular search, match it to a plan item or create an
-ad-hoc search (with `plan_item_id: null` in the log).
+phase has few to spare.
+
+**Planned or ad-hoc — decide before you search.** The line is *who chose the
+search*, not whether a plan exists.
+
+| What you have | Do |
+|---|---|
+| A plan item | Execute. Full GPS, including the Step 8 escalation |
+| No plan item, but the **user named this search** | Execute as ad-hoc: log `plan_item_id: null`, note it was user-requested, and stop when done — no escalation, no plan edits |
+| No plan item, and **you** thought of the search | `Skill("research-plan")` and stop. If the user then says yes, it comes back as a plan item — not as ad-hoc |
+
+Refusing a researcher's own request is obstruction, not rigour. Inventing a
+search nobody asked for is how a session drifts off its question. An autonomous
+`/research` run has no ad-hoc searches — the orchestrator only dispatches you
+when a plan item is waiting.
 
 ### 2. Construct the search query
 
@@ -185,6 +197,18 @@ to the manual path in Step 4.
 **Always log the search (Step 5) — never skip it.** (Ranking no longer needs a rule: passing `subjectId` above makes it part of the search.) `projectPath` on the call is what earns the log entry its results sidecar (the `staged.resultsRef` handle). If you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`, re-run the identical query **with** `projectPath` and use **that** staged re-run for Steps 4 and 5, so the entry gets its sidecar. Why the sidecar matters: a sidecar-less search entry can't feed extraction — `record_persona_id` is auto-filled from the sidecar, `research_append` **rejects** an assertions append against a sidecar-less search, and there is no manual workaround (you cannot set `results_ref` by hand) — so **re-stage before any handoff to extraction**. A missing handle is a reason to re-run, never a reason to skip ranking or logging. If a `stagingError` persists across one retry, surface it to the user. (A nil search correctly has no handle — nothing was found to retain; that is expected.)
 
 **If the search fails due to authentication:** Instruct the user to log in: "The search requires FamilySearch authentication. Please ask me to log you in, or type `login`."
+
+**A zero-result search is NOT an authentication failure.** Auth problems throw an
+error ("User is not logged in to FamilySearch…" / "FamilySearch session not
+accepted…"); `results: []` means the query ran, authenticated, and matched
+nothing. That is the nil finding this skill exists to record. An implausible nil
+is not licence to suspect your session — say so in the `notes` and carry on.
+(Rows from the wrong collection are a mismatch, not a nil.)
+
+❌ WRONG: "Zero results US-wide is implausible for the 1850 census, so the session
+must be dead — please log in and I'll re-run."
+✅ CORRECT: "Zero results US-wide despite good coverage. The search ran fine, so
+this is a real nil — most likely a transcription error the index cannot match."
 
 ### 4. Triage results — rank by match, then confirm
 
@@ -435,6 +459,8 @@ Never treat an index entry as equivalent to examining the original record.
    ✅ CORRECT: "Log_001 found Patrick under 'Flynn'. The nil under 'Flinn' documents that FamilySearch does not alias Flynn→Flinn for this record — both findings stand as independent evidence."
 6. Check for fallback plan items (`fallback_for`). If none and the question remains open, suggest research-plan for re-planning.
 7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass" on a Q→O error), no FamilySearch variant will ever surface that record. Other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`), so they can recover records FamilySearch cannot — which is exactly why the escalation is triggered by the nil signal here, not planned upfront (planning external items preemptively clutters the plan when FamilySearch works). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, invoke `Skill("search-external-sites")` with the same person attributes to generate Ancestry (and, where the researcher subscribes, MyHeritage/FindMyPast) search URLs. **Do this immediately — do not ask the user first and do not wait until step 9.** This is a tool call you make in this turn, not an option you narrate for the user to approve.
+
+   **No plan item → no escalation**, however many variants came back nil; an ad-hoc search ends when you log it (Step 1).
 
    ❌ WRONG: Ending your response with "FamilySearch is exhausted — would you like me to check Ancestry?" without having called the skill. Offering the escalation in prose is not escalating.
    ✅ CORRECT: Call `Skill("search-external-sites")` in this same turn, before writing your summary, and present the URLs it returns as part of your results.
