@@ -11,7 +11,11 @@
     "user_message": "Execute plan item pli_001 — find Jan Gallo's 1893 baptism from Turany parish and report what it says about his father.",
     "scenario": "gallo-jurisdiction-change"
   },
-  "mcp_fixtures": ["record-search-gallo-hungary-no-results", "record-search-gallo-slovakia-hit"],
+  "mcp_fixtures": [
+    "record-search-gallo-hungary-no-results",
+    "record-search-gallo-slovakia-hit",
+    "record-read-gallo-1893-baptism"
+  ],
   "execution": {
     "max_turns": 35
   },

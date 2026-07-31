@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "The agent correctly recovered the required finding by identifying Juana Martinez Carvajal as a daughter of Emilio Martinez (G5CM-DZW) and Isabel Carvajal Chinchilla (LR2Y-X3H), creating the expected ParentChild relationships (R17, R18). The AI judge correctly marked the finding as passed (recall 1.0/1.0). The harness failure is unrelated to genealogical correctness or recall - it was triggered by the research-guardrail-bypass gate (#914): the agent created two new persons (I1 Juana, I2 Ysmael) with person_evidence links without invoking same_person, and generated a conflict-resolution artifact (c_001) without invoking the conflict-resolution skill. This is a provenance/process failure rather than a fixture defect or grading error."
+  }
+}

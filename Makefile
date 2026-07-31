@@ -268,12 +268,36 @@ test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema (
 server-test: ## Control-plane tests — apps/server (FastAPI, pytest; uv auto-syncs the venv)
 	cd apps/server && uv run pytest -q
 
+.PHONY: agent-smoke
+agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the plugin agents under their bare names (issue #939; no model call, bills nothing)
+	# The one thing no offline test can see: what the RUNTIME resolves the
+	# hosted options to. It reads the SDK init handshake's agent list — no
+	# query, so it costs nothing but a CLI process start. The key comes from
+	# $$ANTHROPIC_API_KEY, else this repo's eval/.env, and is passed under a
+	# distinct name because tests/conftest.py blanks ANTHROPIC_API_KEY.
+	cd apps/server && \
+	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run pytest tests/test_plugin_agents.py -q -rs
+
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test
 
+# $(ENGINE_BUILD) is a real prerequisite here, not a convenience. The mock MCP
+# server (eval/harness/harness/mock_mcp.py) shells out to the COMPILED build/
+# for its live tool handlers and for the production tool catalog, so part of
+# this suite genuinely executes build/**. CI already builds before running the
+# same pytest (.github/workflows/eval-harness-tests.yml); only this target and
+# scripts/test.sh were missing it.
+#
+# build/ is gitignored, so a freshly-added worktree has none — and
+# link-worktree.sh deliberately does NOT link it (each worktree must compile its
+# own src/, or a branch would silently test another branch's build). Without the
+# prereq the run failed inside test_mock_mcp.py on "AssertionError: staging must
+# still happen": a missing build wearing the costume of a code regression.
+# Python deps still need no stamp — `uv run` auto-syncs the venv.
 .PHONY: harness-test
-harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e; uv auto-syncs the venv)
+harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest, excludes e2e; uv auto-syncs the venv)
 	cd eval/harness && uv run pytest -m 'not e2e' -q
 
 .PHONY: eval-skill

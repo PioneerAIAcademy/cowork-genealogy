@@ -308,3 +308,26 @@ def test_conflict_blocks_proved(after_state, test):
         "conflict (c_001) blocks it — unresolved conflicts hard-block the "
         "proved tier"
     )
+
+
+# --- Tag-gated: research_query tool coverage (SKILL.md §1) -------------
+
+def test_research_query_called_for_coverage(tool_calls, test):
+    """Tag-gated (research-query-coverage): the skill must actually call
+    research_query to gather a question's accumulated evidence, not fall
+    back to a whole-file Read of research.json (SKILL.md §1).
+
+    Deterministic regression catch — not judge-graded — for a future
+    SKILL.md edit that reverts to a raw Read or drops the scoped lookup:
+    such an edit produces zero research_query calls, and this assertion
+    flips. Substring match on the tool name so it holds under any MCP
+    server-prefix spelling.
+    """
+    if "research-query-coverage" not in test.get("tags", []):
+        pytest.skip("not a research_query coverage test")
+    called = [tc["tool"] for tc in tool_calls if "research_query" in tc.get("tool", "")]
+    assert called, (
+        "research-query-coverage test made no research_query call — "
+        "proof-conclusion must gather the question's evidence via scoped "
+        "research_query, not a whole-file Read of research.json (SKILL.md §1)."
+    )

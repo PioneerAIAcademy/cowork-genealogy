@@ -207,6 +207,49 @@ def find_unguarded_protected_writes(
     return violations
 
 
+# The four optional `conflict` fields that are conflict-resolution's analytical
+# PRODUCT rather than the mere record that a conflict exists. Several skills
+# legitimately open a conflicts entry — person-evidence (#738's mandatory entry
+# when identity rests on one uncorroborated read), proof-conclusion,
+# question-selection, research-plan, timeline, init-project — but they write only
+# the schema's required fields (id / conflict_type / description /
+# competing_assertion_ids / status / blocks_question_ids). These four are
+# optional in `research.schema.json` and, across the whole plugin, are written
+# ONLY by `conflict-resolution/SKILL.md` and by `research/SKILL.md` — i.e. the
+# orchestrator that is supposed to *delegate* to it. So their presence is the
+# effect, and their absence is why "a conflict was recorded" alone must not fire.
+CONFLICT_ANALYSIS_FIELDS = (
+    "independence_analysis",
+    "weighing_analysis",
+    "preferred_assertion_id",
+    "resolution_rationale",
+)
+
+
+def _is_conflict_resolution_product(conflict: Any) -> bool:
+    """Whether a `conflicts[]` entry carries conflict-resolution's own output.
+
+    Two independent signals, either sufficient:
+
+    - any of `CONFLICT_ANALYSIS_FIELDS` populated (non-empty, non-null), or
+    - `status == "resolved"` — resolving is the skill's job whatever fields it
+      left behind.
+
+    Checking status ALONE (the original rule) under-fires: `unresolved` is a
+    legitimate *outcome* of a full weighing — the skill ran, analysed, and
+    concluded the conflict stands. The `eulogia-gatica-burial` run
+    (run-2026-07-28_17-07-48) is the live case: the router wrote c_001 with a
+    full `independence_analysis` and `weighing_analysis`, never invoked
+    conflict-resolution, and slipped past the status check because it left the
+    conflict `unresolved` — then stamped the proof `proved` over it.
+    """
+    if not isinstance(conflict, dict):
+        return False
+    if conflict.get("status") == "resolved":
+        return True
+    return any(conflict.get(f) for f in CONFLICT_ANALYSIS_FIELDS)
+
+
 def find_effects_without_invocation(
     tool_calls: list[dict[str, Any]],
     research: dict[str, Any] | None,
@@ -226,6 +269,10 @@ def find_effects_without_invocation(
     fixture's starting tree) and flag only NEW persons or persons that GAINED
     facts this run — without it, every already-linked-by-nothing seed person
     would read as a violation. Best-effort and may over-flag when omitted.
+
+    Each arm keys on a *product* of the skill, never on the skill's mere
+    footprint — see `_is_conflict_resolution_product` for why the
+    conflict-resolution arm cannot key on `status` alone.
     """
     research = research or {}
     tree = tree or {}
@@ -300,12 +347,13 @@ def find_effects_without_invocation(
         )
 
     conflicts = research.get("conflicts") if isinstance(research.get("conflicts"), list) else []
-    if any(isinstance(c, dict) and c.get("status") == "resolved" for c in conflicts) and (
+    if any(_is_conflict_resolution_product(c) for c in conflicts) and (
         "conflict-resolution" not in invoked
     ):
         violations.append(
-            "research.json has a resolved conflict but 'conflict-resolution' was never "
-            "successfully invoked in this run"
+            "research.json has a conflict carrying conflict-resolution's analytical product "
+            f"({', '.join(CONFLICT_ANALYSIS_FIELDS)}, or status='resolved') but "
+            "'conflict-resolution' was never successfully invoked in this run"
         )
 
     return violations

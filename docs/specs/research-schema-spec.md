@@ -68,6 +68,21 @@ All enums are defined here once and referenced by section schemas. Skills must u
 | `source_classification` | `original`, `derivative`, `authored` | sources |
 | `information_quality` | `primary`, `secondary`, `indeterminate` | assertions |
 | `evidence_type` | `direct`, `indirect`, `negative` | assertions |
+
+> **`no_evidence` was considered and rejected (2026-06-21).** The model reaches
+> for it when a record simply does not speak to the question, and the instinct is
+> GPS-correct — but a *scalar* `evidence_type` cannot represent "no evidence"
+> honestly, and a bare enum add buys that honesty at the cost of new exclusion
+> logic in four consumers, none of it validator-caught, plus an under-specified
+> value. The retry loop it was meant to fix was closed instead by a
+> lower-blast-radius prose pin (#433: state the valid values inline, plus
+> "there is no `no_evidence`; keep best-effort `indirect`"). If the honesty is
+> ever judged worth it, do it deliberately, not as a quick fix: settle the
+> scalar-vs-structural mismatch first, define the structural convention + eval
+> invariant + re-classification trigger, then land all ~6 definition sites, both
+> skills, and the eval rubrics/goldens **in one PR**. This is also the worked
+> example of a closed-enum change's blast radius — see CLAUDE.md's schema-change
+> site list.
 | `conflict_type` | `fact`, `identity` | conflicts |
 | `conflict_status` | `unresolved`, `resolved`, `moot` | conflicts |
 | `hypothesis_status` | `active`, `supported`, `ruled_out` | hypotheses |
@@ -597,8 +612,10 @@ researches; it accumulates across the project's questions (reused, not per-quest
 
 **Applied facts live in `plan_item.rationale`.** `localities` is the knowledge base;
 the per-search decision (e.g. "search Oppland, not Ringebu — see `loc_001`") is
-written as free text in the plan item that uses it. Full design:
-`docs/plan/localities-section-plan.md`.
+written as free text in the plan item that uses it. The section shipped with
+`locality-guide` persisting into it, `research-plan` invoking and reading it, and
+a viewer Localities tab; `search-records` deliberately stays general (see the
+consumer table above).
 
 ---
 

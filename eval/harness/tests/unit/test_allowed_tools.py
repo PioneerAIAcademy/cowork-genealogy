@@ -129,7 +129,7 @@ def test_referenced_but_missing_agent_is_ignored(tmp_path):
 
 # --- image-reader-opus: the union must actually pick up the real files -----
 #
-# docs/plan/image-reader-opus-agent-plan.md's first draft put the
+# The image-reader-opus design's first draft put the
 # discoverability pointer in agents/image-reader.md (an agent body), which
 # compute_allowed_tools never scans — only a SKILL.md is scanned for
 # @plugin:<name> references. That placement bug would have made
