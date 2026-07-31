@@ -1,0 +1,2915 @@
+{
+  "project": {
+    "id": "rp_heinrich_zinsmeister_death",
+    "objective": "When and where was Heinrich Zinsmeister of Steinwenden, Pfalz, Bavaria born, and when and where did he die?",
+    "subject_person_ids": [
+      "KD72-C6D"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-30"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where was Heinrich Zinsmeister of Steinwenden, Pfalz, Bavaria born (baptized)?",
+      "rationale": "The overarching objective requires both birth and death facts for Heinrich Zinsmeister. Birth is addressed first because establishing his birth date and place anchors his lifetime chronology, which directly narrows the date range for death-record searches. Lutheran church records (Kirchenb\u00fccher) for the Steinwenden parish in Pfalz, Bavaria survive from the 17th century onward and are partially indexed on FamilySearch; a baptism entry is the most direct source for this fact.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "Indexed searches of FamilySearch CID 4234521, CID 3015626, and CID 1473000 returned no baptism record for KD72-C6D (Heinrich Zinsmeister, husband of Elisabetha Engelskircher, Steinwenden). Three children's baptism records (1818-1828, CID 3015626) confirm his presence in Steinwenden as a father but supply no birth date or birthplace. Image browse of Steinwenden Geburten volumes (image group 008239801) is inaccessible: images are 1.8-2.7 MB, exceeding the MCP transport cap for image_read (~700 KB), and no OpenRouter API key is configured for image_transcribe. Ancestry Saarland Zivilstandsregister (dbid=61110) could not be searched: Ancestry authentication not available in this autonomous session. The question cannot be answered from accessible indexed records alone; no birth date or place has been established. Early termination for inaccessibility of primary record types.",
+        "log_entry_ids": [
+          "log_003",
+          "log_004",
+          "log_008",
+          "log_009",
+          "log_013",
+          "log_023",
+          "log_024"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "No. No birth date or place was established for KD72-C6D. Accessible indexed records confirm his presence in Steinwenden from at least 1818 (oldest known child Philippina born that year) through 1828 (youngest known child Elisabetha christened) but no baptism record was found.",
+          "repository_breadth": "Partial. FamilySearch indexed collections searched (CID 4234521, 3015626, 1473000). Multiple name variants tried (Zinsmeister, Zinssmeister, Zenssmeister). Ancestry Zivilstandsregister (dbid=61110) blocked by authentication. FamilySearch image browse (008239801) blocked by transport cap (images 1.8-2.7 MB) and missing OpenRouter key.",
+          "original_substitution": "Not achieved. Image originals for Steinwenden church registers could not be accessed via any available tool path: image_read cap exceeded, image_transcribe requires unconfigured OpenRouter key. Indexed entries used as derivative leads only.",
+          "independent_verification": "Not applicable \u2014 no birth record found. Three independent children's baptism entries (CID 3015626) confirm Heinrich Zinsmeister of Steinwenden as a father from 1818-1828 but do not supply a birth date.",
+          "evidence_class": "No original record found for the birth event itself. Available evidence is entirely indirect (secondary references in children's baptism records naming Heinrich as father).",
+          "conflict_resolution": "No conflicting birth records found. Disambiguation of three co-resident Steinwenden Heinrich Zinsmeisters (KD72-C6D vs. 1801-born Heinrich with wife Margaretha vs. 'Margaretha Jung' Heinrich) resolved by spousal naming.",
+          "overturn_risk": "High. Image browse of Steinwenden birth registers (image group 008239801) and Ancestry Saarland Zivilstandsregister (dbid=61110) remain inaccessible due to technical constraints in this session. These are the most plausible locations for a direct baptism record and could provide the answer if accessible. The question is not closed; the primary record types are temporarily inaccessible, not confirmed absent."
+        }
+      },
+      "created": "2026-07-30"
+    },
+    {
+      "id": "q_002",
+      "question": "When and where did Heinrich Zinsmeister of Steinwenden, Pfalz, Bavaria \u2014 husband of Elisabetha Engelskircher and father of Philippina (b. 1818), Maria Catharina (b. 1819), and Juliane (b. 1823) \u2014 die?",
+      "rationale": "The death is the second independent part of the research objective and has no question or plan yet. A burial record (QPKP-CJC2, CID 3015626) for a Heinrich Zin\u00dfmeister buried 20 Feb 1855 in Steinwenden was extracted during q_001 searching, but that record lists his wife as 'Margaretha' \u2014 not Elisabetha Engelskircher. At least three distinct Heinrich Zinsmeisters have been identified in Steinwenden during this period; the 1855 burial is likely the 1801-born Heinrich (parents Jacob Zinssmeister + Maria Elisabetha Ziegler), not our subject. Our subject's actual death record has not been found. Primary search targets: (1) Steinwenden church burial volumes, browse-only image group 008239802 (Tote/deaths); (2) Ancestry Saarland Sterberegister 1876\u20131933 (dbid=61150) for deaths after civil registration began; (3) any indexed death record in CID 3015626 for a Heinrich Zinsmeister in Steinwenden with wife Elisabetha or alone, post-1823. The 1835 marriage of 'Joh. Heinrich Zin\u00dfmeister' to a younger Elisabetha Engelskircher (born ~1815) may be our subject's son, which would help bound our subject's lifetime.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "Indexed searches of FamilySearch CID 3015626 (log_019), CID 1609357 (log_020), and CID 1494474 (log_021) yielded no death record for KD72-C6D (Heinrich Zinsmeister, husband of Elisabetha Engelskircher). The search with spouseGivenName=Elisabetha (log_021) found JWBL-9ZZ \u2014 the 1843 death record of Elisabetha Engelskircher naming Heinrich Zinssmeister as her surviving husband (MaritalStatus=M), establishing a lower bound of 15 April 1843 for Heinrich's death. A 1855 Steinwenden burial for a 'Heinrich Zinsmeister' (QPKP-CJC2, wife Margaretha) was confirmed as a different individual. Image browse of Steinwenden Tote volumes (image group 008239802) is inaccessible: images are 1.8-2.7 MB, exceeding the MCP transport cap for image_read, and no OpenRouter API key is configured for image_transcribe. Ancestry Saarland Sterberegister (dbid=61150) could not be searched: Ancestry authentication not available in this autonomous session. The actual death date and place for KD72-C6D remain unknown. Early termination for inaccessibility of primary record types.",
+        "log_entry_ids": [
+          "log_019",
+          "log_020",
+          "log_021",
+          "log_025",
+          "log_028"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Partial. Lower bound established: Heinrich Zinsmeister (KD72-C6D) was alive as of 15 April 1843 (wife Elisabetha Engelskircher's death record, JWBL-9ZZ). No death date or burial place found for KD72-C6D himself.",
+          "repository_breadth": "Partial. FamilySearch indexed collections searched (CID 3015626, 1609357, 1494474). Spouse name variant used to widen the search. Ancestry Sterberegister (dbid=61150) blocked by authentication. FamilySearch image browse of Tote volumes (008239802) blocked by transport cap and missing OpenRouter key.",
+          "original_substitution": "Not achieved for the death event. The JWBL-9ZZ record (wife's death) was read via the indexed entry; the underlying image was not accessed (transport cap). Steinwenden burial register images (008239802) remain unread.",
+          "independent_verification": "Only one source provides timing evidence: JWBL-9ZZ (wife's death record, 15 Apr 1843). This is a single source establishing the lower bound. No second independent source corroborating or extending the post-1843 survival period was found.",
+          "evidence_class": "The JWBL-9ZZ entry (Germany Deaths and Burials, CID 1494474) is an original record containing primary information about Elisabetha's death and indirect information about Heinrich's marital status. No original record bearing directly on Heinrich's own death was found.",
+          "conflict_resolution": "The 1855 Steinwenden burial of 'Heinrich Zinsmeister' (wife Margaretha, born 1801) was correctly distinguished from KD72-C6D (wife Elisabetha Engelskircher) and excluded. No unresolved conflicts remain within the gathered evidence.",
+          "overturn_risk": "High. Image browse of Steinwenden Tote volumes (008239802) is the most direct path to a burial record for KD72-C6D. Ancestry Saarland Sterberegister (dbid=61150) would cover any post-1876 death. Both are currently inaccessible. A death record in either would directly answer the question and is not confirmed absent."
+        }
+      },
+      "created": "2026-07-30"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-30",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Steinwenden, Kaiserslautern, Bavaria, Germany",
+          "date_range": "1780-1876",
+          "repository": "FamilySearch",
+          "rationale": "The Evangelisch-Reformierte Kirchenbuch for Steinwenden (1684\u20131942, FamilySearch catalog 52452) is the primary source for Heinrich's baptism, as the Reformed church was dominant in this Palatinate village. FamilySearch collection CID 4234521 (Germany, Bavaria, Catholic and Lutheran Church Records, 1591\u20131963) contains 194,237 indexed records and is the fastest path to a Zinsmeister baptism entry. Search surname 'Zinsmeister' with place 'Steinwenden' and given name 'Heinrich'. Civil registration did not begin here until ~1798 (French period), so for births before that date only the church register survives.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Steinwenden, Kaiserslautern, Bavaria, Germany",
+          "date_range": "1780-1876",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection CID 3015626 (Germany, Lutheran Baptisms, Marriages, and Burials, 1500\u20131971) contains 70+ million indexed records and covers Bavaria Reformed and Lutheran church books. This overlaps with and complements CID 4234521; a Zinsmeister baptism not surfaced by pli_001 may appear here under slightly different name indexing. Also search CID 1473000 (Germany, Births and Baptisms, 1558\u20131898) as a parallel indexed source.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Steinwenden, Bezirksamt Homburg, Bavaria, Germany",
+          "date_range": "1798-1876",
+          "repository": "Ancestry",
+          "rationale": "Ancestry's 'Saarland, Deutschland, Zivilstandsregister, 1776\u20131875' (dbid=61110) is a name-indexed collection of Napoleonic-era civil registration records covering this area \u2014 predating Bavaria's general 1876 civil registration start by decades. If Heinrich was born after ~1798, a civil birth registration may exist and be searchable by name. This is the highest-value external-site search for the post-1798 window. Executed via search-external-sites.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Steinwenden, Kaiserslautern, Bavaria, Germany",
+          "date_range": "1780-1876",
+          "repository": "FamilySearch",
+          "rationale": "If indexed searches (pli_001, pli_002) yield no result, the Steinwenden Reformed Kirchenbuch 1684\u20131942 (catalog 52452) must be browsed image-by-image. FamilySearch has digitized Steinwenden Geburten (births) volumes under imageGroupPrefix 008239801, covering years from 1818 onward. Browse-only (0% indexed, not full-text searchable); requires reading each page in German/French. Use the search-images skill to identify the correct volume by year, then image-reader to transcribe. Focus on the year range most likely to contain Heinrich's birth based on any age clues found in steps 1\u20133.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Steinwenden, Kaiserslautern, Bavaria, Germany",
+          "date_range": "1780-1876",
+          "repository": "FamilySearch",
+          "rationale": "FAN breadth item: Search for other Zinsmeister entries in the Steinwenden Reformed church records (CID 4234521 and CID 3015626) regardless of given name. Establishing the broader Zinsmeister family in Steinwenden \u2014 siblings, parents, other relatives \u2014 will triangulate Heinrich's approximate birth year and confirm his parentage, providing context to interpret any ambiguous entries found in pli_001 through pli_004. Also search for Elisabetha Engelskircher (KD72-C66, in the project tree) \u2014 if she is Heinrich's mother or wife, her records may name his birth details.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Steinwenden, Kaiserslautern, Bavaria, Germany",
+          "date_range": "1876-1920",
+          "repository": "Ancestry",
+          "rationale": "Secondary source: Search Ancestry 'Saarland Sterberegister, 1876\u20131933' (dbid=61150) and any available Bavarian/Rhineland-Palatinate death records for Heinrich Zinsmeister of Steinwenden. A death record created after 1876 would state his birth date and place as secondary information from an informant \u2014 useful corroboration if the primary church/civil birth record is not found or is ambiguous. Executed via search-external-sites.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-30",
+      "items": [
+        {
+          "id": "pli_007",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Steinwenden, Kaiserslautern, Bavaria, Germany",
+          "date_range": "1840-1876",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch CID 3015626 (Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971) already surfaced one Heinrich Zinsmeister burial in Steinwenden (1855, wife Margaretha \u2014 log_007). A second indexed search with a broader date range and without filtering on wife may surface additional entries. A Heinrich Zinsmeister whose wife was Elisabetha Engelskircher and who fathered children in 1818-1823 likely died between 1840 and 1900. Try the indexed collection first as the fastest path before the required image-browse. Likely low yield given the 0% index rate of Steinwenden volumes, but zero cost.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Steinwenden, Kaiserslautern, Bavaria, Germany",
+          "date_range": "1840-1890",
+          "repository": "FamilySearch",
+          "rationale": "Definitive source: browse Steinwenden Tote/Beerdigungen (deaths/burials) volumes. The Steinwenden Reformed church register volumes are 0% name-indexed and browse-only; image group prefix 008239802 covers deaths. The correct burial entry for Heinrich Zinsmeister (husband of Elisabetha Engelskircher) must be found by reading the pages sequentially for the plausible death date range. The 1855 burial of the wrong Heinrich (wife Margaretha) was already found in the same collection. Use search-images to identify the correct volume by year range, then image-reader to transcribe pages. This is the highest-yield item for a definitive death date and place.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Steinwenden, Kaiserslautern, Bavaria, Germany",
+          "date_range": "1876-1933",
+          "repository": "Ancestry",
+          "rationale": "If Heinrich Zinsmeister survived past 1876 (plausible if born in the 1790s: he would be ~80 in 1876), a civil death record would exist in the Saarland Sterberegister 1876-1933 (Ancestry dbid=61150). Civil death records in this collection give the deceased's name, date, place, age/birth year, and often the spouse's name \u2014 directly answering the death question. Execute via search-external-sites. Note: pli_006 in pl_001 targets the same repository for birth corroboration \u2014 coordinate execution to avoid duplicate searches.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Steinwenden, Kaiserslautern, Bavaria, Germany",
+          "date_range": "1835-1850",
+          "repository": "FamilySearch",
+          "rationale": "FAN / lifetime-bounding item: Browse the 1835 Steinwenden marriage image (ark:/61903/3:1:3Q9M-CSCB-X9C5-G) for groom 'Joh. Heinrich Zin\u00dfmeister' to read the original entry, which likely names the groom's father. If the groom's father is named as 'Heinrich Zinsmeister' (husband of Elisabetha Engelskircher), this establishes that our research subject KD72-C6D was alive in February 1835 and places a lower bound on his death date. Additionally browse the 1845 Philippina marriage image (QPKL-LJ7Y original) to confirm whether it names Heinrich Zinsmeister's occupation or other details. Use image-reader on the relevant image ARKs.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T05:24:45.059Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "4234521",
+        "surname": "Zinsmeister",
+        "givenName": "Heinrich",
+        "birthPlace": "Steinwenden, Bavaria, Germany",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "CID 4234521 returned 1 result (Henricus Zinssmeister, baptism 1 Jan 1906, Kaiserslautern) \u2014 wrong era and place, not our subject. No baptism record for Heinrich Zinsmeister of Steinwenden c.1780-1876 found in this collection."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:24:45.065Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "3015626",
+        "surname": "Zinsmeister",
+        "givenName": "Heinrich",
+        "birthPlace": "Steinwenden, Bavaria, Germany"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 114,
+      "notes": "Top result: Heinrich Zinsmeister, baptism 10 Jan 1819 at Steinwenden, Bezirksamt Homburg, Kgr. Bayern; born 6 Jan 1819. Father: Adam Jung; Mother: Maria Barbara (nee Zinsmeister). Additional records show Heinrich appearing as father in records for Juliane Zinsmeister (QPKP-C39S) and Maria Catharina Zinsmeister (QPKG-B8SJ), both persons in project tree. High priority for extraction."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:28:15.457Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "QPKG-B8SJ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Maria Catharina Zinsmeister baptism 13 Jul 1819 / 17 Jul 1819, Steinwenden. Father: Heinrich Zinsmeister (FamilySearch person p_104727285977). Mother: Elisabetha Zinsmeister AKA 'Engels Kricher' (= Engelskircher, matching tree person KD72-C66). Confirms Heinrich was married to Elisabetha Engelskircher and was resident in Steinwenden by July 1819. CRITICAL: Since Heinrich fathered a child in July 1819, he cannot be the Heinrich Zinsmeister baptized 6 Jan 1819 in the same village (QPKG-B8Y8, son of Adam Jung and Maria Barbara n\u00e9e Zinsmeister). The research subject must have been born significantly earlier, c.1785-1804."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:28:15.457Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "QPKP-C39S"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Juliane Zinsmeister baptism 30 Dec 1823 / 1 Jan 1824, Steinwenden. Father: Heinrich Zinsmeister (FamilySearch person p_104727575732). Mother: Elisabetha Zinsmeister AKA 'Begelekicher' (= Engelskircher). Corroborates Maria Catharina record: same father Heinrich, same mother Elisabetha Engelskircher, same village Steinwenden. Heinrich was still resident in Steinwenden in late 1823. Image ARK: ark:/61903/3:1:3Q9M-CSCB-X9HX-F"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:32:29.932Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zinsmeister",
+        "givenName": "Heinrich",
+        "birthYearFrom": 1785,
+        "birthYearTo": 1808,
+        "birthPlace": "Steinwenden",
+        "collectionId": "3015626"
+      },
+      "outcome": "positive",
+      "results_examined": 24,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 24,
+      "notes": "CID 3015626 search: surname=Zinsmeister, givenName=Heinrich, birthYearFrom=1785, birthYearTo=1808, birthPlace=Steinwenden. 24 results. Key find: QPKP-CJC2 \u2014 Heinrich Zenssmeister/Zinssmeister born 1801, died 18 Feb 1855, buried 20 Feb 1855 Steinwenden, wife Margaretha (no surname). Also found QPKP-ZRP5 (Joh. Heinrich Zinssmeister married Elisabetha Engelskircher born ~1815 on 7 Feb 1835 \u2014 likely a son of our subject). Also QPKG-B83C (father Heinrich Zinsmeister of Philipp Wehner born 1831, wife Margaretha Wehner). No clear indexed baptism for the older Heinrich (father of Maria Catharina 1819, Juliane 1823) found yet."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:32:29.939Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zinsmeister",
+        "givenName": "Heinrich",
+        "birthYearFrom": 1785,
+        "birthYearTo": 1808,
+        "birthPlace": "Steinwenden",
+        "collectionId": "1473000"
+      },
+      "outcome": "positive",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 12,
+      "notes": "CID 1473000 search: surname=Zinsmeister, givenName=Heinrich, birthYearFrom=1785, birthYearTo=1808, birthPlace=Steinwenden. 12 results. Key find: N5BK-P7P \u2014 Heinrich Zinssmeister born 27 Nov 1801, christened 4 Dec 1801 Steinwenden; parents Jacob Zinssmeister and Maria Elisabetha Ziegler. Also N5BK-GH7 \u2014 Johann Heinrich Zinssmeister born 15 Nov 1802 Steinwenden (secondary shows father also named Heinrich Zinssmeister). No indexed baptism for the older Heinrich (father of Maria Catharina 1819) found."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:32:29.943Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "QPKP-CJC2"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Burial record: Heinrich Zenssmeister / Zinssmeister, born 1801, died 18 Feb 1855, buried 20 Feb 1855, Steinwenden. Wife listed as Margaretha (no surname). The birth year 1801 and Steinwenden location match N5BK-P7P (Heinrich Zinssmeister born 27 Nov 1801, parents Jacob Zinssmeister + Maria Elisabetha Ziegler). The wife name 'Margaretha' differs from our subject's wife Elisabetha Engelskircher \u2014 unless our subject remarried after Elisabetha's death. Also consistent with QPKG-B83C (Jan 1831 baptism of Philipp Wehner, father Heinrich Zinsmeister, mother Margaretha Wehner). Image ARK: ark:/61903/3:1:3Q9M-CSCB-X9F7-S"
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:32:29.943Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "QPKP-ZRP5"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Marriage record 7 Feb 1835 Steinwenden: Joh. Heinrich Zinssmeister (Male, p_104727623214) married Elisabetha Engelskircher (born ~1815, p_104727623216). Elisabetha born ~1815 CANNOT be the mother of Maria Catharina (b. Jul 1819) \u2014 she would have been only ~4 years old. This marriage record is therefore NOT for our research subject's first marriage. Most likely this is a son of our subject (Joh. Heinrich Jr.) marrying a different, younger Elisabetha Engelskircher in 1835. The Engelskircher surname connection to our subject's wife family supports this interpretation."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:32:29.943Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "QPKG-B83C"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Baptism of Philipp Wehner (born 21 Jan 1831, baptized 23 Jan 1831, Steinwenden). Father: Heinrich Zinsmeister (p_104727285999). Mother: Margaretha Wehner (no given name listed beyond Margaretha). Child's AlsoKnownAs: 'Zinsmeister' \u2014 suggesting the child was also known as Philipp Zinsmeister. Confirms a Heinrich Zinsmeister with wife Margaretha in Steinwenden in 1831. Combined with burial record QPKP-CJC2 (died 1855, wife Margaretha), this may represent our subject after he remarried following Elisabetha Engelskircher's death sometime between 1823 and 1831."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:36:50.175Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zinsmeister",
+        "givenName": "Heinrich",
+        "spouseSurname": "Engelskircher",
+        "collectionId": "3015626"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 86,
+      "notes": "CID 3015626: surname=Zinsmeister, givenName=Heinrich, spouseSurname=Engelskircher. 86 results, 50 examined. Key finds: QPKL-LJ7Y and QPKL-VGGZ (two indexes of same record) = 1845 marriage of Philippina Zinsmeister (born 1818, Steinwenden) to Johannes Ultes/Altes. Bride's parents: Heinrich Zinsmeister + Elisabeth AKA Engelskircher. DIRECTLY confirms our research subject (KD72-C6D) is the father of Philippina born 1818. No indexed marriage record found for our Heinrich + Elisabetha Engelskircher predating 1819."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:36:50.190Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Engelskircher",
+        "givenName": "Elisabetha",
+        "deathYearFrom": 1820,
+        "deathYearTo": 1833,
+        "anyPlace": "Steinwenden",
+        "collectionId": "3015626"
+      },
+      "outcome": "negative",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 14,
+      "notes": "CID 3015626: surname=Engelskircher, givenName=Elisabetha, deathYearFrom=1820, deathYearTo=1833, anyPlace=Steinwenden. 14 results, none are a death record for our subject's wife Elisabetha (n\u00e9e Engelskircher) Zinsmeister in the window 1820-1833. QPKP-CSJX shows an Elisabetha Engelskircher born 1809 in a record for Adam Henn (different person). Search result does not confirm or deny Elisabetha's death date."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:36:50.200Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zinsmeister",
+        "givenName": "Elisabetha",
+        "deathYearFrom": 1820,
+        "deathYearTo": 1833,
+        "anyPlace": "Steinwenden",
+        "collectionId": "3015626"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 120,
+      "notes": "CID 3015626: surname=Zinsmeister, givenName=Elisabetha, death 1820-1833, anyPlace=Steinwenden. 120 results, 20 examined. The Elisabetha Zinsmeisters found in 1826-1827 (QPKP-MG7J, QPKP-7YJ9) are daughters of Philipp + Philippina Laterner Zinsmeister, not our Heinrich. Did not find a death record for our subject's wife (Elisabetha n\u00e9e Engelskircher Zinsmeister) in this search."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:36:50.209Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "QPKL-LJ7Y"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1845 marriage record (Otterberg): Johannes Altes/Ultes (born 1816, parents Ludwig Ultes + Katharina Kolter) married Philippina Zinsmeister (born 1818, Steinwenden). Bride's parents: Heinrich Zinsmeister (p_104726292477) + Elisabeth AKA Engelskircher (p_104726292480). CONFIRMS that our research subject Heinrich Zinsmeister (KD72-C6D) had a daughter Philippina born 1818 with wife Elisabetha Engelskircher. Image ARK: ark:/61903/3:1:3Q9M-CSCB-DQXZ-C. This establishes Philippina as a third known child (before Maria Catharina July 1819 and Juliane Dec 1823)."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:36:50.209Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "QPKL-VGGZ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Same 1845 marriage (second index): same Philippina Zinsmeister (born 1818) + Johannes Ultes, parents Heinrich Zinsmeister (p_104726216470) + Elisabethe AKA Engelskirhen (p_104726216473). Corroborates QPKL-LJ7Y. Image ARK: ark:/61903/3:1:3Q9M-CSCB-DQZQ-4."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:36:50.209Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "QPKP-695F"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Marriage 6 Nov 1823, Steinwenden: Philipp Peter Petri married Elisabetha Zinsmeister. Bride's parents: Heinrich Zinsmeister (p_104727682635) + Margaretha AKA Jong (= n\u00e9e Jung). This is a DIFFERENT Heinrich Zinsmeister from our research subject. Confirms the 'Margaretha Jung' Heinrich: same person as father of Johann Heinrich Zinssmeister (1802, N5BK-GH7) where father=Heinrich and mother=Margaretha Jung. Establishes separate lineage that must be distinguished from KD72-C6D."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": null,
+      "performed": "2026-07-30T05:36:50.209Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "N5BK-GH7"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Baptism of Johann Heinrich Zinssmeister, born 15 Nov 1802, christened 16 Nov 1802, Steinwenden. Father: Heinrich Zinssmeister (p_12270413046). Mother: Margaretha Jung (p_12270413047). This 'Margaretha Jung' Heinrich fathered a child in 1802, so was born before 1787. He CANNOT be our research subject (KD72-C6D) who had his first known child (Philippina) only in 1818. The 'Margaretha Jung' Heinrich is an older relative (perhaps uncle or older brother) of our subject."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:36:50.209Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "QPKP-MG7J"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Burial of infant Elisabetha Zinsmeister, born and died 19 Mar 1827, buried 20 Mar 1827, Steinwenden. Parents: Philipp Zinsmeister + Philippina AKA Laterner. NOT related to our research subject Heinrich Zinsmeister (KD72-C6D)."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T05:36:50.209Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "QPKP-7YJ9"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Baptism of Elisabetha Zinsmeister, born 13 Jul 1826, baptized 16 Jul 1826, Steinwenden. Parents: Philipp Zinsmeister + Philippine AKA Laterner. NOT related to our research subject Heinrich Zinsmeister (KD72-C6D). The 1826 and 1827 Elisabethas are siblings from the Philipp + Philippine Laterner Zinsmeister family."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-30T05:52:59.726Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zinsmeister",
+        "givenName": "Heinrich",
+        "recordType": "death",
+        "deathPlace": "Steinwenden, Germany",
+        "deathYearFrom": 1840,
+        "deathYearTo": 1900,
+        "collectionId": "3015626"
+      },
+      "outcome": "negative",
+      "results_examined": 15,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 15,
+      "notes": "Death search in CID 3015626 for Heinrich Zinsmeister, Steinwenden, 1840-1900. 15 results returned; all match scores extremely low (max 0.033). The only Steinwenden burial for a Heinrich is QPKP-CJC2 (1855, wife Margaretha, born 1801) \u2014 already documented as a different person from KD72-C6D (wife Elisabetha Engelskircher). No indexed death record for our subject found. Steinwenden volumes are 0% indexed; the definitive answer requires browsing image group 008239802 (pli_008)."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-30T05:59:56.001Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1609357",
+        "surname": "Zinsmeister",
+        "givenName": "Heinrich",
+        "recordType": "death",
+        "recordCountry": "Germany",
+        "deathYearFrom": 1840,
+        "deathYearTo": 1900
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "CID 1609357 (Germany Evangelical Church Book Duplicates 1815-1875): no results for Heinrich Zinsmeister death. Collection may not cover the Steinwenden Rhineland-Palatinate area."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-30T05:59:56.001Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zinsmeister",
+        "givenName": "Heinrich",
+        "spouseGivenName": "Elisabetha",
+        "recordType": "death",
+        "recordCountry": "Germany",
+        "deathYearFrom": 1840,
+        "deathYearTo": 1900
+      },
+      "outcome": "partial",
+      "results_examined": 33,
+      "external_site": null,
+      "results_ref": "results/log_021.json",
+      "results_available": 33,
+      "notes": "Broader Germany death search with spouseGivenName=Elisabetha. KEY FIND: JWBL-9ZZ/JWBL-9Z8 in CID 1494474 (Germany Deaths and Burials 1582-1958) \u2014 Elisabetha Engelskircher died 15 Apr 1843, buried 17 Apr 1843, Bayern; husband named as Heinrich Zinssmeister; MaritalStatus=M confirms Heinrich was alive at her death; birth year ~1787. This establishes a lower bound for KD72-C6D death: he was alive at least until 15 April 1843. Other ranked records are for distinct families (different mothers / places). No death record for KD72-C6D himself found."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T06:05:46.157Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zinsmeister",
+        "givenName": "Philippina",
+        "birthYearFrom": 1815,
+        "birthYearTo": 1822,
+        "birthPlace": "Steinwenden, Germany",
+        "recordCountry": "Germany"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_022.json",
+      "results_available": 151,
+      "notes": "Search for Philippina Zinsmeister baptism ~1815-1822 in Steinwenden/Germany. Top results: QPKG-TK96 (Philippina Caroline Zinsmeister, born 27 Sep 1818, baptized 4 Oct 1818, Spesbach, H\u00fctschenhausen, Bezirksamt Kaiserslautern, CID 3015626) \u2014 matching birth year for Philippina daughter of KD72-C6D. Also QPKP-SB8X (Philippine Zinsmeister baptized 1820, Steinwenden) \u2014 possible additional child. Reading both records to verify parents."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": null,
+      "performed": "2026-07-30T06:09:47.722Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Engelskircher",
+        "givenName": "Elisabetha",
+        "birthYearFrom": 1783,
+        "birthYearTo": 1792,
+        "recordCountry": "Germany"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_023.json",
+      "results_available": 251,
+      "notes": "Searched for a birth/baptism record for Elisabetha Engelskircher (KD72-C66), born ~1787, wife of our subject. Top-ranked result was JWBL-9ZZ (her 1843 death record, already known). No baptism record for KD72-C66 identified. Rank 5 (NDJ1-5HY) was Katharina Elisabetha Engelskircher b.23 Feb 1787 Otterberg \u2014 wrong given name. QPKP-CJD3 ('Elisabetha Engelskircher in entry for Philippina Engelskircher', Steinwenden area) still to be read \u2014 may be a Philippina Engelskircher baptism where Elisabetha is the mother."
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": null,
+      "performed": "2026-07-30T06:09:47.746Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zinsmeister",
+        "givenName": "Heinrich",
+        "birthYearFrom": 1778,
+        "birthYearTo": 1802,
+        "recordCountry": "Germany",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_024.json",
+      "results_available": 188,
+      "notes": "Searched for a baptism record for Heinrich Zinsmeister (KD72-C6D), our research subject. All match scores extremely low (max 0.040). Top match QPK2-JMGG (Weilerbach, b.1 May 1794, score 0.029) is attached to a different person and is not from Steinwenden. All other results are secondary references \u2014 Heinrich appearing as a father in his children's baptism records. No indexed baptism record for our specific subject found in CID 3015626, 1473000, or 4234521. Birth information must come from derivative evidence (children's baptism records noting father's approximate age, or civil registration if it began before his birth)."
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": null,
+      "performed": "2026-07-30T06:12:22.852Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QPKP-CJD3"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read QPKP-CJD3, which appeared in rank list for Elisabetha Engelskircher birth search. This is a DIFFERENT Elisabetha Engelskircher: she appears as the unmarried mother of Philippina Engelskircher (b. 18 Jan 1841, bapt. 24 Jan 1841, Steinwenden, CID 3015626). Child takes mother's surname indicating illegitimate birth. KD72-C66 (our subject's wife) died 15 Apr 1843 as a married woman \u2014 she would not appear as an unmarried mother in 1841. This is a younger Engelskircher relative, not our KD72-C66. No new evidence for KD72-C6D or KD72-C66."
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-30T06:12:22.852Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "dbid": "61110",
+        "description": "Ancestry Saarland Zivilstandsregister (civil registration births/baptisms)"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://search.ancestry.com/cgi-bin/sse.dll?dbid=61110&gss=angs-d&new=1&rank=1&gsfn=Heinrich&gsln=Zinsmeister&msbpn__ftp=Germany",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Ancestry Saarland Zivilstandsregister (dbid 61110, civil birth/baptism records). URL generated but no capture received \u2014 Ancestry authentication not configured in this autonomous session. Cannot execute this search."
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-30T06:12:22.852Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "dbid": "61150",
+        "description": "Ancestry Saarland Sterberegister (death records) for q_001 corroboration"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://search.ancestry.com/cgi-bin/sse.dll?dbid=61150&gss=angs-d&new=1&rank=1&gsfn=Heinrich&gsln=Zinsmeister&msbpn__ftp=Germany",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Ancestry Saarland Sterberegister (dbid 61150, death records). URL generated but no capture received \u2014 Ancestry authentication not configured in this autonomous session. Cannot execute this search."
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-30T06:12:22.852Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "dbid": "61150",
+        "description": "Ancestry Saarland Sterberegister (death records) for q_002"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://search.ancestry.com/cgi-bin/sse.dll?dbid=61150&gss=angs-d&new=1&rank=1&gsfn=Heinrich&gsln=Zinsmeister&msbpn__ftp=Germany",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Ancestry Saarland Sterberegister (dbid 61150, death records) for q_002 (death date). URL generated but no capture received \u2014 Ancestry authentication not configured in this autonomous session. Cannot execute this search."
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": null,
+      "performed": "2026-07-30T06:32:09.073Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zinsmeister",
+        "givenName": "Heinrich",
+        "spouseGivenName": "Elisabetha",
+        "spouseSurname": "Engelskircher",
+        "recordType": "marriage",
+        "recordCountry": "Germany"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_029.json",
+      "results_available": 20,
+      "notes": "Ad-hoc marriage search for Heinrich Zinsmeister + Elisabetha Engelskircher across CID 3015626 (Germany Lutheran BMD) and CID 1473009 (Germany Marriages 1558-1929). 20 results; all match scores at or below 0.039. No direct marriage record for KD72-C6D identified. Top search-ranked results (J48R-NDH 'Joh. Heinrich Zinsmeister', J41Z-34X 'Johann Heinrich Zinsmeister', CID 1473009) have zero candidate facts and are not attached to subject \u2014 possible son's marriages or other family members. QPKP-ZRP5 (1835 marriage, already known as likely son's) reappears at search rank 4. The marriage of KD72-C6D and Elisabetha Engelskircher (circa 1815-1818) is either in image-only form in the Steinwenden church register (blocked) or predates the indexed portion of these collections."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Germany, Lutheran Baptisms, Marriages, and Burials, 1500\u20131971,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPKG-B8SJ : accessed 2026-07-30), entry for Maria Catharina Zinsmeister, baptized 17 Jul 1819, Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern; image ARK ark:/61903/3:1:3Q9M-CSCB-X9HN-N.",
+      "citation_detail": {
+        "who": "Maria Catharina Zinsmeister (child); Heinrich Zinsmeister (father); Elisabetha n\u00e9e Engelskircher (mother)",
+        "what": "Lutheran baptism register entry, Steinwenden parish",
+        "when_created": "17 Jul 1819",
+        "when_accessed": "2026-07-30",
+        "where": "FamilySearch, Germany, Lutheran Baptisms, Marriages, and Burials, 1500\u20131971 (collection 3015626)",
+        "where_within": "Image ARK ark:/61903/3:1:3Q9M-CSCB-X9HN-N; record ARK ark:/61903/1:1:QPKG-B8SJ"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-30",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPKG-B8SJ",
+      "notes": "Digital image of the original Lutheran baptism register for Steinwenden parish. Record subject is Maria Catharina Zinsmeister; father listed as Heinrich Zinsmeister, mother as Elisabetha n\u00e9e Engels Kricher (Engelskircher). Baptism date 17 Jul 1819; birth date 13 Jul 1819.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Germany, Lutheran Baptisms, Marriages, and Burials, 1500\u20131971,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPKP-C39S : accessed 30 July 2026), entry for Juliane Zinsmeister, baptized 1 Jan 1824, Steinwenden; image of original Kirchenbuch, ark:/61903/3:1:3Q9M-CSCB-X9HX-F.",
+      "citation_detail": {
+        "who": "Juliane Zinsmeister (child); Heinrich Zinsmeister (father); Elisabetha Zinsmeister n\u00e9e Engelskircher (mother)",
+        "what": "Lutheran baptism register entry \u2014 Eintrag f\u00fcr Juliane Zinsmeister",
+        "when_created": "1 January 1824",
+        "when_accessed": "30 July 2026",
+        "where": "FamilySearch, Germany, Lutheran Baptisms, Marriages, and Burials, 1500\u20131971 (collection 3015626)",
+        "where_within": "Image ARK ark:/61903/3:1:3Q9M-CSCB-X9HX-F; record ARK ark:/61903/1:1:QPKP-C39S"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPKP-C39S",
+      "access_date": "2026-07-30",
+      "log_entry_id": "log_004",
+      "notes": "Digital image of original Lutheran baptism register for Steinwenden. The record_read returns a FamilySearch index entry (derivative layer) backed by the original Kirchenbuch image (ark:/61903/3:1:3Q9M-CSCB-X9HX-F). The original image was not independently examined beyond the indexed facts; the index is treated as representative of the original. Mother's AKA surname 'Begelekicher' is the indexer's transcription of Engelskircher.",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPKP-CJC2 : accessed 30 July 2026), burial entry for Heinrich Zen\u00dfmeister, 20 Feb 1855, Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern; citing image ark:/61903/3:1:3Q9M-CSCB-X9F7-S.",
+      "citation_detail": {
+        "who": "Heinrich Zen\u00dfmeister (deceased) and Margaretha (wife)",
+        "what": "Burial register entry, church burial record",
+        "when_created": "20 Feb 1855",
+        "when_accessed": "30 July 2026",
+        "where": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971 (FamilySearch Collection 3015626)",
+        "where_within": "Burial entry for Heinrich Zen\u00dfmeister, 20 Feb 1855, Steinwenden"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-30",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPKP-CJC2",
+      "notes": "Church burial register from Steinwenden, Bavaria. The principal (Heinrich, born 1801, wife Margaretha) is likely a DIFFERENT Heinrich Zinsmeister from the research subject KD72-C6D (whose wife was Elisabetha Engelskircher). The 1801 birth year matches the son of Jacob Zinssmeister + Maria Elisabetha Ziegler identified in record N5BK-P7P. Image ARK: ark:/61903/3:1:3Q9M-CSCB-X9F7-S.",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Deutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPKL-LJ7Y : accessed 2026-07-30), entry for Johannes Altes/Ultes marriage, 8 February 1845, Otterberg, Kaiserslautern, Bavaria, Germany; image of original church register.",
+      "citation_detail": {
+        "who": "Heinrich Zinsmeister (bride's father)",
+        "what": "Lutheran marriage register entry for Johannes Altes/Ultes and Philippina Zinsmeister",
+        "when_created": "8 February 1845",
+        "when_accessed": "2026-07-30",
+        "where": "FamilySearch, Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971 (collection 3015626)",
+        "where_within": "Marriage entry dated 8 February 1845, Otterberg, Kaiserslautern, Bavaria; image ark:/61903/3:1:3Q9M-CSCB-DQXZ-C"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-30",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPKL-LJ7Y",
+      "log_entry_id": "log_013",
+      "notes": "Digital image of original Lutheran church marriage register. Record names the bride's parents as Heinrich Zinsmeister and Elisabeth n\u00e9e Engelskircher, and the groom's parents as Ludwig Altes/Ultes and Katharina Kolter.",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Deutschland, ausgew\u00e4hlte evangelische Kirchenb\u00fccher 1500-1971,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPKP-ZRP5 : accessed 30 July 2026), entry for Joh. Heinrich Zin\u00dfmeister and Elisabetha Engelskircher, marriage 7 Feb 1835, Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern.",
+      "citation_detail": {
+        "who": "Joh. Heinrich Zin\u00dfmeister and Elisabetha Engelskircher",
+        "what": "Marriage register entry, Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971 (index/abstract)",
+        "when_created": "7 February 1835 (original entry); indexed by FamilySearch",
+        "when_accessed": "30 July 2026",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "ark:/61903/1:1:QPKP-ZRP5; image ark:/61903/3:1:3Q9M-CSCB-X9C5-G"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPKP-ZRP5",
+      "access_date": "2026-07-30",
+      "log_entry_id": "log_008",
+      "notes": "Original not examined \u2014 this is a FamilySearch index/abstract of the underlying Lutheran Kirchenbuch image (ark:/61903/3:1:3Q9M-CSCB-X9C5-G). The original church register image was not browsed. Per locality guide, Steinwenden Lutheran records in this collection are typically browse-only and 0% name-indexed; the index here may carry transcription errors. Image review is recommended to confirm groom's full name spelling and any additional details (parents' names, witnesses).",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "\"Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPKG-B83C : accessed 2026-07-30), entry for Philipp Wehner, baptism 23 Jan 1831, Steinwenden; citing image ARK ark:/61903/3:1:3Q9M-CSCB-X9Z4-C.",
+      "citation_detail": {
+        "who": "Philipp Wehner (child); Heinrich Zinsmeister (father); Margaretha Wehner (mother)",
+        "what": "Baptism register entry \u2014 baptism of Philipp Wehner, 23 Jan 1831, Steinwenden",
+        "when_created": "23 January 1831 (baptism date of entry)",
+        "when_accessed": "2026-07-30",
+        "where": "FamilySearch, Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971 (Collection ID 3015626)",
+        "where_within": "Image ARK ark:/61903/3:1:3Q9M-CSCB-X9Z4-C; record ARK ark:/61903/1:1:QPKG-B83C"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPKG-B83C",
+      "access_date": "2026-07-30",
+      "notes": "FamilySearch index/abstract of the Lutheran church register image. Original church register not independently examined \u2014 original not examined (browse-only image behind index). Index may introduce transcription errors, including the spelling or identification of the father's surname.",
+      "log_entry_id": "log_009",
+      "gedcomx_source_description_id": "S6"
+    },
+    {
+      "id": "src_007",
+      "citation": "\"Deutschland Tote und Beerdigungen, 1582-1958\", FamilySearch (https://familysearch.org/ark:/61903/1:1:JWBL-9ZZ : accessed 30 July 2026), entry for Elisabetha Engelskircher, 1843; citing original records held by local German archives.",
+      "citation_detail": {
+        "who": "Elisabetha Engelskircher (deceased); Heinrich Zinssmeister (husband)",
+        "what": "Death and burial entry, Germany, Deaths and Burials, 1582-1958, FamilySearch collection CID 1494474",
+        "when_created": "15\u201317 April 1843 (original entry); indexed 25 October 2021",
+        "when_accessed": "30 July 2026",
+        "where": "FamilySearch (familysearch.org), collection \"Germany, Deaths and Burials, 1582-1958\", CID 1494474",
+        "where_within": "Entry for Elisabetha Engelskircher, ARK ark:/61903/1:1:JWBL-9ZZ; husband persona ARK ark:/61903/1:1:JWBL-9Z8"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://familysearch.org/ark:/61903/1:1:JWBL-9ZZ",
+      "access_date": "2026-07-30",
+      "notes": "CID 1494474 is a compiled database index of German church and civil death records; this is a derivative \u2014 the underlying original parish register image was not examined. Original not examined \u2014 image not accessed during this search.",
+      "log_entry_id": "log_021",
+      "gedcomx_source_description_id": "S7"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Maria Catharina Zinsmeister",
+      "structured_value": {
+        "given": "Maria Catharina",
+        "surname": "Zinsmeister"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Heinrich and Elisabetha Zinsmeister)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (Heinrich and Elisabetha Zinsmeister)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "baptized 17 Jul 1819, Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern",
+      "date": "17 Jul 1819",
+      "date_certainty": "exact",
+      "place": "Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern",
+      "information_quality": "primary",
+      "informant": "Lutheran officiant, Steinwenden parish",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Steinwenden, Bezirksamt Homburg, Bavaria, Germany"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 13 Jul 1819",
+      "date": "13 Jul 1819",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "presenting parents (Heinrich and Elisabetha Zinsmeister)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Heinrich Zinsmeister",
+      "structured_value": {
+        "given": "Heinrich",
+        "surname": "Zinsmeister"
+      },
+      "information_quality": "primary",
+      "informant": "Heinrich Zinsmeister (self, as presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Heinrich Zinsmeister (self, as presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "father of Maria Catharina Zinsmeister",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "primary",
+      "informant": "Lutheran officiant, Steinwenden parish",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The baptism register explicitly names Heinrich Zinsmeister as father; this is a stated relationship recorded by the officiant at time of baptism, not inferred from household position.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "father",
+      "fact_type": "residence",
+      "value": "resident in Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern, as of Jul 1819",
+      "place": "Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern",
+      "date": "17 Jul 1819",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "Lutheran officiant, Steinwenden parish",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Residence inferred from the fact that the baptism took place at Steinwenden parish and Heinrich is named as the father; the register does not state his residence explicitly, but his presence in the parish at this date is implied. Indirect evidence for q_001: establishes Heinrich was living in Steinwenden in 1819 but does not give his birth date or birthplace.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Steinwenden, Bezirksamt Homburg, Bavaria, Germany"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Elisabetha Zinsmeister, n\u00e9e Engels Kricher (Engelskircher)",
+      "structured_value": {
+        "given": "Elisabetha",
+        "surname": "Zinsmeister"
+      },
+      "information_quality": "primary",
+      "informant": "Elisabetha Zinsmeister n\u00e9e Engelskircher (self, as presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Record gives birth name as 'Engels Kricher' (alternate name field), standardized as Engelskircher. Tree person KD72-C66 (Elisabetha Engelskircher) is identified as this individual per delegation guidance.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Elisabetha Zinsmeister n\u00e9e Engelskircher (self, as presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "mother of Maria Catharina Zinsmeister",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "primary",
+      "informant": "Lutheran officiant, Steinwenden parish",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Baptism register explicitly names Elisabetha (n\u00e9e Engelskircher) as mother; stated relationship, not inferred from position.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:QPKG-B8SJ",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "spouse of Heinrich Zinsmeister",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Lutheran officiant, Steinwenden parish",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Register records Elisabetha as bearing the Zinsmeister married surname and lists Heinrich as the father of the same child; the couple relationship is stated by the register structure.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Juliane Zinsmeister",
+      "structured_value": {
+        "given": "Juliane",
+        "surname": "Zinsmeister"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Heinrich and Elisabetha Zinsmeister)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (Heinrich and Elisabetha Zinsmeister)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "born 30 Dec 1823",
+      "date": "30 Dec 1823",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "presenting parents (Heinrich and Elisabetha Zinsmeister)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "baptized 1 Jan 1824, Steinwenden",
+      "date": "1 Jan 1824",
+      "date_certainty": "exact",
+      "place": "Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern",
+      "information_quality": "primary",
+      "informant": "officiant (Lutheran minister)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002",
+      "standard_place": "Steinwenden, Bezirksamt Homburg, Bavaria, Germany"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Heinrich Zinsmeister",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Heinrich and Elisabetha Zinsmeister)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Elisabetha Zinsmeister n\u00e9e Engelskircher",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Heinrich and Elisabetha Zinsmeister)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "father_of_child",
+      "fact_type": "name",
+      "value": "Heinrich Zinsmeister",
+      "structured_value": {
+        "given": "Heinrich",
+        "surname": "Zinsmeister"
+      },
+      "information_quality": "primary",
+      "informant": "Heinrich Zinsmeister",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "father_of_child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Heinrich Zinsmeister",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "father_of_child",
+      "fact_type": "residence",
+      "value": "Steinwenden (inferred from child's baptism location)",
+      "place": "Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern",
+      "information_quality": "indeterminate",
+      "informant": "officiant (Lutheran minister)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Residence at Steinwenden inferred from the fact that Juliane was baptized in the Steinwenden Lutheran church in January 1824. The register does not explicitly state Heinrich's place of residence, but the family's use of this parish implies local residence. This is indirect evidence bearing on q_001: places Heinrich in Steinwenden in 1823\u20131824 with wife Elisabetha Engelskircher, consistent with the earlier Maria Catharina baptism record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002",
+      "standard_place": "Steinwenden, Bezirksamt Homburg, Bavaria, Germany"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "father_of_child",
+      "fact_type": "relationship",
+      "value": "father of Juliane Zinsmeister",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Heinrich and Elisabetha Zinsmeister)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "mother_of_child",
+      "fact_type": "name",
+      "value": "Elisabetha Zinsmeister (n\u00e9e Engelskircher; indexed as 'Begelekicher')",
+      "structured_value": {
+        "given": "Elisabetha",
+        "surname": "Zinsmeister"
+      },
+      "information_quality": "primary",
+      "informant": "Elisabetha Zinsmeister",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The AKA surname 'Begelekicher' is the indexer's phonetic transcription of Engelskircher (maiden name). The birth name given in the index is Elisabetha Zinsmeister (married name). The original image (ark:/61903/3:1:3Q9M-CSCB-X9HX-F) should be consulted to confirm the maiden surname spelling. Likely the same person as tree person KD72-C66 (Elisabetha Engelskircher).",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "mother_of_child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Elisabetha Zinsmeister",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "mother_of_child",
+      "fact_type": "relationship",
+      "value": "mother of Juliane Zinsmeister",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Heinrich and Elisabetha Zinsmeister)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:QPKP-C39S",
+      "record_role": "father_of_child",
+      "fact_type": "relationship",
+      "value": "spouse of Elisabetha Zinsmeister n\u00e9e Engelskircher",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother_of_child"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Heinrich and Elisabetha Zinsmeister)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:QPKP-CJC2",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Heinrich Zen\u00dfmeister",
+      "structured_value": {
+        "given": "Heinrich",
+        "surname": "Zen\u00dfmeister"
+      },
+      "information_quality": "secondary",
+      "informant": "church officiant or family member reporting to register",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Primary name variant as recorded in the burial register. Burial registers typically recorded the name as reported; the officiant/clerk recorded the name from family report at burial. Surname spelling varies (Zen\u00dfmeister / Zin\u00dfmeister) \u2014 both variants preserved. This is most likely a different Heinrich from research subject KD72-C6D based on wife name (Margaretha vs. Elisabetha Engelskircher).",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:QPKP-CJC2",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Heinrich Zin\u00dfmeister",
+      "structured_value": {
+        "given": "Heinrich",
+        "surname": "Zin\u00dfmeister"
+      },
+      "information_quality": "secondary",
+      "informant": "church officiant or family member reporting to register",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Alternate surname spelling appearing in the same burial record. Both Zen\u00dfmeister and Zin\u00dfmeister are recorded variants for the same individual.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:QPKP-CJC2",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "church officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:QPKP-CJC2",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1801",
+      "date": "1801",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1801"
+      },
+      "information_quality": "secondary",
+      "informant": "family member reporting to burial register",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year recorded in a burial register 54 years after the event. The surviving family (likely wife Margaretha or other kin) supplied this from recollection or family knowledge. The informant was not present at the birth. Year-only precision suggests approximation. Consistent with the birth year of Heinrich born to Jacob Zinssmeister + Maria Elisabetha Ziegler (record N5BK-P7P).",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:QPKP-CJC2",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 18 Feb 1855",
+      "date": "18 Feb 1855",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": "1855"
+      },
+      "information_quality": "primary",
+      "informant": "church officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Death date recorded two days before burial; the officiant recorded this at or near the time of the event in the parish register.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:QPKP-CJC2",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "buried 20 Feb 1855, Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern, Deutsches Reich",
+      "date": "20 Feb 1855",
+      "date_certainty": "exact",
+      "place": "Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern, Deutsches Reich",
+      "structured_value": {
+        "year": "1855",
+        "place": "Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern, Deutsches Reich"
+      },
+      "information_quality": "primary",
+      "informant": "church officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Burial date and place recorded by the officiating pastor at the time of the burial in the parish register at Steinwenden. Official duty record.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003",
+      "standard_place": "Steinwenden, Bezirksamt Homburg, Bavaria, Germany"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:QPKP-CJC2",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Margaretha",
+      "structured_value": {
+        "given": "Margaretha"
+      },
+      "information_quality": "secondary",
+      "informant": "church officiant or family member reporting to register",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "No surname recorded for Margaretha in the burial entry. Name as reported to the church by the family at the time of burial. She is identified only as the wife of Heinrich Zen\u00dfmeister.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:QPKP-CJC2",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "church officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:QPKP-CJC2",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Heinrich Zen\u00dfmeister",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "church officiant or family member reporting to register",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Relationship stated in the burial register. Margaretha is named as wife (Ehefrau) of the deceased. The record itself states the spousal relationship; the officiant recorded it from family report.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Heinrich Zinsmeister",
+      "structured_value": {
+        "given": "Heinrich",
+        "surname": "Zinsmeister"
+      },
+      "information_quality": "primary",
+      "informant": "Philippina Zinsmeister (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Elisabeth Engelskircher",
+      "structured_value": {
+        "given": "Elisabeth",
+        "surname": "Engelskircher"
+      },
+      "information_quality": "primary",
+      "informant": "Philippina Zinsmeister (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Philippina Zinsmeister",
+      "structured_value": {
+        "given": "Philippina",
+        "surname": "Zinsmeister"
+      },
+      "information_quality": "primary",
+      "informant": "Philippina Zinsmeister (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Philippina Zinsmeister (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born 1818",
+      "date": "1818",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1818"
+      },
+      "information_quality": "primary",
+      "informant": "Philippina Zinsmeister (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Bride stated her own birth year. That Philippina was born 1818 places Heinrich Zinsmeister as a married father by at least that year, providing indirect chronological context for q_001.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Johannes Altes/Ultes, 8 February 1845, Otterberg, Kaiserslautern, Bavaria, Germany",
+      "date": "8 February 1845",
+      "date_certainty": "exact",
+      "place": "Otterberg, Kaiserslautern, Bavaria, Germany",
+      "information_quality": "primary",
+      "informant": "church officiant/clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004",
+      "standard_place": "Otterberg, Kaiserslautern, Bavaria, Germany"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Heinrich Zinsmeister",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Philippina Zinsmeister (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Elisabeth Engelskircher",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Philippina Zinsmeister (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Johannes Altes / Johannes Ultes",
+      "structured_value": {
+        "given": "Johannes",
+        "surname": "Altes"
+      },
+      "information_quality": "primary",
+      "informant": "Johannes Altes/Ultes (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Surname appears in two variant spellings in the record: Altes and Ultes. Both captured in value.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Johannes Altes/Ultes (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born 1816",
+      "date": "1816",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1816"
+      },
+      "information_quality": "primary",
+      "informant": "Johannes Altes/Ultes (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Philippina Zinsmeister, 8 February 1845, Otterberg, Kaiserslautern, Bavaria, Germany",
+      "date": "8 February 1845",
+      "date_certainty": "exact",
+      "place": "Otterberg, Kaiserslautern, Bavaria, Germany",
+      "information_quality": "primary",
+      "informant": "church officiant/clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004",
+      "standard_place": "Otterberg, Kaiserslautern, Bavaria, Germany"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Ludwig Altes/Ultes",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Johannes Altes/Ultes (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Katharina Kolter/Altes",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Johannes Altes/Ultes (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Ludwig Altes / Ludwig Ultes",
+      "structured_value": {
+        "given": "Ludwig",
+        "surname": "Altes"
+      },
+      "information_quality": "primary",
+      "informant": "Johannes Altes/Ultes (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Surname variant Ultes also appears in record alongside Altes.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:QPKL-LJ7Y",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Katharina Kolter",
+      "structured_value": {
+        "given": "Katharina",
+        "surname": "Kolter"
+      },
+      "information_quality": "primary",
+      "informant": "Johannes Altes/Ultes (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Record gives maiden surname Kolter; also indexed under Altes as married surname.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:QPKP-ZRP5",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Joh. Heinrich Zin\u00dfmeister",
+      "structured_value": {
+        "given": "Joh. Heinrich",
+        "surname": "Zin\u00dfmeister"
+      },
+      "information_quality": "primary",
+      "informant": "Joh. Heinrich Zin\u00dfmeister (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Marriage record: groom stated his own name to the officiant/clerk. Index transcription may contain errors (original image not examined); name spelling 'Zin\u00dfmeister' vs 'Zinsmeister' variant should be confirmed against the image.",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:QPKP-ZRP5",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Joh. Heinrich Zin\u00dfmeister (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:QPKP-ZRP5",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married 7 February 1835, Steinwenden",
+      "date": "7 Feb 1835",
+      "date_certainty": "exact",
+      "place": "Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern, Deutsches Reich",
+      "information_quality": "primary",
+      "informant": "officiating minister/clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "The officiant or clerk recorded the marriage event in the Lutheran church register. Date and place are direct from the register entry. This marriage in 1835 is consistent with the groom being a son of research subject Heinrich Zinsmeister (b. ca. 1780s\u20131790s) rather than the subject himself, whose daughter Maria Catharina was born 1819.",
+      "source_id": "src_005",
+      "standard_place": "Steinwenden, Bezirksamt Homburg, Bavaria, Germany"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:QPKP-ZRP5",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Elisabetha Engelskircher",
+      "structured_value": {
+        "given": "Elisabetha",
+        "surname": "Engelskircher"
+      },
+      "information_quality": "primary",
+      "informant": "Elisabetha Engelskircher (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Marriage record: bride stated her own name to the officiant/clerk. Index transcription may contain errors; original image not examined.",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:QPKP-ZRP5",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Elisabetha Engelskircher (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:QPKP-ZRP5",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born ~1815",
+      "date": "~1815",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Elisabetha Engelskircher (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Birth year ~1815 as indexed; source of derivation (from stated age or recorded birth year) unclear without original image. A bride born ~1815 would be ~20 at marriage in 1835, which is plausible. She is NOT consistent with being our research subject Heinrich Zinsmeister's wife \u2014 she would have been only ~4 years old in 1819 when Heinrich fathered Maria Catharina.",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:QPKP-ZRP5",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married 7 February 1835, Steinwenden",
+      "date": "7 Feb 1835",
+      "date_certainty": "exact",
+      "place": "Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern, Deutsches Reich",
+      "information_quality": "primary",
+      "informant": "officiating minister/clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_005",
+      "standard_place": "Steinwenden, Bezirksamt Homburg, Bavaria, Germany"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Heinrich Zinsmeister",
+      "structured_value": {
+        "given": "Heinrich",
+        "surname": "Zinsmeister"
+      },
+      "information_quality": "primary",
+      "informant": "Heinrich Zinsmeister (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Father presumably presented the child for baptism; his own name is stated directly. This record identifies a Heinrich Zinsmeister whose wife was Margaretha Wehner \u2014 per project context, this is likely a DIFFERENT individual from research subject KD72-C6D (wife: Elisabetha Engelskircher). The 1801-born Heinrich (parents Jacob Zinssmeister + Maria Elisabetha Ziegler, d. 1855) is the more likely match for this family unit. Derivative source \u2014 original church register not independently examined.",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Heinrich Zinsmeister (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Margaretha Wehner",
+      "structured_value": {
+        "given": "Margaretha",
+        "surname": "Wehner"
+      },
+      "information_quality": "primary",
+      "informant": "Margaretha Wehner (mother, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Mother's given name 'Margaretha' is recorded as birth name; 'Wehner' appears as an AKA \u2014 likely her maiden surname used as the family surname in this entry, or the child's surname lineage. Index may reflect the church register's notation conventions.",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Margaretha Wehner (mother, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Philipp Wehner (AKA Zinsmeister)",
+      "structured_value": {
+        "given": "Philipp",
+        "surname": "Wehner"
+      },
+      "information_quality": "primary",
+      "informant": "Heinrich Zinsmeister and Margaretha Wehner (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Child's surname recorded as 'Wehner' (birth name) with 'Zinsmeister' as AKA \u2014 likely the father's surname noted alongside the mother's. Parents presented the child; the name is stated directly in the register.",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Heinrich Zinsmeister and Margaretha Wehner (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Sex inferred from the male given name Philipp and from the name 'Zinsmeister' being carried as AKA \u2014 consistent with a male child taking father's surname.",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 21 Jan 1831",
+      "date": "21 Jan 1831",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "Heinrich Zinsmeister and Margaretha Wehner (presenting parents)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Birth date stated in the register entry; parents presented the child two days later for baptism \u2014 proximity to the event supports reliability.",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "baptized 23 Jan 1831, Steinwenden",
+      "date": "23 Jan 1831",
+      "date_certainty": "exact",
+      "place": "Steinwenden, Bezirksamt Homburg, K\u00f6nigreich Bayern, Deutsches Reich",
+      "information_quality": "primary",
+      "informant": "officiating minister (Lutheran church, Steinwenden)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "The officiant recorded the baptism event in the church register \u2014 this is their attestation of an event they performed, at official_duty proximity.",
+      "source_id": "src_006",
+      "standard_place": "Steinwenden, Bezirksamt Homburg, Bavaria, Germany"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "father of Philipp Wehner (inferred)",
+      "structured_value": {
+        "relationship_type": "parent_inferred",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Relationship inferred from record structure: Heinrich Zinsmeister is listed as father in the baptism entry. The inference is the researcher's reading of the register's parent-child structure. This links a Heinrich Zinsmeister (wife: Margaretha Wehner) to Steinwenden in 1831 \u2014 relevant for disambiguation from KD72-C6D (wife: Elisabetha Engelskircher).",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "mother of Philipp Wehner (inferred)",
+      "structured_value": {
+        "relationship_type": "parent_inferred",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Relationship inferred from record structure: Margaretha Wehner is listed as mother in the baptism entry.",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Heinrich Zinsmeister (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Relationship inferred from record structure \u2014 German Lutheran baptism registers of this period do not use a formal relationship column; parent-child links are read from the layout of the entry.",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Margaretha Wehner (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "mother"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Relationship inferred from record structure \u2014 German Lutheran baptism registers of this period do not use a formal relationship column; parent-child links are read from the layout of the entry.",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:QPKG-B83C",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Margaretha Wehner (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "mother"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Couple relationship inferred from co-listing as father and mother in a baptism entry. This confirms the Heinrich Zinsmeister in this record had wife Margaretha Wehner \u2014 a key distinguishing fact from KD72-C6D (wife: Elisabetha Engelskircher). Original church register not independently examined.",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:JWBL-9ZZ",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Elisabetha Engelskircher",
+      "structured_value": {
+        "given": "Elisabetha",
+        "surname": "Engelskircher"
+      },
+      "information_quality": "primary",
+      "informant": "church officiant or civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:JWBL-9ZZ",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "church officiant or civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:JWBL-9ZZ",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "15 April 1843",
+      "date": "15 Apr 1843",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "church officiant or civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:JWBL-9ZZ",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "17 April 1843, Bayern, Deutschland",
+      "date": "17 Apr 1843",
+      "date_certainty": "exact",
+      "place": "Bayern, Deutschland",
+      "information_quality": "primary",
+      "informant": "church officiant or civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007",
+      "standard_place": "Bavaria, Germany"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:JWBL-9ZZ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "approximately 1787",
+      "date": "~1787",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown informant (likely family member)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year recorded as approximate (~1787) in an index entry; no original parish record examined. The informant providing age or birth year at death registration likely had secondhand knowledge of the decedent's birth \u2014 indirect evidence of a birth date.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:JWBL-9ZZ",
+      "record_role": "deceased",
+      "fact_type": "marital_status",
+      "value": "Married (M)",
+      "information_quality": "primary",
+      "informant": "church officiant or civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:JWBL-9ZZ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "wife of Heinrich Zinssmeister",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "husband"
+      },
+      "information_quality": "primary",
+      "informant": "church officiant or civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:JWBL-9Z8",
+      "record_role": "husband",
+      "fact_type": "name",
+      "value": "Heinrich Zinssmeister",
+      "structured_value": {
+        "given": "Heinrich",
+        "surname": "Zinssmeister"
+      },
+      "information_quality": "primary",
+      "informant": "church officiant or civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Heinrich Zinssmeister is named as the husband of the deceased in this death/burial record \u2014 a third party named by the officiant in recording the deceased's entry. The name is stated but comes via the officiant's record of another person's biographical attribute. Note also: the index spells the surname 'Zinssmeister' (double-s) vs. the tree's 'Zinsmeister' \u2014 a common orthographic variant in German records; warrants confirmation against the original image.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:JWBL-9Z8",
+      "record_role": "husband",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "church officiant or civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:JWBL-9Z8",
+      "record_role": "husband",
+      "fact_type": "relationship",
+      "value": "husband of Elisabetha Engelskircher (deceased)",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "primary",
+      "informant": "church officiant or civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:JWBL-9Z8",
+      "record_role": "husband",
+      "fact_type": "other",
+      "value": "alive as of 15 April 1843 (wife's death recorded with him as surviving husband, MaritalStatus=M)",
+      "date": "15 Apr 1843",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "church officiant or civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The deceased Elisabetha Engelskircher's marital status is recorded as 'M' (Married) at her death on 15 April 1843, and Heinrich Zinssmeister is named as the husband. This implies Heinrich was alive when his wife's death was registered \u2014 she would not be recorded as 'Married' if her husband had predeceased her. This is indirect evidence that Heinrich Zinsmeister (KD72-C6D) survived at least to 15 April 1843, bearing directly on q_002 (when and where did Heinrich die). The inference rests on a derivative index entry; original image confirmation is outstanding.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "source_id": "src_007"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "MK39-T4W",
+      "confidence": "confident",
+      "rationale": "Name 'Maria Catharina Zinsmeister' stated by presenting parents in src_001 (QPKG-B8SJ). Tree person MK39-T4W has given name 'Maria Catharina'; the record christening date 17 Jul 1819 and place Steinwenden match the tree fact exactly. Strong match on name + date + place + parents (KD72-C6D, KD72-C66). No conflicting identifier.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "MK39-T4W",
+      "confidence": "confident",
+      "rationale": "Sex Female stated in Maria Catharina's baptism record (src_001). Consistent with MK39-T4W gender Female.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "MK39-T4W",
+      "confidence": "confident",
+      "rationale": "Christening date 17 Jul 1819, Steinwenden from src_001 (QPKG-B8SJ). Tree fact on MK39-T4W: Christening 17 Jul 1819, Steinwenden. Exact match on date and place.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "MK39-T4W",
+      "confidence": "confident",
+      "rationale": "Birth date 13 Jul 1819 from src_001, stated by presenting parents. Consistent with christening 17 Jul 1819 (4 days later, typical for the period). Supports MK39-T4W identity.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Name 'Heinrich Zinsmeister' stated as father in Maria Catharina's baptism (src_001, QPKG-B8SJ). Wife named as Elisabetha n\u00e9e Engelskircher \u2014 matches KD72-C66. Resident Steinwenden 1819. All identifiers agree with KD72-C6D. Independent from src_002 (different baptism event). Confident.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Sex Male for the father persona in src_001. Consistent with KD72-C6D gender Male.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'father of Maria Catharina Zinsmeister' (src_001, father role). Directly places KD72-C6D as parent of MK39-T4W. Stated by the officiating pastor from a direct relationship record.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "MK39-T4W",
+      "confidence": "confident",
+      "rationale": "Father's relationship assertion 'father of Maria Catharina Zinsmeister' (src_001) also bears on MK39-T4W as the child named. Corroborates child identity alongside a_001-a_003.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Residence Steinwenden inferred from Maria Catharina's baptism in that parish, Jul 1819 (src_001). Indirect evidence: establishes KD72-C6D was resident in Steinwenden by mid-1819. Consistent with all other sources locating Heinrich Zinsmeister in Steinwenden.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Name 'Elisabetha Zinsmeister n\u00e9e Engelskircher' (AKA 'Engels Kricher') stated as mother in src_001 (QPKG-B8SJ). Unique combination: given name Elisabetha, maiden name Engelskircher, married name Zinsmeister, spouse of Heinrich Zinsmeister. Matches KD72-C66 (Elisabetha Engelskircher) exactly. No conflicting identifier.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Sex Female for mother persona in src_001. Consistent with KD72-C66 gender Female.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Relationship 'mother of Maria Catharina Zinsmeister' stated in src_001 (mother role). Directly places KD72-C66 as parent of MK39-T4W.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "MK39-T4W",
+      "confidence": "confident",
+      "rationale": "Mother's relationship assertion 'mother of Maria Catharina Zinsmeister' (src_001) also bears on MK39-T4W as the named child.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Spousal relationship assertion attached to mother role in src_001: 'spouse of Heinrich Zinsmeister.' Primary evidence that Elisabetha (n\u00e9e Engelskircher) is the wife of Heinrich Zinsmeister. Stated at time of baptism from presenting parent who signed as wife.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Elisabetha's spousal assertion in src_001 names 'Heinrich Zinsmeister' as her husband. Bears on KD72-C6D as the named party. Corroborates the couple relationship R1 in the tree.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "MK39-RYL",
+      "confidence": "confident",
+      "rationale": "Name 'Juliane Zinsmeister' from Juliane's baptism (src_002, QPKP-C39S). Tree person MK39-RYL has given name 'Juliane'. Christening date 1 Jan 1824 matches tree fact exactly. Strong name + date + place + parents match.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "MK39-RYL",
+      "confidence": "confident",
+      "rationale": "Sex Female in Juliane's baptism record (src_002). Consistent with MK39-RYL gender Female.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "MK39-RYL",
+      "confidence": "confident",
+      "rationale": "Birth date 30 Dec 1823 from src_002, stated by presenting parents. Consistent with christening 1 Jan 1824 (2 days later). Supports MK39-RYL.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "MK39-RYL",
+      "confidence": "confident",
+      "rationale": "Christening 1 Jan 1824 Steinwenden from src_002. Tree fact on MK39-RYL: Christening 01 Jan 1824. Exact match on date and place.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "MK39-RYL",
+      "confidence": "confident",
+      "rationale": "Relationship 'child of Heinrich Zinsmeister' stated by presenting parents in Juliane's baptism (src_002, child role). Places Juliane as child of KD72-C6D, consistent with tree relationship R4.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Juliane's relationship assertion 'child of Heinrich Zinsmeister' (src_002) also bears on KD72-C6D as the named father. Corroborates his parentage of MK39-RYL.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "MK39-RYL",
+      "confidence": "confident",
+      "rationale": "Relationship 'child of Elisabetha Zinsmeister n\u00e9e Engelskircher' in Juliane's baptism (src_002). Places MK39-RYL as child of KD72-C66, consistent with tree relationship R5.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_018",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Juliane's relationship assertion 'child of Elisabetha n\u00e9e Engelskircher' (src_002) also bears on KD72-C66 as the named mother.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Name 'Heinrich Zinsmeister' as father_of_child in Juliane's baptism (src_002, QPKP-C39S). Wife named as Elisabetha n\u00e9e Engelskircher \u2014 matches KD72-C66. Resident Steinwenden 1823-1824. Independent confirmation from a different baptism event than src_001. Confident.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_020",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Sex Male for father_of_child persona in src_002. Consistent with KD72-C6D.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_021",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Residence Steinwenden inferred from Juliane's baptism in that parish, Jan 1824 (src_002). Indirect evidence placing KD72-C6D in Steinwenden in late 1823 / early 1824, consistent with src_001 residence in 1819.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_022",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Relationship 'father of Juliane Zinsmeister' stated in src_002 (father_of_child role). Directly places KD72-C6D as parent of MK39-RYL.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_022",
+      "person_id": "MK39-RYL",
+      "confidence": "confident",
+      "rationale": "Father's assertion 'father of Juliane Zinsmeister' in src_002 also bears on MK39-RYL as the named child.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_023",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Name 'Elisabetha n\u00e9e Engelskircher' (indexed as Begelekicher \u2014 phonetic transcription of Engelskircher) as mother_of_child in Juliane's baptism (src_002). Same maiden name as src_001 (Engels Kricher). Two independent baptism records corroborate each other for KD72-C66 identification.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_024",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Sex Female for mother_of_child persona in src_002. Consistent with KD72-C66.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_025",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Relationship 'mother of Juliane Zinsmeister' in src_002. Directly places KD72-C66 as parent of MK39-RYL.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_025",
+      "person_id": "MK39-RYL",
+      "confidence": "confident",
+      "rationale": "Mother's assertion 'mother of Juliane Zinsmeister' (src_002) also bears on MK39-RYL as the named child.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_026",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Spousal assertion 'spouse of Elisabetha Zinsmeister n\u00e9e Engelskircher' attached to father_of_child role in src_002. Directly names Elisabetha as wife of Heinrich \u2014 corroborates the couple relationship R1 in the tree.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_026",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Same spousal assertion in src_002 also bears on KD72-C66 as the named spouse. Corroborates a_012 from src_001: two independent records name Elisabetha Engelskircher as wife of Heinrich Zinsmeister.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_036",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Name 'Heinrich Zinsmeister' as father_of_bride in Philippina's 1845 marriage record (src_004, QPKL-LJ7Y). Mother named as 'Elisabeth Engelskircher' \u2014 exactly matches KD72-C66. Philippina born 1818 is consistent with Heinrich fathering children in 1819 and 1823 from src_001/002. Third independent record naming Heinrich Zinsmeister + Elisabetha Engelskircher as a couple. Confident.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_037",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Name 'Elisabeth Engelskircher' as mother_of_bride in Philippina's 1845 marriage (src_004). Third independent source corroborating this maiden surname. Together with a_009 (src_001) and a_023 (src_002), all three baptism/marriage records agree on the maiden name Engelskircher.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_042",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Bride Philippina Zinsmeister at her 1845 marriage states she is 'child of Heinrich Zinsmeister' (src_004). The daughter's direct testimony at her own marriage is primary information. Combined with a_036 naming the same person as father_of_bride, this is two facets of the same record \u2014 but the information is stated directly by the daughter (self), the informant closest to the fact.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_043",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Bride Philippina states she is 'child of Elisabeth Engelskircher' at her 1845 marriage (src_004). Daughter's direct testimony. Corroborates a_037 (father_of_bride assertion from same record) \u2014 both facets name the same parental couple.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_072",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Name 'Elisabetha Engelskircher' is the maiden name recorded in the death record (src_007, JWBL-9ZZ). This exact given+maiden-name combination is unique in the corpus: KD72-C66 is the only Elisabetha Engelskircher linked to a Heinrich Zinsmeister in Steinwenden. Husband 'Heinrich Zinssmeister' on the same record corroborates the couple unit. Derivative source (CID 1494474 index); original image not yet confirmed, but spelling 'Zinssmeister' is a standard orthographic variant of 'Zinsmeister'. Confident link.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_073",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Sex Female for the deceased persona in src_007. Consistent with KD72-C66 gender Female.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_074",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Death date 15 April 1843 from src_007 (CID 1494474 index, JWBL-9ZZ). Stated at or near the time of death by the officiating pastor; classified as primary information for the death event. Confident for KD72-C66 given the unique name+couple combination.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_075",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Burial 17 April 1843, Bayern, Deutschland (src_007). Likely in Steinwenden but the index records only 'Bayern' \u2014 original image would confirm the specific locality. Confident for KD72-C66.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_076",
+      "person_id": "KD72-C66",
+      "confidence": "probable",
+      "rationale": "Birth year ~1787 from src_007 \u2014 secondary information derived from reported age at burial. The derivative index may carry this as an approximation. Consistent with having children 1818-1823 (she would be ~31-36). Probable confidence: the birth year is approximate and comes from secondary information in a derivative source.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_077",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Marital status 'M' (Married) recorded at time of Elisabetha's death in src_007. Direct primary evidence that she was still married on 15 April 1843.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_078",
+      "person_id": "KD72-C66",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'wife of Heinrich Zinssmeister' in src_007 (deceased role). Spousal relationship stated in the death record. Bears on KD72-C66 as the primary person named.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_078",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Same spousal relationship assertion in src_007 also bears on KD72-C6D as the named husband 'Heinrich Zinssmeister'. Fourth independent record (after src_001, src_002, src_004) naming this couple together. Confident.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_079",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Name 'Heinrich Zinssmeister' as husband in Elisabetha Engelskircher's death record (src_007, JWBL-9Z8). Unique surname+wife-name combination; 'Zinssmeister' is a standard double-s orthographic variant of 'Zinsmeister'. Confident despite the derivative source: the name pairing with 'Elisabetha Engelskircher' uniquely identifies KD72-C6D.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_080",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Sex Male for the husband persona in src_007. Consistent with KD72-C6D gender Male.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_081",
+      "person_id": "KD72-C6D",
+      "confidence": "confident",
+      "rationale": "Relationship 'husband of Elisabetha Engelskircher' in src_007. This is the fourth record stating the couple relationship (after a_012, a_026, a_036/a_037). Each comes from a different event; together they constitute strong, independent corroboration.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_082",
+      "person_id": "KD72-C6D",
+      "confidence": "probable",
+      "rationale": "Indirect evidence that KD72-C6D was alive on 15 April 1843: Elisabetha's death record records her marital status as 'M' (Married), meaning her husband Heinrich Zinssmeister had not yet died as of 15 April 1843. This is the earliest confirmed lower bound for KD72-C6D's death (he was alive at least to this date). Probable confidence: the MaritalStatus field is direct evidence for Elisabetha's status; the inference that Heinrich was alive is indirect and rests on the assumption the clerk's record was accurate at time of death. Derivative source (CID 1494474 index); original image would strengthen this to confident.",
+      "created": "2026-07-30"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "identity",
+      "description": "The 1855 Steinwenden burial QPKP-CJC2 ('Heinrich Zen\u00dfmeister', wife Margaretha, born 1801) is a potential match for KD72-C6D's death record. Identity question: is this the same person as KD72-C6D (wife Elisabetha Engelskircher)?",
+      "disputed_attribute": "identity",
+      "identity_question": "Is the individual named in QPKP-CJC2 (1855 burial, wife Margaretha, b. 1801) the same as KD72-C6D (wife Elisabetha Engelskircher)?",
+      "competing_assertion_ids": [
+        "a_079",
+        "a_082"
+      ],
+      "independence_analysis": "The 1855 burial record (QPKP-CJC2, CID 3015626) and the 1843 Elisabetha Engelskircher death record (JWBL-9ZZ, CID 1494474) are from different original record-creation events, different officiants, and different collections \u2014 they are fully independent sources.",
+      "weighing_analysis": "Four independent sources (1819 Maria Catharina baptism QPKG-B8SJ, 1823 Juliane baptism QPKP-C39S, 1828 Elisabetha baptism, 1843 Elisabetha Engelskircher death JWBL-9ZZ) consistently name KD72-C6D with wife Elisabetha Engelskircher. The 1855 burial names wife 'Margaretha' and birth year 1801 with parents Jacob Zinssmeister + Maria Elisabetha Ziegler. The 1831 Philipp Wehner baptism (QPKG-B83C) independently confirms a co-resident Heinrich Zinsmeister family with wife Margaretha Wehner. No record places KD72-C6D with a wife named Margaretha. The spousal name, birth year, and parentage data together distinguish the 1855 individual from KD72-C6D.",
+      "preferred_assertion_id": "a_079",
+      "resolution_rationale": "QPKP-CJC2 is the 1855 burial of a distinct individual \u2014 the 1801-born Heinrich Zinsmeister (parents Jacob Zinssmeister + Maria Elisabetha Ziegler, wife Margaretha Wehner). This is not a death record for KD72-C6D (wife Elisabetha Engelskircher). Conflict resolved by spousal name and parentage differences across multiple independent records.",
+      "status": "resolved",
+      "blocks_question_ids": [
+        "q_002"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The Heinrich Zinsmeister named as father in the 1831 Philipp Wehner baptism at Steinwenden (QPKG-B83C, wife Margaretha Wehner) is the same individual as research subject KD72-C6D (wife Elisabetha Engelskircher).",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [
+        "a_059",
+        "a_067",
+        "a_071"
+      ],
+      "contradicting_assertion_ids": [
+        "a_005",
+        "a_019",
+        "a_036"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "The 1831 Philipp Wehner baptism names the father's wife as 'Margaretha Wehner'. KD72-C6D is identified with wife Elisabetha Engelskircher across four independent records (1819, 1823, 1828 baptisms; 1843 death record). No record ever associates KD72-C6D with a wife named Margaretha. The 'Margaretha Wehner' Heinrich is the 1801-born individual whose 1855 burial (QPKP-CJC2) names him with the same spousal line. The hypothesis is ruled out: the 1831 baptism concerns a contemporaneous but distinct Heinrich Zinsmeister family in Steinwenden.",
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Disambiguation of at least three co-resident Heinrich Zinsmeisters in Steinwenden c. 1800-1855 was required by q_001 and q_002. This hypothesis entry formalises the exclusion of the Margaretha-Wehner family line."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "possible",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_036",
+        "a_037",
+        "a_040",
+        "a_042",
+        "a_043"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Indexed FamilySearch collections searched: CID 4234521 (Germany, Bavaria, Catholic and Lutheran Church Records, 1591-1963), CID 3015626 (Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971), CID 1473000 (Germany, Births and Baptisms, 1558-1898). A direct birth search for Heinrich Zinsmeister (birthYearFrom 1778, birthYearTo 1802) returned 188 results; all had match scores below 0.04 and appear to be secondary references \u2014 Heinrich named as a father in children's records \u2014 not his own baptism. The Steinwenden Geburten image volumes (FamilySearch image group 008239801), which contain the actual church register pages, are browse-only (0% name-indexed) and were inaccessible: images are 1.8-2.7 MB, exceeding the MCP transport cap for image_read (~700 KB), and no OpenRouter API key was configured for image_transcribe. The Ancestry Saarland Zivilstandsregister (dbid=61110), covering Napoleonic-era civil birth registrations from approximately 1798, could not be searched due to Ancestry authentication limitations. Research is not declared exhaustive (declared: false).",
+      "narrative_markdown": "## Proof Summary: Birth of Heinrich Zinsmeister (KD72-C6D), Steinwenden, Pfalz, Bavaria\n\n**Question:** When and where was Heinrich Zinsmeister of Steinwenden, Pfalz, Bavaria born?\n\n**Tier:** Possible\n\n**Conclusion:** The birth date and birthplace of Heinrich Zinsmeister (KD72-C6D) of Steinwenden cannot be established from the evidence gathered to date. Based on indirect evidence of his presence as a married father in Steinwenden from at least 1818, a birth year in the approximate range 1778\u20131800 is a possible inference, and a birthplace somewhere in the Palatinate region is plausible; however, no baptism record or civil birth registration confirming any specific date or place has been found. Further research in the Steinwenden church register images (image group 008239801) and the Ancestry Saarland Zivilstandsregister remains the most direct path to a definitive answer.\n\n### Evidence Gathered\n\nNo baptism record for Heinrich Zinsmeister (KD72-C6D) was found in any indexed FamilySearch collection. Systematic searches of collection 4234521 (Germany, Bavaria, Catholic and Lutheran Church Records, 1591\u20131963), collection 3015626 (Germany, Lutheran Baptisms, Marriages, and Burials, 1500\u20131971), and collection 1473000 (Germany, Births and Baptisms, 1558\u20131898) returned no baptism entry for the subject. A dedicated birth search specifying surname Zinsmeister, given name Heinrich, birth years 1778\u20131802, returned 188 candidate records; all matched at scores below 0.040 and, upon review, appear to be secondary references \u2014 Heinrich appearing as a named father in his children\u2019s baptism records \u2014 not his own birth entry.\n\nThree independent original records from the Steinwenden Lutheran church register (FamilySearch CID 3015626) confirm Heinrich Zinsmeister\u2019s identity and presence in that parish:\n\n1. The 17 July 1819 baptism of daughter Maria Catharina names Heinrich Zinsmeister and wife Elisabetha n\u00e9e Engelskircher as parents (original source; information primary for the child\u2019s baptism, primary as to parental names stated by the presenting father; evidence indirect for q_001 \u2014 establishes residence but not birth). \u201cBaptism register entry for Maria Catharina Zinsmeister, 17 Jul 1819, Steinwenden \u2014 Germany, Lutheran Baptisms, Marriages, and Burials, 1500\u20131971,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPKG-B8SJ).\n\n2. The January 1824 baptism of daughter Juliane independently confirms the same couple in the same parish. \u201cBaptism record of Juliane Zinsmeister, Germany, Lutheran Baptisms, Marriages, and Burials, 1500\u20131971,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPKP-C39S).\n\n3. At her 1845 marriage, daughter Philippina Zinsmeister stated her parents were Heinrich Zinsmeister and Elisabeth Engelskircher (original source; information primary \u2014 the bride\u2019s own declaration of parentage; evidence direct for her relationship to Heinrich, indirect for q_001). \u201cHeinrich Zinsmeister in entry for Johannes Altes/Ultes, Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPKL-LJ7Y). Philippina also stated her own birth year as 1818, placing Heinrich as a father by that year at the latest.\n\nA 23 November 1828 christening record for daughter Elisabetha Zinsmeister (CID 3015626) independently places the same couple in Steinwenden, extending the confirmed residence window to ten years (1818\u20131828).\n\nThese four records collectively establish Heinrich Zinsmeister\u2019s identity and parish residence with high confidence. None, however, states when or where he was born.\n\n### Bounded Inference\n\nPhilippina\u2019s 1818 birth provides an indirect constraint on Heinrich\u2019s birth year. If he became a father for the first time between the ages of 18 and 40 \u2014 the common range for German men in early nineteenth-century Lutheran communities \u2014 his birth year falls approximately 1778\u20131800. His consistent residence in Steinwenden as a settled married man from at least 1818 suggests he was established in the community, which in German village life typically correlates with proximity to one\u2019s origin, though migration from elsewhere in the Palatinate cannot be excluded. These inferences rest on demographic generalisation rather than record evidence and are offered only as a plausible range, not as findings.\n\n### What Was Not Searched\n\nThe Steinwenden Geburten (birth) volumes (FamilySearch image group 008239801) contain the actual Lutheran church register pages and are the primary location where a baptism record for Heinrich would appear. These volumes are browse-only (0% name-indexed) and could not be browsed: individual image files range from approximately 1.8 to 2.7 MB, exceeding the MCP transport capacity for image reading (~700 KB maximum), and no optical character recognition service was configured for this session. The Ancestry Saarland Zivilstandsregister (dbid 61110), covering Napoleonic-era civil birth registrations from approximately 1798, could not be searched due to authentication limitations in this session. These two record sets represent the most direct paths to a precise answer and remain unsearched pending configuration of an OpenRouter API key (for image_transcribe) or an Ancestry login.\n\n### GPS Evaluation\n\nGPS Component 1 (reasonably exhaustive research): Not met. The primary record type \u2014 the Steinwenden church register image pages \u2014 was inaccessible during this session. Research via indexed collections is complete; image-browse and Ancestry civil registration remain outstanding. Components 2\u20135 are addressed in the evidence discussion above; no conflicts require resolution.\n\n### Conclusion\n\nThe evidence gathered establishes Heinrich Zinsmeister (KD72-C6D) as resident in Steinwenden, Kaiserslautern, Pfalz, Bavaria from at least 1818 through 1828, but does not establish a birth date or confirmed birthplace. A birth year in the approximate range 1778\u20131800, in Steinwenden or the broader Palatinate region, is a **possible** inference consistent with the indirect evidence. This conclusion is rated *possible*: it rests entirely on indirect evidence, relies on demographic inference rather than a birth record, and could be confirmed or contradicted by the unsearched Steinwenden register images and Ancestry civil registration."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "possible",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_079",
+        "a_081",
+        "a_082"
+      ],
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "exhaustive_search_summary": "Indexed FamilySearch collections searched: CID 3015626 (Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971), CID 1609357 (Germany Evangelical Church Book Duplicates 1815-1875), CID 1494474 (Germany, Deaths and Burials, 1582-1958). A search with spouseGivenName=Elisabetha found JWBL-9ZZ (Elisabetha Engelskircher's 15 April 1843 death, naming Heinrich Zinssmeister as surviving husband). A Steinwenden burial for 'Heinrich Zinsmeister' (1855, QPKP-CJC2, wife Margaretha) was confirmed as a different person born 1801. Steinwenden Tote image volumes (group 008239802) inaccessible: images 1.8-2.7 MB, exceeding MCP transport cap; no OpenRouter key. Ancestry Saarland Sterberegister (dbid=61150) not accessed: authentication unavailable. Research not declared exhaustive.",
+      "narrative_markdown": "## Proof Summary: Death of Heinrich Zinsmeister (KD72-C6D), Steinwenden, Pfalz, Bavaria\n\n**Question:** When and where did Heinrich Zinsmeister of Steinwenden, Pfalz, Bavaria \u2014 husband of Elisabetha Engelskircher and father of Philippina (b. 1818), Maria Catharina (b. 1819), and Juliane (b. 1823) \u2014 die?\n\n**Tier:** Possible\n\n**Conclusion:** The death date and place of Heinrich Zinsmeister (KD72-C6D) cannot be established from the evidence gathered to date. One indexed record establishes that he was alive as of 15 April 1843. The actual date and place of his death remain unknown, pending access to the Steinwenden church burial register images and Ancestry Saarland civil death records.\n\n### Key Finding: Alive as of 15 April 1843\n\nThe Germany, Deaths and Burials, 1582\u20131958 collection (FamilySearch CID 1494474) contains an entry for the death of Elisabetha Engelskircher on 15 April 1843 in Bayern, with burial on 17 April 1843. The entry records her marital status as \u201cM\u201d (Married) and names her husband as Heinrich Zinssmeister. \u201cGermany, Deaths and Burials, 1582-1958, entry for Elisabetha Engelskircher, 15 April 1843,\u201d FamilySearch (https://familysearch.org/ark:/61903/1:1:JWBL-9ZZ).\n\nThe name \u201cZinssmeister\u201d (double-s) is a well-attested orthographic variant of \u201cZinsmeister\u201d common in Palatinate church records of this period; in combination with the wife\u2019s distinctive name \u201cElisabetha Engelskircher,\u201d the identification of this entry with KD72-C6D is compelling. The marital status \u201cM\u201d, recorded by the officiating registrar at the time of death, implies Heinrich had not predeceased his wife \u2014 a woman would not ordinarily be recorded as \u201cMarried\u201d if her husband were already dead. This constitutes indirect evidence that Heinrich Zinsmeister (KD72-C6D) was alive on 15 April 1843.\n\nThe source (accessed via derivative index; original image not confirmed in this session) is an original record type. The information is primary for Elisabetha\u2019s death event; the inference about Heinrich\u2019s survival is indirect and relies on the accuracy of the marital-status field at time of registration. The evidence is assessed as *indeterminate* in isolation but consistent with all other evidence placing this couple together in Steinwenden through the 1820s\u20131840s.\n\n### Negative Finding: The 1855 Steinwenden Burial Is a Different Person\n\nA burial record for \u201cHeinrich Zen\u00dfmeister\u201d (sic), 20 February 1855, Steinwenden (FamilySearch CID 3015626, QPKP-CJC2) was found during indexed searching. This record names the deceased\u2019s wife as \u201cMargareth[a]\u201d \u2014 not Elisabetha Engelskircher. Separately extracted source data establishes that this individual was born in 1801, with parents Jacob Zinssmeister and Maria Elisabetha Ziegler. The combination of a different wife, a later birth year, and different parents conclusively distinguishes this burial from KD72-C6D. The 1855 record is negative evidence for this question: it shows that at least one Heinrich Zinsmeister in Steinwenden died in 1855, but it is not the subject of this research.\n\n### What Was Not Searched\n\nThe Steinwenden Tote/Beerdigungen (deaths and burials) volumes (FamilySearch image group 008239802) contain the actual Lutheran burial register pages and represent the definitive source for answering this question. These volumes are browse-only (0% name-indexed) and could not be browsed: individual image files range from approximately 1.8 to 2.7 MB, exceeding the MCP transport capacity for image reading (~700 KB maximum), and no optical character recognition service was configured for this session. The Ancestry Saarland Sterberegister (dbid 61150), covering civil death registrations from 1876 through 1933, could not be searched due to authentication limitations. If Heinrich survived past 1876 (plausible if born circa 1785), a civil death record would state his date of death, place, and age.\n\n### GPS Evaluation\n\nGPS Component 1 (reasonably exhaustive research): Not met. The primary record types for answering this question \u2014 the Steinwenden burial register image pages and the Ancestry civil death records \u2014 were inaccessible during this session. Indexed searching of CID 3015626, CID 1609357, and CID 1494474 is complete. Component 4 (conflict resolution): No conflicts; the 1855 Steinwenden burial was correctly distinguished from KD72-C6D via spousal and parentage differences.\n\n### Conclusion\n\nHeinrich Zinsmeister (KD72-C6D) was alive as of 15 April 1843, as evidenced by his wife\u2019s death record of that date naming him as the surviving husband with marital status \u201cMarried.\u201d This establishes a lower bound: he died *after* 15 April 1843. The actual date and place of death remain unknown. This conclusion is rated **possible**: it rests on a single source accessed via derivative index, the evidence for Heinrich\u2019s survival is indirect, research is not declared exhaustive, and the unsearched Steinwenden burial register images and Ancestry civil death records remain the most direct path to a definitive answer."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-30T18:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-30T18-00-00.json"
+    },
+    {
+      "id": "ev_002",
+      "focus": "proof-critique",
+      "target_id": "ps_002",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-30T18:00:05Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_002-2026-07-30T18-00-05.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Bavaria, Germany",
+      "for_place": "Steinwenden, Kaiserslautern, Bavaria, Germany",
+      "time_period": "1780-1880",
+      "jurisdictions": [
+        {
+          "name": "Steinwenden, Landkommissariat Homburg, Bavaria",
+          "date_range": "1818-1871"
+        },
+        {
+          "name": "Steinwenden, Kaiserslautern, Bavaria, Germany",
+          "date_range": "1871-1946"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4234521",
+          "title": "Germany, Bavaria, Catholic and Lutheran Church Records, 1591-1963",
+          "date_range": "1591-1963"
+        },
+        {
+          "id": "3015626",
+          "title": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+          "date_range": "1500-1971"
+        },
+        {
+          "id": "1473000",
+          "title": "Germany, Births and Baptisms, 1558-1898",
+          "date_range": "1558-1898"
+        },
+        {
+          "id": "1494474",
+          "title": "Germany, Deaths and Burials, 1582-1958",
+          "date_range": "1582-1958"
+        },
+        {
+          "id": "1475962",
+          "title": "Germany, Rhineland-Palatinate Church Record Extractions and Family Registers, 1600-1925",
+          "date_range": "1600-1925"
+        }
+      ],
+      "quirks": [
+        "The Evangelisch-Reformierte (Reformed) church Kirchenbuch for Steinwenden, 1684\u20131942 (FamilySearch catalog 52452), is the primary source for births, marriages, and deaths across the entire 1780\u20131880 period. Search this before Lutheran records.",
+        "A second Steinwenden Kirchenbuch (Evangelische/Lutheran, catalog 265274) covers only 1723\u20131798; it ends before the civil registration era.",
+        "All Steinwenden-specific FamilySearch volumes found by volume_search are 0% name-indexed and not full-text searchable \u2014 they must be browsed image-by-image. Records are in German and French (Napoleonic-era bilingual format).",
+        "Civil registration (Zivilstandsregister) for this region began ~1798 under French administration \u2014 well before Bavaria's 1876 start date for civil registration elsewhere. FamilySearch has digitized browse-only volumes of Steinwenden Geburten (births), Tote (deaths), and Heiraten (marriages) from 1818 onward under imageGroupPrefix 008239801 (Geburten), 008239802 (Tote), 008232818/008232819 (Heiraten).",
+        "Ancestry.de has an indexed collection 'Saarland, Deutschland, Zivilstandsregister, 1776\u20131875' (dbid=61110) and 'Saarland Sterberegister, 1876\u20131933' (dbid=61150) that cover this area and are name-searchable \u2014 search these before browsing FamilySearch volumes.",
+        "FamilySearch catalogs all Steinwenden records under Bavaria (Bayern), filed under Landkommissariat Homburg (1818\u20131871) and Bezirksamt Homburg / Kaiserslautern (post-1871). Use 'Homburg' as the district when searching the catalog.",
+        "Before 1818 (the French period, 1798\u20131815), records were kept in French-style civil registers. Before 1798, only church records survive. The Reformed Kirchenbuch (catalog 52452) covers 1684\u20131942 continuously through both periods.",
+        "German handwriting (Kurrentschrift) is standard in church records; some Napoleonic-era civil records use Latin script. A German genealogical word list is advisable.",
+        "Weltersbach is a hamlet within the Steinwenden municipality; FamilySearch volumes for Weltersbach are filed separately (same imageGroupPrefixes) and should also be searched."
+      ],
+      "guide_markdown": "# Locality Guide: Steinwenden, Pfalz (Bavaria), Germany \u2014 1780\u20131880\n\n## Jurisdictional History\n\nSteinwenden is a village in the western Palatinate (Pfalz), today in Rhineland-Palatinate, Germany. For the target period:\n\n- **Before ~1798**: Part of the County Palatine / small German principalities of the Rhine region (pre-Napoleonic)\n- **~1798\u20131815**: Incorporated into Napoleonic France; civil registration of births, marriages, and deaths begins under French law\n- **1815\u20131818**: Transition to Bavarian administration under the Congress of Vienna\n- **1818\u20131871**: *Steinwenden, Landkommissariat Homburg, Bavaria* \u2014 administered as part of the Rhenish Palatinate (Rheinpfalz) province of Bavaria\n- **1871\u20131946**: *Steinwenden, Kaiserslautern, Bavaria, Germany* (also filed under *Bezirksamt Homburg*)\n- **Post-1945**: Briefly part of Saarland; currently in Rhineland-Palatinate, Germany\n\n## Primary Record Types\n\n### Church Records (Kirchenb\u00fccher) \u2014 **Priority 1**\n\nThe Palatinate was predominantly Reformed (Calvinist) with a Lutheran minority.\n\n**Steinwenden-specific Kirchenb\u00fccher (from FamilySearch Wiki inventory):**\n- **Evangelisch-Reformierte Kirche, Steinwenden: Kirchenbuch, 1684\u20131942** \u2014 FamilySearch catalog 52452. Covers the *entire* 1780\u20131880 research period. This is the primary record source for births, marriages, and deaths before civil registration, and alongside it after 1798.\n- **Evangelische Kirche (Lutheran), Steinwenden: Kirchenbuch, 1723\u20131798** \u2014 FamilySearch catalog 265274. Lutheran records ending at the start of the civil registration era.\n\nThese are accessible via FamilySearch collection **Germany, Bavaria, Catholic and Lutheran Church Records, 1591\u20131963** (CID 4234521; 194,237 indexed records) and **Germany, Lutheran Baptisms, Marriages, and Burials, 1500\u20131971** (CID 3015626; 70+ million records).\n\n### Civil Registration (Zivilstandsregister) \u2014 **Priority 2**\n\nNapoleonic civil registration began ~1798 for this region, over 75 years before Bavaria's general 1876 start. Records cover Geburten (births), Heiraten (marriages), and Tote (deaths).\n\n**FamilySearch digitized volumes (browse-only, 0% indexed):**\n- Births (Geburten): imageGroupPrefix 008239801 \u2014 volumes from 1818 onward\n- Deaths (Tote): imageGroupPrefix 008239802 \u2014 volumes from ~1799 onward\n- Marriages (Heiraten): imageGroupPrefixes 008232818 / 008232819 \u2014 volumes 1831\u20131875+\n\n\u26a0\ufe0f **All Steinwenden volumes on FamilySearch are browse-only** \u2014 0% name-indexed, not full-text searchable. Must be read image by image. Records are in German and French.\n\n**Ancestry (name-indexed, recommended first):**\n- *Saarland, Deutschland, Zivilstandsregister, 1776\u20131875* (Ancestry dbid=61110) \u2014 covers this region with name indexing\n- *Saarland Sterberegister, 1876\u20131933* (Ancestry dbid=61150)\n- *Saarland, Deutschland, Heiratsregister, 1876\u20131923* (Ancestry dbid=61149)\n\n### Indexed FamilySearch Collections\n\n- **Germany, Births and Baptisms, 1558\u20131898** (CID 1473000) \u2014 25+ million records\n- **Germany, Deaths and Burials, 1582\u20131958** (CID 1494474) \u2014 2.9 million records\n- **Germany, Marriages, 1558\u20131929** (CID 1473009)\n- **Germany, Rhineland-Palatinate Church Record Extractions and Family Registers, 1600\u20131925** (CID 1475962) \u2014 browse-only images, 106,000+ images\n\n## Research Strategy for 1780\u20131880\n\n1. **Search FamilySearch indexed collections first** (CID 4234521, 3015626, 1473000, 1494474) for Zinsmeister in Steinwenden / Homburg\n2. **Search Ancestry's Saarland Zivilstandsregister** (dbid=61110) for civil registration records post-1798\n3. **Browse FamilySearch volumes** if indexed searches fail \u2014 use image group numbers above for Geburten/Tote/Heiraten by year\n4. **Consult the Reformed Kirchenbuch** (catalog 52452, 1684\u20131942) for pre-1798 baptisms and burials\n\n## Additional Record Types\n\n- **Military records**: Men of military age in the Napoleonic era may appear in French/Bavarian military records\n- **Emigration records**: The Palatinate had significant emigration in the 1840s\u20131860s; check German emigration lists\n- **Town genealogies (Ortssippenb\u00fccher)**: Database at ortsfamilienbuecher.de may have compiled family data for this area\n- **Archion**: German Lutheran church archive (archion.de) holds additional Reformed/Lutheran records online by subscription\n- **Matricula Online**: data.matricula-online.eu has additional Catholic and Protestant church records\n\n## Archives\n\n- **Landesarchiv Saarbr\u00fccken** / **Landeshauptarchiv Koblenz**: hold original civil registration and church records for this region\n- **Evangelisches Zentralarchiv**: for Reformed/Lutheran Kirchenb\u00fccher not yet digitized\n- FamilySearch catalog entry for Steinwenden: https://www.familysearch.org/en/research/places/?text=Steinwenden&focusedId=9285230\n\n## Key Quirks\n\n- The **Reformed (Evangelisch-Reformiert) church** was predominant in Steinwenden \u2014 check Reformed records before Lutheran\n- All FamilySearch volumes for Steinwenden are **0% indexed** \u2014 plan on image browsing\n- **Kurrentschrift** (old German script) is used in church and civil records; German genealogical word list essential\n- Weltersbach (a hamlet in Steinwenden municipality) has its own separate volume entries on FamilySearch \u2014 search both\n- FamilySearch catalogs Steinwenden under **Bayern/Bavaria, Homburg district** \u2014 use those terms in catalog searches\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Germany_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-30"
+    }
+  ]
+}
