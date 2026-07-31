@@ -524,3 +524,233 @@ kept separate because they have different audiences and different urgency:
   checks (`find_effects_without_invocation`, `find_missing_mentor_verdicts`)
   retroactively across the corpus for a precise count, since those need no
   window-size judgment call at all.
+
+## 11. A third bypass shape — "skill-call laundering" (`juan-rodriguez-son`, 2026-07-29)
+
+The `eval/tests/e2e/juan-rodriguez-son` fixture (a record-hint run, on the
+unmerged `E2E-test-for-juan-rodriguez-son` branch) surfaced a bypass shape
+distinct from both §1's "read-and-improvise" and "untyped subagent": the
+orchestrator calls `Skill(X)` **successfully** — satisfying every existing
+"was X invoked" check, §4.1's window and §4.4's whole-run presence test
+alike — then immediately hands the actual work to a fresh, non-dedicated
+`Agent` subagent whose own context never receives `X`'s doctrine. Skill-tool
+content injection lands in the calling context only and does not propagate
+into a freshly spawned subagent's fresh context (see `docs/TODOs.md`'s open
+item on whether this survives compaction, which this run corroborates from a
+different angle — it doesn't even need compaction to fail, a same-turn
+subagent hand-off is enough).
+
+**The evidence, in order:**
+
+- `tool_calls[75]`: `Skill(person-evidence, ...)` — succeeds.
+- `tool_calls[76]`: `Agent(subagent_type: "general-purpose", prompt: <the
+  orchestrator's own pre-written identity analysis + a scripted 5-step
+  tool-call plan>)`. The prompt itself performs `person-evidence/SKILL.md`
+  Step 2's candidate check inline — "Candidate tree person: None... no
+  'Juan' infant among [the eight known children]... This is a NEW person" —
+  a name-only dismissal that never weighed the one plausible alternative
+  already sitting in the orchestrator's own `project_context` at every prior
+  call: an existing child, Francisco, christened the same year to the same
+  parents (the fixture's own reviewer notes flag exactly this ambiguity —
+  "check whether this burial could in fact be the same event as Francisco's
+  christening"). The prompt's own tool-loading note lists `materialize_facts`,
+  `research_append`, `tree_edit`, `check_warnings` — `same_person` is never
+  mentioned as an option.
+- Confirmed by grepping the full run: `person-evidence/SKILL.md` (or any of
+  its `references/*.md`) is never `Read` anywhere in the run. Its doctrine —
+  Step 2's candidate check, Step 3's `same_person` requirement — never
+  entered any context that touched this identity decision.
+- `find_effects_without_invocation` does not fire: `person-evidence` *was*
+  invoked. `find_unguarded_protected_writes` (§4.1) would not fire either at
+  any reasonable window size: the `Skill` call is one tool call before the
+  write. Only `find_person_evidence_missing_same_person` (§9) caught the
+  *symptom* (no `same_person` call for the new person `I1`) — not the cause,
+  and that check's fix is specific to person-evidence; it does not
+  generalize to the other three guardrail skills, none of which have an
+  equivalently unambiguous required-tool fingerprint.
+
+**Fix:** `find_skill_call_without_doctrine` (`harness/skill_invocation.py`).
+Per guardrail `Skill(X)` call, in the episode up to the next `Skill` call of
+any name: track the MOST RECENTLY seen `Agent` call and whether a `Read`
+matching `X`'s own folder (SKILL.md or `references/*.md`, path-separator
+agnostic — committed runlogs mix POSIX and Windows-style paths in the same
+run) has happened since that call. A write owned by `X` (per the existing
+`owning_skills`) is flagged only if the nearest preceding `Agent` call is
+non-dedicated (not one of the four `packages/engine/plugin/agents/*.md`
+agents, each of which carries its own self-contained doctrine) and no
+reload happened since. Keys on the *nearest* preceding `Agent` call, not the
+first — an early design draft used "first" and produced one confirmed false
+positive during validation (`clark-parents/run-2026-07-08_06-00-11.json`: an
+early, unrelated untyped helper extracting volume titles from a saved dump,
+long since returned, wrongly blamed for a write the orchestrator itself made
+after a later dedicated `image-reader` call).
+
+Retroactively scanned against all 109 committed e2e runlogs on `main` plus
+the 4 on the `juan-rodriguez-son` branch (113 runlogs, 271-274 guardrail
+`Skill()` calls depending on exact corpus snapshot; only 9 episodes across
+the whole corpus ever interpose a non-dedicated `Agent` call at all): fires
+on exactly the one confirmed bug, zero other false positives.
+
+**Known blind spot, unobserved in the current corpus:** this is a heuristic
+over a flat `tool_calls` list with no true call-stack attribution. A
+non-dedicated subagent that itself nests a dedicated helper call and then
+*resumes itself* to make an un-reloaded protected write would be misread as
+"context is now dedicated" and incorrectly cleared. The one nested case
+found in the whole corpus (`clark-parents`, above) is confirmed via its
+transcript to be the orchestrator resuming, not the subagent — corroborating
+evidence, not a structural guarantee.
+
+**Rollout: shadow mode, not a hard fail — deliberately different from §9's
+`find_person_evidence_missing_same_person`.** That check is a required-tool
+fact with no heuristic and no shadow period needed (§9's own reasoning).
+This one is a heuristic with a stated, currently-unobserved blind spot and a
+thin sample (9 of 274 episodes exercise the interesting path at all) — the
+same profile that put §4.1's caller-id hook into shadow mode first. Ships as
+a new, separate run-log field (`skill_call_laundering_violations`, a
+`list[str]`, distinct in shape from §4.1's `guardrail_shadow_violations`
+`list[dict]`) logged via `[skill-call-laundering]`, not wired into the
+`guardrail_effects_without_invocation` hard-fail expression. Graduation
+criteria tracked in `docs/TODOs.md` alongside #911's §4.1 window
+calibration.
+
+**Correction (2026-07-31): retired, superseded by §12.** A second reviewer
+went through the harness and all 110 committed runlogs and found the actual
+defect one layer down from what this section diagnosed: `e2e/orchestrator.py`'s
+`tool_calls` ledger never records WHO made each call — the SDK's
+`PreToolUse` hook payload already carries `agent_id`/`agent_type` when a
+call originates inside a subagent, but nothing captured it — which makes
+every check in this file, including `find_skill_call_without_doctrine`
+above, caller-blind by construction. Two committed runlogs prove the
+consequence directly: `ogletree-children/run-2026-07-21_13-24-05.json`
+contains a real instance of an unnamed `general-purpose` subagent making
+guardrail-owned writes that `find_skill_call_without_doctrine` — run against
+this exact fixture — returns **zero violations** for, because the delegate
+calls `Skill(person-evidence)` *itself* (so "was doctrine reloaded" reads
+clean) while the real question — "was this identity ever allowed to make
+this decision at all" — was never asked. §12 replaces this mechanism
+entirely with one that answers the right question directly, using true
+per-call caller identity instead of guessing from `Skill`/`Agent`/`Read`
+adjacency. `find_skill_call_without_doctrine`, `_skill_folder_pattern`, and
+`skill_call_laundering_violations` are removed from the codebase (this
+mechanism never reached `main` — it existed only as uncommitted work).
+`DEDICATED_AGENT_NAMES` survives, reused by §12's check as-is.
+
+## 12. Attributing the ledger, then detecting protected writes by unnamed delegates (`ogletree-children`, 2026-07-31)
+
+### The real defect: the ledger is caller-blind
+
+`_run_agent`'s SDK message loop (`e2e/orchestrator.py`) builds `tool_calls`
+from every `ToolUseBlock`/`ToolResultBlock` pair in the stream, regardless of
+whether it originated on the main thread or inside a spawned subagent — the
+SDK interleaves both into the same message stream with no marker. But the
+information needed to tell them apart already exists and is already used
+elsewhere in this codebase: `claude_agent_sdk` 0.1.81's `PreToolUseHookInput`
+(`_SubagentContextMixin`) carries `agent_id`/`agent_type`, present only
+inside a Task-spawned subagent and absent — not merely `None` — on the main
+thread. `harness/context_policy.py::is_subagent_call` already keys on
+exactly this for the *unit* harness's `image_read` guard, probe-verified
+against the same SDK version; it was simply never wired into e2e's ledger.
+
+**Corrected proof** (the second reviewer's original numbers needed two
+rounds of correction, both confirmed against the real committed data before
+landing anything):
+`ogletree-children/run-2026-07-21_13-24-05.json` (committed, verdict `pass`,
+judge `pass`, 345 `tool_calls`, 15 `subagents`) — `tool_calls[266]`, an
+`Agent` call with no `subagent_type` key, spawns `subagents[13]`
+(`agent_type: "general-purpose"`), confirmed by matching that subagent's
+own turn-by-turn tool sequence against `tool_calls[267:289]` exactly, in
+order. That subagent calls `Skill(person-evidence)` itself at 267 (doctrine
+genuinely injected — a different bug from "doctrine never loaded"), then
+makes three writes `owning_skills` attributes to a guardrail skill:
+
+| index | write | owned by |
+|---|---|---|
+| 278 | `materialize_facts`, no `personId` (mints a new person) | person-evidence |
+| 279 | `tree_edit`, two `ParentChild` + one `Couple` | proof-conclusion |
+| 280 | `research_append`, 19 ops, all `person_evidence` | person-evidence |
+
+Not violations, despite the original write-up claiming otherwise:
+`tool_calls[227]`'s `exhaustive_declaration.declared` is **`false`** (checked
+against the run's own `.final-research.json` — still `false` at the end of
+the run), so `owning_skills` attributes it to nobody; `tool_calls[275:277]`'s
+three other `materialize_facts` calls all carry a `personId` (enriching
+existing persons, not mints). `subagents[12]` (`agent_type:
+"record-extractor"`) makes several `extraction_append` calls in the
+preceding span — a legitimate control case.
+
+### Step 0 — attribute the ledger
+
+Three edits in `e2e/orchestrator.py`'s `_run_agent`, all confirmed
+backward-compatible (every consumer of `tool_calls` reads entries via
+`.get(...)`, no strict key-set validation anywhere):
+
+1. A new closure dict `caller_by_tool_use_id: dict[str, tuple[str | None, str | None]]`,
+   declared next to `pending_tool_uses` — `pretool_hook` already mutates
+   sibling enclosing-scope dicts without `nonlocal` (`activity_count`,
+   `tool_call_count`, `blocked_tree_reads`), same pattern.
+2. `pretool_hook` stashes `(input_data.get("agent_id"), input_data.get("agent_type"))`
+   keyed by `_tool_use_id`, as the very first thing it does — before even
+   the direct-write-deny branch, since a denied call is exactly the kind of
+   thing worth attributing (an unnamed subagent attempting a raw `Write`
+   bypass).
+3. The `ToolResultBlock` branch joins `caller_by_tool_use_id` onto the
+   matching entry (`entry["agent_id"]`, `entry["agent_type"]`) right where
+   `response_summary` is already being filled in. Causally safe: the CLI
+   always completes the `PreToolUse` round-trip for a `tool_use_id` before
+   executing the tool and streaming its `ToolResultBlock`, so the lookup is
+   guaranteed populated — traced directly in the SDK's own dispatch
+   (`_internal/query.py`).
+
+A call still in-flight when the run aborts mid-stream never gets these
+fields — same degradation `response_summary` already has. `E2eResult.tool_calls`'s
+docstring (`e2e/result.py`) was also corrected — it previously claimed
+"every MCP tool call the agent attempted," which was wrong on both counts
+(every tool call, not just `mcp__`-prefixed; and it never distinguished
+caller).
+
+### Step 1 — `find_protected_writes_by_unnamed_delegate`, shadow mode only
+
+With true per-call caller identity, no windowing/episode heuristic is
+needed at all — a real simplification over the retired §11 mechanism.
+Reuses `owning_skills` unchanged for the four `GUARDRAIL_SKILLS`. Handles
+`extraction_append` **separately**, not folded into `owning_skills` (whose
+contract is specifically "which of the four guardrail skills owns this,"
+relied on by `find_effects_without_invocation`): hard-restricted at the
+TypeScript layer to exactly `sources`/`assertions`
+(`extraction-append.ts`), zero overlap with `owning_skills`'s sections, and
+`record-extractor.md` is the only agent file that even declares the tool —
+so its legitimate caller is the single name `"record-extractor"`, tighter
+than "any of `DEDICATED_AGENT_NAMES`."
+
+A `GUARDRAIL_SKILLS`-owned write is legitimate iff `agent_id is None` (main
+thread) or `agent_type in DEDICATED_AGENT_NAMES`. `gps-mentor` needs no
+special case: it only ever writes `evaluations[]`, which `owning_skills`'s
+`research_append` branch never attributes to any guardrail skill, so its
+calls already return `owners == []` before caller identity is even
+considered.
+
+**Documented, currently-dormant gap, carried forward rather than fixed:**
+treating any `DEDICATED_AGENT_NAMES` member as sufficient for a
+`GUARDRAIL_SKILLS`-owned write is looser than `extraction_append`'s
+single-name check. It's safe today only because each agent's own
+`tools:`/`disallowedTools` already prevents `record-extractor`/
+`image-reader`/`image-reader-opus` from reaching one, and `gps-mentor`'s
+only reachable write is the `evaluations[]` exemption above. A future
+agent-file edit could silently widen this — same shape of risk as
+`DEDICATED_AGENT_NAMES` itself needing a manual update for a 5th agent
+file.
+
+**Rollout: shadow mode, same discipline as §9 vs. §4.1's split.** Unlike
+`find_person_evidence_missing_same_person` (a required-tool fact,
+hard-failed immediately), this ships log-only: historical runlogs carry no
+`agent_id`/`agent_type` at all (only new runs going forward will), so
+today's validation is one hand-backfilled corpus fixture
+(`ogletree-children`, committed as a regression test in
+`test_skill_invocation.py`), not the full-corpus mechanical check §9 or
+even §11 had. New field `protected_writes_by_unnamed_delegate` (`list[str]`),
+logged via `[unnamed-delegate]`, not wired into the
+`guardrail_effects_without_invocation` hard-fail expression. Graduating to
+a hard fail is a deliberate follow-up once real runs accumulate a
+shadow-mode sample — tracked directly as a backlog item (task #980), not
+duplicated here per `docs/TODOs.md`'s own "staging queue, not a parallel
+tracker" rule.

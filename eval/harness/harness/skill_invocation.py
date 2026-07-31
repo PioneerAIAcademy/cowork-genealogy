@@ -6,17 +6,23 @@ sometimes lets the four GPS guardrail skills (`research-exhaustiveness`,
 their documented effect lands in the project files without the skill ever
 having been successfully invoked. This module is pure matching logic, no I/O,
 over the harness's own `tool_calls` list shape
-(`{"tool": ..., "args": ..., "response_summary": ..., "is_error": ...}`, built
-by `e2e/orchestrator.py`'s message loop) plus the project's persisted
+(`{"tool": ..., "args": ..., "response_summary": ..., "is_error": ...,
+"agent_id": ..., "agent_type": ...}`, built by `e2e/orchestrator.py`'s
+message loop and `pretool_hook` — the last two are `None`/absent on a
+main-thread call and only meaningful once §12's ledger-attribution lands;
+older runlogs simply lack the keys) plus the project's persisted
 `research.json`/`tree.gedcomx.json`.
 
-Two consumers, both described in the plan:
+Three consumers, all described in the plan:
   - `owning_skills` + `recently_succeeded` — the live, shadow-mode caller-id
     check (§4.1): before a protected write is allowed to proceed, was its
     owning skill successfully invoked recently?
   - `find_effects_without_invocation` — the post-run hard detector (§4.4):
     does the FINAL project state show a guardrail skill's effect with no
     matching successful invocation anywhere in the whole run?
+  - `find_protected_writes_by_unnamed_delegate` — the post-run shadow-mode
+    detector (§12): does a protected write's own `agent_id`/`agent_type`
+    show it was made by neither the main thread nor a dedicated agent?
 """
 
 from __future__ import annotations
@@ -476,3 +482,145 @@ def find_person_evidence_missing_same_person(
         "was never called for it anywhere in the run — the identity was asserted, never scored"
         for pid in missing
     ]
+
+
+# The four dedicated Cowork agents under packages/engine/plugin/agents/*.md —
+# each carries its own self-contained, baked-in doctrine (per CLAUDE.md's "No
+# playbook/reference files for agents": the agent body IS the doctrine), so a
+# protected write made by one of these is trusted without further doctrine
+# checks. `general-purpose` (the SDK's own blank-slate fallback) and any
+# other subagent_type are NOT in this set and start with no doctrine of their
+# own. Hand-maintained: no existing code enumerates this list (build_workspace
+# globs the directory but never hardcodes names), so adding a 5th agent file
+# without updating this set makes find_protected_writes_by_unnamed_delegate
+# under-flag (fail toward false-negative, not false-positive).
+DEDICATED_AGENT_NAMES = frozenset(
+    {"record-extractor", "image-reader", "image-reader-opus", "gps-mentor"}
+)
+
+
+def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) -> list[str]:
+    """A protected write attributed to neither the main thread nor a
+    dedicated agent.
+
+    docs/plan/research-guardrail-bypass-plan.md §12 (supersedes §11's
+    retired `find_skill_call_without_doctrine`, a heuristic that guessed
+    "who is currently executing" from `Skill`/`Agent`/`Read` adjacency in a
+    flat, unattributed `tool_calls` list — confirmed to miss real bypasses
+    because it asked the wrong question, see below). `e2e/orchestrator.py`'s
+    `pretool_hook` now stamps every `tool_calls` entry with the PreToolUse
+    hook's own `agent_id`/`agent_type` (`claude_agent_sdk` 0.1.81's
+    `_SubagentContextMixin`: present only inside a Task-spawned subagent,
+    absent — not merely falsy — on the main thread; see
+    `harness/context_policy.py::is_subagent_call` for the probe-verified
+    precedent this reuses, though that module is unit-harness-only and does
+    not itself cover e2e). Given that TRUE caller identity per entry, this
+    check needs no windowing or episode-boundary heuristic at all: a write
+    owned by one of the four `GUARDRAIL_SKILLS` (per the existing
+    `owning_skills`), or an `extraction_append` call, is legitimate iff it
+    came from the main thread (no `agent_id`) or from one of the four
+    dedicated Cowork agents (`DEDICATED_AGENT_NAMES`) that carry their own
+    self-contained doctrine — anyone else making that decision is a bypass,
+    full stop.
+
+    `extraction_append` is checked separately from `owning_skills` on
+    purpose, not folded into it: `owning_skills`'s contract is specifically
+    "which of the four `GUARDRAIL_SKILLS` owns this" (relied on elsewhere,
+    e.g. `find_effects_without_invocation`), and `extraction_append` is not
+    one of the four guardrail skills' writes at all — it's hard-restricted at
+    the TypeScript layer to exactly `sources`/`assertions`
+    (`extraction-append.ts`), and `record-extractor.md` is the only agent
+    file that even declares the tool. So its legitimate caller is narrower
+    than "any dedicated agent": only `agent_type == "record-extractor"`
+    exactly — a wrong dedicated agent (e.g. `gps-mentor`) holding this tool
+    is not a case any agent's own `tools:`/`disallowedTools` declaration is
+    set up to permit, and is itself worth flagging.
+
+    Confirmed live in `ogletree-children/run-2026-07-21_13-24-05.json` (a
+    committed, judge-`pass` run): `tool_calls[266]`, an `Agent` call with no
+    `subagent_type` key at all (description "Link Louise Barrett death cert
+    assertions to tree"), spawns the run's own `subagents[13]`
+    (`agent_type: "general-purpose"`) — confirmed by matching that
+    subagent's own turn-by-turn tool sequence against `tool_calls[267:289]`
+    in order. That subagent calls `Skill(person-evidence)` itself at 267 (so
+    person-evidence's doctrine WAS injected — this is a different bug from
+    "doctrine never loaded," which is exactly why the retired check missed
+    it: it only asked whether doctrine was reloaded, not who was allowed to
+    act on it), then makes three writes `owning_skills` attributes to a
+    guardrail skill: a personId-less `materialize_facts` at 278 (mints a new
+    tree person — person-evidence), a `tree_edit` at 279 adding two
+    `ParentChild` relationships and a `Couple` relationship
+    (proof-conclusion — the tree-encoding side of a conclusion, not
+    person-evidence, despite sharing the same subagent span), and a 19-op
+    `research_append` batch at 280, entirely `person_evidence`
+    (person-evidence). All three were made by `general-purpose` — neither
+    the main thread nor a dedicated agent. Three OTHER `materialize_facts`
+    calls earlier in the same span (275-277) attach facts to already-known
+    `personId`s and are correctly NOT owned by any guardrail skill under
+    `owning_skills`'s "no personId == mint" rule; they are not part of this
+    violation. The run's `subagents[12]` (`agent_type: "record-extractor"`,
+    extracting the same death certificate) makes several `extraction_append`
+    calls in the preceding span — a legitimate, correctly-attributed control
+    case this function must NOT flag.
+
+    `gps-mentor` legitimately declares `research_append` and uses it in
+    dozens of committed runs, but only to append to `evaluations[]` — a
+    section `owning_skills`'s `research_append` branch never attributes to
+    any of the four `GUARDRAIL_SKILLS`. So a gps-mentor call is already
+    exempt before caller identity is even considered (`owners` comes back
+    empty) — the same structural reason `find_effects_without_invocation`
+    never needed a gps-mentor special case either.
+
+    Known gap, not yet exercised in the corpus: this treats ANY of
+    `DEDICATED_AGENT_NAMES` as sufficient for a `GUARDRAIL_SKILLS`-owned
+    write, unlike `extraction_append`'s tighter single-name check. That is
+    currently a no-op in practice — `record-extractor` explicitly disallows
+    `research_append` and never declares `materialize_facts`/`tree_edit`,
+    `image-reader`/`image-reader-opus` hold no writer tool at all, and
+    `gps-mentor`'s only writer tool is structurally exempted via the
+    `evaluations[]` carve-out above — but that's enforced by each agent's
+    own `tools:`/`disallowedTools` declaration, not by this function. A
+    future agent-file edit that gave any dedicated agent a legitimate-but-
+    narrow reason to touch a `GUARDRAIL_SKILLS`-owned section would make
+    this check silently accept it — see the identical caution already on
+    `DEDICATED_AGENT_NAMES` above about a 5th agent file.
+
+    Ships in shadow mode only (`e2e/orchestrator.py`'s
+    `protected_writes_by_unnamed_delegate`, logged, never denied): historical
+    runlogs carry no `agent_id`/`agent_type` at all (Step 0 just landed), so
+    today's validation is one hand-backfilled fixture, not the full-corpus
+    mechanical check a check like `find_person_evidence_missing_same_person`
+    got. Graduating to a hard fail is a separate, deliberate follow-up once
+    real runs accumulate a shadow-mode sample — tracked as its own backlog
+    item, not duplicated here.
+    """
+    violations: list[str] = []
+    for i, entry in enumerate(tool_calls):
+        if entry.get("is_error") is True:
+            continue
+        tool = entry.get("tool", "")
+        args = entry.get("args") or {}
+        agent_id = entry.get("agent_id")
+        agent_type = entry.get("agent_type")
+
+        if bare_tool_name(tool) == "extraction_append":
+            if agent_id is None or agent_type == "record-extractor":
+                continue
+            violations.append(
+                f"tool_calls[{i}] extraction_append was made by agent_type="
+                f"{agent_type!r} (agent_id={agent_id!r}) — only the dedicated "
+                "'record-extractor' agent may hold this tool"
+            )
+            continue
+
+        owners = owning_skills(tool, args)
+        if not owners or agent_id is None or agent_type in DEDICATED_AGENT_NAMES:
+            continue
+        for owner in owners:
+            violations.append(
+                f"tool_calls[{i}] {tool} is a protected write owned by "
+                f"'{owner}' but was made by agent_type={agent_type!r} "
+                f"(agent_id={agent_id!r}) — neither the main thread nor a "
+                "dedicated agent"
+            )
+    return violations

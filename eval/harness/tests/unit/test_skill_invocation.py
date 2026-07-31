@@ -1,22 +1,36 @@
 """Unit tests for harness/skill_invocation.py.
 
-docs/plan/research-guardrail-bypass-plan.md §4.1/§4.4 — pure matching logic
-over the harness's `tool_calls` list shape, no I/O, no SDK types.
+docs/plan/research-guardrail-bypass-plan.md §4.1/§4.4/§12 — pure matching
+logic over the harness's `tool_calls` list shape. No I/O, no SDK types,
+except the one corpus-pinned regression test that reads a committed runlog.
 """
+
+import json
+from pathlib import Path
 
 import pytest
 
 from harness.skill_invocation import (
     CONFLICT_ANALYSIS_FIELDS,
+    DEDICATED_AGENT_NAMES,
     GUARDRAIL_SKILLS,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
+    find_protected_writes_by_unnamed_delegate,
     find_unguarded_protected_writes,
     owning_skills,
     recently_succeeded,
     skill_name_if_skill_call,
 )
+
+# Sentinel distinguishing "key absent entirely" (the historical tool_calls
+# shape, and the shape a call still in-flight when a run aborts keeps
+# forever) from "key present as None" (§12 Step 0's real shape for a
+# main-thread call) -- find_protected_writes_by_unnamed_delegate treats both
+# as "main thread, always legitimate" via .get(), but the two are
+# constructed differently here so both are exercised.
+_UNSET = object()
 
 
 def _skill_call(name, args_text=None, is_error=False):
@@ -28,10 +42,14 @@ def _skill_call(name, args_text=None, is_error=False):
     return entry
 
 
-def _mcp_call(bare_name, args, is_error=False):
+def _mcp_call(bare_name, args, is_error=False, agent_id=_UNSET, agent_type=_UNSET):
     entry = {"tool": f"mcp__genealogy__{bare_name}", "args": args}
     if is_error:
         entry["is_error"] = True
+    if agent_id is not _UNSET:
+        entry["agent_id"] = agent_id
+    if agent_type is not _UNSET:
+        entry["agent_type"] = agent_type
     return entry
 
 
@@ -477,6 +495,195 @@ def test_a_same_person_call_for_a_different_person_does_not_clear_the_flag():
     violations = find_person_evidence_missing_same_person(calls, research, tree, starting_tree={"persons": []})
     assert len(violations) == 1
     assert "I1" in violations[0]
+
+
+# --- find_protected_writes_by_unnamed_delegate -------------------------------
+
+
+def _owned_write(skill, agent_id=_UNSET, agent_type=_UNSET, is_error=False):
+    """A minimal tool_calls entry `owning_skills` attributes to `skill`."""
+    if skill == "person-evidence":
+        return _mcp_call(
+            "materialize_facts",
+            {"recordId": "rec_1", "recordRole": "child"},
+            is_error=is_error,
+            agent_id=agent_id,
+            agent_type=agent_type,
+        )
+    if skill == "proof-conclusion":
+        return _mcp_call(
+            "research_append",
+            {"section": "proof_summaries", "op": "append", "entry": {"question_id": "q_001", "tier": "probable"}},
+            is_error=is_error,
+            agent_id=agent_id,
+            agent_type=agent_type,
+        )
+    if skill == "research-exhaustiveness":
+        return _mcp_call(
+            "research_append",
+            {
+                "section": "questions",
+                "op": "update",
+                "entryId": "q_001",
+                "fields": {"exhaustive_declaration": {"declared": True}},
+            },
+            is_error=is_error,
+            agent_id=agent_id,
+            agent_type=agent_type,
+        )
+    if skill == "conflict-resolution":
+        return _mcp_call(
+            "research_append",
+            {"section": "conflicts", "op": "append", "entry": {"id": "c_001"}},
+            is_error=is_error,
+            agent_id=agent_id,
+            agent_type=agent_type,
+        )
+    raise ValueError(skill)
+
+
+def _extraction_call(agent_id=_UNSET, agent_type=_UNSET, is_error=False):
+    return _mcp_call(
+        "extraction_append",
+        {"section": "sources", "op": "append", "entry": {"citation": "test"}},
+        is_error=is_error,
+        agent_id=agent_id,
+        agent_type=agent_type,
+    )
+
+
+def test_main_thread_write_not_flagged_no_agent_id_key():
+    """The historical tool_calls shape -- no agent_id key at all."""
+    calls = [_owned_write("person-evidence")]
+    assert find_protected_writes_by_unnamed_delegate(calls) == []
+
+
+def test_main_thread_write_not_flagged_agent_id_present_as_none():
+    """Step 0's actual output shape for a main-thread call going forward."""
+    calls = [_owned_write("person-evidence", agent_id=None, agent_type=None)]
+    assert find_protected_writes_by_unnamed_delegate(calls) == []
+
+
+def test_dedicated_agent_write_not_flagged():
+    for name in DEDICATED_AGENT_NAMES:
+        calls = [_owned_write("person-evidence", agent_id="a1", agent_type=name)]
+        assert find_protected_writes_by_unnamed_delegate(calls) == []
+
+
+def test_unnamed_delegate_write_flagged():
+    """The ogletree-children/juan-rodriguez-son shape: a general-purpose
+    subagent makes a guardrail-owned write directly."""
+    calls = [_owned_write("person-evidence", agent_id="a1", agent_type="general-purpose")]
+    violations = find_protected_writes_by_unnamed_delegate(calls)
+    assert len(violations) == 1
+    assert "person-evidence" in violations[0]
+    assert "general-purpose" in violations[0]
+
+
+def test_extraction_append_by_record_extractor_not_flagged():
+    calls = [_extraction_call(agent_id="a1", agent_type="record-extractor")]
+    assert find_protected_writes_by_unnamed_delegate(calls) == []
+
+
+def test_extraction_append_by_main_thread_not_flagged():
+    calls = [_extraction_call(agent_id=None, agent_type=None)]
+    assert find_protected_writes_by_unnamed_delegate(calls) == []
+
+
+def test_extraction_append_by_unnamed_delegate_flagged():
+    calls = [_extraction_call(agent_id="a1", agent_type="general-purpose")]
+    violations = find_protected_writes_by_unnamed_delegate(calls)
+    assert len(violations) == 1
+    assert "record-extractor" in violations[0]
+
+
+def test_extraction_append_by_wrong_dedicated_agent_still_flagged():
+    """Only record-extractor is legitimate for this specific tool -- being
+    IN DEDICATED_AGENT_NAMES is not sufficient the way it is for the four
+    GUARDRAIL_SKILLS writes."""
+    calls = [_extraction_call(agent_id="a1", agent_type="gps-mentor")]
+    violations = find_protected_writes_by_unnamed_delegate(calls)
+    assert len(violations) == 1
+
+
+def test_gps_mentor_evaluations_write_not_flagged():
+    """gps-mentor holds research_append but only ever writes evaluations[] --
+    a section owning_skills never attributes to any guardrail skill, so this
+    is exempt structurally before caller identity is even considered, even
+    from an unnamed delegate."""
+    calls = [
+        _mcp_call(
+            "research_append",
+            {"section": "evaluations", "op": "append", "entry": {"focus": "proof-critique"}},
+            agent_id="a1",
+            agent_type="general-purpose",
+        )
+    ]
+    assert find_protected_writes_by_unnamed_delegate(calls) == []
+
+
+def test_is_error_entries_skipped():
+    calls = [_owned_write("person-evidence", agent_id="a1", agent_type="general-purpose", is_error=True)]
+    assert find_protected_writes_by_unnamed_delegate(calls) == []
+
+
+def test_no_owned_writes_returns_empty():
+    assert find_protected_writes_by_unnamed_delegate([]) == []
+    assert find_protected_writes_by_unnamed_delegate(
+        [_mcp_call("record_search", {}, agent_id="a1", agent_type="general-purpose")]
+    ) == []
+
+
+def test_ogletree_children_hand_backfilled_regression():
+    """Corpus-pinned regression: eval/runlogs/e2e/ogletree-children/
+    run-2026-07-21_13-24-05.json is a committed, judge-`pass` run containing
+    a real instance of this bypass. Its tool_calls carry no agent_id/
+    agent_type yet (Step 0 postdates it), so this hand-backfills the three
+    real subagent spans from the run's own `subagents[]` capture -- verified
+    by matching each subagent's turn-by-turn tool sequence against the
+    corresponding tool_calls slice in order:
+      - subagents[11] (general-purpose, "Research exhaustiveness evaluation
+        for q_001") -> tool_calls[215:227]. Its exhaustive_declaration write
+        at 227 is declared=false, so owning_skills attributes it to nobody
+        -- not part of the expected violation count.
+      - subagents[12] (record-extractor, "Extract Louise C Barrett death
+        cert") -> tool_calls[258:265]. Legitimate control case.
+      - subagents[13] (general-purpose, "Link Louise Barrett death cert
+        assertions to tree") -> tool_calls[267:288]. Three of its writes are
+        real violations: a person-id-less materialize_facts (mints a new
+        person -> person-evidence), a tree_edit adding ParentChild x2 +
+        Couple (-> proof-conclusion, not person-evidence, despite sharing
+        the subagent span), and a person_evidence-section research_append
+        batch (-> person-evidence). Three OTHER materialize_facts calls in
+        the same span attach facts to already-known personIds and are
+        correctly not owned by anything.
+    """
+    repo_root = Path(__file__).resolve().parents[4]
+    runlog = (
+        repo_root
+        / "eval"
+        / "runlogs"
+        / "e2e"
+        / "ogletree-children"
+        / "run-2026-07-21_13-24-05.json"
+    )
+    data = json.loads(runlog.read_text(encoding="utf-8"))
+    tool_calls = [dict(entry) for entry in data["tool_calls"]]  # shallow-copy entries before mutating
+
+    def backfill(lo, hi, agent_id, agent_type):
+        for i in range(lo, hi):
+            tool_calls[i]["agent_id"] = agent_id
+            tool_calls[i]["agent_type"] = agent_type
+
+    backfill(215, 227, "sub-11", "general-purpose")
+    backfill(258, 265, "sub-12", "record-extractor")
+    backfill(267, 288, "sub-13", "general-purpose")
+
+    violations = find_protected_writes_by_unnamed_delegate(tool_calls)
+    assert len(violations) == 3
+    assert sum("materialize_facts" in v and "person-evidence" in v for v in violations) == 1
+    assert sum("tree_edit" in v and "proof-conclusion" in v for v in violations) == 1
+    assert sum("research_append" in v and "person-evidence" in v for v in violations) == 1
 
 
 def test_an_errored_same_person_call_does_not_count_as_scoring():
