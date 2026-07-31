@@ -1,25 +1,35 @@
 name: labeler
 
 # Applies path-based labels to PRs from .github/labeler.yml.
-# Today that is one rule: any PR touching a *.py file gets `developer`.
+# Today that is one rule: any PR touching a *.py, *.ts, or *.tsx file gets
+# `developer`.
 #
 # `sync-labels: true` means the label tracks the diff rather than the PR's
-# history — push a commit that drops the last .py change and the label comes
-# off. That also means a human cannot hand-apply `developer` to a PR with no
-# Python in it: the next push will strip it. If you want a label that sticks,
+# history — push a commit that drops the last source-file change and the label
+# comes off. That also means a human cannot hand-apply `developer` to a PR with
+# no code in it: the next push will strip it. If you want a label that sticks,
 # it does not belong in labeler.yml.
 #
-# TRIGGER CHOICE: `pull_request`, not `pull_request_target`. The labeler docs
-# suggest the latter because it is the only way to get a writable token on a
-# PR from a fork. This repo has never taken a fork PR (0 of the last 30 were
-# cross-repository) — every branch lives here. If that changes, a fork PR will
-# fail this job red with a 403 on the label write, which is the loud failure
-# we want; switch to `pull_request_target` at that point, and only then. It is
-# safe for this action specifically (labeler v5 checks out no PR code), but it
-# runs with repo secrets in scope, so it is not a default worth carrying.
+# TRIGGER CHOICE: `pull_request_target`, switched from `pull_request` on
+# 2026-07-31 when we decided to start accepting PRs from forks. A fork PR gets
+# a read-only GITHUB_TOKEN under `pull_request`, so the label write would 403
+# and fail this job red on every outside contribution.
+#
+# `pull_request_target` runs with a writable token and repo secrets in scope,
+# which is why it is not a default worth carrying — but it is safe for this
+# action specifically, on two counts that must both stay true:
+#   1. labeler v5 checks out no PR code, and there is no `actions/checkout`
+#      step below. Nothing fork-authored ever executes in this job.
+#   2. The event context is the BASE branch, so `.github/labeler.yml` is read
+#      from main — a fork cannot rewrite the label rules in its own PR.
+# If you ever add a checkout or a `run:` step that touches PR content here,
+# this trigger becomes a pwn-request vector: split the job instead.
+#
+# Fork PRs from first-time contributors still wait on the repo's
+# "require approval to run workflows" setting before any of this fires.
 
 on:
-  pull_request:
+  pull_request_target:
 
 permissions:
   contents: read

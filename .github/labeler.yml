@@ -4,11 +4,21 @@
 # Keep this list short. A label here only earns its place if someone
 # actually filters or routes on it.
 
-# Python is the developer-facing half of this repo — the eval harness
-# (eval/harness, eval/triggering) and the FastAPI control plane
-# (apps/server). Nothing a genealogist reviews is written in Python, so
-# "touches a .py file" is a reliable proxy for "needs a developer's eyes".
+# Source code is the developer-facing half of this repo. Python is the eval
+# harness (eval/harness, eval/triggering) and the FastAPI control plane
+# (apps/server); TypeScript is the MCP server (packages/engine/mcp-server),
+# the shared web packages (packages/schema, packages/viewer-ui) and the apps
+# that consume them (apps/web, apps/electron, eval/app).
+#
+# What a genealogist actually reviews — skill and agent prose, eval fixtures
+# and run logs, docs — is .md and .json, never .py/.ts/.tsx. So "touches a
+# source file" stays a reliable proxy for "needs a developer's eyes".
+#
+# .tsx is listed alongside .ts because the React half of the web and Electron
+# clients lives in .tsx; omitting it would leave every UI-only PR unlabelled.
 developer:
   - changed-files:
       - any-glob-to-any-file:
           - '**/*.py'
+          - '**/*.ts'
+          - '**/*.tsx'
