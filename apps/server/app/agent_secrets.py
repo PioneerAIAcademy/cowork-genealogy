@@ -9,7 +9,7 @@ while every existing one kept failing with `401 authentication_error` — the
 2026-07-20 alpha outage. Rewriting the current value on every connect makes a
 rotation take effect for every session at its next reconnect.
 
-This restores decision #2 of `docs/plan/sandbox-provider-interface.md` ("per-user
+This restores decision #2 of `docs/specs/sandbox-provider-spec.md` ("per-user
 secrets go in a file, written on every (re)connect — not create-time env"), which
 the implementation had drifted from; `SECRETS_PATH` was already reserved for it
 in `sandbox/base.py` and had no callers.

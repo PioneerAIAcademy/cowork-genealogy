@@ -29,6 +29,21 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 9, flags `adds_birth`/`adds_burial`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — Chile, Cemetery Records, 1701-2021: burial entry, 30 May 1908, Santiago, for Eulogia Gatica Alfaro, with an estimated birth year of 1865. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard, plus a `required` finding that the report documents the rejection.
+**Resolved: TRUE MATCH.** The hint record — Chile, Cemetery Records,
+1701-2021: burial entry, 30 May 1908, Santiago, for Eulogia Gatica Alfaro —
+is confirmed to belong to Eulojia del Carmen Gatica Alfaro (`LZ3Z-RHM`).
+Research on this fixture is successful when that burial record is attached
+to her. The findings in `expected-findings.json` are kept as transcribed.
 
-This is the **strongest** candidate match in the batch: the tree already records Eulojia's death as 29 May 1908 in Santiago, and the cemetery burial record is dated one day later (30 May 1908) in the same city — an entirely expected sequence, not a coincidence needing much scrutiny. The one wrinkle is the estimated birth year (1865) conflicting with the tree's already-recorded christening date (2 October 1862) by three years; cemetery-record birth-year estimates (often derived from an age-at-death notation) are commonly a few years off a true birth/christening date, so this is marked bonus-only (`required: false`) rather than treated as disqualifying.
+What decided it: the tree already records Eulojia's death as 29 May 1908
+in Santiago, and the cemetery burial record is dated one day later
+(30 May 1908) in the same city — an expected death → burial sequence in one
+locality, not a coincidence. No competing same-named Santiago candidate with
+a conflicting death/burial date turned up to unseat the identification.
+
+The one wrinkle is the estimated birth year (1865) conflicting with the
+tree's already-recorded christening date (2 October 1862) by three years.
+Cemetery-record birth-year estimates (typically derived from an age-at-death
+notation) are commonly a few years off a true birth/christening date, so this
+is graded bonus-only (`required: false`) rather than treated as disqualifying;
+it does not weaken the burial identification.

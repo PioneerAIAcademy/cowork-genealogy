@@ -1,9 +1,10 @@
 ---
 name: timeline
 model: claude-sonnet-4-6
-description: Builds candidate timelines (written to research.json) from assertions, surfaces gaps and
-  chronological impossibilities, and supports identity-testing by checking
-  whether records cohere into one life. GPS Step 3 — Analysis and
+description: Builds candidate timelines (written to research.json) from assertions, surfaces gaps,
+  and supports identity-testing by checking whether records cohere into one
+  life. Logical-impossibility checks (events after death, impossible ages)
+  belong to check-warnings, not here. GPS Step 3 — Analysis and
   Correlation (chronological analysis). Use when the user says "build a
   timeline", "show me the timeline", "what's the chronology?", "test
   whether a set of records describe one person", "do these events fit one
@@ -51,7 +52,8 @@ into one person's life.
 A timeline labeled "John Smith assuming Augusta = Rockingham" can
 aggregate person_ids from two different GedcomX persons that might
 be the same individual. If the events fit one life without
-impossibilities, that's evidence supporting the merge.
+contradictions — ages progress, locations are geographically
+plausible — that's evidence supporting the merge.
 
 ## Steps
 
@@ -212,58 +214,70 @@ than the events they come from.
 - Immigration: If born abroad but later in the US, an immigration
   event is expected.
 
-### 5. Identify impossibilities
+### 5. Note chronology-visible anomalies — do NOT judge possibility
 
-Check for chronological contradictions that are visible from the
-timeline's event sequence. Focus on what the timeline uniquely
-reveals — contradictions that only emerge when events are arranged
-in order:
+Arranging events can make anomalies visible, but deciding whether a
+single person's data is *logically impossible* — an event after death,
+a birth after death, an impossible age — is **check-warnings'** job, not
+this skill's. check-warnings runs that check deterministically via
+`person_warnings` and even tells a genuine identity mix-up apart from a
+record that merely mentions the deceased (a posthumous probate/obituary).
+Do **not** detect or record those contradictions here.
 
-Each impossibility has a `description` and the two conflicting event
-assertion ids (`event_1_assertion_id`, `event_2_assertion_id`).
+- **Leave `impossibilities[]` empty (`[]`).** This skill no longer
+  populates it. When the sorted timeline surfaces a possible vital-limit
+  contradiction — e.g. a record dated after the person's recorded death —
+  do **not** flag it as an impossibility yourself and do **not** silently
+  fold it in as a normal late-life event. State it plainly in your reply
+  ("the 1912 deed postdates the recorded 1908 death") and recommend a
+  data-integrity check (check-warnings' `person_warnings`), which will
+  classify it — misattribution vs. wrong death date vs. posthumous mention.
 
-**Timeline-visible impossibilities:**
-- Events occurring before birth or after death
-- Two events in distant locations with insufficient travel time
-  (use `distance_from_previous_km` from Step 3.5 and the travel
-  speed reference in `references/timeline-analysis-guide.md`)
-- Same person enumerated in two different states in the same census
-  year (suggests two different persons, not one)
+- **Geographic / travel feasibility is the exception — it IS this skill's,**
+  because it depends on arranging events across sources and `person_warnings`
+  does not do geography. When two place-bound events sit close together in
+  time, use `distance_from_previous_km` (Step 3.5) and the era's travel speed
+  (`references/timeline-analysis-guide.md`) to judge whether one person could
+  have been at both — including the same person enumerated in two different
+  states in one census year. Report an infeasible pair **in your reply** as a
+  coherence signal (this identity-coherence finding has no persisted field);
+  do not write it to `impossibilities[]`.
 
-**`impossibilities[]` is for chronological contradictions ONLY.**
-Identity uncertainty ("which Patrick Flynn is this?"), source
-disagreement ("informant said X, another said Y"), and any other
-non-chronological dispute belong in `conflicts[]` — not here. If
-those questions are already captured as `c_*` entries (resolved or
-unresolved), reference them via the affected event's `conflict_ids`
-field; do not duplicate the signal as an impossibility. If the
-underlying identity conflict is unresolved and the affected events
-cannot be safely attributed to one person, either omit those events
-from the timeline or annotate them in the event's `conflict_note`
-field. Putting "this might be a different person per c_002" into
-`impossibilities` misuses the section and produces noise downstream.
-
-**Impossibilities are strong evidence of identity problems.** If a
-timeline built from two candidate persons has impossibilities, the
-persons are probably NOT the same individual.
+Identity uncertainty ("which Patrick Flynn is this?"), source disagreement
+("informant said X, another said Y"), and any other non-chronological dispute
+belong in `conflicts[]`, not here. If those are already captured as `c_*`
+entries, reference them from the affected event via its `conflict_ids` /
+`conflict_note` field; do not re-derive them.
 
 ### 6. Identity-testing analysis
 
 When building a hypothesis-testing timeline (Mode B), evaluate
 coherence and report one of three results:
 
-- **Pass:** No impossibilities. Ages progress correctly, locations
-  are geographically plausible, and identifying details (occupation,
+- **Pass:** No contradictions. Ages progress correctly, locations are
+  geographically plausible (Step 5), and identifying details (occupation,
   birthplace, family members) remain consistent across records.
-  Evidence SUPPORTING the hypothesis.
+  Evidence SUPPORTING the hypothesis. When several independent records
+  agree on age progression **and** at least one further stable identifier
+  (birthplace, residence, occupation, or family), that is a Pass —
+  conclude it. A common or high-frequency name is **not** a reason to
+  downgrade to Inconclusive when the records otherwise cohere on multiple
+  independent axes; note the common name as a caution to keep verifying,
+  not as grounds to withhold the verdict.
 
-- **Fail:** Impossibilities exist, or identifying details contradict
-  (different birthplaces, incompatible ages, different spouse names).
-  Evidence AGAINST the hypothesis.
+- **Fail:** Identifying details contradict (different birthplaces,
+  incompatible ages, different spouse names), or a geographic
+  infeasibility (Step 5) shows the records cannot describe one person.
+  If you also suspect a vital-limit impossibility (an event after death),
+  recommend check-warnings to confirm it before concluding. Evidence
+  AGAINST the hypothesis.
 
-- **Inconclusive:** Events are consistent but too sparse to confirm
-  or deny. Consistency alone does not prove identity when the
-  profile is thin (name + approximate age may match multiple people).
+- **Inconclusive:** Reserve this for a genuinely THIN profile — one or
+  two records matching on little more than a name and an approximate age,
+  with no corroborating birthplace, residence, occupation, or family to
+  tie them together. Do **not** use Inconclusive as a hedge when several
+  records already agree on age progression plus a stable birthplace or
+  residence — that is a Pass, not an Inconclusive.
 
 Report the coherence result to the user, and **name the specific signals
 that drove the verdict** — the actual age progression, birthplace
@@ -296,9 +310,10 @@ said about it."
 Persist the timeline to `research.json` `timelines[]` through
 `research_append`. Pass **only the timeline object** — never read and
 re-serialize the whole `research.json`. The persisted timeline's fields
-and shape are exactly as before (`label`, optional `hypothesis_id`,
-`person_ids`, `generated`, `events[]`, `gaps[]`, `impossibilities[]`);
-only the write mechanism changes. On `{ ok: false, errors }` it writes
+and shape are as before (`label`, optional `hypothesis_id`,
+`person_ids`, `generated`, `events[]`, `gaps[]`, and `impossibilities[]` —
+which this skill now always writes as an empty array `[]`, since
+impossibility detection has moved to check-warnings). On `{ ok: false, errors }` it writes
 nothing — surface those errors and fix the input rather than retrying
 blindly.
 
@@ -315,7 +330,7 @@ research_append({
     "person_ids": ["KWCJ-RN4"],
     "events": [ ... ],
     "gaps": [ ... ],
-    "impossibilities": [ ... ]
+    "impossibilities": []
   }
 })
 ```
@@ -338,7 +353,7 @@ research_append({
     "generated": "2026-05-04T16:00:00Z",
     "events": [ ... ],
     "gaps": [ ... ],
-    "impossibilities": [ ... ]
+    "impossibilities": []
   }
 })
 ```
@@ -365,13 +380,14 @@ one short line per finding, not a paragraph.
 
 Report:
 
-- **Written:** the timeline `t_` id and label plus event / gap /
-  impossibility counts — e.g. "t_003 — 7 events, 2 gaps, 0
-  impossibilities; persisted for the viewer".
+- **Written:** the timeline `t_` id and label plus event / gap
+  counts — e.g. "t_003 — 7 events, 2 gaps; persisted for the viewer".
 - **Gaps:** one line per gap — its span and severity (the actionable
   negative evidence). Omit if none.
-- **Chronological impossibilities:** one line per impossibility, or
-  "None".
+- **Anomalies:** any geographic/travel-feasibility problem you found
+  (Step 5); and, if a record falls outside the person's recorded
+  lifespan, one line noting it and recommending a data-integrity check
+  (check-warnings) rather than flagging it here. Omit if none.
 - **Coherence** (Mode B hypothesis test): the Pass / Fail /
   Inconclusive verdict with a one-sentence rationale.
 - **Recommended next step** (see Handoff rules below).

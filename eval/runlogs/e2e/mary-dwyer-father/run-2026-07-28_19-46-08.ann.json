@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Tree encodes Michael Reagan (I2) as father via relationship R9 and Margaret Callahan/Margret Reagan (I1) as mother via R8, both sourced to independently-verified records (S2: 1880 census, S3: 1922 death certificate). proof_summaries ps_001 correctly hedges at 'probable' tier and documents the Daniel Ragan competing hypothesis (h_001) rather than omitting it.",
+    "f2": "Patrick Dwyer never appears anywhere in the final tree or sources; the run worked outward from independent record search and never encountered the original Chicopee hint record at all. Absence satisfies the avoid finding's pass criteria."
+  },
+  "annotator": "Emruthwill"
+}

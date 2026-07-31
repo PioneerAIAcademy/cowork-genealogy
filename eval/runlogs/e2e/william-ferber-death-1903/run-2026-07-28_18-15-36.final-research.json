@@ -1,0 +1,1240 @@
+{
+  "project": {
+    "id": "rp_william_ferber_death_1903",
+    "objective": "When and where did William Hubert Ferber (father of Charles Hubert Ferber, b. 1891, Cincinnati, Ohio) die, and where was he buried?",
+    "subject_person_ids": [
+      "G7JB-YH6"
+    ],
+    "status": "completed",
+    "created": "2026-07-28",
+    "updated": "2026-07-28"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did William Hubert Ferber (born December 1869, Ohio; resided Cincinnati, Hamilton County, Ohio; married Emma Becker 1890) die?",
+      "rationale": "The objective's primary fact is the death date and place of William H. Ferber. His tree has no death record. He appears in the 1900 census and Cincinnati city directories through 1910; the 1910 census and Ohio death records (registered from 1908) are the highest-priority sources to consult. Hamilton County death records (some pre-1908 local records survive) and the city directories' gap after 1910 may also point to a death window. This question is the gatekeeper: its answer constrains the timeframe for the burial search.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [
+        "q_002"
+      ],
+      "resolved": "2026-07-28",
+      "resolution_assertion_ids": [
+        "a_003"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two independent sources establish death on 11 March 1903 in Cincinnati, Hamilton County, Ohio. (1) Ohio County Death Records derivative index (src_001): direct/primary evidence of date and place, parents match tree, FamilySearch match score 0.698, already attached to G7JB-YH6. (2) 1910 U.S. Census (src_002, original): Emma Ferber listed as Widowed with William entirely absent \u2014 independent negative corroboration of pre-1910 death. The original register page image (ark:/61903/3:1:S3HT-66TS-SCS) was pursued but is transport-inaccessible at 1.1 MB (log_004); a fulltext-search pivot also returned nil (log_005). No unsearched accessible source type could plausibly contradict the established date and place.",
+        "log_entry_ids": [
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 death date (11 March 1903) and place (Cincinnati, Hamilton County, Ohio) are established by the county death record index and independently corroborated by the 1910 census.",
+          "repository_breadth": "Yes \u2014 Ohio statewide registration searched (negative, predates 1908 start); Hamilton County death records searched (positive); 1910 census searched (corroborating); original register image pursued (transport-inaccessible); FTS pivot searched (nil). All identified accessible source types have been exhausted.",
+          "original_substitution": "Partial \u2014 the original Hamilton County death register page image (ark:/61903/3:1:S3HT-66TS-SCS) was attempted but is 1.1 MB, exceeding the MCP transport cap (log_004). A fulltext-search pivot also returned nil (log_005). The derivative index is the most accessible form of this record; the original is pursued-and-unavailable rather than unsearched.",
+          "independent_verification": "Yes \u2014 two independent sources with different informants and institutional origins: (1) the county death record index (created at time of death by a registrar with informant knowledge); (2) the 1910 census (recorded seven years later by an enumerator, with Emma Ferber as the probable informant for her own widowed status). These are genuinely independent.",
+          "evidence_class": "Yes \u2014 src_001 is a derivative of an original record with primary information (created close to the event by persons with direct knowledge of the death). The 1910 census (src_002) is an original record with secondary information (reported years after the death).",
+          "conflict_resolution": "Yes \u2014 no conflicts exist. The county death record and the 1910 census are fully consistent. No source assigns a different death date, place, or identity.",
+          "overturn_risk": "Low. The original register image is transport-inaccessible, not non-existent; the derivative index reliably reflects it. No other record type (probate, newspaper, church burial) could plausibly name a different death date or place for this specific individual. The 1910 census independently anchors the death to pre-April 1910. Overturn risk is minimal."
+        }
+      },
+      "created": "2026-07-28"
+    },
+    {
+      "id": "q_002",
+      "question": "Where was William Hubert Ferber (born December 1869, Ohio; died Cincinnati area, date unknown) buried?",
+      "rationale": "The objective explicitly asks for burial location as a separate fact from the death event. Ohio death certificates (post-1908) include the name of the undertaker and sometimes the cemetery; pre-1908 Hamilton County records and funeral home records may also name the burial place. Spring Grove Cemetery (Cincinnati) is the most probable candidate given that his mother, wife, and son are all buried there. This question depends on q_001 because the death date constrains which records to search.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": "2026-07-28",
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "All accessible FamilySearch sources returned negative: Vine Street Hill Cemetery index (log_006), Ohio Deaths and Burials 1854-1997 (log_007), Ohio Church and Civil Deaths (log_012). External sites that could plausibly answer this question \u2014 FindAGrave (log_008), Spring Grove Cemetery's own database (log_009), and Cincinnati newspaper obituaries via Chronicling America/Newspapers.com (log_010, log_011) \u2014 were deferred because an autonomous run cannot perform interactive browser captures. These are not genuinely inaccessible records; they remain viable for an interactive session. A Cincinnati newspaper obituary from March 1903 or a FindAGrave/Spring Grove memorial for William H. Ferber would very likely name the burial location. Research terminating due to autonomous-mode access limitation, not record exhaustion.",
+        "log_entry_ids": [
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "No \u2014 burial location not established. No FamilySearch-accessible source named a cemetery or burial place for William H. Ferber.",
+          "repository_breadth": "Partial \u2014 FamilySearch cemetery indexes (Vine Street Hill), vital aggregates (Ohio Deaths & Burials, Church & Civil Deaths), and FTS searched and exhausted. External repositories (FindAGrave, Spring Grove Cemetery database, Chronicling America/Newspapers.com) identified as high-probability sources but deferred in autonomous mode.",
+          "original_substitution": "Not applicable \u2014 no positive source found to evaluate for derivative vs. original.",
+          "independent_verification": "Not applicable \u2014 no positive evidence found to verify.",
+          "evidence_class": "Not applicable \u2014 no positive evidence found.",
+          "conflict_resolution": "Not applicable \u2014 no conflicting evidence.",
+          "overturn_risk": "High if research continues interactively \u2014 FindAGrave, Spring Grove's own database, and Cincinnati newspaper obituaries (March 1903) are likely to name the burial location. The family pattern (mother, wife, and son all buried at Spring Grove Cemetery) is a strong but unconfirmed prior. An interactive session should prioritize these three sources."
+        }
+      },
+      "created": "2026-07-28"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Ohio, United States",
+          "date_range": "1908-1930",
+          "repository": "FamilySearch",
+          "rationale": "Ohio statewide death registration began 1908. Collection 1307272 ('Ohio, Deaths, 1908-1953') has 3.5M indexed records with full certificate images. If William died after December 1907 this is the highest-probability source: it will give date, place, cause, informant, and undertaker/burial details in one record.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio, United States",
+          "date_range": "1865-1908",
+          "repository": "FamilySearch",
+          "rationale": "Collection 2128172 ('Ohio, County Death Records, 1840-2001') includes Hamilton County local death registrations predating statewide registration. If William died between 1900 and 1907, county-level records are the only Ohio vital-record source. Also covers an overlap period in case a certificate exists before the 1908 statewide index begins.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio, United States",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "The 1910 U.S. Census (taken April 15, 1910) will confirm whether William H. Ferber appears as a living household member. His presence narrows the death window to post-April 1910; his absence constrains it to before that date and may show his widow's household status. His son Charles and wife Emma are known to have been in Cincinnati Ward 21 in 1910.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Ohio, United States",
+          "date_range": "1854-1997",
+          "repository": "FamilySearch",
+          "rationale": "Fallback for pli_001 (Ohio Deaths 1908-1953). Primary death record found via pli_002 (Hamilton County Death Records). William died 11 March 1903 \u2014 predates statewide registration \u2014 so this aggregated index would not add to q_001. Deferred to q_002 plan if needed.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio, United States",
+          "date_range": "1791-1994",
+          "repository": "FamilySearch",
+          "rationale": "Fallback for pli_002 (browse-only Hamilton County Records). pli_002 succeeded with indexed record; browse-only images not needed for q_001 date/place. The original register page image (ark:/61903/3:1:S3HT-66TS-SCS) is noted for q_002 (burial details) but not required to establish q_001.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Ohio, United States",
+          "date_range": "1908-1953",
+          "repository": "Ancestry",
+          "rationale": "Ancestry Ohio Death Certificates 1908-1953. William H. Ferber died 11 March 1903 \u2014 outside this collection's date range. Not applicable to q_001.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "newspaper",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio, United States",
+          "date_range": "1900-1930",
+          "repository": "other",
+          "rationale": "Cincinnati newspaper obituary search. Valuable for q_002 (burial/funeral arrangements) but not required for q_001 (death date/place), which is directly answered by the Hamilton County death register with independent corroboration from the 1910 census. Overturn risk for death date/place from newspapers is negligible. Deferred to q_002 plan.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_008",
+          "sequence": 1,
+          "record_type": "cemetery",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio, United States",
+          "date_range": "1903",
+          "repository": "other",
+          "rationale": "Find A Grave documents Spring Grove Cemetery exhaustively, including lot numbers and headstone photos. William's mother Eva (d. Jan 1872), wife Emma (d. Dec 1948), and son Charles (d. Dec 1967) are all documented at Spring Grove \u2014 a strong family burial pattern. Spring Grove was founded in 1845, serves all denominations, and is the second-largest cemetery in the United States. A memorial entry for William H. Ferber would directly confirm burial location, date of burial, and lot.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 2,
+          "record_type": "cemetery",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio, United States",
+          "date_range": "1903",
+          "repository": "other",
+          "rationale": "Spring Grove Cemetery operates its own online burial search at springgrove.org, with records since its 1845 founding. This is the authoritative institutional source: if William is interred there, the cemetery database will confirm section, lot, date of burial, and potentially the undertaker. Searching springgrove.org directly is more authoritative than Find A Grave for lot and section detail.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 3,
+          "record_type": "cemetery",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio, United States",
+          "date_range": "1895-1910",
+          "repository": "FamilySearch",
+          "rationale": "Collection 3714673 \u2014 Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986 (60,707 indexed records). Founded by German Evangelical Reform churches (St. Peter and St. Paul), consistent with the Ferber family's German Protestant background. Records include name of deceased, death date, burial date, funeral home name, and lot owner. If William was not buried at Spring Grove, this German-founded Cincinnati cemetery is the next most likely alternative for a German immigrant family.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 4,
+          "record_type": "newspaper",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio, United States",
+          "date_range": "1903",
+          "repository": "other",
+          "rationale": "Cincinnati newspaper obituaries from March 1903 (Cincinnati Enquirer, Cincinnati Post, Cincinnati Commercial Tribune) routinely named the funeral home, pallbearers, and burial location. Chronicling America (loc.gov, free) indexes the Cincinnati Enquirer 1881-1922; Newspapers.com and GenealogyBank cover additional Cincinnati papers. Searching for 'Ferber' or 'William Ferber' around 11-15 March 1903 is the most likely source for both funeral home and cemetery name independent of cemetery records.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio, United States",
+          "date_range": "1895-1910",
+          "repository": "FamilySearch",
+          "rationale": "Collection 1681000 \u2014 Ohio, Deaths and Burials, 1854-1997 (483,832 aggregate records). A supplementary check to ensure no burial-place data exists in a broader aggregated index beyond what the county death record (src_001) already captured. Some entries in this aggregate include cemetery or burial location fields not indexed in the county record collection.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T17:37:21.948Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Ohio, Deaths, 1908-1953 (1307272)",
+        "surname": "Ferber",
+        "givenName": "William",
+        "recordType": "death",
+        "birthYearFrom": 1864,
+        "birthYearTo": 1874,
+        "recordSubdivision": "Ohio",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 47,
+      "notes": "47 results returned; top 10 ranked against G7JB-YH6. Best candidates were \"William Farber\" (father on daughter's 1924 Cincinnati death cert, surname Farber not Ferber, wife Mary Gardner not Emma Becker) and \"Farber\" (died 9 Mar 1911 Cincinnati, parents Peter Farber + Barbara Wilhelm \u2014 different family). No match for William H. Ferber. Ohio statewide registration began 1908; if subject died ca. 1903 as project ID suggests, this collection would not capture it. Proceeding to county records (pli_002)."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T17:38:33.054Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Ohio, County Death Records, 1840-2001 (2128172)",
+        "surname": "Ferber",
+        "givenName": "William",
+        "recordType": "death",
+        "birthYearFrom": 1864,
+        "birthYearTo": 1874,
+        "deathPlace": "Cincinnati, Hamilton, Ohio",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 4,
+      "notes": "Strong match: 'Wm. Ferber', born 1870, Cincinnati, Hamilton, Ohio; died 11 March 1903, Cincinnati, Hamilton, Ohio; Married, White; father Gerhard Ferber and mother Eva Ferber both match tree exactly (GCD9-9X1, G7J1-QF2). Match score 0.698; already attached to subject G7JB-YH6. Record is an index entry pointing to the Hamilton County death register image (ark:/61903/1:2:MXGX-5SW). No burial place in the index \u2014 original image may contain more detail. Passing to record-extraction."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T17:39:55.709Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States, Census, 1910 (1727033)",
+        "surname": "Ferber",
+        "givenName": "Emma",
+        "recordType": "census",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "residencePlace": "Cincinnati, Hamilton, Ohio",
+        "count": 20
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 9,
+      "notes": "Found Emma Ferber household, Cincinnati Ward 21, 1910 (ark:/61903/1:1:ML89-JK7). Emma listed as Widowed, born 1871 Ohio. Household includes Gerhard Ferber (b. 1821, Germany \u2014 William's father), Chas H Ferber (b. 1892, Ohio \u2014 son Charles Hubert), Gustave Ferber (b. 1857, Ohio). William H. Ferber is entirely absent; Emma's widowed status corroborates 11 March 1903 death date. Passing to record-extraction for negative-evidence assertion on William's absence."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": null,
+      "performed": "2026-07-28T17:58:21.423Z",
+      "tool": "image_search",
+      "query": {
+        "imageArk": "ark:/61903/3:1:S3HT-66TS-SCS",
+        "standardPlace": "Hamilton, Ohio, United States",
+        "recordType": "Death Records",
+        "recordYear": 1903,
+        "subject": "William Ferber",
+        "purpose": "Read original Hamilton County death register page to verify q_001 death date/place and find q_002 burial information"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Attempted to read original Hamilton County, Ohio death register page image (ark:/61903/3:1:S3HT-66TS-SCS) underlying src_001 (Ohio County Death Records, 1903, William Ferber). Image is 1.1 MB \u2014 exceeds MCP transport cap of ~1 MB (base64 inflation ~33%). Image is pursued-and-unavailable, not unsearched. The derivative index (src_001) and corroborating 1910 census (src_002) together provide sufficient accessible evidence to support a defensible answer to q_001. Burial/undertaker details from the original register page remain unobtainable via this transport."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": null,
+      "performed": "2026-07-28T17:58:50.650Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Ferber +Cincinnati +1903",
+        "recordType": "Death",
+        "recordPlace1": "Ohio",
+        "yearFrom": 1903,
+        "yearTo": 1903,
+        "purpose": "Pivot from inaccessible original image \u2014 attempt to recover burial/undertaker details from FTS transcript of Hamilton County death register"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Full-text search for '+Ferber +Cincinnati +1903' in Ohio Death records returned zero results. The Hamilton County 1903 death register is not AI-transcribed in FamilySearch's FTS corpus. Combined with the inaccessible image (log_004), no additional facts from the original register page are obtainable via FamilySearch. The accessible evidence (src_001 derivative index + src_002 1910 census) remains the evidentiary basis for q_001."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-28T18:06:51.889Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Ohio, Hamilton, Cincinnati, Vine Street Hill Cemetery Index of Burials, 1851-1986 (3714673)",
+        "surname": "Ferber",
+        "givenName": "William",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 2,
+      "notes": "2 results returned: both are 'William Faber' (not Ferber), one died 30 May 1955 (buried 2 Jun 1955) and one with no date. Wrong surname spelling and wrong era \u2014 neither is William H. Ferber (d. 11 March 1903). William H. Ferber is not recorded in the Vine Street Hill Cemetery index."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_012",
+      "performed": "2026-07-28T18:06:56.943Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Ohio, Deaths and Burials, 1854-1997 (1681000)",
+        "surname": "Ferber",
+        "givenName": "William",
+        "birthYearFrom": 1864,
+        "birthYearTo": 1874,
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 4,
+      "notes": "4 results returned; none match William H. Ferber (d. 1903). Top result 'W.H. or William H. Farber' (buried 1898, wrong date and surname variant). Others: Philip W. Lefeber (1935), Clarence W. Faber (1956), Faber (d. 1885 Ashland). No entry for William H. Ferber, Cincinnati, 1903 in this aggregate index. The collection may not fully index Hamilton County pre-1908 burial records."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-28T18:07:49.764Z",
+      "tool": "external_site",
+      "query": {
+        "site": "findagrave",
+        "firstname": "William",
+        "lastname": "Ferber",
+        "deathyear": 1903,
+        "location": "Cincinnati, Hamilton, Ohio",
+        "notes": "Searching for burial memorial at Spring Grove Cemetery, Cincinnati \u2014 family pattern: mother Eva (d. Jan 1872), wife Emma (d. Dec 1948), son Charles all buried Spring Grove"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "findagrave",
+        "url_generated": "https://www.findagrave.com/memorial/search?firstname=William&lastname=Ferber&deathyear=1903&location=Cincinnati%2C+Hamilton%2C+Ohio",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous run, no user available to click, capture, or upload PDF. Search URL generated: https://www.findagrave.com/memorial/search?firstname=William&lastname=Ferber&deathyear=1903&location=Cincinnati%2C+Hamilton%2C+Ohio. In an interactive session, open this URL in a browser authenticated to FindAGrave, save the results page as PDF, and upload for triage. High-probability lead: mother Eva, wife Emma, and son Charles Hubert are all documented at Spring Grove Cemetery, Cincinnati."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-28T18:08:44.861Z",
+      "tool": "external_site",
+      "query": {
+        "site": "findagrave",
+        "target": "springgrove.org online burial search",
+        "firstname": "William",
+        "lastname": "Ferber",
+        "deathyear": 1903,
+        "cemetery": "Spring Grove Cemetery, Cincinnati, Ohio"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "findagrave",
+        "url_generated": "https://www.springgrove.org/find-a-burial/",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous run, no user to navigate springgrove.org. URL for interactive session: https://www.springgrove.org/find-a-burial/ \u2014 search for William Ferber, death year 1903. Spring Grove Cemetery maintains its own burial database since 1845. This is the authoritative institutional source if William is interred there. In an interactive session, search the cemetery's database directly."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-28T18:09:13.492Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Ferber +Cincinnati",
+        "recordType": "other",
+        "recordPlace1": "Ohio",
+        "yearFrom": 1903,
+        "yearTo": 1903,
+        "purpose": "FamilySearch FTS pivot for Cincinnati newspaper obituary search \u2014 looking for William H. Ferber death notice or obituary, March 1903"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FamilySearch full-text search for '+Ferber +Cincinnati' in Ohio records, 1903, record type 'other' returned zero results. FamilySearch does not have AI-transcribed Cincinnati newspaper content for 1903 in its FTS corpus. External newspaper archives (Chronicling America, Newspapers.com) remain unsearched \u2014 deferred as autonomous run cannot capture those results. Logged separately as log_010."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-28T18:09:24.787Z",
+      "tool": "external_site",
+      "query": {
+        "site": "newspapers",
+        "target": "Chronicling America / Newspapers.com",
+        "query": "Ferber Cincinnati obituary March 1903",
+        "yearFrom": 1903,
+        "yearTo": 1903,
+        "state": "Ohio"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "newspapers",
+        "url_generated": "https://chroniclingamerica.loc.gov/search/pages/results/?andtext=Ferber&dateFilterType=range&date1=03%2F11%2F1903&date2=03%2F20%2F1903&state=Ohio",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous run, no user to search newspaper archives. FamilySearch FTS pivot returned nil (log_010). For interactive session: (1) Chronicling America (free): https://chroniclingamerica.loc.gov/search/pages/results/?andtext=Ferber&dateFilterType=range&date1=03%2F11%2F1903&date2=03%2F20%2F1903&state=Ohio \u2014 search Cincinnati Enquirer and Cincinnati Post for 'Ferber' obituary circa 11-18 March 1903. (2) Newspapers.com: https://www.newspapers.com/search/?query=William+Ferber&dr_year=1903-1903&dr_place=Cincinnati%2C+Ohio \u2014 requires subscription. A Cincinnati newspaper obituary is the highest-probability source for funeral home and cemetery names for a 1903 death."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": null,
+      "performed": "2026-07-28T18:10:53.728Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Ohio, Church and Civil Deaths, 1833-1991 (2373723)",
+        "surname": "Ferber",
+        "givenName": "William",
+        "deathYearFrom": 1900,
+        "deathYearTo": 1910,
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 2,
+      "notes": "2 results: (1) 'Wm. Farber' mentioned in Matilda C. Jung's record, birthplace Germany \u2014 surname variant and the record is about a different principal; (2) female 'Faber' in Louise W. Hoffmann's record. Neither is William H. Ferber (d. 11 March 1903). Church and Civil Deaths collection does not capture a burial record for William H. Ferber in Cincinnati, 1900-1910."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Ohio, County Death Records, 1840-2001,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ : accessed 28 July 2026), entry for Wm. Ferber and Gerhard Ferber, 11 Mar 1903; citing Hamilton County, Ohio death register.",
+      "citation_detail": {
+        "who": "Hamilton County, Ohio death registrar",
+        "what": "Ohio, County Death Records, 1840-2001 - index entry for Wm. Ferber, death 11 Mar 1903",
+        "when_created": "1903",
+        "when_accessed": "2026-07-28",
+        "where": "FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ)",
+        "where_within": "Hamilton County, Ohio local death register, entry for Wm. Ferber and Gerhard Ferber"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "notes": "Derivative index/register entry (Hamilton County local death register). Original register page image (ark:/61903/1:2:MXGX-5SW) not examined -- original not examined; burial details may be present on the original register page.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States, Census, 1910\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:ML89-JK7 : Wed Aug 13 19:05:45 UTC 2025), Entry for Emma Ferber and Gerhard Ferber, 1910.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau enumerator",
+        "what": "1910 U.S. Federal Census population schedule, household of Emma Ferber",
+        "when_created": "1910",
+        "when_accessed": "2026-07-28",
+        "where": "FamilySearch",
+        "where_within": "Cincinnati Ward 21, Hamilton County, Ohio; household of Emma Ferber and Gerhard Ferber"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:ML89-JK7",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_role": "deceased",
+      "record_persona_id": "p_11261440420",
+      "log_entry_id": "log_002",
+      "fact_type": "Name",
+      "value": "Wm. Ferber",
+      "information_quality": "indeterminate",
+      "informant": "unknown (not stated in index)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_role": "deceased",
+      "record_persona_id": "p_11261440420",
+      "log_entry_id": "log_002",
+      "fact_type": "Birth",
+      "value": "Birth: 1870, Cincinnati, Hamilton, Ohio",
+      "date": "1870",
+      "date_certainty": "approximate",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "information_quality": "secondary",
+      "informant": "unknown (not stated in index)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth year/place reported decades after the event on a death record, not contemporaneous with the birth.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_role": "deceased",
+      "record_persona_id": "p_11261440420",
+      "log_entry_id": "log_002",
+      "fact_type": "Death",
+      "value": "Death: 11 Mar 1903, Cincinnati, Hamilton, Ohio",
+      "date": "11 Mar 1903",
+      "date_certainty": "exact",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "unknown (not stated in index)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_role": "deceased",
+      "record_persona_id": "p_11261440420",
+      "log_entry_id": "log_002",
+      "fact_type": "Residence",
+      "value": "Cincinnati, Ohio",
+      "place": "Cincinnati, Ohio",
+      "information_quality": "indeterminate",
+      "informant": "unknown (not stated in index)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_role": "deceased",
+      "record_persona_id": "p_11261440420",
+      "log_entry_id": "log_002",
+      "fact_type": "MaritalStatus",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown (not stated in index)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_role": "deceased",
+      "record_persona_id": "p_11261440420",
+      "log_entry_id": "log_002",
+      "fact_type": "Race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown (not stated in index)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_role": "father_of_deceased",
+      "record_persona_id": "p_11261440421",
+      "log_entry_id": "log_002",
+      "fact_type": "Parentage",
+      "value": "Father: Gerhard Ferber",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown (not stated in index)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_role": "mother_of_deceased",
+      "record_persona_id": "p_11261440422",
+      "log_entry_id": "log_002",
+      "fact_type": "Parentage",
+      "value": "Mother: Eva Ferber",
+      "structured_value": {
+        "relationship_type": "mother",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown (not stated in index)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252875",
+      "record_role": "head_of_household",
+      "fact_type": "Residence",
+      "value": "Cincinnati Ward 21, Hamilton County, Ohio",
+      "structured_value": {
+        "place": "Cincinnati Ward 21, Hamilton, Ohio, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "Cincinnati Ward 21, Hamilton, Ohio, United States",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252875",
+      "record_role": "head_of_household",
+      "fact_type": "Birth",
+      "value": "~1871 (computed from age at 1910 census)",
+      "structured_value": {
+        "year": 1871
+      },
+      "date": "1871",
+      "date_certainty": "calculated",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252875",
+      "record_role": "head_of_household",
+      "fact_type": "BirthPlace",
+      "value": "Ohio",
+      "structured_value": {
+        "place": "Ohio, United States"
+      },
+      "place": "Ohio",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252875",
+      "record_role": "head_of_household",
+      "fact_type": "MaritalStatus",
+      "value": "Widowed",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Widowed status is indirect evidence that William H. Ferber had died by the April 1910 enumeration; consistent with a reported 11 March 1903 death, though the census does not state a cause or date of death.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252876",
+      "record_role": "father_in_law",
+      "fact_type": "Residence",
+      "value": "Cincinnati Ward 21, Hamilton County, Ohio",
+      "structured_value": {
+        "place": "Cincinnati Ward 21, Hamilton, Ohio, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "Cincinnati Ward 21, Hamilton, Ohio, United States",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252876",
+      "record_role": "father_in_law",
+      "fact_type": "Birth",
+      "value": "~1821 (computed from age at 1910 census)",
+      "structured_value": {
+        "year": 1821
+      },
+      "date": "1821",
+      "date_certainty": "calculated",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252876",
+      "record_role": "father_in_law",
+      "fact_type": "BirthPlace",
+      "value": "Germany",
+      "structured_value": {
+        "place": "Germany"
+      },
+      "place": "Germany",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Germany"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252878",
+      "record_role": "child_1",
+      "fact_type": "Residence",
+      "value": "Cincinnati Ward 21, Hamilton County, Ohio",
+      "structured_value": {
+        "place": "Cincinnati Ward 21, Hamilton, Ohio, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "Cincinnati Ward 21, Hamilton, Ohio, United States",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252878",
+      "record_role": "child_1",
+      "fact_type": "Birth",
+      "value": "~1892 (computed from age at 1910 census)",
+      "structured_value": {
+        "year": 1892
+      },
+      "date": "1892",
+      "date_certainty": "calculated",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Chas H (approx. age 18) could not report his own birth info; a parent likely responded. Tree records Charles Hubert Ferber's birth as 22 June 1891 \u2014 a one-year discrepancy consistent with census age rounding.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252878",
+      "record_role": "child_1",
+      "fact_type": "BirthPlace",
+      "value": "Ohio",
+      "structured_value": {
+        "place": "Ohio, United States"
+      },
+      "place": "Ohio",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252877",
+      "record_role": "relative_unspecified",
+      "fact_type": "Residence",
+      "value": "Cincinnati Ward 21, Hamilton County, Ohio",
+      "structured_value": {
+        "place": "Cincinnati Ward 21, Hamilton, Ohio, United States"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "place": "Cincinnati Ward 21, Hamilton, Ohio, United States",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252877",
+      "record_role": "relative_unspecified",
+      "fact_type": "Birth",
+      "value": "~1857 (computed from age at 1910 census)",
+      "structured_value": {
+        "year": 1857
+      },
+      "date": "1857",
+      "date_certainty": "calculated",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Gustave Ferber's relationship to Emma/Gerhard/Chas is not stated in this record \u2014 same surname suggests possible kinship (e.g., son of Gerhard, brother of William) but no relationship column value is available to confirm.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252877",
+      "record_role": "relative_unspecified",
+      "fact_type": "BirthPlace",
+      "value": "Ohio",
+      "structured_value": {
+        "place": "Ohio, United States"
+      },
+      "place": "Ohio",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Ohio, United States"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:ML89-JK7",
+      "record_persona_id": "p_519252875",
+      "record_role": "absent",
+      "fact_type": "Absence",
+      "value": "William H. Ferber absent from Emma Ferber's household in the 1910 U.S. Census (Cincinnati Ward 21, Hamilton County, Ohio) \u2014 his widow, father, son, and a likely relative (Gustave) reside there, but he is not listed.",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "information_quality": "primary",
+      "evidence_type": "negative",
+      "informant_bias_notes": "Negative evidence supporting death by the April 1910 enumeration date, consistent with a reported 11 March 1903 death. Alternative explanations considered: relocation, enumerator omission, indexing error \u2014 none has independent support; Emma's own stated 'Widowed' status corroborates death rather than these alternatives.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": 0.698,
+      "rationale": "'Wm. Ferber' (abbreviated given name) = William H. Ferber. Death record index names him as deceased; birth 1870, Cincinnati, Hamilton, Ohio agrees with William's known December 1869 birth in Ohio (year-rounding typical); married status consistent with 1890 Emma Becker marriage; both parents (Gerhard Ferber, Eva Ferber) match GCD9-9X1 and G7J1-QF2 exactly. FamilySearch match score 0.698; record already attached to G7JB-YH6 in FS tree.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": 0.698,
+      "rationale": "Birth year 1870 reported on death record matches William's known December 1869 birth (one-year census/register rounding expected). Birthplace Cincinnati, Hamilton, Ohio is consistent with known Ohio residence. All other identifiers on this record (name, parents, marital status) confirm this is the same individual.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": 0.698,
+      "rationale": "Death date 11 March 1903, Cincinnati, Hamilton, Ohio. This is the primary fact answering q_001. Record name (Wm. Ferber), birth year, birthplace, marital status, and both parents all align with G7JB-YH6. FamilySearch had already attached this record to G7JB-YH6 (match score 0.698), corroborating the identification.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": 0.698,
+      "rationale": "Residence 'Cincinnati, Ohio' on death record matches William's known Cincinnati, Hamilton County residence. Consistent with all other identifiers on this record.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": 0.698,
+      "rationale": "Marital status 'Married' on death record is consistent with William's 1890 marriage to Emma Becker, who survived him (widowed in 1910 census). All other identifiers confirm this is G7JB-YH6.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": 0.698,
+      "rationale": "Race 'White' on death record. Consistent with the Ferber family's documented German immigrant ancestry. All other identifiers confirm this is G7JB-YH6.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "GCD9-9X1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The death record for 'Wm. Ferber' lists 'Gerhard Ferber' as father. Tree person GCD9-9X1 is 'Gerhard Ferber', born 29 September 1820, Germany \u2014 name is exact, and he is already linked as William's father in tree.gedcomx.json (R3: ParentChild GCD9-9X1 \u2192 G7JB-YH6). The parentage assertion on a death record is reported by an informant at or near the time of death and confirms the known father-son relationship. Qualitative correlation strong; no same_person score available (census-search context).",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": 0.698,
+      "rationale": "The parentage assertion 'Father: Gerhard Ferber' on the death record bears on William H. Ferber as the child whose father is named. This is the same death record conclusively identified as William's (name, birth, death, marital status, mother all match G7JB-YH6). The child's side of the parentage is William.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "G7J1-QF2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The death record for 'Wm. Ferber' lists 'Eva Ferber' as mother. Tree person G7J1-QF2 is 'Eva Engermann', who married Gerhard Ferber (GCD9-9X1) \u2014 her married name is Eva Ferber. She died 1 January 1872 in Cincinnati; death records routinely record parents' names regardless of whether they are living at the time of the decedent's death. Given name 'Eva' matches exactly; surname 'Ferber' is her married name. Tree already records R4: ParentChild G7J1-QF2 \u2192 G7JB-YH6. Qualitative correlation strong.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": 0.698,
+      "rationale": "The parentage assertion 'Mother: Eva Ferber' bears on William H. Ferber as the child whose mother is named. Same death record conclusively identified as William's \u2014 William is the child on this record.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "G7JB-2T6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Head of household 'Emma Ferber', born 1871, Ohio, Widowed, Cincinnati Ward 21, 1910. Tree person G7JB-2T6 is Emma Becker Ferber, born 25 March 1870, Cincinnati, Hamilton, Ohio. Name match: Emma Ferber = Emma Becker (married surname Ferber) \u2713. Birth 1871\u22481870 (one-year census age rounding) \u2713. Cincinnati \u2713. Widowed is consistent with William H. Ferber's death on 11 March 1903 \u2713. She is the wife of G7JB-YH6, confirmed by R1 in tree. Qualitative correlation strong across all identifiers.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "G7JB-2T6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth ~1871 on 1910 census. Tree has Emma born 25 March 1870 \u2014 one-year rounding within expected census variation. All other household identifiers (name, place, widow status, presence of son Charles and father-in-law Gerhard) confirm this is G7JB-2T6.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "G7JB-2T6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace Ohio on 1910 census. Tree records Emma's birth in Cincinnati, Hamilton, Ohio \u2014 Ohio birthplace \u2713. All other identifiers confirm G7JB-2T6.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "G7JB-2T6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status 'Widowed' reported by Emma Ferber in the 1910 census. The subject of this assertion is Emma (head of household); her widowed status is a self-reported fact. All household and personal identifiers confirm this is G7JB-2T6.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "G7JB-YH6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Emma Ferber's 'Widowed' status in the 1910 census is indirect evidence that her husband William H. Ferber (G7JB-YH6) was deceased by April 1910. This corroborates the 11 March 1903 death established by src_001. Confidence is probable rather than confident because the census does not explicitly name the deceased husband \u2014 the inference that Emma's deceased husband is William H. Ferber rests on the surrounding evidence (same household, same surname, known marriage R1).",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "GCD9-9X1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Household member 'Gerhard Ferber', born 1821, Germany, listed as father-in-law in Emma Ferber's household, Cincinnati Ward 21, 1910. Tree person GCD9-9X1 is Gerhard Ferber, born 29 September 1820, Germany. Name exact \u2713; birth 1821\u22481820 (one-year rounding) \u2713; birthplace Germany \u2713; role as father-in-law to Emma (G7JB-2T6) is consistent with his role as William's father (R3: GCD9-9X1 \u2192 G7JB-YH6, who was Emma's husband). Qualitative correlation strong.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "GCD9-9X1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth ~1821 in 1910 census for Gerhard Ferber. Tree has 29 September 1820 \u2014 one-year rounding \u2713. All other identifiers confirm GCD9-9X1.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "GCD9-9X1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace Germany on 1910 census for Gerhard Ferber. Tree records birthplace as Germany \u2713. All other identifiers confirm GCD9-9X1.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "G7JB-Y46",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Household member 'Chas H Ferber', born 1892, Ohio, child in Emma Ferber's household, Cincinnati Ward 21, 1910. Tree person G7JB-Y46 is Charles Hubert Ferber, born 22 June 1891, Cincinnati, Hamilton, Ohio. Name: 'Chas H' = Charles Hubert (abbreviation + initial) \u2713; birth 1892\u22481891 (one-year census rounding) \u2713; birthplace Ohio \u2713; Cincinnati \u2713; child of Emma in household \u2713 (R6: G7JB-2T6 \u2192 G7JB-Y46). Qualitative correlation strong.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "G7JB-Y46",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth ~1892 in 1910 census. Tree has 22 June 1891 \u2014 one-year rounding consistent with census age reporting. All other identifiers confirm G7JB-Y46.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "G7JB-Y46",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace Ohio on 1910 census for Chas H Ferber. Tree records Charles Hubert born in Cincinnati, Hamilton, Ohio \u2713. All other identifiers confirm G7JB-Y46.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Household member 'Gustave Ferber', born 1857, Ohio, role relative_unspecified in Emma Ferber's 1910 household. Tree person I1 (Gustave Ferber) is a stub created from this same record. Only one source for this person; relationship to the family is unstated in the record. Confidence probable because the stub was created from this single record with no independent corroboration.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth ~1857 Ohio in 1910 census for Gustave Ferber. This stub person was created from this same record. Probable confidence pending additional corroboration.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birthplace Ohio in 1910 census for Gustave Ferber. Probable confidence pending additional corroboration of this stub person's identity.",
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_022",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Negative evidence assertion: William H. Ferber is absent from the 1910 census household of his widow Emma Ferber (Cincinnati Ward 21), where his father (Gerhard), son (Charles Hubert), and likely relative (Gustave) reside. Emma's stated 'Widowed' status corroborates the inference that William was deceased. This assertion was written specifically about G7JB-YH6's absence; his identity is certain from all surrounding context (household surname Ferber, Emma's known marriage R1, Gerhard's presence as father-in-law). Confidence: confident.",
+      "created": "2026-07-28"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_012",
+        "a_022"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched: (1) Ohio statewide deaths 1908\u20131953 \u2014 negative (statewide registration began 1908, postdates William's 1903 death); (2) Ohio County Death Records 1840\u20132001 \u2014 positive (Hamilton County death index for 'Wm. Ferber,' died 11 March 1903, Cincinnati); (3) 1910 U.S. Census \u2014 positive (Emma Ferber listed as Widowed, William entirely absent from household); (4) original Hamilton County register page image ark:/61903/3:1:S3HT-66TS-SCS \u2014 pursued, transport-inaccessible at 1.1 MB exceeding MCP cap; (5) full-text search of Ohio 1903 death records \u2014 nil (register not FTS-indexed). All accessible source types for this question exhausted. Research declared reasonably exhaustive per GPS Component 1.",
+      "narrative_markdown": "## William Hubert Ferber \u2014 Death Date and Place\n\n**Conclusion (Probable):** William Hubert Ferber probably died **11 March 1903** in **Cincinnati, Hamilton County, Ohio**.\n\n### Evidence Summary\n\n**Primary evidence \u2014 Hamilton County Death Record (derivative index):**\nThe Ohio County Death Records collection (FamilySearch collection 2128172, src_001) includes an index entry for \"Wm. Ferber\" recording a death of 11 March 1903 in Cincinnati, Hamilton County, Ohio (a_003). The entry names his birth year as 1870 in Cincinnati, his marital status as Married, his race as White, and his parents as Gerhard Ferber and Eva Ferber. All identifiers align precisely with William Hubert Ferber (G7JB-YH6): his father Gerhard Ferber (GCD9-9X1, b. 29 Sep 1820, Germany) and mother Eva Engermann Ferber (G7J1-QF2, d. 1 Jan 1872, Cincinnati) are in the FamilySearch tree, and the record was previously attached to G7JB-YH6 with a match score of 0.698. Source classification: **derivative** (index of the original Hamilton County register); information quality: **primary** for death date and place (reported at or near the time of death); evidence type: **direct** (a_001, a_003; pe_001\u2013pe_010).\n\n**Corroborating evidence \u2014 1910 U.S. Census (original):**\nThe 1910 federal census (src_002) records Emma Ferber as head of household in Cincinnati Ward 21, Hamilton County, Ohio, with marital status **Widowed** (a_012, pe_014\u2013pe_015). William Hubert Ferber is entirely absent from this household, which includes his widow, his father Gerhard (listed as father-in-law), and his son Charles Hubert \u2014 all family members who would be expected in his household had he been living (a_022, pe_025). Source classification: **original**; information quality: **indeterminate** for Emma's marital status (self-reported); evidence type: **indirect and negative** with respect to William's death. Emma's widowed status independently corroborates that William had died before April 1910, consistent with \u2014 and not in conflict with \u2014 the 11 March 1903 county death record. The two sources are genuinely independent: different informants, different institutional origins, different time periods.\n\n### No Conflicts\n\nNo conflicts exist between the two sources. The death record's identifiers (name, birth year, birthplace, parents, marital status) are internally consistent and align with all independently known facts about William H. Ferber.\n\n### Why Probable, Not Proved\n\nThe primary evidence rests on a **derivative index**, not the original Hamilton County death register. The original register page image (ark:/61903/3:1:S3HT-66TS-SCS) was pursued but is transport-inaccessible at 1.1 MB \u2014 the MCP system transport cap was exceeded \u2014 and a full-text search pivot returned nil (log_004\u2013log_005). GPS Component 1 is declared met; Components 3\u20135 are satisfied. However, the GPS Proved standard requires two or more independent **original** sources with primary information. The 1910 census is original but provides only indirect evidence of the death. Until the original register page can be directly examined to confirm the indexed facts, the conclusion stands at **Probable**.\n\n### Path to Proved\n\nIf the original Hamilton County death register page (ark:/61903/3:1:S3HT-66TS-SCS) becomes accessible \u2014 through a larger transport window or a different access mechanism \u2014 and confirms the indexed date and place, the conclusion would advance to **Proved**, provided no contradicting information is found on the original page."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "not_proved",
+      "vehicle": "statement",
+      "supporting_assertion_ids": [
+        "a_009",
+        "a_013",
+        "a_016",
+        "a_019"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch: Vine Street Hill Cemetery index (collection 3714673, negative), Ohio Deaths and Burials 1854-1997 (collection 1681000, negative), Ohio Church and Civil Deaths 1833-1991 (collection 2373723, negative), FamilySearch FTS Ohio 1903 (negative). External sites deferred in autonomous mode: FindAGrave for Spring Grove Cemetery (URL generated, log_008), Spring Grove Cemetery's own database at springgrove.org (log_009), Cincinnati newspaper obituaries via Chronicling America and Newspapers.com (log_010, log_011). All accessible FamilySearch sources exhausted. Burial location not established from any searched source. Family burial pattern (mother Eva at Spring Grove Jan 1872; wife Emma at Spring Grove Dec 1948; son Charles at Spring Grove) suggests Spring Grove Cemetery as the probable burial site, but this is a prior based on family pattern, not evidentiary proof.",
+      "narrative_markdown": "## William Hubert Ferber \u2014 Burial Location\n\n**Conclusion (Not Proved):** The burial location of William Hubert Ferber (d. 11 March 1903, Cincinnati, Hamilton County, Ohio) cannot be established from currently searched sources.\n\n### Evidence Examined\n\nThe 1910 U.S. Census (src_002) confirms that William's widow Emma Ferber and son Charles Hubert Ferber resided in Cincinnati Ward 21 as late as April 1910 (a_009, a_016), placing the family in Cincinnati at the time of the burial search window. However, no record naming William's burial place has been located.\n\n### Searches Conducted\n\nAll FamilySearch-accessible sources for Hamilton County, Ohio burial records were searched and returned negative:\n- **Vine Street Hill Cemetery index** (collection 3714673, 1851\u20131986): no entry for William H. Ferber (log_006)\n- **Ohio Deaths and Burials, 1854\u20131997** (collection 1681000): no matching entry (log_007)\n- **Ohio Church and Civil Deaths, 1833\u20131991** (collection 2373723): no matching entry (log_012)\n- **FamilySearch full-text search**, Ohio 1903 newspapers/records: nil (log_005, log_010)\n\nThree high-probability external sources were identified but could not be searched in this autonomous session:\n1. **FindAGrave** for Spring Grove Cemetery, Cincinnati \u2014 deferred (URL: https://www.findagrave.com/memorial/search?firstname=William&lastname=Ferber&deathyear=1903&location=Cincinnati%2C+Hamilton%2C+Ohio)\n2. **Spring Grove Cemetery's own burial database** at springgrove.org \u2014 deferred\n3. **Cincinnati newspaper obituaries** (Cincinnati Enquirer, Cincinnati Post), March 1903, via Chronicling America and Newspapers.com \u2014 deferred\n\n### Family Burial Pattern\n\nA strong family burial pattern exists at Spring Grove Cemetery, Cincinnati: William's mother Eva Engermann Ferber was buried there in January 1872; his wife Emma Becker Ferber was buried there on 10 December 1948; his son Charles Hubert Ferber is also recorded there. This pattern makes Spring Grove Cemetery the most probable burial site for William, but family pattern alone is not genealogical proof of burial location.\n\n### Path to Resolution\n\nAn interactive session should search FindAGrave for a Spring Grove Cemetery memorial, query the cemetery's own burial database at springgrove.org, and search Cincinnati newspaper archives (Chronicling America, Newspapers.com) for a March 1903 obituary. Any one of these sources would likely name the cemetery and possibly the undertaker and lot number."
+    }
+  ],
+  "evaluations": []
+}
