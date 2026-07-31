@@ -20,17 +20,17 @@ Did the skill identify meaningful gaps where records should exist but don't? A 4
 
 ## Deferral of logical-impossibility detection
 
-Did the skill correctly leave single-person logical-impossibility detection (event after death, birth after death, impossible age) to check-warnings rather than doing it itself? This skill arranges events; judging whether one person's data is logically possible is check-warnings' job.
+Did the skill correctly leave single-person logical-impossibility detection (event after death, birth after death, impossible age) to check-warnings rather than doing it itself? This skill arranges events; judging whether one person's data is logically possible is check-warnings' job. The timeline schema has no `impossibilities` field, so there is nowhere to persist such a contradiction.
 
-- **pass:** `impossibilities[]` is empty. When the chronology surfaces a possible vital-limit contradiction (e.g. a record dated after the recorded death), the skill notes it in its reply and recommends a data-integrity / warnings check, rather than flagging it as an impossibility itself or silently folding it in as a normal event.
-- **partial:** Noted the anomaly but either wrote it into `impossibilities[]` anyway, or folded it in silently without recommending a warnings check.
-- **fail:** Wrote a logical impossibility into `impossibilities[]` (re-doing check-warnings' job), or ignored an out-of-lifespan record entirely.
+- **pass:** When the chronology surfaces a possible vital-limit contradiction (e.g. a record dated after the recorded death), the skill notes it in its reply and recommends a data-integrity / warnings check, rather than judging it impossible itself or silently folding it in as a normal event.
+- **partial:** Noted the anomaly but folded it in silently without recommending a warnings check, or hedged instead of pointing to check-warnings.
+- **fail:** Adjudicated the logical impossibility itself as a settled finding (re-doing check-warnings' job), or ignored an out-of-lifespan record entirely.
 
 ## Geographic feasibility
 
 When two place-bound events sit close together in time, did the skill use `place_distance` and the era's travel speed to judge whether one person could have been at both? **A "distance-sensitive pair" means two events close in TIME but far in DISTANCE — so little time that travel between them is questionable.** When consecutive events are far apart in distance but have ample time between them (e.g. an Ireland birth and a U.S. census five years later), the pair is NOT distance-sensitive: mark this dimension **N/A** and do not require a `place_distance` call. (Only graded when the scenario contains a genuinely distance-sensitive pair; mark N/A otherwise.)
 
-- **pass:** Resolved both places, called `place_distance`, compared the distance against the elapsed time and period travel speed, and flagged a genuinely infeasible pair as a coherence signal **in its reply** (e.g., an Atlantic crossing in 7 days in 1850). Did not flag pairs that are feasible given the time available. (Geographic feasibility is this skill's own check — reported in the reply, not written to `impossibilities[]`.)
+- **pass:** Resolved both places, called `place_distance`, compared the distance against the elapsed time and period travel speed, and flagged a genuinely infeasible pair as a coherence signal **in its reply** (e.g., an Atlantic crossing in 7 days in 1850). Did not flag pairs that are feasible given the time available. (Geographic feasibility is this skill's own check — reported in the reply, and not persisted, since the timeline has no field for it.)
 - **partial:** Noticed the places are far apart but did not call `place_distance` or did not quantify the conclusion (no distance, or no travel-time reasoning).
 - **fail:** Missed an infeasible pair entirely, computed no distance when one was needed, or called a feasible pair infeasible (distant places with years between them).
 

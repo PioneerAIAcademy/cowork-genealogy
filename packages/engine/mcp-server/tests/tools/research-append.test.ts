@@ -708,7 +708,7 @@ describe("research_append (Phase 3)", () => {
       projectPath: dir,
       section: "timelines",
       op: "append",
-      entry: { label: "John Smith timeline", person_ids: ["I1"], events: [], gaps: [], impossibilities: [] },
+      entry: { label: "John Smith timeline", person_ids: ["I1"], events: [], gaps: [] },
     });
     expect(r.ok && r.entryId).toBe("t_001");
     const t = (await readResearch()).timelines[0];
