@@ -17,7 +17,7 @@
 # The engine MUST already be compiled before this builds: build-image.sh runs
 # `cd packages/engine/mcp-server && npm install && npm run build` first, so
 # packages/engine/mcp-server/build/ exists in the context.
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 # NOTE: one ENV per line — the E2B v2 Dockerfile parser appends a trailing space
 # to non-last values in a multi-line `ENV a=x \` block (breaks PIP_NO_CACHE_DIR
