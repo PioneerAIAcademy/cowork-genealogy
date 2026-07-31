@@ -1,12 +1,69 @@
 # Dependabot configuration.
 #
-# Until this file existed, GitHub raised security *alerts* from the dependency
-# graph but nothing opened routine version-update PRs — which is how 24 open
-# alerts accumulated by 2026-07-31 (see docs/dependency-security-advisories.md).
-# Most of them turned out to be a plain lockfile refresh that no upstream
-# constraint was blocking; they were open only because nobody ran the refresh.
+# ── ONE BATCH A MONTH, DELIBERATELY ───────────────────────────────────────────
+# Every ecosystem is `interval: monthly`. Dependency work should arrive on a
+# schedule someone chose, in a quantity one person can actually read.
 #
-# Everything is grouped and weekly. A separate PR per dependency across five
+# The pull-request limits are npm 5 and 2 everywhere else — a ceiling of 13, and
+# realistically about 5 a month once the current backlog drains. They are NOT
+# uniform, because the ecosystems do not have the same slot demand:
+#
+#   npm              The group covers only minor+patch, so every MAJOR arrives
+#                    as its own PR and competes for a slot. npm also spans three
+#                    directories and holds most of the dependencies. Hence 5.
+#   github-actions   `patterns: "*"` with no update-types, so EVERYTHING —
+#   docker           majors included — collapses into one grouped PR. These two
+#                    genuinely need 1; they get 2 so a security advisory has
+#                    somewhere to land alongside. docker is quieter still, since
+#                    major and minor tag moves are ignored (see below).
+#   uv (x2)          Group minor+patch, majors individual, but there are few
+#                    Python deps and two of the noisy ones are pinned. 2 is fine.
+#
+# Do not "simplify" these to one number. A uniform 5 would be a ceiling of 25 —
+# worse than the 23 that caused the 2026-07-31 flood — and a uniform 2 would
+# deadlock npm (see the note at that entry).
+#
+# TWO THINGS ABOUT THAT LIMIT, both of which surprised us on 2026-07-31:
+#
+#   1. It is PER ECOSYSTEM ENTRY, not per repo. Five entries means the ceiling
+#      is the SUM — 5+2+2+2+2 = 13 here, not 5. The previous values (5/5/3/5/5)
+#      summed to 23, which is how a config that read as "limit 5" produced about
+#      a dozen PRs in one afternoon.
+#   2. It caps CONCURRENTLY-OPEN PRs, not PRs per run. GitHub: "If five pull
+#      requests with version updates are open, no further pull requests are
+#      raised until some of those open requests are merged or closed." So
+#      merging one frees a slot — on `weekly` that invited a replacement days
+#      later, which is the other half of what happened. On `monthly` the refill
+#      waits for the next monthly check, so clearing the batch does not pull
+#      more in.
+#
+# Note also that adding or editing this file triggers an immediate run, so
+# expect a batch when this lands regardless of the schedule.
+#
+# WHY NOT OFF ENTIRELY (considered and rejected, 2026-07-31): Dependabot ALERTS
+# come from the dependency graph, not from this file, so /security/dependabot
+# would keep working with version updates disabled. But the dashboard only says
+# what is vulnerable — it does not do the work. Most of the 24 alerts that
+# accumulated before #1030 were a plain lockfile refresh that nothing upstream
+# was blocking; they sat open because no one ran it. Turning updates off puts
+# that refresh back on a human. Monthly keeps the refresh automatic while
+# keeping the interruption on our calendar.
+#
+# WHAT WENT WRONG THE FIRST TIME, since it explains the pins below: #1030 landed
+# on 2026-07-31 and three of its PRs merged green and broke `main`, because no
+# CI job then covered the trees they touched:
+#
+#   #1044  @vitejs/plugin-react 6 needs Vite 8; the repo is on Vite 7. Broke the
+#          viewer-ui tests AND `pnpm --filter web build` — the exact command
+#          deploy/Dockerfile runs. Reverted in #1052.
+#   #1043  eslint 10 removed `context.getFilename()`. Broke apps/electron lint.
+#   #1047  same, for eval/app. Both reverted in #1053.
+#
+# That gap is closed: #1049 added server-tests.yml and js-tests.yml, so every
+# tree in this repo now gets tests, typecheck, and the production web build on a
+# dependency PR. The batch arrives with real signal now.
+#
+# Everything is grouped and monthly. A separate PR per dependency across five
 # manifests is how a config like this gets muted, so minor/patch updates land as
 # one grouped PR per ecosystem and only majors arrive individually — a major is
 # the one that deserves to be read.
@@ -38,8 +95,10 @@
 #                         moving eval/app to zod 4.
 #
 # All four ignores are scoped to `version-update:*` update-types, so they
-# suppress only routine version bumps — a genuine *security* advisory on any of
-# these packages still opens a PR.
+# suppress only routine version bumps rather than security advisories.
+#
+# All four are live and doing work — each one is a thing that has already broken
+# this repo once. Do not "clean them up" because the packages look stale.
 #
 # TWO OF THESE WERE ALREADY PINNED, AND THE BOT FLOATED THEM ANYWAY. That is the
 # pattern worth internalizing, because it recurs:
@@ -81,8 +140,12 @@ updates:
       - "/packages/engine/mcp-server"
       - "/eval/app"
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
+    # 5, not 2: npm groups only minor+patch, so every MAJOR arrives as its own
+    # PR competing for a slot — and npm spans three directories with most of the
+    # dependencies. At 2 (one grouped + one major) a single major left open would
+    # block the whole ecosystem until the next monthly check. The other four
+    # ecosystems stay at 2 because they need far less: see the header.
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -115,9 +178,8 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
+      interval: monthly
+    open-pull-requests-limit: 2   # per ECOSYSTEM, not per repo — see header
     labels:
       - dependencies
     commit-message:
@@ -174,9 +236,8 @@ updates:
       - "/deploy"
       - "/apps/server/sandbox"
     schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 3
+      interval: monthly
+    open-pull-requests-limit: 2   # per ECOSYSTEM, not per repo — see header
     labels:
       - dependencies
     commit-message:
@@ -195,9 +256,8 @@ updates:
   - package-ecosystem: uv
     directory: "/apps/server"
     schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
+      interval: monthly
+    open-pull-requests-limit: 2   # per ECOSYSTEM, not per repo — see header
     labels:
       - dependencies
       - python:uv
@@ -219,9 +279,8 @@ updates:
   - package-ecosystem: uv
     directory: "/eval/harness"
     schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
+      interval: monthly
+    open-pull-requests-limit: 2   # per ECOSYSTEM, not per repo — see header
     labels:
       - dependencies
       - python:uv
