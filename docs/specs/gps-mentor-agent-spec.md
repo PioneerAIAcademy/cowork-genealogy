@@ -286,6 +286,10 @@ passed; this checks whether the analytical work underneath is sound.
 **What is being evaluated:** A written proof summary. This is the deliverable a peer reviewer
 would judge. The agent acts as the peer reviewer.
 
+**The checks below are the agent's lens, not its output format.** The deliverable is the
+tier call plus the single highest-value issue — two at most. The agent must not catalog
+everything a reviewer *might* flag; it names what matters most and stops.
+
 **Rubric checks (in order):**
 
 1. **Tier defensibility (Standards 64–67).** Read the assertions referenced in the proof.
@@ -310,6 +314,16 @@ would judge. The agent acts as the peer reviewer.
    bent toward a desired conclusion? Warning signs: assertions cited only for the side they
    support; counter-evidence absent from the discussion; "preferred" assertion choices that
    align suspiciously with the conclusion.
+
+6. **Structural backing for identity/conflict reasoning.** If the narrative names a ruled-out
+   namesake or other candidate, or compares two records for possible shared identity, a
+   corresponding `hypotheses` or `conflicts` entry must exist and be cited by id — not merely
+   described in prose. Reasoning that lives only in `narrative_markdown`, with
+   `hypotheses`/`conflicts` empty or uncited, is `must_address`: name the specific elimination
+   or comparison and set `suggested_skill` to `hypothesis-tracking` or `conflict-resolution`.
+   This applies even when the reasoning itself is sound — check 4's "elimination claimed but
+   not performed" is a different failure from this one, where the work was genuinely done but
+   never persisted structurally.
 
 ### 6.4 `on-demand`
 
@@ -794,19 +808,27 @@ collapsing the three mentor gates (pre-exhaustiveness, conclusion-readiness,
 proof-critique) to a single conclusion gate to cut the cost of an autonomous
 `/research` run; the surviving version of that lever is tracked in
 `docs/TODOs.md` § "Research latency (e2e `/research` runs)".
-**That change is explicitly NOT adopted**, for three reasons:
 
-1. **It is unmeasurable today.** The e2e harness does not stage
-   `packages/engine/plugin/agents/` into the sandbox — `build_workspace`
-   (`eval/harness/e2e/orchestrator.py`) copies only `plugin/skills/` into
-   `.claude/skills/`. So the mentor is absent from every benchmark run, both
-   passing e2e runs recorded `evaluations: []`, and gate deferral saves the
-   benchmark nothing while shipping a quality-affecting change with no test
-   coverage.
-2. **The agent is not yet conformant.** `agents/gps-mentor.md` is still the
-   pre-spec draft (see §2) pending the implementation PR. Optimizing a
-   component that has not landed is premature.
-3. **The final gate is the only production backstop.** There is no eval judge
+**That collapse has since happened, on its own evidence:** per §3.4, `/research`
+auto-invokes exactly one advisory `proof-critique` gate, and
+`pre-exhaustiveness`/`conclusion-readiness` survive only as on-demand focuses.
+Read the `docs/TODOs.md` entry's "3–4 gates per answering question" with that in
+mind — it predates the §3.4 change.
+
+What remains **explicitly NOT adopted** is the *next* cut: deferring or dropping
+the one surviving gate to save its cost. Two reasons:
+
+1. **The gate is now observable, but not yet measured.** Both harnesses stage
+   `packages/engine/plugin/agents/*.md` into the workspace's `.claude/agents/`
+   (`eval/harness/harness/workspace.py`, `eval/harness/e2e/orchestrator.py::build_workspace`),
+   so the real mentor runs under `/research` and its cost is visible per gate in
+   the run log's `subagents[].turns`. A recorded example: the
+   `friedrich-weber-daughter` run of 2026-07-29 spent 5 turns and ~7.4k output
+   tokens on its one `proof-critique` gate and wrote `ev_001` with
+   `verdict: "address_first"`. What is still missing is the *decision-grade*
+   evidence — whether any gate ever changes a verdict or a proof tier across the
+   fixture corpus. One run showing the gate fires is not that.
+2. **The final gate is the only production backstop.** There is no eval judge
    in production Cowork, so the `proof-critique` gate is the only fresh-context
    adversarial proof-quality check a real user receives. Trimming gates trades
    the GPS workflow's one quality net for speed.
@@ -815,16 +837,16 @@ If reducing mentor cost later becomes warranted (driven by **production**
 latency/cost evidence, not the e2e benchmark), do it in this sequence — **not**
 by deferring gates first:
 
-- **(a) Land the mentor conformance PR** (§2) so the agent behaves to spec.
-- **(b) Stage `plugin/agents/` into the e2e harness** (extend `build_workspace`
-  to copy agents into `.claude/agents/`, and add an `evaluations/` verdict
-  fixture) so e2e actually *exercises and measures* the gates — both their cost
-  (turns/tokens per gate) and whether any gate ever changes a verdict or proof
-  tier.
+- **(a) Land the mentor conformance PR** (§2) so the agent behaves to spec. **Done.**
+- **(b) Measure the gates across the corpus.** The staging half of this step is
+  **done** (see reason 1 above); what remains is an `evaluations/` verdict fixture
+  and a read across runs of both the gate's cost (turns/tokens per gate) and
+  whether any gate ever changes a verdict or proof tier.
 - **(c) Then decide gating** with the GPS/spec owner, driven by that data plus
-  production cost. If measurement shows the two early gates (pre-exhaustiveness,
-  conclusion-readiness) never change an outcome, that is the evidence to
-  collapse to the single final `proof-critique` gate — earned, not assumed.
+  production cost. If measurement shows the surviving `proof-critique` gate never
+  changes a verdict or a proof tier, that is the evidence for deferring it (per
+  the negative-result short-circuit in `docs/TODOs.md`) — earned, not assumed.
+  Reason 2 above is the standing argument against dropping it outright.
 
 ### 17.2 `narrative-craft` as a fourth focus mode (deferred, not dropped)
 
