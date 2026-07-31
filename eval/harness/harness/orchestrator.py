@@ -429,6 +429,7 @@ async def _execute_single_run(
         tool_calls=result.tool_calls,
         blocked_context_calls=result.blocked_context_calls,
         skill_frontmatter=skill_frontmatter,
+        skills_invoked=result.skills_invoked,
         test={
             **spec.raw.get("test", {}),
             # Top-level validator-facing block threaded in alongside the

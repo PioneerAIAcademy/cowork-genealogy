@@ -33,6 +33,7 @@
   ],
   "judge_reads_files": true,
   "execution": {
-    "max_turns": 35
+    "max_turns": 35,
+    "max_wall_clock_seconds": 600
   }
 }
