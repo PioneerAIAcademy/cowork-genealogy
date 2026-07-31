@@ -19,6 +19,9 @@ name: Engine tests
 #     PR adding one value to one enum need touch nothing else — without these
 #     two paths, that exact PR reports success without running the lint written
 #     to stop it.
+#   - eval/tests/unit/** — the same enum-drift lint scans rubric files for ∈
+#     declarations. No rubric carries one today, but including the path arms
+#     the lint the day one lands (mirroring the references/ class above).
 # A change to any of them can red the suite, so any of them must trigger it.
 #
 # `npm test` runs the `pretest` build first (tsc), which the packaging tests do
@@ -44,12 +47,12 @@ jobs:
   vitest:
     runs-on: ubuntu-latest
     steps:
-      - name: Does this PR touch the engine, the plugin, or a schema?
+      - name: Does this PR touch the engine, plugin, schema, or rubric?
         id: scope
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^packages/engine/mcp-server/|^packages/engine/plugin/|^packages/schema/schemas/|^docs/specs/schemas/|^\.github/workflows/engine-tests\.yml$'
+          PATTERNS: '^packages/engine/mcp-server/|^packages/engine/plugin/|^packages/schema/schemas/|^docs/specs/schemas/|^eval/tests/unit/|^\.github/workflows/engine-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -58,7 +61,7 @@ jobs:
             echo "relevant=true" >> "$GITHUB_OUTPUT"
           else
             echo "relevant=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No engine, plugin, or schema path changed; reporting success without running vitest."
+            echo "::notice::No engine, plugin, schema, or rubric path changed; reporting success without running vitest."
           fi
 
       - name: Check out PR
