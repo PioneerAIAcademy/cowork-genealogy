@@ -185,6 +185,27 @@ therefore requires **unfiltered** `conflicts` and `hypotheses` count checks, and
 requires checking `count` against `research_query`'s 50-item cap. Do not remove those
 two habits when editing the recipes.
 
+**Measured after the change (`bagley-father-1884`, 2026-07-31).** Same fixture,
+before → after:
+
+| | before (07-27) | after (07-31) |
+|---|---|---|
+| mentor `research.json` reads | 15 | **0** |
+| `project_context` / `research_query` in the mentor's window | 0 / 0 | **1 / 7** |
+| unfiltered `conflicts` + `hypotheses` checks | — | **both present** |
+| project-wide absence finding raised | yes | **yes** |
+| run wall clock / cost | 57.3 min / $8.89 | **35.8 min / $5.29** |
+
+The quality check is the load-bearing row: the mentor still reports the structural
+absence without the scan. The existing-verdict skip used the new filters exactly as
+intended — one `research_query({section:"evaluations", targetId:"ps_001",
+focus:"proof-critique"})`. Zero projection-tool errors across both runs of that day.
+
+*(The companion `wilkins-marriage` re-run produced no data on this: it hit the
+harness's 7200s wall-clock cap during an image-browsing detour and never reached
+`proof-conclusion`, so the mentor never ran. Unrelated to this change — the mentor is
+downstream of where it stopped.)*
+
 ---
 
 ## 5. Universal Principles
