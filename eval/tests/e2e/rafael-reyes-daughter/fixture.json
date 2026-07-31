@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 16, flag adds_daughter, confidence 3). Draft transcribed from an El Salvador civil registration record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 16, flag adds_daughter, confidence 3). Resolved 2026-07-31: false match, no findable substitute — the hint's death registration (ark:/61903/1:1:6DQ4-1RQZ) names a father with an extra given name ('Manuel'), a different specific town, and a 53-year gap since the tree couple's only recorded marriage with no other children in between. Most likely a later-generation Rafael Reyes/Serapia Benavides. See README 'Notes for reviewers'."
 }

@@ -3,18 +3,36 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Rafael Reyes and Serapia Benavides Cueva had a daughter, Rita Reyes, born and died in January 1913 (death registered 22 July 1932, Santa Elena, Usulután — the registration itself dated decades after the death).",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Rafael Reyes (PID MTNY-RXQ) and Serapia Benavides Cueva had a daughter named Rita Reyes, born and died in January 1913, and must NOT cite the record at ark:/61903/1:1:6DQ4-1RQZ as evidence for this. That record is a death registration (22 Jul 1932, Santa Elena, Usulután) naming the father as 'Manuel Rafael Reyes' — a given name the tree's Rafael Reyes does not carry — married to a 'Serapia Benavides' in a different specific town (Santa Elena) than the tree couple's 1860 marriage (Usulután, Usulután). The claimed 1913 birth falls 53 years after that marriage, with zero other children recorded for the couple in the intervening span, and no birth record for Rita exists — only the 1932 death registration, filed 19 years after her death. This is more plausibly a later-generation Rafael Reyes and Serapia Benavides in the same family/community bearing repeated family names, not the tree's own couple. Pass = the final tree/research contains no child named Rita Reyes attributed to Rafael Reyes (MTNY-RXQ), and does not cite ark:/61903/1:1:6DQ4-1RQZ as evidence for this (or such a candidate appears only as an explicitly rejected hypothesis).",
       "details": {
         "subject_person": "Rafael Reyes (MTNY-RXQ)",
         "relation": "child",
-        "target_person": {
-          "name": "Rita Reyes",
-          "birth": "January 1913",
-          "death": "January 1913, Usulután, El Salvador"
+        "wrong_candidate": {
+          "name": "Rita Reyes, b./d. January 1913",
+          "note": "Death registration (22 Jul 1932, Santa Elena, Usulután) names parents 'Manuel Rafael Reyes' and 'Serapia Benavides' — an extra given name the tree's Rafael Reyes doesn't carry, a different specific town than the 1860 marriage location, and a 53-year gap since that marriage with no other children recorded."
         }
       },
       "supporting_sources": [
-        "El Salvador, Civil Registration, 1704-2001 — death registration, 22 Jul 1932, Santa Elena, Usulután, naming parents Manuel Rafael Reyes and Serapia Benavides"
+        "Tree marriage record: Rafael Reyes m. Serapia Benavides Cueva, 19 Jan 1860, Usulután, Usulután, El Salvador — no other children recorded",
+        "El Salvador, Civil Registration, 1704-2001 — death registration, 22 Jul 1932, Santa Elena, Usulután, naming parents Manuel Rafael Reyes and Serapia Benavides; no birth record for Rita located"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having investigated the record hint pointing to ark:/61903/1:1:6DQ4-1RQZ for a daughter Rita born to Rafael Reyes, the agent should document a negative/exhausted-search conclusion: the hint record does not concern this Rafael Reyes, and no daughter Rita has been established for him from accessible records.",
+      "details": {
+        "subject_person": "Rafael Reyes (MTNY-RXQ)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: hint record is a false match; no daughter Rita found for this Rafael Reyes",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Absence of a birth record for Rita Reyes; the death registration's father name, locality, and chronology are inconsistent with Rafael Reyes (MTNY-RXQ)'s documented marriage and lack of other recorded children"
       ],
       "required": true
     }
