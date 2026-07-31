@@ -26,7 +26,10 @@ import {
 import { toArk } from "../utils/ark.js";
 import { stageSearchResults } from "../utils/results-staging.js";
 import { readProjectJson } from "../utils/project-io.js";
-import { marriageJurisdictionCandidates } from "../utils/marriage-jurisdictions.js";
+import {
+  isSubCountryPlace,
+  marriageJurisdictionCandidates,
+} from "../utils/marriage-jurisdictions.js";
 import { rankSearchMatches } from "./rank-search-matches.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
@@ -650,11 +653,19 @@ export async function recordSearchTool(
   //
   // Fires on a search that did not find the subject here — either literally no
   // hits, or hits that ranking judged to hold no match (`subjectResolvable`
-  // false, which the ranker sets only for a scoreable subject against a pool
-  // that genuinely lacks one — a real negative worth acting on). Nil-only was
-  // too narrow to be useful: in the verification run it fired once, at 121 of
-  // 180 minutes, with almost no budget left to act on. A search that returned
-  // rows but matched nobody is an equally good moment to offer the alternative.
+  // false). The ranker sets that in TWO branches — a scoreable subject against a
+  // pool with no match, and a subject too thin to discriminate — and the hint
+  // fires on both deliberately; see the spec's `subjectResolvable` paragraph.
+  // Nil-only was too narrow: in one verification run it fired once, at 121 of 180
+  // minutes. A search that returned rows but matched nobody is an equally good
+  // moment to offer the alternative.
+  //
+  // Also gated on the search having been scoped to something NARROWER THAN A
+  // COUNTRY. Unscoped and country-wide are the same situation: every candidate
+  // the tree can offer was already inside the search, so naming localities within
+  // it is noise and the note's "in the place searched" would be false. Across the
+  // six committed runlogs, 9 of 26 marriage-scoped searches carried no place
+  // scope at all — latent only because all 9 also omitted `subjectId`.
   //
   // Strictly best-effort and advisory — a tree that cannot be read leaves the
   // search untouched, exactly like the ranking block.
@@ -678,7 +689,13 @@ export async function recordSearchTool(
     [input.recordSubdivision, input.recordCountry].filter(Boolean).join(", ") ||
     undefined;
 
-  if (isMarriageSearch && foundNobody && input.subjectId && input.projectPath) {
+  if (
+    isMarriageSearch &&
+    foundNobody &&
+    isSubCountryPlace(searchedPlace) &&
+    input.subjectId &&
+    input.projectPath
+  ) {
     try {
       const tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
       const candidates = marriageJurisdictionCandidates(tree, input.subjectId, {

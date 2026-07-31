@@ -958,6 +958,38 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
     expect(places.filter((p) => /Texas/.test(p))).toEqual([]);
   });
 
+  // Review: `isMarriageSearch` is true on recordType alone, so nothing used to
+  // require that a place had actually been scoped. Unscoped and country-wide are
+  // the same situation — every candidate the tree can offer was already inside the
+  // search — so the note's "in the place searched" would be false. 9 of 26
+  // marriage-scoped searches across the six runlogs carried no place scope at all.
+  it("stays silent when the marriage search scoped no place at all", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints).toBeUndefined();
+  });
+
+  it("stays silent when the marriage search was scoped only to a country", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      recordCountry: "United States",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints).toBeUndefined();
+  });
+
   it("caps the candidate list so it cannot dominate the response", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
 

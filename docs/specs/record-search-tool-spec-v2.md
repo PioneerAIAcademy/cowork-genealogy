@@ -263,7 +263,16 @@ already present in the same tree.
 Fires when **all** of: the search was marriage-scoped (`recordType: "marriage"`,
 or any `marriagePlace` / `marriageYearFrom` / `marriageYearTo`); the search did
 not find the subject — either `totalMatches` is 0 **or** ranking reported
-`subjectResolvable: false`; and both `projectPath` and `subjectId` were supplied.
+`subjectResolvable: false`; the search was scoped to a place **narrower than a
+country**; and both `projectPath` and `subjectId` were supplied.
+
+The sub-country condition matters more than it sounds. A country-wide nil means
+the record is not in that country's indexed collections, so naming counties inside
+it is noise — and an unscoped search never missed anywhere at all, which makes the
+note's "did not find the subject in the place searched" simply untrue. Both are the
+same situation and both are suppressed. Across the six committed `jimmie-jewel-neal`
+runlogs, **9 of 26** marriage-scoped searches carried no place scope whatsoever, so
+this is the common shape, not an edge case.
 
 `subjectResolvable: false` is set by **two** branches of `rank-search-matches.ts`,
 and the hint deliberately fires on both. One is a scoreable subject against a pool
@@ -341,6 +350,11 @@ as a behavioural change and re-verify against a live run, not unit tests alone.
 `recordSubdivision` + `recordCountry` joined — the caller usually scopes a marriage
 search with the latter pair, and reading only `marriagePlace` left the exclusion
 inert on most real searches.
+
+A country term alone does not count as a scoped place: `isSubCountryPlace()` gates
+the hint, and it is exported from `marriage-jurisdictions.ts` rather than duplicated
+here because `placeTokens` deliberately collapses the distinction it tests (its
+empty-fallback makes a country-only place look like any other single-token place).
 
 It is compared to each candidate on comma-separated tokens, lowercased, with
 `County`/`Co.` dropped and the country term dropped unless it is all that remains.

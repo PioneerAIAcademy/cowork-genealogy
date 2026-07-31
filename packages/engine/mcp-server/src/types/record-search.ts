@@ -271,12 +271,15 @@ export interface RecordSearchToolResponse {
   staged?: { resultsRef: string; returnedCount: number } | null;
   // Set only when staging was attempted and failed — the search still succeeded.
   stagingError?: string;
-  // Present only on a NIL marriage search made with `projectPath` + `subjectId`:
-  // the other jurisdictions either spouse is known to have been, earliest first,
-  // read off the project tree. A marriage is filed where the wedding happened,
-  // not where the couple later lived, and marriage usually precedes migration —
-  // so a nil result in one place is a prompt to try the earlier ones, not a
-  // finding. Advisory only; nothing downstream depends on it.
+  // Present only on a marriage search that did not find the subject — no hits, or
+  // ranking reporting `subjectResolvable: false` — made with `projectPath` +
+  // `subjectId`, and scoped to something narrower than a country. Carries the
+  // other jurisdictions these people are on record as having been, ordered by
+  // distance from the search's own marriage date window (NOT earliest-first; that
+  // ordering was measured harmful, see the spec). A marriage is filed where the
+  // wedding happened, not where the couple later lived, so a miss in one place is
+  // a prompt to try the others, not a finding. Advisory only; nothing downstream
+  // depends on it.
   jurisdictionHints?: {
     searchedPlace?: string;
     candidates: JurisdictionCandidate[];

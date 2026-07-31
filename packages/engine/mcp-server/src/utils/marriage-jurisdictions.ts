@@ -82,15 +82,39 @@ interface TreeLike {
  * expects, while the tree stores standardized forms — and an exact-string
  * comparison let the place just searched reappear as its own alternative.
  */
-function placeTokens(place: string): string[] {
-  const COUNTRY = new Set(["united states", "usa", "us", ""]);
-  const parts = place
+const COUNTRY_TERMS = new Set(["united states", "usa", "us"]);
+
+/** Comma-separated locality parts, lowercased, with `County`/`Co.` dropped. */
+function placeParts(place: string): string[] {
+  return place
     .toLowerCase()
     .split(",")
     .map((part) => part.trim().replace(/\s+/g, " "))
     .map((part) => part.replace(/\bcounty\b|\bco\.?\b/g, "").trim())
     .filter((part) => part !== "");
-  const withoutCountry = parts.filter((part) => !COUNTRY.has(part));
+}
+
+/**
+ * True when `place` names something narrower than a whole country.
+ *
+ * The hint is gated on this. A search scoped to a country, or scoped to nothing
+ * at all, is not a search that missed *somewhere* — every candidate the tree can
+ * offer was already inside it, so naming localities within it is noise, and the
+ * note's "did not find the subject in the place searched" would be false.
+ *
+ * Exported rather than duplicating the country set into `record-search.ts`,
+ * because `placeTokens` below deliberately collapses the distinction this
+ * predicate needs: its empty-fallback makes a country-only place look like any
+ * other single-token place.
+ */
+export function isSubCountryPlace(place: string | undefined): boolean {
+  if (!place) return false;
+  return placeParts(place).some((part) => !COUNTRY_TERMS.has(part));
+}
+
+function placeTokens(place: string): string[] {
+  const parts = placeParts(place);
+  const withoutCountry = parts.filter((part) => !COUNTRY_TERMS.has(part));
   // A country-only place ("United States") must not reduce to [], or the
   // comparison below has nothing to work with and the searched place is offered
   // straight back as its own alternative.
