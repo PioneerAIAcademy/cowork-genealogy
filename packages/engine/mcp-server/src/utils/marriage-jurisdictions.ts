@@ -48,7 +48,12 @@ export interface JurisdictionCandidate {
   place: string;
   /** Earliest possible year for the fact, or null when the fact is undated. */
   earliestYear: number | null;
-  /** `persons[].id` of whoever contributed the fact. */
+  /**
+   * `persons[].id` of whoever contributed the fact, or the literal `"couple"`
+   * when it came from a Couple relationship rather than a person. The note tells
+   * the caller each entry says whose fact it is, so a shared relationship fact
+   * must not be reported as the subject's own.
+   */
   whose: string;
   /** The fact type the place came from, e.g. `Birth`, `Residence`, `Marriage`. */
   fromFact: string;
@@ -78,27 +83,37 @@ interface TreeLike {
  * comparison let the place just searched reappear as its own alternative.
  */
 function placeTokens(place: string): string[] {
-  const DROP = new Set(["county", "co", "united states", "usa", "us", ""]);
-  return place
+  const COUNTRY = new Set(["united states", "usa", "us", ""]);
+  const parts = place
     .toLowerCase()
     .split(",")
     .map((part) => part.trim().replace(/\s+/g, " "))
     .map((part) => part.replace(/\bcounty\b|\bco\.?\b/g, "").trim())
-    .filter((part) => !DROP.has(part));
+    .filter((part) => part !== "");
+  const withoutCountry = parts.filter((part) => !COUNTRY.has(part));
+  // A country-only place ("United States") must not reduce to [], or the
+  // comparison below has nothing to work with and the searched place is offered
+  // straight back as its own alternative.
+  return withoutCountry.length > 0 ? withoutCountry : parts;
 }
 
 /**
- * True when two place strings denote the same jurisdiction, or one contains the
- * other. Containment counts in both directions: searching a whole state should
- * suppress its counties, and searching a county should suppress the bare state
- * form of the same place.
+ * True when `candidate` is the same jurisdiction as `searched`, or narrower than
+ * it. Deliberately **one-directional**.
+ *
+ * Searching a state suppresses its counties: they are inside what was just
+ * covered. Searching a county must NOT suppress the state, because a statewide
+ * search is a different search — it reaches the *other* counties, and dropping a
+ * locality level when the narrow one comes back empty is the single most useful
+ * broadening move there is. A bidirectional test deleted exactly that lead: with
+ * `Arkansas, United States` and `Yell, Arkansas` in the tree, searching
+ * `"Yell County, Arkansas"` returned no candidates at all.
  */
-function samePlace(a: string, b: string): boolean {
-  const ta = placeTokens(a);
-  const tb = placeTokens(b);
-  if (ta.length === 0 || tb.length === 0) return false;
-  const [shorter, longer] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
-  return shorter.every((token) => longer.includes(token));
+function samePlace(candidate: string, searched: string): boolean {
+  const tc = placeTokens(candidate);
+  const ts = placeTokens(searched);
+  if (tc.length === 0 || ts.length === 0) return false;
+  return ts.every((token) => tc.includes(token));
 }
 
 export function marriageJurisdictionCandidates(
@@ -142,20 +157,32 @@ export function marriageJurisdictionCandidates(
       contributions.push({ whose: spouseId, fact });
   }
   for (const fact of coupleFacts)
-    contributions.push({ whose: subjectId, fact });
+    contributions.push({ whose: "couple", fact });
 
   const windowStart = context.marriageYearFrom ?? context.marriageYearTo;
   const windowEnd = context.marriageYearTo ?? context.marriageYearFrom;
   const hasWindow = windowStart !== undefined && windowEnd !== undefined;
 
-  /** Lower sorts earlier. Distance from the window when we have one. */
+  // Sentinels chosen to stay well inside exact-integer range. An earlier version
+  // used MAX_SAFE_INTEGER as the after-window base, which lands above 2^53 where
+  // doubles are spaced 2 apart, so adjacent years collided and the bucket sorted
+  // out of order (1902, 1900, 1901 came back 1900, 1902, 1901). Ordering is the
+  // load-bearing part of this feature; it must not look nondeterministic.
+  const UNDATED_KEY = 100_000; // between the two dated buckets, see below
+  const AFTER_WINDOW_BASE = 1_000_000;
+
+  /**
+   * Lower sorts earlier. With a window: places at or before it rank by how close
+   * they sit to it, then undated, then places after it.
+   *
+   * Undated sits in the MIDDLE deliberately: an undated residence still tells you
+   * these people were there, which is more use for locating a wedding than a
+   * residence recorded thirty years afterwards.
+   */
   const rankKey = (year: number | null): number => {
-    if (year === null) return Number.POSITIVE_INFINITY;
-    if (!hasWindow) return year;
-    if (year > (windowEnd as number)) {
-      // After the wedding: keep, but behind everything informative.
-      return Number.MAX_SAFE_INTEGER - (windowEnd as number) + year;
-    }
+    if (!hasWindow) return year === null ? Number.POSITIVE_INFINITY : year;
+    if (year === null) return UNDATED_KEY;
+    if (year > (windowEnd as number)) return AFTER_WINDOW_BASE + year;
     return (windowStart as number) - year; // most recent before → smallest
   };
 

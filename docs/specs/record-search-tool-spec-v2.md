@@ -263,20 +263,30 @@ already present in the same tree.
 Fires when **all** of: the search was marriage-scoped (`recordType: "marriage"`,
 or any `marriagePlace` / `marriageYearFrom` / `marriageYearTo`); the search did
 not find the subject — either `totalMatches` is 0 **or** ranking reported
-`subjectResolvable: false`, which it sets only for a scoreable subject against a
-pool that genuinely holds no match; and both `projectPath` and `subjectId` were
-supplied.
+`subjectResolvable: false`; and both `projectPath` and `subjectId` were supplied.
 
-A nil-**only** trigger was tried first and is too narrow to be useful: in the
-verification run it fired once, at 121 of 180 minutes, with almost no budget left
-to act on. A search returning rows that match nobody puts the caller in the same
-position as a nil search — the subject is not in this jurisdiction — so it gets
-the same hint.
+`subjectResolvable: false` is set by **two** branches of `rank-search-matches.ts`,
+and the hint deliberately fires on both. One is a scoreable subject against a pool
+that holds no match (a real negative). The other is a subject too thin to
+discriminate — no dated or placed fact — where the scores are noise. Those two
+need opposite responses from the caller *about the ranking*, but they want the same
+response here, and the thin-subject case may be the more valuable of the two: in
+genealogy you often cannot enrich the subject, because not knowing the missing
+information is precisely why you are stuck. A spouse's places are exactly the
+borrowed context that unsticks it. Distinguishing them later wants an explicit
+field on `RankSearchMatchesResult`, not sniffing the `diagnostic` string.
+
+A nil-**only** trigger was tried first and is too narrow: in one verification run
+it fired once, at 121 of 180 minutes. Note that both triggers need `subjectId`, so
+a caller that omits it gets neither the hint nor host-side ranking — measured
+`subjectId` coverage across four graded runs was 0% / 100% / 55% / 39%, which
+bounds how often either can fire at all. That gap is tracked separately; do not
+read a run with low coverage as evidence about the trigger width.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `searchedPlace` | string \| undefined | Echo of the `marriagePlace` searched. |
-| `candidates` | JurisdictionCandidate[] | Other places these people are on record as having been, ordered by distance from the search's date window (see below). The jurisdiction already searched is excluded, including differently-spelled and narrower forms of it. |
+| `candidates` | JurisdictionCandidate[] | Other places these people are on record as having been, ordered by distance from the search's date window (see below). **Capped at 8** — the tail of a distance-ordered list is its least useful part, and this lands in a response whose assembly elsewhere strips `gedcomx` and hoists `collectionTitle` for context economy. The jurisdiction already searched is excluded, including differently-spelled and **narrower** forms of it; a **broader** place is kept, since a wider search reaches the other localities inside it. |
 | `note` | string | Plain-language statement of the rule, so the reason travels with the data — including that these are places to look, never evidence. |
 
 Each `JurisdictionCandidate`: `place` (as written, `standard_place` preferred),
@@ -299,23 +309,49 @@ With no window in the arguments there is no proximity signal, and the ordering
 falls back to earliest-first across the whole set.
 
 **Earliest-first over the whole set was the original design and is wrong.** It
-ranks by absolute age, so a spouse from a much later marriage can top the list on
-nothing but a small birth year. Verified harmful: in the `jimmie-jewel-neal`
-verification run it put the subject's **third** husband's 1847 birthplace above
-the relevant husband's 1857 one, and the caller then scoped nine searches to that
-top candidate against one for the jurisdiction that mattered, finishing by
-minting two wrong parents there. A run of the same fixture *without* the hint had
-correctly declined to name parents at all — so the ordering did not merely fail
-to help, it converted a cautious run into an over-claiming one. Ranking is the
-load-bearing part of this feature; treat a change to it as a behavioural change
-and re-verify with a live run, not unit tests alone.
+ranks by absolute age, so a place tied to a much later marriage can top the list
+on nothing but a small birth year.
+
+Verified harmful in `jimmie-jewel-neal` run `run-2026-07-30_23-05-46`. Under
+earliest-first the order was South Carolina (1847, the subject's *third*
+husband's birthplace), **Georgia (1855, the subject's own birthplace)**, Yell,
+Arkansas (1857, the birthplace of the husband who mattered). The caller pivoted
+to candidate #2: searches carrying a Georgia place argument went from **0 before
+the hint fired to 12 after**, and the two wrong parents it then minted were found
+in those Georgia records. A run of the same fixture *without* the hint
+(`run-2026-07-30_14-32-18`) had correctly declined to name parents at all, so the
+ordering did not merely fail to help — it converted a cautious run into an
+over-claiming one.
+
+Re-derive from the run rather than trusting a summary: count place arguments on
+`record_search` **tool_use** entries only. An earlier reading of this same run
+reported nine South Carolina searches; there were **zero**. That figure came from
+matching the string anywhere in a transcript line, which also catches
+`extraction_append`, `research_log_append` and subagent prompts describing census
+people who merely *happened to be born* in South Carolina.
+
+The current ordering demotes Georgia to #4, below the Yell, Arkansas entry that
+holds the answer — i.e. it fixes the real failure path, not the one first
+reported. Ranking is the load-bearing part of this feature: treat a change to it
+as a behavioural change and re-verify against a live run, not unit tests alone.
 
 #### Place matching
 
-`searchedPlace` is compared to each candidate on comma-separated tokens, lowercased,
-with `County`/`Co.` and country suffixes dropped, and matches when one token set
-contains the other. So `"Hill County, Texas"` excludes `"Hill, Texas, United States"`,
-and searching `"Texas, United States"` excludes every Texas place in the tree.
+`searchedPlace` is the caller's `marriagePlace` when given, otherwise
+`recordSubdivision` + `recordCountry` joined — the caller usually scopes a marriage
+search with the latter pair, and reading only `marriagePlace` left the exclusion
+inert on most real searches.
+
+It is compared to each candidate on comma-separated tokens, lowercased, with
+`County`/`Co.` dropped and the country term dropped unless it is all that remains.
+The match is **one-directional**: a candidate is excluded only when it is equal to
+or **narrower** than what was searched. So `"Hill County, Texas"` excludes
+`"Hill, Texas, United States"`, and searching `"Texas, United States"` excludes
+every Texas place in the tree — but searching `"Yell County, Arkansas"` **keeps**
+`"Arkansas, United States"`, because a statewide search is a different search that
+reaches the other counties. Dropping a locality level when the narrow one comes back
+empty is the highest-value broadening move available, so the bidirectional version
+of this test deleted exactly the lead the feature exists to surface.
 
 Exact string comparison was the original behaviour and let the jurisdiction just
 searched reappear as its own alternative, because callers spell places the way

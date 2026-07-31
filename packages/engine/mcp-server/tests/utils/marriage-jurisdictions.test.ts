@@ -110,6 +110,33 @@ describe("marriageJurisdictionCandidates — excluding the place already searche
     const out = marriageJurisdictionCandidates(tree(), "LKYG-VKB", { searchedPlace: "Hill County, Georgia" });
     expect(out.map((c) => c.place)).toContain("Hill, Texas, United States");
   });
+
+  // Review defect: containment ran both ways, so a county-scoped search deleted the
+  // parent state from its own candidate list. A statewide search is a DIFFERENT
+  // search — it reaches the other counties — and dropping a locality level when the
+  // narrow one comes back empty is the most useful broadening move there is.
+  it("KEEPS a broader place when a narrower one was searched", () => {
+    const t = {
+      persons: [{ id: "I1", facts: [
+        { type: "Residence", date: "1860", place: "Arkansas, United States", standard_place: "Arkansas, United States" },
+        { type: "Birth", date: "1857", place: "Yell, Arkansas, United States", standard_place: "Yell, Arkansas, United States" },
+      ] }],
+      relationships: [],
+    };
+    const out = marriageJurisdictionCandidates(t, "I1", { searchedPlace: "Yell County, Arkansas" });
+    expect(out.map((c) => c.place)).toContain("Arkansas, United States");
+    expect(out.map((c) => c.place)).not.toContain("Yell, Arkansas, United States");
+  });
+
+  // Review defect: placeTokens dropped the country term, so a country-only place
+  // reduced to [] and the guard let it back through as its own alternative.
+  it("excludes a country-only place that was itself searched", () => {
+    const t = {
+      persons: [{ id: "I1", facts: [{ type: "Birth", date: "1857", place: "United States", standard_place: "United States" }] }],
+      relationships: [],
+    };
+    expect(marriageJurisdictionCandidates(t, "I1", { searchedPlace: "United States" })).toEqual([]);
+  });
 });
 
 describe("marriageJurisdictionCandidates — ranking", () => {
@@ -127,6 +154,64 @@ describe("marriageJurisdictionCandidates — ranking", () => {
     const before = out.findIndex((c) => c.place === "South Carolina, United States");
     expect(after).toBeGreaterThanOrEqual(0);
     expect(after).toBeGreaterThan(before);
+  });
+
+  // Review defect: undated sorted LAST, contradicting both this module's docstring
+  // and the spec. An undated residence still says these people were there, which
+  // beats a residence recorded thirty years after the wedding.
+  it("puts undated places BETWEEN the two dated buckets", () => {
+    const t = {
+      persons: [{ id: "I1", facts: [
+        { type: "Birth", date: "1855", place: "Georgia", standard_place: "Georgia" },
+        { type: "Residence", date: "1900", place: "After County, Texas", standard_place: "After County, Texas" },
+        { type: "Residence", place: "Undated County, Kentucky", standard_place: "Undated County, Kentucky" },
+      ] }],
+      relationships: [],
+    };
+    const out = marriageJurisdictionCandidates(t, "I1", { ...WINDOW });
+    expect(out.map((c) => c.place)).toEqual([
+      "Georgia",                    // before the window
+      "Undated County, Kentucky",   // undated
+      "After County, Texas",        // after the window
+    ]);
+  });
+
+  // Review defect: the after-window key was MAX_SAFE_INTEGER-based, landing above
+  // 2^53 where doubles are spaced 2 apart, so adjacent years collided and sorted
+  // out of order (1902, 1900, 1901 came back 1900, 1902, 1901).
+  it("orders the after-window bucket exactly, with no float collisions", () => {
+    const t = {
+      persons: [{ id: "I1", facts: [
+        { type: "Residence", date: "1902", place: "A, Texas", standard_place: "A, Texas" },
+        { type: "Residence", date: "1900", place: "B, Texas", standard_place: "B, Texas" },
+        { type: "Residence", date: "1901", place: "C, Texas", standard_place: "C, Texas" },
+      ] }],
+      relationships: [],
+    };
+    const out = marriageJurisdictionCandidates(t, "I1", { ...WINDOW });
+    expect(out.map((c) => c.earliestYear)).toEqual([1900, 1901, 1902]);
+  });
+
+  // The note promises each entry says whose fact it came from, so a shared
+  // relationship fact must not be reported as the subject's own. Uses a dedicated
+  // tree because in `tree()` the couple's Marriage place duplicates the husband's
+  // 1860 residence, and dedupe correctly keeps the closer-dated person fact.
+  it("attributes a Couple relationship fact to the pair, not to the subject", () => {
+    const t = {
+      persons: [
+        { id: "I1", facts: [{ type: "Birth", date: "1855", place: "Georgia", standard_place: "Georgia" }] },
+        { id: "I2", facts: [] },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [
+          { type: "Marriage", date: "1869", place: "Smith, Texas", standard_place: "Smith, Texas" },
+        ] },
+      ],
+    };
+    const out = marriageJurisdictionCandidates(t, "I1", { ...WINDOW });
+    const fromCouple = out.find((c) => c.fromFact === "Marriage");
+    expect(fromCouple?.place).toBe("Smith, Texas");
+    expect(fromCouple?.whose).toBe("couple");
   });
 
   it("falls back to earliest-first when the search gives no date window", () => {

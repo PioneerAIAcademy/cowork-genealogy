@@ -36,6 +36,8 @@ const FS_SEARCH_URL =
   "https://www.familysearch.org/service/search/hr/v2/personas";
 
 const PAGINATION_CAP = 4999;
+/** Most jurisdiction candidates a nil marriage search will offer. See below. */
+const MAX_JURISDICTION_HINTS = 8;
 const PERSISTENT_ID_URI = "http://gedcomx.org/Persistent";
 const COLLECTION_RESOURCE_TYPE = "http://gedcomx.org/Collection";
 
@@ -665,18 +667,33 @@ export async function recordSearchTool(
   const foundNobody =
     out.totalMatches === 0 || out.ranked?.subjectResolvable === false;
 
+  // The place that was just searched is not always `marriagePlace`. In practice
+  // the caller usually scopes a marriage search with `recordCountry` +
+  // `recordSubdivision` instead — 6 of 7 marriage searches in one run, 4 of 5 in
+  // another. Reading only `marriagePlace` left `searchedPlace` undefined on those,
+  // so nothing was excluded and the jurisdiction that had just come back empty was
+  // offered back as its own top alternative.
+  const searchedPlace =
+    input.marriagePlace ||
+    [input.recordSubdivision, input.recordCountry].filter(Boolean).join(", ") ||
+    undefined;
+
   if (isMarriageSearch && foundNobody && input.subjectId && input.projectPath) {
     try {
       const tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
       const candidates = marriageJurisdictionCandidates(tree, input.subjectId, {
-        searchedPlace: input.marriagePlace,
+        searchedPlace,
         marriageYearFrom: input.marriageYearFrom,
         marriageYearTo: input.marriageYearTo,
       });
       if (candidates.length > 0) {
         out.jurisdictionHints = {
-          searchedPlace: input.marriagePlace,
-          candidates,
+          searchedPlace,
+          // Capped: 4 spouses x 8 placed facts is 40 objects, and this lands in a
+          // response whose own assembly above deliberately strips `gedcomx`, hoists
+          // `collectionTitle` and drops empty `treeMatches` for context economy.
+          // The tail of a distance-ordered list is the least useful part of it.
+          candidates: candidates.slice(0, MAX_JURISDICTION_HINTS),
           note:
             "This marriage search did not find the subject in the place searched. A " +
             "marriage is filed where the wedding happened, not where the couple later " +
@@ -684,8 +701,8 @@ export async function recordSearchTool(
             "other places these people are on record as having been, ordered by how " +
             "close they sit to this search's date window — most recent BEFORE the " +
             "window first, since that is the best guess for where they were when they " +
-            "married; places dated after the window come last. Search these before " +
-            "concluding no marriage record exists. " +
+            "married; undated places next; places dated after the window last. Search " +
+            "these before concluding no marriage record exists. " +
             "These are places to LOOK, not evidence of anything: a jurisdiction " +
             "appearing here is not a reason to attach a person found there. Each entry " +
             "says whose fact it came from and when, because a place contributed by a " +

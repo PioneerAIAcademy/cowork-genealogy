@@ -935,6 +935,43 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
     expect(out.jurisdictionHints).toBeDefined();
   });
 
+  // Review defect: the exclusion only read `marriagePlace`, but the caller scopes
+  // marriage searches with recordCountry + recordSubdivision instead — 6 of 7
+  // marriage searches in run 6, 4 of 5 in run 5. On that shape `searchedPlace` was
+  // undefined, so nothing was excluded and the state that had just come back empty
+  // was offered back as the top alternative.
+  it("excludes the searched place when scoped by recordCountry + recordSubdivision", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      recordCountry: "United States",
+      recordSubdivision: "Texas",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints).toBeDefined();
+    expect(out.jurisdictionHints?.searchedPlace).toBe("Texas, United States");
+    const places = out.jurisdictionHints?.candidates.map((c) => c.place) ?? [];
+    expect(places.filter((p) => /Texas/.test(p))).toEqual([]);
+  });
+
+  it("caps the candidate list so it cannot dominate the response", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Nowhere At All",
+      projectPath: dir,
+      subjectId: "I2",
+    });
+
+    expect(out.jurisdictionHints?.candidates.length).toBeLessThanOrEqual(8);
+  });
+
   it("stays silent on a nil search that was not about a marriage", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(nilResult()));
 
