@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 33, flag adds_daughter, confidence 3). Draft transcribed from an England & Wales 1901 census household; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 33, flag adds_daughter, confidence 3). Resolved as a false match: the 1901 census household of Joseph Davies (b. 1876, Hirwaun) and Hannah Davies (b. 1878, Llanidloes) is a different, same-named couple — both spouses' birth years and towns conflict with the tree's Joseph and Hannah David of Clydach. Expected outcome is that the agent does NOT add Elizabeth A. Davies (b. 1899) as the subject's daughter."
 }

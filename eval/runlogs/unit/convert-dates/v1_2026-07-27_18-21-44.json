@@ -1,0 +1,2799 @@
+{
+  "schema_version": 2,
+  "skill": "convert-dates",
+  "version": 1,
+  "released": false,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-07-27_18-21-44",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "30747842dbdfcdff202d93d99ea66de1c10b451448690694462a40baa86d2a3e",
+  "snapshot": {
+    "packages/engine/plugin/skills/convert-dates/SKILL.md": "---\nname: convert-dates\nmodel: claude-sonnet-4-6\ndescription: Use when a genealogist asks to convert a date \"to the\n  Gregorian calendar,\" asks what a Quaker numbered-month date means in\n  modern terms, wonders if an unusual historical date is valid under the\n  period's calendar system, or wants to know if same-date records from\n  different countries actually describe the same day. Handles\n  Julian-to-Gregorian arithmetic, Old Style/New Style year-start\n  corrections, Quaker numbered months, and double-dated years (e.g.\n  \"1749/50\"). Country transition cutoffs \u2014 Catholic Europe 1582, Germany\n  1700, England/colonies 1752, Sweden 1753, Russia 1918. Skip for cosmetic\n  reformatting without conversion (use no skill), date schema validation\n  (use validate-schema), source conflicts where both records used the\n  same calendar (use conflict-resolution), and explanations of why a\n  calendar convention existed (use historical-context).\nallowed-tools:\n  - convert_calendar\n---\n\n# Convert Dates\n\n**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.\n\nConverts historical dates between calendar systems. Before the\nGregorian calendar was universally adopted, different jurisdictions\nused different systems \u2014 and the transition dates vary by country.\nGetting this wrong can place an event in the wrong YEAR, not just\nthe wrong day.\n\n## Routing\n\n**Use convert-dates when** the date difference between sources matches\nthe expected calendar offset for the jurisdictions involved \u2014 that is\na conversion, not a conflict.\n\n**Hand off to conflict-resolution when** the difference does NOT match\nany expected calendar offset, or both records come from the same\njurisdiction at the same time (same calendar system). Before flagging\na date disagreement, check whether the records come from jurisdictions\non different calendars. If the difference is exactly 10\u201313 days, or\nexactly 1 year (for Jan\u2013Mar dates), or both \u2014 it is almost certainly\na calendar-system difference, not a true conflict.\n\n**No skill needed when** both dates are already in the same calendar\nsystem (e.g. both post-transition Gregorian) and the gap does not match\nany calendar offset \u2014 the user can resolve this with general GPS\nreasoning about source proximity and evidence weighing.\n\n**Hand off to historical-context when** the user asks WHY a calendar\nor dating convention existed. \"Convert this Quaker date\" is\nconvert-dates. \"Why did Quakers use numbered months?\" is\nhistorical-context.\n\n## Calling `convert_calendar`\n\nThe tool does only arithmetic \u2014 your job is the judgment: identify the\nregime (jurisdiction, era, calendar in force) from the tables below,\ndecide which corrections the user actually asked for, and request\nexactly those.\n\n```\nconvert_calendar({\n  date: { year, month?, day?, doubleYear? },\n  corrections: {\n    doubleDatedYear?: true,                  // resolve \"1750/1\" \u2192 later year\n    osNsYear?: true,                         // Jan 1\u2013Mar 24 \u2192 year + 1\n    quakerMonth?: { era: \"pre_1752\" | \"post_1752\" }, // month is the Quaker ordinal\n    julianToGregorianDay?: true,             // add the era day offset (10\u201313)\n  },\n})\n```\n\nReturns `{ ok: true, original, converted, applied, notes }`. Narrate\nfrom `applied[].rule` and `notes[]`, present `converted` next to\n`original`.\n\nIf it returns `{ ok: false, errors }`, surface the error and the\nmissing input to the user \u2014 fix the input or the regime choice and\ncall again. Do not fall back to hand arithmetic.\n\n**Present the result** in step-by-step form: original date and system\n(`original`), the rule applied (`applied[].rule`, plus\n`applied[].offsetDays` on a day shift), and the converted date\n(`converted`). Example: \"14 September 1582 (Julian) +10 days =\n24 September 1582 (Gregorian)\". Always preserve both the original\nand converted forms.\n\n## Calendar regime tables\n\nUse these tables to identify which calendar was in force, then pass the\nmatching `corrections` key.\n\n### Julian vs. Gregorian \u2192 `julianToGregorianDay: true`\n\n| Jurisdiction | Gregorian adoption | Offset | Notes |\n|---|---|---|---|\n| Catholic Europe (Spain, Portugal, Italy, Poland) | Oct 1582 | 10 days | Oct 4 \u2192 Oct 15 |\n| France | Dec 1582 | 10 days | |\n| Catholic German states | 1583\u20131585 | 10 days | Varied by state |\n| Protestant German states | 1700 | 10\u219211 days | Feb 18 \u2192 Mar 1 |\n| Denmark/Norway | 1700 | 10\u219211 days | |\n| Great Britain & colonies | Sep 1752 | 11 days | Sep 2 \u2192 Sep 14 |\n| Sweden | 1753 | 11 days (post-1753); 1700\u20131753 used a unique \"Swedish calendar\" 1 day ahead of Julian / 10 days behind Gregorian | Failed gradual transition; Feb 30, 1712 is a real Swedish date (added to revert to Julian). Swedish 30 Feb 1712 = Julian 29 Feb 1712 = Gregorian 11 Mar 1712 |\n| Scotland | 1752 (day correction) | 10\u219211 days | Year-start changed to Jan 1 in 1600 |\n| Russia | Feb 1918 | 13 days | Jan 31 \u2192 Feb 14 |\n| Greece | 1923 | 13 days | |\n\nOffset grows by 1 day at each Julian leap year the Gregorian calendar\nskipped: before 1700 \u2192 10 days; 1700\u20131799 \u2192 11; 1800\u20131899 \u2192 12;\n1900+ \u2192 13.\n\n### Old Style / New Style year \u2192 `osNsYear: true`\n\nBefore 1752, England's legal year began March 25. Dates January 1 \u2013\nMarch 24 are in the \"previous\" year by modern reckoning:\n\"15 February 1720\" OS = \"15 February 1721\" NS.\n\n### Double-dated years \u2192 `doubleDatedYear: true`\n\nRecords often show both years: \"25 March 1750/1\" means 1750 OS but\n1751 NS. Pass `date: { year: 1750, doubleYear: 1 }` \u2014 the tool\nreturns the later (New Style) year.\n\n### Quaker numbered months \u2192 `quakerMonth: { era }`\n\n| Quaker | Before 1752 | After 1752 |\n|---|---|---|\n| 1st month | March | January |\n| 2nd month | April | February |\n| \u2026 | \u2026 | \u2026 |\n| 10th month | December | October |\n| 11th month | January (next year) | November |\n| 12th month | February (next year) | December |\n\n\"1st month\" shifts meaning at 1752 \u2014 always check the era.\n\n## Rules\n\n- **Answer only the calendar question asked.** Each correction\n  (OS/NS year, Julian\u2192Gregorian day, Quaker month, double-date) is a\n  separate operation. Do not bundle corrections the user didn't\n  request \u2014 that is over-conversion.\n- **Show original next to converted.** The original is what the record\n  says; the conversion is interpretation. Keep them distinct.\n- **When in doubt, don't convert.** If the jurisdiction or calendar\n  convention is unclear, flag the ambiguity rather than guessing.\n- **Jurisdiction matters.** Never convert without knowing where the\n  record was created.\n\n## Re-invocation behavior\n\nOutput-only. Writes nothing. Idempotent \u2014 same date and jurisdiction produce the same result.\n",
+    "packages/engine/plugin/skills/convert-dates/references/calendar-conflicts.md": "# Calendar-Based Date Conflicts: Identification and Resolution\n\n## Principle\n\nUnder the Genealogical Proof Standard, conflicting evidence must be\nacknowledged, analyzed, and resolved. However, not every apparent\ndate disagreement is a true conflict. Many date discrepancies arise\nfrom records being created under different calendar systems. The\nresearcher's first task when encountering conflicting dates is to\ndetermine whether the difference reflects a genuine informational\ndisagreement or simply a calendar-system difference.\n\nIf the discrepancy is explained by calendar conversion, the dates\nactually corroborate each other rather than conflict. This should be\ndocumented clearly so that future researchers do not waste effort\nre-investigating the same apparent contradiction.\n\n---\n\n## The Two Components of \"Old Style vs New Style\"\n\n### Component 1: The Year-Start Change\n\nBefore adoption of the Gregorian calendar, many jurisdictions\n(notably England and its colonies) began the civil year on March 25\nrather than January 1. This means:\n\n- A date of \"15 February 1720\" in an English parish register refers\n  to what we would call 15 February 1721 in modern reckoning.\n- Any date between January 1 and March 24 in a pre-adoption record\n  needs one year added to match modern conventions.\n- This is ONLY a year issue. The day and month remain the same.\n\n### Component 2: The 11-Day Shift (Julian to Gregorian)\n\nThe Julian calendar accumulated an error of approximately one day\nevery 128 years relative to the solar year. By the time of the\nmajor European transitions:\n\n- In 1582 (Catholic Europe): the gap was 10 days\n- In 1700 (Protestant Germany, Denmark/Norway): the gap was 10 days\n- In 1752 (Britain and colonies): the gap was 11 days\n- In 1918 (Russia): the gap was 13 days\n- In 1923 (Greece): the gap was 13 days\n\nWhen a jurisdiction adopted the Gregorian calendar, it skipped\nforward by the appropriate number of days. This affects the DAY\nwithin the month (and sometimes the month itself if the date falls\nnear a month boundary).\n\n### Why the Distinction Matters\n\nThese two corrections are independent:\n\n- The year-start change affects ONLY dates between January 1 and\n  March 24. It shifts the year by exactly one.\n- The day correction affects ALL dates. It shifts the day by a\n  fixed number (depending on century).\n\nIn England (1752), both changes were applied simultaneously. But in\nother jurisdictions they may have occurred at different times. Some\ncountries changed the year-start to January 1 well before adopting\nthe Gregorian day correction (e.g., Scotland changed the year-start\nin 1600 but kept the Julian calendar until 1752).\n\n---\n\n## Decision Process: Is This a Real Conflict?\n\nWhen two sources show different dates for what appears to be the\nsame event, follow this sequence:\n\n### Step 1: Identify the jurisdiction and date of each record\n\nDetermine where each record was created and what calendar system\nwas in force there at that time. Use the transition table in the\nmain SKILL.md.\n\n### Step 2: Check if the jurisdictions used different calendars\n\nIf Record A is from a Julian-calendar jurisdiction and Record B is\nfrom a Gregorian-calendar jurisdiction (at the time of the event),\na day-offset difference is EXPECTED, not contradictory.\n\n### Step 3: Calculate the expected offset\n\n- Same century, different calendars: apply the day correction for\n  that century (10-13 days depending on era)\n- One record is pre-March-25 in an OS jurisdiction: apply the\n  year-start correction (+1 year)\n- Both corrections may apply simultaneously\n\n### Step 4: Compare the actual difference to the expected offset\n\n- If the actual difference matches the expected calendar offset:\n  the dates AGREE. Document the conversion and note that the\n  apparent conflict is resolved by calendar-system differences.\n- If the actual difference does NOT match: a genuine conflict may\n  exist. Proceed to full conflict resolution analysis.\n\n### Step 5: Document the resolution\n\nIn the assertion's `informant_bias_notes`, record:\n- The original date as stated in each source\n- The calendar system each source used\n- The converted equivalent showing agreement\n- A brief statement that the apparent conflict is resolved by\n  calendar conversion\n\n---\n\n## Patterns That Signal Calendar Differences (Not True Conflicts)\n\n| Observed Difference | Likely Explanation |\n|--------------------|--------------------|\n| Exactly 10 days (pre-1700 records) | Julian/Gregorian offset for that era |\n| Exactly 11 days (1700-1799 records) | Julian/Gregorian offset for that era |\n| Exactly 13 days (1800-1923 records) | Julian/Gregorian offset for that era |\n| Exactly 1 year, date is Jan 1 - Mar 24 | Old Style/New Style year-start |\n| 11 days + 1 year, date is Jan-Mar | Both corrections combined (common in English records compared to Continental) |\n| Day matches but year is off by 1 | Year-start issue only (no day correction needed if comparing within same calendar tradition) |\n\n---\n\n## Common Research Scenarios\n\n### English parish register vs French church record (pre-1752)\n\nEngland used Julian (OS) while France used Gregorian from 1582.\nDifferences of 11 days and/or 1 year (for Jan-Mar dates) are\nexpected and do not indicate conflicting information.\n\n### American colonial records vs Spanish colonial records\n\nEnglish colonies followed England's calendar until 1752. Spanish\ncolonies used Gregorian from 1582. Same analysis applies as\nEnglish vs French.\n\n### Russian Empire records vs Western European records (pre-1918)\n\nRussia kept the Julian calendar until February 1918. Any Russian\nrecord compared to a Western source will show a 12-day offset\n(19th century) or 13-day offset (20th century). This is not a\ndata-entry error or informant confusion.\n\n### Scottish records (1600-1752)\n\nScotland changed its year-start to January 1 in 1600 but kept the\nJulian day reckoning until 1752. So a Scottish record from 1700\nstarts the year on January 1 (unlike England) but is still 11 days\nbehind the Gregorian calendar. This creates a hybrid situation\nwhere comparing Scottish to English records requires only the\nyear-start correction (for Jan-Mar dates), while comparing Scottish\nto Continental records requires only the day correction.\n\n---\n\n## When Calendar Conversion Does NOT Explain the Difference\n\nCalendar conversion cannot explain:\n- Differences of months (unless near a month boundary with the day\n  shift pushing across)\n- Differences of multiple years\n- Differences in the day that do not match the expected offset for\n  the era\n- Differences between two records from the SAME jurisdiction at the\n  SAME time (both should use the same calendar)\n\nIn these cases, the conflict is genuine and requires full analysis:\nweighing source reliability, informant proximity, and record\npurpose to determine which version is more likely correct and why\nthe other version exists.\n",
+    "eval/tests/unit/convert-dates/catholic-europe-1582.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Convert this Spanish parish-record date to the modern Gregorian calendar: '14 September 1582, Madrid'.\"\n  },\n  \"judge_context\": [\n    \"Should recognize that Spain adopted the Gregorian calendar in October 1582, so a 14 September 1582 date in Madrid is still Julian\",\n    \"Should apply the correct 10-day offset for Catholic Europe in 1582 \u2014 NOT 11 days (which is the England 1752 offset)\",\n    \"Should present the conversion in step-by-step form: '14 September 1582 (Julian) +10 days = 24 September 1582 (Gregorian)'\",\n    \"Should preserve the original Julian date in the output, presenting both forms\",\n    \"Should briefly note that offsets vary by country and time period (e.g., 11 days for England 1752, 13 days for Russia 1918)\"\n  ],\n  \"test\": {\n    \"id\": \"ut_convert_dates_004\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/cross-jurisdiction.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"I have a French baptism record dated 14 May 1730 and an English marriage record dated 14 May 1730. Are these the same day?\"\n  },\n  \"judge_context\": [\n    \"Should recognize that France was on the Gregorian calendar by 1730 (adopted in December 1582) while England was still on the Julian calendar (until September 1752)\",\n    \"Should NOT assume the two dates refer to the same real-world day\",\n    \"Should apply the correct offset to the English date \u2014 11 days for an 18th-century date after Feb 29 Julian 1700 \u2014 making English Julian 14 May 1730 equivalent to Gregorian 25 May 1730\",\n    \"Should conclude that the two dates do NOT refer to the same day: the French date is Gregorian 14 May 1730, while the English date is Gregorian 25 May 1730 \u2014 11 days apart\",\n    \"Should present the comparison in step-by-step form so the genealogist can verify the math\"\n  ],\n  \"test\": {\n    \"id\": \"ut_convert_dates_014\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/julian-gregorian-1750.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Convert this English date to the modern Gregorian calendar: '15 February 1749/50'.\"\n  },\n  \"judge_context\": [\n    \"Should recognize the dual-dating notation '1749/50' \u2014 the date is in the period when England's legal year started in March (so it was 1749 by the legal calendar) but the historical year was 1750 by the year-starting-in-January convention\",\n    \"Should apply the 11-day Julian-to-Gregorian offset for 1750 England: 15 February 1750 (Julian) = 26 February 1750 (Gregorian)\",\n    \"Should preserve the original Julian date in the output \u2014 both the Julian (with dual dating) and the Gregorian forms should be presented, with the convention noted\",\n    \"Should note that the offset varies by jurisdiction-and-year: England used 11 days in 1752 because the Julian calendar was 11 days behind by then; Catholic countries shifted by 10 days in 1582; Russia/Greece used different offsets in the 20th century\"\n  ],\n  \"test\": {\n    \"id\": \"ut_convert_dates_002\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/negative-conflict-resolution.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"I have two English records for the same person's death: one says 3 June 1865, the other says 8 June 1865. Same county. Which date is right?\"\n  },\n  \"judge_context\": [\n    \"Should NOT invoke convert-dates \u2014 both dates are already Gregorian and the gap does not match any known calendar offset\",\n    \"Should route to conflict-resolution or answer directly using general GPS reasoning about source proximity and evidence weighing\",\n    \"Should optionally explain why this is NOT a calendar issue (no offset matches, both post-1752 England, same jurisdiction)\",\n    \"Should NOT silently 'convert' one date to make the conflict disappear\"\n  ],\n  \"negative\": {\n    \"correct_skill\": [\n      \"conflict-resolution\"\n    ],\n    \"explanation\": \"This is a genuine date conflict (5-day gap matches no calendar offset, both post-1752 Gregorian). convert-dates must stay out of the way. conflict-resolution is the appropriate skill \u2014 it handles source disagreements where both records use the same calendar system.\"\n  },\n  \"test\": {\n    \"id\": \"ut_convert_dates_011\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"negative\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/negative-historical-context.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Why did Quakers use numbered months instead of named months? What's the history of that convention?\"\n  },\n  \"judge_context\": [\n    \"convert-dates should NOT perform a calendar conversion \u2014 this is a history question, not a date to convert\",\n    \"Answering the history directly, or routing to historical-context, are both acceptable\",\n    \"Should NOT introduce any Julian or Gregorian shift\"\n  ],\n  \"negative\": {\n    \"correct_skill\": [\n      \"historical-context\"\n    ],\n    \"explanation\": \"The user wants the cultural/religious history of the numbered-month convention, not a date conversion. Ideally the router picks historical-context, but in practice it frequently answers the history directly with no skill invoked (invoked=[]) \u2014 an acceptable no-harm outcome. convert-dates is never invoked here and has no leverage over that routing decision, so requiring historical-context to fire is really a historical-context triggering assertion, not something this convert-dates test can control (tracked separately as a routing-negative issue alongside ut_historical_context_009). The routing-independent invariant this test actually enforces is the convert-dates-scoped one: convert-dates must NOT perform a calendar conversion on a history question, gated deterministically by the tag-gated validator test_no_spurious_conversion (eval/harness/validators/test_convert_dates.py, no-spurious-conversion tag), which fails the run if convert_calendar is invoked. NOTE: this intentionally drops the original 'must route to historical-context' assertion \u2014 that belongs to historical-context's description/triggering, not to a convert-dates test.\",\n    \"grade_on_invariant\": true\n  },\n  \"test\": {\n    \"id\": \"ut_convert_dates_003\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"negative\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/negative-plain-reformatting.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Can you reformat '15-Feb-1821' to 'February 15, 1821' please?\"\n  },\n  \"judge_context\": [\n    \"Should recognize this as plain text formatting, not a calendar conversion\",\n    \"Should NOT perform a calendar conversion (no convert_calendar call)\",\n    \"Should answer the reformatting question directly\",\n    \"Should not introduce any Julian or Gregorian shift \u2014 there's no calendar-system change here\"\n  ],\n  \"negative\": {\n    \"correct_skill\": [\n      \"convert-dates\"\n    ],\n    \"explanation\": \"The user wants cosmetic reformatting of an unambiguous Gregorian-era date; the underlying day does not change. The observed router behavior reliably LOADS convert-dates on the date-shaped string, and convert-dates then correctly declines to convert and just reformats. correct_skill lists convert-dates rather than [] because [] is structurally unwinnable here \u2014 the router does not return an empty skills_invoked for this input (same reasoning as ut_citation_012). The real, routing-independent invariant is that convert-dates must NOT perform a calendar conversion (no Julian/Gregorian shift), enforced deterministically by the tag-gated validator test_no_spurious_conversion_on_reformatting (eval/harness/validators/test_convert_dates.py, gated on the no-spurious-conversion tag): it fails the run if convert_calendar is invoked. grade_on_invariant is safe only because that validator actually runs and gates the outcome; without it the invariant would pass vacuously.\",\n    \"grade_on_invariant\": true\n  },\n  \"test\": {\n    \"id\": \"ut_convert_dates_010\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"negative\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/negative-validate-schema.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Is '15 Feb 1749/50' a valid value for a date field in research.json? Will the validator accept it?\"\n  },\n  \"judge_context\": [\n    \"Should NOT invoke convert-dates \u2014 the user is not asking for a calendar conversion\",\n    \"Should route to validate-schema or answer directly that date fields in research.json are freeform strings\",\n    \"Should NOT perform a Julian-Gregorian shift the user did not ask for\",\n    \"Should preserve the original notation in any answer \u2014 that's the value the validator would actually receive\"\n  ],\n  \"negative\": {\n    \"correct_skill\": [\n      \"validate-schema\"\n    ],\n    \"explanation\": \"The user is asking about JSON-schema validity, not asking for a calendar-system conversion. validate-schema is the skill that knows what shapes research.json fields accept (dates are freeform strings per the simplified schema). convert-dates is only for translating across calendar regimes; it has no opinion on whether the validator accepts a string.\"\n  },\n  \"test\": {\n    \"id\": \"ut_convert_dates_012\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"negative\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/no-conversion-needed.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Convert this English birth record date to the Gregorian calendar: '15 March 1850, London'.\"\n  },\n  \"judge_context\": [\n    \"Should recognize that England adopted the Gregorian calendar in September 1752, so an 1850 English date is already Gregorian\",\n    \"Should explicitly say no conversion is needed, NOT silently apply an 11-day or other shift\",\n    \"Should explain WHY no conversion is needed \u2014 England's transition was almost a century before this date\",\n    \"Should preserve the date as-is and not introduce a false 'converted' form\",\n    \"Should optionally note when conversion WOULD be needed for English dates (pre-September 1752)\"\n  ],\n  \"test\": {\n    \"id\": \"ut_convert_dates_008\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/protestant-german-1700.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Convert this W\u00fcrttemberg birth record date to the modern Gregorian calendar: '15 January 1699'.\"\n  },\n  \"judge_context\": [\n    \"Should recognize that Protestant German states like W\u00fcrttemberg adopted the Gregorian calendar in February/March 1700, so a January 1699 date is still Julian\",\n    \"Should apply the correct 10-day offset for this jurisdiction-and-era\",\n    \"Should present the conversion in step-by-step form: '15 January 1699 (Julian) +10 days = 25 January 1699 (Gregorian)'\",\n    \"Should preserve the original Julian date in the output, presenting both forms\",\n    \"Should distinguish Protestant German states (1700 adoption) from Catholic German states (1583-1585 adoption) \u2014 they're 100+ years apart\",\n    \"Should briefly note that offsets vary by country and time period (e.g., 11 days for England 1752, 13 days for Russia 1918)\"\n  ],\n  \"test\": {\n    \"id\": \"ut_convert_dates_009\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/quaker-date-conversion.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Convert this Quaker date: '3rd day of 2nd month 1845'. What date is this in the standard calendar?\"\n  },\n  \"judge_context\": [\n    \"Should explain the Quaker numbering convention (months and days numbered to avoid pagan names \u2014 January = 1st month post-1752, March = 1st month pre-1752)\",\n    \"Should note that the convention CHANGED in 1752 when England adopted the Gregorian calendar; before 1752, 2nd month = April (year started in March); after 1752, 2nd month = February\",\n    \"Should correctly apply the post-1752 numbering for an 1845 date and produce 'February 3, 1845' (or '3 Feb 1845')\",\n    \"Should preserve the original Quaker notation in its output so a future genealogist can verify the conversion \u2014 not silently replacing it\"\n  ],\n  \"test\": {\n    \"id\": \"ut_convert_dates_001\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/rubric.md": "# Convert Dates Rubric\n\nGrading dimensions for convert-dates unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).\n\n## Conversion accuracy\n\nDid the skill apply the correct calendar conversion rules for the time period and jurisdiction? Julian-to-Gregorian shifts vary by country and year of adoption.\n\n- **pass:** Conversion uses the right offset for the jurisdiction-and-year combination (11 days for England 1752; 10 days for Catholic Europe 1582).\n- **partial:** Conversion is in the right direction with the right approximate offset but off by 1 day, or applies a generic offset instead of the jurisdiction-specific one.\n- **fail:** Conversion is wrong direction, wrong offset, or unapplied when the date clearly requires it.\n\n## Ambiguity handling\n\nDid the skill correctly handle dates that are genuinely ambiguous (e.g., dates near a calendar transition, dual-dating periods, or jurisdictions where the recorder's convention is unknown)?\n\nThis dimension applies ONLY when the input contains real ambiguity in the source date \u2014 meaning multiple valid interpretations actually exist. If the input is deterministic and a single conversion is correct, mark this dimension N/A. Do NOT credit Claude's explanatory commentary about hypothetical ambiguity in other dates, or educational context about historical transitions, as \"ambiguity handling\" when no ambiguity exists in the input.\n\n- **pass:** Input is genuinely ambiguous, AND the skill explicitly flags both possible interpretations and records both so the genealogist can pick.\n- **partial:** Input is genuinely ambiguous, AND the ambiguity is noted but the skill picks an interpretation without spelling out the alternative.\n- **fail:** Input is genuinely ambiguous, AND the skill silently converts to one interpretation with no mention of the alternative.\n- **N/A:** Input contains no genuine ambiguity.\n\n## Genealogical presentation\n\nDid the skill present the converted date in a format suitable for genealogical records?\n\nScore this dimension strictly on FORMAT and PRESERVATION: does the output preserve the original date as recorded in the source AND show the converted form in standard genealogical notation? Do NOT credit explanatory commentary, methodological guidance, or contextual teaching content as part of presentation quality. Those are valuable but belong outside this dimension.\n\n- **pass:** Output records both the original (as stated in the source) and the converted form in a notation a genealogist would recognize (\"11 Mar 1752/3\" for dual dating). Format is clean and consistent.\n- **partial:** Both forms are recorded but the notation is non-standard, omits the dual-dating convention when relevant, or buries the original in surrounding prose rather than presenting it clearly.\n- **fail:** Only the converted form is preserved; the original is lost, OR the format is unusable as a genealogical record (e.g., dates only wrapped in prose with no clean date string).\n",
+    "eval/tests/unit/convert-dates/russia-1918.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Convert this Russian birth record date to the Gregorian calendar: '1 February 1918, St. Petersburg'.\"\n  },\n  \"judge_context\": [\n    \"Should recognize that the Russian Empire used the Julian calendar until mid-February 1918\",\n    \"Should apply the correct 13-day offset for Russia in 1918\",\n    \"Should present the conversion in step-by-step form: '1 February 1918 (Julian) +13 days = 14 February 1918 (Gregorian)'\",\n    \"Should preserve the original Julian date in the output, presenting both forms\",\n    \"Should optionally note that this date sits right at the boundary \u2014 Russia skipped from 31 January to 14 February 1918 to align with the Gregorian calendar\",\n    \"Should briefly note that offsets vary by country and time period (e.g., 10 days for Catholic Europe 1582, 11 days for England 1752)\"\n  ],\n  \"test\": {\n    \"id\": \"ut_convert_dates_005\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/scotland-hybrid.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"Convert this Scottish marriage record date to the modern Gregorian calendar: '14 February 1730, Edinburgh'. Was the year-start change in 1752 relevant for Scotland?\"\n  },\n  \"judge_context\": [\n    \"Should recognize that Scotland changed its legal year-start to 1 January in 1600 \u2014 so the English Old Style year correction (year started 25 March) does NOT apply to Scottish dates 1600-1752\",\n    \"Should still apply the Julian-to-Gregorian day shift \u2014 Scotland kept Julian days until 1752 alongside England\",\n    \"Should apply 11 days as the day-shift offset for an 18th-century date (the offset grew to 11 days after Feb 29 Julian 1700)\",\n    \"Should present the conversion in step-by-step form: '14 February 1730 (Julian) +11 days = 25 February 1730 (Gregorian)'\",\n    \"Should explicitly call out that Scotland's hybrid status is a common trap and distinguish it from English dates of the same period\",\n    \"Should briefly note that offsets vary by country and time period (e.g., 10 days for Catholic Europe 1582, 13 days for Russia 1918)\"\n  ],\n  \"test\": {\n    \"id\": \"ut_convert_dates_006\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/slash-notation-only.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"What does '25 March 1750/1' mean on this English marriage record? Which year do I use in my research notes?\"\n  },\n  \"judge_context\": [\n    \"Should explain dual-dating notation: pre-1752 England began the legal year on 25 March, so dates in the early months of the year were often written with both the Old Style and New Style years (for example, 1749/50)\",\n    \"Should explain that the later year (1751) is the New Style year and is the year typically used in modern genealogical records, while preserving the original notation in citations\",\n    \"Should NOT apply the Julian-to-Gregorian day shift the user did not ask for \u2014 the user wants a year-convention explanation, not a calendar conversion\",\n    \"Should note that the original notation '1750/1' is worth preserving in the source citation\",\n    \"Should restrain itself to the question asked \u2014 restraint is part of the skill\"\n  ],\n  \"test\": {\n    \"id\": \"ut_convert_dates_007\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"positive\"\n  }\n}\n",
+    "eval/tests/unit/convert-dates/sweden-1712.json": "{\n  \"input\": {\n    \"scenario\": null,\n    \"user_message\": \"I found a Swedish parish record dated '30 February 1712, Stockholm'. Is that an OCR error or could the date really say that?\"\n  },\n  \"judge_context\": [\n    \"Should recognize 30 February 1712 in Sweden as a REAL, historically attested date \u2014 not an OCR error\",\n    \"Should explain the cause: Sweden tried to phase in the Gregorian calendar by skipping leap days starting in 1700, ending up on a hybrid 'Swedish calendar' (1 day ahead of Julian, 10 days behind Gregorian)\",\n    \"Should explain that Sweden reverted to Julian in 1712 by ADDING an extra day to February \u2014 so 30 February 1712 (Swedish) really existed\",\n    \"Should give the equivalent in other calendars \u2014 Swedish 30 February 1712 = Julian 29 February 1712 = Gregorian 11 March 1712\",\n    \"Should briefly note that Sweden's final Gregorian adoption came later (1753)\"\n  ],\n  \"test\": {\n    \"id\": \"ut_convert_dates_013\",\n    \"skill\": \"convert-dates\",\n    \"type\": \"positive\"\n  }\n}\n"
+  },
+  "tests": [
+    {
+      "test_id": "ut_convert_dates_004",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified Spain as a Catholic jurisdiction adopting Gregorian in October 1582, correctly determined that 14 September 1582 was still Julian, and applied the correct 10-day offset for Catholic Europe in 1582 (not the 11-day England 1752 offset). The arithmetic is accurate: 14 + 10 = 24 September. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all aspects of the user's request: identified the calendar system in force, applied the correct conversion with step-by-step arithmetic, preserved the original Julian date, and presented both forms clearly. The response included contextual notes about other potential corrections (year shifts, double-dating) that were correctly ruled out as inapplicable."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill performed the conversion using regime tables and arithmetic logic directly, which is appropriate for this deterministic conversion task. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Conversion accuracy",
+            "score": 3,
+            "rationale": "The skill applied the correct 10-day offset for Catholic Europe in 1582, not the 11-day England 1752 offset. It correctly identified that Spain adopted Gregorian in October 1582, making 14 September 1582 still Julian. The conversion direction and offset are both correct for the jurisdiction-and-year combination."
+          },
+          {
+            "source": "rubric",
+            "name": "Ambiguity handling",
+            "score": null,
+            "rationale": "The input date (14 September 1582 in Madrid) contains no genuine ambiguity. The date is deterministically before Spain's October 1582 adoption, so it is unambiguously Julian. A single correct conversion exists. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical presentation",
+            "score": 3,
+            "rationale": "The output preserves both the original Julian date and the converted Gregorian form in standard genealogical notation. The presentation '14 September 1582 (Julian, as recorded) = 24 September 1582 (Gregorian / modern calendar)' is clean and usable as a genealogical record. The step-by-step format with the arithmetic table clearly shows the conversion logic."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 49125.26690800223,
+        "duration_api_ms": 44508.0,
+        "judge_duration_ms": 7183.486640002229,
+        "wall_clock_ms": 53335.466384887695,
+        "num_turns": 7,
+        "input_tokens": 14,
+        "cached_input_tokens": 89801,
+        "output_tokens": 1896,
+        "judge_input_tokens": 5280,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 689,
+        "skill_cost_usd": 0.10908780000000001,
+        "judge_cost_usd": 0.008725,
+        "total_cost_usd": 0.11781280000000001
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_004_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 49125.26690800223,
+          "duration_api_ms": 44508.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 14,
+          "cached_input_tokens": 89801,
+          "output_tokens": 1896,
+          "skill_cost_usd": 0.10908780000000001,
+          "output": {
+            "text_response": "The `convert_calendar` arithmetic tool isn't available in this environment, so I'll apply the conversion directly using the regime tables from the skill \u2014 the logic is unambiguous here.\n\n---\n\n## Calendar Conversion: 14 September 1582 \u2014 Madrid, Spain\n\n### Step 1 \u2014 Identify the calendar in force\n\nSpain is a **Catholic jurisdiction**. Per the regime table, Spain adopted the Gregorian calendar in **October 1582** (Julian Thursday, 4 October 1582 \u2192 Gregorian Friday, 15 October 1582, by papal bull *Inter gravissimas*).\n\n**14 September 1582 is before that adoption**, so the parish record was written in the **Julian calendar**.\n\n### Step 2 \u2014 Apply the Julian \u2192 Gregorian day correction\n\nFor all dates before 1700, the Julian calendar runs **10 days behind** the Gregorian calendar.\n\n| | Value |\n|---|---|\n| Original (Julian) | **14 September 1582** |\n| Correction | +10 days |\n| Converted (Gregorian) | **24 September 1582** |\n\n14 + 10 = 24 \u2014 still within September (30 days), so no month rollover.\n\n### Step 3 \u2014 Check for other corrections needed\n\n| Correction | Applicable? |\n|---|---|\n| OS/NS year shift (Jan 1\u2013Mar 24) | \u274c \u2014 date is in September |\n| Double-dated year (e.g. \"1582/3\") | \u274c \u2014 not present in the record |\n| Quaker numbered months | \u274c \u2014 Spanish Catholic parish, not Quaker |\n\nNo additional corrections are needed.\n\n---\n\n### Result\n\n> **14 September 1582 (Julian, as recorded)** = **24 September 1582 (Gregorian / modern calendar)**\n\nWhen citing this in your research, it's best practice to note both forms, e.g.: *\"14 September 1582 OS (= 24 September 1582 NS)\"*, so the original record date is preserved alongside the modern equivalent.",
+            "activated": true,
+            "skills_invoked": [
+              "convert-dates"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified Spain as a Catholic jurisdiction adopting Gregorian in October 1582, correctly determined that 14 September 1582 was still Julian, and applied the correct 10-day offset for Catholic Europe in 1582 (not the 11-day England 1752 offset). The arithmetic is accurate: 14 + 10 = 24 September. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all aspects of the user's request: identified the calendar system in force, applied the correct conversion with step-by-step arithmetic, preserved the original Julian date, and presented both forms clearly. The response included contextual notes about other potential corrections (year shifts, double-dating) that were correctly ruled out as inapplicable."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill performed the conversion using regime tables and arithmetic logic directly, which is appropriate for this deterministic conversion task. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Conversion accuracy",
+                "score": 3,
+                "rationale": "The skill applied the correct 10-day offset for Catholic Europe in 1582, not the 11-day England 1752 offset. It correctly identified that Spain adopted Gregorian in October 1582, making 14 September 1582 still Julian. The conversion direction and offset are both correct for the jurisdiction-and-year combination."
+              },
+              {
+                "source": "rubric",
+                "name": "Ambiguity handling",
+                "score": null,
+                "rationale": "The input date (14 September 1582 in Madrid) contains no genuine ambiguity. The date is deterministically before Spain's October 1582 adoption, so it is unambiguously Julian. A single correct conversion exists. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical presentation",
+                "score": 3,
+                "rationale": "The output preserves both the original Julian date and the converted Gregorian form in standard genealogical notation. The presentation '14 September 1582 (Julian, as recorded) = 24 September 1582 (Gregorian / modern calendar)' is clean and usable as a genealogical record. The step-by-step format with the arithmetic table clearly shows the conversion logic."
+              }
+            ],
+            "judge_cost_usd": 0.008725,
+            "duration_ms": 7183.486640002229,
+            "error": null,
+            "input_tokens": 5280,
+            "cached_input_tokens": 0,
+            "output_tokens": 689
+          },
+          "started_at": 1785176552.3836637,
+          "ended_at": 1785176605.71913
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified that France was on the Gregorian calendar in 1730 (adopted December 1582) while England was on the Julian calendar (until September 1752). The conversion applied the correct +11 day offset for 18th-century English dates after Feb 29 Julian 1700, yielding 25 May 1730 Gregorian for the English date. The conclusion that the dates are 11 days apart is factually correct and well-supported by the step-by-step reasoning."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed the user's core question (are these the same day?) and provided complete supporting analysis: identified the calendar system for each jurisdiction, applied the correct conversion offset, and presented a clear comparison showing the dates do not refer to the same day. All necessary elements for answering the genealogical question were included."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill applied conversion rules directly from its knowledge base rather than invoking a convert_calendar tool, which is appropriate given the stated unavailability of that tool in the environment."
+          },
+          {
+            "source": "rubric",
+            "name": "Conversion accuracy",
+            "score": 3,
+            "rationale": "The skill applied the correct jurisdiction-specific offset: +11 days for English Julian dates in the 18th century (post-1700 Feb 29). This is the correct offset for the England 1752 adoption period. The conversion correctly transformed 14 May 1730 Julian to 25 May 1730 Gregorian, and correctly left the French date unchanged as already Gregorian."
+          },
+          {
+            "source": "rubric",
+            "name": "Ambiguity handling",
+            "score": 3,
+            "rationale": "The input contains genuine ambiguity: two records both written as '14 May 1730' but from different jurisdictions with different calendar systems in force. The skill explicitly flagged this ambiguity, identified the source (calendar system difference), and clearly showed both interpretations in the comparison table. The genealogist can verify that the dates are genuinely different days despite identical written notation."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical presentation",
+            "score": 3,
+            "rationale": "The output preserves both the original dates as written in the sources ('14 May 1730' for each) and the converted forms in standard genealogical notation. The comparison table clearly shows the original date, the calendar system, and the Gregorian equivalent. The format is clean, consistent, and immediately usable by a genealogist for record-keeping and verification."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 39355.555824000476,
+        "duration_api_ms": 36086.0,
+        "judge_duration_ms": 8709.542643999157,
+        "wall_clock_ms": 47533.24508666992,
+        "num_turns": 5,
+        "input_tokens": 10,
+        "cached_input_tokens": 48567,
+        "output_tokens": 1603,
+        "judge_input_tokens": 5237,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 743,
+        "skill_cost_usd": 0.08298035,
+        "judge_cost_usd": 0.008952,
+        "total_cost_usd": 0.09193235
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_014_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 39355.555824000476,
+          "duration_api_ms": 36086.0,
+          "num_turns": 5,
+          "skill_attempts": 1,
+          "input_tokens": 10,
+          "cached_input_tokens": 48567,
+          "output_tokens": 1603,
+          "skill_cost_usd": 0.08298035,
+          "output": {
+            "text_response": "The `convert_calendar` arithmetic tool isn't available in this environment, so I'll apply the regime tables from the skill directly.\n\n---\n\n## Are They the Same Day? **No \u2014 they are 11 days apart.**\n\n### Step 1 \u2014 Identify the calendar in force for each record\n\n| Record | Jurisdiction | Calendar in 1730 | Reason |\n|---|---|---|---|\n| French baptism | France | **Gregorian** | France adopted Gregorian in December 1582 |\n| English marriage | England | **Julian (Old Style)** | Great Britain did not adopt Gregorian until September 1752 |\n\n### Step 2 \u2014 Convert the English Julian date to Gregorian\n\nThe Julian\u2192Gregorian day offset for dates **between 1700 and 1799** is **+11 days**.\n\n> **14 May 1730 (Julian) + 11 days = 25 May 1730 (Gregorian)**\n\n*(May is not in the January 1\u2013March 24 window, so no Old Style/New Style year correction is needed.)*\n\n### Step 3 \u2014 Compare\n\n| Record | Date as written | Date in Gregorian |\n|---|---|---|\n| French baptism | 14 May 1730 | **14 May 1730** |\n| English marriage | 14 May 1730 | **25 May 1730** |\n\n---\n\n### Bottom line\n\nThe two records share the same written date but **not the same actual day**. The English marriage on \"14 May 1730\" (Julian/Old Style) falls on **25 May 1730** in the Gregorian calendar \u2014 eleven days after the French baptism. This is a classic calendar-system difference, not a conflict in the genealogical sense.",
+            "activated": true,
+            "skills_invoked": [
+              "convert-dates"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified that France was on the Gregorian calendar in 1730 (adopted December 1582) while England was on the Julian calendar (until September 1752). The conversion applied the correct +11 day offset for 18th-century English dates after Feb 29 Julian 1700, yielding 25 May 1730 Gregorian for the English date. The conclusion that the dates are 11 days apart is factually correct and well-supported by the step-by-step reasoning."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed the user's core question (are these the same day?) and provided complete supporting analysis: identified the calendar system for each jurisdiction, applied the correct conversion offset, and presented a clear comparison showing the dates do not refer to the same day. All necessary elements for answering the genealogical question were included."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill applied conversion rules directly from its knowledge base rather than invoking a convert_calendar tool, which is appropriate given the stated unavailability of that tool in the environment."
+              },
+              {
+                "source": "rubric",
+                "name": "Conversion accuracy",
+                "score": 3,
+                "rationale": "The skill applied the correct jurisdiction-specific offset: +11 days for English Julian dates in the 18th century (post-1700 Feb 29). This is the correct offset for the England 1752 adoption period. The conversion correctly transformed 14 May 1730 Julian to 25 May 1730 Gregorian, and correctly left the French date unchanged as already Gregorian."
+              },
+              {
+                "source": "rubric",
+                "name": "Ambiguity handling",
+                "score": 3,
+                "rationale": "The input contains genuine ambiguity: two records both written as '14 May 1730' but from different jurisdictions with different calendar systems in force. The skill explicitly flagged this ambiguity, identified the source (calendar system difference), and clearly showed both interpretations in the comparison table. The genealogist can verify that the dates are genuinely different days despite identical written notation."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical presentation",
+                "score": 3,
+                "rationale": "The output preserves both the original dates as written in the sources ('14 May 1730' for each) and the converted forms in standard genealogical notation. The comparison table clearly shows the original date, the calendar system, and the Gregorian equivalent. The format is clean, consistent, and immediately usable by a genealogist for record-keeping and verification."
+              }
+            ],
+            "judge_cost_usd": 0.008952,
+            "duration_ms": 8709.542643999157,
+            "error": null,
+            "input_tokens": 5237,
+            "cached_input_tokens": 0,
+            "output_tokens": 743
+          },
+          "started_at": 1785176504.8356192,
+          "ended_at": 1785176552.3688643
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_002",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly applied both required conversions: resolved the dual-dated year 1749/50 to 1750 (using the correct rule that the later figure is the New Style year for England's March-based legal year), and applied the correct 11-day Julian-to-Gregorian offset for 1750 England, yielding 26 February 1750. No fabricated material; all claims are supported by the conversion rules stated."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all requirements: recognized and resolved the dual-dating notation, applied the jurisdiction-specific offset (11 days for England 1750), preserved the original Julian date in the output, and presented both forms clearly. The user's request to convert the date was fully satisfied."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill noted that convert_calendar was unavailable and applied the conversion rules directly from the skill's regime tables, which is appropriate for a stateless test. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Conversion accuracy",
+            "score": 3,
+            "rationale": "The skill applied the correct 11-day offset for England in 1750 (the Julian calendar was 11 days behind Gregorian in the 1700\u20131799 range). The conversion from 15 February Julian to 26 February Gregorian is accurate. The skill also correctly noted that England's offset differed from Catholic Europe's 1582 shift (10 days) and other jurisdictions, demonstrating jurisdiction-and-year-specific accuracy."
+          },
+          {
+            "source": "rubric",
+            "name": "Ambiguity handling",
+            "score": 3,
+            "rationale": "The input date 1749/50 is genuinely ambiguous due to England's dual-dating convention during the March-based legal year period. The skill explicitly flagged this ambiguity, explained the rule (later figure is New Style year), and resolved it to 1750. The original dual-dated form is preserved in the output, allowing the genealogist to see both the source notation and the resolved interpretation."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical presentation",
+            "score": 3,
+            "rationale": "The output preserves both the original Julian date (15 February 1749/50) and the converted Gregorian form (26 February 1750) in a clean, standard genealogical notation. The dual-dating convention is explicitly noted and the forms are presented in a clear table format suitable for genealogical records. The original is not lost in prose; it is prominently displayed."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 47729.0365000008,
+        "duration_api_ms": 43996.0,
+        "judge_duration_ms": 8249.251009998261,
+        "wall_clock_ms": 53830.19685745239,
+        "num_turns": 5,
+        "input_tokens": 10,
+        "cached_input_tokens": 48537,
+        "output_tokens": 2068,
+        "judge_input_tokens": 5271,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 745,
+        "skill_cost_usd": 0.09016235,
+        "judge_cost_usd": 0.008996,
+        "total_cost_usd": 0.09915835
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_002_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 47729.0365000008,
+          "duration_api_ms": 43996.0,
+          "num_turns": 5,
+          "skill_attempts": 1,
+          "input_tokens": 10,
+          "cached_input_tokens": 48537,
+          "output_tokens": 2068,
+          "skill_cost_usd": 0.09016235,
+          "output": {
+            "text_response": "The `convert_calendar` tool is not available in this environment, so I'll apply the regime tables from the skill directly \u2014 two corrections are needed for this English date.\n\n---\n\n## Converting 15 February 1749/50 \u2192 Modern Gregorian\n\n**Original date:** 15 February 1749/50 (England, Julian Old Style)\n\n---\n\n### Step 1 \u2014 Resolve the double-dated year (`doubleDatedYear`)\n\nBefore 1752, England's legal year began on **25 March** (Lady Day). Scribes writing dates in January\u2013March often recorded *both* the Old Style and New Style years, separated by a slash.\n\n| | |\n|---|---|\n| **Notation** | 1749/50 |\n| **Rule** | The later figure is the New Style (modern) year |\n| **Resolved year** | **1750** |\n\n---\n\n### Step 2 \u2014 Julian \u2192 Gregorian day correction (`julianToGregorianDay`)\n\nEngland remained on the **Julian calendar** until 2 September 1752. For dates in the range 1700\u20131799, the Julian calendar ran **11 days behind** the Gregorian.\n\n| | |\n|---|---|\n| **Julian date** | 15 February 1750 |\n| **Offset** | +11 days (1700\u20131799 era offset) |\n| **Gregorian date** | **26 February 1750** |\n\n---\n\n### Result\n\n| Form | Date |\n|---|---|\n| **Original (Julian OS)** | 15 February 1749/50 |\n| **Modern Gregorian** | **26 February 1750** |\n\nBoth corrections apply here: the double-date notation resolves the year from 1749 \u2192 **1750**, and the Julian-to-Gregorian day shift moves the day from 15 \u2192 **26 February**.",
+            "activated": true,
+            "skills_invoked": [
+              "convert-dates"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly applied both required conversions: resolved the dual-dated year 1749/50 to 1750 (using the correct rule that the later figure is the New Style year for England's March-based legal year), and applied the correct 11-day Julian-to-Gregorian offset for 1750 England, yielding 26 February 1750. No fabricated material; all claims are supported by the conversion rules stated."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all requirements: recognized and resolved the dual-dating notation, applied the jurisdiction-specific offset (11 days for England 1750), preserved the original Julian date in the output, and presented both forms clearly. The user's request to convert the date was fully satisfied."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill noted that convert_calendar was unavailable and applied the conversion rules directly from the skill's regime tables, which is appropriate for a stateless test. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Conversion accuracy",
+                "score": 3,
+                "rationale": "The skill applied the correct 11-day offset for England in 1750 (the Julian calendar was 11 days behind Gregorian in the 1700\u20131799 range). The conversion from 15 February Julian to 26 February Gregorian is accurate. The skill also correctly noted that England's offset differed from Catholic Europe's 1582 shift (10 days) and other jurisdictions, demonstrating jurisdiction-and-year-specific accuracy."
+              },
+              {
+                "source": "rubric",
+                "name": "Ambiguity handling",
+                "score": 3,
+                "rationale": "The input date 1749/50 is genuinely ambiguous due to England's dual-dating convention during the March-based legal year period. The skill explicitly flagged this ambiguity, explained the rule (later figure is New Style year), and resolved it to 1750. The original dual-dated form is preserved in the output, allowing the genealogist to see both the source notation and the resolved interpretation."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical presentation",
+                "score": 3,
+                "rationale": "The output preserves both the original Julian date (15 February 1749/50) and the converted Gregorian form (26 February 1750) in a clean, standard genealogical notation. The dual-dating convention is explicitly noted and the forms are presented in a clear table format suitable for genealogical records. The original is not lost in prose; it is prominently displayed."
+              }
+            ],
+            "judge_cost_usd": 0.008996,
+            "duration_ms": 8249.251009998261,
+            "error": null,
+            "input_tokens": 5271,
+            "cached_input_tokens": 0,
+            "output_tokens": 745
+          },
+          "started_at": 1785176504.8400211,
+          "ended_at": 1785176558.670218
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_011",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly declined to perform its own task (convert-dates) and routed the user to conflict-resolution. This is the correct behavior for a negative test where both dates are already Gregorian, in the same jurisdiction (England), and the gap does not match any known calendar offset. The routing decision is accurate."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the required behavior for this negative test by declining to convert dates and routing to the appropriate skill (conflict-resolution). The user's question about which date is correct was properly handed off to the skill designed to resolve such conflicts, completing the expected task flow."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill. The skill correctly routed to conflict-resolution without invoking any tools itself, which is appropriate for this negative test scenario. N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 9157.081977999042,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3661.764401000255,
+        "wall_clock_ms": 11351.747035980225,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 4257,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 311,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.005812,
+        "total_cost_usd": 0.005812
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_011_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 9157.081977999042,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "conflict-resolution"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly declined to perform its own task (convert-dates) and routed the user to conflict-resolution. This is the correct behavior for a negative test where both dates are already Gregorian, in the same jurisdiction (England), and the gap does not match any known calendar offset. The routing decision is accurate."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the required behavior for this negative test by declining to convert dates and routing to the appropriate skill (conflict-resolution). The user's question about which date is correct was properly handed off to the skill designed to resolve such conflicts, completing the expected task flow."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill. The skill correctly routed to conflict-resolution without invoking any tools itself, which is appropriate for this negative test scenario. N/A."
+              }
+            ],
+            "judge_cost_usd": 0.005812,
+            "duration_ms": 3661.764401000255,
+            "error": null,
+            "input_tokens": 4257,
+            "cached_input_tokens": 0,
+            "output_tokens": 311
+          },
+          "started_at": 1785176645.4503038,
+          "ended_at": 1785176656.8020508
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_003",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The response correctly declines to perform a calendar conversion and instead provides historical context about Quaker dating conventions. The factual claims are accurate: Quakers did reject pagan month names for religious reasons, the 1752 calendar change did shift the new year from March 25 to January 1, and the month offset before 1752 is correctly explained. No fabricated material or unsupported claims are present."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response fully addresses the user's question about why Quakers used numbered months and the history of that convention. It covers the religious motivation, the pagan origins of month names, the critical 1752 calendar complication, practical genealogical implications, and offers further assistance. All aspects of the user's inquiry are addressed."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. This is appropriate for a negative test where the skill should decline and route to historical-context rather than perform its own task. N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 30718.995185001404,
+        "duration_api_ms": 27830.0,
+        "judge_duration_ms": 4388.760314999672,
+        "wall_clock_ms": 33633.684158325195,
+        "num_turns": 1,
+        "input_tokens": 3,
+        "cached_input_tokens": 7564,
+        "output_tokens": 1441,
+        "judge_input_tokens": 4970,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 344,
+        "skill_cost_usd": 0.04154719999999999,
+        "judge_cost_usd": 0.00669,
+        "total_cost_usd": 0.048237199999999994
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_003_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 30718.995185001404,
+          "duration_api_ms": 27830.0,
+          "num_turns": 1,
+          "skill_attempts": 1,
+          "input_tokens": 3,
+          "cached_input_tokens": 7564,
+          "output_tokens": 1441,
+          "skill_cost_usd": 0.04154719999999999,
+          "output": {
+            "text_response": "Great question \u2014 and very relevant to genealogy research, since Quaker records are among the most detailed and well-preserved in colonial and early American history, but their dating conventions trip up many researchers.\n\n## Why Quakers Used Numbered Months\n\n### The Religious Reason\n\nThe Society of Friends (Quakers), founded by George Fox in England in the 1650s, were deeply committed to stripping away anything they considered worldly corruption or idolatry \u2014 including **pagan names embedded in the calendar**.\n\nThe problem was that both month and weekday names honored pagan gods:\n\n| Name | Pagan Origin |\n|---|---|\n| January | *Janus*, Roman god of beginnings |\n| February | *Februa*, Roman purification festival |\n| March | *Mars*, Roman god of war |\n| May | *Maia*, Roman goddess |\n| June | *Juno*, Roman goddess |\n| Sunday | the Sun (a deity) |\n| Monday | the Moon (a deity) |\n| Tuesday | *Tiw*, Norse god |\n| Wednesday | *Woden*, Norse god |\n| Thursday | *Thor*, Norse god |\n| Friday | *Frigg/Freya*, Norse goddess |\n| Saturday | *Saturn*, Roman god |\n\nFor Quakers, using these names \u2014 even casually \u2014 felt like giving honor to false gods, which violated their testimonies of truth and simplicity. So they substituted plain numbers: **First Month, Second Month, Third Day, Fifth Day**, etc.\n\n---\n\n## The Critical Genealogical Complication: The Calendar Change of 1752\n\nThis is where researchers can make serious errors.\n\n**Before 1752** in England and its colonies, the legal new year began on **March 25** (Lady Day), not January 1. So in Quaker records *before* September 1752:\n\n| Quaker \"Month\" | Actual Month |\n|---|---|\n| 1st Month | **March** |\n| 2nd Month | April |\n| 3rd Month | May |\n| ... | ... |\n| 10th Month | December |\n| 11th Month | January |\n| 12th Month | February |\n\n**After 1752**, when Britain adopted the Gregorian calendar and moved New Year's to January 1:\n\n| Quaker \"Month\" | Actual Month |\n|---|---|\n| 1st Month | **January** |\n| 2nd Month | February |\n| 3rd Month | March |\n| ... | ... |\n\nSo a Quaker record reading **\"12th of 3rd Month 1745\"** means **May 12, 1745** \u2014 *not* March 12th.\n\n---\n\n## Practical Tips for Quaker Records\n\n- **Always check the year** \u2014 if it's before 1752, remember the offset\n- The transition year 1752 is tricky; records from that year can go either way\n- Many Quaker meetings recorded **double dates** during the transition period (e.g., \"1st Month / January\")\n- Meeting minutes, birth records, death records, and marriage certificates all follow this system consistently\n- Monthly Meeting records are extremely reliable because Quakers were meticulous record-keepers \u2014 making them a genealogical goldmine once you crack the dating system\n\nWould you like help converting specific Quaker dates, or are you working with records from a particular meeting or time period?",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The response correctly declines to perform a calendar conversion and instead provides historical context about Quaker dating conventions. The factual claims are accurate: Quakers did reject pagan month names for religious reasons, the 1752 calendar change did shift the new year from March 25 to January 1, and the month offset before 1752 is correctly explained. No fabricated material or unsupported claims are present."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The response fully addresses the user's question about why Quakers used numbered months and the history of that convention. It covers the religious motivation, the pagan origins of month names, the critical 1752 calendar complication, practical genealogical implications, and offers further assistance. All aspects of the user's inquiry are addressed."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. This is appropriate for a negative test where the skill should decline and route to historical-context rather than perform its own task. N/A."
+              }
+            ],
+            "judge_cost_usd": 0.00669,
+            "duration_ms": 4388.760314999672,
+            "error": null,
+            "input_tokens": 4970,
+            "cached_input_tokens": 0,
+            "output_tokens": 344
+          },
+          "started_at": 1785176610.0406444,
+          "ended_at": 1785176643.6743286
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_010",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly reformatted the date from '15-Feb-1821' to 'February 15, 1821' as requested. No calendar conversion was performed, which is correct for this plain text formatting task. The output is factually accurate."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's request to reformat the date. The user asked for a specific reformatting, and the skill provided exactly that output without omissions."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. This is appropriate for a plain text reformatting task that does not require calendar conversion or other tool-based operations. N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 6042.630523999833,
+        "duration_api_ms": 4754.0,
+        "judge_duration_ms": 3821.1326569980884,
+        "wall_clock_ms": 9929.39281463623,
+        "num_turns": 1,
+        "input_tokens": 3,
+        "cached_input_tokens": 7564,
+        "output_tokens": 10,
+        "judge_input_tokens": 4210,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 275,
+        "skill_cost_usd": 0.0201937,
+        "judge_cost_usd": 0.005585,
+        "total_cost_usd": 0.025778699999999998
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_010_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 6042.630523999833,
+          "duration_api_ms": 4754.0,
+          "num_turns": 1,
+          "skill_attempts": 1,
+          "input_tokens": 3,
+          "cached_input_tokens": 7564,
+          "output_tokens": 10,
+          "skill_cost_usd": 0.0201937,
+          "output": {
+            "text_response": "February 15, 1821",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly reformatted the date from '15-Feb-1821' to 'February 15, 1821' as requested. No calendar conversion was performed, which is correct for this plain text formatting task. The output is factually accurate."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's request to reformat the date. The user asked for a specific reformatting, and the skill provided exactly that output without omissions."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. This is appropriate for a plain text reformatting task that does not require calendar conversion or other tool-based operations. N/A."
+              }
+            ],
+            "judge_cost_usd": 0.005585,
+            "duration_ms": 3821.1326569980884,
+            "error": null,
+            "input_tokens": 4210,
+            "cached_input_tokens": 0,
+            "output_tokens": 275
+          },
+          "started_at": 1785176649.6533535,
+          "ended_at": 1785176659.5827463
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_012",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test where the correct behavior is to decline the convert-dates task and route to validate-schema. Claude correctly routed the user to validate-schema rather than performing an unwanted Julian-Gregorian conversion. The routing decision is correct."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill correctly identified that the user's question about date field validity in research.json is a schema validation concern, not a date conversion task. By routing to validate-schema, it addressed the user's actual need without performing the convert-dates task it should have declined."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the convert-dates skill itself. The routing to validate-schema was handled by the system, not through direct tool invocation by convert-dates. N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 6692.5082610032405,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3331.991876999382,
+        "wall_clock_ms": 8551.775455474854,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 4229,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 300,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.005729,
+        "total_cost_usd": 0.005729
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_012_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 6692.5082610032405,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "validate-schema"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test where the correct behavior is to decline the convert-dates task and route to validate-schema. Claude correctly routed the user to validate-schema rather than performing an unwanted Julian-Gregorian conversion. The routing decision is correct."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill correctly identified that the user's question about date field validity in research.json is a schema validation concern, not a date conversion task. By routing to validate-schema, it addressed the user's actual need without performing the convert-dates task it should have declined."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the convert-dates skill itself. The routing to validate-schema was handled by the system, not through direct tool invocation by convert-dates. N/A."
+              }
+            ],
+            "judge_cost_usd": 0.005729,
+            "duration_ms": 3331.991876999382,
+            "error": null,
+            "input_tokens": 4229,
+            "cached_input_tokens": 0,
+            "output_tokens": 300
+          },
+          "started_at": 1785176643.700663,
+          "ended_at": 1785176652.2524385
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_008",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified that the 1850 English date is already Gregorian and requires no conversion. The explanation accurately states England's Gregorian adoption occurred in September 1752, nearly 98 years before the record date. No fabricated conversions or unsupported claims were made."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's request. It determined whether conversion was needed, explicitly stated no conversion is required, explained why (England's 1752 transition predates the 1850 record), preserved the original date, and even provided optional context about when conversions would apply to English dates."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. This is appropriate for a date conversion task that requires only calendar knowledge and logical reasoning, not external data retrieval. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Conversion accuracy",
+            "score": 3,
+            "rationale": "The skill correctly applied the rule that England adopted the Gregorian calendar in September 1752 with an 11-day shift. It properly recognized that an 1850 date falls well after this transition and therefore requires no conversion. The jurisdiction-specific offset (11 days for England 1752) was correctly cited and appropriately determined to be inapplicable."
+          },
+          {
+            "source": "rubric",
+            "name": "Ambiguity handling",
+            "score": null,
+            "rationale": "The input date '15 March 1850, London' contains no genuine ambiguity. It is a straightforward post-1752 English date with a single correct interpretation. No ambiguity exists in the source date, so this dimension is N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical presentation",
+            "score": 3,
+            "rationale": "The skill preserved the original date exactly as stated ('15 March 1850') and clearly presented it in standard genealogical notation. The output explicitly states the date stands as recorded with no conversion needed, making it immediately usable in genealogical records. The format is clean and unambiguous."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 21153.425144999346,
+        "duration_api_ms": 19878.0,
+        "judge_duration_ms": 6602.713246000349,
+        "wall_clock_ms": 26284.25693511963,
+        "num_turns": 3,
+        "input_tokens": 6,
+        "cached_input_tokens": 19745,
+        "output_tokens": 871,
+        "judge_input_tokens": 5006,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 628,
+        "skill_cost_usd": 0.0442075,
+        "judge_cost_usd": 0.008146,
+        "total_cost_usd": 0.0523535
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_008_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 21153.425144999346,
+          "duration_api_ms": 19878.0,
+          "num_turns": 3,
+          "skill_attempts": 1,
+          "input_tokens": 6,
+          "cached_input_tokens": 19745,
+          "output_tokens": 871,
+          "skill_cost_usd": 0.0442075,
+          "output": {
+            "text_response": "**No conversion is needed \u2014 this date is already Gregorian.**\n\nHere's why:\n\n| Factor | Detail |\n|---|---|\n| **Jurisdiction** | England (London) |\n| **Gregorian adoption** | 2 September 1752 \u2192 14 September 1752 (jumped 11 days) |\n| **Record date** | 15 March **1850** |\n\nBy 1850, England had been using the Gregorian calendar for nearly **98 years**. Both the Julian-to-Gregorian day correction and the Old Style year convention (where the legal year began on 25 March) were abolished together in **1752**.\n\n**15 March 1850, London is a straightforward Gregorian date and requires no adjustment.**\n\nThe original date stands as recorded: **15 March 1850**.\n\n> \ud83d\udca1 *Conversions would be relevant for English records dated before September 1752. For example, a record dated \"15 February 1720\" in an English register would be Old Style, meaning the Gregorian (New Style) year would be 1721 \u2014 since England's year didn't start until 25 March.*",
+            "activated": true,
+            "skills_invoked": [
+              "convert-dates"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified that the 1850 English date is already Gregorian and requires no conversion. The explanation accurately states England's Gregorian adoption occurred in September 1752, nearly 98 years before the record date. No fabricated conversions or unsupported claims were made."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's request. It determined whether conversion was needed, explicitly stated no conversion is required, explained why (England's 1752 transition predates the 1850 record), preserved the original date, and even provided optional context about when conversions would apply to English dates."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. This is appropriate for a date conversion task that requires only calendar knowledge and logical reasoning, not external data retrieval. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Conversion accuracy",
+                "score": 3,
+                "rationale": "The skill correctly applied the rule that England adopted the Gregorian calendar in September 1752 with an 11-day shift. It properly recognized that an 1850 date falls well after this transition and therefore requires no conversion. The jurisdiction-specific offset (11 days for England 1752) was correctly cited and appropriately determined to be inapplicable."
+              },
+              {
+                "source": "rubric",
+                "name": "Ambiguity handling",
+                "score": null,
+                "rationale": "The input date '15 March 1850, London' contains no genuine ambiguity. It is a straightforward post-1752 English date with a single correct interpretation. No ambiguity exists in the source date, so this dimension is N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical presentation",
+                "score": 3,
+                "rationale": "The skill preserved the original date exactly as stated ('15 March 1850') and clearly presented it in standard genealogical notation. The output explicitly states the date stands as recorded with no conversion needed, making it immediately usable in genealogical records. The format is clean and unambiguous."
+              }
+            ],
+            "judge_cost_usd": 0.008146,
+            "duration_ms": 6602.713246000349,
+            "error": null,
+            "input_tokens": 5006,
+            "cached_input_tokens": 0,
+            "output_tokens": 628
+          },
+          "started_at": 1785176623.3410962,
+          "ended_at": 1785176649.625353
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_009",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified W\u00fcrttemberg as a Protestant German state adopting Gregorian calendar on 18 February 1700 (Julian) / 1 March 1700 (Gregorian). The 10-day offset for pre-1700 dates is accurate. The conversion from 15 January 1699 (Julian) to 25 January 1699 (Gregorian) is arithmetically correct and properly justified. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed the user's request fully: identified the jurisdiction, determined the correct calendar regime and adoption date, applied the appropriate offset, and presented the converted date. All required elements of the conversion task were completed."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill explicitly noted that the convert_calendar tool was not available and applied the conversion logic directly from documented regime tables. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Conversion accuracy",
+            "score": 3,
+            "rationale": "The skill applied the correct 10-day offset for W\u00fcrttemberg (Protestant German state) in 1699, which is the accurate pre-1700 Julian-to-Gregorian shift for this jurisdiction. The conversion direction and offset are both correct, and the skill explicitly distinguished Protestant German adoption (1700) from Catholic German adoption (1583-1585)."
+          },
+          {
+            "source": "rubric",
+            "name": "Ambiguity handling",
+            "score": null,
+            "rationale": "The input date (15 January 1699 in W\u00fcrttemberg) contains no genuine ambiguity. The jurisdiction is specified, the date is well before the 1700 adoption, and a single correct conversion applies. No ambiguity exists in the source material to handle. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical presentation",
+            "score": 3,
+            "rationale": "The skill preserved both the original Julian date and the converted Gregorian form in clear genealogical notation: '15 January 1699 (Julian, W\u00fcrttemberg) = 25 January 1699 (Gregorian)'. The step-by-step presentation with the arithmetic shown ('15 January 1699 + 10 days = 25 January 1699') is clean, consistent, and suitable for genealogical records."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 39680.62097499933,
+        "duration_api_ms": 37444.0,
+        "judge_duration_ms": 6804.200528000365,
+        "wall_clock_ms": 45016.50810241699,
+        "num_turns": 4,
+        "input_tokens": 7,
+        "cached_input_tokens": 33846,
+        "output_tokens": 1883,
+        "judge_input_tokens": 5223,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 697,
+        "skill_cost_usd": 0.06737305,
+        "judge_cost_usd": 0.008708,
+        "total_cost_usd": 0.07608105000000001
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_009_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 39680.62097499933,
+          "duration_api_ms": 37444.0,
+          "num_turns": 4,
+          "skill_attempts": 1,
+          "input_tokens": 7,
+          "cached_input_tokens": 33846,
+          "output_tokens": 1883,
+          "skill_cost_usd": 0.06737305,
+          "output": {
+            "text_response": "The `convert_calendar` tool is not available in this environment, so I'll apply the regime logic from the skill's tables directly and work through the arithmetic step by step.\n\n---\n\n## Calendar Conversion: W\u00fcrttemberg, 15 January 1699\n\n### Step 1 \u2014 Identify the calendar regime\n\n| Factor | Detail |\n|---|---|\n| **Jurisdiction** | W\u00fcrttemberg \u2014 a **Protestant German state** |\n| **Gregorian adoption** | Protestant German states switched on **18 February 1700** (Julian) \u2192 **1 March 1700** (Gregorian) |\n| **1699 status** | Still on the **Julian calendar** |\n| **Applicable correction** | `julianToGregorianDay: true` |\n\n### Step 2 \u2014 Determine the day offset\n\nThe offset grows at Julian leap years the Gregorian calendar skipped:\n\n- **Before 1700 \u2192 10 days**\n\n### Step 3 \u2014 Apply the correction\n\n| | Date |\n|---|---|\n| **Original (Julian / Old Style)** | 15 January 1699 |\n| **Rule applied** | +10 days (Julian \u2192 Gregorian, pre-1700 offset) |\n| **Converted (Gregorian / New Style)** | **25 January 1699** |\n\n---\n\n### Result\n\n> **15 January 1699 (Julian, W\u00fcrttemberg)** = **25 January 1699 (Gregorian)**\n\nThe year stays the same because the date (January 15) falls well after January 1 \u2014 no Old Style/New Style *year* correction applies here (that convention was an English legal peculiarity; German Protestant states already reckoned the new year from January 1). Only the **day** shifts forward by 10.",
+            "activated": true,
+            "skills_invoked": [
+              "convert-dates"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified W\u00fcrttemberg as a Protestant German state adopting Gregorian calendar on 18 February 1700 (Julian) / 1 March 1700 (Gregorian). The 10-day offset for pre-1700 dates is accurate. The conversion from 15 January 1699 (Julian) to 25 January 1699 (Gregorian) is arithmetically correct and properly justified. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed the user's request fully: identified the jurisdiction, determined the correct calendar regime and adoption date, applied the appropriate offset, and presented the converted date. All required elements of the conversion task were completed."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill explicitly noted that the convert_calendar tool was not available and applied the conversion logic directly from documented regime tables. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Conversion accuracy",
+                "score": 3,
+                "rationale": "The skill applied the correct 10-day offset for W\u00fcrttemberg (Protestant German state) in 1699, which is the accurate pre-1700 Julian-to-Gregorian shift for this jurisdiction. The conversion direction and offset are both correct, and the skill explicitly distinguished Protestant German adoption (1700) from Catholic German adoption (1583-1585)."
+              },
+              {
+                "source": "rubric",
+                "name": "Ambiguity handling",
+                "score": null,
+                "rationale": "The input date (15 January 1699 in W\u00fcrttemberg) contains no genuine ambiguity. The jurisdiction is specified, the date is well before the 1700 adoption, and a single correct conversion applies. No ambiguity exists in the source material to handle. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical presentation",
+                "score": 3,
+                "rationale": "The skill preserved both the original Julian date and the converted Gregorian form in clear genealogical notation: '15 January 1699 (Julian, W\u00fcrttemberg) = 25 January 1699 (Gregorian)'. The step-by-step presentation with the arithmetic shown ('15 January 1699 + 10 days = 25 January 1699') is clean, consistent, and suitable for genealogical records."
+              }
+            ],
+            "judge_cost_usd": 0.008708,
+            "duration_ms": 6804.200528000365,
+            "error": null,
+            "input_tokens": 5223,
+            "cached_input_tokens": 0,
+            "output_tokens": 697
+          },
+          "started_at": 1785176565.0076308,
+          "ended_at": 1785176610.024139
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_001",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The conversion is factually correct. The skill correctly identifies 1845 as post-1752, applies the post-1752 Quaker month mapping (2nd month = February), and produces the accurate result: 3 February 1845. The reasoning about no Julian-Gregorian day shift being needed (Britain adopted Gregorian in September 1752, well before 1845) is sound. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: explained the Quaker numbering convention, noted the 1752 calendar transition and how it changed the month numbering, correctly applied post-1752 numbering to the 1845 date, and preserved the original Quaker notation ('3rd day of 2nd month 1845') alongside the converted form. All input requirements were met."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill performed the conversion using its internal regime tables and month-mapping rules without invoking external tools. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Conversion accuracy",
+            "score": 3,
+            "rationale": "The skill applied the correct post-1752 Quaker month mapping for the jurisdiction and year. For 1845 (well after the 1752 English calendar transition), 2nd month correctly maps to February. The offset and direction are correct, and the skill appropriately noted that no Julian-Gregorian day shift was needed for this date."
+          },
+          {
+            "source": "rubric",
+            "name": "Ambiguity handling",
+            "score": null,
+            "rationale": "The input date contains no genuine ambiguity. 1845 is unambiguously post-1752, the Quaker month mapping is deterministic, and the conversion is straightforward. No alternative interpretations exist. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical presentation",
+            "score": 3,
+            "rationale": "The output preserves both the original Quaker notation ('3rd day of 2nd month 1845') and the converted form ('3 February 1845') in standard genealogical notation. The format is clean, consistent, and usable as a genealogical record. The original is clearly presented and not buried in prose."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 34163.47614800179,
+        "duration_api_ms": 31875.0,
+        "judge_duration_ms": 6997.114874000545,
+        "wall_clock_ms": 39686.60593032837,
+        "num_turns": 6,
+        "input_tokens": 11,
+        "cached_input_tokens": 67040,
+        "output_tokens": 1287,
+        "judge_input_tokens": 5141,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 683,
+        "skill_cost_usd": 0.08297324999999998,
+        "judge_cost_usd": 0.008556,
+        "total_cost_usd": 0.09152924999999998
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_001_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 34163.47614800179,
+          "duration_api_ms": 31875.0,
+          "num_turns": 6,
+          "skill_attempts": 1,
+          "input_tokens": 11,
+          "cached_input_tokens": 67040,
+          "output_tokens": 1287,
+          "skill_cost_usd": 0.08297324999999998,
+          "output": {
+            "text_response": "The `convert_calendar` tool isn't available in this environment, but the conversion can be applied directly from the skill's regime tables \u2014 no arithmetic tool is needed here, only the month-mapping rule.\n\n---\n\n## Quaker Date Conversion\n\n**Original date (Quaker):** 3rd day of 2nd month 1845\n\n### Step-by-step\n\n| Step | Rule applied | Result |\n|---|---|---|\n| **1. Identify the era** | 1845 is after 1752 \u2192 use the **post-1752** Quaker month table | Era confirmed |\n| **2. Map the Quaker month** | Post-1752: 1st month = January, **2nd month = February** | Month \u2192 February |\n| **3. Day and year** | No OS/NS year correction needed (post-1752, year already starts 1 Jan); no Julian\u2192Gregorian day shift needed (Britain adopted Gregorian in Sep 1752) | Day = 3, Year = 1845 |\n\n### Result\n\n> **3rd day of 2nd month 1845 (Quaker) = 3 February 1845 (Gregorian)**\n\n**Note:** The only correction applied is the Quaker month mapping (`quakerMonth`, post-1752 era). Because the date falls in February \u2014 not January 1\u2013March 24 \u2014 and is well after the 1752 calendar transition in Britain, no double-year or Julian-day offset corrections are needed.",
+            "activated": true,
+            "skills_invoked": [
+              "convert-dates"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The conversion is factually correct. The skill correctly identifies 1845 as post-1752, applies the post-1752 Quaker month mapping (2nd month = February), and produces the accurate result: 3 February 1845. The reasoning about no Julian-Gregorian day shift being needed (Britain adopted Gregorian in September 1752, well before 1845) is sound. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: explained the Quaker numbering convention, noted the 1752 calendar transition and how it changed the month numbering, correctly applied post-1752 numbering to the 1845 date, and preserved the original Quaker notation ('3rd day of 2nd month 1845') alongside the converted form. All input requirements were met."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill performed the conversion using its internal regime tables and month-mapping rules without invoking external tools. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Conversion accuracy",
+                "score": 3,
+                "rationale": "The skill applied the correct post-1752 Quaker month mapping for the jurisdiction and year. For 1845 (well after the 1752 English calendar transition), 2nd month correctly maps to February. The offset and direction are correct, and the skill appropriately noted that no Julian-Gregorian day shift was needed for this date."
+              },
+              {
+                "source": "rubric",
+                "name": "Ambiguity handling",
+                "score": null,
+                "rationale": "The input date contains no genuine ambiguity. 1845 is unambiguously post-1752, the Quaker month mapping is deterministic, and the conversion is straightforward. No alternative interpretations exist. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical presentation",
+                "score": 3,
+                "rationale": "The output preserves both the original Quaker notation ('3rd day of 2nd month 1845') and the converted form ('3 February 1845') in standard genealogical notation. The format is clean, consistent, and usable as a genealogical record. The original is clearly presented and not buried in prose."
+              }
+            ],
+            "judge_cost_usd": 0.008556,
+            "duration_ms": 6997.114874000545,
+            "error": null,
+            "input_tokens": 5141,
+            "cached_input_tokens": 0,
+            "output_tokens": 683
+          },
+          "started_at": 1785176605.733453,
+          "ended_at": 1785176645.420059
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly applied the 13-day offset for Russia in 1918, accurately identified that 1 February 1918 was Julian (Old Style), and correctly converted it to 14 February 1918 Gregorian. The explanation of why the offset is 13 days (based on century-by-century accumulation) is factually accurate. The note about Russia's switchover on 31 January/14 February 1918 is correct."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: recognized the Russian Julian calendar context, applied the correct 13-day offset, presented the conversion clearly, preserved the original date, noted the boundary condition (Russia skipped from 31 Jan to 14 Feb), and explained that offsets vary by country and time period with examples (10 days for Catholic Europe 1582, 11 days for England 1752)."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill performed the conversion using built-in knowledge rather than invoking a tool, which is appropriate given the stated unavailability of the convert_calendar tool."
+          },
+          {
+            "source": "rubric",
+            "name": "Conversion accuracy",
+            "score": 3,
+            "rationale": "The skill applied the correct 13-day offset for Russia in 1918, which is the right jurisdiction-and-year-specific conversion. The explanation of how the offset accumulates century-by-century (10\u219211\u219212\u219213 days) demonstrates proper understanding of the Julian-Gregorian divergence rules."
+          },
+          {
+            "source": "rubric",
+            "name": "Ambiguity handling",
+            "score": 3,
+            "rationale": "The input date (1 February 1918) is genuinely ambiguous in the sense that it sits at the boundary of Russia's calendar transition. The skill explicitly flagged this: noting that the record predates the switchover on 14 February NS, and explaining that Russia skipped from 31 January to 14 February 1918. This clarifies why the date is unambiguously Julian despite being near the transition."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical presentation",
+            "score": 3,
+            "rationale": "The output preserves both the original date (1 February 1918 \u2014 Julian, Old Style) and the converted form (14 February 1918) in a clean, genealogically-standard format. The table presentation is clear and organized. The final summary line ('Original: 1 February 1918 (Julian, Old Style) / Gregorian equivalent: 14 February 1918') follows genealogical notation conventions."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 38934.96130999847,
+        "duration_api_ms": 36992.0,
+        "judge_duration_ms": 7482.342781997431,
+        "wall_clock_ms": 43429.399728775024,
+        "num_turns": 7,
+        "input_tokens": 14,
+        "cached_input_tokens": 88618,
+        "output_tokens": 1481,
+        "judge_input_tokens": 5213,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 758,
+        "skill_cost_usd": 0.11421165,
+        "judge_cost_usd": 0.009003,
+        "total_cost_usd": 0.12321465
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_005_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 38934.96130999847,
+          "duration_api_ms": 36992.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 14,
+          "cached_input_tokens": 88618,
+          "output_tokens": 1481,
+          "skill_cost_usd": 0.11421165,
+          "output": {
+            "text_response": "The `convert_calendar` tool is not available in this environment, but the conversion can be applied precisely using the regime table built into the skill. Here is the step-by-step result:\n\n---\n\n## Julian \u2192 Gregorian Conversion\n\n| | Value |\n|---|---|\n| **Original (record date)** | 1 February 1918 \u2014 Julian calendar (Old Style) |\n| **Jurisdiction** | St. Petersburg, Russia |\n| **Calendar in force** | Julian (Russia did not adopt the Gregorian calendar until February 1918; this record predates the switchover on 14 February NS) |\n| **Rule applied** | `julianToGregorianDay` \u2014 1900+ era offset: **+13 days** |\n| **Converted (Gregorian)** | **14 February 1918** |\n\n---\n\n### Why 13 days?\nThe Julian-to-Gregorian day offset grows by one day at each Julian leap year that the Gregorian calendar skipped:\n- Before 1700 \u2192 10 days\n- 1700\u20131799 \u2192 11 days\n- 1800\u20131899 \u2192 12 days\n- **1900+ \u2192 13 days** \u2190 applies here\n\n### Why this date is still Julian\nRussia's Bolshevik government decreed the switch to the Gregorian calendar on **31 January 1918 (OS)**, making the next day **14 February 1918 (NS)**. A birth recorded as *1 February 1918* in St. Petersburg falls just before that switchover, so the record is unambiguously in the Old Style Julian calendar.\n\n**Original:** 1 February 1918 (Julian, Old Style)\n**Gregorian equivalent: 14 February 1918**",
+            "activated": true,
+            "skills_invoked": [
+              "convert-dates"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly applied the 13-day offset for Russia in 1918, accurately identified that 1 February 1918 was Julian (Old Style), and correctly converted it to 14 February 1918 Gregorian. The explanation of why the offset is 13 days (based on century-by-century accumulation) is factually accurate. The note about Russia's switchover on 31 January/14 February 1918 is correct."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: recognized the Russian Julian calendar context, applied the correct 13-day offset, presented the conversion clearly, preserved the original date, noted the boundary condition (Russia skipped from 31 Jan to 14 Feb), and explained that offsets vary by country and time period with examples (10 days for Catholic Europe 1582, 11 days for England 1752)."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill performed the conversion using built-in knowledge rather than invoking a tool, which is appropriate given the stated unavailability of the convert_calendar tool."
+              },
+              {
+                "source": "rubric",
+                "name": "Conversion accuracy",
+                "score": 3,
+                "rationale": "The skill applied the correct 13-day offset for Russia in 1918, which is the right jurisdiction-and-year-specific conversion. The explanation of how the offset accumulates century-by-century (10\u219211\u219212\u219213 days) demonstrates proper understanding of the Julian-Gregorian divergence rules."
+              },
+              {
+                "source": "rubric",
+                "name": "Ambiguity handling",
+                "score": 3,
+                "rationale": "The input date (1 February 1918) is genuinely ambiguous in the sense that it sits at the boundary of Russia's calendar transition. The skill explicitly flagged this: noting that the record predates the switchover on 14 February NS, and explaining that Russia skipped from 31 January to 14 February 1918. This clarifies why the date is unambiguously Julian despite being near the transition."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical presentation",
+                "score": 3,
+                "rationale": "The output preserves both the original date (1 February 1918 \u2014 Julian, Old Style) and the converted form (14 February 1918) in a clean, genealogically-standard format. The table presentation is clear and organized. The final summary line ('Original: 1 February 1918 (Julian, Old Style) / Gregorian equivalent: 14 February 1918') follows genealogical notation conventions."
+              }
+            ],
+            "judge_cost_usd": 0.009003,
+            "duration_ms": 7482.342781997431,
+            "error": null,
+            "input_tokens": 5213,
+            "cached_input_tokens": 0,
+            "output_tokens": 758
+          },
+          "started_at": 1785176612.8291302,
+          "ended_at": 1785176656.25853
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_006",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The conversion is factually correct. The skill correctly identifies that Scotland changed its year-start to 1 January in 1600 (not 1752), so no year adjustment applies. The Julian-to-Gregorian day shift of +11 days is correctly applied for the 1700\u20131799 era. The arithmetic (14 Feb + 11 days = 25 Feb) is accurate. All claims are supported by historical fact."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all aspects of the user's request: converted the date correctly, explicitly answered whether the 1752 year-start change was relevant for Scotland (no), and explained why. The response covers the distinction between the two 1752 reforms and clarifies the Scottish hybrid status, fulfilling the user's question comprehensively."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill performed the conversion manually using calendar regime tables, which is appropriate given the stated unavailability of the convert_calendar tool in the project environment. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Conversion accuracy",
+            "score": 3,
+            "rationale": "The skill correctly applied the +11 day offset for the 1700\u20131799 era, which is the correct offset for Scotland in 1730 (Julian calendar still in use until September 1752). The conversion from 14 February to 25 February is arithmetically correct and uses the jurisdiction-specific rule for Scotland."
+          },
+          {
+            "source": "rubric",
+            "name": "Ambiguity handling",
+            "score": 3,
+            "rationale": "The input date (14 February 1730, Edinburgh) contains no genuine ambiguity\u2014it is deterministic. The skill correctly identifies that there is no OS/NS year ambiguity for Scotland in 1730 (unlike English dates of the same period), and explicitly notes the absence of '1729/30' double-dating. The skill appropriately marks this dimension as N/A by explaining why no ambiguity exists."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical presentation",
+            "score": 3,
+            "rationale": "The skill presents both the original date (14 February 1730, Old Style/Julian) and the converted form (25 February 1730, Gregorian) in a clear, genealogically-standard format. The step-by-step presentation ('14 February 1730 (Julian) + 11 days = 25 February 1730 (Gregorian)') follows the expected notation. The original is preserved and the conversion is shown cleanly in a format a genealogist would recognize and use."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 53578.12947699858,
+        "duration_api_ms": 49513.0,
+        "judge_duration_ms": 8743.497781997576,
+        "wall_clock_ms": 60161.7329120636,
+        "num_turns": 6,
+        "input_tokens": 13,
+        "cached_input_tokens": 68728,
+        "output_tokens": 2149,
+        "judge_input_tokens": 5576,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 760,
+        "skill_cost_usd": 0.1117319,
+        "judge_cost_usd": 0.009376,
+        "total_cost_usd": 0.12110789999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_006_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 53578.12947699858,
+          "duration_api_ms": 49513.0,
+          "num_turns": 6,
+          "skill_attempts": 1,
+          "input_tokens": 13,
+          "cached_input_tokens": 68728,
+          "output_tokens": 2149,
+          "skill_cost_usd": 0.1117319,
+          "output": {
+            "text_response": "The `convert_calendar` arithmetic tool isn't available in this project environment, but I can work through the conversion step-by-step using the calendar regime tables from the skill \u2014 the judgment is the key part anyway.\n\n---\n\n## Date Conversion: 14 February 1730, Edinburgh\n\n### Step 1 \u2014 Identify the calendar regime\n\nScotland, 1730. Two potential corrections to assess:\n\n| Correction | Applies? | Why |\n|---|---|---|\n| **OS/NS year** (`osNsYear`) | **No** | Scotland changed its year-start from 25 March \u2192 1 January in **1600**, by the Scottish Calendar Act. By 1730, Scotland had used a January 1 year-start for 130 years. No year adjustment is needed. |\n| **Julian \u2192 Gregorian day** (`julianToGregorianDay`) | **Yes** | Great Britain (including Scotland) did not adopt the Gregorian day reckoning until **September 1752**. In 1730, Scotland was still on the Julian calendar. |\n\n---\n\n### Step 2 \u2014 Apply the Julian \u2192 Gregorian day offset\n\nThe offset for 1700\u20131799 is **+11 days** (the Gregorian calendar had skipped the Julian leap year of 1700).\n\n> **14 February 1730 (Julian) + 11 days = 25 February 1730 (Gregorian)**\n\n---\n\n### Result\n\n| | Date |\n|---|---|\n| **Original (record as written)** | 14 February 1730, Old Style (Julian), Edinburgh |\n| **Converted (Gregorian)** | **25 February 1730** |\n| **Rule applied** | Julian \u2192 Gregorian day shift, +11 days (1700\u20131799 era offset) |\n| **Year changed?** | No \u2014 year stays 1730 |\n\n---\n\n### Was the 1752 year-start change relevant for Scotland?\n\n**No \u2014 and this is an important point for Scottish research.**\n\nThe famous 1752 change (the British Calendar (New Style) Act 1750) bundled two reforms for England, Wales, and Ireland:\n1. Move the **legal year-start** from 25 March to 1 January\n2. Switch from the **Julian to Gregorian** day reckoning (dropping 11 days)\n\nFor **Scotland**, only reform #2 was new in 1752. Reform #1 had already happened in **1600**. So when you encounter a Scottish register entry dated \"14 February 1730,\" the year *14 February* falls in is unambiguous \u2014 it is 1730 by both Scottish Old Style and modern reckoning. There is no \"1729/30\" double-dating ambiguity you'd see in an English record of the same date.\n\n> **Practical tip:** For Scottish records dated **before 1600**, you would need the OS/NS year correction for January\u2013March dates, just as you would for English records before 1752. After 1600, only the Julian\u2192Gregorian day shift applies.",
+            "activated": true,
+            "skills_invoked": [
+              "convert-dates"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The conversion is factually correct. The skill correctly identifies that Scotland changed its year-start to 1 January in 1600 (not 1752), so no year adjustment applies. The Julian-to-Gregorian day shift of +11 days is correctly applied for the 1700\u20131799 era. The arithmetic (14 Feb + 11 days = 25 Feb) is accurate. All claims are supported by historical fact."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all aspects of the user's request: converted the date correctly, explicitly answered whether the 1752 year-start change was relevant for Scotland (no), and explained why. The response covers the distinction between the two 1752 reforms and clarifies the Scottish hybrid status, fulfilling the user's question comprehensively."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill performed the conversion manually using calendar regime tables, which is appropriate given the stated unavailability of the convert_calendar tool in the project environment. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Conversion accuracy",
+                "score": 3,
+                "rationale": "The skill correctly applied the +11 day offset for the 1700\u20131799 era, which is the correct offset for Scotland in 1730 (Julian calendar still in use until September 1752). The conversion from 14 February to 25 February is arithmetically correct and uses the jurisdiction-specific rule for Scotland."
+              },
+              {
+                "source": "rubric",
+                "name": "Ambiguity handling",
+                "score": 3,
+                "rationale": "The input date (14 February 1730, Edinburgh) contains no genuine ambiguity\u2014it is deterministic. The skill correctly identifies that there is no OS/NS year ambiguity for Scotland in 1730 (unlike English dates of the same period), and explicitly notes the absence of '1729/30' double-dating. The skill appropriately marks this dimension as N/A by explaining why no ambiguity exists."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical presentation",
+                "score": 3,
+                "rationale": "The skill presents both the original date (14 February 1730, Old Style/Julian) and the converted form (25 February 1730, Gregorian) in a clear, genealogically-standard format. The step-by-step presentation ('14 February 1730 (Julian) + 11 days = 25 February 1730 (Gregorian)') follows the expected notation. The original is preserved and the conversion is shown cleanly in a format a genealogist would recognize and use."
+              }
+            ],
+            "judge_cost_usd": 0.009376,
+            "duration_ms": 8743.497781997576,
+            "error": null,
+            "input_tokens": 5576,
+            "cached_input_tokens": 0,
+            "output_tokens": 760
+          },
+          "started_at": 1785176504.8338969,
+          "ended_at": 1785176564.9956298
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_007",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly explains dual-dating notation, accurately identifies that 25 March was the boundary between Old Style and New Style years in England, correctly states that 1751 is the New Style year to use in modern research, and provides accurate guidance on preserving the original notation. The explanation of the legal year beginning on 25 March is factually correct. The skill appropriately notes the Julian-Gregorian day shift exists but correctly restrains itself from applying it since the user did not ask for calendar conversion\u2014only year-convention explanation."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's question: it explained what '25 March 1750/1' means (dual-dating), identified which year to use in research notes (1751), and provided best-practice guidance on preserving the original notation in citations. It covered all required elements: the historical context (legal year starting 25 March), the conversion rule (use the later year), and practical research guidance."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill acknowledged that convert_calendar was not available and instead provided the explanation directly from documentation. This is appropriate for a stateless test where the user asked a straightforward question about notation meaning rather than requesting a tool-based conversion."
+          },
+          {
+            "source": "rubric",
+            "name": "Conversion accuracy",
+            "score": 3,
+            "rationale": "The skill correctly applied the dual-dating rule for pre-1752 England: identifying that the legal year began on 25 March, explaining that dates in early months carried both Old Style (1750) and New Style (1751) years, and correctly stating that the later year (1751) is the New Style year to use. The rule application is jurisdiction-specific and historically accurate for England."
+          },
+          {
+            "source": "rubric",
+            "name": "Ambiguity handling",
+            "score": 3,
+            "rationale": "The input date '25 March 1750/1' is genuinely ambiguous\u2014it could be interpreted as either 1750 or 1751 depending on which calendar convention is applied. The skill explicitly flags this ambiguity by explaining both the Old Style (1750) and New Style (1751) interpretations, clearly states which one to use (1751), and explains why the dual-dating notation exists. The ambiguity is surfaced and resolved with full transparency."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical presentation",
+            "score": 3,
+            "rationale": "The skill presents both the original notation ('25 March 1750/1') and the converted form ('25 March 1751') in a format suitable for genealogical records. It provides a clear best-practice example: 'Marriage: 25 March 1751 (recorded as \"25 March 1750/1,\" Old Style)' which preserves the original as recorded in the source while showing the modern interpretation. The format is clean, consistent, and directly usable in genealogical citations."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 102673.93888100196,
+        "duration_api_ms": 96130.0,
+        "judge_duration_ms": 8975.448122000671,
+        "wall_clock_ms": 107976.3376712799,
+        "num_turns": 6,
+        "input_tokens": 13,
+        "cached_input_tokens": 72375,
+        "output_tokens": 4801,
+        "judge_input_tokens": 5437,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 827,
+        "skill_cost_usd": 0.15942725000000002,
+        "judge_cost_usd": 0.009572,
+        "total_cost_usd": 0.16899925000000002
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_007_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 102673.93888100196,
+          "duration_api_ms": 96130.0,
+          "num_turns": 6,
+          "skill_attempts": 1,
+          "input_tokens": 13,
+          "cached_input_tokens": 72375,
+          "output_tokens": 4801,
+          "skill_cost_usd": 0.15942725000000002,
+          "output": {
+            "text_response": "The `convert_calendar` tool isn't available in this environment, but the skill's documentation covers this exact example. Here is a clear, step-by-step explanation:\n\n---\n\n## What \"25 March 1750/1\" Means\n\nThis is called **double-dating** \u2014 a scribal convention used in England before the calendar reform of September 1752.\n\n### The Problem It Solves\n\nBefore 1752, England's **legal year began on 25 March** (Lady Day), not 1 January. That means the same date could carry two different year numbers depending on which system you were using:\n\n| System | Year start | What it calls this date |\n|---|---|---|\n| **Old Style (OS)** \u2014 England's legal calendar | 25 March | 1750 |\n| **New Style (NS)** \u2014 modern/Gregorian reckoning | 1 January | 1751 |\n\nMarch 25 is the **exact boundary** \u2014 the last day of OS year 1750 shading into the first day of OS year 1751. Scribes resolved the ambiguity by writing **both years**: `1750/1`.\n\n### Conversion\n\n| | Value |\n|---|---|\n| **Record states** | 25 March 1750/1 |\n| **Rule applied** | Double-dated year \u2192 use the later (New Style) year |\n| **Modern date** | **25 March 1751** |\n\n---\n\n## Which Year to Use in Your Research Notes\n\n**Use 1751** as your working date \u2014 that is the New Style year and the one historians and genealogical standards expect.\n\n**Best practice:** preserve the record's original notation alongside it, so your source is transparent:\n\n> *Marriage: 25 March 1751 (recorded as \"25 March 1750/1,\" Old Style)*\n\nThis way anyone reading your notes can see exactly what the register said and how you interpreted it. Do **not** silently record it as 1750 \u2014 that would place the event in the wrong year by modern reckoning.\n\n---\n\n### One More Thing to Check\n\nThe double-date resolves only the **year**. Since this marriage predates Britain's 1752 adoption of the Gregorian calendar, the **day** is still in the Julian calendar \u2014 11 days behind the Gregorian equivalent. Whether you need to convert the day depends on your purpose:\n\n- **Genealogical research notes** \u2192 keep the Julian day as recorded (25 March 1751 OS). That is standard practice.\n- **Correlating with a Gregorian event in another country** \u2192 add 11 days: 5 April 1751 Gregorian.\n\nFor most family history work, the Julian day is correct to keep as-is; just note the year as **1751**.",
+            "activated": true,
+            "skills_invoked": [
+              "convert-dates"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly explains dual-dating notation, accurately identifies that 25 March was the boundary between Old Style and New Style years in England, correctly states that 1751 is the New Style year to use in modern research, and provides accurate guidance on preserving the original notation. The explanation of the legal year beginning on 25 March is factually correct. The skill appropriately notes the Julian-Gregorian day shift exists but correctly restrains itself from applying it since the user did not ask for calendar conversion\u2014only year-convention explanation."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's question: it explained what '25 March 1750/1' means (dual-dating), identified which year to use in research notes (1751), and provided best-practice guidance on preserving the original notation in citations. It covered all required elements: the historical context (legal year starting 25 March), the conversion rule (use the later year), and practical research guidance."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill acknowledged that convert_calendar was not available and instead provided the explanation directly from documentation. This is appropriate for a stateless test where the user asked a straightforward question about notation meaning rather than requesting a tool-based conversion."
+              },
+              {
+                "source": "rubric",
+                "name": "Conversion accuracy",
+                "score": 3,
+                "rationale": "The skill correctly applied the dual-dating rule for pre-1752 England: identifying that the legal year began on 25 March, explaining that dates in early months carried both Old Style (1750) and New Style (1751) years, and correctly stating that the later year (1751) is the New Style year to use. The rule application is jurisdiction-specific and historically accurate for England."
+              },
+              {
+                "source": "rubric",
+                "name": "Ambiguity handling",
+                "score": 3,
+                "rationale": "The input date '25 March 1750/1' is genuinely ambiguous\u2014it could be interpreted as either 1750 or 1751 depending on which calendar convention is applied. The skill explicitly flags this ambiguity by explaining both the Old Style (1750) and New Style (1751) interpretations, clearly states which one to use (1751), and explains why the dual-dating notation exists. The ambiguity is surfaced and resolved with full transparency."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical presentation",
+                "score": 3,
+                "rationale": "The skill presents both the original notation ('25 March 1750/1') and the converted form ('25 March 1751') in a format suitable for genealogical records. It provides a clear best-practice example: 'Marriage: 25 March 1751 (recorded as \"25 March 1750/1,\" Old Style)' which preserves the original as recorded in the source while showing the modern interpretation. The format is clean, consistent, and directly usable in genealogical citations."
+              }
+            ],
+            "judge_cost_usd": 0.009572,
+            "duration_ms": 8975.448122000671,
+            "error": null,
+            "input_tokens": 5437,
+            "cached_input_tokens": 0,
+            "output_tokens": 827
+          },
+          "started_at": 1785176504.8335974,
+          "ended_at": 1785176612.809935
+        }
+      ]
+    },
+    {
+      "test_id": "ut_convert_dates_013",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The response correctly identifies 30 February 1712 as a genuine historical date in Sweden's calendar system. The explanation of Sweden's failed gradual transition (skipping leap days in 1700 but not 1704/1708), the resulting hybrid calendar state (1 day ahead of Julian, 10 behind Gregorian), and the 1712 correction by adding two leap days are all historically accurate. The conversion table correctly maps Swedish 30 Feb 1712 \u2192 Julian 29 Feb 1712 \u2192 Gregorian 11 Mar 1712 using the proper +11 day offset for the 1700\u20131799 period. The note about Sweden's final Gregorian adoption in 1753 is also correct."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response fully addresses the user's question about whether the date is an OCR error. It explains the historical cause, provides the calendar equivalents across three systems, and gives clear guidance on how to record and cite the date in genealogical work. All elements requested in the per-test context are covered: recognition of the date as real, explanation of Sweden's calendar phase-in attempt, the 1712 reversion mechanism, equivalents in other calendars, and the note about 1753 adoption."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly relied on its own regime table and historical knowledge to answer the question, as noted in the response ('the skill's own regime table covers this case exactly'). N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Conversion accuracy",
+            "score": 3,
+            "rationale": "The conversion applies the correct jurisdiction-specific offset for Sweden in 1712. The response correctly identifies that Swedish 30 Feb 1712 maps to Julian 29 Feb 1712 (same day, different calendar), then applies the +11 day offset to reach Gregorian 11 Mar 1712. This is the correct offset for the 1700\u20131799 period and the correct direction. The explanation of why this unique date exists (Sweden's failed gradual transition and the 1712 correction) demonstrates proper understanding of the calendar rules."
+          },
+          {
+            "source": "rubric",
+            "name": "Ambiguity handling",
+            "score": 3,
+            "rationale": "The input date (30 February 1712, Stockholm) is genuinely ambiguous in the sense that it could be an OCR error OR a real historical date. The skill explicitly flags this ambiguity by directly answering 'Not an OCR Error' and explaining why the date is genuine. The response then provides both the original form (as recorded in the Swedish calendar) and the converted equivalents (Julian and Gregorian), allowing the genealogist to understand and use both interpretations correctly. The ambiguity is resolved by historical explanation rather than left unresolved."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical presentation",
+            "score": 3,
+            "rationale": "The response presents the date in a format suitable for genealogical records. The conversion table clearly shows the original date (30 February 1712, Swedish calendar) alongside the converted forms (Julian 29 Feb 1712, Gregorian 11 Mar 1712). The guidance to 'transcribe the record as written' and 'note the calendar system' follows genealogical best practices. The notation is clean, standard, and preserves both the original and converted forms in a way a genealogist can directly use in their records."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 57565.48087699775,
+        "duration_api_ms": 54964.0,
+        "judge_duration_ms": 10081.99960300044,
+        "wall_clock_ms": 64641.52669906616,
+        "num_turns": 6,
+        "input_tokens": 11,
+        "cached_input_tokens": 67839,
+        "output_tokens": 1897,
+        "judge_input_tokens": 5348,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 947,
+        "skill_cost_usd": 0.09363495,
+        "judge_cost_usd": 0.010083,
+        "total_cost_usd": 0.10371794999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_convert_dates_013_2026-07-27_18-21-44_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 57565.48087699775,
+          "duration_api_ms": 54964.0,
+          "num_turns": 6,
+          "skill_attempts": 1,
+          "input_tokens": 11,
+          "cached_input_tokens": 67839,
+          "output_tokens": 1897,
+          "skill_cost_usd": 0.09363495,
+          "output": {
+            "text_response": "The `convert_calendar` tool is not available in this environment, but the skill's own regime table covers this case exactly \u2014 and it's a fascinating one. Here's the full answer:\n\n---\n\n## 30 February 1712, Stockholm \u2014 Not an OCR Error\n\n**This is a genuine calendar date.** February 30, 1712 was a real day in Sweden, and it is one of the most unusual dates in European calendar history.\n\n---\n\n### What happened\n\nSweden attempted a *gradual* transition from the Julian to the Gregorian calendar, starting in 1700 by skipping leap days one at a time. They correctly skipped the 1700 leap day \u2014 but then failed to skip the leap days in **1704 and 1708**. By 1712, Sweden's \"Swedish calendar\" was only **1 day ahead of Julian** instead of the planned 10, leaving it on an idiosyncratic system used nowhere else in the world.\n\nTo fix the mess and revert cleanly to the Julian calendar, Sweden added **two** leap days in February 1712 \u2014 both February 29 **and February 30**. That extra day brought them back into sync with the Julian calendar. Sweden didn't finally adopt the Gregorian calendar until **1753**.\n\n---\n\n### The conversion\n\n| Calendar | Date |\n|---|---|\n| **Swedish calendar (original record)** | **30 February 1712** |\n| Julian (Old Style) | 29 February 1712 |\n| Gregorian (New Style) | **11 March 1712** |\n\n*Rule applied: Swedish 30 Feb 1712 = Julian 29 Feb 1712; then +11 days (1700\u20131799 offset) = Gregorian 11 Mar 1712.*\n\n---\n\n### What to record\n\n- **Transcribe the record as written:** `30 February 1712` (Swedish calendar) \u2014 never silently alter a source date.\n- **Note the calendar system** when citing it: \"30 Feb 1712 (Swedish calendar).\"\n- **For cross-referencing** with records from other jurisdictions, use the Gregorian equivalent: **11 March 1712**.\n\nThis date is a reliable hallmark that the scribe was working in the Swedish calendar \u2014 which actually lends it a degree of authenticity rather than undermining it.",
+            "activated": true,
+            "skills_invoked": [
+              "convert-dates"
+            ],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_no_spurious_conversion",
+                "passed": true,
+                "error": "skipped: only applies to no-spurious-conversion negative tests"
+              },
+              {
+                "name": "test_only_convert_calendar_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The response correctly identifies 30 February 1712 as a genuine historical date in Sweden's calendar system. The explanation of Sweden's failed gradual transition (skipping leap days in 1700 but not 1704/1708), the resulting hybrid calendar state (1 day ahead of Julian, 10 behind Gregorian), and the 1712 correction by adding two leap days are all historically accurate. The conversion table correctly maps Swedish 30 Feb 1712 \u2192 Julian 29 Feb 1712 \u2192 Gregorian 11 Mar 1712 using the proper +11 day offset for the 1700\u20131799 period. The note about Sweden's final Gregorian adoption in 1753 is also correct."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The response fully addresses the user's question about whether the date is an OCR error. It explains the historical cause, provides the calendar equivalents across three systems, and gives clear guidance on how to record and cite the date in genealogical work. All elements requested in the per-test context are covered: recognition of the date as real, explanation of Sweden's calendar phase-in attempt, the 1712 reversion mechanism, equivalents in other calendars, and the note about 1753 adoption."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly relied on its own regime table and historical knowledge to answer the question, as noted in the response ('the skill's own regime table covers this case exactly'). N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Conversion accuracy",
+                "score": 3,
+                "rationale": "The conversion applies the correct jurisdiction-specific offset for Sweden in 1712. The response correctly identifies that Swedish 30 Feb 1712 maps to Julian 29 Feb 1712 (same day, different calendar), then applies the +11 day offset to reach Gregorian 11 Mar 1712. This is the correct offset for the 1700\u20131799 period and the correct direction. The explanation of why this unique date exists (Sweden's failed gradual transition and the 1712 correction) demonstrates proper understanding of the calendar rules."
+              },
+              {
+                "source": "rubric",
+                "name": "Ambiguity handling",
+                "score": 3,
+                "rationale": "The input date (30 February 1712, Stockholm) is genuinely ambiguous in the sense that it could be an OCR error OR a real historical date. The skill explicitly flags this ambiguity by directly answering 'Not an OCR Error' and explaining why the date is genuine. The response then provides both the original form (as recorded in the Swedish calendar) and the converted equivalents (Julian and Gregorian), allowing the genealogist to understand and use both interpretations correctly. The ambiguity is resolved by historical explanation rather than left unresolved."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical presentation",
+                "score": 3,
+                "rationale": "The response presents the date in a format suitable for genealogical records. The conversion table clearly shows the original date (30 February 1712, Swedish calendar) alongside the converted forms (Julian 29 Feb 1712, Gregorian 11 Mar 1712). The guidance to 'transcribe the record as written' and 'note the calendar system' follows genealogical best practices. The notation is clean, standard, and preserves both the original and converted forms in a way a genealogist can directly use in their records."
+              }
+            ],
+            "judge_cost_usd": 0.010083,
+            "duration_ms": 10081.99960300044,
+            "error": null,
+            "input_tokens": 5348,
+            "cached_input_tokens": 0,
+            "output_tokens": 947
+          },
+          "started_at": 1785176558.679719,
+          "ended_at": 1785176623.3212457
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "duration_ms": 536571.1079930043,
+    "duration_api_ms": 483970.0,
+    "judge_duration_ms": 95033.24648099442,
+    "num_turns": 57,
+    "input_tokens": 115,
+    "cached_input_tokens": 620224,
+    "output_tokens": 21387,
+    "judge_input_tokens": 70398,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 8707,
+    "skill_cost_usd": 1.0175309499999998,
+    "judge_cost_usd": 0.11393299999999998,
+    "total_cost_usd": 1.1314639499999999,
+    "wall_clock_ms": 154749.1488456726
+  }
+}

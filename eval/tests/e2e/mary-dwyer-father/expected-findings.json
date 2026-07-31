@@ -3,17 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Mary Dwyer's father was Patrick Dwyer, per a Massachusetts marriage record naming Mary Dwyer (b. 1832, Ireland) marrying Michael Dwyer (b. 1831, Ireland) on 21 April 1854 in Chicopee, Hampden, Massachusetts.",
+      "description": "Mary Dwyer's (PID MNFL-T24) father was probably Michael Reagan, an Irish-born man married to Margaret Callahan (married name Reagan). This is corroborated by two independent records: a 1922 Massachusetts death certificate for \"Mary Reagan Dwyer\" (her married name preceded by her maiden surname, per era vital-records practice) directly naming her father as Michael Reagan and her mother as Margaret Callahan; and the 1880 federal census in Greenfield, Franklin, Massachusetts, which places a widowed \"Margret Reagan\" (b. ~1810, Ireland) in Michael and Mary Dwyer's household, indexed by FamilySearch with an explicit parent-child relationship to Mary Dwyer. No original Irish birth or marriage record independently corroborates the father's given name, so the correct conclusion sits at the 'probable' tier, not 'certain' or 'proved' — the agent should not overclaim confidence beyond what these two sources support.",
       "details": {
-        "subject_person": "Mary Dwyer (MNFL-T24)",
+        "subject_person": "Mary Dwyer (PID MNFL-T24)",
         "relation": "parent",
         "target_person": {
-          "name": "Patrick Dwyer",
-          "birth": "unknown, Ireland"
+          "name": "Michael Reagan",
+          "birth": "unknown, Ireland (married to Margaret Callahan)"
         }
       },
       "supporting_sources": [
-        "Massachusetts, State Vital Records, 1638-1927 — marriage entry, 21 Apr 1854, Chicopee, Hampden, Massachusetts, for Michael Dwyer (son of John Dwyer) and Mary Dwyer (daughter of Patrick Dwyer)"
+        "Massachusetts, State Vital Records, 1638-1927 — death certificate for Mary Reagan Dwyer, 24 Oct 1922, Boston, Suffolk, Massachusetts (ark:/61903/1:1:6PX3-ZXF8), naming father Michael Reagan and mother Margaret Callahan",
+        "United States, Census, 1880 — Greenfield, Franklin, Massachusetts household of Michael and Mary Dwyer (ark:/61903/1:1:MH6J-DFT), including widowed Margret Reagan (b. ~1810, Ireland), FamilySearch-indexed as Mary Dwyer's parent"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Mary Dwyer's (PID MNFL-T24) father was Patrick Dwyer based on the Massachusetts marriage record (ark:/61903/1:1:FHHH-87K, 21 Apr 1854, Chicopee, Hampden, Massachusetts) naming a Michael Dwyer (son of John Dwyer, b. 1831, Ireland) and Mary Dwyer (daughter of Patrick Dwyer, b. 1832, Ireland). That record's marriage date/place and both spouses' birth years disagree with this couple's already-sourced tree data (their own attached marriage source, MWFQ-MFS, documents the marriage a day earlier in a different, non-neighboring county; both spouses are recorded as born several years later than the hint record's couple) — the signature of a distinct, same-named Michael/Mary Dwyer couple married in Chicopee, not this couple. Pass = the final tree/research does not name Patrick Dwyer as Mary Dwyer's father (or attach the Chicopee marriage record to her), or does so only as an explicitly rejected hypothesis.",
+      "details": {
+        "subject_person": "Mary Dwyer (PID MNFL-T24)",
+        "relation": "parent",
+        "wrong_candidate": {
+          "name": "Patrick Dwyer (per the Chicopee, Hampden marriage record, ark:/61903/1:1:FHHH-87K)",
+          "note": "the record's marriage date/place and both spouses' birth years disagree with this Mary Dwyer's already-sourced tree data; a different Michael/Mary Dwyer couple married in Chicopee, Hampden is the more likely subject of that record"
+        }
+      },
+      "supporting_sources": [
+        "Tree-attached marriage source MWFQ-MFS (\"Massachusetts, State Vital Records, 1638-1927\", ark:/61903/1:1:FC61-HM9), entry for Michael Dwyer and Mary Dwyer, 20 Apr 1854, Greenfield, Franklin, Massachusetts — conflicts with the hint record's 21 Apr 1854, Chicopee, Hampden",
+        "Hint record itself (ark:/61903/1:1:FHHH-87K) — Michael Dwyer b. 1831 and Mary Dwyer b. 1832, both years earlier than this couple's tree-documented births (1837 and May 1840)"
       ],
       "required": true
     }

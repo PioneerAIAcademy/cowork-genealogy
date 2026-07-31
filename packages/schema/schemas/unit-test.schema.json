@@ -161,7 +161,7 @@
         "grade_on_invariant": {
           "type": "boolean",
           "default": false,
-          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe (e.g. citation refuse-new-source: the skill may or may not fire, but no run may fabricate a source). REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. See docs/specs/unit-test-spec.md."
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe (e.g. citation refuse-new-source: the skill may or may not fire, but no run may fabricate a source). REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. The runnability gate enforces this: it aborts the test unless one of its tags gates a validator in that file (an `if \"<tag>\" not in test.get(\"tags\", []): pytest.skip(...)` opener — the inverse `in` form is an exclusion gate and does not count). See docs/specs/unit-test-spec.md."
         }
       }
     },
@@ -190,7 +190,28 @@
         "max_wall_clock_seconds": { "type": "integer", "minimum": 1 },
         "max_tool_calls": { "type": "integer", "minimum": 1 },
         "max_input_tokens_per_turn": { "type": "integer", "minimum": 1 },
-        "sdk_message_silence_seconds": { "type": "integer", "minimum": 1 }
+        "sdk_message_silence_seconds": { "type": "integer", "minimum": 1 },
+        "stub_skills": {
+          "type": "array",
+          "description": "Positive tests only. Sub-skills this test does not want executed. The PreToolUse hook records the delegation in skills_invoked, denies the launch, and lets the run continue, so the caller still finishes its own logging. Use when the callee has its own unit suite. Two forms: a bare string denies the launch and returns nothing; an object with `response` hands that text back as the callee's result, which is required when the CALLER's own remaining work consumes the output (e.g. search-records is specced to present the URLs search-external-sites returns). See eval/harness/harness/skill_stubs.py.",
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["skill"],
+                "properties": {
+                  "skill": { "type": "string" },
+                  "response": {
+                    "type": "string",
+                    "description": "Canned result handed back to the caller in place of the callee's real output. Reaches the model as text via permissionDecisionReason, not as a structured tool result."
+                  }
+                }
+              }
+            ]
+          }
+        }
       }
     }
   },
