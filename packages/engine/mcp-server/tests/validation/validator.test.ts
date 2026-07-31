@@ -819,6 +819,87 @@ describe("Project Validator", () => {
       ).toBe(true);
     });
 
+    it("rejects a 2-generation ParentChild ancestry cycle (mutual parents)", async () => {
+      const tree = {
+        persons: [
+          { id: "P1", gender: "Male", names: [{ id: "N1", given: "Al", surname: "Doe", preferred: true }] },
+          { id: "P2", gender: "Female", names: [{ id: "N2", given: "Bea", surname: "Doe", preferred: true }] },
+        ],
+        relationships: [
+          { id: "R1", type: "ParentChild", parent: "P1", child: "P2" },
+          { id: "R2", type: "ParentChild", parent: "P2", child: "P1" },
+        ],
+        sources: [],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("ancestry cycle"))
+      ).toBe(true);
+    });
+
+    it("rejects a 3-generation ParentChild ancestry cycle", async () => {
+      const tree = {
+        persons: [
+          { id: "P1", gender: "Male", names: [{ id: "N1", given: "Al", surname: "Doe", preferred: true }] },
+          { id: "P2", gender: "Female", names: [{ id: "N2", given: "Bea", surname: "Doe", preferred: true }] },
+          { id: "P3", gender: "Male", names: [{ id: "N3", given: "Cy", surname: "Doe", preferred: true }] },
+        ],
+        relationships: [
+          { id: "R1", type: "ParentChild", parent: "P1", child: "P2" },
+          { id: "R2", type: "ParentChild", parent: "P2", child: "P3" },
+          { id: "R3", type: "ParentChild", parent: "P3", child: "P1" },
+        ],
+        sources: [],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("ancestry cycle"))
+      ).toBe(true);
+    });
+
+    it("rejects a person recorded as their own parent (self-loop)", async () => {
+      const tree = {
+        persons: [
+          { id: "P1", gender: "Male", names: [{ id: "N1", given: "Al", surname: "Doe", preferred: true }] },
+        ],
+        relationships: [
+          { id: "R1", type: "ParentChild", parent: "P1", child: "P1" },
+        ],
+        sources: [],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("ancestry cycle"))
+      ).toBe(true);
+    });
+
+    it("accepts a valid multi-generation lineage (no false-positive cycle)", async () => {
+      const tree = {
+        persons: [
+          { id: "P1", gender: "Male", names: [{ id: "N1", given: "Al", surname: "Doe", preferred: true }] },
+          { id: "P2", gender: "Female", names: [{ id: "N2", given: "Bea", surname: "Doe", preferred: true }] },
+          { id: "P3", gender: "Male", names: [{ id: "N3", given: "Cy", surname: "Doe", preferred: true }] },
+        ],
+        relationships: [
+          { id: "R1", type: "ParentChild", parent: "P3", child: "P2" },
+          { id: "R2", type: "ParentChild", parent: "P2", child: "P1" },
+        ],
+        sources: [],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(true);
+      expect(
+        result.errors.some((e) => e.message.includes("ancestry cycle"))
+      ).toBe(false);
+    });
+
     it("reports fact type not in PascalCase", async () => {
       const tree = {
         persons: [
