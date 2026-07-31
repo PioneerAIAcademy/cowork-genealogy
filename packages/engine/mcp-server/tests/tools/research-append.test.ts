@@ -734,7 +734,7 @@ describe("research_append (Phase 3)", () => {
     expect(r.ok && r.entryId).toBe("ps_001");
   });
 
-  // docs/plan/research-guardrail-bypass-plan.md §4.2 — tier/exhaustiveness cross-field guardrail.
+  // docs/specs/guardrail-enforcement-spec.md §5 — tier/exhaustiveness cross-field guardrail.
   it("rejects tier 'proved' when the question's exhaustive_declaration.declared is false", async () => {
     await writeProject(); // phase3Research(): q_001 defaults to exhaustive_declaration.declared: false
     const before = await readFile(join(dir, "research.json"), "utf-8");

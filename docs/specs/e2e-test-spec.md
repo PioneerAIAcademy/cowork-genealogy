@@ -929,8 +929,9 @@ presence of the `guardrail_shadow_violations` key (the two shipped in the same
 commit). Retroactively scoring the corpus is tracked as issue #913, and needs
 the checks replayed at a pinned version to be meaningful.
 
-Design rationale and the §4.1 shadow-mode sibling:
-`docs/plan/research-guardrail-bypass-plan.md` §4.4.
+Design rationale, the shadow-mode sibling check, and the production layers these
+three sit alongside: `docs/specs/guardrail-enforcement-spec.md` (§8 for these
+checks, §7 for the shadow-mode window).
 
 ## 8. Result Artifacts
 
