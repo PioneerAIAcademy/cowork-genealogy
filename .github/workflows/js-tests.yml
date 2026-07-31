@@ -69,15 +69,15 @@ jobs:
           fi
 
       - if: steps.scope.outputs.relevant == 'true'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # pnpm BEFORE setup-node so the npm-cache step can find it. Version is
       # read from the root package.json `packageManager` field.
       - if: steps.scope.outputs.relevant == 'true'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - if: steps.scope.outputs.relevant == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'pnpm'
@@ -120,10 +120,10 @@ jobs:
           fi
 
       - if: steps.scope.outputs.relevant == 'true'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - if: steps.scope.outputs.relevant == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'

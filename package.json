@@ -16,7 +16,7 @@
     "server": "bash apps/server/run-dev.sh"
   },
   "devDependencies": {
-    "turbo": "^2.3.3",
+    "turbo": "^2.10.7",
     "typescript": "^5.9.3"
   },
   "pnpm": {

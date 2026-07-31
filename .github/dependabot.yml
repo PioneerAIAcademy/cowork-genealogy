@@ -30,17 +30,34 @@
 #                         6.10.2, all of which call it and all of which cap their
 #                         eslint peer at 9. Raise this only when those plugins
 #                         ship eslint-10-compatible releases.
+#   json-schema-to-zod    eval/app pins `zod ^3` and generates lib/schema/*.ts
+#         2.6.1           with this at postinstall (scripts/gen-zod.ts). 2.8.x
+#                         emits the zod-v4 API (`z.core.$ZodIssue`), which does
+#                         not typecheck against zod 3 — `npm run typecheck`
+#                         fails with 8 errors. Raise this only together with
+#                         moving eval/app to zod 4.
 #
-# All three ignores are scoped to `version-update:*` update-types, so they
+# All four ignores are scoped to `version-update:*` update-types, so they
 # suppress only routine version bumps — a genuine *security* advisory on any of
 # these packages still opens a PR.
 #
-# The eslint pin was already written down, in a comment at the top of
-# eval/app/eslint.config.mjs, and PRs #1043 and #1047 floated it anyway: a bot
-# bumps the version and leaves the prose behind. Both merged green and broke
-# `npm run lint` in both trees with the exact TypeError that comment predicts.
-# Nothing in CI lints, so nothing noticed. A pin a bot can reach needs an
-# `ignore` here, not only a comment where a human would find it.
+# TWO OF THESE WERE ALREADY PINNED, AND THE BOT FLOATED THEM ANYWAY. That is the
+# pattern worth internalizing, because it recurs:
+#
+#   - eslint was documented in a comment at the top of eval/app/eslint.config.mjs
+#     naming the three plugins and `context.getFilename()` by name. #1043/#1047
+#     bumped the version and left the prose behind; both merged green and broke
+#     `npm run lint` in both trees (#1053 reverted them).
+#   - json-schema-to-zod was pinned EXACTLY — `"2.6.1"`, no caret, unlike its
+#     caret-ranged neighbours. #1042 proposed 2.8.1 regardless.
+#
+# Dependabot does not read prose and does not treat an exact pin as intent. A pin
+# it can reach needs an `ignore` here, where it will actually be read.
+#
+# And note the update-type on this one: 2.6.1 -> 2.8.1 is semver-MINOR, so a
+# major-only ignore would not have caught it — the same trap as python
+# 3.12 -> 3.14 under the docker entry below. Match the ignore to how the version
+# actually moves, not to how breaking the change feels.
 #
 # ── Engine lockfile caveat ────────────────────────────────────────────────────
 # packages/engine/mcp-server pins `npm@11.12.1` via its packageManager field, and
@@ -78,6 +95,12 @@ updates:
       - dependency-name: eslint
         update-types:
           - version-update:semver-major
+      # Minor as well as major: 2.6.1 -> 2.8.1 is a semver-MINOR bump that
+      # breaks the typecheck. See the note above.
+      - dependency-name: json-schema-to-zod
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
     groups:
       npm-minor-and-patch:
         patterns:
