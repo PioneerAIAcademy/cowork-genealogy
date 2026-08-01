@@ -16,7 +16,7 @@
     "prebuild": "tsx scripts/gen-zod.ts"
   },
   "dependencies": {
-    "@mantine/core": "7.15.1",
+    "@mantine/core": "9.5.0",
     "@mantine/form": "7.15.1",
     "@mantine/hooks": "7.15.1",
     "@mantine/notifications": "7.15.1",
