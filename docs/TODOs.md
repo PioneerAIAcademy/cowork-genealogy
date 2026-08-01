@@ -575,3 +575,11 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   needs a fresh run plus a genealogist annotation per skill — it needs the judge
   API and a reviewer, which is why it was left. Nothing about the feature is
   pending; this is the eval-cadence debt behind it.
+
+- [ ] **`logIndex` projection for the log↔assertion cross-check** — a
+  `project_context` (or `research_query`) view pairing each research-log entry
+  with whether it has a linked assertion, so a skill can spot an unlogged
+  assertion without reading `research.json`. Proposed in #693 and deliberately
+  not built there: no measured failure motivates it, and the `/research`
+  orchestrator makes zero mid-run whole-file reads, so nothing is currently
+  paying for its absence. File it only if a run is seen failing the cross-check.
