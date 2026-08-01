@@ -124,8 +124,9 @@ is not recorded anywhere. Editing a duplicated reference means editing every
 copy by hand and knowing which ones are meant to differ. The two ways out —
 lint a shared core plus a per-skill "who calls what" section, or derive each
 copy at plugin-build time from the skill's `allowed-tools` — are tracked in
-issue #1112 (which also covers the narrower `places-guidance` exemption
-currently recorded in `docs/TODOs.md`).
+issue #1112, together with the third case: `research-plan`'s deliberately
+specialized `places-guidance.md`, which the lint exempts by name and therefore
+checks only for existence, so a regression inside it passes silently too.
 
 ## 2. Orchestration — the `research` skill
 

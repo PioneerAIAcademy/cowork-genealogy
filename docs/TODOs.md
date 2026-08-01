@@ -534,18 +534,6 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   tool table, and `docs/specs/mcpb-package-spec.md` still tells a manual tester
   to assert 21 tools. No CI reads either, so nothing reds.
 
-- [ ] **A specialized `places-guidance.md` copy is unlinted for drift** — the drift
-  lint (`tests/packaging/skill-guidance.test.ts`) holds 8 skills byte-identical
-  to `plugin/references/places-guidance.md`, but `research-plan`'s copy is
-  deliberately specialized (8bf43be2 split place work by function, so its copy
-  reframes four tools it no longer has as locality-guide's). It now gets only an
-  exists-and-non-empty check, so a genuine regression *inside* that copy — or a
-  canonical edit that should have been mirrored into its shared paragraphs —
-  passes silently. Two ways out: factor the guidance into a shared core plus a
-  per-skill "who calls what" section and lint the core, or derive each skill's
-  copy from the canonical at plugin-build time using its `allowed-tools`. The
-  second kills the duplication problem outright but is a build-step change.
-
 - [ ] **Four shipped plans in `docs/plan/` need a spec to be promoted into.**
   They are shipped but have no spec to fold into, so deleting them under the
   "delete a plan once the work ships" rule would destroy the only written record
