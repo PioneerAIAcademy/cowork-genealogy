@@ -317,6 +317,33 @@ candidates; you still confirm the top ones:
   caveat. Report the record, the conflict, and what would settle it. The
   people in it belong to whoever that record is actually about, and until
   the cross-check clears you do not know that it is your subject.
+- **Pre-1880 US censuses have no relationship column — never write a household
+  relationship as though the record stated it.** The 1850/1860/1870 federal
+  schedules record name, age, sex, birthplace and occupation in household
+  order, and nothing else; "relationship to head of household" is an
+  **1880-onward** field. So every "head", "wife", "son", "daughter" you read
+  off a pre-1880 household is *your inference* from surname, age and the order
+  the names were written in — a materially weaker claim than a stated one. The
+  record's own `ParentChild` / `Couple` edges do not rescue it: those are the
+  indexer's inference from the same three signals, not something the schedule
+  says. Mark the inference as an inference in triage, in the log `notes`, and
+  in what you present.
+  ❌ WRONG: "1860 Springfield household of Daniel Ragan: head Daniel Ragan
+  b.1800 Ireland + wife Margaret Ragan b.1810 Ireland + daughter Hannah b.1845
+  MA + son Patrick b.1847 MA."
+  ✅ CORRECT: "1860 Springfield, one dwelling listing, in order, Daniel Ragan
+  b.1800 Ireland, Margaret Ragan b.1810 Ireland, Hannah b.1845 MA, Patrick
+  b.1847 MA. The 1860 schedule states no relationships — a Daniel/Margaret
+  couple with two children is inferred from shared surname, ages and listing
+  order, not documented."
+  This is not a wording preference. The inferred phrasing is what keeps the
+  next step visible (find a record that *states* the relationship — an 1880
+  census, a marriage record, a probate naming heirs); the asserted phrasing is
+  what makes the next reader stop looking. The same caution applies to any
+  other fact the schedule for that year did not collect — parents' birthplaces
+  (1880+), marital status (1880+), years married and children-borne (1900+),
+  exact month of birth (1900). For which years carry which fields, read
+  `references/census-field-availability.md`.
 - **Cite `matchScore`, never `results[].score` — they are different numbers.**
   Every raw search stub carries a `score` (and a `confidence`): that is
   FamilySearch's own *search relevance*, the unreliable ordering the match-ranker
@@ -385,6 +412,13 @@ before extraction.
 Call `research_log_append` once per search — it assigns the next `log_` id, stamps the timestamp, writes the `results/<log_id>.json` sidecar, validates, and **appends** atomically. See `references/research-log-protocol.md` for field-level guidance.
 
 Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce the search), `outcome`, `resultsExamined`, `resultsAvailable`, `notes` (a one-line summary), and `stagedResultsRef` from Step 3 (the `staged.resultsRef` handle, when present).
+
+**`notes` describes what the record says, not what you concluded from it.** When
+the note summarizes a household, name the relationship-column rule from Step 4
+if the census predates 1880 — the log is the audit trail a later reader
+re-derives the case from, and "head X + wife Y + daughter Z" on an 1860 schedule
+tells them a relationship was documented when none was. Write the listing and
+mark the family structure as inferred.
 
 **What counts as nil is the result COUNT, not `staged`.** A nil search is one that returned **zero** results — only then omit `stagedResultsRef` and leave `results_ref` null. If the search returned one or more results but `staged` is null (no handle was returned), it is **not** a nil search — and you cannot patch it here: `research_log_append` sets `results_ref` only from a `stagedResultsRef`, so the recovery is the Step 3 hard gate (re-run the identical query **with** `projectPath` to get a real handle), never a hand-written sidecar.
 
