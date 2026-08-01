@@ -15,10 +15,13 @@ with the two parsed objects over stdin and NO projectPath — so it runs researc
 + gedcomx + cross-file validation with no disk access and no sidecar-integrity
 blast radius.
 
-Returns None (the caller should SKIP, not fail) whenever the compiled validator
-cannot be run — build absent, `node` missing, subprocess error. The build is
-intentionally not in the run-log snapshot, so a validation *failure* on an
-un-built machine would wrongly red the whole suite.
+Returns None (the caller should SKIP, not fail) ONLY when the compiled validator
+cannot be run at all — the build is absent, or `node` is not installed. The
+build is intentionally not in the run-log snapshot, so a validation *failure* on
+an un-built machine would wrongly red the whole suite. But if node runs and then
+crashes or fails (non-zero exit, empty/unparseable output, timeout), that is
+returned as a validation error and fails loudly — a crash must never be
+mistaken for a missing build and silently passed.
 """
 
 from __future__ import annotations
@@ -77,14 +80,31 @@ def validate_parsed(research: Any, tree: Any) -> list[str] | None:
             encoding="utf-8",
             timeout=30,
         )
-    except (OSError, subprocess.SubprocessError):
+    except FileNotFoundError:
+        # `node` is not installed -> the bridge cannot run at all -> skip, like a
+        # missing build. Never a silent pass on a real validation problem.
         return None
+    except (OSError, subprocess.SubprocessError) as exc:
+        # node was invoked but did not complete (timeout, etc.). That is a real
+        # failure, not a missing build -> fail loudly.
+        return [f"validateParsed bridge did not complete: {exc}"]
 
     out = (proc.stdout or "").strip()
-    if not out:
-        return None
-    try:
-        result = json.loads(out)
-    except json.JSONDecodeError:
-        return None
-    return [str(e) for e in (result.get("errors") or [])]
+    if out:
+        try:
+            result = json.loads(out)
+        except json.JSONDecodeError:
+            pass  # unparseable output => a crash, handled below
+        else:
+            return [str(e) for e in (result.get("errors") or [])]
+
+    # The build IS present (checked at the top), yet node produced no parseable
+    # output. That is a validator CRASH (e.g. a malformed tree that trips a
+    # TypeError in the TS validator), NOT a missing build. Fail loudly with
+    # stderr so a crash is never mistaken for "unavailable" and passed
+    # (finding 1, #987 review).
+    stderr = (proc.stderr or "").strip()[:800]
+    return [
+        f"validateParsed bridge crashed (node exit {proc.returncode}); "
+        f"stderr: {stderr or '(none)'}"
+    ]

@@ -820,3 +820,35 @@ def test_full_validation_catches_reference_integrity():
 
     ok = _named(_run_universal(_VALID_TREE), "test_project_files_pass_full_validation")
     assert ok is not None and ok.passed, "a clean project must pass full validation"
+
+
+def test_full_validation_catches_cross_file_subject_person_id():
+    # #987 plan §2/§6: the most likely init-project defect — subject_person_ids
+    # naming a person the tree does not contain (init-project hand-writes both).
+    from harness.ts_validator import validate_parsed
+
+    if validate_parsed({}, {}) is None:
+        pytest.skip("compiled TS validator (build/) unavailable — skip, not fail")
+
+    research = _empty_research_state()["research_json"]
+    research = {**research, "project": {**research["project"], "subject_person_ids": ["I9"]}}
+    errors = validate_parsed(research, _VALID_TREE)  # tree has I1/I2, not I9
+    assert errors, "a subject_person_ids ref absent from the tree must fail"
+    assert any("subject_person_ids" in e and "I9" in e for e in errors), errors
+
+
+def test_validator_crash_is_not_reported_as_missing_build():
+    # #987 review finding 1: a node crash (non-zero exit, empty stdout) must NOT
+    # be reported as None ("build missing") and silently passed. A bare string in
+    # persons trips a TypeError in the TS validator — exactly the malformed tree
+    # this feature exists to catch.
+    from harness.ts_validator import validate_parsed
+
+    if validate_parsed({}, {}) is None:
+        pytest.skip("compiled TS validator (build/) unavailable — skip, not fail")
+
+    research = _empty_research_state()["research_json"]
+    crash_tree = {"persons": ["I1"], "relationships": [], "sources": []}
+    result = validate_parsed(research, crash_tree)
+    assert result is not None, "a crash must not be reported as missing-build (None)"
+    assert result, "a crash must surface a non-empty error"
