@@ -117,7 +117,7 @@ def test_watchdog_aborts_on_no_progress_when_resume_off(tmp_path, monkeypatch):
     fx = _fixture(
         tmp_path, progress_stall_seconds=0.3, inactivity_seconds=2, wall_clock_seconds=30
     )
-    _tc, _t, usage, aborted, _e, _b, _g = _drive(fx, tmp_path, resume_on_stall=False)
+    _tc, _t, usage, aborted, _e, _b, _c, _g = _drive(fx, tmp_path, resume_on_stall=False)
     assert aborted == "no_progress_stall"
     assert usage["resumes"] == 0
     assert usage["session_id"] == "S1"  # captured from the init SystemMessage
@@ -147,7 +147,7 @@ def test_resume_recovers_a_stall_in_safe_state(tmp_path, monkeypatch):
     fx = _fixture(
         tmp_path, progress_stall_seconds=0.3, inactivity_seconds=2, wall_clock_seconds=30
     )
-    _tc, _t, usage, aborted, _e, _b, _g = _drive(fx, tmp_path, resume_on_stall=True)
+    _tc, _t, usage, aborted, _e, _b, _c, _g = _drive(fx, tmp_path, resume_on_stall=True)
     assert aborted is None  # completed via resume, no abort
     assert usage["resumes"] == 1
     assert calls["n"] == 2  # query was re-issued with resume

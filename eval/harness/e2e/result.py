@@ -94,6 +94,15 @@ class E2eResult:
     # this list is the only record that it was attempted.
     blocked_tree_reads: list[dict[str, Any]] = field(default_factory=list)
 
+    # Main-thread `extraction_append` calls the PreToolUse hook denied — the
+    # router substituting for a failed record-extractor spawn and doing the
+    # extraction itself (#942). Each entry is {tool, args, blocked_by:"context"}.
+    # Kept separate from `blocked_tree_reads` because this is a WRITE, not a
+    # read, and a different guard (the per-context subagent-only policy, not the
+    # tree block) denied it. Like the list above, a denied call never reaches
+    # `tool_calls`, so this is its only trace.
+    blocked_context_calls: list[dict[str, Any]] = field(default_factory=list)
+
     # Compact per-subagent transcript summaries (agent_type, per-turn
     # stop_reason / output_tokens / block shape, and a `runaway_thinking` flag).
     # Captured from the SDK's ephemeral subagent cache — which the runlog

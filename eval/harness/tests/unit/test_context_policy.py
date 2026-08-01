@@ -10,6 +10,7 @@ rather than setting it to None.
 """
 
 from harness.context_policy import (
+    _DENIAL_REASONS,
     SUBAGENT_ONLY_TOOLS,
     bare_tool_name,
     is_subagent_call,
@@ -182,6 +183,67 @@ def test_denial_reason_names_the_fix():
     assert "image_read" in reason
 
 
+# --- extraction_append: the record-extractor spawn-failure guard (#942) -----
+#
+# Same shape as image_read, but UNCONDITIONAL: no skill declares
+# extraction_append (it lives only in agents/record-extractor.md), so the
+# declared-tools exemption can never fire for it. These mirror the image_read
+# cases above and add the "declaring nothing still denies" edge that matters
+# most here, since that is the state every real caller is in.
+
+
+def test_extraction_append_violation_on_main_thread():
+    assert (
+        subagent_only_violation(_main("mcp__genealogy__extraction_append"))
+        == "extraction_append"
+    )
+
+
+def test_extraction_append_no_violation_inside_subagent():
+    assert subagent_only_violation(_sub("mcp__genealogy__extraction_append")) is None
+
+
+def test_extraction_append_denied_even_with_declared_tools():
+    """No skill declares extraction_append, so the exemption never applies.
+
+    Even passing record-extraction's real declared set must not exempt the
+    router — the tool is held only through @plugin:record-extractor.
+    """
+    declared = {"record_read", "volume_search", "research_log_append"}
+    assert (
+        subagent_only_violation(
+            _main("mcp__genealogy__extraction_append"), declared
+        )
+        == "extraction_append"
+    )
+
+
+def test_extraction_append_denial_tells_the_router_to_stop():
+    reason = subagent_only_denial("extraction_append")["hookSpecificOutput"][
+        "permissionDecisionReason"
+    ]
+    # The fix for a spawn failure is to surface it and stop — NOT to delegate
+    # differently or retry. The reason text is the model's only feedback.
+    assert "record-extractor" in reason
+    assert "stop" in reason.lower()
+    assert "extraction_append" in reason
+    # Must tell it NOT to keep trying — an inverted reason that encouraged a
+    # retry ("retry another way") would relocate the substitution. Assert the
+    # negation, not the bare phrase, so such an inversion fails here.
+    assert "do not retry another way" in reason.lower()
+    assert "retry another way" not in reason.lower().replace(
+        "do not retry another way", ""
+    ), "the only 'retry another way' mention must be the negated one"
+
+
+def test_extraction_append_delegation_itself_is_not_a_violation():
+    """The Task call that spawns record-extractor is main-thread but not guarded."""
+    assert (
+        subagent_only_violation(_main("Task", subagent_type="record-extractor"))
+        is None
+    )
+
+
 # --- the policy set itself ---
 
 
@@ -189,6 +251,25 @@ def test_image_read_is_the_guarded_tool():
     assert "image_read" in SUBAGENT_ONLY_TOOLS
     # Guard against over-reach: record_read etc. must stay callable on main.
     assert "record_read" not in SUBAGENT_ONLY_TOOLS
+
+
+def test_extraction_append_is_the_guarded_tool():
+    assert "extraction_append" in SUBAGENT_ONLY_TOOLS
+    # research_append is the broad writer the record-extractor is denied; it must
+    # NOT get swept into the subagent-only guard, which is about a different axis.
+    assert "research_append" not in SUBAGENT_ONLY_TOOLS
+
+
+def test_every_guarded_tool_has_a_bespoke_denial_reason():
+    """Parity guard: the fallback in subagent_only_denial must stay unreachable.
+
+    A tool added to SUBAGENT_ONLY_TOOLS without its own reason would silently
+    fall back to a vague refusal — this fails loudly instead.
+    """
+    for tool in SUBAGENT_ONLY_TOOLS:
+        assert tool in _DENIAL_REASONS, f"{tool} has no bespoke denial reason"
+        # The reason should reference the tool it denies.
+        assert tool in _DENIAL_REASONS[tool]
 
 
 # --- grounding against the REAL skill files -------------------------------
@@ -234,3 +315,66 @@ def test_real_record_extraction_does_not_declare_image_read():
         subagent_only_violation(_main("mcp__genealogy__image_read"), declared)
         == "image_read"
     )
+
+
+def test_no_skill_declares_extraction_append():
+    """The #942 guard rests on extraction_append having no legitimate main-thread
+    caller. Pin that to the real skill frontmatter so a future skill that
+    declares it — reopening the router-substitution path — fails loudly here.
+    """
+    from harness.allowed_tools import declared_skill_tools
+
+    for skill_dir in sorted(_skills_dir().iterdir()):
+        if not (skill_dir / "SKILL.md").exists():
+            continue
+        declared = declared_skill_tools(skill_dir.name, _skills_dir())
+        assert "extraction_append" not in declared, (
+            f"{skill_dir.name} declares extraction_append in its allowed-tools — "
+            "no skill may. The tool belongs only to @plugin:record-extractor; a "
+            "skill declaring it would exempt its router from the #942 guard. If "
+            "this is intentional, the guard needs the per-skill declared-tools "
+            "scoping that image_read uses."
+        )
+    # And the record-extraction router in particular is guarded on the main thread.
+    declared = declared_skill_tools("record-extraction", _skills_dir())
+    assert (
+        subagent_only_violation(
+            _main("mcp__genealogy__extraction_append"), declared
+        )
+        == "extraction_append"
+    )
+
+
+def test_record_extractor_agent_declares_extraction_append():
+    """The other half of the invariant: the tool must live on the record-extractor
+    agent's `tools:` frontmatter, under BOTH server spellings (CLAUDE.md
+    "Dual-spelled tool names"), or the guard would deny a call nobody can
+    legitimately make.
+
+    Checks the qualified `mcp__…` spellings inside the YAML frontmatter — NOT the
+    bare `extraction_append`, which appears throughout the prose body (Step 4).
+    A bare-substring check would still pass if someone deleted the tools: entries
+    (leaving the subagent unable to call it) or dropped one of the two required
+    spellings, so it must key on what actually grants the tool.
+    """
+    from pathlib import Path
+
+    agent = (
+        Path(__file__).resolve().parents[4]
+        / "packages/engine/plugin/agents/record-extractor.md"
+    )
+    text = agent.read_text(encoding="utf-8")
+    # Isolate the YAML frontmatter (between the first two `---` fences). maxsplit=2
+    # keeps any `---` thematic break in the body out of parts[1].
+    parts = text.split("---", 2)
+    assert len(parts) >= 3, "record-extractor.md must open with YAML frontmatter"
+    frontmatter = parts[1]
+    for spelling in (
+        "mcp__genealogy__extraction_append",
+        "mcp__remote-devices__Genealogy_Research__extraction_append",
+    ):
+        assert spelling in frontmatter, (
+            f"record-extractor.md frontmatter must declare {spelling} — the tool "
+            "is held only by this agent, and CLAUDE.md requires both server "
+            "spellings; a prose mention of the bare name does not grant it."
+        )

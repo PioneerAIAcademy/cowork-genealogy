@@ -40,6 +40,8 @@ from claude_agent_sdk import (
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
+    is_subagent_call,
+    subagent_only_denial,
 )
 from harness.skill_invocation import (
     find_effects_without_invocation,
@@ -153,6 +155,33 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
     if not tool_name.startswith("mcp__"):
         return False
     return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
+
+
+def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
+    """Whether this is `extraction_append` on the main thread — the #942 bug.
+
+    `extraction_append` is the record-extractor subagent's private writer: it is
+    declared by NO skill's `allowed-tools` and lives only on
+    `agents/record-extractor.md`. So the only legitimate caller is the
+    Task-spawned subagent, whose PreToolUse firing carries `agent_id`; a call on
+    the main thread (no `agent_id`) is the router substituting for a failed
+    spawn and doing the extraction itself.
+
+    This is why the per-context policy binds in e2e for THIS tool where it
+    cannot for `image_read` (see `harness.context_policy` docstring): `image_read`
+    is declared by the `search-images` skill and called in-session, so e2e — which
+    can't attribute an in-session call to a skill — can't tell a legitimate browse
+    from a violation. `extraction_append` has no such in-session caller, so
+    `agent_id` presence alone is a sufficient discriminator. We deny the bare tool
+    directly rather than routing through `subagent_only_violation`, which guards the
+    whole set and would also deny a legitimate main-session `image_read` browse.
+    """
+    if not input_data.get("tool_name", "").startswith("mcp__"):
+        return False
+    return (
+        _bare_tool_name(input_data["tool_name"]) == "extraction_append"
+        and not is_subagent_call(input_data)
+    )
 
 
 def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
@@ -562,7 +591,7 @@ async def _run_agent(
     """Spawn the agent SDK and consume messages until done or capped.
 
     Returns (tool_calls, transcript_chunks, usage, aborted_reason, error,
-    blocked_tree_reads).
+    blocked_tree_reads, blocked_context_calls, guardrail_shadow_violations).
     """
     tool_calls: list[dict[str, Any]] = []
     transcript: list[str] = []
@@ -582,6 +611,10 @@ async def _run_agent(
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
+    # Every denied main-thread `extraction_append` — the router doing the
+    # record-extractor's job because the subagent failed to spawn (#942). A
+    # denied call never reaches `tool_calls`, so this list is its only trace.
+    blocked_context_calls: list[dict[str, Any]] = []
     # Continue-nudge state: when the agent voluntarily yields before
     # project.status == "completed" (the known "narrated next step then
     # stopped" stall), the Stop hook vetoes the yield and tells it to resume —
@@ -671,14 +704,37 @@ async def _run_agent(
         if not tool_name.startswith("mcp__"):
             return {}
 
-        # NOTE: the per-context tool policy (harness/context_policy.py) is
-        # deliberately NOT enforced here — see docs/plan/image-read-context-policy.md
-        # §4.1. It is unit-only because the guard needs to know which SKILL is
-        # active, and e2e cannot know: sub-skills run in this same session via
-        # the Skill tool (no `agent_id` to attribute them), so a legitimate
-        # `search-images` browse — which declares `image_read` and pages through
-        # volumes itself — is indistinguishable from a record-extraction router
-        # violation. Denying on the bare tool name would break real browsing.
+        # NOTE: the per-context tool policy (harness/context_policy.py) is only
+        # PARTIALLY enforced here, and the split is deliberate — see that
+        # module's docstring and docs/plan/image-read-context-policy.md §4.1.
+        #   - `image_read` is NOT enforced in e2e: the guard needs to know which
+        #     SKILL is active, and e2e cannot — sub-skills run in this same
+        #     session via the Skill tool (no `agent_id`), so a legitimate
+        #     `search-images` browse (it declares `image_read` and pages volumes
+        #     itself) is indistinguishable from a router violation. Denying on the
+        #     bare name would break real browsing.
+        #   - `extraction_append` IS enforced (below): no skill declares it, so
+        #     there is no in-session caller to confuse it with. The only
+        #     legitimate caller is the Task-spawned record-extractor (carries
+        #     `agent_id`); a main-thread call is the #942 router substitution.
+        #     `agent_id` presence alone discriminates, so the caveat above does
+        #     not transfer.
+        if is_main_thread_extraction_append(input_data):
+            bare = _bare_tool_name(tool_name)
+            blocked_context_calls.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "context",
+                }
+            )
+            transcript.append(
+                f"\n**[BLOCKED]** `{bare}` denied on the main thread — writing "
+                "extracted assertions is the record-extractor subagent's job. If "
+                "it failed to spawn, report the failure and stop (#942).\n"
+            )
+            _emit(f"[blocked context call] {bare} (main-thread extraction_append)")
+            return subagent_only_denial(bare)
 
         # Block tree-reading tools BEFORE counting toward the cap — a denied
         # call never runs, so it shouldn't consume the budget. The run
@@ -1114,6 +1170,7 @@ async def _run_agent(
         aborted_reason,
         error,
         blocked_tree_reads,
+        blocked_context_calls,
         guardrail_shadow_violations,
     )
 
@@ -1248,6 +1305,7 @@ async def run_e2e_test(
             aborted,
             error,
             blocked_tree_reads,
+            blocked_context_calls,
             guardrail_shadow_violations,
         ) = await _run_agent(
             fixture=fixture,
@@ -1346,6 +1404,7 @@ async def run_e2e_test(
             error=error,
             tags=fixture.tags,
             blocked_tree_reads=blocked_tree_reads,
+            blocked_context_calls=blocked_context_calls,
             guardrail_bypass_violations=guardrail_bypass_violations,
             guardrail_shadow_violations=guardrail_shadow_violations,
             subagents=subagents,

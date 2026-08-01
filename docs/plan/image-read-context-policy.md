@@ -161,7 +161,9 @@ hook is synchronous, fails **closed**, and works under parallel subagents.
 ## 4. The change — IMPLEMENTED
 
 `eval/harness/harness/context_policy.py` is the shared home (e2e imports from
-`harness.*`, never the reverse). It exposes `SUBAGENT_ONLY_TOOLS = {"image_read"}`,
+`harness.*`, never the reverse). It exposes `SUBAGENT_ONLY_TOOLS` (originally
+`{"image_read"}`; issue #942 added `extraction_append`, and per-tool denial reasons —
+see that module's docstring for the e2e-enforcement split between the two),
 `subagent_only_violation(input_data)`, and `subagent_only_denial(bare)`. Both existing
 `pretool_hook`s call it before their budget counters — a denied call never runs, so it
 must not consume the budget (the ordering the e2e tree-block already uses).
