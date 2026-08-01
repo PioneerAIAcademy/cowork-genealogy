@@ -123,8 +123,9 @@ contents. Whether each divergence is deliberate specialization or silent rot
 is not recorded anywhere. Editing a duplicated reference means editing every
 copy by hand and knowing which ones are meant to differ. The two ways out —
 lint a shared core plus a per-skill "who calls what" section, or derive each
-copy at plugin-build time from the skill's `allowed-tools` — are recorded in
-`docs/TODOs.md`.
+copy at plugin-build time from the skill's `allowed-tools` — are tracked in
+issue #1112 (which also covers the narrower `places-guidance` exemption
+currently recorded in `docs/TODOs.md`).
 
 ## 2. Orchestration — the `research` skill
 
@@ -243,10 +244,10 @@ which matches whatever prefix the session exposes. The same test fails any
 > (`eval/harness/harness/auth.py`, `apps/server/app/agent/real_agent.py`,
 > `tests/packaging/agent-tool-names.test.ts`) describe that as *eager-loading*
 > the schemas to avoid deferral. The name reads the other way, and committed
-> runlogs still show heavy ToolSearch use. Nobody has confirmed the polarity.
-> It does not change the rule above — bare-name search is correct under either
-> reading — but it does mean the three comments may be describing the opposite
-> of what the flag does.
+> runlogs still show heavy ToolSearch use. Nobody has confirmed the polarity
+> (issue #1110). It does not change the rule above — bare-name search is
+> correct under either reading — but it does mean the three comments may be
+> describing the opposite of what the flag does.
 
 **Known limit:** every lint above stops at spelling. Nothing in the repo
 verifies that a *granted* tool actually binds at runtime (the SDK handshake
