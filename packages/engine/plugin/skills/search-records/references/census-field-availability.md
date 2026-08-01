@@ -109,7 +109,9 @@ and of both parents. Drops the children-born counts.
 
 ### 1930 — age at first marriage
 
-**Age at first marriage** (unique to 1930), year of immigration, naturalization
+**Age at first marriage** (column 15, asked of every married person — 1940
+asks it too, but only of women and only on the 5% supplementary sample, so
+1930 is the year to reach for), year of immigration, naturalization
 status, language spoken before coming to the US, veteran status and which war,
 home value or monthly rent, and whether the household owned a radio set. No
 naturalization year.
@@ -173,3 +175,36 @@ rather than an enumerator's transcription.
   their own schedules and often carry fields the federal census of that decade
   lacks — check the collection description rather than assuming the federal
   pattern.
+
+---
+
+## Sources
+
+The year-boundary claims above were checked against these, not written from
+memory. Check here first if a claim looks wrong; correct the table and this
+list together.
+
+- **[Clues in Census Records, 1850–1950](https://www.archives.gov/research/census/1850-1950)**
+  (US National Archives) — column-level confirmation for the 1870 parents'
+  foreign-birth flags (cols 11–12) vs. the 1880 parents' *birthplaces*
+  (cols 25–26) and relationship-to-head; 1900 month-and-year of birth (col 7);
+  children born/living on 1900 (cols 11–12) and 1910 (cols 10–11); 1920 year of
+  naturalization (col 15).
+- **[The 1930 Census Schedules](https://www.archives.gov/publications/prologue/2002/spring/1930-census-2.html)**
+  and **[IPUMS 1930 enumerator instructions](https://usa.ipums.org/usa/voliii/inst1930.shtml)**
+  — age at first marriage is 1930 col 15, asked of every married person.
+- **[1940 Census, General Information](https://www.archives.gov/research/census/1940/general-info)**
+  — the circled X marking the informant, and the 5% supplementary-sample
+  questions.
+- **[United States Federal Census](https://www.familysearch.org/en/wiki/United_States_Federal_Census)**
+  (FamilySearch Research Wiki) — 1850 as the first census naming every free
+  person.
+- **[1841](https://en.wikipedia.org/wiki/1841_United_Kingdom_census)** /
+  **[1851 United Kingdom census](https://en.wikipedia.org/wiki/1851_United_Kingdom_census)**
+  and **[Census Returns for England and Wales 1841–1911](https://www.digitalpanopticon.org/Census_Returns_for_England_and_Wales_1841-1911)**
+  (Digital Panopticon) — 1841 ages 15+ rounded down to five and no relationship
+  column; 1851 as the first with relationship, exact age, and birth parish.
+
+Not independently re-verified here, and the first thing to doubt: the finer
+1890 question list, the 1910/1920/1930 language and veteran columns, and the
+1950 sample-line detail.
