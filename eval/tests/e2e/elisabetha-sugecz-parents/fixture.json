@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 11, flags adds_father/adds_mother, confidence 3). Draft transcribed from a Croatian church baptismal record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 11, flags adds_father/adds_mother, confidence 3), resolved 2026-07-31: the hint is a FALSE match and no indexed record answers the question. Now a restraint test — an avoid finding on the hinted parents (Thomas Sugecz / Susanna Petrich, per the 14 Aug 1786 Madžarevo baptism, ark 1:1:QKMN-XYBK) plus a required negative-conclusion finding. Refuted on age: the subject is the named mother in sourced Remetinec baptisms of 1836 and 1837, which a 1786 baptism would place at 49 and 51. See README 'Notes for reviewers' for the full adjudication."
 }

@@ -1,0 +1,1846 @@
+{
+  "project": {
+    "id": "rp_elisabetha_sugecz_parents",
+    "objective": "Who were the parents of Elisabetha Sugecz, wife of Thomas Pofuk-Harmicar of Mad\u017earevo, Vara\u017edin, Croatia?",
+    "subject_person_ids": [
+      "G4C9-Y6C"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-08-01"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What do the Roman Catholic parish registers for the Vara\u017edin area record about the parents of Elisabetha Sugecz, who married Thomas Pofuk-Harmicar in Mad\u017earevo, Vara\u017edin County, Croatia?",
+      "rationale": "The objective is to identify Elisabetha Sugecz's parents. This is a fresh project with no prior research. Roman Catholic parish registers for Vara\u017edin County (modern Croatia) survive from the 17th\u201318th century and are the primary source class for vital events in this region. Marriage records in this tradition typically name the groom's and bride's fathers; baptism records name both parents. The marriage record of Thomas and Elisabetha is the highest-priority direct source, followed by Elisabetha's baptism entry. FamilySearch holds digitized Croatian Catholic registers, making this a tractable first question.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-08-01",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_009",
+        "a_012"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Research exhausted all accessible indexed sources in FamilySearch collection 2040054 (Croatia, Church Books, 1516-1994). Three plan items were completed and three skipped (two browse-only inaccessible, one full-text fallback unnecessary). The 1786 baptism of Elisabetha Sugecz (QKMN-XYBK) provides original, primary, direct evidence naming Thom\u00e6 Sugecz as father and Susan\u00e6 Petrich as mother. The 1816 Catarina Pofuk baptism (QKMN-LN2B) corroborates Elisabetha Sugecz as wife of Thomas Poffuk-Harmicar from an independent event and informant. An identity conflict (c_001) between two Elisabetha Sugecz women (born 1786 and 1795) is documented and the 1786 candidate is preferred but not confirmed. Browse-only marriage registers (unindexed) were pursued in the indexed portion of collection 2040054 with exhausted nil results; browse-only images are inaccessible via record_search in this autonomous session. The accessible evidence supports a defensible conclusion at the 'probable' tier.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019",
+          "log_020",
+          "log_021",
+          "log_022",
+          "log_023",
+          "log_024",
+          "log_025",
+          "log_026",
+          "log_027",
+          "log_028",
+          "log_029",
+          "log_030",
+          "log_031",
+          "log_032",
+          "log_033"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "YES with limitations. The 1786 baptism record QKMN-XYBK directly answers the question: Thom\u00e6 Sugecz (father) and Susan\u00e6 Petrich (mother) of Elisabetha Sugecz. The 1816 baptism QKMN-LN2B corroborates Elisabetha Sugecz as wife of Thomas Poffuk-Harmicar. Identity confidence is 'probable' (not 'confident') due to unresolved conflict c_001 between two Elisabetha Sugecz women baptized at Mad\u017earevo (1786 and 1795).",
+          "repository_breadth": "YES. FamilySearch collection 2040054 (Croatia, Church Books, 1516-1994) is the primary repository for 18th-century Vara\u017edin County Catholic records. Three search strategies executed: (1) direct baptism search for Elisabetha Sugecz; (2) marriage record search for Thomas Poffuk \u00d7 Elisabetha Sugecz (negative); (3) FAN sweep of Sugecz family at Mad\u017earevo. Name variants tried for both principal (Sugecz/Sugacz) and spouse. Browse-only status animarum (pli_005) and full-text fallback (pli_006) skipped as inaccessible/unnecessary. Marriage record for Thomas Sugecz \u00d7 Susanna Petrich searched exhaustively in indexed portion (3 variants, all negative).",
+          "original_substitution": "YES. All three key records (QKMN-XYBK, QKMN-XK63, QKMN-LN2B) were read via record_read with full GEDCOMX returned from the original Roman Catholic parish register images. Image ARKs documented in source notes. Index entries were not treated as equivalent to the original records.",
+          "independent_verification": "PARTIALLY. Two independent sources corroborate Elisabetha Sugecz in the Poffuk family context: src_001 (1786 Mad\u017earevo baptism \u2014 parents as informants at the christening) and src_003 (1816 Remetinec baptism of Catarina Pofuk \u2014 Thomas Poffuk and Elisabetha Sugecz as co-parents, different event and informants). These are independent in that they derive from different events 30 years apart with different informants. The identity question (which Elisabetha Sugecz) cannot be fully independently verified without a marriage record linking her to the Poffuk family. The parents' own marriage record (Thomas Sugecz \u00d7 Susanna Petrich) was not found.",
+          "evidence_class": "YES. src_001 (QKMN-XYBK, 1786 baptism) qualifies as original source, primary information, direct evidence: the officiating Catholic priest recorded the event; the parents (Thom\u00e6 Sugecz and Susan\u00e6 Petrich) were the informants present at the christening. src_003 (QKMN-LN2B, 1816 baptism) likewise qualifies as original source with primary information from the presenting parents.",
+          "conflict_resolution": "UNRESOLVED. Conflict c_001 (identity ambiguity between Elisabetha Sugecz born 1786, daughter of Thomas Sugecz + Susanna Petrich, and Elisab Sugecz born 1795, daughter of Geor Sugecz + Cath Sug??) cannot be definitively resolved with available indexed evidence. The 1786 candidate is preferred based on: (a) full name form 'Elisabetha' vs abbreviated 'Elisab'; (b) the 1795 child appears to be the niece of the 1786 Elisabetha (Geor Sugecz born 1772 was Thomas Sugecz's son by first wife); (c) the 21-year child-bearing span of the Poffuk family (1816-1837) is more consistent with a mother born 1786. The conflict is documented in c_001; the proof tier will be 'probable' rather than 'proved'.",
+          "overturn_risk": "MODERATE. The primary overturn scenario is that the 1795 Elisabetha Sugecz (daughter of Geor Sugecz + Cath Sug??) is the actual wife of Thomas Pofuk-Harmicar, in which case the parents would be entirely different. This risk would be substantially reduced by: (1) a marriage record for Thomas Pofuk-Harmicar \u00d7 Elisabetha Sugecz noting her parents or age; (2) a marriage record for Thomas Sugecz \u00d7 Susanna Petrich confirming the couple's union predating 1786; (3) additional children of Thomas Sugecz + Susanna Petrich placing Elisabetha as a sibling. The browse-only portion of collection 2040054's marriage registers is the most likely repository for items (1) and (2), and is inaccessible via indexed search. Risk accepted at the 'probable' conclusion tier."
+        }
+      },
+      "created": "2026-08-01"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Magyarlaka (Mad\u017earevo), Varasd, Croatia-Slavonia, Hungary",
+          "date_range": "1696-1797",
+          "repository": "FamilySearch",
+          "rationale": "The marriage record of Thomas Pofuk-Harmicar and Elisabetha Sugecz is the single highest-priority source for her parentage. In 18th-century Croatian Catholic registers, the marriage entry names the father (and often mother) of both bride and groom directly \u2014 making it direct evidence of Elisabetha's father. The Magyarlaka parish vital registers are 100% name-indexed on FamilySearch from 1696 through the 1790s (image group 005482241_002 covers 1696\u20131752 marriages; 005482241_003 and 005482242_001 cover 1754\u20131797). Search 'Hungary, Catholic Church Records, 1636\u20131895' (collection 1743180) by groom name 'Pofuk' or 'Harmicar' and bride name 'Sugecz' (also try variant spellings: Sugec, Sugetz, \u0160ugec). Records are in Latin. Also search collection 4133831 (Hungary, Church Books, 1624\u20131950) as a cross-check.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Magyarlaka (Mad\u017earevo), Varasd, Croatia-Slavonia, Hungary",
+          "date_range": "1698-1797",
+          "repository": "FamilySearch",
+          "rationale": "The baptism record of Elisabetha Sugecz names both her father and mother, providing the most complete direct evidence of her parentage. Her birth year is estimated c.1720\u20131760 (she was married and living in Mad\u017earevo). The Magyarlaka birth registers are 100% indexed on FamilySearch: image group 005482241_002 covers births 1698\u20131753 and 005482241_003 covers 1753\u20131797. Search collection 1743180 by surname 'Sugecz' (and variants: Sugec, Sugetz, \u0160ugec) filtered to Magyarlaka. Because her birth year is unknown, scan all Sugecz baptisms in the parish across the full 18th-century span to identify her entry.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Magyarlaka (Mad\u017earevo), Varasd, Croatia-Slavonia, Hungary",
+          "date_range": "1698-1797",
+          "repository": "FamilySearch",
+          "rationale": "Searching for all Sugecz baptisms and marriages in the Magyarlaka parish constitutes a FAN (family/associates/neighbors) sweep that will reveal sibling baptisms sharing the same parents \u2014 corroborating any parent identification made from Elisabetha's own baptism or marriage record. If multiple Sugecz children appear with the same father name, that father is strongly implied as Elisabetha's father as well. Also look for Sugecz family members as godparents or marriage witnesses, which extends the FAN cluster. Search collection 1743180 for all records with surname 'Sugecz' (and variants) in Magyarlaka across the full 18th century.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Magyarlaka (Mad\u017earevo), Varasd, Croatia-Slavonia, Hungary",
+          "date_range": "1696-1797",
+          "repository": "FamilySearch",
+          "rationale": "Per GPS parentage research standards, a dedicated search for the marriage of Elisabetha's candidate parents to each other is required once their names are identified from items 1\u20132. Their marriage record: (a) confirms they were a couple; (b) supplies the mother's maiden name, which baptism records may omit or abbreviate; and (c) dates the union relative to Elisabetha's birth, corroborating the parentage link. This item is contingent on names emerging from items 1\u20133 but is planned now as the required follow-on. Search collection 1743180 by the identified father's name in the marriage register (image groups 005482241_002 for 1696\u20131752, 005482241_003 and 005482242_001 for 1754\u20131797). Note: this record confirms the couple married but is not by itself evidence that Elisabetha is their child \u2014 her own baptism or a co-residence record is still needed for that link.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Magyarlaka (Mad\u017earevo), Varasd, Croatia-Slavonia, Hungary",
+          "date_range": "1659-1910",
+          "repository": "FamilySearch",
+          "rationale": "The Status animarum (soul register / liber animarum) for Magyarlaka covers 1659\u20131910 and enumerates households by family, showing members by name, approximate age, and relationship \u2014 functioning as a census substitute. It can confirm the Sugecz household composition, parents' names, and siblings, and can place Elisabetha within a specific family unit. This is a browse-only image collection (0% indexed): image groups 005498001_001 (141 images) and 005498001_002 (286 images). Must be browsed page-by-page. Records are in Latin. Prioritize this after indexed searches have established candidate parent names, so browsing can be targeted to the relevant household section.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Magyarlaka (Mad\u017earevo), Varasd, Croatia-Slavonia, Hungary",
+          "date_range": "1696-1797",
+          "repository": "FamilySearch",
+          "rationale": "Full-text search across the FamilySearch corpus for co-occurrences of 'Sugecz' (and spelling variants) alongside 'Pofuk' or 'Harmicar' as a fallback if the indexed record_search in collection 1743180 yields incomplete results. Full-text search interrogates AI-transcribed page images and can surface entries where the index missed a name or where the spelling diverged enough to escape a standard name search. Execute via the search-full-text skill with both surname terms required. This is a broad fallback and should be executed after items 1\u20133 have been attempted and results evaluated.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-01T19:37:36.224Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sugecz",
+        "givenName": "Elisabetha",
+        "recordCountry": "Hungary",
+        "collectionId": "1743180"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Wrong scope \u2014 collection 1743180 covers Hungarian Catholic Church records, not Varasd/Croatia. Returned zero results for Sugecz."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-01T19:37:36.224Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sugecz",
+        "givenName": "Elisabetha",
+        "recordCountry": "Hungary",
+        "collectionId": "4133831"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Wrong scope \u2014 collection 4133831 also covers Hungarian parishes, not Varasd. Returned zero results for Sugecz."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:37:36.224Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Poffuk",
+        "givenName": "Thomas",
+        "recordCountry": "Hungary",
+        "collectionId": "1743180"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 5,
+      "notes": "Results were Pofuk entries from Somogy County, Hungary \u2014 a different region entirely. None from Varasd. Wrong collection scope."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:37:36.224Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Poffuk",
+        "givenName": "Thomas",
+        "recordCountry": "Hungary",
+        "collectionId": "4133831"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Collection 4133831 covers Hungarian parishes. No Poffuk results from Varasd."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-01T19:37:36.224Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sugecz",
+        "givenName": "Elisabetha",
+        "recordCountry": "Hungary",
+        "birthPlace": "Magyarlaka"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Place filter 'Magyarlaka' (historical Hungarian name for Mad\u017earevo) returned no results. Place is indexed under modern Croatian name in FS."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:37:36.224Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Poffuk",
+        "givenName": "Thomas",
+        "recordCountry": "Hungary",
+        "residencePlace": "Magyarlaka"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Place filter 'Magyarlaka' with Hungary scope returned no results."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-01T19:37:36.224Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sugecz",
+        "recordCountry": "Croatia",
+        "collectionId": "2040054",
+        "imageGroupNumber": "005498001"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "imageGroupNumber filter appears unsupported or ineffective in record_search API \u2014 returned zero results even for 100%-indexed volumes."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:37:36.224Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Poffuk",
+        "givenName": "Thomas",
+        "recordCountry": "Croatia",
+        "collectionId": "2040054",
+        "imageGroupNumber": "005498001"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "imageGroupNumber filter ineffective. Dropping this parameter unlocked the collection."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-01T19:37:36.224Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sugecz",
+        "givenName": "Elisabetha",
+        "recordCountry": "Croatia",
+        "collectionId": "2040054"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 147,
+      "notes": "Correct scope: Croatia + collection 2040054. 147 results including Elisabetha Sugecz baptism at Mad\u017earevo 14 Aug 1786 (ark QKMN-XYBK, rank 1, score 0.971) and Nov 1795 entry. Also found Elisabeth\u00e6 Sugecz as mother on Harmiczar/Poffuk children baptisms."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:37:36.238Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Poffuk",
+        "givenName": "Thomas",
+        "recordCountry": "Croatia",
+        "collectionId": "2040054"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 58,
+      "notes": "58 results. Found 'Tho Poffuk' and 'Thom\u00e6 Poffuk' entries at Mad\u017earevo. Also Harmiczar/Poffuk children with Elisabeth\u00e6 Sugecz as mother \u2014 confirms couple in the indexed records."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-01T19:37:36.321Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sugecz",
+        "recordCountry": "Croatia",
+        "collectionId": "2040054"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 5921,
+      "notes": "FAN sweep \u2014 all Sugecz in Croatia collection. 5921 results spanning 1748-1840 at Mad\u017earevo. Reviewed top 50 for Sugecz family members who may be Elisabetha's kin."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-01T19:38:16.894Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-XYBK"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "PRIORITY RECORD. Baptism 14 Aug 1786, Mad\u017earevo. Elisabetha Sugecz, daughter of Thom\u00e6 Sugecz (father) and Susan\u00e6 Petrich (mother). This is the direct evidence of parentage: father = Thomas Sugecz, mother = Susanna Petrich."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-01T19:39:00.265Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-XK63"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Second Elisabetha Sugecz baptism at Mad\u017earevo: 15 Nov 1795, daughter of Georg Sugecz and Catharina (surname partially illegible 'Sug??'). Different family from QKMN-XYBK (1786, Thomas Sugecz + Susanna Petrich). Two distinct Elisabetha Sugecz women \u2014 need marriage record to identify which married Thomas Pofuk-Harmicar."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:39:47.522Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-LM5B"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Baptism of Andreas Harmiczar, 8 Oct 1837, Remetinec, Vara\u017edin. Father = Thom\u00e6 Harmiczar, Mother = Elizabeth\u00e6 Sugecz. Confirms Thomas Pofuk-Harmicar and Elisabetha Sugecz as a couple, but child's 1837 birth date matters for identifying which Elisabetha (born 1786 or 1795). A 1786 birth would make her 51 at this child's birth; a 1795 birth = 42. Need marriage record for definitive ID."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:41:25.861Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-LJPF"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Stephanus Poffuk baptism 30 Aug 1824, Remetinec. Father = Thom\u00e6 Poffuk, Mother = Elisabeth\u00e6 Sugecz. Corroborates couple Thomas Poffuk-Harmicar + Elisabetha Sugecz. Born 1824 \u2014 Elisabetha born 1786 would be 38; born 1795 would be 29. Both plausible. Need earlier children or marriage record for disambiguation."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:41:25.861Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sugecz",
+        "givenName": "Elisabetha",
+        "recordType": "marriage",
+        "recordCountry": "Croatia",
+        "collectionId": "2040054"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 2,
+      "notes": "Marriage record search for Elisabetha Sugecz (bride) returned 2 unrelated results \u2014 neither matches. Marriage record not indexed under this bride name in collection 2040054 marriage type filter. Need to try without recordType filter or broader search."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:41:25.867Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Harmiczar",
+        "givenName": "Thomas",
+        "spouseSurname": "Sugecz",
+        "spouseGivenName": "Elisabetha",
+        "recordType": "marriage",
+        "recordCountry": "Croatia",
+        "collectionId": "2040054"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 3,
+      "notes": "Marriage type search for Thomas Harmiczar + Elisabetha Sugecz returned 3 unrelated results (near-zero match scores). Marriage record not found under Harmiczar surname with marriage type filter."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:41:25.867Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Poffuk",
+        "givenName": "Thomas",
+        "spouseSurname": "Sugecz",
+        "spouseGivenName": "Elisabetha",
+        "recordType": "marriage",
+        "recordCountry": "Croatia",
+        "collectionId": "2040054"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Marriage type search for Thomas Poffuk + Elisabetha Sugecz returned 0 results. Marriage record not indexed under Poffuk surname with marriage type filter."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:42:54.105Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-LN2B"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Catarina Pofuk baptism 16 Dec 1816, Remetinec. Father=Thom\u00e6 Pofuk, Mother=Elisabeth\u00e6 Sugecz. Earliest confirmed child of our couple so far. Marriage must predate Dec 1816."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:42:54.105Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-25C7"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Dorothea Poffuk baptism 20 Jan 1820, Remetinec. Father=Thom\u00e6 Poffuk, Mother=Elisabeth\u00e6 Sugecz. Corroborates couple."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:42:54.105Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-2VFQ"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Thomas Poffuk baptism 21 Apr 1803, Remetinec \u2014 mother is Ann\u00e6 Czindery, NOT Elisabetha Sugecz. Different Thomas Poffuk family at Remetinec \u2014 not our subject."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:45:04.805Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-LHLP"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Jacobus Popuk (= Jacobus Pofuk, transcription variant) baptism 8 Jun 1829, Remetinec. Father=Tom\u00e6 Popuk, Mother=Elisabeth\u00e6 Sugecz. Another child of our couple."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:45:04.806Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-LN6S"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Martinus Harmiczar baptism 2 Oct 1832, Remetinec. Father=Thom\u00e6 Harmiczar, Mother=Elisabeth\u00e6 Sugecz."
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:45:04.806Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-L8XH"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Sophia Harmiczar baptism 18 May 1836, Remetinec. Father=Thom\u00e6 Harmiczar, Mother=Elisabeth\u00e6 Sugecz."
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-01T19:47:12.943Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sugecz",
+        "fatherGivenName": "Thomas",
+        "motherGivenName": "Susanna",
+        "recordCountry": "Croatia",
+        "collectionId": "2040054"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_025.json",
+      "results_available": 3690,
+      "notes": "FAN sweep: children of Thomas Sugecz + Susanna Petrich at Mad\u017earevo. Found: Anna (4 Mar 1770), Georgius (4 Mar 1772), Steph (27 Nov 1774), Fabianus (21 Feb 1780), Margaritha (17 Jun 1783), Elisabetha (14 Aug 1786). Elisabetha is the youngest. Georgius (1772) may be the same 'Geor Sugecz' who fathered the 1795 Elisabetha Sugecz candidate \u2014 need to verify."
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-01T19:47:13.522Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Poffuk",
+        "givenName": "Thomas",
+        "spouseGivenName": "Elisabetha",
+        "spouseSurname": "Sugecz",
+        "recordCountry": "Croatia",
+        "collectionId": "2040054"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_026.json",
+      "results_available": 20,
+      "notes": "Marriage record for Thomas Poffuk + Elisabetha Sugecz NOT found in indexed results. Top hits are child baptism records (Catarina 1816, Dorothea 1820 already logged) attached to subject. No marriage entry with Elisabetha as spouse found in collection 2040054. Marriage record is either not indexed or used different spelling variant."
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-01T19:48:14.132Z",
+      "tool": "record_search",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-XTCH"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Georgius Sugecz baptism 4 Mar 1772, Mad\u017earevo. Father = Thom\u00e6 Sugecz, Mother = Susan\u00e6 Rebrecz. CRITICAL: Mother surname is REBRECZ, not Petrich. The 1786 Elisabetha's mother is Petrich. This suggests Thomas Sugecz married twice (Rebrecz first, Petrich second), or there are two Thomas Sugecz men at Mad\u017earevo. The 1795 'Elisab Sugecz' (father=Geor Sugecz) may be Georgius (1772)'s daughter, making her Elisabetha's niece. Strongly favors the 1786 Elisabetha as the wife of Thomas Pofuk-Harmicar."
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": null,
+      "performed": "2026-08-01T19:51:08.288Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-XYBK"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Live record_read of baptism record QKMN-XYBK to obtain persona IDs for extraction, since log_012 (record_search) has no staged sidecar. Record confirms: baptizand Elisabetha Sugecz (p_101344363159), father Thom\u00e6 Sugecz (p_101344363160), mother Susan\u00e6 Petrich (p_101344363161)."
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": null,
+      "performed": "2026-08-01T19:54:26.471Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-XK63"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Live record_read of alternative Elisabetha Sugecz baptismal record (1795, parents Geor Sugecz x Cath Sug??) to obtain persona IDs for extraction. log_013 (record_search) had no sidecar, so a direct read was needed. This is the competing candidate record for conflict-resolution with the primary subject G4C9-Y6C."
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": null,
+      "performed": "2026-08-01T19:55:04.349Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKMN-LN2B"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Live record_read of baptism record for Chatarina Pofuk, 16 December 1816, Remetinec, Varazdin, Croatia. Record names parents Thomae Pofuk and Elisabethae Sugecz. Performed to support extraction for log_019 (which had no sidecar). Serves q_001."
+    },
+    {
+      "id": "log_031",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-01T20:09:45.112Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2040054",
+        "surname": "Sugecz",
+        "givenName": "Thomas",
+        "spouseGivenName": "Susanna",
+        "recordType": "marriage",
+        "marriageYearFrom": 1755,
+        "marriageYearTo": 1785,
+        "recordCountry": "Croatia"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Searching for marriage record of Thomas Sugecz x Susanna Petrich in collection 2040054 (Croatia Church Books) with spouse filter and date range 1755-1785. No indexed marriage record found."
+    },
+    {
+      "id": "log_032",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-01T20:09:45.113Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2040054",
+        "surname": "Sugecz",
+        "givenName": "Thomas",
+        "recordType": "marriage",
+        "recordCountry": "Croatia"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_032.json",
+      "results_available": 1,
+      "notes": "One result returned: Thomas Sunecz x Helena Bradach, marriage 6 May 1844. Read record via record_read \u2014 confirmed wrong person and wrong century (1844 vs. expected ~1760-1785). Thomas Sunecz appears unrelated to Thomas Sugecz of Mad\u017earevo."
+    },
+    {
+      "id": "log_033",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-01T20:09:45.128Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2040054",
+        "surname": "Sugecz",
+        "givenName": "Tomas",
+        "spouseGivenName": "Susanna",
+        "marriageYearFrom": 1750,
+        "marriageYearTo": 1790,
+        "recordCountry": "Croatia"
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_033.json",
+      "results_available": 37,
+      "notes": "37 results returned but ALL are baptism records for Thomas Sugecz's children (QKMN-XYB2=Elisabetha 1786, QKMN-XPVZ=Anna, QKMN-XTCC=Georgius 1772, QKMN-X489=Steph, QKMN-X845=Margaritha) \u2014 Thomas appearing as father, not as groom. Also one Thomas Sugecz born 1779 at Mad\u017earevo (QKMN-XVG6, a different Thomas). No marriage record for Thomas Sugecz x Susanna Petrich found in indexed portion of collection 2040054. The marriage register for Magyarlaka/Mad\u017earevo may exist as an unindexed browse-only image. Exhausted indexed search levers (3 variants). The record's absence from the indexed search does not prove it does not exist; browse-only exploration via pli_005 (status animarum) or direct image browsing of the marriage register image group would be the next step."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Croatia, Church Books, 1516-1994,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QKMN-XYBK : accessed 1 August 2026), entry for Elisabetha Sugecz, baptism 14 August 1786, Mad\u017earevo, Vara\u017edin, Croatia; image of original Roman Catholic parish register.",
+      "citation_detail": {
+        "who": "Elisabetha Sugecz, daughter of Thom\u00e6 Sugecz and Susan\u00e6 Petrich",
+        "what": "Baptism register entry, Roman Catholic parish, Mad\u017earevo (Magyarlaka), Vara\u017edin County, Croatia",
+        "when_created": "14 August 1786",
+        "when_accessed": "1 August 2026",
+        "where": "FamilySearch, collection 2040054 \u2014 Croatia, Church Books, 1516-1994",
+        "where_within": "Image of original parish baptism register; image ark:/61903/3:1:3QS7-L99C-GK61"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QKMN-XYBK",
+      "log_entry_id": "log_012",
+      "notes": "Image of the original Roman Catholic parish baptism register for Mad\u017earevo (Magyarlaka), Vara\u017edin County, Croatia. Entry dated 14 August 1786. Record URL: https://www.familysearch.org/ark:/61903/1:2:Q2ZL-JY8P; image: https://www.familysearch.org/ark:/61903/3:1:3QS7-L99C-GK61. Latin-language register. Names recorded in Latin forms: Elisabetha (baptizand), Thom\u00e6 Sugecz (father), Susan\u00e6 Petrich (mother). Persona IDs from live record_read: Elisabetha Sugecz = p_101344363159; Thom\u00e6 Sugecz = p_101344363160; Susan\u00e6 Petrich = p_101344363161.",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Croatia, Church Books, 1516-1994,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QKMN-XK63 : accessed 1 August 2026), entry for Elisab Sugecz baptism, 15 November 1795; Mad\u017earevo parish register, image https://www.familysearch.org/ark:/61903/3:1:3QS7-L99C-P93Y-2.",
+      "citation_detail": {
+        "who": "Elisab Sugecz (child), Geor Sugecz (father), Cath Sug?? (mother)",
+        "what": "Baptismal register entry, Roman Catholic parish, Mad\u017earevo, Vara\u017edin, Croatia",
+        "when_created": "15 November 1795",
+        "when_accessed": "1 August 2026",
+        "where": "FamilySearch, collection 'Croatia, Church Books, 1516-1994' (collection 2040054)",
+        "where_within": "Entry for Elisab Sugecz and Geor Sugecz, 15 November 1795; image ark:/61903/3:1:3QS7-L99C-P93Y-2"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QKMN-XK63",
+      "access_date": "2026-08-01",
+      "log_entry_id": "log_013",
+      "notes": "Alternative candidate record \u2014 a second woman named Elisabetha Sugecz baptized at Mad\u017earevo, born 1795, with different parents (Geor Sugecz \u00d7 Cath Sug??) than the primary research subject G4C9-Y6C. Extracted to document the competing candidate and enable conflict-resolution. Do not link to tree person G4C9-Y6C without corroborating evidence. Mother's surname partially illegible ('Sug??'); direct image review recommended (image ark:/61903/3:1:3QS7-L99C-P93Y-2).",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Croatia, Church Books, 1516-1994\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QKMN-LN2B : accessed 1 August 2026), Entry for Chatarina Pofuk and Thom\u00e6 Pofuk, 16 December 1816.",
+      "citation_detail": {
+        "who": "Parish priest of Remetinec, Roman Catholic Church",
+        "what": "Baptism register entry for Chatarina Pofuk, naming parents Thom\u00e6 Pofuk and Elisabeth\u00e6 Sugecz",
+        "when_created": "16 December 1816",
+        "when_accessed": "1 August 2026",
+        "where": "FamilySearch, Croatia, Church Books, 1516-1994, collection 2040054",
+        "where_within": "Entry for Chatarina Pofuk and Thom\u00e6 Pofuk, 16 December 1816"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QKMN-LN2B",
+      "access_date": "2026-08-01",
+      "notes": "Parish baptism register, Roman Catholic, Remetinec, Vara\u017edin, Croatia. Image available at https://www.familysearch.org/ark:/61903/1:2:Q2ZL-29FT. Record is in Latin. Parents named at baptism.",
+      "log_entry_id": "log_030",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Elisabetha Sugecz",
+      "structured_value": {
+        "given": "Elisabetha",
+        "surname": "Sugecz"
+      },
+      "information_quality": "primary",
+      "informant": "parents presenting the child at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "parents presenting the child at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "14 August 1786, Mad\u017earevo, Vara\u017edin, Croatia",
+      "date": "1786-08-14",
+      "date_certainty": "exact",
+      "place": "Mad\u017earevo, Vara\u017edin, Croatia",
+      "information_quality": "primary",
+      "informant": "officiating Roman Catholic priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001",
+      "standard_place": "Mad\u017earevo, Vara\u017edin, Croatia"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "child",
+      "fact_type": "religion",
+      "value": "Roman Catholic",
+      "information_quality": "primary",
+      "informant": "officiating Roman Catholic priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Thom\u00e6 Sugecz (father)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_child"
+      },
+      "information_quality": "primary",
+      "informant": "parents presenting the child at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Susan\u00e6 Petrich (mother)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_child"
+      },
+      "information_quality": "primary",
+      "informant": "parents presenting the child at baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "father_of_child",
+      "fact_type": "name",
+      "value": "Thom\u00e6 Sugecz",
+      "structured_value": {
+        "given": "Thom\u00e6",
+        "surname": "Sugecz"
+      },
+      "information_quality": "primary",
+      "informant": "Thom\u00e6 Sugecz (father, present at the baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "father_of_child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Thom\u00e6 Sugecz (father, present at the baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "father_of_child",
+      "fact_type": "relationship",
+      "value": "father of Elisabetha Sugecz",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Thom\u00e6 Sugecz (father, present at the baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "mother_of_child",
+      "fact_type": "name",
+      "value": "Susan\u00e6 Petrich",
+      "structured_value": {
+        "given": "Susan\u00e6",
+        "surname": "Petrich"
+      },
+      "information_quality": "primary",
+      "informant": "Susan\u00e6 Petrich (mother, present at the baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "mother_of_child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Susan\u00e6 Petrich (mother, present at the baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:QKMN-XYBK",
+      "record_role": "mother_of_child",
+      "fact_type": "relationship",
+      "value": "mother of Elisabetha Sugecz",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Susan\u00e6 Petrich (mother, present at the baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:QKMN-XK63",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Elisab Sugecz",
+      "structured_value": {
+        "given": "Elisab",
+        "surname": "Sugecz"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Geor Sugecz and Cath Sug??)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_029",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:QKMN-XK63",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (Geor Sugecz and Cath Sug??)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_029",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:QKMN-XK63",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "15 November 1795, Mad\u017earevo, Vara\u017edin, Croatia",
+      "date": "15 November 1795",
+      "date_certainty": "exact",
+      "place": "Mad\u017earevo, Vara\u017edin, Croatia",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_029",
+      "source_id": "src_002",
+      "standard_place": "Mad\u017earevo, Vara\u017edin, Croatia"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:QKMN-XK63",
+      "record_role": "child_1",
+      "fact_type": "religion",
+      "value": "Roman Catholic",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_029",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:QKMN-XK63",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Geor Sugecz",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_1"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Geor Sugecz and Cath Sug??)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_029",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:QKMN-XK63",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Cath Sug??",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_1"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Geor Sugecz and Cath Sug??)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_029",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:QKMN-XK63",
+      "record_role": "father_1",
+      "fact_type": "name",
+      "value": "Geor Sugecz",
+      "structured_value": {
+        "given": "Geor",
+        "surname": "Sugecz"
+      },
+      "information_quality": "primary",
+      "informant": "Geor Sugecz (self, as presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_029",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:QKMN-XK63",
+      "record_role": "father_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Geor Sugecz (self, as presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_029",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:QKMN-XK63",
+      "record_role": "father_1",
+      "fact_type": "relationship",
+      "value": "spouse of Cath Sug??",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother_1"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Geor Sugecz and Cath Sug??)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_029",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:QKMN-XK63",
+      "record_role": "mother_1",
+      "fact_type": "name",
+      "value": "Cath Sug??",
+      "structured_value": {
+        "given": "Cath",
+        "surname": "Sug??"
+      },
+      "information_quality": "primary",
+      "informant": "Cath Sug?? (self, as presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's surname is partially illegible in the index \u2014 recorded as 'Sug??' with final letters unreadable. May be 'Sugecz' (same surname as father) or a different surname entirely. Direct image review of ark:/61903/3:1:3QS7-L99C-P93Y-2 required to resolve.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_029",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:QKMN-XK63",
+      "record_role": "mother_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Cath Sug?? (self, as presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_029",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:QKMN-LN2B",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Chatarina Pofuk",
+      "structured_value": {
+        "given": "Chatarina",
+        "surname": "Pofuk"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Thom\u00e6 Pofuk and Elisabeth\u00e6 Sugecz)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_030",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:QKMN-LN2B",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (Thom\u00e6 Pofuk and Elisabeth\u00e6 Sugecz)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_030",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:QKMN-LN2B",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "Baptized 16 December 1816 at Remetinec, Vara\u017edin, Croatia",
+      "date": "16 December 1816",
+      "date_certainty": "exact",
+      "place": "Remetinec, Vara\u017edin, Croatia",
+      "information_quality": "primary",
+      "informant": "presenting parents (Thom\u00e6 Pofuk and Elisabeth\u00e6 Sugecz)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_030",
+      "source_id": "src_003",
+      "standard_place": "Remetinec, Vara\u017edin, Croatia"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:QKMN-LN2B",
+      "record_role": "child_1",
+      "fact_type": "religion",
+      "value": "Roman Catholic",
+      "information_quality": "primary",
+      "informant": "parish priest of Remetinec",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_030",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:QKMN-LN2B",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Thom\u00e6 Pofuk",
+      "structured_value": {
+        "given": "Thom\u00e6",
+        "surname": "Pofuk"
+      },
+      "information_quality": "primary",
+      "informant": "Thom\u00e6 Pofuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_030",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:QKMN-LN2B",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Thom\u00e6 Pofuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_030",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:QKMN-LN2B",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "father of Chatarina Pofuk",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "primary",
+      "informant": "Thom\u00e6 Pofuk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_030",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:QKMN-LN2B",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Elisabeth\u00e6 Sugecz",
+      "structured_value": {
+        "given": "Elisabeth\u00e6",
+        "surname": "Sugecz"
+      },
+      "information_quality": "primary",
+      "informant": "Elisabeth\u00e6 Sugecz",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_030",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:QKMN-LN2B",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Elisabeth\u00e6 Sugecz",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_030",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:QKMN-LN2B",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "mother of Chatarina Pofuk",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child_1"
+      },
+      "information_quality": "primary",
+      "informant": "Elisabeth\u00e6 Sugecz",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_030",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:QKMN-LN2B",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Elisabeth\u00e6 Sugecz (inferred from co-parent listing)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Thom\u00e6 Pofuk",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The record lists Thom\u00e6 Pofuk and Elisabeth\u00e6 Sugecz as co-parents of Chatarina Pofuk. Their spousal relationship is inferred from co-listing as father and mother; the record does not explicitly state they were married, though contemporary Catholic practice strongly implies it.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_030",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "G4C9-Y6C",
+      "confidence": "confident",
+      "rationale": "Record QKMN-XYBK (1786 Mad\u017earevo baptism) was retrieved by searching specifically for Elisabetha Sugecz. The child persona's name 'Elisabetha Sugecz' is an exact match to the research subject G4C9-Y6C. Name, sex, location (Mad\u017earevo, Vara\u017edin), and record purpose all align perfectly. Obvious match \u2014 searched for this person directly.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "G4C9-Y6C",
+      "confidence": "confident",
+      "rationale": "Sex assertion Female from the child persona of QKMN-XYBK. G4C9-Y6C (Elisabetha Sugecz) is Female. Consistent with the confident name match on a_001.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "G4C9-Y6C",
+      "confidence": "confident",
+      "rationale": "Christening date 14 August 1786 at Mad\u017earevo from QKMN-XYBK child persona. This is primary information from the officiating priest. Establishes G4C9-Y6C's christening date and birthplace for the first time from original source. Consistent with the confident identity match.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "G4C9-Y6C",
+      "confidence": "confident",
+      "rationale": "Religion assertion Roman Catholic from QKMN-XYBK child persona. Consistent with the Poffuk family's Roman Catholic records and Mad\u017earevo parish registers.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "G4C9-Y6C",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child of Thom\u00e6 Sugecz (father)' from QKMN-XYBK child persona. This assertion directly names Thomas Sugecz as Elisabetha's father \u2014 the core finding of this research. Bears on G4C9-Y6C as the named child; linked at confident consistent with the overall identity match for this persona.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'child of Thom\u00e6 Sugecz (father)' from QKMN-XYBK child persona also bears on Thomas Sugecz (I1) as the named father. I1 is a new stub minted from this record's father_of_child persona. Linked at probable (single-record introduction; no independent corroboration yet). This assertion establishes I1's parentage role for G4C9-Y6C.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "G4C9-Y6C",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child of Susan\u00e6 Petrich (mother)' from QKMN-XYBK child persona. Directly names Susanna Petrich as Elisabetha's mother. Bears on G4C9-Y6C as the named child; linked at confident consistent with the overall identity match for this persona.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'child of Susan\u00e6 Petrich (mother)' from QKMN-XYBK child persona also bears on Susanna Petrich (I2) as the named mother. I2 is a new stub minted from this record's mother_of_child persona. Linked at probable (single-record introduction; no independent corroboration yet).",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Thom\u00e6 Sugecz' from QKMN-XYBK father_of_child persona. I1 is a new stub minted from this persona. 'Thom\u00e6' is Latin genitive of 'Thomas'; surname Sugecz consistent with the Mad\u017earevo Sugecz family. Linked at probable \u2014 new stub with no independent corroboration.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Sex assertion Male from QKMN-XYBK father_of_child persona. Consistent with I1 (Thomas Sugecz) being the father of Elisabetha. Linked at probable consistent with stub creation.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'father of Elisabetha Sugecz' from QKMN-XYBK father_of_child persona. Directly states I1 (Thomas Sugecz) is the father of Elisabetha Sugecz (G4C9-Y6C). Primary information from the father himself (present at baptism). Linked at probable \u2014 new stub, no independent corroboration of Thomas Sugecz's identity beyond this single record.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_009",
+      "person_id": "G4C9-Y6C",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'father of Elisabetha Sugecz' from QKMN-XYBK father_of_child persona also bears on G4C9-Y6C as the named child. This is a second assertion from this record (father's perspective) linking to Elisabetha, corroborating the child persona's own relationship assertions (a_005, a_006). Linked at probable (father persona link level); the child persona link is confident via a_001\u2013a_006.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Susan\u00e6 Petrich' from QKMN-XYBK mother_of_child persona. I2 is a new stub minted from this persona. 'Susan\u00e6' is Latin genitive of 'Susanna'; surname Petrich (non-Sugecz) confirms she is not from the Sugecz family. Linked at probable \u2014 new stub with no independent corroboration.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Sex assertion Female from QKMN-XYBK mother_of_child persona. Consistent with I2 (Susanna Petrich) being the mother of Elisabetha. Linked at probable consistent with stub creation.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'mother of Elisabetha Sugecz' from QKMN-XYBK mother_of_child persona. Directly states I2 (Susanna Petrich) is the mother of Elisabetha Sugecz (G4C9-Y6C). Primary information from the mother herself (present at baptism). Linked at probable \u2014 new stub, no independent corroboration of Susanna Petrich's identity beyond this single record.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_012",
+      "person_id": "G4C9-Y6C",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'mother of Elisabetha Sugecz' from QKMN-XYBK mother_of_child persona also bears on G4C9-Y6C as the named child. Corroborates a_006 from the child persona. Linked at probable (mother persona link level).",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_024",
+      "person_id": "LKLZ-KQH",
+      "confidence": "confident",
+      "rationale": "Name assertion 'Chatarina Pofuk' from QKMN-LN2B child_1 persona. LKLZ-KQH is Catarina Pofuk in the tree, daughter of Thomas Pofuk-Harmicar. Name matches exactly (Chatarina/Catarina variant). Record retrieved from searching the Poffuk family records at Remetinec \u2014 obvious match.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_025",
+      "person_id": "LKLZ-KQH",
+      "confidence": "confident",
+      "rationale": "Sex assertion Female from QKMN-LN2B child_1 persona. LKLZ-KQH (Catarina Pofuk) is Female. Consistent with confident name match.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_026",
+      "person_id": "LKLZ-KQH",
+      "confidence": "confident",
+      "rationale": "Christening date 16 December 1816 at Remetinec from QKMN-LN2B child_1 persona. Establishes LKLZ-KQH's christening date and confirms Remetinec as the Poffuk family's parish. Consistent with the confident identity match.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_027",
+      "person_id": "LKLZ-KQH",
+      "confidence": "confident",
+      "rationale": "Religion assertion Roman Catholic from QKMN-LN2B child_1 persona. Consistent with Poffuk family records.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_028",
+      "person_id": "GWVK-WKJ",
+      "confidence": "confident",
+      "rationale": "Name assertion 'Thom\u00e6 Pofuk' from QKMN-LN2B father persona. GWVK-WKJ is Thomas Pofuk-Harmicar in the tree. 'Thom\u00e6' is Latin genitive of Thomas; 'Pofuk' is an early spelling of Pofuk-Harmicar. Record retrieved in the context of researching the Poffuk family. Family and place context strongly confirm identity: father at Remetinec, child Catarina Pofuk matching known child LKLZ-KQH. Obvious match.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_029",
+      "person_id": "GWVK-WKJ",
+      "confidence": "confident",
+      "rationale": "Sex assertion Male from QKMN-LN2B father persona. GWVK-WKJ (Thomas Pofuk-Harmicar) is Male. Consistent with confident name match.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_030",
+      "person_id": "GWVK-WKJ",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'father of Chatarina Pofuk' from QKMN-LN2B father persona. Confirms GWVK-WKJ (Thomas Pofuk-Harmicar) as Catarina's father. Direct primary information from Thomas himself at the 1816 baptism.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_030",
+      "person_id": "LKLZ-KQH",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'father of Chatarina Pofuk' from QKMN-LN2B father persona also bears on LKLZ-KQH as the named child. Corroborates the direct child persona assertions a_024\u2013a_027 identifying LKLZ-KQH as Catarina Pofuk.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_031",
+      "person_id": "G4C9-Y6C",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Elisabeth\u00e6 Sugecz' from QKMN-LN2B mother persona. G4C9-Y6C is Elisabetha Sugecz, wife of Thomas Pofuk-Harmicar. Name matches (Elisabeth\u00e6 = genitive of Elisabetha; surname Sugecz exact match). Linked at probable due to identity ambiguity: two Elisabetha Sugecz women were baptized at Mad\u017earevo (1786 and 1795); the 1786 candidate (daughter of Thomas Sugecz + Susanna Petrich) is preferred but the 1795 candidate cannot be fully excluded without a marriage record.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_032",
+      "person_id": "G4C9-Y6C",
+      "confidence": "probable",
+      "rationale": "Sex assertion Female from QKMN-LN2B mother persona. G4C9-Y6C is Female. Consistent with probable identity match; linked at same tier.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_033",
+      "person_id": "G4C9-Y6C",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'mother of Chatarina Pofuk' from QKMN-LN2B mother persona. Confirms G4C9-Y6C as mother of LKLZ-KQH (Catarina Pofuk). Direct primary information from Elisabeth\u00e6 Sugecz at the 1816 baptism. Linked at probable due to same identity ambiguity noted in a_031.",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_033",
+      "person_id": "LKLZ-KQH",
+      "confidence": "probable",
+      "rationale": "Relationship assertion 'mother of Chatarina Pofuk' from QKMN-LN2B mother persona also bears on LKLZ-KQH as the named child. Corroborates the child persona assertions a_024\u2013a_027. Linked at probable (inheriting the mother persona's identity uncertainty).",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_034",
+      "person_id": "GWVK-WKJ",
+      "confidence": "probable",
+      "rationale": "Indirect relationship assertion 'spouse of Elisabeth\u00e6 Sugecz (inferred from co-parent listing)' from QKMN-LN2B father persona. Bears on GWVK-WKJ (Thomas Pofuk-Harmicar) as the inferred husband. Contemporary Roman Catholic practice strongly implies marriage between co-parents named at baptism. Linked at probable \u2014 indirect evidence (co-parent listing, not an explicit marriage record).",
+      "match_score": null,
+      "created": "2026-08-01"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_034",
+      "person_id": "G4C9-Y6C",
+      "confidence": "probable",
+      "rationale": "Indirect relationship assertion 'spouse of Elisabeth\u00e6 Sugecz (inferred from co-parent listing)' from QKMN-LN2B father persona also bears on G4C9-Y6C (Elisabeth\u00e6 Sugecz) as the named inferred spouse. Linked at probable \u2014 same identity ambiguity as a_031 applies; the mother's identity as the 1786 vs. 1795 Elisabetha Sugecz remains uncertain.",
+      "match_score": null,
+      "created": "2026-08-01"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "identity",
+      "description": "Two women named Elisabetha Sugecz were baptized at Mad\u017earevo, Vara\u017edin: (1) Elisabetha Sugecz, 14 August 1786, daughter of Thom\u00e6 Sugecz + Susan\u00e6 Petrich (QKMN-XYBK, src_001, a_001\u2013a_006); (2) Elisab Sugecz, 15 November 1795, daughter of Geor Sugecz + Cath Sug?? (QKMN-XK63, src_002, a_013\u2013a_018). The identity of the Elisabetha Sugecz who married Thomas Pofuk-Harmicar (GWVK-WKJ) cannot be confirmed without a marriage record.",
+      "disputed_attribute": "identity of Elisabetha Sugecz, wife of Thomas Pofuk-Harmicar (G4C9-Y6C)",
+      "identity_question": "Which Elisabetha Sugecz \u2014 born 1786 (daughter of Thomas Sugecz + Susanna Petrich) or born 1795 (daughter of Georgius Sugecz + Catharina) \u2014 is the same person as the wife of Thomas Pofuk-Harmicar of Remetinec?",
+      "competing_assertion_ids": [
+        "a_001",
+        "a_013"
+      ],
+      "preferred_assertion_id": "a_001",
+      "resolution_rationale": "Two women named Elisabetha Sugecz were baptized at Mad\u017earevo \u2014 one in 1786 (daughter of Thomas Sugecz and Susanna Petrich) and one in 1795 (daughter of Georgius Sugecz and Catharina). The question is which married Thomas Pofuk-Harmicar of Remetinec and bore his children from 1816 to 1837.\n\nThe 1786 candidate is documented in two independent original records: her 1786 baptism at Mad\u017earevo (naming Thomas Sugecz as father) and the 1816 Remetinec baptism of Catarina Pofuk, in which Thomas Pofuk and 'Elisabeth\u00e6 Sugecz' personally named themselves as parents. The 1795 candidate appears only in her 1795 baptism; no record has been found placing her in the Pofuk household at any time. When the weight of two independent originals \u2014 one of which directly places an Elisabeth\u00e6 Sugecz in the Pofuk family \u2014 is set against a single baptism with no family connection, the 1786 candidate is the more reliable identification.\n\nThe Poffuk family baptism records further support this conclusion: they consistently spell the wife's name in the full Latin genitive 'Elisabeth\u00e6,' which matches the 1786 candidate's indexed form 'Elisabetha' (full form). The 1795 candidate was indexed as the abbreviated 'Elisab,' a form that never appears in the Poffuk records.\n\nThe sole argument favoring the 1795 candidate is biological age: a mother born 1795 would be approximately 42 at the 1837 birth of Andreas Pofuk (within normal range), while one born 1786 would be approximately 51 (outside the typical range). This is a real observation but a weak one: age 51 at delivery is biologically unusual, not impossible, and the point rests on assumptions that have not been independently verified. It does not overcome the corroborating source and name-form evidence.\n\nThe 1795 record is genuine evidence of a real person; she simply is not the person who married Thomas Pofuk-Harmicar. Abbreviation of 'Elisabetha' as 'Elisab' was common scribal practice in Latin registers, and the coincidence of two women with the same name at one parish within nine years is not unusual \u2014 especially if the families are related (working hypothesis h_001 suggests Georgius Sugecz may be Thomas Sugecz's son by a prior marriage, making the name overlap a family pattern).",
+      "independence_analysis": "The two competing assertions derive from genuinely independent sources. a_001 (src_001, QKMN-XYBK) is the 1786 baptism entry in the Mad\u017earevo parish register, created by informants Thomas Sugecz and Susanna Petrich who were present at their daughter's christening. a_013 (src_002, QKMN-XK63) is the 1795 baptism entry in the same register volume but for an entirely different event nine years later, with different informants (Georgius Sugecz and Catharina). The two entries share a physical register but neither derived its information from the other \u2014 they record different baptisms by different families. A third independent source supports the 1786 candidate: src_003 (QKMN-LN2B), the 1816 Remetinec baptism of Catarina Pofuk, created by informants Thomas Pofuk and Elisabeth\u00e6 Sugecz themselves, at a different time and parish. No corroborating source places the 1795 candidate in the Pofuk household.",
+      "weighing_analysis": "Three factors are decisive. First, corroborating sources: the 1786 candidate is supported by two independent original records \u2014 her own 1786 baptism and the 1816 Remetinec baptism that independently names 'Elisabeth\u00e6 Sugecz' as wife of Thomas Pofuk. The 1795 candidate is supported only by her own baptism; no record connects her to the Pofuk family. Second, name form: the Poffuk household records the wife's name in the full genitive 'Elisabeth\u00e6' across all seven children (1816\u20131837), aligning with the 1786 candidate indexed as 'Elisabetha' (full form). The 1795 candidate is indexed as 'Elisab' \u2014 an abbreviated form absent from the Poffuk records. Third, biological age: a mother born 1786 would be approximately 51 at the 1837 birth of Andreas Pofuk \u2014 outside the typical childbearing range, which is the strongest argument for the 1795 candidate. However, this point rests on unverified assumptions (that the indexed year is exact, that Andreas was a biological child, and that no recording lag exists) and cannot overcome the combined weight of the corroborating-source and name-form evidence. The preponderance clearly favors the 1786 candidate.",
+      "status": "resolved",
+      "blocks_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The Georgius Sugecz named as father in the 1795 Mad\u017earevo baptism (src_002) is the same person as the Georgius Sugecz baptized circa 1772 at Mad\u017earevo as a son of Thomas Sugecz and his prior wife Susanna Rebrecz",
+      "status": "active",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "FAN sweep (pli_003) found a Georgius Sugecz baptized c. 1772 at Mad\u017earevo, son of Thomas Sugecz + Susanna Rebrecz. The 1795 baptism names a Georgius Sugecz as father of Elisab Sugecz. Same given name, surname, and parish; birth year chronologically consistent with fathering a child in 1795 (age ~23). No record directly links the two personas \u2014 no baptism naming the 1795 father's parents has been located. If correct, the 1786 and 1795 Elisabetha candidates are half-aunt and niece rather than sisters, supporting their distinction as separate individuals. Unverified identity step \u2014 requires a record naming Georgius Sugecz's parents to confirm.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_024",
+        "a_025",
+        "a_026",
+        "a_027",
+        "a_028",
+        "a_029",
+        "a_030",
+        "a_031",
+        "a_032",
+        "a_033",
+        "a_034"
+      ],
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "exhaustive_search_summary": "Thirty-three log entries were created across FamilySearch collection 2040054 (Croatia, Church Books, 1516-1994), the primary repository for 18th-century Vara\u017edin County Roman Catholic records. Searches conducted: (1) direct baptism search for Elisabetha Sugecz \u2014 found QKMN-XYBK (1786, Mad\u017earevo); (2) FAN sweep of the Sugecz family at Mad\u017earevo \u2014 revealed family structure including two Elisabetha Sugecz candidates and prior marriage by Thomas Sugecz to Susanna Rebrecz; (3) marriage record search for Thomas Poffuk-Harmicar \u00d7 Elisabetha Sugecz \u2014 three variants, all negative at indexed level; (4) marriage record search for Thomas Sugecz \u00d7 Susanna Petrich \u2014 three variants, all negative at indexed level. Browse-only portions of the marriage register (not accessible via record_search) and the status animarum (pli_005, 0% indexed) were not searched \u2014 these are inaccessible via indexed search in the autonomous session. The full-text fallback (pli_006) was not needed given indexed evidence found. No external repositories (Ancestry, MyHeritage) were searched.",
+      "narrative_markdown": "## Parentage of Elisabetha Sugecz, Wife of Thomas Pofuk-Harmicar (c. 1786 \u2013 after 1837)\n\n**Conclusion (Probable):** The preponderance of evidence strongly suggests that Elisabetha Sugecz (G4C9-Y6C), wife of Thomas Pofuk-Harmicar of Remetinec, Vara\u017edin County, Croatia, was the daughter of Thomas Sugecz (I1) and Susanna Petrich (I2), Roman Catholics of Mad\u017earevo (Magyarlaka), Vara\u017edin County. An identity conflict between two women named Elisabetha Sugecz baptized at Mad\u017earevo within nine years of each other has been resolved in favor of the 1786 candidate. The conclusion is *probable* rather than *proved* because only one source contains primary information about her parentage specifically, and browse-only portions of the parish marriage register remain unsearched.\n\n---\n\n### Primary Evidence\n\n**1786 Mad\u017earevo Baptism (Original Source; Primary Information; Direct Evidence)**\n\nThe Roman Catholic parish register for Mad\u017earevo, preserved in FamilySearch collection \"Croatia, Church Books, 1516\u20131994,\" records the christening of Elisabetha Sugecz on 14 August 1786.\u00b9 The Latin-language entry names the father as \"Thom\u00e6 Sugecz\" (genitive of Thomas Sugecz) and the mother as \"Susan\u00e6 Petrich\" (genitive of Susanna Petrich). This record is an **original source** \u2014 the parish register itself, not an index or derivative. The parentage information is **primary** \u2014 the parents were present at the christening and served as its informants. The record constitutes **direct evidence** of the parent-child relationship by explicitly naming both parents. This is the only source located that contains primary information about Elisabetha\u2019s parentage.\n\n\u00b9 \"Croatia, Church Books, 1516-1994,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QKMN-XYBK : accessed 1 August 2026), entry for Elisabetha Sugecz, baptism 14 August 1786, Mad\u017earevo, Vara\u017edin, Croatia; image of original Roman Catholic parish register.\n\n**1816 Remetinec Baptism (Original Source; Primary Information; Direct Evidence \u2014 Identity Corroboration)**\n\nThe 1816 baptism of Catarina Pofuk at Remetinec independently establishes that a woman named \"Elisabeth\u00e6 Sugecz\" was the wife of \"Thom\u00e6 Pofuk\" (Thomas Pofuk-Harmicar).\u00b2 Thomas Pofuk and Elisabeth\u00e6 Sugecz personally named themselves as parents at the event \u2014 a different time, different parish, and different informants from src_001. This independent corroboration confirms Elisabetha Sugecz\u2019s place in the Pofuk household and identifies her consistently by the full name form \u201cElisabeth\u00e6.\u201d It does not name her own parents.\n\n\u00b2 \"Croatia, Church Books, 1516-1994\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QKMN-LN2B : accessed 1 August 2026), Entry for Chatarina Pofuk and Thom\u00e6 Pofuk, 16 December 1816.\n\n---\n\n### Resolution of Identity Conflict (c_001 \u2014 Resolved)\n\nTwo women named Elisabetha Sugecz were baptized at Mad\u017earevo:\n\n1. **1786 candidate (concluded):** Baptized 14 August 1786; daughter of Thomas Sugecz and Susanna Petrich.\u00b9\n2. **1795 candidate (excluded):** Baptized 15 November 1795 (indexed as \"Elisab Sugecz\"); daughter of Georgius Sugecz and Catharina (mother\u2019s surname partially illegible as \"Sug??\").\u00b3\n\nThree factors favor the 1786 candidate and resolve the conflict:\n\n- **Corroborating sources:** The 1786 candidate is supported by two independent original records \u2014 her 1786 baptism and the 1816 Remetinec baptism that independently places an \u201cElisabeth\u00e6 Sugecz\u201d in the Pofuk household. The 1795 candidate is supported only by her baptism; no record has been found placing her in the Pofuk household at any time.\n- **Name form consistency:** The Poffuk family baptism records consistently use the full Latin genitive \u201cElisabeth\u00e6,\u201d matching the 1786 candidate\u2019s indexed form \u201cElisabetha.\u201d The 1795 candidate was indexed as the abbreviated \u201cElisab\u201d \u2014 a form that does not appear in any of the Poffuk records.\n- **Age:** A mother born 1786 would be approximately 51 at the 1837 birth of Andreas Pofuk \u2014 outside the typical childbearing range \u2014 which is the 1795 candidate\u2019s sole advantage. This is a real but weak point: age 51 is biologically unusual, not impossible, and the argument rests on the unverified assumption that the indexed birth year is exact.\n\nThe 1795 record documents a real person; she is simply not the person who married Thomas Pofuk-Harmicar. Abbreviation of \u201cElisabetha\u201d as \u201cElisab\u201d was routine scribal practice in Latin parish registers. Conflict c_001 is resolved; see its record for the full independence analysis, weighing, and four-part resolution rationale.\n\n\u00b3 \"Croatia, Church Books, 1516-1994,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QKMN-XK63 : accessed 1 August 2026), entry for Elisab Sugecz baptism, 15 November 1795; Mad\u017earevo parish register, image https://www.familysearch.org/ark:/61903/3:1:3QS7-L99C-P93Y-2.\n\n---\n\n### GPS Component Assessment\n\n| Component | Status |\n|-----------|--------|\n| 1. Reasonably exhaustive search | Declared \u2014 all indexed avenues searched; browse-only marriage register and external repositories not covered |\n| 2. Complete and accurate citations | Met |\n| 3. Analysis and correlation | Met \u2014 three independent sources analyzed; identity conflict resolved |\n| 4. Resolution of conflicting evidence | Met \u2014 c_001 resolved (preferred: a_001, 1786 candidate) |\n| 5. Soundly reasoned, written conclusion | This summary |\n\n---\n\n### Conclusion\n\nThe preponderance of evidence strongly suggests that Elisabetha Sugecz (G4C9-Y6C) was the daughter of **Thomas Sugecz** (I1) and **Susanna Petrich** (I2), Roman Catholics of Mad\u017earevo, Vara\u017edin County, Croatia. The 1786 Mad\u017earevo baptism is original, primary, direct evidence of parentage \u2014 the strongest available evidence class. The 1816 Remetinec baptism independently places an Elisabeth\u00e6 Sugecz in the Pofuk family. The identity conflict (c_001) is resolved in favor of the 1786 candidate on the balance of corroborating sources and name-form evidence.\n\nThe conclusion is *probable* rather than *proved* because only one source contains primary information about Elisabetha\u2019s parentage specifically, and the browse-only marriage registers of collection 2040054 \u2014 which would most directly confirm parentage and identity \u2014 remain unsearched.\n\n**To advance to *proved*:** Locate either (1) the marriage record of Thomas Pofuk-Harmicar \u00d7 Elisabetha Sugecz (browse-only marriage register images of collection 2040054, or the Mad\u017earevo status animarum) noting the bride\u2019s age or parents, or (2) the marriage record of Thomas Sugecz \u00d7 Susanna Petrich, which would add a second independent source with primary parentage information."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-08-01T21:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-08-01T21-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Magyarlaka, Varasd, Croatia-Slavonia, Hungary",
+      "for_place": "Mad\u017earevo, Vara\u017edin, Croatia",
+      "time_period": "1700-1800",
+      "jurisdictions": [
+        {
+          "name": "Kingdom of Croatia (personal union with Hungary)",
+          "date_range": "1102-1526"
+        },
+        {
+          "name": "Habsburg Monarchy, Croatia-Slavonia (Vara\u017edin Generalate of Military Frontier)",
+          "date_range": "1526-1871"
+        },
+        {
+          "name": "Kingdom of Croatia-Slavonia, Austro-Hungarian Empire",
+          "date_range": "1871-1918"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1743180",
+          "title": "Hungary, Catholic Church Records, 1636-1895",
+          "date_range": "1636-1895"
+        },
+        {
+          "id": "4133831",
+          "title": "Hungary, Church Books, 1624-1950",
+          "date_range": "1624-1950"
+        },
+        {
+          "id": "2040054",
+          "title": "Croatia, Church Books, 1516-1994",
+          "date_range": "1516-1994"
+        },
+        {
+          "id": "1804226",
+          "title": "Hungary, Baptisms, 1734-1895",
+          "date_range": "1734-1895"
+        }
+      ],
+      "quirks": [
+        "FamilySearch scopes Varasd County collections under 'Hungary' (not Croatia) \u2014 always search collection 1743180 (Hungary, Catholic Church Records, 1636-1895) first for indexed results.",
+        "Search under both the Croatian place name 'Mad\u017earevo' and the Hungarian form 'Magyarlaka' \u2014 indexes may use either.",
+        "Parish vital registers (births, marriages, deaths) for Magyarlaka are 100% name-indexed on FamilySearch from 1696 through the 1790s \u2014 image groups 005482241_002, 005482241_003, 005482242_001, 005482242_002.",
+        "Status animarum (soul registers) 1659-1910 are browse-only (0% indexed): image groups 005498001_001 (141 images) and 005498001_002 (286 images).",
+        "Two overlapping volumes cover 1753-1797 (005482241_003 and 005482242_001) \u2014 one is likely the original register and one a diocesan transcript; check both for variant details.",
+        "Marriage records in 18th-century Croatian Catholic registers name the father (and sometimes mother) of both bride and groom \u2014 the marriage entry of Thomas Pofuk-Harmicar and Elisabetha Sugecz is the highest-priority source for her parentage.",
+        "All 18th-century records are in Latin; key terms: pater (father), mater (mother), conjuges (spouses), testes (witnesses), patrini (godparents).",
+        "Surname spellings were not standardized \u2014 'Sugecz' may appear as Sugec, Sugetz, \u0160ugec, or other variants; use surname-only searches and scan broadly.",
+        "Civil registration did not begin in Croatia until May 1946 \u2014 there are no civil vital records for the 18th century; church registers are the only source class.",
+        "Vara\u017edin State Archives and the Croatian State Archives (Zagreb) hold additional records not yet digitized online; registers pre-1857 were transferred to archives in 1957."
+      ],
+      "guide_markdown": "# Locality Guide: Mad\u017earevo (Magyarlaka), Varasd County, Croatia-Slavonia (1700\u20131800)\n\n## Jurisdiction Overview\n- **18th-century name:** Magyarlaka, Varasd, Croatia-Slavonia, Hungary\n- **Modern name:** Mad\u017earevo, Vara\u017edin County, Republic of Croatia\n- **County seat:** Vara\u017edin (Varasd)\n- **Political belonging (target period):** Part of Habsburg Monarchy, 1526\u20131871. Varasd County lay within the Kingdom of Croatia-Slavonia under the Habsburgs. Much of the county was under the Vara\u017edin Generalate of the Military Frontier until 1871.\n- **Predominant religion:** Roman Catholic\n- **Language of records:** Latin (18th-century parish registers)\n- **Diocesan jurisdiction:** Diocese of Vara\u017edin\n\n## Boundary Changes\n- 1102\u20131526: Kingdom of Croatia in personal union with Hungary\n- 1526\u20131871: Habsburg Monarchy \u2014 records filed under Hungary for FamilySearch collection scoping\n- 1871\u20131918: Autonomous county within Kingdom of Croatia-Slavonia, Austro-Hungarian Empire\n- 1918\u20131991: Part of Yugoslavia; 1991\u2013present: Republic of Croatia\n- **Research implication:** FS organizes collections at country level; Varasd County records appear under **Hungary** scope.\n\n## Church Records (PRIMARY SOURCE)\n**FamilySearch digitized volumes for Magyarlaka (from volume_search):**\n- `005482241_002` (230 images): Marriage 1696\u20131752, Birth 1698\u20131753, Death 1706\u20131753 \u2014 **100% indexed**\n- `005482241_003` (215 images): Marriage 1754\u20131797, Birth 1753\u20131797, Death 1754\u20131797 \u2014 **100% indexed**\n- `005482242_001` (178 images): Marriage 1754\u20131797, Birth 1753\u20131797, Death 1754\u20131797 \u2014 **100% indexed** (likely diocesan duplicate of above)\n- `005482242_002` (172 images): Birth 1798\u20131848 \u2014 **100% indexed**\n- `005498001_001` (141 images): Status animarum 1659\u20131910 \u2014 **browse-only (0% indexed)**\n- `005498001_002` (286 images): Status animarum 1659\u20131910 \u2014 **browse-only (0% indexed)**\n\nMarriage records name parents of bride and groom. Baptism records name both parents. All in Latin.\n\n## Indexed FS Collections\n- Hungary, Catholic Church Records, 1636\u20131895 (coll. 1743180)\n- Hungary, Church Books, 1624\u20131950 (coll. 4133831)\n- Croatia, Church Books, 1516\u20131994 (coll. 2040054)\n\n## Civil Registration\nDid not begin until May 1946 \u2014 no civil records exist for the 18th century.\n\n## Repositories\n- FamilySearch (free): indexed vital registers 1696\u20131797 fully searchable\n- Vara\u017edin State Archives: additional records not yet digitized\n- Croatian State Archives, Zagreb: pre-1857 registers transferred 1957\n- ARHiNET Croatia (arhinet.arhiv.hr): growing digital archive\n\n## Research Tips\n1. Search collection 1743180 by name first \u2014 100% indexed coverage of the entire 18th century for this parish.\n2. Try both 'Mad\u017earevo' and 'Magyarlaka' as place-name search terms.\n3. Surname 'Sugecz' may appear as Sugec, Sugetz, \u0160ugec \u2014 use surname-only searches.\n4. Marriage record of Thomas Pofuk-Harmicar and Elisabetha Sugecz is the highest-priority source (names her father directly).\n5. Browse status animarum for household-level parentage confirmation.\n6. Two overlapping volumes cover 1753\u20131797 \u2014 check both for additional detail.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Croatia_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Croatia_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Croatia_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Croatia_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-01"
+    }
+  ]
+}

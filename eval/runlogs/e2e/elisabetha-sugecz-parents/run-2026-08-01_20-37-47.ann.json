@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Over-claimed. Final tree carries R20 (I1 Thomae Sugecz -> parent of G4C9-Y6C) and R21 (I2 Susanae Petrich -> parent of G4C9-Y6C), both sourced to S1 (the 1786 Madzarevo baptism, ark 1:1:QKMN-XYBK) at quality 3. Neither is flagged hypothetical or rejected, and both stub persons were created by this run. This is the exact assertion the finding forbids.",
+    "f2": "Borderline, graded false. The agent did the exhausted-search half genuinely: 33 log entries, four marriage-record search variants for Thomas Poffuk/Harmiczar x Elisabetha Sugecz and three for Thomas Sugecz x Susanna Petrich, all negative and logged; it surfaced the 15 Nov 1795 candidate (QKMN-XK63) as src_002; and it recognised the age problem explicitly (log_014: 'a 1786 birth would make her 51 at this child's birth'). But the finding asks for a negative conclusion, and ps_001 is a positive one at tier 'probable'. The 1795 candidate is recorded as excluded (c_001 status 'resolved', preferred_assertion_id a_001), not as the open hypothesis the finding allows. Exhaustiveness was used to support the wrong claim rather than to conclude a negative, so the required output is absent rather than partially present."
+  },
+  "annotator": "taiwo-stack"
+}

@@ -3,34 +3,40 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Elisabetha Sugecz's father was Thomas Sugecz, per a baptismal record dated 14 August 1786 in Madžarevo, Varaždin, Croatia.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Elisabetha Sugecz (PID G4C9-Y6C) was the daughter of Thomas (Thomæ) Sugecz and Susanna (Susanæ) Petrich on the strength of the baptism of 14 August 1786 at Madžarevo, Varaždin, Croatia (\"Croatia, Church Books, 1516-1994\", ark 1:1:QKMN-XYBK) — the record FamilySearch's own hinting matched to her at unverified confidence. That entry is a genuine baptism of a genuine Elisabetha Sugecz, but not of this woman. Her own attached sources place nine children's baptisms at Remetinec, Varaždin between 1816 and 1837, and the 8 October 1837 baptism of Andreas Harmiczar (ark 1:1:QKMN-LM5B, attached in the tree to G4C9-Y6C) names Elizabethæ Sugecz, wife of Thomæ Harmiczar, as his mother — so a woman baptized in August 1786 would have borne that child at 51, and Sophia in 1836 at 49. Pass = the final tree and research contain no parent-child relationship making Thomas Sugecz or Susanna Petrich a parent of G4C9-Y6C, and no stub persons of those names standing as her parents, or they appear only as an explicitly rejected hypothesis.",
       "details": {
-        "subject_person": "Elisabetha Sugecz (G4C9-Y6C)",
+        "subject_person": "Elisabetha Sugecz (PID G4C9-Y6C)",
         "relation": "parent",
-        "target_person": {
-          "name": "Thomas Sugecz",
-          "birth": "unknown, likely Madžarevo, Varaždin, Croatia"
+        "wrong_candidate": {
+          "name": "Thomas (Thomæ) Sugecz and Susanna (Susanæ) Petrich, per the 14 August 1786 Madžarevo baptism (ark 1:1:QKMN-XYBK)",
+          "note": "Refuted on age: the subject is named as mother in sourced Remetinec baptisms of 1836 and 1837, which an August 1786 baptism would place at ages 49 and 51. The same couple's only other indexed child in 1780-1802 is Margaritha, baptized 17 June 1783 — a family whose childbearing ends three decades before the subject's own ends. FamilySearch's record page for the 1786 entry points it at LK25-1K1, a bare September-2015 extraction stub with no spouse, no children and no sources, so the hint cannot be rescued as an unmerged duplicate of G4C9-Y6C."
         }
       },
       "supporting_sources": [
-        "Croatia, Church Books, 1516-1994 — baptismal entry, 14 Aug 1786, Madžarevo, Varaždin, naming parents Thomæ Sugecz and Susanæ Petrich"
+        "\"Croatia, Church Books, 1516-1994\" — baptism of Andreas Harmiczar, 8 October 1837, Remetinec, Varaždin, naming Elizabethæ Sugecz, wife of Thomæ Harmiczar, as mother (ark 1:1:QKMN-LM5B; attached in the tree to G4C9-Y6C)",
+        "\"Croatia, Church Books, 1516-1994\" — baptism of Sophia Harmiczar, 18 May 1836, Remetinec, Varaždin (ark 1:1:QKMN-L8XZ), the second-latest of the nine children attributed to the subject",
+        "\"Croatia, Church Books, 1516-1994\" — baptism of Catharina (Kata) Pofuk, 16 December 1816, Remetinec, Varaždin (ark 1:1:QKMN-LNLM), fixing the start of the subject's childbearing",
+        "\"Croatia, Church Books, 1516-1994\" — baptism of Margaritha Sugecz, 17 June 1783, Madžarevo, to Thomæ Sugecz and Susanæ Petrich: the only other indexed child of the hint record's parents in 1780-1802"
       ],
       "required": true
     },
     {
       "id": "f2",
-      "type": "relationship",
-      "description": "Elisabetha Sugecz's mother was Susanna Petrich, per the same baptismal record.",
+      "type": "fact",
+      "description": "Having searched the indexed \"Croatia, Church Books, 1516-1994\" collection for a record establishing the parentage of Elisabetha Sugecz (PID G4C9-Y6C) — candidate baptisms in her parish, the ~1814 marriage to Thomas Pofuk-Harmicar, and her own children's baptisms — the agent should document a negative, exhausted-search conclusion: the 1786 Madžarevo baptism attributed to her by FamilySearch hinting is refuted on age grounds, no marriage entry for her union with Thomas Pofuk-Harmicar is indexed, none of her nine children's baptisms records her own parents, and no available record conclusively establishes her father and mother. Surfacing the 15 November 1795 Madžarevo baptism of Elisab Sugecz, daughter of Georgius (Geor) Sugecz/Žugec and a Catharina of unrecorded surname (ark 1:1:QKMN-XK63), as an age-plausible but unproven candidate satisfies this finding, provided it is recorded as an open hypothesis rather than asserted as her parentage.",
       "details": {
-        "subject_person": "Elisabetha Sugecz (G4C9-Y6C)",
-        "relation": "parent",
+        "subject_person": "Elisabetha Sugecz (PID G4C9-Y6C)",
+        "relation": "research conclusion",
         "target_person": {
-          "name": "Susanna Petrich",
-          "birth": "unknown, likely Madžarevo, Varaždin, Croatia"
+          "name": "documented negative conclusion — no available record establishes her parents, and the 1786 hint is refuted",
+          "birth": "n/a"
         }
       },
       "supporting_sources": [
-        "Croatia, Church Books, 1516-1994 — baptismal entry, 14 Aug 1786, Madžarevo, Varaždin"
+        "Absence of any indexed marriage entry in \"Croatia, Church Books, 1516-1994\" for Thomas Pofuk / Poffuk / Harmicar / Harmiczar and Elisabetha Sugecz / Žugec, Madžarevo or Remetinec, 1812-1816",
+        "The three indexed Madžarevo baptisms of an Elisabetha Sugecz — 14 August 1786 to Thomæ Sugecz and Susanæ Petrich (refuted on age), 15 November 1795 to Geor Sugecz and a Catharina (age-plausible but unlinked), and 28 September 1810 to Thomæ Sugecz and Hellenæ (impossible: age 6 at the subject's first child)",
+        "The subject's five attached children's baptisms, 1816-1837, none of which records her own parentage"
       ],
       "required": true
     }
