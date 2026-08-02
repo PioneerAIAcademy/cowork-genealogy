@@ -880,8 +880,8 @@ Named so nobody mistakes silence for a clean bill.
   beyond the agent-configuration path.
 - The **`.mcpb` install and OAuth paths**, except where they bear on tool-name
   binding.
-- **Individual tool implementations** against their specs — that is
-  `spec-review`'s job, per tool.
+- **Individual tool implementations** against their specs — that is a per-tool
+  review against `docs/specs/<tool>-tool-spec.md`, not this document's scope.
 - Whether the **judge itself** is well-calibrated on the unit side. §2.8 notes
   the metric is missing; measuring it is separate work. (#1090, filed 07-31, is
   direct e2e-side evidence of the risk: the judge scored a relationship finding

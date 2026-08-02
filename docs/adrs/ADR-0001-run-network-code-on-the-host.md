@@ -96,8 +96,9 @@ what makes the capability-binding layer (ADR-0004, ADR-0006) possible at all.
 
 **Risks.** The silent-failure mode still exists for anyone who forgets the rule:
 a skill script that calls out gets blocked with no error. Nothing in CI detects
-network code in a skill script; the only guard is review and the
-`cowork-skill-builder` subagent, which refuses to write one.
+network code in a skill script, and **the only automated guard was removed** —
+the `cowork-skill-builder` subagent refused to write one, and it was deleted as
+stale on 2026-08-02 (#1161). Review is now the sole check.
 
 ## Enforcement
 

@@ -6,7 +6,7 @@
 > below), so the build is unblocked and the §12 fallback is not triggered.
 > §4 is retained as the record of the experiment that was run.
 >
-> Owner: unassigned. Reviewer: spec-review agent (once implemented).
+> Owner: unassigned. Review against this spec once implemented.
 >
 > **Revision (2026-07-17) — three changes from the original draft, per a
 > design review:**

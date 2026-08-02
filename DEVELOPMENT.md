@@ -114,9 +114,14 @@ Example: adding a "list providers" feature.
 
 4. **Manually test by installing both artifacts in Claude Desktop.**
 
-The `mcp-tool-scaffolder` and `cowork-skill-builder` subagents (under
-`.claude/agents/`) generate the boilerplate for steps 1 and 2.
-`spec-review` checks the implementation against the spec before PR.
+Copy the templates for steps 1 and 2: `src/tools/wikipedia.ts` plus its sibling
+four files for a tool, and `packages/engine/plugin/skills/search-wikipedia/` for
+a skill. Before the PR, read the implementation against its
+`docs/specs/<tool>-tool-spec.md` and quote both sides on any drift.
+
+(The `mcp-tool-scaffolder`, `cowork-skill-builder`, and `spec-review` subagents
+did these jobs until 2026-08-02, when all three were deleted as stale — see
+`CLAUDE.md` § "Subagents" and issue #1161.)
 
 ### Follow-on work you find along the way
 

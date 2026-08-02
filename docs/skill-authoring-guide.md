@@ -9,8 +9,9 @@ the doc index at the end.
 
 Two other things write toward this guide, so keep it current:
 
-- The `cowork-skill-builder` agent (`.claude/agents/`) scaffolds a new
-  skill — point it here for body style and frontmatter limits.
+- Anyone scaffolding a new skill from
+  `packages/engine/plugin/skills/search-wikipedia/` needs this guide for body
+  style and frontmatter limits.
 - The skill-improver loop (see [`docs/skill-lifecycle.md`](skill-lifecycle.md))
   proposes edits to existing skills and is told to write toward this
   standard.
