@@ -71,10 +71,11 @@ uses freely: *assertion*, *source*, *proof summary*, *tier*, *exhaustiveness*,
 0. **Prerequisites on PATH:** `make`, `node` + `npm`, `pnpm`, and `uv`.
    (`scripts/test.sh`'s preflight names `make`, `npm`, and `uv`; a missing
    `pnpm` surfaces only when `make install` reaches `pnpm install`.)
-1. `make install`, then **`make test-all && make typecheck`** — confirm green
-   *before* you change anything, so a pre-existing failure isn't mistaken for
-   yours. (`make test-all` does **not** typecheck; turbo runs those as separate
-   tasks.)
+1. `make install`, then **`make test-all`** — confirm green *before* you change
+   anything, so a pre-existing failure isn't mistaken for yours. (It runs
+   `make typecheck` first, since #1173; turbo defines `test` and `typecheck` as
+   separate tasks, so `pnpm test` alone never typechecks. It still does not
+   cover the e2e-marked harness tests that `scripts/test.sh` runs — see §9.1.)
 2. Read [`docs/gps-research-flow.md`](gps-research-flow.md) (the domain).
 3. Read §§1–3 here (the shape).
 4. Open one skill (`packages/engine/plugin/skills/record-extraction/SKILL.md`),
@@ -1097,7 +1098,7 @@ skips silently**, which looks identical to passing.
 |---|---|---|
 | **`scripts/test.sh`** | engine + eval app + eval harness (harness **including** e2e-marked tests). **The PR template requires this one.** | the JS workspace, `apps/server`, and typecheck |
 | `make test` | JS workspace + server tests | **engine, packaging lints, harness** — an engine-only change gets *zero* coverage |
-| `make test-all` | JS, server, engine, eval harness, CRUD UI | **`make typecheck`** (turbo runs `test` and `typecheck` as separate tasks), and the eval suites |
+| `make test-all` | typecheck (since #1173 — it runs `make typecheck` first), JS, server, engine, eval harness, CRUD UI | the **e2e-marked harness tests** — it reaches the harness via `make harness-test`, which is `-m 'not e2e'`. `scripts/test.sh` is the only command that runs those. |
 | `make engine-test` | `packages/engine/mcp-server` (vitest) + all packaging lints | the `packages/schema` mirror; anything needing a live API |
 | `make harness-test` | `eval/harness` (pytest, excludes e2e) — **the sole gate on the `packages/schema` mirror** | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug |
 | `make typecheck` | the whole JS workspace (turbo) — the only gate on viewer code | Python |
@@ -1236,6 +1237,7 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 | Question | Read |
 |---|---|
 | What is genealogical research, and what are all these words? | [`docs/gps-research-flow.md`](gps-research-flow.md) — **read this first** |
+| How does a task get from issue to merge? | [`docs/task-lifecycle.md`](task-lifecycle.md) — the developer process (plan → attack → implement → verify → review). §0 "First day" above is the setup that precedes it. For skill-prose work, [`docs/skill-lifecycle.md`](skill-lifecycle.md) instead. |
 | How do I build / run / test / deploy? | [`DEVELOPMENT.md`](../DEVELOPMENT.md) |
 | What rule must I follow to make a correct change? | [`CLAUDE.md`](../CLAUDE.md) — the operating manual, auto-loaded every session |
 | What does tool X do? | `docs/specs/<tool>-tool-spec.md` — **wins over this guide on conflict** |

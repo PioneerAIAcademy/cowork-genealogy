@@ -56,9 +56,12 @@ what they're getting.
   writer tools silently.
 - Touches **auth** (`packages/engine/mcp-server/src/auth/`) or anything holding
   a credential.
-- Changes **agent frontmatter**, `tools:`/`disallowedTools:`, hooks, or
-  anything that decides which tools an agent can reach. This is the class of
-  change that has broken production while CI stayed green.
+- Changes a **Cowork plugin agent** — anything under
+  `packages/engine/plugin/agents/` or `packages/engine/plugin/hooks/`, and
+  especially `tools:`/`disallowedTools:`. This is the class of change that has
+  broken production while CI stayed green. (Claude Code subagents under
+  `.claude/agents/` are *not* this — they're developer tooling that ships to
+  nobody, and they're Normal tier.)
 - Adds a **new MCP tool**, or changes an existing tool's contract.
 - Is **cross-cutting** — more than about three modules, or both the engine and
   the web side.
@@ -131,9 +134,11 @@ always:
 
 **Where it lives**, by tier:
 
-- **Normal:** the plan goes in the PR description when you open it. That's what
-  lets a reviewer check the diff against your *intent* instead of guessing at
-  it.
+- **Normal:** write it to `PLAN.md` at the root of your worktree, *before*
+  step 3. Two later steps consume it — the plan critic and your own fresh-session
+  review — and both run in a context that can't see your chat. Paste it into
+  the PR description at step 8. It's a scratch artifact and is gitignored;
+  don't commit it.
 - **Risky:** a real file under [`docs/plan/`](./plan/), reviewed by the lead
   before you write code. Note the conventions on that directory: its
   `**Status:**` line is load-bearing, and the plan is **deleted when the work
@@ -142,13 +147,19 @@ always:
   [`docs/adrs/README.md`](./adrs/README.md).
 
 A plan that stays in the chat window doesn't exist. Nobody else can see it, so
-nobody can catch you having built something else.
+nobody can catch you having built something else — and a subagent can't read it
+either.
 
 ### 3. Attack the plan
 
-Hand the plan to the `plan-critic` subagent:
+Hand the plan to the `plan-critic` subagent, **by path**:
 
-> Use the plan-critic agent to review this plan.
+> Use the plan-critic agent to review the plan in PLAN.md.
+
+Point it at the file, not at "this plan." Subagents start in fresh context and
+see only what you hand them; asked to review "this plan," the parent session
+passes along a paraphrase — which is exactly the input the critic is told not
+to trust.
 
 It reads the plan *and the code the plan claims to touch*, and reports findings
 with a severity and a concrete replacement. Its highest-value check is the
@@ -191,16 +202,24 @@ This step is not optional, and it is the one most often skipped. Your peer
 reviewer is not your test suite.
 
 ```sh
-make test-all        # typecheck + every suite; this is the floor
+make test-all        # typecheck + JS + server + engine + harness + CRUD UI
+scripts/test.sh      # what the PR template's checkbox actually requires
 ```
+
+**Run both.** Neither is a superset of the other, and this trips people up:
+`make test-all` reaches the harness via `make harness-test`, which excludes
+e2e-marked tests; `scripts/test.sh` runs the harness suite in full but skips
+the JS workspace, `apps/server`, and typecheck. The full breakdown of what each
+command does and does not cover is [`docs/architecture.md`](./architecture.md)
+§9.1 — read it once, and don't guess after that.
 
 Plus whatever your change actually touches:
 
 | If you changed | Also run |
 |---|---|
-| An MCP tool | `packages/engine/mcp-server/dev/try-<tool>.ts` against the live API, and re-read the tool's spec under `docs/specs/` against your implementation — quote both sides |
-| A skill's `SKILL.md` | `make eval-skill SKILL=<name>` — and follow [`docs/skill-lifecycle.md`](./skill-lifecycle.md), which is the real process for this |
-| Agent frontmatter, hooks, or tool binding | `make agent-smoke` — the only check that reads what the runtime actually resolved. No CI job covers this path. |
+| An MCP tool | `cd packages/engine/mcp-server && npx tsx dev/try-<tool>.ts` against the live API — if a `try-` script exists; write one if not, and run `dev/try-login.ts` first for an authenticated tool. Then re-read the tool's spec under `docs/specs/` against your implementation, quoting both sides. |
+| **Any file under `packages/engine/plugin/skills/`** | `make eval-skill SKILL=<name>`, **and commit the run log + its `.ann.json`**. `.github/workflows/check-runlogs.yml` blocks merge otherwise — even for a one-word change, and even on a task that is otherwise pure developer work. Follow [`docs/skill-lifecycle.md`](./skill-lifecycle.md) for the rest. |
+| Plugin agent frontmatter (`packages/engine/plugin/agents/`), hooks, or tool binding | `make agent-smoke` — the only check that reads what the runtime actually resolved. No CI job covers this path. **It exits 0 when it skips**, so confirm the output lists the resolved agents rather than `1 skipped`; that means no API key was reachable. |
 | An e2e fixture | `make e2e-validate TEST=<slug>` |
 | Anything user-facing | Actually run it. `make server` / `make web`, or the Claude Desktop install path. |
 
@@ -219,8 +238,8 @@ So open a **new** session, give it the plan and the diff, and ask:
 > implementation do that the plan didn't call for, and what did the plan call
 > for that isn't here?
 
-You can also run `/code-review` on the branch. Either way, you're hunting one
-specific thing: **implement-vs-plan drift**. It is the most common failure mode
+You're hunting one specific thing: **implement-vs-plan drift**. It is the most
+common failure mode
 in agent-assisted work and it is nearly invisible in a diff read on its own,
 because the code looks fine — it's just not the code that was agreed to.
 
@@ -258,10 +277,15 @@ that someone has to triage. Use the free-afternoon test.
 
 ### 8. Open the PR
 
-The description carries:
+**Fill in the PR template — don't replace it.** Its Test plan checkboxes are
+the repo's contract, and the first one names `scripts/test.sh` specifically.
+Don't tick a box for a command you didn't run; if a check doesn't apply, say
+why rather than deleting it.
+
+Under Summary, add:
 
 - **The tier** you picked.
-- **The plan** (Normal tier) or a link to it (Risky tier).
+- **The plan** (Normal tier — paste `PLAN.md`) or a link to it (Risky tier).
 - **What you verified** — which commands you ran, what you exercised by hand.
 - **The follow-on issue numbers.**
 
@@ -319,7 +343,6 @@ gh pr checkout <N>
 
 Then give Claude the PR description (which has the plan), the diff, and the
 relevant spec, and ask for findings with severity and a suggested replacement.
-`/code-review` does this on the current branch.
 
 Three rules:
 
@@ -369,18 +392,21 @@ Every one of these has happened somewhere, to someone competent.
 # 0. branch
 git worktree add .claude/worktrees/<branch> -b <branch> origin/main
 
-# 3. attack the plan (max 2 rounds)
-#    → "Use the plan-critic agent to review this plan."
+# 2. write PLAN.md at the worktree root (gitignored)
 
-# 5. verify
-make test-all                        # floor, always
-make eval-skill SKILL=<name>         # a SKILL.md changed
-make agent-smoke                     # agent frontmatter / hooks / tool binding
+# 3. attack the plan (max 2 rounds)
+#    → "Use the plan-critic agent to review the plan in PLAN.md."
+
+# 5. verify — run BOTH; neither is a superset of the other
+make test-all                        # JS + server + engine + harness + typecheck
+scripts/test.sh                      # what the PR template requires
+make eval-skill SKILL=<name>         # any packages/engine/plugin/skills/ file
+make agent-smoke                     # plugin agents / hooks / tool binding
 make e2e-validate TEST=<slug>        # an e2e fixture changed
 cd packages/engine/mcp-server && npx tsx dev/try-<tool>.ts   # an MCP tool changed
 
 # 6. self-review, in a FRESH session
-/code-review
+#    → "Here is PLAN.md and the diff. Where do they diverge?"
 
 # 7. follow-on work
 gh issue create --label developer --title "…" --body "…"
