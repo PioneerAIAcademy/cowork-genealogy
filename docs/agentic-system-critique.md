@@ -11,7 +11,7 @@ against how comparable production agent systems are built, and a prioritized
 list of what to do next. It is a critique and a work list, not a plan — each
 item that gets picked up should get its own plan or issue.
 
-**Evidence base.** 126 committed e2e runs (`eval/runlogs/e2e/`), the latest unit
+**Evidence base.** 133 committed e2e runs (`eval/runlogs/e2e/`), the latest unit
 run log for the 25 skills with suites, the specs under `docs/specs/`, the
 measured performance work in `docs/plan/research-performance-2026-07-27.md`, the
 plugin bodies, the packaging lints, and ~90 open issues (115 as of 08-01,
@@ -71,9 +71,18 @@ guardrail-bypass violation. In the five most recent failing runs (all
 2026-07-30) the LLM judge scored the *genealogy* **pass on three and partial on
 two** — every one was failed by the detector.
 
+> **On the full committed window that rate is worse, not better: 12 of 29 runs
+> and 45 violations (§7).** The 8/25 window stops at `2026-07-30_19-43-58` and
+> drops timed-out runs. The narrow window is retained here because §3's P0 and
+> §9's "≤9 of 25" gate-reach figure are stated against it.
+
 **That rate is a floor with an unquantified false-positive rate and should not
 be quoted without this caveat.** The arm producing **16 of the 25** violations
-(`find_person_evidence_missing_same_person`) is the subject of **#1006**, which
+(34 of 45 on the full window) is `find_person_evidence_missing_same_person`.
+**16 is a count of violations, not of what a gate could prevent** — §3's P0 puts
+the reach of any gate consistent with the skill contract at **≤9 of the 25**,
+because 7 of the 16 flagged persons have zero record-sourced links (§9, rev. 3
+row). It is the subject of **#1006**, which
 states that "doctrine gap" and "a check measuring its own introduction date"
 predict identical data and cannot be separated on the current corpus — a
 confound partially resolved by a 07-31 comment (see the P0). **#998**
@@ -357,7 +366,9 @@ person fact-counts). #1006 needs a date floor — and its confound is now
 partially resolved: a 2026-07-31T20:38Z comment supplies a post-doctrine run
 (`bagley-father-1884`, `run-2026-07-31_18-06-28`) that created and linked a
 person with zero `same_person` calls, the data point the
-check-measures-its-own-introduction reading predicts should not exist.
+check-measures-its-own-introduction reading predicts should not exist. That run
+is **committed** (`d5d26d00`) and reproducible from `eval/runlogs/e2e/`, not
+comment-only as §7 previously said.
 
 **Two false-positive classes rev. 2 did not name — both from the detector
 enforcing the router's paraphrase rather than the owning skill's contract.**
@@ -763,23 +774,37 @@ Levers, ranked:
 
 ## 7. Evidence appendix
 
-Reproducible from the repo at the date above — with one carve-out: the
-#1006-separating bagley run of 07-31 (`run-2026-07-31_18-06-28`) is uncommitted
-and exists only in that issue's comment thread.
+Reproducible from the repo at the date above.
 
-**E2e corpus (126 committed runs).** Outcomes 81 pass / 22 partial / 23 fail
-(these are fused pre-#1050 verdicts: 7 of the 23 fails are judge-pass/partial
-runs failed by the compliance detector).
-Stop reasons: 93 completed, 16 timeout, 8 error, 7 cost_cap, 1 inactivity, 1
-natural_end.
+> **Correction (2026-08-02).** This appendix carried a carve-out saying the
+> #1006-separating bagley run of 07-31 (`run-2026-07-31_18-06-28`) was
+> uncommitted and existed only in that issue's comment thread. **It is
+> committed** — it landed in `d5d26d00`. Every count below has been recomputed
+> over the whole committed corpus, including it.
 
-**Guardrail violations since the detector shipped (2026-07-27 20:00):** 8 of 25
-runs. Violation counts by type across that window: 16 × "tree person is new this
-run and has a person_evidence link" (with no `same_person`), 3 × exhaustiveness
-declared without `research-exhaustiveness`, 3 × proof/conclusion effect without
-`proof-conclusion`, 3 × conflict analysis without `conflict-resolution`. **Read
-with §0.2's caveat: #998/#999/#1006 make this a floor with an unquantified
-false-positive rate.**
+**E2e corpus (133 committed runs).** Outcomes 81 pass / 22 partial / 30 fail
+(these are fused pre-#1050 verdicts: 8 of the 30 fails are judge-pass/partial
+runs failed by the compliance detector — 6 judge-pass, 2 judge-partial).
+Stop reasons: 96 completed, 19 timeout, 8 error, 8 cost_cap, 1 inactivity, 1
+natural_end. **This is the same 133 §6's economics use** — 111 of them record a
+cost and 22 do not (all 19 timeouts, 2 errors, 1 inactivity). One corpus, one
+denominator.
+
+**Guardrail violations since the detector shipped (2026-07-27 20:00):** **12 of
+the 29 runs** in that window carry at least one, **45 violations** in total:
+34 × "tree person is new this run and has a `person_evidence` link" (with no
+`same_person`), 4 × exhaustiveness declared without `research-exhaustiveness`,
+4 × proof/conclusion effect without `proof-conclusion`, 3 × conflict analysis
+without `conflict-resolution`. **Read with §0.2's caveat: #998/#999/#1006 make
+this a floor with an unquantified false-positive rate.**
+
+> **Why other sections say "8 of 25" and "16 ×".** Those are the same
+> measurement over a **narrower window** — it stopped at `2026-07-30_19-43-58`
+> and dropped timed-out runs, which excluded four runs (two `jimmie-jewel-neal`
+> timeouts and both 07-31 runs) that are all committed. Those four carry 20 of
+> the 45. The narrow window is what §3's P0 and §9's **"≤9 of 25"** gate-reach
+> figure are stated against, so both are left on it; **the ≤9 has not been
+> re-derived on the full window — do not rescale it by eye.**
 
 **The five 07-30 failures.** isabel-carvajal-daughter (judge pass, 5
 violations), heinrich-zinsmeister-death (judge partial, 1),

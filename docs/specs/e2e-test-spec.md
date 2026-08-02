@@ -990,15 +990,16 @@ through `axes_from_runlog` and reports all three axes, holding `not_checked`
 compliance separate from clean:
 
 ```
-126 committed run(s)
-  recall (genealogy): 86 pass / 24 partial / 16 fail
-  compliance:         8 fail / 118 not_checked
-  gate (outcome):     81 pass / 22 partial / 23 fail
+133 committed run(s)
+  recall (genealogy): 87 pass / 24 partial / 22 fail
+  compliance:         12 fail / 121 not_checked
+  gate (outcome):     81 pass / 22 partial / 30 fail
 ```
 
-(A snapshot taken 2026-07-31, not a live figure — run the command for
+(A snapshot taken 2026-08-02, not a live figure — run the command for
 current totals. The gap between the recall line and the gate line is the
-whole point: five of those eight non-compliant runs recovered the answer.)
+whole point: eight of those twelve non-compliant runs recovered the answer —
+six judge-pass, two judge-partial.)
 
 No dashboard, no database — two functions reading committed runlogs. The
 console output is also the artifact stakeholders see.

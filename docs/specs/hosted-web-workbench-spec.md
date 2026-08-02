@@ -184,6 +184,16 @@ and electron share code" requires).
   /server         FastAPI control plane (Python) + agent_runner.py (ships into the sandbox image)
 ```
 
+> **As built, verified 2026-08-02.** The tree above is the 2026-06-05 target and
+> the counts in it are that date's snapshot. What shipped differs in four ways:
+> `/packages/engine` split into `engine/mcp-server` + `engine/plugin`, and it now
+> holds **27** skills and **47** MCP tools, not 28 and 30; `viewer-ui` now has
+> **13** sections, not 11 (`KnownInformationSection` and `LocalitiesSection` were
+> added after this was written); **`/apps/cowork-plugin` and `/apps/mcpb` were
+> never created** — both artifacts are still built by top-level `scripts/`; and
+> `/apps` holds exactly `electron`, `web`, `server`. For the as-built map see
+> [`docs/architecture.md`](../architecture.md) §7.
+
 ### 4.1 The shared seam: `ResearchTransport`
 
 Today `ResearchDataProvider` calls `window.api.*` directly. Refactor it to accept
@@ -214,7 +224,9 @@ interface ResearchTransport {
   feedback/session-capture model (§11).
 
 ~90% of the renderer (App, 11 sections, shared components, `lib/schema.ts`,
-`progress.ts`, `relationship-label.ts`) moves into `viewer-ui` unchanged.
+`progress.ts`, `relationship-label.ts`) moves into `viewer-ui` unchanged. **11 is
+the count that actually moved** (PR #293, 2026-06-07); two sections were added
+later, so the package holds **13** today.
 
 ---
 

@@ -1,6 +1,10 @@
 # Genealogy Workbench — Interaction & UI Design
 
-**Status:** DRAFT for design + engineering review · 2026-06-06 · branch `hosted-web-workbench`
+**Status:** DRAFT for design + engineering review · 2026-06-06 · **still unbuilt
+as of 2026-08-02** — none of Phases 1–4 has landed (`apps/web` is still the
+two-pane shell; `viewer-ui` has no `EvidenceList`, no `WorkspaceBridge`, and the
+sidecar is still the modal `SidecarPanel`). Written on `hosted-web-workbench`,
+which has since merged into `main`.
 
 Covers the **interaction model** (the AI as worker *and* mentor — Did / Decide /
 Next) and the **spatial design** (places vs. documents). Guiding rule: **ship the
@@ -12,8 +16,9 @@ live in **Later**, not the build.
 
 The hosted web workbench today is a **two-pane** layout (`apps/web`): chat on
 the left, the shared viewer (`packages/viewer-ui`) on the right. The viewer
-itself is a 3-zone app — a section sidebar (11 sections), a single content
-slot, and a modal "sidecar" drawer for search results.
+itself is a 3-zone app — a section sidebar (13 sections; 11 when this was
+written), a single content slot, and a modal "sidecar" drawer for search
+results.
 
 The original request was for a standard **3-pane IDE**: file tree (left),
 tabbed file content (middle), chat (right). We are **not** building a literal
