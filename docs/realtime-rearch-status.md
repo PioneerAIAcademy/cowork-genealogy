@@ -43,19 +43,29 @@ of the streaming path (affinity-free).
 
 ## Morning run — client + server + E2B
 Prereqs in `apps/server/.env`: `E2B_API_KEY`, `E2B_ACCESS_TOKEN`,
-`ANTHROPIC_API_KEY`, `GOOGLE_CLIENT_ID`/`SECRET`, a stable `SESSION_SECRET`. The
+`ANTHROPIC_API_KEY`, `FAMILYSEARCH_WEB_ENABLED=true`, a stable `SESSION_SECRET`,
+and — for anything but local dev — a real `WS_SIGNING_KEY`. The
 `genealogy-agent` image built (C2).
 
 1. **Terminal A:** `make server-e2b`  (control plane on `127.0.0.1:1837`,
    `SANDBOX_PROVIDER=e2b`, `AGENT_MODE=real`).
-2. **Terminal B:** `make web-oauth`  (Vite proxied at `:1837`).
-3. Open **http://127.0.0.1:5173** → Sign in with Google → create a research
-   session. That provisions an E2B sandbox from `genealogy-agent`, boots its WS
-   server; the browser connects **directly** to the sandbox's `wss://…e2b.app`
-   for chat + the live viewer.
-4. **FamilySearch (optional):** "Connect FamilySearch" (popup) or dev-connect —
-   writes the token into the E2B sandbox. Needed only for FS tools; basic agent
-   turns work without it.
+2. **Terminal B:** `make web`  (Vite proxied at `:1837`).
+3. Open **http://127.0.0.1:5173** → **Sign in with FamilySearch** → create a
+   research session. That provisions an E2B sandbox from `genealogy-agent`, boots
+   its WS server; the browser connects **directly** to the sandbox's
+   `wss://…e2b.app` for chat + the live viewer.
+
+> **Login changed after this was written, verified 2026-08-02.** FamilySearch is
+> now the **single front door** (`apps/server/app/auth.py`): one OAuth round-trip
+> both gates app access via the email allowlist *and* persists the data token
+> every sandbox-create injects. There is **no Google sign-in** and **no
+> per-session "Connect FamilySearch" step** — both are gone, along with
+> `GOOGLE_CLIENT_ID`/`SECRET`. There is also no `make web-oauth` target; the
+> FamilySearch path is `make web` (`:1837`). With `FAMILYSEARCH_WEB_ENABLED` off,
+> a **dev-login** (allowlisted email, no round-trip) stands in and the agent runs
+> in mock mode — pair that with `make server-dev` / `make server-mock` on `:8000`
+> and `make web-dev`. Full target matrix: `DEVELOPMENT.md` → "Running the hosted
+> web workbench locally".
 
 ### How a turn flows
 `/connect` (E2B branch, `sessions.py`) → `provider.resume(sandbox)` +
@@ -70,9 +80,11 @@ sidecar, feedback) — never the stream.
   the C5 cleanup removed every import. Dead weight in the image, not a behavior
   gap.
 - **FamilySearch token** is not auto-injected into E2B — dev/real connect writes it.
-- **Wiki tools** (`wiki_read`/`wiki_place_page`) need the pre-crawled markdown
-  corpus baked into the image (`wikiMarkdownDir`) — not baked, so those two tools
-  error; everything else (incl. `wiki_search` over the network) works.
+- ~~**Wiki tools** need the pre-crawled markdown corpus baked into the image
+  (`wikiMarkdownDir`).~~ **Obsolete, not pending (verified 2026-08-02).**
+  `wiki_read` and `wiki_place_page` are now HTTP clients against the hosted
+  `wiki-query-api`, the same as `wiki_search` — there is no corpus to bake and no
+  `wikiMarkdownDir`. All three work in the sandbox wherever the API is reachable.
 - **1h Hobby cap:** a continuously-active session force-pauses at ~1h (resumes in
   ~1s; a mid-turn pause breaks that turn). Proactive between-turn pause deferred.
 - **Delete-janitor** (abandoned-sandbox GC) deferred — use the explicit DELETE.
