@@ -93,7 +93,7 @@ The web side depends on `packages/schema`, never on the engine.
 
 - `packages/schema/` — single source of `research.json` + simplified-GedcomX TS
   types + JSON Schemas (seeded from the viewer). Consumed by viewer-ui, web, server.
-- `packages/viewer-ui/` — the extracted renderer (App, 11 sections, shared
+- `packages/viewer-ui/` — the extracted renderer (App, 13 sections, shared
   components, `ResearchDataProvider`), transport-agnostic via a
   `ResearchTransport` (see `src/transport.ts`). Runs in Electron (IPC) and web (WS).
 - `apps/electron/` — the former `cowork-genealogy-ui` Electron viewer, now an

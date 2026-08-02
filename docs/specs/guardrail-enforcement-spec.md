@@ -203,9 +203,20 @@ same reason, so the redundancy is harmless. Tracked in `docs/TODOs.md`.
 - **`Read` is not revoked, and should not be** until there is a way to read the
   same data. `research_query` covers 11 of `research.json`'s ~15 top-level
   sections (missing `project`, `researcher_profile`, `known_holdings`,
-  `localities`) and caps at 50 items with no pagination, and no MCP tool reads
-  `tree.gedcomx.json` at all (`person_read` hits the live FamilySearch API — a
-  different data source). Closing that is a build project, not a config change.
+  `localities`) and caps at 50 items with no pagination. For
+  `tree.gedcomx.json` there is **no query surface at all** — nothing that stands
+  to the tree as `research_query` stands to `research.json`. Plenty of tools
+  *open* the file: `project_context` (`project-context.ts:115`) loads it, and
+  roughly a dozen writer/validator tools (`tree_edit`, `tree_correct`,
+  `tree_forget`, the merge tools, `materialize_facts`, `research_append`,
+  `validate_research_schema`, …) load it to validate or rewrite it. But none of
+  them hand the agent its contents to inspect: the writers return a result, not
+  the tree, and `project_context` returns only a flat person roster
+  (`{id, name, gender, sourceRefs}`) — no facts, no dates or places, no
+  relationships, no per-fact sources. An agent that needs to see what the tree
+  actually says has `Read` and nothing else. (`person_read` is not a substitute
+  — it hits the live FamilySearch API, a different data source.) Closing that is
+  a build project, not a config change.
 - **Scope this correctly: it is hygiene.** Both observed bypass shapes write via
   `research_append`, never via raw `Write`. This closes an escape hatch; §5 and
   §7 are the gates that address the observed bug.
