@@ -409,6 +409,14 @@ expensive enough (§12) that an accidental sweep is a real cost event; driving a
 batch needs an explicit shell loop and a budget decision, not a one-word flag.
 (A `--tag` sweep existed until 2026-07 and was removed for this reason.)
 
+**Suite economics — scale by the mean, not the median.** From the 96 committed
+e2e runlogs: median **$7.29 / 53 min** per run. **17 of 96 carry no
+`total_cost_usd`** (16 `timeout`, 1 `error`), so the $661 recorded total spans
+only 79 runs while the 98 h of wall-clock spans all 96; imputing the missing runs
+at the pooled $0.1504/min puts true spend near **$886**. A suite is a *sum*, so
+budget it at the mean: a 20-fixture pass is ≈ **$185 and ~20.5 h serial**.
+Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
+
 1. Harness loads fixture, builds a fresh temp project directory.
 2. Copies `starting-research.json` and `starting-tree.gedcomx.json`
    into the temp dir. Mirrors `packages/engine/plugin/skills/` into
@@ -446,15 +454,34 @@ batch needs an explicit shell loop and a budget decision, not a one-word flag.
    **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
    the message that arrives once the run has *already finished* and the money
-   is already spent. Every `cost_cap` run in the corpus ended with the SDK's
-   own `end_turn` and `is_error: false`; none was interrupted. Two things
-   block real enforcement, so it was left as-is rather than half-built: there
-   is no per-model price table for agent models (a run spans the parent plus
-   each subagent on its own `.md` pin), and subagent tokens never appear in
-   the main message stream at all — so an in-flight estimate would
-   systematically under-count and a `$15` cap would fire somewhere north of
-   `$15` by an unknown margin. Treat `max_cost_usd` as a reporting threshold.
-   Tracked in `docs/TODOs.md`.
+   is already spent. All **five** `cost_cap` runs in the corpus ended with the
+   SDK's own `end_turn` and `is_error: false`; none was interrupted — spend ran
+   to **$15.86–$20.84** against a $15 cap. Two things block real enforcement, so
+   it was left as-is rather than half-built: there is no per-model price table
+   for agent models (`judge.py::JUDGE_PRICING` covers judge models only, and a
+   run spans the parent plus each subagent on its own `.md` pin), and subagent
+   tokens never appear in the main message stream at all — so an in-flight
+   estimate would systematically under-count and a `$15` cap would fire somewhere
+   north of `$15` by an unknown margin. Treat `max_cost_usd` as a reporting
+   threshold. Decided, not tracked: a cap that silently fires late is worse than
+   a documented reporting threshold.
+
+   **Agent `model:` pins interact with reasoning effort, and one pin is
+   load-bearing.** Effort is session-wide; `model:` is per-subagent (each
+   `packages/engine/plugin/agents/*.md`). So when one agent misbehaves at the
+   run's effort level, repinning that agent is the only change that does not
+   move every other step too. `record-extractor` was repinned `claude-sonnet-5`
+   → `claude-sonnet-4-6` on 2026-07-18 for exactly this: sonnet-5 hangs as a
+   subagent at Cowork/e2e `effortLevel: high` — adaptive-thinking runaway, not a
+   model defect, and fine at default effort. Capping its output at 8k instead was
+   A/B'd over 5 tests and is non-viable: it either starves before the first tool
+   call or runs away across turns (0 pass, ~20 min per test). The pin's known
+   cost is ~0.24/3 mean judge score, concentrated in GPS classification nuance —
+   the existing "blank columns produce no assertions" rule, and
+   `informant_proximity` / `evidence_type` calls; recovering that is issue #1131.
+   **Anyone running the reasoning-effort A/B (#1136) must account for this**: a
+   sweep that lowers effort changes the conditions that forced this pin, and a
+   sweep that keeps `high` must not also repin the extractor back to sonnet-5.
 
    **Continue-nudge on premature yield.** An autonomous `/research` run
    must end at `project.status == "completed"`; instead the agent

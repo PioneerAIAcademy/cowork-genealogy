@@ -134,8 +134,9 @@ PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
 # catch a shell write would be pattern-matching command text — which would deny
 # a legitimate `python script.py research.json > out` while still missing
 # `python -c` with the path built from a variable. A false deny is the worse
-# failure mode (plan §6), so the shell route is left open and recorded in
-# docs/TODOs.md instead.
+# failure mode, so the shell route is left open and recorded in
+# docs/specs/guardrail-enforcement-spec.md §6 ("Deliberate gaps") instead —
+# close it only if a bypass appears in a runlog or a feedback case.
 _FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 
 
