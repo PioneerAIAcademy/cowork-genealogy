@@ -691,8 +691,8 @@ Two behaviors of the script that are deliberate:
   `cat >`, `sed -i`, and `python -c` all get through. Pattern-matching command
   text would false-deny a legitimate `python script.py research.json > out` while
   still missing a variable-built path, and **a false deny is the worse failure
-  mode**. Recorded in `docs/TODOs.md`, to be closed only if a bypass ever uses
-  the shell.
+  mode**. The rationale lives in `guardrail-enforcement-spec.md` §6 ("`Bash` is
+  not covered"), to be revisited only if a bypass ever uses the shell.
 
 Packaging is guarded: `package-plugin.mjs`'s `INCLUDE` must carry `"hooks"`, or
 the directory never ships. Asserted by `tests/packaging/plugin-hooks.test.ts`,
@@ -1235,4 +1235,4 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 | A user submitted a feedback zip | [`alpha-feedback-guide.md`](alpha-feedback-guide.md), then [`feedback-case-spec.md`](specs/feedback-case-spec.md) |
 | The hosted web product | [`hosted-web-workbench-spec.md`](specs/hosted-web-workbench-spec.md), [`sandbox-provider-spec.md`](specs/sandbox-provider-spec.md), [`realtime-architecture.md`](realtime-architecture.md) (reasoning, not current state) |
 | I'm a genealogist, not a developer | `eval/JUNIOR-WALKTHROUGH.md`, `eval/SENIOR-WALKTHROUGH.md` |
-| What work is queued but not yet an issue? | [`docs/TODOs.md`](TODOs.md) — a staging queue for the Backlog column, not a tracker |
+| What work is queued but not yet started? | The **Backlog column** on the project board. `docs/TODOs.md` was retired 2026-08-02 (#1163) — its 54 items became issues #1117–#1157. Deferred work goes straight to an issue; there is no staging file. |
