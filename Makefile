@@ -247,13 +247,19 @@ typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
 	pnpm typecheck
 
 .PHONY: test-all
-test-all: ## Run EVERY test suite (JS workspace + server + engine + eval harness + CRUD UI)
+test-all: ## Run EVERY check: typecheck + every test suite (JS workspace + server + engine + eval harness + CRUD UI)
+	# `typecheck` first, and it is NOT redundant with test-js: turbo.json defines
+	# `test` and `typecheck` as separate tasks, so `pnpm test` never runs tsc. A
+	# viewer-side type break used to pass `make test-all` clean and surface only
+	# in CI (.github/workflows/js-tests.yml, which runs both). It costs seconds
+	# and fails fast, so it goes before the suites rather than after.
+	$(MAKE) typecheck
 	$(MAKE) test-js
 	$(MAKE) server-test
 	$(MAKE) engine-test
 	$(MAKE) harness-test
 	$(MAKE) eval-ui-test
-	@echo "✓ all test suites passed"
+	@echo "✓ typecheck + all test suites passed"
 
 .PHONY: test
 test: ## Quick loop: JS workspace + server tests (a subset of test-all)
