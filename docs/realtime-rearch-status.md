@@ -1,6 +1,9 @@
 # Realtime re-architecture — build status & morning run guide
 
-**Branch:** `hosted-web-workbench`. **What this is:** the "sandbox IS the
+**Where the code is:** **merged to `main`.** The `hosted-web-workbench` branch
+this was written on no longer exists — `apps/server`, `apps/web`, and
+`packages/{schema,viewer-ui}` are all on `main`.
+**What this is:** the "sandbox IS the
 per-session server" build (docs/realtime-architecture.md). The browser
 opens ONE authenticated WSS directly to the E2B sandbox; the control plane is out
 of the streaming path (affinity-free).
@@ -27,9 +30,16 @@ of the streaming path (affinity-free).
   + token). Commit `7b73132`. **One gotcha fixed:** E2B `commands.run` does NOT
   inherit the image `ENV`, so the WS-server launch passes `PYTHONPATH`/`ENGINE_*`/
   `HOME` explicitly.
-- **C5 (deferred)** — remove Ably + the old CP relay (`ws.py`/`live_session`/
-  `realtime/`/idle-loop); unify LocalProvider onto the WS server. Kept for local
-  dev + as a fallback until the E2B path is proven.
+- **C5 ✅ cleanup done** — Ably and the old control-plane relay are gone from
+  `apps/server/app`: no `ws.py`, no `realtime/`, no `live_session`, no
+  `_idle_suspend_loop`, no capability-token endpoint, and no Ably import
+  anywhere (the only surviving mentions are two historical comments, in
+  `sandbox/e2b.py` and `tests/conftest.py`). LocalProvider is unified onto the
+  same in-sandbox WS server — it launches `python -m app.sandbox_server` as a
+  subprocess, so local dev and E2B now run identical streaming code.
+  **One loose end:** `ably>=3.1.2` is still a declared dependency in
+  `apps/server/pyproject.toml` (and `uv.lock`) with nothing importing it —
+  drop it on the next dependency pass.
 
 ## Morning run — client + server + E2B
 Prereqs in `apps/server/.env`: `E2B_API_KEY`, `E2B_ACCESS_TOKEN`,
@@ -56,9 +66,9 @@ control plane only does auth + `/connect` + file reads (`/state`, `/status`,
 sidecar, feedback) — never the stream.
 
 ## Deferred / known gaps (none block the live-test)
-- **C5 cleanup** not done: Ably backends, the capability-token endpoint, the old
-  `/ws` relay + `live_session` + `_idle_suspend_loop` are still present (local dev
-  uses them; the E2B path doesn't). LocalProvider still uses the old relay.
+- **`ably>=3.1.2` is still declared** in `apps/server/pyproject.toml` even though
+  the C5 cleanup removed every import. Dead weight in the image, not a behavior
+  gap.
 - **FamilySearch token** is not auto-injected into E2B — dev/real connect writes it.
 - **Wiki tools** (`wiki_read`/`wiki_place_page`) need the pre-crawled markdown
   corpus baked into the image (`wikiMarkdownDir`) — not baked, so those two tools
