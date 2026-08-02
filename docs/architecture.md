@@ -635,10 +635,11 @@ loudly in CI) and asserts all five registration sites still agree on `genealogy`
 > a **falsy** value (`false|0|no|off`) is what turns it **off**. Critically,
 > **unset also means on** — deleting the variable does not eager-load anything.
 > (It is additionally forced off on a non-first-party `ANTHROPIC_BASE_URL`, on
-> Vertex, and under `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`.) Three sites
-> describe the opposite: `eval/harness/harness/auth.py:133`,
-> `eval/harness/e2e/orchestrator.py:811` (which says "Forcing tool search off"
-> while `:829` sets `"true"`), and `apps/server/app/agent/real_agent.py:247`. The
+> Vertex, and under `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`.) **Five sites
+> described the opposite and were corrected in #1173 and its follow-up** — the
+> three harness/hosted comments plus `CLAUDE.md` and this repo's own packaging
+> test. The flag **values** are unchanged; flipping them is separate work that
+> has to re-measure the tool mix (#1110). The
 > repo's own data corroborates: ToolSearch is **~11% of all tool calls** (387
 > across 28 runs) *while the flag is set to `true`*. This does not change the
 > bare-name rule above, which is correct either way. See critique §3 P1 and #1110.
@@ -1216,13 +1217,17 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 3. **Whether the compliance-detector doctrine should follow the router's
    paraphrase or the owning skill's contract** (#1006). Until that is decided,
    "true or false positive" has no ground truth at all (critique §3 P0). **Do not
-   quote "16 of 25"** — critique §9 retracts it; 16 counts *flagged persons* on
-   one arm, and the corrected reach of the proposed gate is ≤9 of 25.
+   quote "16 of 25" as the gate's *reach*** — critique §9 retracts that reading.
+   16 is the count of violations one arm produced; the corrected reach is ≤9 of
+   25 (≤14 of 45 on the full committed window). Note the critique carries two
+   windows and two disjoint "9 of 25" figures — read its §0.2 before quoting
+   either.
 4. **Why the 1024-character description cap exists** — two lint sites give
    contradictory reasons (§3.2). Treat it as hard either way.
 5. **`ENABLE_TOOL_SEARCH`** (#1110) — the polarity is settled as of 2026-08-02
-   (§5.2); what remains is correcting the three code comments and re-measuring
-   the tool mix afterward.
+   (§5.2) and all five inverted comments have been corrected. What remains is
+   the **flip itself**, which changes behavior in both harnesses and the hosted
+   path and requires re-measuring the tool mix before and after.
 
 ---
 
