@@ -94,7 +94,7 @@ Facts about this system live in one of three places:
 | [**`docs/adrs/`**](adrs/) | **The why.** One decision per file: forces, alternatives tried and rejected, consequences knowingly accepted. Its Context/Decision/Alternatives are frozen history; its `Applies to`/`Enforcement` pointers are live and CI-linted. | A rule looks arbitrary, or you want to change it. Index below. |
 
 If this guide and a per-tool spec (`docs/specs/<tool>-tool-spec.md`) disagree,
-**the spec wins** — it is the contract `spec-review` checks against.
+**the spec wins** — it is the contract an implementation is checked against.
 
 ### Tense: "Today" vs "Direction"
 
@@ -203,8 +203,8 @@ The four agents are `gps-mentor`, `record-extractor`, `image-reader`, and
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
-> (`.claude/agents/`, which are developer tooling for this repo — `spec-review`,
-> `mcp-tool-scaffolder`, `cowork-skill-builder`).
+> (`.claude/agents/`, which are developer tooling for this repo — today
+> `rubric-critic` and `skill-improver`).
 
 ### 3.1 The most important rule in this repo: anchor rules structurally
 
@@ -380,8 +380,9 @@ not yet landed in either owner. On conflict, `CLAUDE.md` wins.
 Architecturally:
 
 - **The spec comes first** — `docs/specs/<tool>-tool-spec.md`. A live tool must
-  have a live spec; `spec-review` checks the implementation against it, and
-  `mcp-tool-scaffolder` refuses without one.
+  have a live spec, and the spec is what the implementation gets checked
+  against. Copy `src/tools/wikipedia.ts` and its sibling four files as the
+  template.
 - **Four sites — but the drift test catches only one kind of miss.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
   `allToolSchemas`. **It does not check the dispatch.** Forget the
@@ -417,18 +418,14 @@ Architecturally:
   rebuild it (§7). `docs/skill-lifecycle.md` → "Rebuilding and reinstalling"
   covers the Claude Code and Cowork rows; the hosted row is only here.
 
-> ⚠️ The `mcp-tool-scaffolder` subagent still works but is **stale** (#1161): its
-> paths predate the `packages/engine/` move and its canonical-template link is
-> broken. Its User-Agent instruction is the one to watch — it says to send
-> `genealogy-mcp-server/<version>` **on every request**. That string is fine for
-> the four non-FamilySearch tools that send it today (`wikipedia`, `wiki_search`,
-> `wiki_read`, `wiki_place_page`), and it is exactly what Imperva 403s on any
-> FamilySearch endpoint. The rule is conditional: **FamilySearch → `BROWSER_USER_AGENT`;
-> anything else → the service's own convention.** The scaffolder states it
-> unconditionally because its canonical template is one of the non-FS tools.
-> `.claude/agents/cowork-skill-builder.md` and `spec-review.md` are stale the
-> same way; `spec-review`'s description of `index.ts` predates the move of the
-> tool list into `src/tool-schemas.ts`.
+> **On the User-Agent, the rule is conditional.** `genealogy-mcp-server/<version>`
+> is what the four non-FamilySearch tools send today (`wikipedia`, `wiki_search`,
+> `wiki_read`, `wiki_place_page`) and is correct for them. It is also exactly
+> what Imperva 403s on any FamilySearch endpoint. So: **FamilySearch →
+> `BROWSER_USER_AGENT`; anything else → the service's own convention.** The
+> deleted `mcp-tool-scaffolder` subagent stated it unconditionally — because its
+> canonical template was one of the non-FS tools — which is part of why it and
+> its two siblings were removed (#1161).
 
 **Add a skill.** Copy `packages/engine/plugin/skills/search-wikipedia/` — the
 canonical minimal example of the full pipeline. Don't mutate it. Then:
@@ -1154,15 +1151,15 @@ tools — what happens after you grant one). And
 | Gap | Consequence | Tracking |
 |---|---|---|
 | **No check proves a declared agent tool actually *binds* at runtime.** Every lint stops at spelling; the SDK handshake exposes only name/description/model. | `gps-mentor` read `research.json` front-to-back for 112 of 178 reads across 24 runs because its `tools:` — correct by every lint — lacked the projection tools. (Since granted; **the missing check is not**.) | #1084/#1085 |
-| **Nothing asserts an MCP tool's dispatch exists.** | A tool ships advertised and throws `Unknown tool` on first call, CI green. | — |
-| **Nothing checks a `packages/schema` TypeScript interface against its JSON Schema.** | Already drifted: `Assertion` is missing `standard_place`. | — |
-| **Nothing checks that a new `research.json` field is rendered, taught, or written** (sites 6–8 in §6). | The field validates and is never used by anything. | — |
+| **Nothing asserts an MCP tool's dispatch exists.** | A tool ships advertised and throws `Unknown tool` on first call, CI green. | #1164 |
+| **Nothing checks a `packages/schema` TypeScript interface against its JSON Schema.** | It had already drifted twice — `Assertion` and `TimelineEvent` were both missing `standard_place` (fixed in #1173; the missing *check* is not). | #1165 |
+| **Nothing checks that a new `research.json` field is rendered, taught, or written** (sites 6–8 in §6). | The field validates and is never used by anything. | #1166 |
 | **No test asserts the three write-lockdown copies agree.** | The next `PROTECTED_PROJECT_FILES` change can silently re-open the divergence. | critique §3 P3 |
 | **No automated suite exercises a plugin hook *as a bound runtime hook*.** `plugin-hooks.test.ts` runs the guard script directly and asserts its decisions; nothing checks that Cowork or the hosted path actually route a `Write` through it. And the unit harness's own hook carries no protected-file rule at all, so the write lockdown is absent from that tier in either form. | A binding regression surfaces only in Cowork, which no CI job touches. | #1160 |
 | **No unit suite for `research`** (the orchestrator) or `forget-and-rederive`. | The component that fails most is exercised only by live e2e. | critique §3 P1 |
 | **`validation-protocol.md` (12 copies, 10 distinct) and `research-log-protocol.md` (3 copies, 3 distinct) are unlinted** and already drifted. | Nothing records which divergences are deliberate. | #1112 |
 | **The `places-guidance.md` exemption is existence-only.** | A regression inside `research-plan`'s copy passes silently. | #1112 |
-| **Nothing checks `README.md`'s tool/skill catalog** against the code. | The user-facing catalog rots silently. | — |
+| **Nothing checks `README.md`'s tool/skill catalog** against the code. | Already rotted: **13 of 47 tools appear nowhere in it** — the entire structured-persistence writer surface plus both projection tools. Skills and agents are clean (27/27, 4/4). | #1137 |
 | **No unit-side judge calibration.** `calibrate_judge` is e2e-only. | The unit judge's accuracy is unmeasured. | critique §2.8 |
 | **No production telemetry.** `apps/server/app/obs.py` is PII-free stdout logging; `sandbox_server.py` keeps a capped in-memory *replay* buffer for reconnects, not a tool ledger. Every compliance rate, cost figure, and guardrail measurement in this repo is computed over `eval/runlogs/`. | You cannot answer "is this getting better for a real user?" | #1054 |
 | **The compliance detectors are uncalibrated.** Three open defects, two unnamed false-positive classes, one false-negative blind spot. `is_error` is never populated, so a *failed* `Skill` call counts as a success. | **Do not quote the 8-of-25 violation rate without that caveat**, and do not graduate a gate on it. | #998, #999, #1006 |
@@ -1200,9 +1197,9 @@ a skill does *not* trigger; add one whenever you widen a description.
 
 **Write or update a spec.** `docs/specs/<tool>-tool-spec.md`, landed **before**
 the tool. A spec is checkable when it states, per behavior: the exact input
-shape, the exact output shape, and the error case *with its message text* —
-`spec-review` quotes both sides, so anything written as narrative rather than as
-a contract it cannot cite. Copy the shape of a recent one
+shape, the exact output shape, and the error case *with its message text* — a reviewer has to be able to
+quote both sides, so anything written as narrative rather than as a contract
+cannot be cited against the code. Copy the shape of a recent one
 (`docs/specs/project-context-tool-spec.md` is a good model).
 
 ---
