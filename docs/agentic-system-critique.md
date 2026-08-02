@@ -11,7 +11,7 @@ against how comparable production agent systems are built, and a prioritized
 list of what to do next. It is a critique and a work list, not a plan — each
 item that gets picked up should get its own plan or issue.
 
-**Evidence base.** 126 committed e2e runs (`eval/runlogs/e2e/`), the latest unit
+**Evidence base.** 133 committed e2e runs (`eval/runlogs/e2e/`), the latest unit
 run log for the 25 skills with suites, the specs under `docs/specs/`, the
 measured performance work in `docs/plan/research-performance-2026-07-27.md`, the
 plugin bodies, the packaging lints, and ~90 open issues (115 as of 08-01,
@@ -36,21 +36,32 @@ see §7.
 **0.1 — We proved the right law and have not applied it to the router's
 judgment rows.** `research-performance-2026-07-27.md` §5.3 is the strongest
 piece of agent engineering in this repo: across 309 turns of a real session,
-every rule with a **structural anchor** held at **100%**, and both rules that
-had none decayed — the ranking doctrine from 77% compliance to **3%** once
+every rule with a **structural anchor** held at **100%**, and **both rules that
+decayed had none** — the ranking doctrine from 77% compliance to **3%** once
 compaction evicted the skill body. We acted on that for `record_search` (the
 ranking fold, C7). The routing table — 17 rows at `research/SKILL.md:128-146`,
 inside a 431-line body that is resident longer than any other in the system — is
 still prose.
 
-Two caveats that rev. 1 got wrong and that constrain what follows. First,
+**The law runs one direction only.** An anchor *guarantees* survival; the absence
+of one merely *permits* decay. It is not the converse — "unanchored" does not
+predict failure. The audit's own table lists **three** unanchored rules and one
+of them **improved**: `givenName` went 54% → 94%, annotated "Not decay — the
+early surname-only queries were deliberate broad sweeps. Rate *rose*." So the
+inference an anchor licenses is one-way, and an unanchored rule still has to be
+measured before it is called a problem.
+
+Three caveats that rev. 1 got wrong and that constrain what follows. First,
 **whether this is in fact the largest unanchored rule we own is unmeasured**:
 `research-performance-2026-07-27.md:692-697` explicitly scopes its audit to
 `search-records` and says the per-skill audit "should not be assumed." No
 compaction-segment audit of `research/SKILL.md` exists; doing one is cheap and
-should precede any structural change to the router. Second, **only 6 of the 17
-rows are mechanically computable** (§3, P2 spike) — and those six are the ones
-that were never failing.
+should precede any structural change to the router. Second, that same scope note
+**exempts plugin agents entirely** — they run in fresh context per invocation, so
+`record-extractor` (48 KB) and `gps-mentor` (30.8 KB) reload every time and
+cannot decay this way; nothing below about anchoring applies to them. Third,
+**only 6 of the 17 rows are mechanically computable** (§3, P2 spike) — and those
+six are the ones that were never failing.
 
 **0.2 — The dominant failure mode is process compliance, not genealogy — but the
 instrument measuring it has three open defects, two unnamed false-positive
@@ -60,9 +71,18 @@ guardrail-bypass violation. In the five most recent failing runs (all
 2026-07-30) the LLM judge scored the *genealogy* **pass on three and partial on
 two** — every one was failed by the detector.
 
+> **On the full committed window that rate is worse, not better: 12 of 29 runs
+> and 45 violations (§7).** The 8/25 window stops at `2026-07-30_19-43-58` and
+> drops timed-out runs. The narrow window is retained here because §3's P0 and
+> §9's "≤9 of 25" gate-reach figure are stated against it.
+
 **That rate is a floor with an unquantified false-positive rate and should not
 be quoted without this caveat.** The arm producing **16 of the 25** violations
-(`find_person_evidence_missing_same_person`) is the subject of **#1006**, which
+(34 of 45 on the full window) is `find_person_evidence_missing_same_person`.
+**16 is a count of violations, not of what a gate could prevent** — §3's P0 puts
+the reach of any gate consistent with the skill contract at **≤9 of the 25**,
+because 7 of the 16 flagged persons have zero record-sourced links (§9, rev. 3
+row). It is the subject of **#1006**, which
 states that "doctrine gap" and "a check measuring its own introduction date"
 predict identical data and cannot be separated on the current corpus — a
 confound partially resolved by a 07-31 comment (see the P0). **#998**
@@ -346,7 +366,9 @@ person fact-counts). #1006 needs a date floor — and its confound is now
 partially resolved: a 2026-07-31T20:38Z comment supplies a post-doctrine run
 (`bagley-father-1884`, `run-2026-07-31_18-06-28`) that created and linked a
 person with zero `same_person` calls, the data point the
-check-measures-its-own-introduction reading predicts should not exist.
+check-measures-its-own-introduction reading predicts should not exist. That run
+is **committed** (`d5d26d00`) and reproducible from `eval/runlogs/e2e/`, not
+comment-only as §7 previously said.
 
 **Two false-positive classes rev. 2 did not name — both from the detector
 enforcing the router's paraphrase rather than the owning skill's contract.**
@@ -448,7 +470,8 @@ conflict is unresolved. It does **not** refuse when:
 2. a resolved question's `ps_id` has no `focus: "proof-critique"` entry in
    `evaluations[]` (the mentor gate).
 
-Both are prose today, both are the shape §5.3 says decays, and both are
+Both are prose today, both are the shape §5.3 says *can* decay (unanchored —
+which permits decay rather than predicting it, §0.1), and both are
 computable from files the tool already loads. Follow `proofSummaryInvariants`'
 pre-call-state discipline. Land the mentor gate first — it is a pure FK check
 into `evaluations[]`; the tree-encoding gate carries the caveat below.
@@ -593,7 +616,9 @@ what comes next changes nothing when the router already got there.
 `guardrail-enforcement-spec.md:299-304` rejected per-skill write tools because
 *"a split tool is exactly as callable by the router as a section branch is."*
 The same logic applies here — "call `research_next` every turn" is itself
-unanchored prose in the body that decays. The disconfirming evidence is in our
+unanchored prose in the body, so nothing protects it from decaying. The
+one-way law (§0.1) does not make that decay certain; the disconfirming
+evidence for this proposal, which does not depend on it, is in our
 own data: `project_context`, the projection tool built for exactly this, is
 called **~3 times per run** against `Read`'s ~19.
 
@@ -676,8 +701,8 @@ governance count above is one doc lighter.
 
 1. **Generate the schema mirrors** — deletes four issues and a doc table.
 2. **Ship the two gate ports, and spec the `same_person` invariant.** Each retires
-   prose that decays, which is the *right* prose to retire — unlike a general
-   assault on body length.
+   unanchored prose — the shape §5.3 says *can* decay — which is the *right*
+   prose to retire, unlike a general assault on body length.
 3. **Delete the 26 dead `model:` pins.** They change nothing anywhere and make
    per-step routing look like it exists (§2.4).
 4. ~~Rewrite or retire `skill-architecture-spec.md` §2.~~ **Done 2026-08-02** —
@@ -712,10 +737,25 @@ Current measured economics:
 
 | | |
 |---|---|
-| e2e run, median / mean | **$7.29 / $8.26** (107 runs with cost recorded) |
-| e2e recent range (07-25 → 07-30) | $2.89 – $14.00, 18–87 min |
+| e2e run, median / mean | **$7.35 / $8.54** (111 runs record a cost; 22 record none) |
+| e2e run, worst case | **$25.24** and **180 min** (corpus maxima; duration median 52, mean 59) |
+| e2e recent window (07-25 → 07-30), 32 runs / 27 costed | **$2.89 – $21.50**, **18 – 180 min** |
 | Full unit sweep (25 suites) | **≈$77** |
-| Committed e2e spend to date | ≈$884 |
+| Committed e2e spend to date | **≈$948** |
+
+**The tail is the expense, and it is easy to truncate away.** Read those ranges
+with two facts. First, **capped and timed-out runs are not exceptions** — 8 runs
+hit `stop_reason: cost_cap` and 19 hit `timeout`, 27 in all. Quoting a
+range that stops at the last *completed, uncapped* run understates the top badly:
+inside the 07-25 → 07-30 window that framing gives $2.89 – $14.00 / 18 – 87 min,
+while the window's real extremes are **$21.50 / 119 min**
+(`jimmie-jewel-neal` 07-25, `stop_reason: cost_cap`) plus **two 180-minute
+timeouts** (`jimmie-jewel-neal`, 07-30). Second, **all 19 timed-out runs record no
+cost at all**, so they are absent from the median and mean entirely — $8.54 is a
+floor, not a centre. Corpus-wide the worst single run is `jimmie-jewel-neal`
+07-31 at **$25.24 / 168 min**, and that fixture accounts for four of the ten
+longest runs on record. Cost work should be aimed at the tail; the median run is
+already cheap.
 
 Levers, ranked:
 
@@ -736,23 +776,37 @@ Levers, ranked:
 
 ## 7. Evidence appendix
 
-Reproducible from the repo at the date above — with one carve-out: the
-#1006-separating bagley run of 07-31 (`run-2026-07-31_18-06-28`) is uncommitted
-and exists only in that issue's comment thread.
+Reproducible from the repo at the date above.
 
-**E2e corpus (126 committed runs).** Outcomes 81 pass / 22 partial / 23 fail
-(these are fused pre-#1050 verdicts: 7 of the 23 fails are judge-pass/partial
-runs failed by the compliance detector).
-Stop reasons: 93 completed, 16 timeout, 8 error, 7 cost_cap, 1 inactivity, 1
-natural_end.
+> **Correction (2026-08-02).** This appendix carried a carve-out saying the
+> #1006-separating bagley run of 07-31 (`run-2026-07-31_18-06-28`) was
+> uncommitted and existed only in that issue's comment thread. **It is
+> committed** — it landed in `d5d26d00`. Every count below has been recomputed
+> over the whole committed corpus, including it.
 
-**Guardrail violations since the detector shipped (2026-07-27 20:00):** 8 of 25
-runs. Violation counts by type across that window: 16 × "tree person is new this
-run and has a person_evidence link" (with no `same_person`), 3 × exhaustiveness
-declared without `research-exhaustiveness`, 3 × proof/conclusion effect without
-`proof-conclusion`, 3 × conflict analysis without `conflict-resolution`. **Read
-with §0.2's caveat: #998/#999/#1006 make this a floor with an unquantified
-false-positive rate.**
+**E2e corpus (133 committed runs).** Outcomes 81 pass / 22 partial / 30 fail
+(these are fused pre-#1050 verdicts: 8 of the 30 fails are judge-pass/partial
+runs failed by the compliance detector — 6 judge-pass, 2 judge-partial).
+Stop reasons: 96 completed, 19 timeout, 8 error, 8 cost_cap, 1 inactivity, 1
+natural_end. **This is the same 133 §6's economics use** — 111 of them record a
+cost and 22 do not (all 19 timeouts, 2 errors, 1 inactivity). One corpus, one
+denominator.
+
+**Guardrail violations since the detector shipped (2026-07-27 20:00):** **12 of
+the 29 runs** in that window carry at least one, **45 violations** in total:
+34 × "tree person is new this run and has a `person_evidence` link" (with no
+`same_person`), 4 × exhaustiveness declared without `research-exhaustiveness`,
+4 × proof/conclusion effect without `proof-conclusion`, 3 × conflict analysis
+without `conflict-resolution`. **Read with §0.2's caveat: #998/#999/#1006 make
+this a floor with an unquantified false-positive rate.**
+
+> **Why other sections say "8 of 25" and "16 ×".** Those are the same
+> measurement over a **narrower window** — it stopped at `2026-07-30_19-43-58`
+> and dropped timed-out runs, which excluded four runs (two `jimmie-jewel-neal`
+> timeouts and both 07-31 runs) that are all committed. Those four carry 20 of
+> the 45. The narrow window is what §3's P0 and §9's **"≤9 of 25"** gate-reach
+> figure are stated against, so both are left on it; **the ≤9 has not been
+> re-derived on the full window — do not rescale it by eye.**
 
 **The five 07-30 failures.** isabel-carvajal-daughter (judge pass, 5
 violations), heinrich-zinsmeister-death (judge partial, 1),

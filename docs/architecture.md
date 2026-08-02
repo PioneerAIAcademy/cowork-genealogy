@@ -706,8 +706,8 @@ Two behaviors of the script that are deliberate:
   `cat >`, `sed -i`, and `python -c` all get through. Pattern-matching command
   text would false-deny a legitimate `python script.py research.json > out` while
   still missing a variable-built path, and **a false deny is the worse failure
-  mode**. Recorded in `docs/TODOs.md`, to be closed only if a bypass ever uses
-  the shell.
+  mode**. The rationale lives in `guardrail-enforcement-spec.md` §6 ("`Bash` is
+  not covered"), to be revisited only if a bypass ever uses the shell.
 
 Packaging is guarded: `package-plugin.mjs`'s `INCLUDE` must carry `"hooks"`, or
 the directory never ships. Asserted by `tests/packaging/plugin-hooks.test.ts`,
@@ -964,8 +964,10 @@ lets the same viewer run in Electron and in the browser. **Build shared workspac
 features in `packages/viewer-ui`;** only chat and session-management chrome stays
 in `apps/web`.
 
-> `CLAUDE.md` currently says this package has 11 sections. It has **13** — the
-> guide is right and `CLAUDE.md` is stale.
+> The count is **13**. `CLAUDE.md` said 11 until 2026-08-02, when it was
+> corrected; `hosted-web-workbench-spec.md` and `docs/plan/3-pane-workbench-ui.md`
+> still carry 11 in places, but only where it is the historically correct count
+> for the date they describe, and each says so at the site.
 
 ### 7.2 The sandbox is the per-session server
 
@@ -1018,13 +1020,14 @@ reference in `sandbox/e2b.py`), and there is no idle-suspend loop.
   paused is a vendor billing question this repo does not answer.
 - `ws_signing_key` defaults to a dev value; production needs a real one.
 
-> **Two stale claims in the source docs (verified 2026-08-02).**
-> `docs/realtime-architecture.md` and `docs/realtime-rearch-status.md` both still
-> carry a `**Branch:** hosted-web-workbench` line — the code is on `main`. The
-> status doc additionally lists the "C5 cleanup" (Ably backends, the old relay,
-> the idle-suspend loop) as **still present**; it is not, though `ably>=3.1.2`
-> remains a declared dependency in `apps/server/pyproject.toml`. **Read those two
-> docs for the reasoning, not for the current state.**
+> **Both source docs were corrected 2026-08-02.** `docs/realtime-architecture.md`
+> and `docs/realtime-rearch-status.md` used to carry a
+> `**Branch:** hosted-web-workbench` line (the code is on `main`), and the status
+> doc used to list the "C5 cleanup" (Ably backends, the old relay, the
+> idle-suspend loop) as **still present** when it was already done. Both now say
+> so. The one real remnant: `ably>=3.1.2` is still a declared dependency in
+> `apps/server/pyproject.toml` with nothing importing it. **Still read those two
+> docs for the reasoning, not as the current-state reference — this guide is.**
 
 ### If you're asked to…
 
@@ -1248,4 +1251,4 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 | A user submitted a feedback zip | [`alpha-feedback-guide.md`](alpha-feedback-guide.md), then [`feedback-case-spec.md`](specs/feedback-case-spec.md) |
 | The hosted web product | [`hosted-web-workbench-spec.md`](specs/hosted-web-workbench-spec.md), [`sandbox-provider-spec.md`](specs/sandbox-provider-spec.md), [`realtime-architecture.md`](realtime-architecture.md) (reasoning, not current state) |
 | I'm a genealogist, not a developer | `eval/JUNIOR-WALKTHROUGH.md`, `eval/SENIOR-WALKTHROUGH.md` |
-| What work is queued but not yet an issue? | [`docs/TODOs.md`](TODOs.md) — a staging queue for the Backlog column, not a tracker |
+| What work is queued but not yet started? | The **Backlog column** on the project board. `docs/TODOs.md` was retired 2026-08-02 (#1163) — its 54 items became issues #1117–#1157. Deferred work goes straight to an issue; there is no staging file. |
