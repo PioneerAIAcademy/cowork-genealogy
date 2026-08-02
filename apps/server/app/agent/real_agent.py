@@ -244,11 +244,22 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # minutes. The deltas are also what keeps the socket's data frames flowing
         # through the sandbox's edge proxy during that stretch.
         include_partial_messages=True,
-        # ENABLE_TOOL_SEARCH=true eager-loads the genealogy MCP tool schemas
-        # instead of deferring them above the bundled CLI's token threshold
-        # (the ~38-tool server trips it), which otherwise forces repeated
-        # ToolSearch re-discovery mid-session. See speedup plan §3a — kept in
-        # sync with the e2e orchestrator so hosted-web users get the same win.
+        # ENABLE_TOOL_SEARCH turns tool search ON, not off — the polarity is the
+        # opposite of what this comment claimed until issue #1110. Read off the
+        # installed CLI (v2.1.220): a truthy value (`true|1|yes|on`) selects
+        # deferred/tool-search mode, `auto`/`auto:N` is the adaptive variant, and
+        # only a FALSY value (`false|0|no|off`) selects "standard" mode, where
+        # every schema is loaded up front. Unset also lands on tool-search mode,
+        # so deleting the variable eager-loads nothing. (Additionally forced off
+        # on a non-first-party ANTHROPIC_BASE_URL, on Vertex, and under
+        # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
+        #
+        # So "true" below means hosted sessions run WITH tool search: the
+        # ~38-tool genealogy server's schemas are deferred and re-discovered via
+        # ToolSearch mid-session. Speedup plan §3a wanted the opposite; flipping
+        # to "false" is a separate, tracked decision that requires re-measuring
+        # the tool mix, so the value is left as it has been running — and kept in
+        # sync with the e2e orchestrator either way.
         env={
             "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
             "ENABLE_TOOL_SEARCH": "true",
