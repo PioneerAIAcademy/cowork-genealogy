@@ -91,7 +91,7 @@ Facts about this system live in one of three places:
 |---|---|---|
 | **`CLAUDE.md`** (repo root) | **The imperative.** "List both spellings." "Pass `encoding="utf-8"`." The rules you must follow to make a correct change. | Always — the only tier auto-loaded into every session. |
 | **This guide** | **The map.** What the pieces are, how they bind, where a change lands, what nothing checks. It restates an imperative only where you need it to size a blast radius, and names `CLAUDE.md` as that rule's owner. **On conflict, `CLAUDE.md` wins.** | Before a change whose blast radius you don't already know. |
-| **`docs/adrs/`** *(planned — not yet written)* | **The why.** One decision per file: forces, alternatives tried and rejected, consequences knowingly accepted. | Until it exists, the "why" is in the linked spec or in [`docs/agentic-system-critique.md`](agentic-system-critique.md). |
+| [**`docs/adrs/`**](adrs/) | **The why.** One decision per file: forces, alternatives tried and rejected, consequences knowingly accepted. Its Context/Decision/Alternatives are frozen history; its `Applies to`/`Enforcement` pointers are live and CI-linted. | A rule looks arbitrary, or you want to change it. Index below. |
 
 If this guide and a per-tool spec (`docs/specs/<tool>-tool-spec.md`) disagree,
 **the spec wins** — it is the contract `spec-review` checks against.
@@ -113,8 +113,23 @@ carries the instruction, not the reasoning.
 ### ADR index
 
 <!-- ADR-INDEX-START -->
-*`docs/adrs/` is being written. Until it lands, the "why" behind each decision
-below lives in the linked spec, in `CLAUDE.md`, or in the critique.*
+One decision per file, in [`docs/adrs/`](adrs/). Read one when a rule looks
+arbitrary, or when you want to change it. The **"read before you"** column is the
+routing surface — find your task, then open that ADR.
+
+| ADR | Decision | Read before you… |
+|---|---|---|
+| [0001](adrs/ADR-0001-run-network-code-on-the-host.md) | Run all network code on the host; ship only offline code into the VM | add a feature that calls an external API · write a script that ships in a skill or hook · debug a call that returns nothing with no error |
+| [0002](adrs/ADR-0002-decompose-into-tools-skills-and-agents.md) | Decompose into MCP tools, skills, and plugin agents by what each needs | add any capability and wonder where it goes · choose between a skill and a subagent · add a tool for something the model could just do |
+| [0003](adrs/ADR-0003-anchor-cross-turn-rules-structurally.md) | Anchor cross-turn rules structurally rather than in prose | write a new rule into a `SKILL.md` or agent body · fix a compliance failure by making an instruction clearer · reinforce a rule that keeps being violated |
+| [0004](adrs/ADR-0004-dual-spell-mcp-tool-names-in-agent-frontmatter.md) | Dual-spell every MCP tool name in agent frontmatter | grant or deny a tool to a plugin agent · write a `ToolSearch` query · rename the desktop extension |
+| [0005](adrs/ADR-0005-ship-the-write-lockdown-as-a-plugin-hook.md) | Ship the write lockdown as a plugin `PreToolUse` hook | add a guardrail · restrain the main thread · try to stop the agent doing something with an allow-list · change `PROTECTED_PROJECT_FILES` |
+| [0006](adrs/ADR-0006-restrict-capability-by-tool-identity.md) | Restrict capability by tool identity, not by prompt or parameter | need a delegated agent to do *part* of what a tool can do · write "you must only use this for X" in an agent body · add a `mode` parameter to scope a writer tool |
+
+Conventions, and how to add one: [`docs/adrs/README.md`](adrs/README.md).
+Not yet written: state and the writer/projection tools, self-contained agent
+bodies, duplicated `references/`, the casing seam, model routing,
+descriptions-as-triggering.
 <!-- ADR-INDEX-END -->
 
 ---
@@ -791,8 +806,9 @@ that produced it** — `record_search`, `fulltext_search`, and
 `external_links_search` write their payload into `results/.staging/` and return a
 handle plus a **reduced** inline copy, which `research_log_append` later
 finalizes. The reduction differs by tool: `record_search` drops `gedcomx`,
-`collectionUrl`, and empty `treeMatches` and hoists `collectionTitle` into a
-response-level map; `fulltext_search` drops `textDocument`; both leave
+`collectionUrl`, and empty `treeMatches`, hoists `collectionTitle` into a
+response-level map, and de-duplicates `events`; `fulltext_search` drops
+`textDocument`; both leave
 name/date/place stubs for triage. `external_links_search` reduces differently —
 it caps the *number* of inline rows and leaves each row intact, because its
 payload is curated third-party URLs with nothing to triage on. **The full payload travels
@@ -1087,7 +1103,7 @@ skips silently**, which looks identical to passing.
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
 | **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
-| `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Across all 111 committed costed runs: ~$7 median, range $3–25, 20–180 min | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and timed-out runs record *no* cost, so the mean is a floor. (`Makefile` says "~20-60 min, $3-10" over a narrower window.) |
+| `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Across all 111 committed costed runs: ~$7 median, $3–25 typical, 20–180 min (two outliers below $3, floor $0.06 — those are runs that died early) | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and most timed-out runs record *no* cost, so the mean is a floor. (`Makefile` says "~20-60 min, $3-10" over a narrower window.) |
 
 ### 9.2 The lint layer
 
@@ -1219,7 +1235,7 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 | What rule must I follow to make a correct change? | [`CLAUDE.md`](../CLAUDE.md) — the operating manual, auto-loaded every session |
 | What does tool X do? | `docs/specs/<tool>-tool-spec.md` — **wins over this guide on conflict** |
 | What tools / skills / agents exist, for a user? | [`README.md`](../README.md) |
-| Why is it built this way? | [`docs/agentic-system-critique.md`](agentic-system-critique.md) for the measured why; the linked spec for the rest. (`docs/adrs/` is planned, not written.) |
+| Why is it built this way? | [`docs/adrs/`](adrs/) — one decision per file, with the alternatives that were tried and rejected. Index in §0. For decisions with no ADR yet, the linked spec or [`docs/agentic-system-critique.md`](agentic-system-critique.md). |
 | What is wrong with it, and what's next? | [`docs/agentic-system-critique.md`](agentic-system-critique.md) |
 | Every guardrail, its instrument, its status | [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) |
 | The write boundary and the `extraction_append` lane | [`research-append-tool-spec.md`](specs/research-append-tool-spec.md) §11 |
