@@ -662,11 +662,11 @@ run logs, ~90 open issues, and a CLAUDE.md that is itself a load-bearing
 operating manual. Defensible when the prompt is the product; but the marginal
 doc now costs more to keep current than it returns.
 
-**One doc is actively misleading.** `docs/specs/skill-architecture-spec.md` §2
-still states "Cowork lacks programmatic skill invocation" and "there is no
-orchestrator skill in v1," and carries a current→canonical rename map for tools
-renamed long ago. Skills call `Skill("…")` throughout and the orchestrator has
-existed for months. Rewrite or retire it.
+**Resolved (2026-08-02).** `docs/specs/skill-architecture-spec.md` — whose §2
+still claimed "Cowork lacks programmatic skill invocation" and "there is no
+orchestrator skill in v1" — was rewritten as an as-built binding map (#1107) and
+then folded into [`docs/architecture.md`](architecture.md) and deleted. The
+governance count above is one doc lighter.
 
 ---
 
@@ -678,7 +678,8 @@ existed for months. Rewrite or retire it.
    assault on body length.
 3. **Delete the 26 dead `model:` pins.** They change nothing anywhere and make
    per-step routing look like it exists (§2.4).
-4. **Rewrite or retire `skill-architecture-spec.md` §2.**
+4. ~~Rewrite or retire `skill-architecture-spec.md` §2.~~ **Done 2026-08-02** —
+   rewritten in #1107, then folded into `docs/architecture.md` and deleted.
 5. **Reconcile the two `address_first` verdict tables** in `research/SKILL.md`
    — one behavior, one table.
 6. **Adopt #985's retention rule** — every `.ann.json` and released `v{N}` kept

@@ -347,8 +347,8 @@ this section keeps only the risks that outlive any one of them.
 - `docs/specs/e2e-test-spec.md` §7.5 — the detectors, specified
 - `docs/specs/research-append-tool-spec.md` §5, §11 — the write-boundary
   invariant and the `extraction_append` lane-gating precedent this extends
-- `docs/specs/skill-architecture-spec.md` §1 — note that its "guardrail skills"
-  means the schema-validation skills, a different set from the four here
+- `docs/architecture.md` §5 — the three capability-binding surfaces and which
+  of them bind in production; §9.4 lists what nothing checks
 - `CLAUDE.md` — "Plugin hooks", "Cowork plugin agents"
 - Issues #911 (calibrate §7), #913 (what past verdicts are worth), #1054
   (retain a hosted ledger, then port §8), #998 (§8 check 1's seed-state arm),

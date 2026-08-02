@@ -880,7 +880,7 @@ these to follow the flow above:
 
 | Topic | Spec / plan |
 |---|---|
-| Skill architecture & the three skill kinds | [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md) |
+| Skill architecture — how skills, agents, and tools bind | [`docs/architecture.md`](architecture.md) |
 | Test JSON format, fixtures, validators | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
 | Per-PR review + run-log versioning mechanics | [`docs/per-pr-review-workflow.md`](per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
 | The vendored description optimizer | `eval/triggering/` (vendoring notes in `VENDORED.md`) |

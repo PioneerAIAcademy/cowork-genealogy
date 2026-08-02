@@ -3,9 +3,12 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 For developer-facing build, test, and feature-addition recipes, see
-[DEVELOPMENT.md](./DEVELOPMENT.md). This file covers architecture,
-conventions, and rules — what Claude needs to know to make correct
-changes.
+[DEVELOPMENT.md](./DEVELOPMENT.md). For how the system fits together and
+which sites a given change touches, see
+[docs/architecture.md](./docs/architecture.md) — its "If you're asked to…"
+blocks are the map, and its §9.4 lists what nothing checks. This file
+covers architecture, conventions, and rules — what Claude needs to know to
+make correct changes; on conflict, this file wins.
 
 ## What this project is
 
