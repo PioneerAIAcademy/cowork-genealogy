@@ -275,7 +275,7 @@ the three lockdown copies agree**, so the next change to
 deserves naming: all three copies match only `Write`/`Edit`/`NotebookEdit` — the
 `Bash` route is deliberately open (`real_agent.py:132-139`: pattern-matching
 command text would false-deny the skills' own stdlib scripts; recorded in
-`docs/TODOs.md`).
+`docs/specs/guardrail-enforcement-spec.md` §6).
 
 **2.11 The system fails open when its tool layer disappears, and a skill is
 reachable as a permission-escalation path.** Nothing treats "the writer tools
@@ -531,7 +531,7 @@ it grades a single routing decision in fresh context. It guards against routing
 
 The largest measured single lever (58% of output tokens are unstored billed
 reasoning; generation is linear in output tokens at ~57 tok/s). Nobody has
-measured this product at any effort other than `high`. `docs/TODOs.md` notes
+measured this product at any effort other than `high`. Issue #1136 notes
 `ClaudeAgentOptions.effort` may make it a one-line change instead of a
 settings-file write, and that the five-minute check has not been done. Do the
 check first.
@@ -657,9 +657,11 @@ so it is managed rather than accidental. The real cost is that doctrine which
 should be tool contracts is living in bodies that get evicted — and, as §3's P2
 spike shows, most of the router's body is *not* that doctrine and cannot move.
 
-**Governance: at the edge.** 58 specs, a 577-line `TODOs.md`, 277 MB of tracked
-run logs, ~90 open issues, and a CLAUDE.md that is itself a load-bearing
-operating manual. Defensible when the prompt is the product; but the marginal
+**Governance: at the edge.** 58 specs, 277 MB of tracked run logs, ~160 open
+issues, and a CLAUDE.md that is itself a load-bearing operating manual. (This
+count included a 577-line `docs/TODOs.md` when written; it was retired
+2026-08-02, its 54 items becoming issues #1117–#1157 — which is why the open-issue
+figure jumped rather than fell.) Defensible when the prompt is the product; but the marginal
 doc now costs more to keep current than it returns.
 
 **One doc is actively misleading.** `docs/specs/skill-architecture-spec.md` §2

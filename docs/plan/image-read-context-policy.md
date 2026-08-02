@@ -2,9 +2,10 @@
 
 > **Status:** proposed (2026-07-16), branch `image-read-context-policy`, merged up
 > to main `6829b087` (#715/#712/#714). **Premise probe-verified — see §3.1.** This
-> supersedes the framing in `docs/TODOs.md:120-125`, whose central premise — *"no
-> environment can currently deny a main session a tool an agent needs"* — is **false
-> as written**. It is true of the *allowlist* layer and false of the *hook* layer.
+> supersedes an earlier `docs/TODOs.md` framing (that file was retired 2026-08-02;
+> the surviving item is issue #1130), whose central premise — *"no environment can
+> currently deny a main session a tool an agent needs"* — is **false as written**.
+> It is true of the *allowlist* layer and false of the *hook* layer.
 > The consequence is large: this is not an open design question needing a
 > per-context policy invention, it is a ~10-line change to a hook that already
 > exists, following a denial pattern already shipped in the e2e orchestrator. §3
@@ -143,7 +144,7 @@ Recorded because both would have misdirected an implementer:
 1. **"Fix the union so the harness mirrors production" — wrong.** The union is
    required (§2). Removing it makes the image-reader toolless, which `366a4acd`
    already demonstrated empirically.
-2. **"Precedent: split tools again" (per `docs/TODOs.md:104-113`) — unnecessary.**
+2. **"Precedent: split tools again" — unnecessary.**
    Tool-splitting was the right lever for per-*op* authority within one tool. This is
    per-*context* authority over a whole tool, and the hook expresses it directly.
 
@@ -254,8 +255,8 @@ pages in one main-session context, which is precisely the "accumulated base64" p
 §1 says overflows the buffer and crashes the run. Either it is exposed to the same
 crash, or the crash needs more than one image to trigger and the record-extraction
 rationale is overstated. Both readings can't be right. That is a genuine question about
-`search-images`' design, not something this plan should decide unilaterally — filed in
-`docs/TODOs.md`.
+`search-images`' design, not something this plan should decide unilaterally — filed as
+issue #1130.
 
 ## 5. The open question this does *not* answer — production
 
@@ -294,7 +295,7 @@ The earlier 8-run spread (5 pass / 3 partial, 2026-07-16 17:16→21:39) is super
 #715's craft and variance work, but its structural lesson stands and is worth keeping:
 across those runs the violation and the outcome were **decoupled** — run 20-51 passed
 *while delegating correctly*, run 20-23 partialed *while violating*, and the other two
-partials had unrelated causes (`informant_proximity` craft, `docs/TODOs.md:128-139`; a
+partials had unrelated causes (`informant_proximity` craft — now issue #1131; a
 `tree_edit` `nameForms` shape retry). The test detected the violation roughly 1-in-8.
 
 #712 pinned the unit judge to `temperature=0` (`judge.py`, `JUDGE_TEMPERATURE`). That
@@ -350,8 +351,8 @@ unattributable rather than leaving it silently unmet.
   crash a user's run.
 - **The exemption encodes "declared = intended", not "declared = safe."** §4.1 lets
   `search-images` call `image_read` on the main thread because it declared the tool.
-  If that skill turns out to have the same base64 exposure (open question, filed in
-  `docs/TODOs.md`), the guard is currently waving it through by construction. The
+  If that skill turns out to have the same base64 exposure (open question, issue
+  #1130), the guard is currently waving it through by construction. The
   exemption is right for *this* change — it preserves shipping behaviour and the guard
   is not the place to relitigate another skill's design — but it is not a safety
   judgement about `search-images`.
@@ -381,8 +382,8 @@ and cite it rather than re-arguing the philosophy.
 
 Docs to fix:
 
-- `docs/TODOs.md:120-125` — rewrite; its premise is falsified (§3, probe-verified in
-  §3.1). Keep the item open for §5, re-scoped to production.
+- ~~`docs/TODOs.md:120-125`~~ — done: the file was retired 2026-08-02 and the item
+  survives, re-scoped to production per §5, as issue #1130.
 - `docs/specs/unit-test-spec.md:1529-1542` — stale (line refs shifted ~+14 by #715's
   §5.10 insertion; verify before editing). Its `compute_allowed_tools` pseudocode is
   `return baseline + declared` — missing **both** the agent-union step

@@ -109,7 +109,7 @@ mocks (no E2B/Anthropic/OAuth needed).
 
 - `docs/plan/` — Implementation plans for work that is **not yet built**.
   A plan is deleted once the work ships: the spec, the code, and any
-  `docs/TODOs.md` entries become the record. Do not keep shipped plans
+  issues filed from it become the record. Do not keep shipped plans
   as historical artifacts — if a plan's rationale is worth preserving,
   fold it into the spec instead. **A plan's `**Status:**` line is load-bearing** —
   it is what tells the next reader whether the file describes pending work, so
@@ -123,22 +123,41 @@ mocks (no E2B/Anthropic/OAuth needed).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth the `spec-review` agent checks implementations against.
   This is the durable tier; a live tool must have a live spec.
-- `docs/TODOs.md` — a **staging queue for the Backlog column**, not a parallel
-  tracker. Every deferred item gets an entry in the same PR that defers it, and
-  the entry's job is to survive only until someone turns it into a GitHub issue.
-  The team picks work off the project board, so an item that lives only in this
-  file is invisible and will never be assigned.
-  **An entry leaves the file when it becomes an issue** — that is the exit event,
-  not "when the work ships". Delete it outright; never check it off, strike it
-  through, or start a "Done" section (a Done tier is how the file reached 932
-  lines with 29 open items buried underneath it, #953). Four entries were found
-  still sitting there months after becoming #703, #694, #943, and #940.
-  **Rationale does not live in `TODOs.md`.** An entry says what the work is plus
-  enough of *why it is still open* to stop the next person re-opening a settled
-  question. Rationale about **code that already shipped** goes to the tool's spec
-  or a comment at the site it constrains — where the next person will actually be
+- **Deferring work creates an issue, not a file entry.** In the same PR that
+  defers something, file it — one command, no board write:
+
+  ```sh
+  gh issue create --label developer|genealogist [--label icebox] \
+    --title "…" --body "…"
+  ```
+
+  The card lands in Backlog on its own — `.github/workflows/add-to-project.yml`
+  fires on `issues: opened` and adds it. **Creating the issue is the whole job:
+  do not call the Projects API yourself** (no `gh project` commands, no
+  `addProjectV2ItemById`). The workflow puts it on the board; `/fill-ready` moves
+  it from there. A `gh` token without the `project` scope — the default after
+  `gh auth login` — would fail a board write *while still creating the issue*,
+  which looks like success. Reference the number in the PR body.
+
+  | Label | Use for |
+  |---|---|
+  | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
+  | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose |
+  | `icebox` | Add alongside either one when the item is a candidate with **no decision behind it**, so triage skips it instead of re-ranking it every morning |
+
+  **Rationale does not go in the issue.** A body says what the work is and enough
+  of *why it is still open* to stop the next person re-opening a settled question
+  — issue bodies are read once at triage and essentially never again. A settled
+  tradeoff, a rejected alternative, or a measurement goes to the tool's spec or a
+  comment at the site it constrains, where the next person will actually be
   standing. If there is no spec to write it into, the item is spec-shaped, not
   queue-shaped. Git history keeps the prose either way.
+
+  This replaced `docs/TODOs.md` (retired 2026-08-02, issues #1117–#1157). That
+  file was a staging queue whose exit event — "an entry leaves when it becomes an
+  issue" — never fired on its own: it reached 932 lines, then 54 unassignable
+  items touched by 54 separate PRs, and became a merge-conflict hotspot across
+  concurrent worktrees. Do not reintroduce a queue file under any name.
 - **Verification is automated, not a manual playbook.** New tools are
   verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
   and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
@@ -234,8 +253,14 @@ cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. Verified
 live in Cowork 2026-07-30 (issue #940): the hook loads, fires for `Write` and
 `Bash` under either matcher form, and its `deny` is honored. Two things that
 run counter to the upstream issues — check behavior, don't trust the threads:
-`SessionStart` hooks do **not** fire in Cowork, and the reported drop of plugin
-`PreToolUse` command hooks (anthropics/claude-code#34573) does not reproduce.
+the reported drop of plugin `PreToolUse` command hooks
+(anthropics/claude-code#34573) does not reproduce; and `SessionStart` hooks do
+**not** fire in Cowork — the same 2026-07-30 probe saw no invocation and no
+`additionalContext` reaching the session, which is the *inverse* of the Cowork
+report in anthropics/claude-code#16288, so that thread is not a reliable guide
+to current behavior either. Nothing depends on `SessionStart` today; it is
+recorded because it is the natural place to put per-session setup (seeding
+state, injecting project context) and it would silently not run.
 Cowork runs `permission_mode: "default"`; the hosted path runs
 `bypassPermissions`; a hook binds under both.
 

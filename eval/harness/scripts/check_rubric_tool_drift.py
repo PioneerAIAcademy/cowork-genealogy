@@ -41,7 +41,11 @@ tool that belongs to a *different* skill (a routing test's judge_context
 naming the destination skill's tool, or "not this skill's job, that's
 $OTHER_SKILL's" prose). Distinguishing that from real drift would require
 either an allow-comment convention or fragile natural-language matching —
-left as an open decision (docs/TODOs.md) rather than guessed at here.
+left as an open decision (issue #1003) rather than guessed at here.
+
+Together the two filters above took the first real-corpus run from 86 hits to
+68. Roughly 20% of the remaining 68 are genuine drift; the list needs triaging,
+not suppressing, before anyone makes this blocking.
 
 Run by .github/workflows/check-runlogs.yml. Self-contained: stdlib only
 (the workflow installs no dependencies).

@@ -189,17 +189,21 @@ carry `"hooks"`) and the two upstream reports that do **not** reproduce.
 also loads the plugin — but "the plugin loader does what you'd expect in the
 hosted path" is exactly the assumption issue #939 disproved for agents. Both
 fire until one hosted run confirms otherwise; they deny the same thing with the
-same reason, so the redundancy is harmless. Tracked in `docs/TODOs.md`.
+same reason, so the redundancy is harmless. Tracked as issue #1129, which also
+covers the third copy in `eval/harness/e2e/orchestrator.py` — no test asserts
+the three agree, so a future addition to `PROTECTED_PROJECT_FILES` can silently
+lag in two of them.
 
 **Deliberate gaps.**
 
-- **`Bash` is not covered.** The guard matches on `file_path`, so
-  `cat > research.json`, `sed -i`, and `python -c` all get through. Skills run
+- **`Bash` is not covered.** All three copies of the guard match on `file_path`,
+  so `cat > research.json`, `sed -i`, and `python -c` all get through. Skills run
   their stdlib-only scripts through `Bash` so it cannot be revoked, and matching
   command text would deny a legitimate `python script.py research.json > out`
   while still missing a variable-built path. A false deny is the worse failure
   mode: it turns a silent quality bug into a loud availability regression. No
-  bypass in the corpus has used the shell; close this if one appears.
+  bypass in the corpus has used the shell; close this if one appears in a runlog
+  or a feedback case.
 - **`Read` is not revoked, and should not be** until there is a way to read the
   same data. `research_query` covers 11 of `research.json`'s ~15 top-level
   sections (missing `project`, `researcher_profile`, `known_holdings`,
@@ -230,7 +234,10 @@ Design points that were paid for and should not be re-derived:
   fills in itself is attested by the party we don't trust at the moment it
   matters. Direct precedent: `person-evidence`'s `match_score` was meant to
   attest that `same_person` was consulted, and its provenance guard was cut in
-  #695 for "zero observed true positives… against a real false-positive class."
+  #695 for zero observed true positives across **all 15**
+  `eval/tests/unit/person-evidence/` cases as of that PR, against a real
+  false-positive class. (That suite has since grown past 15 — the count is the
+  scope of the measurement, not of the directory.)
 - **Success-gated, via `PostToolUse`.** An errored `Skill` call must not open
   the window, or "invoke the skill, let it fail, finish the write inline"
   evades this check and §8 at once — a `Skill` call really is in the log.
@@ -315,8 +322,12 @@ this section before reopening one.
 
 ## 10. Residual risks
 
-Live queue items are in `docs/TODOs.md` § "Guardrail enforcement in production";
-this section keeps only the risks that outlive any one of them.
+Live queue items are GitHub issues — #1129 (confirm the plugin hook binds in the
+hosted path, then delete the SDK copy), #1144 (do the guardrail skills'
+on-demand reference `Read`s survive compaction?), #1145 (is `gps-mentor`'s own
+gate skippable?), and #1146 (other same-batch self-satisfying gates in
+`research_append`). This section keeps only the risks that outlive any one of
+them.
 
 - **§7's window is a heuristic.** A model that invokes the right skill and then
   does something unrelated while the window is open passes. It bounds the
