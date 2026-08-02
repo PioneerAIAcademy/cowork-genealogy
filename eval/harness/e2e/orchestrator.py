@@ -574,13 +574,30 @@ async def _run_agent(
     # deny (in pretool_hook) uses this to flag only persons that are NEW this
     # run — a person_evidence link to a pre-existing seed person is not a new
     # identity and never needs scoring. See skill_invocation.
+    #
+    # None (NOT an empty set) on a read failure, so the deny FAILS OPEN. An
+    # empty seed set would mis-classify every legitimate seed-person link as
+    # "new + unscored" and mass-deny mid-run on nothing worse than a fixture/IO
+    # hiccup — a confusing availability regression. Failing open loses only the
+    # in-run nudge for this run; the post-run hard-fail
+    # (find_person_evidence_missing_same_person, which does its own seed read)
+    # still backstops any real bypass. The failure is printed, not swallowed,
+    # so it's diagnosable rather than surfacing as silent mass-denials.
+    starting_person_ids: set[str] | None
     try:
         _seed_tree = json.loads(fixture.starting_tree_path.read_text(encoding="utf-8"))
-        starting_person_ids: set[str] = {
+        starting_person_ids = {
             p.get("id") for p in _seed_tree.get("persons", []) if isinstance(p, dict)
         }
-    except (OSError, json.JSONDecodeError):
-        starting_person_ids = set()
+    except (OSError, json.JSONDecodeError) as e:
+        starting_person_ids = None
+        print(
+            f"  [warn] could not read seed tree {fixture.starting_tree_path} "
+            f"({type(e).__name__}: {e}) — issue #963 same_person deny DISABLED "
+            "for this run; the post-run guardrail check still applies.",
+            file=sys.stderr,
+            flush=True,
+        )
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
@@ -762,11 +779,23 @@ async def _run_agent(
         # would (new, unscored persons; seed persons excluded), so it adds no
         # new false-positive class — it just converts a silent end-of-run
         # failure into an in-run nudge to call same_person first.
-        if bare == "research_append":
+        if bare == "research_append" and starting_person_ids is not None:
+            # Count a same_person still IN FLIGHT this turn as scoring, not just
+            # committed ones — otherwise a correct agent that batches
+            # same_person and the person_evidence write in one assistant turn
+            # gets a spurious deny that only self-corrects on retry. Both
+            # tool_calls and pending_tool_uses are populated together the moment
+            # the turn's ToolUseBlocks are parsed (see the AssistantMessage
+            # branch), so a same-turn sibling same_person is visible here. In
+            # flight has no result yet, so it can't be success-gated — accepted:
+            # if it later errors, the post-run hard-fail still catches the link.
+            scored = same_person_scored_ids(tool_calls) | same_person_scored_ids(
+                list(pending_tool_uses.values())
+            )
             unguarded = unguarded_new_person_evidence_links(
                 tool_name,
                 input_data.get("tool_input") or {},
-                scored_ids=same_person_scored_ids(tool_calls),
+                scored_ids=scored,
                 starting_ids=starting_person_ids,
             )
             if unguarded:
