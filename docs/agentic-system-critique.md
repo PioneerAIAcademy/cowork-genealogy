@@ -74,8 +74,12 @@ two** — every one was failed by the detector.
 
 > **On the full committed window that rate is worse, not better: 12 of 29 runs
 > and 45 violations (§7).** The 8/25 window stops at `2026-07-30_19-43-58` and
-> drops timed-out runs. The narrow window is retained here because §3's P0 and
-> §9's "≤9 of 25" gate-reach figure are stated against it.
+> drops timed-out runs — and that truncation is *not* neutral: the four excluded
+> runs carry **20 of the 45**, so W1 understates both incidence (32% vs 41% of
+> runs) and severity (1.0 vs 1.55 violations/run). The narrow window is retained
+> here only because §3's P0 and §9's "≤9 of 25" gate-reach figure are derived
+> against it. **Which window is canonical is an open decision — see #1176**,
+> which also records the third, undeclared window §7's tool mix uses.
 
 **That rate is a floor with an unquantified false-positive rate and should not
 be quoted without this caveat.** The arm producing **16 of the 25** violations
@@ -148,12 +152,19 @@ yields — *a rule that must hold for hours needs a structural anchor; prose
 survives about three compactions* — is stated qualitatively in Anthropic's own
 published guidance (deterministic hooks over model choice, "poka-yoke your
 tools" in *Building Effective Agents*, the context-engineering post) — and the
-quantification itself now has a public precedent: arXiv 2606.22528 ("Governance
-Decay", June 2026, one month before this document) measures constraint
-violations rising 0% → 30–59% after compaction on a purpose-built benchmark.
-What remains distinctive here is the derivation from production: the §5.3 audit
-reached the same law from 309 turns of real work and yields an operational
-decay horizon (~3 compactions) the benchmark paper does not give.
+quantification itself now has a public precedent: Shiyang Chen, *"Governance
+Decay: How Context Compaction Silently Erases Safety Constraints in Long-Horizon
+LLM Agents"*, [arXiv:2606.22528](https://arxiv.org/abs/2606.22528) (June 2026,
+one month before this document; verified against arxiv.org 2026-08-02). Its
+**ConstraintRot** benchmark measures constraint violations rising from 0% under
+full policy visibility to **30% after compaction, 59% on some models**, and its
+"Constraint Pinning" mitigation — quarantining governance rules from lossy
+compression — returns them to 0%. What remains distinctive here is the
+derivation from production: the §5.3 audit reached the same law from 309 turns
+of real work and yields an operational decay horizon (~3 compactions, its own
+extrapolation from an early/late segment split rather than a counted quantity)
+that the benchmark does not give. Note the paper's mitigation is platform-side
+and not available to us, which is why our answer is a structural anchor.
 Two rules were converted on the strength of it — the `count: 50` default and
 the ranking fold, both now in `record-search.ts`. (The fold was reported as
 verifying 7/7; that result is not recorded in any committed test or runlog.)
@@ -968,7 +979,7 @@ Named so nobody mistakes silence for a clean bill.
 | The conditioned gate "touches 16 of the 25 measured violations" | Inherited from the unconditional rev. 2 version. 7 of the 16 flagged persons have zero record-sourced links (null `record_persona_id` throughout, by schema design), so the conditioned gate's reach is ≤9 of 25 |
 | Held-only-for-the-subagent tools cited as #1012 | Wrong issue: that gap is tracked by #911. #1012 is the inverse — a `Skill()` callee runs toolless in the unit path |
 | "~70 open issues"; 20-fixture pass "≈$185"; "(26 suites)" in §6 | 115 open as of 08-01 (91 pre-wave); $150–165 from the corpus's own per-run stats; 25 suites — a §9 correction rev. 3 applied in one place and missed in another |
-| "Exactly two are genuinely novel," counting the quantified compaction-decay law | arXiv 2606.22528 ("Governance Decay", June 2026) quantified compaction-driven constraint decay a month earlier. The production-derived ~3-compaction horizon remains distinctive; "no public precedent" does not |
+| "Exactly two are genuinely novel," counting the quantified compaction-decay law | Chen, "Governance Decay", [arXiv:2606.22528](https://arxiv.org/abs/2606.22528) (June 2026) quantified compaction-driven constraint decay a month earlier — verified against arxiv.org 2026-08-02. The production-derived decay horizon remains distinctive; "no public precedent" does not |
 
 ### rev. 4 claims, refuted in the rev. 5 (narrow) pass
 
