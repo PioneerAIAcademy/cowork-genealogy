@@ -1,6 +1,6 @@
 """Guardrail-skill invocation detection.
 
-docs/plan/research-guardrail-bypass-plan.md §4.1/§4.4 — autonomous `/research`
+docs/specs/guardrail-enforcement-spec.md §7/§8 — autonomous `/research`
 sometimes lets the four GPS guardrail skills (`research-exhaustiveness`,
 `proof-conclusion`, `person-evidence`, `conflict-resolution`) get bypassed:
 their documented effect lands in the project files without the skill ever
@@ -14,7 +14,7 @@ Two consumers, both described in the plan:
   - `owning_skills` + `recently_succeeded` — the live, shadow-mode caller-id
     check (§4.1): before a protected write is allowed to proceed, was its
     owning skill successfully invoked recently?
-  - `find_effects_without_invocation` — the post-run hard detector (§4.4):
+  - `find_effects_without_invocation` — the post-run hard detector (§8):
     does the FINAL project state show a guardrail skill's effect with no
     matching successful invocation anywhere in the whole run?
 """
@@ -61,7 +61,7 @@ def _question_id_from_skill_call(args: dict[str, Any] | None) -> str | None:
     (e.g. `"--autonomous q_001 projectPath=..."`, the shape observed in
     committed runlogs). Returns None when not derivable — callers must treat
     that as "unknown," not "no question," and fall back to a skill-only
-    window (see docs/plan/research-guardrail-bypass-plan.md §4.1/§6)."""
+    window (see docs/specs/guardrail-enforcement-spec.md §7/§10)."""
     text = (args or {}).get("args")
     if not isinstance(text, str):
         return None
@@ -96,7 +96,7 @@ def owning_skills(tool: str, args: dict[str, Any] | None) -> list[str]:
     writes (`primary: true`, a `ParentChild`/`Couple` relationship), not just
     the `proof_summaries` entry. Returns a list (not a single value) since one
     batch call can touch more than one protected section — the caller decides
-    how to key each; see docs/plan/research-guardrail-bypass-plan.md §6 on
+    how to key each; see docs/specs/guardrail-enforcement-spec.md §10 on
     batch semantics not being exhaustively audited beyond the one TOCTOU case
     found in §4.2.
     """
@@ -207,6 +207,49 @@ def find_unguarded_protected_writes(
     return violations
 
 
+# The four optional `conflict` fields that are conflict-resolution's analytical
+# PRODUCT rather than the mere record that a conflict exists. Several skills
+# legitimately open a conflicts entry — person-evidence (#738's mandatory entry
+# when identity rests on one uncorroborated read), proof-conclusion,
+# question-selection, research-plan, timeline, init-project — but they write only
+# the schema's required fields (id / conflict_type / description /
+# competing_assertion_ids / status / blocks_question_ids). These four are
+# optional in `research.schema.json` and, across the whole plugin, are written
+# ONLY by `conflict-resolution/SKILL.md` and by `research/SKILL.md` — i.e. the
+# orchestrator that is supposed to *delegate* to it. So their presence is the
+# effect, and their absence is why "a conflict was recorded" alone must not fire.
+CONFLICT_ANALYSIS_FIELDS = (
+    "independence_analysis",
+    "weighing_analysis",
+    "preferred_assertion_id",
+    "resolution_rationale",
+)
+
+
+def _is_conflict_resolution_product(conflict: Any) -> bool:
+    """Whether a `conflicts[]` entry carries conflict-resolution's own output.
+
+    Two independent signals, either sufficient:
+
+    - any of `CONFLICT_ANALYSIS_FIELDS` populated (non-empty, non-null), or
+    - `status == "resolved"` — resolving is the skill's job whatever fields it
+      left behind.
+
+    Checking status ALONE (the original rule) under-fires: `unresolved` is a
+    legitimate *outcome* of a full weighing — the skill ran, analysed, and
+    concluded the conflict stands. The `eulogia-gatica-burial` run
+    (run-2026-07-28_17-07-48) is the live case: the router wrote c_001 with a
+    full `independence_analysis` and `weighing_analysis`, never invoked
+    conflict-resolution, and slipped past the status check because it left the
+    conflict `unresolved` — then stamped the proof `proved` over it.
+    """
+    if not isinstance(conflict, dict):
+        return False
+    if conflict.get("status") == "resolved":
+        return True
+    return any(conflict.get(f) for f in CONFLICT_ANALYSIS_FIELDS)
+
+
 def find_effects_without_invocation(
     tool_calls: list[dict[str, Any]],
     research: dict[str, Any] | None,
@@ -214,7 +257,7 @@ def find_effects_without_invocation(
     *,
     starting_tree: dict[str, Any] | None = None,
 ) -> list[str]:
-    """Post-run hard detector (§4.4): a guardrail skill's documented effect is
+    """Post-run hard detector (§8): a guardrail skill's documented effect is
     present in the FINAL project state, but the skill was never successfully
     invoked anywhere in the run. Mirrors the unit harness's
     `test_positive_fails_when_skill_not_in_skills_invoked`, extended to cover
@@ -226,6 +269,10 @@ def find_effects_without_invocation(
     fixture's starting tree) and flag only NEW persons or persons that GAINED
     facts this run — without it, every already-linked-by-nothing seed person
     would read as a violation. Best-effort and may over-flag when omitted.
+
+    Each arm keys on a *product* of the skill, never on the skill's mere
+    footprint — see `_is_conflict_resolution_product` for why the
+    conflict-resolution arm cannot key on `status` alone.
     """
     research = research or {}
     tree = tree or {}
@@ -300,12 +347,13 @@ def find_effects_without_invocation(
         )
 
     conflicts = research.get("conflicts") if isinstance(research.get("conflicts"), list) else []
-    if any(isinstance(c, dict) and c.get("status") == "resolved" for c in conflicts) and (
+    if any(_is_conflict_resolution_product(c) for c in conflicts) and (
         "conflict-resolution" not in invoked
     ):
         violations.append(
-            "research.json has a resolved conflict but 'conflict-resolution' was never "
-            "successfully invoked in this run"
+            "research.json has a conflict carrying conflict-resolution's analytical product "
+            f"({', '.join(CONFLICT_ANALYSIS_FIELDS)}, or status='resolved') but "
+            "'conflict-resolution' was never successfully invoked in this run"
         )
 
     return violations
@@ -315,7 +363,7 @@ def find_missing_mentor_verdicts(research: dict[str, Any] | None) -> list[str]:
     """Every `ps_id` a resolved question references must carry a matching
     `evaluations[]` entry (`focus: "proof-critique"`, `target_id: <ps_id>`) —
     research/SKILL.md's own final completion check, and per docs/plan/
-    research-guardrail-bypass-plan.md §4.4/§6, this gate is itself just
+    guardrail-enforcement-spec.md §8/§10, this gate is itself just
     another routing-table step the orchestrator could silently skip under the
     same context pressure as the four guardrail skills.
 

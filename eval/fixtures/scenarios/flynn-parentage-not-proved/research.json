@@ -579,8 +579,7 @@
           "expected_events": ["1850_census_childhood_household"],
           "severity": "high"
         }
-      ],
-      "impossibilities": []
+      ]
     }
   ],
 

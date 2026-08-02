@@ -15,25 +15,49 @@ name: check-engine-lockfile
 #
 # The build itself uses `npm ci` (never writes the lock, on any npm); this job is
 # the separate check that catches a deliberate dep change made with the wrong npm.
+# Runs on EVERY pull request — no `paths:` filter — so this check always
+# reports a conclusion and can be required by branch protection. A workflow
+# skipped by `paths:` reports nothing at all, and a required check that never
+# reports leaves its PR stuck on "Expected — waiting for status to be reported"
+# with no way forward except a ruleset bypass. The path scope moved into the
+# first job step; what this check does when it applies is unchanged.
 on:
   pull_request:
-    paths:
-      - 'packages/engine/mcp-server/package.json'
-      - 'packages/engine/mcp-server/package-lock.json'
 permissions:
   contents: read
+  pull-requests: read
 jobs:
   lockfile-drift:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - name: Does this PR touch the engine manifest or lockfile?
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PATTERNS: '^packages/engine/mcp-server/package(-lock)?\.json$|^\.github/workflows/check-engine-lockfile\.yml$'
+        run: |
+          set -euo pipefail
+          files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
+                     --paginate --jq '.[].filename')"
+          if printf '%s\n' "$files" | grep -qE "$PATTERNS"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Neither package.json nor package-lock.json changed; reporting success without running the drift check."
+          fi
+
+      - if: steps.scope.outputs.relevant == 'true'
+        uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        if: steps.scope.outputs.relevant == 'true'
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
       - name: Install the pinned npm (from the packageManager field)
+        if: steps.scope.outputs.relevant == 'true'
         run: |
           # Node 22 bundles npm 10.x; install the exact npm the engine pins so
           # this gate checks the lock against the canonical version. The version
@@ -43,6 +67,7 @@ jobs:
           echo "Using npm $(npm --version)"
 
       - name: Fail if `npm install` would rewrite the lockfile
+        if: steps.scope.outputs.relevant == 'true'
         working-directory: packages/engine/mcp-server
         run: |
           npm install --no-audit --no-fund --ignore-scripts

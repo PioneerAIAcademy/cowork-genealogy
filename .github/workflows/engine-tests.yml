@@ -7,39 +7,77 @@ name: Engine tests
 # specialized research-plan's copy. This is the same gap eval-harness-tests.yml
 # was created to close one layer over, and it names that precedent on purpose.
 #
-# Path scope covers both halves the suite reads:
+# Path scope covers every half the suite reads:
 #   - packages/engine/mcp-server/**  — the tools, utils, validators under test.
 #   - packages/engine/plugin/**      — the packaging tests read the shipped
 #     skills, agents, and shared references (manifest drift, dual-spelled agent
 #     tool names, skill-description length, the places-guidance drift lint).
-# A change to either can red the suite, so either must trigger it.
+#   - packages/schema/schemas/** and docs/specs/schemas/** — the enum-drift lint
+#     (tests/packaging/enum-drift.test.ts) diffs the plugin's prose enum lists
+#     and the validator's CLOSED_ENUMS against enums.schema.json. Catching a
+#     schema edit that leaves those copies stale is the whole point of it, and a
+#     PR adding one value to one enum need touch nothing else — without these
+#     two paths, that exact PR reports success without running the lint written
+#     to stop it.
+#   - eval/tests/unit/** — the same enum-drift lint scans rubric files for ∈
+#     declarations. No rubric carries one today, but including the path arms
+#     the lint the day one lands (mirroring the references/ class above).
+# A change to any of them can red the suite, so any of them must trigger it.
 #
 # `npm test` runs the `pretest` build first (tsc), which the packaging tests do
 # not strictly need but the tool-dispatch tests do — it also fails the job fast
 # on a type error, before vitest starts.
 
+#
+# Runs on EVERY pull request — no `paths:` filter — so this check always
+# reports a conclusion and can be required by branch protection. A workflow
+# skipped by `paths:` reports nothing at all, and a required check that never
+# reports leaves its PR stuck on "Expected — waiting for status to be reported"
+# with no way forward except a ruleset bypass. The path scope above moved into
+# the first job step verbatim; what this check does when it applies is
+# unchanged, and an unrelated PR pays one ~5s step instead of a full suite.
 on:
   pull_request:
-    paths:
-      - 'packages/engine/mcp-server/**'
-      - 'packages/engine/plugin/**'
-      - '.github/workflows/engine-tests.yml'
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   vitest:
     runs-on: ubuntu-latest
     steps:
+      - name: Does this PR touch the engine, plugin, schema, or rubric?
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PATTERNS: '^packages/engine/mcp-server/|^packages/engine/plugin/|^packages/schema/schemas/|^docs/specs/schemas/|^eval/tests/unit/|^\.github/workflows/engine-tests\.yml$'
+        run: |
+          set -euo pipefail
+          files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
+                     --paginate --jq '.[].filename')"
+          if printf '%s\n' "$files" | grep -qE "$PATTERNS"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No engine, plugin, schema, or rubric path changed; reporting success without running vitest."
+          fi
+
       - name: Check out PR
-        uses: actions/checkout@v5
+        if: steps.scope.outputs.relevant == 'true'
+        uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        if: steps.scope.outputs.relevant == 'true'
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: packages/engine/mcp-server/package-lock.json
 
       - name: Install the pinned npm (from the packageManager field)
+        if: steps.scope.outputs.relevant == 'true'
         run: |
           # Node 22 bundles npm 10.x; the engine's .npmrc sets engine-strict with
           # an npm >=11.12 bound, so install the pinned npm before any engine
@@ -49,9 +87,11 @@ jobs:
           echo "Using npm $(npm --version)"
 
       - name: Install dependencies
+        if: steps.scope.outputs.relevant == 'true'
         working-directory: packages/engine/mcp-server
         run: npm ci
 
       - name: Run vitest (pretest builds first)
+        if: steps.scope.outputs.relevant == 'true'
         working-directory: packages/engine/mcp-server
         run: npm test

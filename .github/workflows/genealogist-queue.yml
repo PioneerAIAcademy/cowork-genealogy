@@ -1,0 +1,324 @@
+name: genealogist-queue
+
+# Labels a PR `ready-for-senior` once it is actually ready for senior review:
+# CI green, an approving review from someone other than the author, and no
+# outstanding changes-requested.
+#
+# WHY. `.github/CODEOWNERS` is `* @PioneerAIAcademy/senior-genealogists`, so
+# GitHub requests the team the instant a PR opens — when CI is usually red and
+# nobody has read it. On 2026-07-29 that put all 22 open PRs in their queue,
+# including 5 with failing CI and 2 blocked on their authors. The review-request
+# is therefore accurate as "a PR exists" and useless as "this needs you". The
+# label is the signal that means the second thing:
+#
+#   is:open is:pr label:ready-for-senior
+#
+# WHY A LABEL AND NOT THE REVIEW REQUEST. The obvious design is to strip the
+# team's review request on open and re-add it when ready, so the existing
+# review-requests inbox becomes the queue. That is not possible: while
+# `require_code_owner_review` is active, GitHub will not let you remove a team
+# review request that CODEOWNERS mandates. `DELETE /pulls/{n}/requested_reviewers`
+# returns HTTP 200 and does nothing — no error, no `review_request_removed`
+# timeline event, the team still listed on a fresh read. Verified 2026-07-29 on
+# PR #944 three ways: via `GITHUB_TOKEN`, via an org-admin PAT, and with a
+# hand-written JSON body. Do not re-attempt this without first re-testing that
+# endpoint; the failure mode is silent success, which reads as working.
+#
+# The known alternative, unverified: the ruleset's `pull_request` rule has a
+# `required_reviewers` parameter (currently `[]`). If it can name a team, senior
+# approval could be enforced there instead of via CODEOWNERS, CODEOWNERS could
+# be dropped, and nothing would mandate the request. Worth checking before
+# anyone tries the request-stripping approach again.
+#
+# ENFORCEMENT IS UNCHANGED either way. `require_code_owner_review` in the
+# `protect-main` ruleset gates the merge. This workflow only decides what is
+# visible in a queue; it cannot let anything merge that could not merge before.
+#
+# V1 IS ADD-ONLY. Once labeled a PR stays labeled, even if it later goes red.
+# Demotion would make PRs flicker out of the queue while someone is mid-review.
+# Revisit after a week of real use.
+#
+# 2026-07-30: THE WORKFLOW COUNTED ITSELF AS RUNNING CI. `SELF` was set to the
+# WORKFLOW's name, but a check run is named after the JOB — which was `promote`,
+# since the job had no `name:`. So the self-filter matched nothing, every run saw
+# its own in-progress check run, and `reasons` always contained "CI still running
+# (1)". No automatic trigger ever labelled anything: the only PRs that got the
+# label were the 5 promoted by a manual `workflow_dispatch` sweep, which is spared
+# because a dispatch's check run lands on the default branch's sha, not on any
+# PR's head. PR #921 is the witness — CI green, peer-approved, and still
+# `#921 not ready — CI still running (1)` with its own check run the only thing
+# in flight. Third instance of the same class of failure in this file: the job
+# goes green while doing nothing. When touching the readiness rules, verify
+# against a real approved PR, not just a dispatch dry run — the dispatch path
+# does not exercise the self-filter at all.
+#
+# 2026-07-30, same investigation: THE EVENTS ALONE CANNOT KEEP THE QUEUE CURRENT.
+# `check_suite` never fires (see the trigger below), so nothing observes CI
+# turning green. A PR approved WHILE CI is still running gets its last event at
+# approval time and is never re-evaluated — #924 hit this within minutes of the
+# fix above. Hence the `schedule` sweep: the events are the fast path, the sweep
+# is what makes the queue eventually correct. If you ever remove the schedule,
+# something else must answer "what re-checks a PR after CI finishes?"
+
+# TRIGGER CHOICE: `pull_request_target`, switched from `pull_request` on
+# 2026-07-31 when we started taking PRs from developers who have no write
+# access to this repo and therefore contribute from forks. Under
+# `pull_request` a fork PR gets a read-only GITHUB_TOKEN, so `addLabels` would
+# 403 — which is why the job carried an `if:` guard skipping cross-repository
+# PRs outright. That guard is removed with this switch: `github.event_name` is
+# no longer `pull_request`, so its first clause would always pass and it would
+# be dead code that reads as protection.
+#
+# What the guard cost, for the record: fork PRs lost the low-latency path
+# entirely. They were still labelled — `pull_request_review` already runs in
+# base context with a writable token, and the sweep below catches everything —
+# but a fork PR that opened green and pre-approved waited up to 30 minutes for
+# its label instead of seconds.
+#
+# Safe here for the same two reasons as labeler.yml: the job is a single inline
+# `actions/github-script` step with no `actions/checkout` and no `run:`, so
+# nothing fork-authored ever executes; and the script is read from the base
+# branch, so a fork cannot edit the readiness rules in its own PR. Adding a
+# checkout of PR content here would turn this into a pwn-request vector.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+  check_suite:
+    # DEAD TRIGGER, kept only to document that it is dead. Every check suite in
+    # this repo is created by an Actions workflow using `GITHUB_TOKEN`, and
+    # GitHub does not start a workflow run from a `GITHUB_TOKEN`-triggered
+    # event. Confirmed 2026-07-30: 0 `check_suite` runs in this workflow's
+    # entire history (66 pull_request, 33 pull_request_review, 1
+    # workflow_dispatch). The `schedule` below is what actually covers
+    # "CI turned green after the last PR event".
+    types: [completed]
+  schedule:
+    # WHY A SWEEP AND NOT JUST EVENTS. The per-PR triggers cannot see CI turning
+    # green: the only events left are `pull_request` and `pull_request_review`
+    # (see the dead `check_suite` above), so a PR approved WHILE CI is still
+    # running gets its last event at approval time and is never re-evaluated.
+    # #924 hit exactly that on 2026-07-30. The events are the low-latency path;
+    # this sweep is the one that guarantees the queue converges.
+    #
+    # Every 30 min: a human review queue does not need finer, and it halves the
+    # run-list clutter versus */15. Scheduled runs are best-effort — GitHub
+    # delays or drops them under load — which is fine for a converging
+    # add-only sweep and is the other reason not to rely on the schedule alone.
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would change across all open PRs, without touching any"
+        type: boolean
+        default: true
+
+permissions:
+  # `issues: write` is what actually authorizes labelling (labels live on the
+  # issues API even for PRs); `pull-requests: write` is granted alongside it
+  # because the mapping between the two is inconsistent enough that relying on
+  # one alone has bitten other repos.
+  issues: write
+  pull-requests: write
+  checks: read
+  contents: read
+
+concurrency:
+  # Per-PR events serialize per PR. Sweeps share ONE key ('sweep') so a cron run
+  # that GitHub delayed cannot race the next one; they are add-only and
+  # idempotent, so queueing rather than cancelling costs nothing.
+  group: >-
+    genealogist-queue-${{ github.event.pull_request.number
+      || github.event.check_suite.id
+      || 'sweep' }}
+  cancel-in-progress: false
+
+jobs:
+  # The job name IS the check-run name, and the script below excludes its own
+  # check run by that name. Keep the two in sync — see SELF.
+  promote:
+    name: genealogist-queue
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v9
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+        with:
+          script: |
+            const LABEL = 'ready-for-senior';
+            // This workflow's own check run is always in progress while it
+            // runs; counting it would mean CI is never "green". SELF must equal
+            // the JOB's name (the check-run name), not the workflow's — see the
+            // `name:` above and the 2026-07-30 note in the header.
+            const SELF  = 'genealogist-queue';
+
+            const BAD     = new Set(['failure', 'cancelled', 'timed_out', 'action_required', 'stale']);
+            const PENDING = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
+
+            const dryRun = process.env.DRY_RUN === 'true';
+            const { owner, repo } = context.repo;
+
+            // ---- which PRs to evaluate --------------------------------------
+            // `schedule` and `workflow_dispatch` sweep every open PR; both lack a
+            // `pull_request` payload, so neither may reach the single-PR branch.
+            const sweep = context.eventName === 'schedule'
+                       || context.eventName === 'workflow_dispatch';
+
+            let numbers = [];
+            if (sweep) {
+              const open = await github.paginate(github.rest.pulls.list,
+                { owner, repo, state: 'open', per_page: 100 });
+              numbers = open.map(p => p.number);
+            } else if (context.eventName === 'check_suite') {
+              numbers = (context.payload.check_suite.pull_requests || []).map(p => p.number);
+              if (numbers.length === 0) {
+                // check_suite payloads omit PRs in some cases; match on head sha.
+                const sha = context.payload.check_suite.head_sha;
+                const open = await github.paginate(github.rest.pulls.list,
+                  { owner, repo, state: 'open', per_page: 100 });
+                numbers = open.filter(p => p.head.sha === sha).map(p => p.number);
+              }
+            } else {
+              numbers = [context.payload.pull_request.number];
+            }
+
+            // ---- readiness ---------------------------------------------------
+            async function evaluate(number) {
+              const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });
+              const labeled = pr.labels.map(l => l.name).includes(LABEL);
+
+              if (pr.state !== 'open') return { pr, labeled, ready: false, reasons: ['not open'] };
+              if (pr.draft)            return { pr, labeled, ready: false, reasons: ['draft'] };
+
+              // Peer review: latest standing per reviewer, author excluded.
+              // Any non-author approval counts — deliberately not checking team
+              // membership, which would need a token with `read:org`.
+              const reviews = await github.paginate(github.rest.pulls.listReviews,
+                { owner, repo, pull_number: number, per_page: 100 });
+              const latest = new Map();
+              for (const r of reviews) {
+                if (!r.user || r.user.login === pr.user.login) continue;
+                if (r.state === 'COMMENTED') continue;  // a comment changes nothing
+                latest.set(r.user.login, r.state);
+              }
+              const standings = [...latest.values()];
+
+              // CI on the head sha: both check runs and legacy commit statuses.
+              const [checks, status] = await Promise.all([
+                github.paginate(github.rest.checks.listForRef,
+                  { owner, repo, ref: pr.head.sha, per_page: 100 }),
+                github.rest.repos.getCombinedStatusForRef({ owner, repo, ref: pr.head.sha }),
+              ]);
+              // Drop this workflow's own check runs. Two mechanisms, both load-
+              // bearing: the run-id match is exact but only covers THIS run, and
+              // an EARLIER genealogist-queue run on the same sha that ended in
+              // `failure` would otherwise read as "CI failing" — the name prefix
+              // is what catches that one.
+              const isSelf = c =>
+                (c.details_url || '').includes(`/actions/runs/${context.runId}/`)
+                || (c.name || '').startsWith(SELF);
+              const others   = checks.filter(c => !isSelf(c));
+              const failed   = others.filter(c => BAD.has(c.conclusion));
+              const running  = others.filter(c => PENDING.has(c.status));
+              const statuses = status.data.statuses || [];
+              const statusFailed = statuses.filter(s => s.state === 'failure' || s.state === 'error');
+
+              const reasons = [];
+              if (!standings.includes('APPROVED'))        reasons.push('no peer approval');
+              if (standings.includes('CHANGES_REQUESTED')) reasons.push('changes requested');
+              if (failed.length)       reasons.push(`CI failing: ${failed.map(c => c.name).join(', ')}`);
+              if (statusFailed.length) reasons.push(`status failing: ${statusFailed.map(s => s.context).join(', ')}`);
+              if (running.length)      reasons.push(`CI still running (${running.length})`);
+              if (others.length === 0 && statuses.length === 0) reasons.push('no CI has reported');
+
+              return { pr, labeled, ready: reasons.length === 0, reasons };
+            }
+
+            // ---- label bootstrap --------------------------------------------
+            async function ensureLabel() {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: LABEL });
+                core.info(`label ${LABEL} exists`);
+              } catch (e) {
+                if (e.status !== 404) throw e;
+                if (dryRun) return core.info(`would create label ${LABEL}`);
+                await github.rest.issues.createLabel({
+                  owner, repo, name: LABEL, color: '0E8A16',
+                  description: 'CI green + peer-approved; awaiting senior genealogist',
+                });
+                core.info(`created label ${LABEL}`);
+              }
+            }
+            await ensureLabel();
+
+            // ---- act ---------------------------------------------------------
+            // The first version of this workflow wrapped its write in a
+            // try/catch that downgraded failure to a warning. The API then
+            // no-op'd with HTTP 200 and the job went green while doing nothing.
+            // So: no catch, and read the label back to confirm it landed.
+            async function act(n) {
+              const { pr, labeled, ready, reasons } = await evaluate(n);
+              let action;
+
+              if (ready && labeled) {
+                action = 'already queued';
+              } else if (ready && dryRun) {
+                action = 'WOULD promote';
+              } else if (ready) {
+                await github.rest.issues.addLabels({
+                  owner, repo, issue_number: n, labels: [LABEL] });
+
+                const { data: after } = await github.rest.issues.listLabelsOnIssue({
+                  owner, repo, issue_number: n });
+                if (!after.some(l => l.name === LABEL)) {
+                  core.setFailed(
+                    `#${n}: addLabels returned success but ${LABEL} is not on the PR. ` +
+                    `Treat this as a permissions or API-behaviour change, not a transient error.`);
+                  action = 'FAILED to label';
+                } else {
+                  action = 'promoted';
+                }
+              } else {
+                // v1 is add-only: a labelled PR is never unlabelled.
+                action = labeled ? 'not ready, left queued (v1 add-only)' : 'not ready';
+              }
+
+              core.info(`#${n} ${action}${reasons.length ? ' — ' + reasons.join('; ') : ''}`);
+              return [`#${n}`, pr.user.login, action, reasons.join('; ') || '—'];
+            }
+
+            const rows = [];
+            const errors = [];
+            for (const n of numbers) {
+              if (!sweep) { rows.push(await act(n)); continue; }
+              // A sweep must not lose the other 17 PRs to one PR's transient API
+              // error. This catch is NOT the one the note above warns about: it
+              // never decides whether a label write succeeded — that is settled by
+              // the read-back inside act() — and every error caught here still
+              // fails the job via setFailed below. Nothing is downgraded to a
+              // warning; the sweep just finishes before it reports.
+              try {
+                rows.push(await act(n));
+              } catch (e) {
+                errors.push(`#${n}: ${e.message}`);
+                core.error(`#${n} errored — ${e.message}`);
+                rows.push([`#${n}`, '—', 'ERRORED', e.message]);
+              }
+            }
+            if (errors.length) {
+              core.setFailed(
+                `${errors.length} of ${numbers.length} PR(s) errored during the sweep; ` +
+                `the rest were evaluated. ${errors.join(' | ')}`);
+            }
+
+            await core.summary
+              .addHeading(dryRun ? 'genealogist-queue (dry run)' : 'genealogist-queue', 3)
+              .addRaw(`Queue: \`is:open is:pr label:${LABEL}\``)
+              .addTable([
+                [{ data: 'PR', header: true }, { data: 'Author', header: true },
+                 { data: 'Action', header: true }, { data: 'Blocking', header: true }],
+                ...rows,
+              ])
+              .write();

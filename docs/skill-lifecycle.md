@@ -383,6 +383,7 @@ Four different things feed a grade, and only two of them are yours:
 |---|---|---|
 | **This test's expectations** | `judge_context` in the test JSON | **Yes** — fix it |
 | **This skill's rubric** | `eval/tests/unit/<skill>/rubric.md` | **Yes** — fix it |
+| **Which grader runs at all** | `negative.grade_on_invariant` in the test JSON | **Yes** — but read the next section first |
 | Base rubric (every skill) | shared | No — Dallan's |
 | Global judge prompt | `eval/harness/judge/prompt.md` | No — Dallan's |
 
@@ -394,6 +395,48 @@ either makes your latest run stale and you have to **re-run the skill's suite**
 If the problem is in the bottom two, don't touch them — they're global, and a
 change re-baselines every skill in the project. Post the problem and your
 proposed wording in Slack and let Dallan make the call.
+
+#### Changing *how* a test is graded — `grade_on_invariant`
+
+There is a fifth lever, and it is the one that can quietly gut a test. Setting
+`negative.grade_on_invariant` swaps the LLM judge out for a deterministic
+validator: the test then passes or fails on what the validator asserts and the
+judge's dimensions stop deciding the outcome. That is the right instrument for
+some tests and the wrong one for others, and the difference is not visible in
+the diff.
+
+**Use it when the correct behaviour is a no-op.** Negative and routing tests,
+where passing means the skill *declined* to act — no browse ran, nothing was
+persisted, control went to the other skill. A judge has no output to read in
+that case, so it reasons about an absence and reaches a different conclusion
+each run. That is where the flakiness comes from, and a validator asserting
+"no search ran, no file written" is strictly better evidence.
+
+**Don't use it when the skill produces real genealogical output** — assertions,
+classifications, a proof tier, a citation. There the judge is measuring the
+thing we actually care about, and a flaky judge is a *signal*: usually an
+ambiguous rubric, a thin `judge_context`, or genuine skill inconsistency. All
+three are fixable in lane 2 without changing what the test grades.
+
+The test to apply:
+
+> **If the skill silently got much worse at its job, would this test still
+> pass?** If yes, you moved the goalposts rather than fixing the test.
+
+Try these first when a judged test flakes — each keeps the test measuring the
+right thing:
+
+| Symptom | Usual cause | Fix |
+|---|---|---|
+| Judge calls correct output wrong | It was shown incomplete before-state | Widen `judge_context` |
+| Judge fails a call no fixture covers | Missing `eval/fixtures/mcp/` coverage | Add the fixture |
+| Judge score swings run to run | Rubric wording admits two readings | Sharpen the dimension's pass/partial/fail bullets |
+
+**Say which case you're in, in the PR.** One line — "negative test, the
+invariant is the whole contract", or "the judge was flaky because X, fixed
+that instead". A reviewer cannot tell the two apart from the diff, and the
+whole-suite consequence (a corpus that stops discriminating) only shows up in
+aggregate, long after the PR that started it.
 
 #### When it is a body edit
 
@@ -839,7 +882,7 @@ these to follow the flow above:
 |---|---|
 | Skill architecture & the three skill kinds | [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md) |
 | Test JSON format, fixtures, validators | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
-| Per-PR review + run-log versioning mechanics | [`docs/plan/per-pr-review-workflow.md`](plan/per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
+| Per-PR review + run-log versioning mechanics | [`docs/per-pr-review-workflow.md`](per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
 | The vendored description optimizer | `eval/triggering/` (vendoring notes in `VENDORED.md`) |
 | The e2e fixture format and judge contract | [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md) |
 | The feedback-case contract (baseline, marker file, lints) | [`docs/specs/feedback-case-spec.md`](specs/feedback-case-spec.md) |

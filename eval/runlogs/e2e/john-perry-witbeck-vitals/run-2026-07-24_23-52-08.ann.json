@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial",
+    "f3": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Birth date recovered exactly (10 Mar 1775); place not on the birth fact (Albany is on the retained christening).",
+    "f2": "Exact death date recovered (28 Feb 1819); place not on the fact (expected Niskayuna, Schenectady). | Perf-measurement run for the image-reader bounding lever (#810). Image-reader stayed bounded ([2] turns, no thrash); subagent time 11.2m vs 55.9m baseline. Recall unchanged from the prior passing run (dates/localities recovered, place precision incomplete).",
+    "f3": "Right burial locality (Niskayuna, Schenectady) but not the specific Niskayuna Reformed Church Cemetery; no date."
+  },
+  "annotator": "bolu"
+}

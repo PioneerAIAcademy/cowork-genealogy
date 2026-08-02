@@ -146,8 +146,7 @@ const EXAMPLES: Record<string, string> = {
   "person_ids": ["I1"],
   "generated": "2026-07-18T14:05:00Z",
   "events": [],
-  "gaps": [],
-  "impossibilities": []
+  "gaps": []
 }`,
 
   proof_summaries: `{

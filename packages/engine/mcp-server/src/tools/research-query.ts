@@ -12,8 +12,8 @@
 // manually paginating through) the whole growing research.json. Evidence: a
 // wilkins-marriage e2e run made 53 Read calls on research.json, including
 // hand-paginated reads (offset 850/1500/2000/2500) immediately before the
-// run's single longest generation gap (385s) — see
-// docs/plan/tree-materialization-batching-plan.md's Phase-4 follow-up.
+// run's single longest generation gap (385s) — measured in the 2026-07-26
+// batching-work verification run; see docs/specs/research-query-tool-spec.md.
 //
 // Deliberately NOT a generic filter (an arbitrary `{field: value}` object) —
 // that is exactly the "jq-style," "open-ended context cost, un-promptable"
@@ -55,6 +55,8 @@ export interface ResearchQueryInput {
   assertionId?: string;
   planItemId?: string;
   status?: string;
+  targetId?: string;
+  focus?: string;
 }
 
 export type ResearchQueryResult =
@@ -80,7 +82,9 @@ type FilterKey =
   | "personId"
   | "assertionId"
   | "planItemId"
-  | "status";
+  | "status"
+  | "targetId"
+  | "focus";
 
 /** One filter's match rule: `field` (or the first-matching of `fields`) on
  *  each item, compared by `mode` — `exact` equality, or `contains` /
@@ -142,7 +146,17 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
     questionId: { field: "question_id", mode: "exact" },
     assertionId: { field: "supporting_assertion_ids", mode: "contains" },
   },
-  evaluations: {},
+  // `targetId` + `focus` serve the gps-mentor agent's existing-verdict skip:
+  // "is there already a verdict for this focus + target?". Note what these two
+  // filters deliberately do NOT cover — the agent also needs `superseded_by:
+  // null`, and `superseded_by` is `string | null`, which `matches()` cannot
+  // express (it compares against a `string` value). Narrowing to focus+target
+  // is what the tool can honestly do; picking the un-superseded entry out of
+  // the (small) result stays the caller's step, and gps-mentor.md says so.
+  evaluations: {
+    targetId: { field: "target_id", mode: "exact" },
+    focus: { field: "focus", mode: "exact" },
+  },
 };
 
 const FILTER_KEYS: FilterKey[] = [
@@ -154,6 +168,8 @@ const FILTER_KEYS: FilterKey[] = [
   "assertionId",
   "planItemId",
   "status",
+  "targetId",
+  "focus",
 ];
 
 function matches(item: any, rule: FilterRule, value: string): boolean {
@@ -257,7 +273,9 @@ export const researchQuerySchema = {
     "related_question_ids, assertionId — matches supporting/contradicting_assertion_ids, " +
     "status), `timelines` (personId — matches person_ids), `proof_summaries` " +
     "(questionId, assertionId — matches supporting_assertion_ids), `evaluations` " +
-    "(no filters — always returns everything, capped).\n" +
+    "(targetId, focus). Note for `evaluations`: there is no filter for " +
+    "`superseded_by` — narrow with targetId/focus, then pick the entry whose " +
+    "`superseded_by` is null yourself.\n" +
     "\n" +
     "Returns `{ section, count, items, truncated }` — `count` is the total match " +
     "count before the 50-item cap; `items` is camelCase-untouched (the section's " +
@@ -304,6 +322,14 @@ export const researchQuerySchema = {
       status: {
         type: "string",
         description: "questions/plans/conflicts/hypotheses: matches status.",
+      },
+      targetId: {
+        type: "string",
+        description: "evaluations: matches target_id (the q_/ps_ id the verdict is about).",
+      },
+      focus: {
+        type: "string",
+        description: "evaluations: matches focus (e.g. 'proof-critique', 'on-demand').",
       },
     },
     required: ["projectPath", "section"],

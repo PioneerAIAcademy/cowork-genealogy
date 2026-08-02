@@ -48,7 +48,8 @@ A third, optional decomposition — ``--by-skill`` — segments the run into
 per-Skill-invocation phases (e.g. how long ``person-evidence`` vs.
 ``proof-conclusion`` ran) using the ``tool_names`` tags above. This used to
 require the raw SDK ``session.jsonl`` (gitignored, and only reliably present
-by accident — see ``docs/plan/tree-materialization-batching-plan.md`` §1.2);
+by accident — this is why the 2026-07-26 batching investigation could
+instrument exactly one run end-to-end);
 now every run committed after the tags were added carries what's needed, from
 any contributor's normal PR, with no extra step.
 """
@@ -62,6 +63,8 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+from e2e.result import axes_from_runlog
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 E2E_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "e2e"
@@ -251,9 +254,15 @@ def analyze_result(result: dict[str, Any], source_file: str | None = None) -> La
     tool_calls = result.get("tool_calls") or []
     counts = Counter(_bare_tool_name(c.get("tool", "")) for c in tool_calls)
 
+    # Through the shim, so a pre-#972 log whose top-level `verdict` was
+    # overwritten by a guardrail bypass still shows its real genealogical
+    # verdict here. `compliance` rides along so a non-compliant run is not
+    # silently indistinguishable from a clean one in the table.
+    verdict, compliance, _outcome = axes_from_runlog(result)
+
     bd = LatencyBreakdown(
         test_id=result.get("test_id", "?"),
-        verdict=result.get("verdict", "?"),
+        verdict=verdict if compliance != "fail" else f"{verdict}/noncompliant",
         stop_reason=result.get("stop_reason", "?"),
         source_file=source_file,
         wall_clock_s=round(float(wall_clock_s), 1),

@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Father David Bagley present as person I1 and linked by ParentChild R7, sourced to the 1884 Topsham death record. Cited via 'Vermont, Vital Records, 1760-1954' rather than the fixture's 'Town Clerk, Vital and Town Records, 1732-2005' — different collection path to the same entry, not a miss. David has no birth facts (expected b. 22 Feb 1777 Newton, NH), but the finding is the parentage, not his identification."
+  },
+  "annotator": "genealogist"
+}
