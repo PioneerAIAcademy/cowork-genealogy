@@ -1,10 +1,11 @@
 # Development
 
 Developer guide for building, testing, and extending this repository.
-For architecture and conventions Claude needs when editing the code,
-see [CLAUDE.md](./CLAUDE.md). For end-user installation and usage, see
-[README.md](./README.md). For contribution criteria, see
-[CONTRIBUTING.md](./CONTRIBUTING.md).
+For how the pieces bind and what a change's blast radius is, see
+[docs/architecture.md](./docs/architecture.md). For architecture and
+conventions Claude needs when editing the code, see [CLAUDE.md](./CLAUDE.md).
+For end-user installation and usage, see [README.md](./README.md). For
+contribution criteria, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Build commands
 
