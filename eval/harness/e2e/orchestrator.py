@@ -805,13 +805,26 @@ async def _run_agent(
         # hook, not the allowlist, so it can deny per-call with arguments.
         allowed_tools=BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"],
         permission_mode="dontAsk",
-        # Idea 3a (speedup plan §3a): eager-load the genealogy MCP tool schemas.
-        # The bundled CLI defers MCP tool schemas above a token threshold (the
-        # ~38-tool genealogy server trips it), forcing repeated ToolSearch
-        # re-discovery (17x in the spriggs run). Forcing tool search off loads
-        # them once at session start. `env` MERGES onto the inherited environment
-        # (claude_agent_sdk subprocess_cli merges os.environ, then options.env),
-        # so this adds the var without dropping PATH.
+        # ENABLE_TOOL_SEARCH turns tool search ON, not off. This comment used to
+        # say "forcing tool search off" while setting "true"; the polarity is
+        # inverted (issue #1110). Read off the installed CLI (v2.1.220): a truthy
+        # value (`true|1|yes|on`) selects deferred/tool-search mode, `auto`/
+        # `auto:N` is the adaptive variant, and only a FALSY value
+        # (`false|0|no|off`) selects "standard" mode, where every schema is
+        # loaded up front. Unset also lands on tool-search mode, so deleting the
+        # variable eager-loads nothing. (Additionally forced off on a
+        # non-first-party ANTHROPIC_BASE_URL, on Vertex, and under
+        # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
+        #
+        # So "true" below means e2e runs WITH tool search: the ~38-tool
+        # genealogy server's schemas are deferred and re-discovered via
+        # ToolSearch mid-session (the 17x in the spriggs run, ~11% of all tool
+        # calls across recent runs). Idea 3a of the speedup plan wanted the
+        # opposite; flipping to "false" is a separate, tracked decision that
+        # requires re-measuring the tool mix, so the value is left as it has been
+        # running. `env` MERGES onto the inherited environment (claude_agent_sdk
+        # subprocess_cli merges os.environ, then options.env), so this adds the
+        # var without dropping PATH.
         #
         # env_for_sdk(resolve_auth()) routes the agent run to the operator's
         # subscription when one is available (suppressing the ANTHROPIC_API_KEY
