@@ -152,14 +152,17 @@ either.
 
 ### 3. Attack the plan
 
-Hand the plan to the `plan-critic` subagent, **by path**:
+```
+/critique-plan PLAN.md
+```
 
-> Use the plan-critic agent to review the plan in PLAN.md.
-
-Point it at the file, not at "this plan." Subagents start in fresh context and
-see only what you hand them; asked to review "this plan," the parent session
-passes along a paraphrase — which is exactly the input the critic is told not
-to trust.
+The command dispatches to the `plan-critic` subagent. Use it rather than asking
+in prose: the session you're in *wrote* the plan, and asking it to review the
+plan gets you a Claude that is anchored on its own reasoning and holds Edit and
+Write. It will agree with itself, and it may start implementing. The command
+also points the critic at the plan **by path** — subagents start in fresh
+context and see only what they're handed, so "review this plan" passes along
+your paraphrase, which is exactly the input the critic is told not to trust.
 
 It reads the plan *and the code the plan claims to touch*, and reports findings
 with a severity and a concrete replacement. Its highest-value check is the
@@ -178,8 +181,15 @@ Two rounds of unresolved blocking findings is not a plan problem, it's a task
 problem — the task is underspecified or the approach is wrong, and another
 round of polishing won't fix either.
 
-Read the findings yourself before acting on them. Some will be wrong. Deciding
-which is part of the job, and it's the part that teaches you the codebase.
+**Check each finding before acting on it.** Some will be wrong. Open the file,
+run the command, confirm the claim. Deciding which findings are real is part of
+the job, and it's the part that teaches you the codebase.
+
+This applies to what the critic *proposes* as much as what it criticizes. A
+suggested command, flag, or file name that you pass along unchecked reads like
+an established thing to whoever you hand it to — that is how an invented name
+gets into a document and stays there. If you're going to repeat it, verify it
+first; if you haven't verified it, say so when you repeat it.
 
 ### 4. Implement
 
@@ -350,7 +360,9 @@ Three rules:
    positives — a claim about a function three files away that turns out to be
    wrong, an "unhandled case" that's handled upstream. Open the file and check.
    Posting unverified findings wastes the author's time and burns your
-   credibility fast.
+   credibility fast. This covers *suggestions* too: a proposed command or file
+   name, repeated without checking, arrives at the author looking like
+   something that already exists.
 2. **Post it in your own words, and state the edit.** Quote what they wrote,
    give the replacement text. "This will throw when `standardPlace` is
    unresolvable — resolve it before the map, or guard at line 40" beats a
@@ -395,7 +407,7 @@ git worktree add .claude/worktrees/<branch> -b <branch> origin/main
 # 2. write PLAN.md at the worktree root (gitignored)
 
 # 3. attack the plan (max 2 rounds)
-#    → "Use the plan-critic agent to review the plan in PLAN.md."
+/critique-plan PLAN.md
 
 # 5. verify — run BOTH; neither is a superset of the other
 make test-all                        # JS + server + engine + harness + typecheck

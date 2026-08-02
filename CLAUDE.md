@@ -639,7 +639,7 @@ explicitly with the Agent tool.
   and rejects plans with no falsifiable acceptance check. Step 3 of
   [`docs/task-lifecycle.md`](./docs/task-lifecycle.md), which caps it at two
   rounds — a second round of blocking findings means the *task* is
-  underspecified, not the plan.
+  underspecified, not the plan. `/critique-plan [path]`.
 - **`rubric-critic`** — read-only. Audits a skill's eval rubric and judge
   quality from its run logs; flags non-discriminating, flaky, and unexercised
   dimensions. `/audit-rubric <skill>`.
