@@ -60,14 +60,21 @@ her profile's "Madžarevo" marriage place carries no attached source at all.
 1516-1994* for children of Thomæ Sugecz and Susanæ Petrich (Varaždin,
 1780–1802) returns exactly two: Margaritha, 17 June 1783, and the Elisabetha of
 1786 — so that couple has no later daughter of the right age, and the hint's
-*parents* are wrong, not merely its record. A wider name search surfaces three
-Madžarevo baptisms of an Elisabetha Sugecz, and only one survives the age test:
+*parents* are wrong, not merely its record. A wider name search surfaces four
+Madžarevo baptisms of an Elisabetha Sugecz, and two survive the age test:
 
 | Baptism | Parents | Verdict |
 |---|---|---|
 | 14 Aug 1786 (`1:1:QKMN-XYBK`) | Thomæ Sugecz + Susanæ Petrich | refuted — 51 at the 1837 birth |
 | 15 Nov 1795 (`1:1:QKMN-XK63`) | Geor Sugecz + a Catharina | age fits (21 in 1816, 42 in 1837); **unlinked** |
+| 9 Nov 1796 (`1:1:QKMN-FHFV`) | Mathiæ Suyecz + Marianæ K??piar | age fits (20 in 1816, 40 in 1837); **unlinked** |
 | 28 Sep 1810 | Thomæ Sugecz + Hellenæ | impossible — age 6 at the 1816 first child |
+
+Search the surname loosely. The 1796 entry is indexed under **`Suyecz`** — a
+g/y misreading of the same hand — so a `Sugecz`-only query misses it, which is
+how the first pass of this adjudication came up with three candidates instead
+of four. Neither age-plausible candidate is linked to the subject by any
+record, so the fourth widens the ambiguity rather than resolving it.
 
 The 1795 entry is already attached to a *different* tree person, **G4N9-RHT**
 (Elisabetha Žugec, parents Georgius Žugec `G4CX-3LJ` and Catharina `G4CX-3LG`,
