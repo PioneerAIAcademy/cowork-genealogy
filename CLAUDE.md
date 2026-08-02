@@ -629,10 +629,17 @@ signal to consolidate; one isn't.
 
 ## Subagents
 
-Two project subagents live under `.claude/agents/`. Claude Code invokes them
+Three project subagents live under `.claude/agents/`. Claude Code invokes them
 automatically when their description matches the request, or you can call them
 explicitly with the Agent tool.
 
+- **`plan-critic`** — read-only. Adversarially reviews an implementation plan
+  *before* any code exists: verifies every file/function/command the plan names
+  actually exists, checks the plan against the documented multi-site edit lists,
+  and rejects plans with no falsifiable acceptance check. Step 3 of
+  [`docs/task-lifecycle.md`](./docs/task-lifecycle.md), which caps it at two
+  rounds — a second round of blocking findings means the *task* is
+  underspecified, not the plan.
 - **`rubric-critic`** — read-only. Audits a skill's eval rubric and judge
   quality from its run logs; flags non-discriminating, flaky, and unexercised
   dimensions. `/audit-rubric <skill>`.

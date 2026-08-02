@@ -1,6 +1,12 @@
 # Development
 
 Developer guide for building, testing, and extending this repository.
+
+**New here? Start with [docs/task-lifecycle.md](./docs/task-lifecycle.md)** —
+the process a developer task goes through from issue to merge (plan,
+adversarial plan review, implement, verify, review). This file is the
+reference it sends you to for individual recipes.
+
 For how the pieces bind and what a change's blast radius is, see
 [docs/architecture.md](./docs/architecture.md). For architecture and
 conventions Claude needs when editing the code, see [CLAUDE.md](./CLAUDE.md).
