@@ -124,7 +124,7 @@ mocks (no E2B/Anthropic/OAuth needed).
   "is this still pending?" at a glance. Eight such files were moved out in the
   #953 follow-up.
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
-  source of truth the `spec-review` agent checks implementations against.
+  source of truth an implementation is checked against.
   This is the durable tier; a live tool must have a live spec.
 - **Deferring work creates an issue, not a file entry.** In the same PR that
   defers something, file it — one command, no board write:
@@ -297,12 +297,20 @@ Enforced by `tests/packaging/agent-tool-names.test.ts`, which derives the
 bridge prefix from `display_name` so renaming the extension fails loudly in
 CI instead of silently in production.
 
-**Never hardcode a qualified name in a ToolSearch query.** Cowork defers
-the ~40 genealogy tool schemas (both harnesses set `ENABLE_TOOL_SEARCH=true`
-to avoid this; Cowork offers no such control), so ToolSearch is the real
-load path there. Search by bare tool name — `query: "+research_append"` —
-which matches whatever prefix the session exposes. The same packaging test
-fails any `select:mcp__…` in a plugin body.
+**Never hardcode a qualified name in a ToolSearch query.** Cowork defers the
+genealogy tool schemas above a size threshold and offers no control over it, so
+ToolSearch is the real load path there. Search by bare tool name —
+`query: "+research_append"` — which matches whatever prefix the session exposes.
+The same packaging test fails any `select:mcp__…` in a plugin body.
+
+**`ENABLE_TOOL_SEARCH=true` turns tool search ON, not off.** Verified against
+CLI v2.1.220 (2026-08-02): a truthy value (`true|1|yes|on`) enables
+deferred/tool-search mode, `auto`/`auto:N` is adaptive, and a **falsy** value
+(`false|0|no|off`) is what disables it — **unset also means on**. Both harnesses
+and the hosted path set `"true"`, so they run *with* deferral, which is the
+opposite of what their comments claimed until #1173 corrected them. Nothing here
+depends on the flag's value; the bare-name rule above is correct either way.
+Flipping it is separate work that has to re-measure the tool mix (issue #1110).
 
 **No playbook/reference files for agents — an agent body is self-contained.**
 Everything an agent needs at runtime lives inline in its `.md`. Do **not**
@@ -621,25 +629,31 @@ signal to consolidate; one isn't.
 
 ## Subagents
 
-Three project subagents live under `.claude/agents/`. Claude Code
-invokes them automatically when their description matches the
-request, or you can call them explicitly with the Agent tool.
+Two project subagents live under `.claude/agents/`. Claude Code invokes them
+automatically when their description matches the request, or you can call them
+explicitly with the Agent tool.
 
-- **`spec-review`** — read-only. Compares an MCP tool implementation
-  against its `docs/specs/<tool>-tool-spec.md` and reports drift,
-  quoting both sides. Use it before every PR that touches a specced
-  tool.
-- **`mcp-tool-scaffolder`** — generates the standard four-file
-  scaffolding (`src/types/<name>.ts`, `src/tools/<name>.ts`,
-  `dev/try-<name>.ts`, `tests/tools/<name>.test.ts`) and wires it into
-  `src/tool-schemas.ts`, `src/index.ts`, and `manifest.json`. Follows
-  `wikipedia.ts` as the canonical template. Requires the spec exist first.
-- **`cowork-skill-builder`** — generates a Cowork skill that wraps
-  an existing MCP tool, following `packages/engine/plugin/skills/search-wikipedia/` as
-  the reference. Refuses to put network code in skills (architectural
-  rule: skills run in the VM with no egress).
+- **`rubric-critic`** — read-only. Audits a skill's eval rubric and judge
+  quality from its run logs; flags non-discriminating, flaky, and unexercised
+  dimensions. `/audit-rubric <skill>`.
+- **`skill-improver`** — report-only. Proposes evidence-cited `SKILL.md` edits
+  from a skill's latest annotated run log. `/improve-skill <skill>`.
 
-Each agent's `description` field tells Claude when to invoke it.
+**Three others were deleted on 2026-08-02** (issue #1161): `spec-review`,
+`mcp-tool-scaffolder`, and `cowork-skill-builder`. All three had gone stale
+after the `packages/engine/` move — unresolvable paths, broken template links —
+and `mcp-tool-scaffolder` additionally instructed callers to send
+`User-Agent: genealogy-mcp-server/<version>` **on every request**, which is
+exactly the non-browser UA Imperva 403s on any FamilySearch endpoint. Tooling
+that looks authoritative and is wrong is worse than no tooling.
+
+What replaced them is the templates they pointed at, used directly:
+
+| Was | Do instead |
+|---|---|
+| `mcp-tool-scaffolder` | Copy `src/tools/wikipedia.ts` and its sibling four files. The site list is in `DEVELOPMENT.md` → "How to add a new feature" and `docs/architecture.md` §3. |
+| `cowork-skill-builder` | Copy `packages/engine/plugin/skills/search-wikipedia/`. Its architectural rule still stands: **no network in skill `scripts/`.** |
+| `spec-review` | Read the implementation against `docs/specs/<tool>-tool-spec.md` yourself, or ask a general-purpose subagent to, quoting both sides. The spec is still the source of truth; only the automation is gone. |
 
 ## What NOT to do
 

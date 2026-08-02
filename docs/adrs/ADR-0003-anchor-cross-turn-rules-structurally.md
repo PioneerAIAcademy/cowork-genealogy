@@ -45,12 +45,20 @@ is fine" is not a counterexample. Second, the audit covers **one skill**
 the per-skill result should not be assumed elsewhere. It also exempts plugin
 agents, which get fresh context per invocation and cannot decay this way.
 
-`docs/agentic-system-critique.md` §1.1 reports a public precedent for the general
-effect (arXiv 2606.22528, "Governance Decay," June 2026 — constraint violations
-rising 0% → 30–59% after compaction). **That citation carries no DOI, authors, or
-URL anywhere in this repo and nothing here can establish the paper exists**; it
-is repeated as attribution, not as evidence. This decision rests on the §5.3
-audit alone, which is reproducible.
+There is independent public corroboration of the general effect: Shiyang Chen,
+*"Governance Decay: How Context Compaction Silently Erases Safety Constraints in
+Long-Horizon LLM Agents"*, [arXiv:2606.22528](https://arxiv.org/abs/2606.22528)
+(June 2026). Its **ConstraintRot** benchmark measures violation rates rising from
+0% under full policy visibility to **30% after compaction — 59% on some models** —
+and its "Constraint Pinning" mitigation, which quarantines governance rules from
+lossy compression, returns them to 0%. *(Verified against arxiv.org 2026-08-02.
+An earlier revision of this ADR wrongly called the citation unverifiable.)*
+
+That paper corroborates the mechanism; it does not carry this decision. **The
+§5.3 audit does**, because it is reproducible here and additionally yields a
+production decay horizon the benchmark does not. Note also that Constraint
+Pinning is a platform-side mitigation not available to us — which is exactly why
+the answer here is a structural anchor rather than better prose.
 
 ## Decision
 
