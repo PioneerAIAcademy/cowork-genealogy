@@ -606,7 +606,7 @@ function applyOne(
     }
     // Completed-gate (GPS Component 4, deterministic): refuse to mark the
     // project completed while a BLOCKING conflict is unresolved. Blocking =
-    // status "unresolved" AND (identity_question true OR blocks_question_ids
+    // status "unresolved" AND (it is an identity conflict OR blocks_question_ids
     // non-empty). "resolved" and "moot" both settle a conflict. This is a
     // tool precondition on the status transition, not a document-validity
     // rule — an already-completed project with such a conflict still loads.
@@ -615,16 +615,23 @@ function applyOne(
     // 43-year birth mismatch) and completed the project anyway; prose-level
     // guardrails (warnings, mentor) fired and were rationalized away.
     if (section === "project" && op.fields.status === "completed") {
+      // An identity conflict is flagged by a non-empty identity_question STRING.
+      // The schema types identity_question as the question's text (string|null),
+      // never a boolean, so the old `=== true` was unsatisfiable dead code —
+      // an unresolved identity conflict slipped past the gate whenever
+      // blocks_question_ids was also empty (issue #1001).
+      const isIdentityConflict = (c: any) =>
+        typeof c.identity_question === "string" && c.identity_question.trim() !== "";
       const blocking = (Array.isArray(research.conflicts) ? research.conflicts : []).filter(
         (c: any) =>
           c &&
           c.status === "unresolved" &&
-          (c.identity_question === true ||
+          (isIdentityConflict(c) ||
             (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
       );
       if (blocking.length > 0) {
         const names = blocking
-          .map((c: any) => `${c.id} (${c.conflict_type ?? "conflict"}${c.identity_question ? ", identity" : ""})`)
+          .map((c: any) => `${c.id} (${c.conflict_type ?? "conflict"}${isIdentityConflict(c) ? ", identity" : ""})`)
           .join(", ");
         throw new ResearchAppendError(
           `cannot set project.status = "completed": unresolved blocking conflict(s) ${names}. ` +
