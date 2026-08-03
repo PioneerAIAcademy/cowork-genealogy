@@ -32,6 +32,13 @@ the specific variant a test's name plausibly attracts**, so no
 `fixture_not_found` occurs and the judge has nothing to weigh — that is what
 024 now does with `record-search-wilkens-variant-no-results`. Reach for a
 narrow, single-spelling nil, never the catch-all warned against below.
+It happened a **third** time on 2026-08-03, on ut_search_records_020
+(`Purnall` for Purnell) — the judge quoted this override and scored 2 in the
+same sentence ("Per the rubric override … **However** … Score is partial (2)
+because the variant call failed to match a fixture"). Fixed the same way,
+with `record-search-purnall-variant-no-results`. Three failures of wording
+against two successes of stocking: **do not reword this section again.** If a
+fourth variant flake appears, stock its nil.
 
 This overrides the global "Critical: Tool Usage Errors" rule for this one case,
 under that prompt's own provision for a skill's rubric to claim an axis and be
