@@ -9,7 +9,7 @@ over the harness's own `tool_calls` list shape
 (`{"tool": ..., "args": ..., "response_summary": ..., "is_error": ...,
 "agent_id": ..., "agent_type": ...}`, built by `e2e/orchestrator.py`'s
 message loop and `pretool_hook` — the last two are `None`/absent on a
-main-thread call and only meaningful once §12's ledger-attribution lands;
+main-thread call and only meaningful once spec §11's ledger-attribution lands;
 older runlogs simply lack the keys) plus the project's persisted
 `research.json`/`tree.gedcomx.json`.
 
@@ -21,7 +21,7 @@ Three consumers, all described in the plan:
     does the FINAL project state show a guardrail skill's effect with no
     matching successful invocation anywhere in the whole run?
   - `find_protected_writes_by_unnamed_delegate` — the post-run shadow-mode
-    detector (§12): does a protected write's own `agent_id`/`agent_type`
+    detector (spec §11): does a protected write's own `agent_id`/`agent_type`
     show it was made by neither the main thread nor a dedicated agent?
 """
 

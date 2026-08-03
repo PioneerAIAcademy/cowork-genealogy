@@ -26,7 +26,7 @@ from harness.skill_invocation import (
 
 # Sentinel distinguishing "key absent entirely" (the historical tool_calls
 # shape, and the shape a call still in-flight when a run aborts keeps
-# forever) from "key present as None" (§12 Step 0's real shape for a
+# forever) from "key present as None" (spec §11 Step 0's real shape for a
 # main-thread call) -- find_protected_writes_by_unnamed_delegate treats both
 # as "main thread, always legitimate" via .get(), but the two are
 # constructed differently here so both are exercised.

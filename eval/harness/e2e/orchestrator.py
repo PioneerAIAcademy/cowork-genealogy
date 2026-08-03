@@ -653,7 +653,7 @@ async def _run_agent(
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
-        # §12 Step 0 — record caller identity for EVERY call, including ones
+        # spec §11 Step 0 — record caller identity for EVERY call, including ones
         # about to be denied below (an unnamed subagent attempting a raw
         # Write bypass is exactly the kind of call worth attributing), so
         # this must run before any early return in this function, not just
@@ -983,13 +983,17 @@ async def _run_agent(
                                 summary = _summarize_tool_response(block.content)
                                 if entry is not None:
                                     entry["response_summary"] = summary
-                                    # §12 Step 0 — join caller identity onto
+                                    # spec §11 Step 0 — join caller identity onto
                                     # this entry now that pretool_hook is
                                     # guaranteed to have already run for it
                                     # (the CLI always completes the
                                     # PreToolUse round-trip before executing
                                     # the tool and streaming this result).
-                                    agent_id, agent_type = caller_by_tool_use_id.get(
+                                    # pop, not get: this id is joined exactly
+                                    # once, and an unpopped mapping would grow
+                                    # for the life of the run. Mirrors
+                                    # pending_tool_uses.pop() just above.
+                                    agent_id, agent_type = caller_by_tool_use_id.pop(
                                         block.tool_use_id, (None, None)
                                     )
                                     entry["agent_id"] = agent_id
@@ -1161,7 +1165,7 @@ async def _run_agent(
     # write whose PreToolUse-sourced agent_id/agent_type shows it was made
     # by neither the main thread nor one of the four dedicated Cowork
     # agents. Relies on the caller attribution `pretool_hook` now stamps
-    # onto every tool_calls entry (§12's "Step 0") — historical runlogs
+    # onto every tool_calls entry (spec §11's "Step 0") — historical runlogs
     # simply lack the keys, so this logs rather than overrides the verdict
     # until real runs accumulate a shadow-mode sample (tracked as its own
     # backlog item — task #980).
