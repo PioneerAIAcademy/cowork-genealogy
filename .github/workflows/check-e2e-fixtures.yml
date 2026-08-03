@@ -56,13 +56,13 @@ jobs:
 
       - name: Check out PR with full history
         if: steps.scope.outputs.relevant == 'true'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Set up Python
         if: steps.scope.outputs.relevant == 'true'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 

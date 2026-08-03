@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_amelia_gioiello_marriage",
+    "objective": "Who did Amelia Frances Gioiello marry, and what evidence is found for their marriage?",
+    "subject_person_ids": [
+      "GCT1-F3Q"
+    ],
+    "status": "active",
+    "created": "2026-07-28",
+    "updated": "2026-07-28"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

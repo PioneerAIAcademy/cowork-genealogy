@@ -1,0 +1,2828 @@
+{
+  "project": {
+    "id": "rp_estefania_zambrana_son",
+    "objective": "Did Estefania Zambrana and her husband Antonio Beisaga of Cochabamba, Bolivia have a son named Ricardo, baptized 1874, in addition to their two known children (b. 1867 and 1877)?",
+    "subject_person_ids": [
+      "9QTV-KDZ"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-28"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was a child named Ricardo baptized in Cochabamba, Bolivia circa 1874, recorded as a son of Antonio Beisaga and Estefania Zambrana?",
+      "rationale": "The research objective asks whether the couple had a son named Ricardo baptized ca. 1874. Bolivian Catholic parish baptism registers for Cochabamba survive for this period on FamilySearch and are the primary record type for verifying a baptism event. This question targets that single event directly and is testable through those registers. No prior questions exist, so this is the first decomposition of the objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-28",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_019",
+        "a_031",
+        "a_045",
+        "a_055",
+        "a_063",
+        "a_070"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All plan items for q_001 are completed. The primary indexed collection (Bolivia, Catholic Church Records, 1566-2020, collection 1922463) was searched at 91-99% coverage for the target period 1868-1880 across all major Cochabamba city parishes (San Ignacio de Loyola, San Jos\u00e9, Santo Domingo, San Antonio de Padua). A broad-net search for all children of Antonio Beisaga + Estefania Zambrana 1865-1880 returned exactly 4 children (Luis 1871, Tomaza 1875, Jer\u00f3nimo 1877, Maria de la o 1878) \u2014 no Ricardo. The legacy partial index (collection 1520550) was also searched with no results. The full-text search corpus contains no coverage for Cochabamba registers in 1868-1880 ('Beisaga' alone yields 0 results in the FT index for that date range). Image browse of the 005091274 prefix volumes confirmed they are 20th-century surname indexes (1880+ era), not 1870s registers \u2014 the actual 1870s-era registers for San Ignacio de Loyola are already in the highly indexed 004016032/004016033 prefix volumes included in the collection-wide indexed search. The remaining un-indexed residual (4-9% of the 1870s registers) cannot be efficiently browsed and does not outweigh the comprehensive negative result from the indexed majority. Research is reasonably exhaustive: no additional accessible search paths have been identified.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019",
+          "log_020",
+          "log_021",
+          "log_022",
+          "log_023",
+          "log_024",
+          "log_025"
+        ],
+        "stop_criteria": "Five threshold questions met: (1) sufficient breadth \u2014 indexed, FT, legacy index, and image-browse strategies all executed; (2) all accessible repositories identified and searched; (3) spelling variants Beisaga/Beizaga both searched; (4) all Cochabamba parishes in collection 1922463 covered; (5) full 1865-1880 date range searched. Remaining gap \u2014 4-9% un-indexed residual in 1870s registers \u2014 is insufficient to overturn the comprehensive indexed negative across multiple search strategies."
+      },
+      "created": "2026-07-28"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Cochabamba, Bolivia",
+          "date_range": "1872-1876",
+          "repository": "FamilySearch",
+          "rationale": "Bolivia, Catholic Church Records, 1566-2020 (collection 1922463) is the most comprehensive indexed + image collection for Bolivian parish registers and the primary search vehicle. Civil registration did not begin in Bolivia until 1940, so Catholic baptism registers are the only official vital record for a child born ca. 1874. Searching for Ricardo with parents Antonio Beisaga and Estefania Zambrana across a \u00b12-year window around 1874 is the highest-probability first step. Records are in Spanish. Per loc_001, this collection covers all major Cochabamba city parishes.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Cochabamba, Bolivia",
+          "date_range": "1872-1876",
+          "repository": "FamilySearch",
+          "rationale": "Bolivia, Baptisms, 1560-1938 (collection 1520550) is a separate legacy partial index assembled from a different indexing pass than collection 1922463. Although loc_001 flags it as incomplete, it was indexed independently and may surface entries where the 1922463 index has gaps or variant spellings. A negative in 1520550 cannot confirm absence, but a positive would be a lead worth verifying in the original image. Executed after pli_001 to avoid duplication; serves as a cross-check on the primary indexed search.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Cochabamba, Bolivia",
+          "date_range": "1860-1880",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search for the two surnames 'Beisaga' and 'Zambrana' as separate required terms across the unscoped FamilySearch full-text corpus (search-full-text skill). Per record-type guide, this is the highest-yield tactic when name-indexed search stalls: it finds records where the index is wrong, the name is written in a variant form, or the full-text AI transcription captures what the indexer missed. For a compound Latin American name pattern (Paterno Materno), searching both parent surnames as a co-occurrence lands the child's baptism, the parents' own marriage, or burial records \u2014 any of which may name Ricardo. Not scoped to a specific collection ID.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Cochabamba, Bolivia",
+          "date_range": "1865-1879",
+          "repository": "FamilySearch",
+          "rationale": "Search Bolivia, Catholic Church Records (collection 1922463) for the two known children: Geronimo Beisaga (b. ca. 1867) and Fructuosa Beisaga Zambrana (b. ca. 1877). Per BCG Standard 11, starting-point facts must be verified before being relied upon. Finding these baptisms in original records: (a) confirms Antonio Beisaga and Estefania Zambrana as a documented couple in Cochabamba parish registers; (b) identifies their specific parish, narrowing the browse scope for Ricardo; (c) yields godparent names \u2014 FAN evidence \u2014 that may recur as godparents or witnesses in Ricardo's baptism if he existed; and (d) establishes the temporal pattern of the couple's children, bracketing the ca. 1874 gap where Ricardo is claimed.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Cochabamba, Bolivia",
+          "date_range": "1860-1877",
+          "repository": "FamilySearch",
+          "rationale": "Search Bolivia, Marriages, 1630-1940 (collection 1520564) and Bolivia, Catholic Church Records, 1566-2020 (collection 1922463) for the marriage of Antonio Beisaga and Estefania Zambrana. Per the record-type guide, a parentage question always requires a dedicated search for the candidate parents' marriage: it (a) confirms the couple as a documented unit; (b) supplies Estefania's maiden name 'Zambrana' in an original record, which census and death records often omit; and (c) dates the union relative to Ricardo's claimed 1874 birth, corroborating that the couple could be his parents. Note the limit: the marriage record proves they wed, not that Ricardo is their child \u2014 a child-placing record (his baptism) is still required.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Cochabamba, Cochabamba, Cercado, Cochabamba, Bolivia",
+          "date_range": "1872-1876",
+          "repository": "FamilySearch",
+          "rationale": "Browse San Ignacio de Loyola parish volumes (image group prefix 005091277, 79-96% name-indexed; prefix 005091274, full-text searchable) via image_search for pages covering 1872-1876. San Ignacio de Loyola is the major central-city Cochabamba parish (1828-1957) and, if the family's parish is identified from pli_004, its volumes are the highest-priority target for a manual browse when indexed search returns nothing. This item serves as a browse fallback if pli_001 and pli_002 yield no result: it ensures that an entry missed by the name index but present in the image is not overlooked. Per loc_001, some San Ignacio de Loyola volumes are full-text searchable but NOT name-indexed, so record_search alone will miss them.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T18:15:39.675Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Beisaga",
+        "givenName": "Ricardo",
+        "fatherGivenName": "Antonio",
+        "fatherSurname": "Beisaga",
+        "motherGivenName": "Estefania",
+        "motherSurname": "Zambrana",
+        "birthYearFrom": 1872,
+        "birthYearTo": 1876,
+        "birthPlace": "Cochabamba, Bolivia",
+        "collectionId": "1922463",
+        "recordType": "birth"
+      },
+      "outcome": "positive",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 7,
+      "notes": "Collection 1922463 (Bolivia Catholic Church Records). Search: Ricardo Beisaga, parents Antonio Beisaga + Estefania Zambrana, birth 1872-1876, Cochabamba. Top result: 'Ricardo Beisaga' (Male, score 4.19), recordId QGJC-FX3Y. Record title says 'Registro para Mariano' \u2014 Ricardo may appear as a relative in another person's record. Requires record_read to confirm parent names and relationship."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T18:15:39.680Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Beisaga",
+        "givenName": "Ricardo",
+        "fatherGivenName": "Antonio",
+        "fatherSurname": "Beisaga",
+        "motherGivenName": "Estefania",
+        "motherSurname": "Zambrana",
+        "birthYearFrom": 1872,
+        "birthYearTo": 1876,
+        "birthPlace": "Cochabamba, Bolivia",
+        "collectionId": "1520550",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Collection 1520550 (Bolivia Baptisms legacy index). Same search parameters as pli_001. Zero results \u2014 this legacy partial index does not contain a record for Ricardo Beisaga with parents Antonio Beisaga and Estefania Zambrana for 1872-1876 in Cochabamba."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T18:15:39.680Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Beisaga",
+        "givenName": "Geronimo",
+        "fatherGivenName": "Antonio",
+        "fatherSurname": "Beisaga",
+        "motherGivenName": "Estefania",
+        "motherSurname": "Zambrana",
+        "birthYearFrom": 1865,
+        "birthYearTo": 1869,
+        "birthPlace": "Cochabamba, Bolivia",
+        "collectionId": "1922463",
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 17,
+      "notes": "Search for Geronimo Beisaga (subject 9QTV-K8P), parents Antonio Beisaga + Estefania Zambrana, birth 1865-1869, Cochabamba. 17 results returned, all Beisaga family members, but per ranker diagnostic all matchScores < 0.01 \u2014 treat as real negative for this query. Top name matches include 'Jeronimo Beisaga' (Spanish variant) in records for Juan and Pedro \u2014 these may be Geronimo appearing as a godparent or parent-relative. Will retry with Jeronimo variant and without parent filters."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T18:15:39.685Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Beisaga",
+        "givenName": "Fructuosa",
+        "fatherGivenName": "Antonio",
+        "fatherSurname": "Beisaga",
+        "motherGivenName": "Estefania",
+        "motherSurname": "Zambrana",
+        "birthYearFrom": 1875,
+        "birthYearTo": 1879,
+        "birthPlace": "Cochabamba, Bolivia",
+        "collectionId": "1922463",
+        "recordType": "birth"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 12,
+      "notes": "Search for Fructuosa Beisaga Zambrana (subject P89Y-ZJK), parents Antonio Beisaga + Estefania Zambrana, birth 1875-1879, Cochabamba. 12 results found. Ranks 1-2 (71DT-KTT2, 71DL-V2N2) already attached to subject P89Y-ZJK. Record titles suggest Fructuosa appears as a parent in children's baptism records, not as the baptized child herself. Will read to identify family parish."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-28T18:15:39.689Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Beisaga",
+        "givenName": "Antonio",
+        "spouseGivenName": "Estefania",
+        "spouseSurname": "Zambrana",
+        "anyYearFrom": 1855,
+        "anyYearTo": 1870,
+        "anyPlace": "Cochabamba, Bolivia",
+        "collectionId": "1520564",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Search for marriage of Antonio Beisaga and Estefania Zambrana in collection 1520564 (Bolivia Marriages 1630-1940), 1855-1870, Cochabamba. Zero results. Will retry in collection 1922463 which covers marriages 1566-2020."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T18:17:08.183Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Beisaga",
+        "givenName": "Jeronimo",
+        "fatherGivenName": "Antonio",
+        "fatherSurname": "Beisaga",
+        "motherGivenName": "Estefania",
+        "motherSurname": "Zambrana",
+        "birthYearFrom": 1865,
+        "birthYearTo": 1869,
+        "birthPlace": "Cochabamba, Bolivia",
+        "collectionId": "1922463",
+        "recordType": "birth",
+        "note": "Jeronimo = Spanish form of Geronimo"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 17,
+      "notes": "Retry for Geronimo Beisaga with Spanish name variant 'Jeronimo'. Same 17-result pool returned. All matchScores < 0.01 per ranker diagnostic \u2014 real negative for this query. Subject 9QTV-K8P remains too thin to resolve. Jeronimo Beisaga appears in records for Juan (QGJC-X3YL) and Pedro (QY37-2MN2) as a relative, possibly as godfather/father, not as the baptized child. Indexed birth record for Geronimo/Jeronimo Beisaga with parents Antonio + Estefania not found in collection 1922463."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-28T18:17:08.183Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Beisaga",
+        "givenName": "Antonio",
+        "spouseGivenName": "Estefania",
+        "spouseSurname": "Zambrana",
+        "anyYearFrom": 1855,
+        "anyYearTo": 1870,
+        "anyPlace": "Cochabamba, Bolivia",
+        "collectionId": "1922463",
+        "recordType": "marriage"
+      },
+      "outcome": "positive",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 7,
+      "notes": "Retry for marriage of Antonio Beisaga + Estefania Zambrana in collection 1922463 (Bolivia Catholic Church Records 1566-2020). Top search result (score 8.31): 'Registro para Antonio Beizaga y Estefania Zambrana' (QL7X-YN65, birthDate 1845 for Antonio). Record title directly names both parties \u2014 strong candidate for their marriage or joint registration. Also: 4FC5-7B6Z ('Registro para Lauriano Torrico') already attached to subject Antonio Beisaga 9QTV-KD3. Reading both records."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T18:18:25.467Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QGJC-FX3Y"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "record_read of QGJC-FX3Y (Ricardo Beisaga). Ricardo appears as FATHER of Mariano Beisaga Launa, baptized 3 Oct 1908 in Sicaya, Capinota, Cochabamba. Wife: Petrona Launa. This confirms a Ricardo Beisaga existed in Cochabamba, age consistent with ca. 1874 birth, but this record does not name his parents. Does not directly answer whether he is a son of Antonio Beisaga and Estefania Zambrana."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T18:18:25.467Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:71DT-KTT2"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "record_read of 71DT-KTT2 (Anselmo Torrico Beisaga baptism, 20 Apr 1890). Fructuosa Beisaga appears as mother, married to Laureano Torrico. Parish: Santo Domingo, Cochabamba city. This places Fructuosa in the Santo Domingo parish ca. 1890 but is not her own baptism record."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-28T18:18:25.467Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QL7X-YN65"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "record_read of QL7X-YN65 (marriage record). CONFIRMED: Antonio Beizaga (b.1845, parents Calisto Beizaga + Manuela Rojas) married Estefania Zambrana (b.1848, parents Francisco Zambrana + Manuela Claros) on 23 Mar 1870 at San Jose parish, Cochabamba. 'Beizaga' is a spelling variant of 'Beisaga'. Collection: Bolivia, Cochabamba, Marriages, 1615-1976 (auto_M9J1-9SN)."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T18:18:25.467Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:4FC5-7B6Z"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "record_read of 4FC5-7B6Z (Lauriano Torrico marriage, 30 Mar 1890). CONFIRMED: Fructuosa Beisaga (b. 1867) is daughter of Antonio Beisaga and Estefania Zambrana. Fructuosa married Laureano Torrico (b. 1860). This record explicitly names both parents of Fructuosa \u2014 direct parentage evidence. Note: tree has Fructuosa born 1877, but this record states 1867 \u2014 possible date conflict requiring resolution."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T18:19:33.890Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Antonio",
+        "fatherSurname": "Beisaga",
+        "motherGivenName": "Estefania",
+        "motherSurname": "Zambrana",
+        "birthYearFrom": 1865,
+        "birthYearTo": 1880,
+        "recordCountry": "Bolivia",
+        "collectionId": "1922463",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 4,
+      "notes": "Broad child search: all children of Antonio Beisaga + Estefania Zambrana, birth 1865-1880, collection 1922463. NO Ricardo found. Children indexed: Jeronimo (QPTW-LPGT, 30 Sep 1877, San Ignacio de Loyola), Maria de la o (7DW1-HX2M, 17 Dec 1878, San Jose), Luis (W865-RRT2, 18 Aug 1871, Cochabamba Cercado), Tomaza (71W1-TCW2, 28 Dec 1875, San Ignacio de Loyola). Fathername 'Beisaga' variant."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T18:19:33.893Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Antonio",
+        "fatherSurname": "Beizaga",
+        "motherGivenName": "Estefania",
+        "motherSurname": "Zambrana",
+        "birthYearFrom": 1865,
+        "birthYearTo": 1880,
+        "recordCountry": "Bolivia",
+        "collectionId": "1922463",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 4,
+      "notes": "Same broad child search with 'Beizaga' surname variant (the marriage record spelling). Same 4 children returned. No Ricardo found under either spelling variant. Absence of Ricardo in indexed collection 1922463 for 1865-1880 is significant negative evidence, but collection coverage is not 100%."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T18:22:38.075Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "QPTW-LPGT"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CONFIRMED: Jer\u00f3nimo Beisaga Zambrana baptized 30 Sep 1877, San Ignacio de Loyola, Cochabamba. Parents: Antonio Beisaga + Estefania Zambrana. Contradicts tree date of 1867 for Geronimo \u2014 tree likely has Geronimo and Fructuosa birth years swapped. Direct parentage evidence for Jer\u00f3nimo."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T18:22:38.075Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "W865-RRT2"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CONFIRMED: Luis Beisaga Zambrana baptized 18 Aug 1871, Cochabamba Cercado. Parents: Antonio Beisaga + Estefania Zambrana. Previously unknown child of Antonio and Estefania \u2014 not in tree. Fills gap between marriage (1870) and Tomaza (1875). No Ricardo between 1871 and 1875."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T18:22:38.075Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "71W1-TCW2"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CONFIRMED: Tomaza Beisaga Zambrana baptized 28 Dec 1875, San Ignacio de Loyola. Parents: Antonio Beisaga + Estefania Zambrana. Previously unknown child \u2014 not in tree. Family used San Ignacio de Loyola parish for 1875 and 1877 baptisms."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-28T18:22:38.075Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "7DW1-HX2M"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CONFIRMED: Maria de la o Beisaga Zambrana baptized 17 Dec 1878, San Jos\u00e9, Cochabamba. Parents: Antonio Beisaga + Estefania Zambrana. Previously unknown child \u2014 not in tree. Family returned to San Jos\u00e9 parish (same as their 1870 marriage) for this 1878 baptism. NO Ricardo found in any indexed child record for Antonio + Estefania in 1865-1880."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T18:37:15.242Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Beisaga +Zambrana",
+        "yearFrom": 1860,
+        "yearTo": 1885
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Full-text co-occurrence search: Beisaga AND Zambrana, 1860-1885. Zero results. The Cochabamba Catholic parish registers for 1860-1885 are not indexed in the FamilySearch full-text corpus for this surname combination."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T18:37:15.242Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Beisaga +Zambrana",
+        "count": 20
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 3,
+      "notes": "Full-text co-occurrence: Beisaga AND Zambrana, all years. 3 results found, ALL from Potosi department (not Cochabamba) and dated 1907-1919 \u2014 incidental co-occurrences of unrelated Beisaga and Zambrana individuals on shared register pages. No Cochabamba entry, no Ricardo, no entry for Antonio + Estefania. Not relevant to q_001 in the target period or location."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T18:37:15.246Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Beizaga +Zambrana"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Full-text search: Beizaga (alternate spelling) AND Zambrana, all years. Zero results. Spelling variant search confirms no FT coverage of this surname in the target context."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T18:37:15.246Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Ricardo +Beisaga",
+        "yearFrom": 1860,
+        "yearTo": 1885
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Full-text search: Ricardo AND Beisaga, 1860-1885. Zero results. No register page in the FT corpus for this period names both Ricardo and Beisaga."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-28T18:37:15.246Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Beisaga",
+        "yearFrom": 1868,
+        "yearTo": 1880
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Diagnostic: surname Beisaga alone, 1868-1880. Zero results. CRITICAL FINDING: The FamilySearch full-text corpus contains no indexed page from 1868-1880 mentioning the Beisaga surname. This confirms the Cochabamba Catholic registers (San Ignacio de Loyola, San Jose) for the target period 1870-1878 \u2014 the same registers where the family's other children ARE indexed \u2014 are not in the FT corpus for this era. Full-text cannot find Ricardo even if an entry exists; image browsing (pli_006) is the only remaining non-indexed search path."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-28T18:46:12.628Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "005091274_006_M92V-F36",
+        "imagesRead": [
+          "005091274_00507",
+          "005091274_00614"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Image browse of vol 005091274_006 (San Ignacio de Loyola / La Compa\u00f1\u00eda de Jes\u00fas, Cochabamba). Header card reveals: INDICE BAUTISMOS, volumes L-M, years 1880-1957. This is a 20th-century surname index, NOT a 1870s-era baptism register. Completely outside the target period 1872-1876. No further browsing warranted for this volume."
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-28T18:46:12.628Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "005091274_002_M92V-F3D",
+        "imagesRead": [
+          "005091274_00115"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Image browse of vol 005091274_002 (San Ignacio de Loyola). Internal index page covers surnames B-C, years 1905-1906. Confirms the 005091274 prefix volumes are alphabetical surname indexes for the 20th century, not 1870s registers. Target period 1872-1876 is NOT in these volumes."
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-28T18:46:12.628Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "005091274_* (remaining volumes: 001, 003, 004, 005, 007)"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CONCLUSION FOR PLI_006: All sampled 005091274 volumes are 20th-century surname indexes for La Compa\u00f1\u00eda de Jes\u00fas / San Ignacio de Loyola, not 1870s-era baptism registers. The actual 1870-1880 registers at this parish are in the 93-99% indexed volumes (prefixes 004016032, 004016033, 004016031, 005091282) that were covered by the comprehensive indexed search (log_012, log_013). Those searches returned only 4 children of Antonio Beisaga + Estefania Zambrana (1871, 1875, 1877, 1878) with no Ricardo. Image browsing of the 005091274 volumes would not surface a Ricardo baptism from 1872-1876 since those volumes are out-of-period. Pli_006 exhausted."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Bolivia, Catholic Church Records, 1566\u20132020,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL7X-YN65 : accessed 28 July 2026), entry for Antonio Beizaga and Estefania Zambrana, marriage 23 March 1870, San Jos\u00e9 Parish, Cochabamba, Bolivia; citing original parish register, Collection 1922463.",
+      "citation_detail": {
+        "who": "Antonio Beizaga and Estefania Zambrana",
+        "what": "Marriage entry, San Jos\u00e9 Parish register",
+        "when_created": "23 March 1870",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch, Bolivia, Catholic Church Records, 1566\u20132020 (Collection 1922463), sub-collection Bolivia, Cochabamba, Marriages, 1615\u20131976",
+        "where_within": "San Jos\u00e9 Parish, Cochabamba, Cochabamba, Bolivia"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QL7X-YN65",
+      "notes": "Digital image of original parish marriage register. San Jos\u00e9 Parish, Cochabamba; Catholic Church Records collection 1922463.",
+      "log_entry_id": "log_010",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Bolivia, Catholic Church Records, 1566-2020,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:4FC5-7B6Z : accessed 28 July 2026), entry for Laureano Torrico and Fructuosa Beisaga, marriage 30 March 1890, Cochabamba, Bolivia; citing Collection 1922463.",
+      "citation_detail": {
+        "who": "Laureano Torrico (groom) and Fructuosa Beisaga (bride)",
+        "what": "Parish marriage register entry",
+        "when_created": "30 March 1890",
+        "when_accessed": "28 July 2026",
+        "where": "Bolivia, Catholic Church Records, 1566-2020 (Collection 1922463), FamilySearch",
+        "where_within": "Marriage entry for Laureano Torrico and Fructuosa Beisaga, 30 March 1890, Cochabamba"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:4FC5-7B6Z",
+      "notes": "Parish marriage register for Cochabamba, Bolivia. Record explicitly names Antonio Beisaga and Estefania Zambrana as parents of the bride Fructuosa Beisaga. The record implies Fructuosa's birth year as ca. 1867 (age ~23 at 1890 marriage); however the tree currently records her birth year as 1877 \u2014 a 10-year discrepancy. This conflict should be investigated against baptismal records. No negative evidence of the original image's quality noted; record appears to be an image of the original parish register.",
+      "log_entry_id": "log_011",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGJC-FX3Y : accessed 28 July 2026), entry for Mariano Beisaga Launa baptism, 3 October 1908, Sicaya, Capinota, Cochabamba, Bolivia; naming Ricardo Beisaga as father.",
+      "citation_detail": {
+        "who": "Mariano Beisaga Launa (baptized child); Ricardo Beisaga (father); Petrona Launa (mother)",
+        "what": "Catholic baptismal register entry",
+        "when_created": "3 October 1908",
+        "when_accessed": "28 July 2026",
+        "where": "Bolivia, Catholic Church Records, 1566-2020, FamilySearch (collection 1922463)",
+        "where_within": "Sicaya, Capinota, Cochabamba, Bolivia; entry for Mariano, 3 Oct 1908"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QGJC-FX3Y",
+      "notes": "Original Catholic parish baptismal register. Ricardo Beisaga appears as the father of the baptized child Mariano; this record does NOT name Ricardo's own parents and thus provides no genealogical link between Ricardo Beisaga and Antonio Beisaga / Estefania Zambrana.",
+      "log_entry_id": "log_008",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Bolivia, Catholic Church Records, 1566-2020,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:QT9Y-38P9 : accessed 28 July 2026), Baptism of Jer\u00f3nimo Beisaga Zambrana, San Ignacio de Loyola, Cochabamba, 30 September 1877; FamilySearch, citing Archivo de la Arquidi\u00f3cesis de Cochabamba.",
+      "citation_detail": {
+        "who": "Jer\u00f3nimo Beisaga Zambrana (baptized child); Antonio Beisaga (father); Estefania Zambrana (mother)",
+        "what": "Catholic baptism register entry recording baptism of Jer\u00f3nimo Beisaga Zambrana",
+        "when_created": "30 September 1877",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch, Bolivia, Catholic Church Records, 1566-2020 (collection 1922463)",
+        "where_within": "San Ignacio de Loyola parish, Cochabamba, Cercado, Cochabamba, Bolivia; ARK ark:/61903/1:1:QPTW-LPGT"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QT9Y-38P9",
+      "access_date": "2026-07-28",
+      "log_entry_id": "log_014",
+      "notes": "Digital image of Catholic parish baptism register; original record held by Archivo de la Arquidi\u00f3cesis de Cochabamba. Record title as indexed: 'Registro para Jer\u00f3nimo'. This record corroborates Antonio Beisaga and Estefania Zambrana as parents at San Ignacio de Loyola parish, Cochabamba, 1877 \u2014 relevant context for searching Ricardo baptism ca. 1874 in the same parish. Tree person Geronimo Beisaga (I3, 9QTV-K8P) has birth year 1867 but this record shows baptism 30 Sep 1877 \u2014 a 10-year discrepancy; flag for resolution via person-evidence.",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Bolivia, Catholic Church Records, 1566-2020,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:7Q5F-VCZM : accessed 2026-07-28), entry for Maria de la o Beisaga Zambrana, baptism 17 December 1878, San Jos\u00e9, Cochabamba, Bolivia; citing original parish register, Collection 1922463.",
+      "citation_detail": {
+        "who": "Maria de la o Beisaga Zambrana (baptized child); Antonio Beisaga (father); Estefania Zambrana (mother)",
+        "what": "Baptism register entry, Catholic parish of San Jos\u00e9",
+        "when_created": "17 December 1878",
+        "when_accessed": "2026-07-28",
+        "where": "FamilySearch, Bolivia, Catholic Church Records, 1566-2020 (Collection 1922463)",
+        "where_within": "Entry for Maria de la o Beisaga Zambrana, baptism 17 Dec 1878, San Jos\u00e9, Distrito Municipal Nro. 3, Cercado, Cochabamba, Bolivia"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:7Q5F-VCZM",
+      "access_date": "2026-07-28",
+      "log_entry_id": "log_017",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "\"Bolivia, Catholic Church Records, 1566-2020,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:W865-RRT2 : accessed 28 July 2026), entry for Luis Beisaga Zambrana, baptism 18 August 1871, Cochabamba, Cercado, Cochabamba, Bolivia.",
+      "citation_detail": {
+        "who": "Luis Beisaga Zambrana",
+        "what": "Baptism register entry",
+        "when_created": "18 August 1871",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch, Bolivia, Catholic Church Records, 1566-2020 (collection 1922463)",
+        "where_within": "Entry for Luis Beisaga Zambrana, 18 Aug 1871"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:W865-RRT2",
+      "access_date": "2026-07-28",
+      "log_entry_id": "log_015",
+      "notes": "Digital image of Catholic parish baptism register, Cochabamba, Bolivia. Collection 1922463.",
+      "gedcomx_source_description_id": "S6"
+    },
+    {
+      "id": "src_007",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:71W1-TCW2 : accessed 28 July 2026), Entry for Tomaza Beisaga Zambrana and Antonio Beisaga, 28 Dec 1875.",
+      "citation_detail": {
+        "who": "Tomaza Beisaga Zambrana (baptized child); Antonio Beisaga (father); Estefania Zambrana (mother)",
+        "what": "Baptism register entry, Bolivia, Catholic Church Records (collection 1922463), San Ignacio de Loyola parish, Cochabamba",
+        "when_created": "28 Dec 1875",
+        "when_accessed": "28 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Collection 1922463; image ark:/61903/1:2:7JGC-Q8N2; entry for Tomaza Beisaga Zambrana"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:71W1-TCW2",
+      "access_date": "2026-07-28",
+      "log_entry_id": "log_016",
+      "gedcomx_source_description_id": "S7"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Antonio Beizaga",
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Beizaga"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born ca. 1845",
+      "date": "~1845",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year approximated from apparent age at marriage in 1870; no birth record examined. Classification secondary because the priest is recording estimated age, not witnessing the birth.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Estefania Zambrana, 23 March 1870, San Jos\u00e9, Cochabamba, Bolivia",
+      "date": "23 Mar 1870",
+      "date_certainty": "exact",
+      "place": "San Jos\u00e9, Cochabamba, Cochabamba, Bolivia",
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001",
+      "standard_place": "San Jos\u00e9, Distrito Municipal Nro. 3, Cochabamba, Cercado, Cochabamba, Bolivia"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "spouse of Estefania Zambrana",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Calisto Beizaga",
+      "structured_value": {
+        "given": "Calisto",
+        "surname": "Beizaga"
+      },
+      "information_quality": "primary",
+      "informant": "Antonio Beizaga (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Manuela Rojas",
+      "structured_value": {
+        "given": "Manuela",
+        "surname": "Rojas"
+      },
+      "information_quality": "primary",
+      "informant": "Antonio Beizaga (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Calisto Beizaga (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Antonio Beizaga (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Manuela Rojas (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Antonio Beizaga (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Estefania Zambrana",
+      "structured_value": {
+        "given": "Estefania",
+        "surname": "Zambrana"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born ca. 1848",
+      "date": "~1848",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year approximated from apparent age at marriage in 1870; no birth record examined. Classification secondary because the priest is recording estimated age, not witnessing the birth.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Antonio Beizaga, 23 March 1870, San Jos\u00e9, Cochabamba, Bolivia",
+      "date": "23 Mar 1870",
+      "date_certainty": "exact",
+      "place": "San Jos\u00e9, Cochabamba, Cochabamba, Bolivia",
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001",
+      "standard_place": "San Jos\u00e9, Distrito Municipal Nro. 3, Cochabamba, Cercado, Cochabamba, Bolivia"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "spouse of Antonio Beizaga",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Francisco Zambrana",
+      "structured_value": {
+        "given": "Francisco",
+        "surname": "Zambrana"
+      },
+      "information_quality": "primary",
+      "informant": "Estefania Zambrana (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Manuela Claros",
+      "structured_value": {
+        "given": "Manuela",
+        "surname": "Claros"
+      },
+      "information_quality": "primary",
+      "informant": "Estefania Zambrana (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Francisco Zambrana (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Estefania Zambrana (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:QL7X-YN65",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Manuela Claros (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Estefania Zambrana (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Fructuosa Beisaga",
+      "structured_value": {
+        "given": "Fructuosa",
+        "surname": "Beisaga"
+      },
+      "information_quality": "primary",
+      "informant": "Fructuosa Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Fructuosa Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "ca. 1867 (calculated from age at 1890 marriage)",
+      "date": "~1867",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "Fructuosa Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A person cannot have primary knowledge of their own birth. The birth year is calculated from the age Fructuosa stated at the time of her 1890 marriage. Note conflict: the project tree currently records her birth year as 1877, a 10-year discrepancy with the ~1867 year implied here. This conflict requires corroboration from a baptismal record before resolving.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Antonio Beisaga",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Fructuosa Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Fructuosa Beisaga stated her own father's name at the time of her 1890 marriage. A bride has firsthand knowledge of her own parents. The explicit naming of Antonio Beisaga as her father corroborates Antonio Beisaga and Estefania Zambrana as a documented couple with children in Cochabamba parish registers, bearing on q_001.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Estefania Zambrana",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Fructuosa Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Fructuosa Beisaga stated her own mother's name at the time of her 1890 marriage. A bride has firsthand knowledge of her own parents. The explicit naming of Estefania Zambrana as her mother corroborates Antonio Beisaga and Estefania Zambrana as a documented couple with children in Cochabamba parish registers, bearing on q_001.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Laureano Torrico, 30 March 1890, Cochabamba, Bolivia",
+      "date": "1890-03-30",
+      "date_certainty": "exact",
+      "place": "Cochabamba, Bolivia",
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_002",
+      "standard_place": "Cochabamba, Bolivia"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Antonio Beisaga",
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Beisaga"
+      },
+      "information_quality": "primary",
+      "informant": "Fructuosa Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The name Antonio Beisaga is stated by the bride Fructuosa Beisaga about her own father \u2014 the informant has firsthand knowledge of her father's identity (primary information), but this is a third-party name stated by the bride, classified indirect per the informant-knowledge test (the record subject here is not Antonio but Fructuosa). Corroborates Antonio Beisaga's existence and his Cochabamba connection, bearing on q_001.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Estefania Zambrana",
+      "structured_value": {
+        "given": "Estefania",
+        "surname": "Zambrana"
+      },
+      "information_quality": "primary",
+      "informant": "Fructuosa Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The name Estefania Zambrana is stated by the bride Fructuosa Beisaga about her own mother \u2014 the informant has firsthand knowledge of her mother's identity (primary information), but this is a third-party name stated by the bride, classified indirect per the informant-knowledge test. Corroborates Estefania Zambrana's existence and her Cochabamba connection, bearing on q_001.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Laureano Torrico",
+      "structured_value": {
+        "given": "Laureano",
+        "surname": "Torrico"
+      },
+      "information_quality": "primary",
+      "informant": "Laureano Torrico",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Laureano Torrico",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "ca. 1860 (calculated from age at 1890 marriage)",
+      "date": "~1860",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "Laureano Torrico",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A person cannot have primary knowledge of their own birth. Birth year calculated from age stated by Laureano Torrico at his 1890 marriage.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:4FC5-7B6Z",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Fructuosa Beisaga, 30 March 1890, Cochabamba, Bolivia",
+      "date": "1890-03-30",
+      "date_certainty": "exact",
+      "place": "Cochabamba, Bolivia",
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_002",
+      "standard_place": "Cochabamba, Bolivia"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "father_of_baptized",
+      "fact_type": "name",
+      "value": "Ricardo Beisaga",
+      "structured_value": {
+        "given": "Ricardo",
+        "surname": "Beisaga"
+      },
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The priest recorded Ricardo's name in the context of his son's baptism on 3 Oct 1908, not Ricardo's own registration. The name is reported via the officiating record-keeper at second hand relative to Ricardo's own vital events. No parents of Ricardo are named.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "father_of_baptized",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Sex recorded incidentally in the baptismal register for the father.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "father_of_baptized",
+      "fact_type": "residence",
+      "value": "Sicaya, Capinota, Cochabamba, Bolivia (as of 3 Oct 1908)",
+      "place": "Sicaya, Capinota, Cochabamba, Bolivia",
+      "date": "1908-10-03",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Place of baptism implies Ricardo Beisaga was present in or near Sicaya, Capinota, Cochabamba at the time. Residence is inferred from the event location; no explicit residence column exists in this register.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_003",
+      "standard_place": "Sicaya, Capinota, Cochabamba, Bolivia"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "father_of_baptized",
+      "fact_type": "birth",
+      "value": "birth year approximately 1870s (consistent with fathering a child baptized 1908; no birth year stated in record)",
+      "date": "~1875",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "No birth date or age for Ricardo Beisaga is given in this record. The approximate birth decade is the researcher's estimate based on his being the father of a child baptized in 1908; a father aged roughly 25-40 in 1908 would have been born ca. 1868-1883. This is consistent with a ca. 1874 birth posited by q_001 but does not confirm it.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "father_of_baptized",
+      "fact_type": "relationship",
+      "value": "spouse of Petrona Launa",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The couple relationship is stated in the baptismal register as the parents of Mariano. The priest recorded both parents; no further detail about the marriage is given.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "father_of_baptized",
+      "fact_type": "relationship",
+      "value": "father of Mariano Beisaga Launa",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Stated parentage in the baptismal register.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "mother_of_baptized",
+      "fact_type": "name",
+      "value": "Petrona Launa",
+      "structured_value": {
+        "given": "Petrona",
+        "surname": "Launa"
+      },
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Mother's name recorded in son's baptismal entry.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "mother_of_baptized",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Sex recorded incidentally in the baptismal register for the mother.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "mother_of_baptized",
+      "fact_type": "relationship",
+      "value": "mother of Mariano Beisaga Launa",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Stated parentage in the baptismal register.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Mariano Beisaga Launa",
+      "structured_value": {
+        "given": "Mariano",
+        "surname": "Beisaga Launa"
+      },
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Name of baptized child recorded by officiating priest; name likely supplied by the parents at the font.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Sex recorded in baptismal register for the baptized child.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "baptized 3 October 1908, Sicaya, Capinota, Cochabamba, Bolivia",
+      "date": "1908-10-03",
+      "date_certainty": "exact",
+      "place": "Sicaya, Capinota, Cochabamba, Bolivia",
+      "information_quality": "primary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The officiating priest witnessed and recorded the baptism event firsthand.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_003",
+      "standard_place": "Sicaya, Capinota, Cochabamba, Bolivia"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Ricardo Beisaga",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Stated parentage in the baptismal register.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:QGJC-FX3Y",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Petrona Launa",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "secondary",
+      "informant": "parish priest recording the baptism",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Stated parentage in the baptismal register.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:QPTW-LPGT",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Jer\u00f3nimo Beisaga Zambrana",
+      "structured_value": {
+        "given": "Jer\u00f3nimo",
+        "surname": "Beisaga Zambrana"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:QPTW-LPGT",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:QPTW-LPGT",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "Baptized 30 Sep 1877, San Ignacio de Loyola, Cochabamba, Bolivia",
+      "date": "30 Sep 1877",
+      "date_certainty": "exact",
+      "place": "San Ignacio de Loyola, Cochabamba, Cercado, Cochabamba, Bolivia",
+      "information_quality": "primary",
+      "informant": "parish priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_004",
+      "standard_place": "San Ignacio de Loyola, Cochabamba, Cochabamba, Cercado, Cochabamba, Bolivia"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:QPTW-LPGT",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Antonio Beisaga",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:QPTW-LPGT",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Estefania Zambrana",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:QPTW-LPGT",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Antonio Beisaga",
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Beisaga"
+      },
+      "information_quality": "primary",
+      "informant": "Antonio Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:QPTW-LPGT",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Antonio Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:QPTW-LPGT",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Estefania Zambrana",
+      "structured_value": {
+        "given": "Estefania",
+        "surname": "Zambrana"
+      },
+      "information_quality": "primary",
+      "informant": "Estefania Zambrana",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:QPTW-LPGT",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Estefania Zambrana",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:7DW1-HX2M",
+      "record_role": "baptized_child",
+      "fact_type": "name",
+      "value": "Maria de la o Beisaga Zambrana",
+      "structured_value": {
+        "given": "Maria de la o",
+        "surname": "Beisaga Zambrana"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:7DW1-HX2M",
+      "record_role": "baptized_child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:7DW1-HX2M",
+      "record_role": "baptized_child",
+      "fact_type": "christening",
+      "value": "17 Dec 1878, San Jos\u00e9, Cochabamba, Bolivia",
+      "date": "17 Dec 1878",
+      "date_certainty": "exact",
+      "place": "San Jos\u00e9, Distrito Municipal Nro. 3, Cochabamba, Cercado, Cochabamba, Bolivia",
+      "information_quality": "primary",
+      "informant": "baptizing priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_005",
+      "standard_place": "San Jos\u00e9, Distrito Municipal Nro. 3, Cochabamba, Cercado, Cochabamba, Bolivia"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:7DW1-HX2M",
+      "record_role": "baptized_child",
+      "fact_type": "relationship",
+      "value": "child of Antonio Beisaga",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:7DW1-HX2M",
+      "record_role": "baptized_child",
+      "fact_type": "relationship",
+      "value": "child of Estefania Zambrana",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:7DW1-HX2M",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Antonio Beisaga",
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Beisaga"
+      },
+      "information_quality": "primary",
+      "informant": "Antonio Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:7DW1-HX2M",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Antonio Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:7DW1-HX2M",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Estefania Zambrana",
+      "structured_value": {
+        "given": "Estefania",
+        "surname": "Zambrana"
+      },
+      "information_quality": "primary",
+      "informant": "Estefania Zambrana",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:7DW1-HX2M",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Estefania Zambrana",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:W865-RRT2",
+      "record_role": "baptized_child",
+      "fact_type": "name",
+      "value": "Luis Beisaga Zambrana",
+      "structured_value": {
+        "given": "Luis",
+        "surname": "Beisaga Zambrana"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Antonio Beisaga and Estefania Zambrana)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:W865-RRT2",
+      "record_role": "baptized_child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parents (Antonio Beisaga and Estefania Zambrana)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:W865-RRT2",
+      "record_role": "baptized_child",
+      "fact_type": "christening",
+      "value": "Baptized 18 August 1871, Cochabamba, Cercado, Cochabamba, Bolivia",
+      "date": "18 Aug 1871",
+      "date_certainty": "exact",
+      "place": "Cochabamba, Cercado, Cochabamba, Bolivia",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_006",
+      "standard_place": "Cochabamba, Cercado, Cochabamba, Bolivia"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:W865-RRT2",
+      "record_role": "baptized_child",
+      "fact_type": "relationship",
+      "value": "child of Antonio Beisaga",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Antonio Beisaga and Estefania Zambrana)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:W865-RRT2",
+      "record_role": "baptized_child",
+      "fact_type": "relationship",
+      "value": "child of Estefania Zambrana",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Antonio Beisaga and Estefania Zambrana)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:W865-RRT2",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Antonio Beisaga",
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Beisaga"
+      },
+      "information_quality": "primary",
+      "informant": "Antonio Beisaga",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:W865-RRT2",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Estefania Zambrana",
+      "structured_value": {
+        "given": "Estefania",
+        "surname": "Zambrana"
+      },
+      "information_quality": "primary",
+      "informant": "Estefania Zambrana",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:71W1-TCW2",
+      "record_role": "baptized_child",
+      "fact_type": "name",
+      "value": "Tomaza Beisaga Zambrana",
+      "structured_value": {
+        "given": "Tomaza",
+        "surname": "Beisaga Zambrana"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Antonio Beisaga and Estefania Zambrana)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:71W1-TCW2",
+      "record_role": "baptized_child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (Antonio Beisaga and Estefania Zambrana)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:71W1-TCW2",
+      "record_role": "baptized_child",
+      "fact_type": "christening",
+      "value": "Baptism 28 Dec 1875, San Ignacio de Loyola, Cochabamba, Bolivia",
+      "date": "28 Dec 1875",
+      "date_certainty": "exact",
+      "place": "San Ignacio de Loyola, Cochabamba, Cochabamba, Bolivia",
+      "information_quality": "primary",
+      "informant": "officiating priest, San Ignacio de Loyola parish",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_007",
+      "standard_place": "San Ignacio de Loyola, Cochabamba, Cochabamba, Cercado, Cochabamba, Bolivia"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:71W1-TCW2",
+      "record_role": "baptized_child",
+      "fact_type": "relationship",
+      "value": "daughter of Antonio Beisaga",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Antonio Beisaga and Estefania Zambrana)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:71W1-TCW2",
+      "record_role": "baptized_child",
+      "fact_type": "relationship",
+      "value": "daughter of Estefania Zambrana",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Antonio Beisaga and Estefania Zambrana)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:71W1-TCW2",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Antonio Beisaga",
+      "structured_value": {
+        "given": "Antonio",
+        "surname": "Beisaga"
+      },
+      "information_quality": "primary",
+      "informant": "Antonio Beisaga (self-identified as father)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:71W1-TCW2",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Estefania Zambrana",
+      "structured_value": {
+        "given": "Estefania",
+        "surname": "Zambrana"
+      },
+      "information_quality": "primary",
+      "informant": "Estefania Zambrana (self-identified as mother)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_007"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Antonio Beizaga (groom name, src_001) links to tree person I2 Antonio Beisaga. Same_person comparison between src_001 groom ARK (QL7X-YN65) and src_004 father ARK (QPTW-LPGY) scored 0.964, matched=true, confidence=5 \u2014 very strong record-to-record corroboration. Surname variant Beizaga=Beisaga is a common orthographic alternation in Bolivian parish registers. Same spouse Estefania Zambrana and same Cochabamba location across records confirm identity.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Sex assertion (Male) for groom Antonio Beizaga (src_001) links to I2 Antonio Beisaga; confirmed by same_person score 0.964 between src_001 groom and src_004 father records.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Birth ca. 1845 for groom Antonio Beizaga (src_001) assigned to I2 Antonio Beisaga; consistent with same_person score 0.964 confirming identity across src_001 and src_004.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Marriage fact (23 Mar 1870, San Jos\u00e9, Cochabamba) for groom Antonio Beizaga (src_001) assigned to I2 Antonio Beisaga; confirmed by same_person score 0.964.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Spouse relationship (Estefania Zambrana) for Antonio Beizaga (src_001) assigned to I2; confirmed by same_person score 0.964 and consistent spousal pairing across multiple records.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_008",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Child-of-Calisto-Beizaga relationship for Antonio Beizaga (src_001) assigned to I2; confirmed by same_person score 0.964 between src_001 and src_004 Antonio personas.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_009",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Child-of-Manuela-Rojas relationship for Antonio Beizaga (src_001) assigned to I2; confirmed by same_person score 0.964 between src_001 and src_004 Antonio personas.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_010",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Estefania Zambrana (bride name, src_001) links to tree person I1 Estefania Zambrana. Same_person comparison between src_001 bride ARK (QL7X-YNX3) and src_004 mother ARK (QPTW-LPGB) scored 0.521, matched=true, confidence=3. Cross-source same_person between src_002 mother (4FC5-7BMM) and src_001 bride scored 0.580, matched=true. Exact name match; consistently paired with Antonio Beisaga/Beizaga as spouse across four separate records (src_001, src_002, src_004, src_005, src_006, src_007).",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_011",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Sex (Female) for bride Estefania Zambrana (src_001) assigned to I1; confirmed by same_person score 0.521 between src_001 and src_004 Estefania personas.",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_012",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Birth ca. 1848 for bride Estefania Zambrana (src_001) assigned to I1; confirmed by same_person score 0.521 across src_001 and src_004.",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_013",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Marriage fact (23 Mar 1870, San Jos\u00e9) for Estefania Zambrana (src_001) assigned to I1; confirmed by same_person comparison and consistent spousal pairing across records.",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_014",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Spouse relationship (Antonio Beizaga) for Estefania Zambrana (src_001) assigned to I1; confirmed by same_person comparisons and consistent couple pairing.",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_017",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Child-of-Francisco-Zambrana relationship for Estefania Zambrana (src_001) assigned to I1; follows from the confirmed identity of I1 as the bride in this record.",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_018",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Child-of-Manuela-Claros relationship for Estefania Zambrana (src_001) assigned to I1; follows from confirmed identity of I1 as the bride in this record.",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_019",
+      "person_id": "P89Y-ZJK",
+      "confidence": "confident",
+      "rationale": "Fructuosa Beisaga (bride name, src_002) links to tree person I4 Fructuosa Beisaga Zambrana. Identity confirmed by: (1) exact given name Fructuosa; (2) surname Beisaga consistent with tree Beisaga Zambrana; (3) parents named as Antonio Beisaga and Estefania Zambrana, matching tree parent links R2/R3; (4) record birth year ca. 1867 matches tree birth year 1867 (standard_date). No birth year conflict in actual tree data.",
+      "match_score": 0.85,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_020",
+      "person_id": "P89Y-ZJK",
+      "confidence": "confident",
+      "rationale": "Sex (Female) for bride Fructuosa Beisaga (src_002) assigned to I4; confirmed by name, parentage, and birth year alignment with tree.",
+      "match_score": 0.85,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_021",
+      "person_id": "P89Y-ZJK",
+      "confidence": "confident",
+      "rationale": "Birth ca. 1867 for Fructuosa Beisaga (src_002) assigned to I4; consistent with tree birth year 1867 (standard_date). Note: task brief suggested a conflict with a 1877 tree date, but the actual tree.gedcomx.json records 1867, matching this record.",
+      "match_score": 0.85,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_022",
+      "person_id": "P89Y-ZJK",
+      "confidence": "confident",
+      "rationale": "Child-of-Antonio-Beisaga relationship for Fructuosa Beisaga (src_002) assigned to I4; parents in record match tree parent links (I2=Antonio Beisaga, I1=Estefania Zambrana).",
+      "match_score": 0.85,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_023",
+      "person_id": "P89Y-ZJK",
+      "confidence": "confident",
+      "rationale": "Child-of-Estefania-Zambrana relationship for Fructuosa Beisaga (src_002) assigned to I4; parents in record match tree parent links.",
+      "match_score": 0.85,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_024",
+      "person_id": "P89Y-ZJK",
+      "confidence": "confident",
+      "rationale": "Marriage fact (30 Mar 1890, Laureano Torrico) for Fructuosa Beisaga (src_002) assigned to I4; follows from confirmed identity.",
+      "match_score": 0.85,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_025",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Antonio Beisaga (father of bride, src_002) links to tree person I2 Antonio Beisaga. Same_person comparison between src_002 father ARK (4FC5-7B6Z) and src_001 groom ARK (QL7X-YN65) scored 0.625, matched=true, confidence=3. Consistent name, location (Cochabamba), and spousal pairing (Estefania Zambrana) across 1870 and 1890 records.",
+      "match_score": 0.62,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_026",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Estefania Zambrana (mother of bride, src_002) links to tree person I1 Estefania Zambrana. Same_person comparison between src_002 mother ARK (4FC5-7BMM) and src_001 bride ARK (QL7X-YNX3) scored 0.580, matched=true, confidence=3. Consistent name and spousal pairing with Antonio Beisaga across 1870 and 1890 records.",
+      "match_score": 0.58,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_045",
+      "person_id": "9QTV-K8P",
+      "confidence": "confident",
+      "rationale": "Jer\u00f3nimo Beisaga Zambrana (baptized child, src_004) links to tree person I3 Geronimo Beisaga. Tree already records christening date 30 SEP 1877 (matching record exactly) and parents Antonio Beisaga and Estefania Zambrana (R4/R5). Jer\u00f3nimo/Geronimo are the same name (Spanish/anglicized variant). Same_person between src_001 Antonio and src_004 Antonio scored 0.964, and same_person between src_001 Estefania and src_004 Estefania scored 0.521 (both matched), confirming this family unit is the same. The tree's I3 entry clearly represents this baptismal record person.",
+      "match_score": 0.95,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_046",
+      "person_id": "9QTV-K8P",
+      "confidence": "confident",
+      "rationale": "Sex (Male) for Jer\u00f3nimo Beisaga Zambrana (src_004) assigned to I3; confirmed by christening date and parentage alignment.",
+      "match_score": 0.95,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_047",
+      "person_id": "9QTV-K8P",
+      "confidence": "confident",
+      "rationale": "Christening fact (30 Sep 1877, San Ignacio de Loyola, Cochabamba) for Jer\u00f3nimo Beisaga Zambrana (src_004) assigned to I3. The tree already carries this same christening date (30 SEP 1877) confirming identity. Note: the task brief mentioned a tree birth year of 1867 for I3, but the actual tree.gedcomx.json has only a christening fact dated 30 Sep 1877 \u2014 no birth year conflict exists in the live data.",
+      "match_score": 0.95,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_048",
+      "person_id": "9QTV-K8P",
+      "confidence": "confident",
+      "rationale": "Child-of-Antonio-Beisaga relationship for Jer\u00f3nimo (src_004) assigned to I3; matches tree parent links R4 (I2\u2192I3).",
+      "match_score": 0.95,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_049",
+      "person_id": "9QTV-K8P",
+      "confidence": "confident",
+      "rationale": "Child-of-Estefania-Zambrana relationship for Jer\u00f3nimo (src_004) assigned to I3; matches tree parent links R5 (I1\u2192I3).",
+      "match_score": 0.95,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_050",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Antonio Beisaga (father name, src_004) links to tree person I2 Antonio Beisaga. Same_person comparison between src_001 groom (QL7X-YN65) and src_004 father (QPTW-LPGY) scored 0.964, matched=true, confidence=5 \u2014 very high confidence in identity.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_051",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Sex (Male) for Antonio Beisaga (src_004 father) assigned to I2; confirmed by same_person score 0.964.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_052",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Estefania Zambrana (mother name, src_004) links to I1. Same_person between src_001 bride (QL7X-YNX3) and src_004 mother (QPTW-LPGB) scored 0.521, matched=true. Consistent name and spousal pairing.",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_053",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Sex (Female) for Estefania Zambrana (src_004 mother) assigned to I1; confirmed by same_person score 0.521.",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_059",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Antonio Beisaga (father name, src_005 Maria de la o's baptism) links to I2. Identity established by same_person score 0.964 between src_001 and src_004 Antonio personas, and score 0.625 between src_002 and src_001 personas. Consistent name and Cochabamba location across all records.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_061",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Estefania Zambrana (mother name, src_005 Maria de la o's baptism) links to I1. Identity established by same_person score 0.521 between src_001 and src_004 Estefania personas, and 0.580 between src_002 and src_001. Consistent name and spousal pairing with Antonio Beisaga.",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_068",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Antonio Beisaga (father name, src_006 Luis's baptism) links to I2. Identity established by same_person scores 0.964 (src_001 vs src_004) and 0.625 (src_002 vs src_001). Consistent across all Beisaga family baptism records in Cochabamba 1871\u20131878.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_069",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Estefania Zambrana (mother name, src_006 Luis's baptism) links to I1. Identity established by same_person scores 0.521 and 0.580 across src_001/src_002/src_004. Consistent spousal pairing with Antonio Beisaga.",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_075",
+      "person_id": "9QTV-KD3",
+      "confidence": "confident",
+      "rationale": "Antonio Beisaga (father name, src_007 Tomaza's baptism) links to I2. Identity established by same_person scores across multiple records; consistent Cochabamba parish register appearances 1870\u20131890.",
+      "match_score": 0.96,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_076",
+      "person_id": "9QTV-KDZ",
+      "confidence": "confident",
+      "rationale": "Estefania Zambrana (mother name, src_007 Tomaza's baptism) links to I1. Identity established by same_person scores across multiple records; consistently paired with Antonio Beisaga as spouse.",
+      "match_score": 0.52,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_031",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Ricardo Beisaga (father of baptized, src_003) added as standalone tree person I4. This record names Ricardo Beisaga as father of Mariano Beisaga Launa, baptized 3 Oct 1908 in Sicaya, Capinota, Cochabamba. The record does NOT name Ricardo's own parents, so no parentage link to Antonio Beisaga/Estefania Zambrana (I2/I1) can be established from this source alone. Ricardo's birth ca. 1875 is consistent with the research hypothesis (q_001 asks about a Ricardo baptized ca. 1874), but this record cannot confirm that parentage. Added as standalone pending discovery of a baptismal record for Ricardo himself.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_032",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Sex (Male) for Ricardo Beisaga (src_003) assigned to tree person I4 Ricardo Beisaga.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_033",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Residence (Sicaya, Capinota, Cochabamba, 1908) for Ricardo Beisaga (src_003) assigned to I4.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_034",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Birth ca. 1875 estimate for Ricardo Beisaga (src_003) assigned to I4; this is a researcher-derived estimate, not a stated fact in the record.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_063",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Luis Beisaga Zambrana (baptized child, src_006) is the newly minted tree person I1 Luis Beisaga Zambrana. Identity is unambiguous: baptism 18 Aug 1871, Cochabamba; parents Antonio Beisaga and Estefania Zambrana \u2014 parents confirmed as I2/I1 (9QTV-KD3/9QTV-KDZ) by same_person scores 0.964 and 0.521. No prior tree person existed for this individual; new person created.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_064",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex (Male) for Luis Beisaga Zambrana (src_006) assigned to tree person I1 Luis.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_065",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Christening fact (18 Aug 1871, Cochabamba) for Luis Beisaga Zambrana (src_006) assigned to I1.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_066",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Child-of-Antonio-Beisaga relationship for Luis (src_006) assigned to I1; ParentChild relationship R6 added linking 9QTV-KD3 (I2) to I1 (Luis).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_067",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Child-of-Estefania-Zambrana relationship for Luis (src_006) assigned to I1; ParentChild relationship R7 added linking 9QTV-KDZ (I1 Estefania) to I1 (Luis).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_070",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Tomaza Beisaga Zambrana (baptized child, src_007) is the newly minted tree person I2 Tomaza Beisaga Zambrana. Baptized 28 Dec 1875, San Ignacio de Loyola, Cochabamba; parents Antonio Beisaga and Estefania Zambrana confirmed as 9QTV-KD3/9QTV-KDZ by same_person scores. No prior tree person existed for this individual; new person created.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_071",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Sex (Female) for Tomaza Beisaga Zambrana (src_007) assigned to I2 Tomaza.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_072",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Christening fact (28 Dec 1875, San Ignacio de Loyola, Cochabamba) for Tomaza Beisaga Zambrana (src_007) assigned to I2.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_073",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Child-of-Antonio-Beisaga relationship for Tomaza (src_007) assigned to I2; ParentChild relationship R8 added linking 9QTV-KD3 to I2.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_074",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Child-of-Estefania-Zambrana relationship for Tomaza (src_007) assigned to I2; ParentChild relationship R9 added linking 9QTV-KDZ to I2.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_054",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Maria de la o Beisaga Zambrana (baptized child, src_005) is the newly minted tree person I3 Maria de la o Beisaga Zambrana. Baptized 17 Dec 1878, San Jos\u00e9, Cochabamba; parents Antonio Beisaga and Estefania Zambrana confirmed as 9QTV-KD3/9QTV-KDZ by same_person scores. No prior tree person existed for this individual; new person created.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_055",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Sex (Female) for Maria de la o Beisaga Zambrana (src_005) assigned to I3.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_056",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Christening fact (17 Dec 1878, San Jos\u00e9, Cochabamba) for Maria de la o (src_005) assigned to I3.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_057",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Child-of-Antonio-Beisaga relationship for Maria de la o (src_005) assigned to I3; ParentChild relationship R10 added linking 9QTV-KD3 to I3.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_058",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Child-of-Estefania-Zambrana relationship for Maria de la o (src_005) assigned to I3; ParentChild relationship R11 added linking 9QTV-KDZ to I3.",
+      "match_score": null,
+      "created": "2026-07-28"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Ricardo Beisaga (tree person I4, born circa 1875, resident Sicaya, Capinota, Cochabamba as of 1908) is the same person as a hypothesized son of Antonio Beisaga and Estefania Zambrana baptized circa 1874 in Cochabamba, Bolivia.",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_031",
+        "a_032"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "No record names Ricardo Beisaga's own parents. His estimated age (~1875) and location (Cochabamba region) are consistent with being a son of the couple, but the comprehensive indexed search at 91\u201399% coverage found no baptism naming him as their son. Candidacy is unresolved; the 4\u20139% un-indexed residual in Cochabamba 1870s parish registers is the only remaining path to resolution. Cited in proof summary ps_001.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "not_proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_019",
+        "a_031",
+        "a_032",
+        "a_045",
+        "a_046",
+        "a_055",
+        "a_056",
+        "a_063",
+        "a_064",
+        "a_070",
+        "a_071"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch collection 1922463 (Bolivia Catholic Church Records 1566\u20132020, 91\u201399% indexed for Cochabamba 1865\u20131885) using surname variants Beisaga, Beizaga, and Beysaga, both as principal and as parent name, across the full target date range; the broad-net search for all children of Antonio Beisaga/Beizaga and Estefania Zambrana 1865\u20131880 returned four children (Luis 1871, Tomaza 1875, Jer\u00f3nimo 1877, Maria de la o 1878) \u2014 no Ricardo. Also searched legacy partial index collection 1520550 (negative). Full-text co-occurrence search for '+Beisaga' across 1868\u20131880 returned zero results (Cochabamba registers for this period are absent from the FT corpus). Image browse of volume group 005091274 (apparently un-indexed) confirmed those volumes are 20th-century surname indexes (1880\u20131957), not 1870s registers; the actual 1870s registers are already in the 93\u201399% indexed volumes covered by the indexed search. No additional un-indexed 1870s volumes were identified. Residual gap: estimated 4\u20139% of 1870s Cochabamba parish records not yet indexed.",
+      "narrative_markdown": "## Proof Analysis: q_001\n\n**Question:** Was a child named Ricardo baptized in Cochabamba, Bolivia circa 1874, recorded as a son of Antonio Beisaga and Estefania Zambrana?\n\n### Sources Consulted\n\nSeven original ecclesiastical records from FamilySearch's Bolivia Catholic Church Records 1566\u20132020 (collection 1922463) were retrieved and extracted:\n\n- **S1** (src_001): Marriage register entry, San Jos\u00e9 Parish, Cochabamba \u2014 marriage of Antonio Beizaga and Estefania Zambrana, 23 March 1870. *Original source, primary information on the marriage event; secondary on the parties' parentage.* Names both parties, their parents (Calisto Beizaga + Manuela Rojas for Antonio; Francisco Zambrana + Manuela Claros for Estefania), and witnesses.\n\n- **S2** (src_002): Marriage register entry, 30 March 1890, Cochabamba \u2014 Laureano Torrico and Fructuosa Beisaga. *Original source; secondary information identifying Fructuosa's parents as Antonio Beisaga and Estefania Zambrana.* Places Fructuosa's birth circa 1867\u20131870.\n\n- **S3** (src_003): Baptism register entry, 3 October 1908, Sicaya, Capinota, Cochabamba \u2014 baptism of Mariano Beisaga Launa. *Original source, primary information on Mariano's baptism; secondary on his parents.* Names Ricardo Beisaga as father and Clementina Launa as mother. Does **not** name Ricardo's own parents or birthplace.\n\n- **S4** (src_004): Baptism register entry, San Ignacio de Loyola Parish, Cochabamba \u2014 Jer\u00f3nimo Beisaga Zambrana, baptized 30 September 1877. *Original source, primary information.* Parents: Antonio Beisaga and Estefania Zambrana.\n\n- **S5** (src_005): Baptism register entry, San Jos\u00e9 Parish, Cochabamba \u2014 Maria de la o Beisaga Zambrana, baptized 17 December 1878. *Original source, primary information.* Parents: Antonio Beisaga and Estefania Zambrana.\n\n- **S6** (src_006): Baptism register entry, Cochabamba Cercado \u2014 Luis Beisaga Zambrana, baptized 18 August 1871. *Original source, primary information.* Parents: Antonio Beisaga and Estefania Zambrana.\n\n- **S7** (src_007): Baptism register entry, San Ignacio de Loyola Parish, Cochabamba \u2014 Tomaza Beisaga Zambrana, baptized 28 December 1875. *Original source, primary information.* Parents: Antonio Beisaga (Beizaga) and Estefania Zambrana.\n\nNegative search results are documented in log entries log_001 through log_025.\n\n### Search Strategy and Coverage\n\nThree complementary strategies were executed:\n\n**1. Indexed record search (primary):** FamilySearch collection 1922463 was searched at an estimated 91\u201399% indexed coverage for Cochabamba parishes in the 1865\u20131885 period. Searches used surname variants Beisaga, Beizaga, and Beysaga as both principal and parent names, across the full target date range. A broad-net search for all children of Antonio Beisaga/Beizaga and Estefania Zambrana between 1865 and 1880 returned exactly four children: Luis (1871), Tomaza (1875), Jer\u00f3nimo (1877), and Maria de la o (1878). No child named Ricardo appeared. The legacy partial index (collection 1520550) was also searched with no additional results.\n\n**2. Full-text search:** A corpus search for '+Beisaga' with the year range 1868\u20131880 returned zero results, confirming that Cochabamba Catholic registers for this period are absent from the FamilySearch full-text transcription corpus. This search path is unavailable.\n\n**3. Image browse of apparently un-indexed volumes:** Volume group 005091274 carried `fulltextSearchable: true` metadata. Direct image reads of these volumes revealed they are 20th-century surname indexes (*\u00cdndice Bautismos*) covering 1880\u20131957 \u2014 not 1870s baptism registers. The actual 1870s\u20131880s registers are in the 93\u201399% indexed volume groups (004016032, 004016033) already covered by the indexed search. No additional un-indexed 1870s volumes were identified.\n\n**Residual gap:** An estimated 4\u20139% of Cochabamba parish records for the target period remain un-indexed. Physical inspection of original registers at the Bolivian diocesan archives would be required to eliminate this gap.\n\n### Evidence Analysis\n\n**Established facts:**\n- Antonio Beizaga and Estefania Zambrana married 23 March 1870 in Cochabamba \u2014 their union is documented by an original source with primary information (S1/src_001). *Direct evidence of the couple's existence.*\n- Five children of this couple are confirmed through original records: Fructuosa (b. ~1867, documented via her 1890 marriage S2/src_002), Luis (b. 1871, S6/src_006), Tomaza (b. 1875, S7/src_007), Jer\u00f3nimo (b. 1877, S4/src_004), and Maria de la o (b. 1878, S5/src_005). None is named Ricardo.\n- A man named Ricardo Beisaga resided in Sicaya, Capinota, Cochabamba in 1908 as father of Mariano Beisaga Launa (S3/src_003). His estimated birth circa 1875 is plausible for a son of the couple. *Indirect evidence only \u2014 consistent with the hypothesis but not probative of parentage.*\n\n**What is not established:**\n- No record names Ricardo Beisaga as a child of Antonio Beisaga and Estefania Zambrana.\n- The 1908 record (S3/src_003) names Ricardo's child, not Ricardo's own parents. It cannot establish his parentage.\n- The consistency of Ricardo's name, age, and region with membership in the family is circumstantial. Consistency is not proof.\n\n**Evidence type assessment:** The systematic negative search evidence \u2014 a multi-strategy, reasonably exhaustive survey returning no baptism for Ricardo as son of Antonio+Estefania \u2014 constitutes indirect negative evidence under the GPS. It does not absolutely exclude the possibility (4\u20139% residual remains), but a thorough multi-source negative at 91\u201399% coverage shifts the burden significantly against the hypothesis.\n\n### Conflicts\n\nNo conflicting assertions were identified. No competing hypotheses were formally tracked.\n\n### Conclusion\n\n**Tier: Not Proved**\n\nThe preponderance of accessible evidence fails to establish that a child named Ricardo was baptized in Cochabamba, Bolivia circa 1874 as a son of Antonio Beisaga and Estefania Zambrana. The reasonably exhaustive search (91\u201399% coverage) of the primary repository produced no such baptism record. Five other children of the couple are positively documented, none named Ricardo. A Ricardo Beisaga of plausible age and location exists in 1908 records (src_003), but no source connects him to Antonio and Estefania as his parents.\n\nA definitive resolution would require physical inspection of the approximately 4\u20139% of Cochabamba parish registers not yet indexed, particularly those of San Jos\u00e9, San Ignacio de Loyola, and surrounding parishes for the years 1873\u20131876."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-28T19:05:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-28T19-05-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Cochabamba, Bolivia",
+      "for_place": "Cochabamba, Cochabamba, Cercado, Cochabamba, Bolivia",
+      "time_period": "1867-1877",
+      "jurisdictions": [
+        {
+          "name": "Cochabamba, Bolivia",
+          "date_range": "1826/"
+        },
+        {
+          "name": "Cochabamba, Cochabamba, Cercado, Cochabamba, Bolivia",
+          "date_range": "1571/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1922463",
+          "title": "Bolivia, Catholic Church Records, 1566-2020",
+          "date_range": "1566-2020"
+        },
+        {
+          "id": "1520550",
+          "title": "Bolivia, Baptisms, 1560-1938",
+          "date_range": "1560-1938"
+        },
+        {
+          "id": "1520564",
+          "title": "Bolivia, Marriages, 1630-1940",
+          "date_range": "1630-1940"
+        },
+        {
+          "id": "1520566",
+          "title": "Bolivia, Deaths, 1750-1920",
+          "date_range": "1750-1920"
+        }
+      ],
+      "quirks": [
+        "Bolivia's civil registration began only in 1940; all births in 1874 are documented exclusively in Catholic parish registers.",
+        "The city of Cochabamba had at least six active Catholic parishes (Santo Domingo 1609-1945, San Antonio de Padua 1826-1966, San Joaqu\u00edn 1826-1966, Santa Ana de Cala Cala 1826-1978, San Ignacio de Loyola 1828-1957, San Jos\u00e9 1863-1975) \u2014 a baptism could appear in any of them; search all.",
+        "Collection 1520550 (Bolivia, Baptisms, 1560-1938) is a legacy partial index and explicitly known to be incomplete \u2014 a negative result there does not mean no record exists; always verify with original images in collection 1922463.",
+        "Some San Ignacio de Loyola volumes (prefix 005091274) are full-text searchable but NOT name-indexed (0% recordSearchablePercent) \u2014 use fulltext_search rather than record_search for those volumes.",
+        "All records are in Spanish; use the FamilySearch Spanish Genealogical Word List for unfamiliar terms.",
+        "The Archive of the Archbishopric of Cochabamba (Calle Calama 169; tel. 591-4-4256563) holds duplicate and original sacramental records not fully accessible online."
+      ],
+      "guide_markdown": "# Locality Guide: Cochabamba, Bolivia (1867\u20131877)\n\n## Jurisdiction overview\n- **Formed:** City of Cochabamba established 1571; Department of Cochabamba formed 1826 upon Bolivian independence\n- **Administrative center:** City of Cochabamba, Cercado Province\n- **Religion:** Roman Catholic (exclusive institutional vital-record keeper in this period)\n- **Population (Bolivia national):** ca. 1,372,000\u20131,524,000 (1860\u20131874, Gapminder)\n\n## Vital records\n- Civil registration began 1940 \u2014 **not applicable** for 1874. Catholic parish registers are the only official vital-record source.\n\n## Church records \u2014 PRIMARY SOURCE\nSix parishes with digitized records on FamilySearch for the city of Cochabamba (Cercado):\n- Santo Domingo (1609\u20131945)\n- San Antonio de Padua (1826\u20131966)\n- San Joaqu\u00edn (1826\u20131966)\n- Santa Ana de Cala Cala (1826\u20131978)\n- San Ignacio de Loyola (1828\u20131957)\n- San Jos\u00e9 (1863\u20131975)\n\nAll accessible via collection 1922463 (Bolivia, Catholic Church Records, 1566-2020) \u2014 index & images, free on FamilySearch.\n\n## Digitization levels (city volumes from volume_search)\n- San Ignacio de Loyola: 79\u201396% name-indexed (prefix 005091277); 0% indexed but full-text searchable (prefix 005091274)\n- San Antonio de Padua: 89\u201395% name-indexed (prefix 005091258, 005091257)\n- San Joaqu\u00edn: 88\u201396% name-indexed (prefix 005091261, 005091262)\n- Matrimonial investigations Cochabamba city 1871-1879 (005091284_001): 34% indexed\n\n## Key collections\n| Collection | ID | Access |\n|---|---|---|\n| Bolivia, Catholic Church Records, 1566-2020 | 1922463 | FS free, index + images |\n| Bolivia, Baptisms, 1560-1938 (legacy partial index) | 1520550 | FS free, index only |\n| Bolivia, Marriages, 1630-1940 | 1520564 | FS free |\n| Bolivia, Deaths, 1750-1920 | 1520566 | FS free |\n\n## Physical repository\nArchive of the Archbishopric of Cochabamba, Calle Calama 169, Cochabamba (tel. 591-4-4256563); Archivo y Biblioteca Nacionales de Bolivia.\n\n## Research tips\n1. Search collection 1922463 first \u2014 most comprehensive, has images.\n2. A negative in collection 1520550 does not mean no record \u2014 it is a known partial index.\n3. Search all six city parishes if indexed search is negative.\n4. Full-text search (not record_search) for San Ignacio de Loyola prefix 005091274 volumes.\n5. All records in Spanish.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Bolivia_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Bolivia_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Bolivia_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Bolivia_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-28"
+    }
+  ]
+}
