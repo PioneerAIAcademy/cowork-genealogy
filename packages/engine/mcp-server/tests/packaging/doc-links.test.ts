@@ -67,6 +67,11 @@ const LINTED_DIRS = [".claude/agents", ".claude/commands", ".claude/skills"];
  * name with its reason rather than inferred from the surrounding sentence, and
  * an entry that stops firing fails the suite below — so this list cannot
  * quietly become a blanket exemption nobody can see.
+ *
+ * **An invented name in a worked example does not belong here.** Write it as a
+ * `<slug>` placeholder instead: the glob resolves, the example stops naming a
+ * fixture that does not exist, and no entry is needed. That is what the
+ * `interpret-e2e-result` example does.
  */
 const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
   {
@@ -78,16 +83,6 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     file: ".claude/skills/mine-unit-test/SKILL.md",
     path: "eval/e2e-project/<slug>/",
     why: "created at runtime by `make e2e-project`; gitignored, so it is absent at rest",
-  },
-  {
-    file: ".claude/skills/interpret-e2e-result/SKILL.md",
-    path: "eval/runlogs/e2e/smith-parents-1850/run-<latest>.json",
-    why: "`smith-parents-1850` is a fictional fixture in a worked example, not a real slug",
-  },
-  {
-    file: ".claude/skills/interpret-e2e-result/SKILL.md",
-    path: "eval/tests/e2e/smith-parents-1850/expected-findings.json",
-    why: "`smith-parents-1850` is a fictional fixture in a worked example, not a real slug",
   },
 ];
 

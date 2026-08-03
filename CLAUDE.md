@@ -621,7 +621,7 @@ signal to consolidate; one isn't.
 
 ## Subagents
 
-Three project subagents live under `.claude/agents/`. Claude Code invokes them
+Project subagents live under `.claude/agents/`. Claude Code invokes them
 automatically when their description matches the request, or you can call them
 explicitly with the Agent tool.
 
