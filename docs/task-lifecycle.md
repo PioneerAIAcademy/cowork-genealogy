@@ -17,25 +17,18 @@ Say which one in your PR description.
 | Tier | What it is | What you do |
 |---|---|---|
 | **Trivial** | Typo, comment, doc link, version bump, dead-code deletion, one-line fix with an obvious cause | Skip steps 1–3. Change, test, self-review, PR. |
-| **Normal** | Most tasks. A bug fix, a new test, a tool change, a refactor inside one module | All nine steps. |
-| **Risky** | See below | All nine steps, and the lead reviews your plan in the draft PR **before** you write code. |
+| **Normal** | Everything else | All nine steps. |
 
-**Risky if it does any of these:**
+**There is no risky tier, and that is deliberate.** Risk is classified once, at
+triage, by `task-reviewer` — before the task reaches you. Work that is
+schema-touching, credential-touching, plugin-agent-touching, or hard to undo
+carries the `senior` label and is assigned to the lead, not to the unassigned
+pool. So a task you were handed is a task somebody with the whole picture
+already decided a junior can land. Why:
+[ADR-0008](./adrs/ADR-0008-settle-task-risk-at-triage.md).
 
-- Changes `research.json` or simplified-GedcomX **schema** — a new field, a new
-  value on a closed enum, or a tree-shape change. Site lists:
-  [`CLAUDE.md`](../CLAUDE.md) § "Researcher profile in `research.json`".
-- Touches `packages/engine/mcp-server/src/auth/`, or anything holding a credential.
-- Changes a **Cowork plugin agent** — `packages/engine/plugin/agents/`,
-  `packages/engine/plugin/hooks/`, and especially `tools:`/`disallowedTools:`.
-  (Claude Code subagents under `.claude/agents/` are Normal.)
-- Adds an MCP tool, or changes an existing tool's contract.
-- Touches more than about three modules, or both the engine and the web side.
-- Reverses something in [`docs/adrs/`](./adrs/) or contradicts a `CLAUDE.md` rule.
-- Is hard to undo: a data migration, a write to user state, anything
-  user-facing or talking to an external service.
-
-When in doubt, Risky.
+What that leaves you is the **stop rule** in step 4 — the case triage cannot
+see, because it only becomes visible once you are in the code.
 
 ---
 
@@ -94,15 +87,34 @@ run the command, confirm the claim. This covers what the critic *proposes* as
 much as what it criticizes: a suggested command, flag, or file name that you
 repeat unchecked reads like an established thing to whoever you hand it to.
 
-**Risky tier:** open the draft PR now with the plan in its description, and get
-the lead's review before writing code.
-
 ### 4. Implement
 
 **If reality contradicts the plan, stop and re-plan.** Update the plan (a
-sentence in the PR body is enough on Normal tier), then continue — your
-reviewer is reviewing against the plan, so an undocumented deviation is
-invisible to exactly the person whose job is catching it.
+sentence in the PR body is enough), then continue — your reviewer is reviewing
+against the plan, so an undocumented deviation is invisible to exactly the
+person whose job is catching it.
+
+**Stop and go to the lead** — do not re-plan around it — if the change turns out
+to do any of these. Triage said a junior could land this; finding one of these
+means triage was working from something the issue did not say, and the fix is to
+the issue, not to your branch.
+
+- Changes `research.json` or simplified-GedcomX **schema** — a new field, a new
+  value on a closed enum, or a tree-shape change. Site lists:
+  [`CLAUDE.md`](../CLAUDE.md) § "Researcher profile in `research.json`".
+- Touches `packages/engine/mcp-server/src/auth/`, or anything holding a credential.
+- Changes a **Cowork plugin agent** — `packages/engine/plugin/agents/`,
+  `packages/engine/plugin/hooks/`, and especially `tools:`/`disallowedTools:`.
+  (Claude Code subagents under `.claude/agents/` are not this.)
+- Adds an MCP tool, or changes an existing tool's contract.
+- Reverses something in [`docs/adrs/`](./adrs/) or contradicts a `CLAUDE.md` rule.
+- Is hard to undo: a data migration, a write to user state, anything
+  user-facing or talking to an external service.
+
+Saying so costs one message. It is not an admission that you got something
+wrong — every stop is a signal that the `senior` triggers in
+[`.claude/agents/task-reviewer.md`](../.claude/agents/task-reviewer.md) missed a
+shape, which is the only feedback that gate gets.
 
 Keep the diff scoped to the plan. Anything else you spot becomes step 7.
 

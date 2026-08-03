@@ -119,9 +119,25 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
 | `ready` | A junior can land this correctly today. You still name one thing you would improve, or say "nothing, because …". |
 | `ready-after-edit` | Ready once the body carries what you supply. Give the **exact text**, and where it goes. |
 | `needs-a-decision` | An open fork only the lead can settle. State it as a choice with options and your recommendation. Do not promote. |
-| `senior` | Green-and-wrong risk, cross-subsystem, inverts an existing mechanism, or commits money or doctrine. Route to the lead's pool, never the unassigned one — this is the repo's existing `senior` label, and its description is this row. |
+| `senior` | Any of the triggers below. Route to the lead's pool, never the unassigned one — this is the repo's existing `senior` label, whose description carries an abridged form of this row (GitHub caps it at 100 characters). |
 | `stale-rewrite` | The premise moved, so the ask itself is now wrong. Say what is false and supply the text that **replaces** the ask — not an addition to it. |
 | `close` | No longer needed, already done, or refuted. Give the reason and the evidence. |
+
+### `senior` triggers — any one is sufficient
+
+- Green-and-wrong risk: correctness rests on something in §9.4.
+- Spans subsystems — more than about three modules, or engine *and* web.
+- Inverts an existing mechanism, or commits spend or doctrine.
+- Changes `research.json` or simplified-GedcomX **schema**: a new field, a new
+  value on a closed enum, or a tree-shape change.
+- Touches `packages/engine/mcp-server/src/auth/`, or anything holding a credential.
+- Changes a Cowork plugin agent or hook — `packages/engine/plugin/agents/`,
+  `packages/engine/plugin/hooks/`, `tools:`/`disallowedTools:`. Claude Code
+  subagents under `.claude/agents/` are not this.
+- Adds an MCP tool, or changes an existing tool's contract.
+- Reverses an ADR, or contradicts a `CLAUDE.md` rule.
+- Hard to undo: a data migration, a write to user state, anything user-facing or
+  talking to an external service.
 
 ## Output
 

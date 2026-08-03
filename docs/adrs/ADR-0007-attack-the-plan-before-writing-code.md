@@ -2,7 +2,7 @@
 
 > **Read before you:** wonder why `/critique-plan` is a command instead of "ask
 > Claude to review this" · want to add a third critique round · want to skip
-> writing `PLAN.md` because the plan is already in the chat · want Risky-tier
+> writing `PLAN.md` because the plan is already in the chat · want per-task
 > plans filed under `docs/plan/` · want the critic to fix what it finds.
 
 - **Status:** Accepted
@@ -12,7 +12,9 @@
 - **Supersedes:** —
 - **Superseded by:** —
 - **Applies to:** `docs/task-lifecycle.md`, `.claude/agents/plan-critic.md`, `.claude/commands/critique-plan.md`
-- **Related:** ADR-0006, `docs/skill-lifecycle.md`
+- **Related:** ADR-0006, ADR-0008 (retires the Risky tier this file's Decision
+  bullet 5 and `docs/plan/` alternatives row refer to; the rest stands),
+  `docs/skill-lifecycle.md`
 
 ## Context
 
@@ -88,11 +90,15 @@ critique step changes outcomes.
 > path, markdown link, and `make` target cited in `.claude/agents/`,
 > `.claude/commands/`, `.claude/skills/`, and `docs/task-lifecycle.md`
 > resolves.
-> It does **not** check that the critic was run, that findings were verified,
-> or that a Risky plan reached the lead. Those are convention.
+> It does **not** check that the critic was run or that findings were verified.
+> Those are convention.
 
 `.github/pull_request_template.md` carries the tier and the plan; nothing
 blocks a PR that leaves them blank.
+
+Decision bullet 5 (lead review of Risky-tier plans) no longer applies — ADR-0008
+retired that tier, and risk is classified at triage instead. The bullet stays as
+written because this section is history.
 
 ## Revisit when
 

@@ -42,9 +42,40 @@ a verdict the caller cannot act on is a verdict that silently does nothing.
 | `ready` | A junior can land it today | The `reviewed` label. Nothing else. |
 | `ready-after-edit` | Ready once the body carries the agent's text | Prepend the text; `reviewed`. |
 | `needs-a-decision` | An open fork only the lead can settle | Splice the chosen option's pre-written body text; `reviewed`. |
-| `senior` | Green-and-wrong risk, cross-subsystem, inverts a mechanism, or commits money or doctrine | Assign `DallanQ`; `reviewed`. Report to `fill-ready` for the swap out of the junior pool. |
+| `senior` | Any trigger in the agent's `senior` list — green-and-wrong risk, cross-subsystem, inverts a mechanism, commits money or doctrine, or touches schema / credentials / a plugin-agent binding / an MCP tool contract / an ADR / anything hard to undo | Assign `DallanQ`; `reviewed`. Report to `fill-ready` for the swap out of the junior pool. |
 | `stale-rewrite` | The premise moved; the issue asks for the wrong thing | **Replace** the ask with the agent's rewrite, keeping the original under `## Original issue`; `reviewed`. |
 | `close` | No longer needed, already done, or refuted | `gh issue close --reason "not planned"` with the evidence. No label. |
+
+### 3.1 `senior` is the only risk classification
+
+`docs/task-lifecycle.md` used to carry a third tier, **Risky**, whose seven
+triggers overlapped this row and whose consequence was that the lead reviewed the
+junior's plan in a draft PR before code. It was retired in favour of this verdict
+(ADR-0008). Three reasons, in order of weight:
+
+1. **This gate makes the same call earlier, with more information, and acts on
+   it harder.** A `senior` verdict removes the task from the junior pool; the
+   tier only gated a plan the junior had already been handed.
+2. **The tier asked the least-informed person to make it.** Its tie-break —
+   "when in doubt, Risky" — converted junior uncertainty into a lead interrupt,
+   which is the cost this gate exists to remove (§1).
+3. **Nothing enforced it.** ADR-0007's Enforcement section says the tier and the
+   plan are convention and no check blocks a PR that omits them.
+
+Consequence: this row is now the **only** place a risk trigger is written down,
+so the agent's list must stay complete. Four of the tier's seven triggers —
+schema, credentials, plugin-agent binding, hard-to-undo — were reachable here
+only by inference from the blast-radius pass and §9.4, and are now named.
+
+The tier's blast-radius trigger ("more than about three modules") is kept here
+and deliberately **not** mirrored into the lifecycle's stop rule: it is precisely
+what Pass B #5 computes from the issue body, so it is triage's to catch, not
+something a junior should re-derive mid-branch.
+
+What the retirement gives up is stated in ADR-0008's costs: this gate is now the
+single point of risk classification. The backstop is the lifecycle's step-4 stop
+rule, which fires on the four categorical triggers a junior can only discover in
+the code. A stop is a defect report against this row.
 
 `stale-rewrite` is the one case that replaces rather than prepends, and it is why
 the caller's "prepend, never replace" rule carries an exception. It is kept
