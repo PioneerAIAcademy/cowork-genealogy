@@ -289,26 +289,30 @@ have proven out; none of them reach Cowork or the hosted web workbench.
   on a fresh relevance judgment by the relaying agent. Needs the same
   genealogist scrutiny Option B got before anything is built — NOT investigated.
 
-- [ ] **Confirm whether `record_read` ever surfaces the `i=`/`cc=`/`groupId=`
-  context a multi-image document ARK needs, or only a bare ARK.** Found
-  investigating a `matyas-muck-son` e2e run (2026-08-03): some `3:1:`/`3:2:`
+- [ ] **CONFIRMED (2026-08-03): `record_read` never surfaces the `i=`/`cc=`/
+  `groupId=` context a multi-image document ARK needs — an autonomous run has
+  no way to reach the right page on its own.** Some `3:1:`/`3:2:`
   document-image ARKs are waypoints into a multi-image film/register, and the
-  bare resolver redirect can land on the wrong image within that group — or, as
-  confirmed live for this specific ARK, fail to resolve to any document at all.
-  FamilySearch's own browser page URL for such a document disambiguates with
-  `i=`/`cc=`/`groupId=` query params. `arkToImageUrl`
-  (`packages/engine/mcp-server/src/utils/fs-image-fetch.ts`) now forwards those
-  params when the caller's `ark` input is a full URL carrying them (fixed
-  2026-08-03), which is enough when a human supplies the full page URL — but
-  the open question is whether `record_read`'s `sources[].url` (mapped from
-  FamilySearch's raw `sourceDescriptions[].about` field, `gedcomx-convert.ts`)
-  ever carries that context for a multi-image record, or whether it's purely
-  browser/viewer UI state that never reaches the API. If the latter, an
-  autonomous run with no human in the loop has no way to reach the correct
-  image on its own — `image_transcribe`/`image_read` would need another route
-  (e.g. via `image_search`) to discover the right index rather than guessing
-  from a bare ARK. Needs a live authenticated check against a known
-  multi-image record, not a repo read.
+  bare resolver redirect can land on the wrong image within that group — or,
+  as confirmed live for this specific ARK, fail to resolve to any document at
+  all. FamilySearch's own browser page URL for such a document disambiguates
+  with `i=`/`cc=`/`groupId=` query params. `arkToImageUrl`
+  (`packages/engine/mcp-server/src/utils/fs-image-fetch.ts`) now forwards
+  those params when the caller's `ark` input is a full URL carrying them
+  (fixed 2026-08-03) — that part works and is unit-tested. But **two
+  consecutive scored `matyas-muck-son` e2e runs after the fix both converged
+  on the same wrong page** (entries 26–37, reading the family's own already-
+  correctly-identified father/mother onto the wrong specific entry/date)
+  because `record_read`'s `sources[].url` for this record only ever gave the
+  agent the bare ARK — no query context to forward. Neither run tried
+  `image_search` as an alternative route. The fixture itself (`eval/tests/e2e/
+  matyas-muck-son/`) is left as a known-hard/currently-unsolvable case rather
+  than kept churning on more scored runs — see its README for the dated note.
+  **Next step, if picked up:** check whether `image_search` can locate this
+  specific document and return an unambiguous `imageId` (no ARK ambiguity),
+  which would sidestep the whole `3:1:`/`3:2:` multi-image problem rather than
+  trying to teach `record_read` to expose context FamilySearch's API may not
+  even carry.
 
 ## Skill coverage (orphaned tools)
 These MCP tools are shipped, specced, and advertised, but no skill references them
