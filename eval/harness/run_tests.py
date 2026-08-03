@@ -143,8 +143,9 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "How many tests to run in parallel. Default: RAM-aware — about "
-            "one slot per 2 GiB of system RAM, floored at 4 and capped at 8 "
-            "(a 16 GiB machine resolves to 8). Tests are I/O-bound (each slot "
+            "one slot per 2 GiB of system RAM, capped at 8 (a 16 GiB machine "
+            "resolves to 8, a 4 GiB machine to 2); if total RAM can't be "
+            "detected it runs serially (1). Tests are I/O-bound (each slot "
             "is mostly a Claude SDK subprocess waiting on the API), so the "
             "ceiling is RAM and API rate limits, not CPU cores. Pass a higher "
             "value on a big box, or 1 to force serial execution."
@@ -156,8 +157,8 @@ def _build_parser() -> argparse.ArgumentParser:
 def _total_ram_gb() -> float | None:
     """Best-effort total physical RAM in GiB, cross-platform, stdlib only.
 
-    Returns None when it can't be determined (caller falls back to the
-    floor). POSIX (macOS/Linux) uses sysconf; Windows uses
+    Returns None when it can't be determined (caller then assumes the worst
+    case and runs serially). POSIX (macOS/Linux) uses sysconf; Windows uses
     GlobalMemoryStatusEx via ctypes.
     """
     try:  # POSIX: macOS, Linux
@@ -195,10 +196,16 @@ def _total_ram_gb() -> float | None:
 # blocked on the Anthropic API — the work is I/O-bound, so RAM and API rate
 # limits, not CPU cores, set the ceiling. eval/CLAUDE.md notes that too many
 # concurrent SDK subprocesses trigger SIGKILL under memory pressure. Heuristic:
-# ~1 slot per 2 GiB of RAM, floored at 4 and capped at 8 (16 GiB -> 8).
-_MIN_AUTO_CONCURRENCY = 4
+# ~1 slot per 2 GiB of RAM, floored at 1 (never 0) and capped at 8 (16 GiB -> 8,
+# 4 GiB -> 2). The floor exists only to forbid 0 — it must NOT override the RAM
+# measurement upward, or a low-RAM box gets more slots than it can hold (#1026).
+_MIN_AUTO_CONCURRENCY = 1
 _MAX_AUTO_CONCURRENCY = 8
 _GB_PER_SLOT = 2.0
+# When total RAM can't be measured at all, we can't rule out a tiny box, so we
+# assume the worst case and run serially. Safest default; override with
+# --concurrency on a box you know is bigger.
+_FALLBACK_CONCURRENCY = 1
 
 
 def _est_test_seconds(spec, actuals: dict[str, float] | None = None) -> float:
@@ -248,18 +255,21 @@ def _load_actual_durations(runlogs_root: Path, skills: set[str]) -> dict[str, fl
     return out
 
 
-def _resolve_concurrency(requested: int | None) -> tuple[int, str]:
-    """Return (concurrency, source) where source is 'flag' or 'auto'."""
+def _resolve_concurrency(requested: int | None) -> tuple[int, str, str | None]:
+    """Return (concurrency, source, detail).
+
+    source is 'flag' (an explicit --concurrency) or 'auto' (RAM-derived).
+    detail is a short human string for the startup line explaining the auto
+    value (the detected RAM, or why we fell back); None on the flag path.
+    """
     if requested is not None and requested > 0:
-        return requested, "flag"
+        return requested, "flag", None
     ram = _total_ram_gb()
     if ram is None:
-        return _MIN_AUTO_CONCURRENCY, "auto"
+        return _FALLBACK_CONCURRENCY, "auto", "RAM undetectable, serial default"
     by_ram = int(ram // _GB_PER_SLOT)
-    return (
-        max(_MIN_AUTO_CONCURRENCY, min(_MAX_AUTO_CONCURRENCY, by_ram)),
-        "auto",
-    )
+    n = max(_MIN_AUTO_CONCURRENCY, min(_MAX_AUTO_CONCURRENCY, by_ram))
+    return n, "auto", f"{ram:.1f} GiB RAM"
 
 
 def _select_tests(args, tests_dir: Path) -> list[TestSpec]:
@@ -590,11 +600,11 @@ def main(argv: list[str] | None = None) -> int:
     _COST_WINDOW = 5
     recent_costs: list[float] = []
 
-    concurrency, conc_source = _resolve_concurrency(args.concurrency)
+    concurrency, conc_source, conc_detail = _resolve_concurrency(args.concurrency)
     concurrency = min(concurrency, len(specs))
     print(
         f"Concurrency: {concurrency} "
-        f"({'--concurrency' if conc_source == 'flag' else 'auto from RAM'})"
+        f"({'--concurrency' if conc_source == 'flag' else 'auto: ' + conc_detail})"
     )
 
     # Accumulate test entries grouped by skill. After all tests have run,
