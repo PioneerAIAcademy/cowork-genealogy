@@ -72,6 +72,10 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         uses: actions/checkout@v7
 
+      - name: Fetch base branch for prompt-budget delta
+        if: steps.scope.outputs.relevant == 'true' && github.event_name == 'pull_request'
+        run: git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=1
+
       - name: Set up Node
         if: steps.scope.outputs.relevant == 'true'
         uses: actions/setup-node@v7
