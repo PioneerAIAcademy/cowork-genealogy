@@ -23,6 +23,16 @@ name: Server tests
 # exactly as committed, never re-resolved. That is what makes this job a real
 # check on a Dependabot lockfile PR — it tests the lock in the diff rather than
 # whatever a fresh resolve happens to pick up that morning.
+#
+# What this job deliberately does NOT cover: tests/test_plugin_agents.py::
+# test_bare_agent_names_are_registered — the only check that reads what the
+# RUNTIME resolved the hosted agent options to — skips here, because holding an
+# Anthropic key would break the "no secrets" property above. The offline tests in
+# that file do run, but they only prove the staging happened, not what the runtime
+# made of it. Run `make agent-smoke` by hand after touching
+# real_agent.build_options (root CLAUDE.md § Cowork plugin agents). Note the path
+# filter below also means a PR touching only packages/engine/plugin/agents/ runs
+# none of this. Wiring agent-smoke into CI is issue #1142.
 
 #
 # Runs on EVERY pull request — no `paths:` filter — so this check always reports
