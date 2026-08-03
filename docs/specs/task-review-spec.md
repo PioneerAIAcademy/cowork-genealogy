@@ -179,5 +179,6 @@ line in the staleness check:
   derives its query set from `eval/tests/unit/` and resolves skills under
   `packages/engine/plugin/skills/` only, so it cannot see a hand-written set under
   `.claude/skills/`. They document the intended boundary; nothing enforces it.
+  Wiring them is issue #1184, which also asks whether they are worth keeping.
 - **Nothing checks that a verdict was applied.** The `reviewed` label says an
   issue was looked at, not that the body carries what the agent supplied.
