@@ -9,9 +9,10 @@ transcript is written to the *ephemeral* local cache:
 
 That directory is the temp-workspace-encoded path and is deleted with the
 workspace. The committed runlog only records the *parent's* tool calls plus a
-500-char-truncated `response_summary` per call — it stores **no** subagent
-transcript. So a failure that happens entirely inside a subagent is invisible
-from the committed runlog.
+key-preserving `response_summary` per call (see
+`orchestrator._summarize_tool_response`; it head-truncated at 500 chars until
+2026-08-03) — it stores **no** subagent transcript. So a failure that happens
+entirely inside a subagent is invisible from the committed runlog.
 
 The failure that motivated this: a `record-extractor` subagent called
 `project_context` once, then emitted a single thinking-only turn that burned its

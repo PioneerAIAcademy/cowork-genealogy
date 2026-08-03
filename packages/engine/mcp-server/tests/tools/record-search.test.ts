@@ -1113,6 +1113,28 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
     expect(out.rankingSkipped).toBeTruthy();
   });
 
+  it("stays silent on a nil search WITH a subject, even though ranking did not run", async () => {
+    // The asymmetry worth pinning: ranking needs `out.staged` too, and a nil
+    // search stages nothing, so ranking is skipped here and yet no note is
+    // emitted — correctly, because the issue's condition is the args alone.
+    // 4 of the 18 subject-carrying calls in run-2026-07-31_13-02-13 are this
+    // case. Absence of the note means "a subject was named", NOT "ranking ran".
+    mockFetch.mockResolvedValueOnce(
+      makeOkResponse({ results: 0, index: 0, entries: [] }),
+    );
+
+    const out = await recordSearchTool({
+      surname: "Lincoln",
+      projectPath: dir,
+      subjectId: "I1",
+    });
+
+    expect(out.totalMatches).toBe(0);
+    expect(out.staged).toBeNull();
+    expect(out.ranked).toBeUndefined();
+    expect(out.rankingSkipped).toBeUndefined();
+  });
+
   it("treats a falsy subjectId the same way the ranking gate does", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
@@ -1132,7 +1154,7 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
     // This is the whole point of the field's position. `results` is the largest
     // field in the response; anything after it is what a head bound cuts first,
     // which is why `ranked` appears 0 times across the 46 record_search calls in
-    // run-2026-07-31_13-02-13 despite 18 of them being ranked.
+    // run-2026-07-31_13-02-13 despite 14 of them being ranked.
     const keys = Object.keys(out);
     expect(keys.indexOf("rankingSkipped")).toBeGreaterThan(-1);
     expect(keys.indexOf("rankingSkipped")).toBeLessThan(keys.indexOf("results"));

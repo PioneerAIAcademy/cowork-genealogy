@@ -108,13 +108,14 @@ function placeParts(place: string): string[] {
  * other single-token place.
  */
 /*
- * Typed as a predicate (`place is string`) rather than `boolean` because it is
- * one: it returns false for `undefined`, so a caller that has passed this gate
- * provably holds a place. That lets `jurisdictionHints.searchedPlace` be a
- * required `string` instead of an optional one — the hint cannot exist without a
- * searched place, and the compiler now enforces what the spec asserts.
+ * Deliberately `boolean` and NOT a `place is string` type predicate, though it
+ * was written that way first. The predicate is unsound in its negative branch:
+ * `isSubCountryPlace("United States")` is false while `place` is very much a
+ * string, so TypeScript would narrow the `else` to `undefined` and hand the first
+ * author who writes one a compiler-blessed lie. Callers that need the string
+ * narrowed check `!== undefined` themselves, one token, no unsoundness.
  */
-export function isSubCountryPlace(place: string | undefined): place is string {
+export function isSubCountryPlace(place: string | undefined): boolean {
   if (!place) return false;
   return placeParts(place).some((part) => !COUNTRY_TERMS.has(part));
 }

@@ -354,11 +354,17 @@ def test_summarize_tool_response_dict_is_json():
 def test_summarize_tool_response_truncates_long_content():
     long = "x" * 2000
     out = _summarize_tool_response(long)
-    assert len(out) <= 500
     # The bound is now the judge tier's explicit marker rather than a bare "...",
     # so a reader can tell a summary from a real response and knows what was lost.
     assert "[truncated by harness" in out
     assert "full length 2000 chars" in out
+    # REGRESSION GUARD. This test previously asserted only `len(out) <= 500`,
+    # which a *smaller* bound also satisfies — so it passed while a 200-char
+    # string bound quietly cut 112 of the 284 tool results in
+    # run-2026-07-31_13-02-13 below what the old 497-char head-truncation kept.
+    # A summarizer whose job is to widen the artifact must never narrow it, so
+    # assert the floor, not just the ceiling.
+    assert out.count("x") >= 497
 
 
 def test_summarize_tool_response_keeps_keys_after_a_huge_results_array():
@@ -392,6 +398,45 @@ def test_summarize_tool_response_unwraps_an_mcp_text_block():
 def test_summarize_tool_response_passes_through_non_json_text():
     out = _summarize_tool_response([{"type": "text", "text": "not json at all"}])
     assert "not json at all" in out
+
+
+def test_summarize_tool_response_never_captures_less_than_the_old_bound():
+    """The invariant that makes this change safe to land.
+
+    A key-preserving summary can be SHORTER than a 500-char head cut on a long
+    list of small items, which is how the first cut of this change silently
+    narrowed 91 of 284 real tool results. Whatever the summarizer decides, the
+    output must never carry less than head-truncating would have.
+    """
+    shapes = [
+        # long list of small items — samples to 3, so the summary is short
+        {"ok": True, "results": [{"entryId": f"pe_{i:03d}"} for i in range(40)]},
+        # long flat list of scalars
+        list(range(500)),
+        # one long string
+        "x" * 5000,
+        # many short keys
+        {f"k{i}": f"v{i}" for i in range(200)},
+        # nested
+        {"a": {"b": {"c": [{"d": "e" * 50} for _ in range(30)]}}},
+    ]
+    for shape in shapes:
+        raw = shape if isinstance(shape, str) else json.dumps(shape)
+        head = raw if len(raw) <= 500 else raw[:497] + "..."
+        out = _summarize_tool_response(shape)
+        assert len(out) >= len(head), (
+            f"regressed on {type(shape).__name__}: {len(out)} < {len(head)}"
+        )
+
+
+def test_summarize_tool_response_keeps_a_short_response_verbatim():
+    """Anything the old bound captured whole is still captured whole."""
+    shape = {"ok": True, "results": [{"entryId": f"pe_{i:03d}"} for i in range(8)]}
+    raw = json.dumps(shape)
+    assert len(raw) <= 500, "fixture must sit under the verbatim threshold"
+    assert _summarize_tool_response(shape) == raw
+    # No sampling marker, because nothing was sampled.
+    assert "_summary_truncated" not in _summarize_tool_response(shape)
 
 
 # --- timeline tool labeling ---------------------------------------------------

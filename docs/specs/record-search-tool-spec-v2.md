@@ -280,13 +280,25 @@ is not stylistic. `results` is by far the largest field in the response, so
 anything serialized after it is the first thing any size bound drops. Across the
 46 `record_search` calls in `run-2026-07-31_13-02-13` the existing `ranked` field
 appears in the run log **0 times**, though 18 of those calls supplied `subjectId`
-and were therefore ranked. A signal whose whole purpose is to be measurable from
-the run log cannot sit behind the field that crowds it out.
+and **14 were actually ranked** (the other 4 were nil searches, where staging
+returns `null` so the `out.staged &&` half of the ranking gate never fires). A
+signal whose whole purpose is to be measurable from the run log cannot sit behind
+the field that crowds it out.
 
 The capture side was widened in the same change
 (`eval/harness/e2e/orchestrator.py::_summarize_tool_response` now summarizes by
 key rather than head-truncating at 497 chars). Both halves are kept: the response
 is read by more than one consumer, and only one of them was fixed.
+
+That capture carries a hard invariant — **it can never record less than the old
+head-truncation did.** A response that already fit is passed through verbatim, and
+where a key-preserving summary comes out shorter than a 497-char prefix would
+(a long list of small items) the longer of the two is kept. Both halves are
+needed: an unconditional summarize narrowed 91 of 284 real tool results, because
+`_summarize_response` samples any list past three entries. Measured across all six
+committed `jimmie-jewel-neal` runs, 1544 tool results: **567,545 → 1,228,354 chars
+(2.16x), with 0 results capturing less.** Run logs are committed to git, so that
+growth is the price of the change and is stated rather than discovered later.
 
 #### What this does not do
 

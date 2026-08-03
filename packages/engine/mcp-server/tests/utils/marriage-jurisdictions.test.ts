@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { marriageJurisdictionCandidates } from "../../src/utils/marriage-jurisdictions.js";
+import {
+  marriageJurisdictionCandidates,
+  isSubCountryPlace,
+} from "../../src/utils/marriage-jurisdictions.js";
 
 /**
  * The rule under test, stated generally:
@@ -244,5 +247,51 @@ describe("marriageJurisdictionCandidates — ranking", () => {
     expect(arkansas).toBeGreaterThanOrEqual(0);
     expect(southCarolina).toBeGreaterThan(arkansas);
     expect(places[0]).not.toBe("South Carolina, United States");
+  });
+});
+
+// This predicate gates the whole hint and had no direct cover, which is how it
+// went a round as an unsound `place is string` type guard: false for
+// "United States" while the argument is plainly a string, so the compiler would
+// have narrowed a negative branch to `undefined`. It returns `boolean` now, and
+// these pin the behaviour the gate actually depends on.
+describe("isSubCountryPlace", () => {
+  it("is false for nothing at all", () => {
+    expect(isSubCountryPlace(undefined)).toBe(false);
+    expect(isSubCountryPlace("")).toBe(false);
+  });
+
+  it("is false for a country term alone, in each spelling", () => {
+    expect(isSubCountryPlace("United States")).toBe(false);
+    expect(isSubCountryPlace("USA")).toBe(false);
+    expect(isSubCountryPlace("US")).toBe(false);
+    expect(isSubCountryPlace("  united states  ")).toBe(false);
+  });
+
+  it("is true as soon as one part is narrower than the country", () => {
+    expect(isSubCountryPlace("Texas, United States")).toBe(true);
+    expect(isSubCountryPlace("Hill, Texas, United States")).toBe(true);
+    expect(isSubCountryPlace("Texas")).toBe(true);
+  });
+
+  it("does not mistake a bare County qualifier for a locality", () => {
+    // `placeParts` strips those words, so "County, United States" reduces to the
+    // country alone and must not read as scoped.
+    expect(isSubCountryPlace("County, United States")).toBe(false);
+    expect(isSubCountryPlace("Hill County, Texas")).toBe(true);
+  });
+
+  it("KNOWN WART: an abbreviated qualifier leaves punctuation that reads as scoped", () => {
+    // `placeParts` strips `co` out of `co.` and leaves the ".", which survives
+    // the empty-string filter and counts as a locality. So a place that is only
+    // an abbreviated qualifier plus a country reads as sub-country.
+    //
+    // Recorded rather than fixed, deliberately. `placeParts` also feeds
+    // `placeTokens` -> `samePlace`, i.e. the jurisdiction EXCLUSION and ordering
+    // that the spec flags as load-bearing and requiring a live run to re-verify.
+    // "Co., USA" is not an input any real caller produces — `marriagePlace` and
+    // `recordSubdivision` always carry a name — so the risk of touching ranking
+    // code in a PR about something else is worse than the wart.
+    expect(isSubCountryPlace("Co., USA")).toBe(true);
   });
 });

@@ -42,15 +42,21 @@ const PAGINATION_CAP = 4999;
 /** Most jurisdiction candidates a nil marriage search will offer. See below. */
 const MAX_JURISDICTION_HINTS = 8;
 /**
- * Emitted on every `projectPath`-carrying search that names no subject. Kept
- * short on purpose: it rides two thirds of all searches (59 of 171 calls across
- * the six committed `jimmie-jewel-neal` runlogs carried `subjectId`), so its
- * cost is paid per call while its benefit is being un-forgettable.
+ * Emitted on every `projectPath`-carrying search that names no subject — 112 of
+ * the 171 calls (65.5%) across the six committed `jimmie-jewel-neal` runlogs, the
+ * complement of the 59 that carried `subjectId`. Kept short on purpose: at that
+ * rate its cost is paid per call while its benefit is being un-forgettable.
+ *
+ * The "omit it when" clause mirrors the tool schema's own wording rather than
+ * narrowing it. A person not yet in the tree is the second legitimate reason to
+ * omit, and since this note is re-delivered on two thirds of all searches, a
+ * narrower phrasing here is the one that would get reinforced.
  */
 const RANKING_SKIPPED_NOTE =
   "No `subjectId`, so match-score ranking and marriage jurisdiction hints did " +
   "not run. Pass the tree person this search is about as `subjectId` to enable " +
-  "both. Omit it only for a broad survey with no specific person in mind.";
+  "both. Omit it only when the search is not about a specific tree person — a " +
+  "broad survey, or a person not yet in the tree.";
 const PERSISTENT_ID_URI = "http://gedcomx.org/Persistent";
 const COLLECTION_RESOURCE_TYPE = "http://gedcomx.org/Collection";
 
@@ -554,29 +560,26 @@ export async function recordSearchTool(
     returned: results.length,
     offset: data.index ?? input.offset ?? 0,
     hasMore: data.links?.next?.href != null,
-    // BEFORE `results`, deliberately, and this is load-bearing rather than
-    // stylistic. `results` is by far the largest field in the response, so
-    // anything serialized after it is the first thing any size bound drops:
-    // across the 46 `record_search` calls in `run-2026-07-31_13-02-13` the
-    // existing `ranked` field appears in the runlog **0 times**, though 18 of
-    // those calls supplied `subjectId` and were therefore ranked. A signal whose
-    // entire purpose is to be measurable from the runlog cannot sit behind the
-    // field that crowds it out. (The capture itself is also being widened, in
-    // `eval/harness/e2e/orchestrator.py` — belt and braces, since this response
-    // is read by more than one consumer and only one of them is being fixed.)
+    // Placed before `results` because the run-log capture bounds response size
+    // and `results` is the largest field, so a trailing field is what gets
+    // dropped first. Belt and braces with the capture fix in
+    // `eval/harness/e2e/orchestrator.py`: this response has more than one
+    // consumer and only one of them is being widened here.
     //
-    // The condition is `projectPath && no subjectId` and NOTHING else. No tree
-    // read, no name/date matching, no attempt to judge whether the search
-    // "looked like" it was about a tree person — that test is a heuristic, and
-    // gating the signal on an unvalidated heuristic would bias the very coverage
-    // measurement the signal exists to produce. A caller running a legitimate
-    // broad survey gets one extra short field; whether an omission was
-    // legitimate is answered at analysis time from the args already in the
-    // runlog.
+    // The condition is `projectPath` present and `subjectId` absent, and NOTHING
+    // else. No tree read, no name/date matching, no attempt to judge whether the
+    // search "looked like" it was about a tree person — that test is a heuristic,
+    // and gating the signal on an unvalidated heuristic would bias the very
+    // coverage measurement the signal exists to produce. A caller running a
+    // legitimate broad survey gets one extra short field; whether an omission was
+    // legitimate is answered at analysis time from the args already in the runlog.
     //
-    // Truthiness, not `=== undefined`, on `subjectId`: the ranking gate below is
-    // itself `input.subjectId &&`, so matching it exactly is what keeps this
-    // field from ever claiming ranking was skipped when it ran, or vice versa.
+    // Truthiness, not `=== undefined`, on `subjectId`, so an empty string reports
+    // the same way the ranking gate below treats it. Note the two are NOT
+    // equivalent in the other direction: ranking also requires `out.staged`, so a
+    // nil search WITH a `subjectId` skips ranking and correctly gets no note here
+    // (4 of the 18 subject-carrying calls in `run-2026-07-31_13-02-13`). Absence
+    // of the note therefore means "a subject was named", not "ranking ran".
     ...(input.projectPath !== undefined && !input.subjectId
       ? { rankingSkipped: RANKING_SKIPPED_NOTE }
       : {}),
@@ -728,6 +731,10 @@ export async function recordSearchTool(
   if (
     isMarriageSearch &&
     foundNobody &&
+    // Explicit, rather than leaning on `isSubCountryPlace` to narrow: that
+    // predicate is intentionally not a type guard (see its comment), and this is
+    // what makes `jurisdictionHints.searchedPlace` a sound required `string`.
+    searchedPlace !== undefined &&
     isSubCountryPlace(searchedPlace) &&
     input.subjectId &&
     input.projectPath
