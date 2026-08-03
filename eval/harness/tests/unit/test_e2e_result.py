@@ -64,6 +64,82 @@ def test_write_result_files_creates_all_four_artifacts(tmp_path: Path):
     assert payload["tool_calls"][0]["tool"] == "mcp__genealogy__tree_read"
 
 
+def test_write_result_files_serializes_blocked_context_calls(tmp_path: Path):
+    """The denied main-thread `extraction_append` (#942) reaches the runlog JSON.
+
+    `test_e2e_context_block.py` proves the deny is DECIDED and threaded out of
+    `_run_agent`; this closes the other end — that the `E2eResult` field is
+    carried through `asdict()` into the committed `run-<ts>.json`, kept as a
+    separate array from `blocked_tree_reads` (they are denied by different
+    guards, spec §6.1.1). Together the two tests cover the whole path without a
+    full `run_e2e_test` run.
+    """
+    runlog_dir = tmp_path / "runlogs" / "smith-parents-1850"
+    result = E2eResult(
+        test_id="smith-parents-1850",
+        captured_at="2026-05-26_14-30-45",
+        verdict="pass",
+        stop_reason="completed",
+        judge_output={"verdict": "pass"},
+        usage={},
+        blocked_tree_reads=[{"tool": "person_read", "args": {"personId": "X"}}],
+        blocked_context_calls=[
+            {
+                "tool": "extraction_append",
+                "args": {"assertions": [], "sources": []},
+                "blocked_by": "context",
+            }
+        ],
+    )
+    paths = write_result_files(
+        result=result,
+        runlog_dir=runlog_dir,
+        transcript="# transcript\n",
+        final_tree=None,
+        final_research=None,
+        timestamp="2026-05-26_14-30-45",
+    )
+
+    payload = json.loads(paths["result"].read_text(encoding="utf-8"))
+    assert payload["blocked_context_calls"] == [
+        {
+            "tool": "extraction_append",
+            "args": {"assertions": [], "sources": []},
+            "blocked_by": "context",
+        }
+    ]
+    # The two guards stay in distinct arrays — a write denied by the context
+    # policy must not be conflated with a denied live-tree read.
+    assert payload["blocked_tree_reads"] == [
+        {"tool": "person_read", "args": {"personId": "X"}}
+    ]
+
+
+def test_write_result_files_defaults_blocked_context_calls_to_empty(tmp_path: Path):
+    """A clean run writes an empty array, not a missing key — a reader can always
+    index `blocked_context_calls` without a KeyError."""
+    runlog_dir = tmp_path / "runlogs" / "clean-run"
+    result = E2eResult(
+        test_id="clean-run",
+        captured_at="2026-05-26_14-30-45",
+        verdict="pass",
+        stop_reason="completed",
+        judge_output={"verdict": "pass"},
+        usage={},
+    )
+    paths = write_result_files(
+        result=result,
+        runlog_dir=runlog_dir,
+        transcript="",
+        final_tree=None,
+        final_research=None,
+        timestamp="2026-05-26_14-30-45",
+    )
+
+    payload = json.loads(paths["result"].read_text(encoding="utf-8"))
+    assert payload["blocked_context_calls"] == []
+
+
 def test_write_result_files_handles_missing_tree_and_research(tmp_path: Path):
     """If the agent crashed before producing tree/research, we still get
     the result+transcript files."""

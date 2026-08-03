@@ -135,7 +135,7 @@ def _fixture(tmp_path: Path):
     return load_fixture(fixture_dir)
 
 
-class _HookDrivingAgen:
+class _HookDrivingAgent:
     """An async message stream that first drives the registered PreToolUse hook
     with scripted inputs (recording each return payload into `sink`), then
     yields its messages so `_run_agent` completes normally."""
@@ -188,7 +188,7 @@ def test_main_thread_extraction_append_is_denied_and_recorded(tmp_path, monkeypa
                 },
             ),
         ]
-        return _HookDrivingAgen(
+        return _HookDrivingAgent(
             hook,
             inputs,
             [SystemMessage(subtype="init", data={"session_id": "S1"}), _result()],
