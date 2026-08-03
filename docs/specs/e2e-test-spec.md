@@ -774,7 +774,10 @@ through `e2e.result.axes_from_runlog`, which resolves all four shapes the
 corpus contains. Pre-detector runs (see §7.5) resolve to
 `compliance: not_checked` — an unknown, which is **never** counted as clean.
 
-`make e2e-corpus` prints the three axes across every committed run.
+`make e2e-corpus` prints the three axes across recent committed runs — the
+last 14 days by default, `SINCE=all` for the whole corpus. It names the window
+and the sample size in its own output, so a windowed number is never mistaken
+for a whole-corpus one.
 
 ### 7.3 Variance and Calibration
 
@@ -1011,8 +1014,8 @@ breakdowns exist for a shell loop that runs several fixtures back to back,
 but each iteration prints its own roll-up — the loop does not aggregate.
 
 For totals **across** runs, use `make e2e-corpus`
-(`eval/harness/e2e/corpus_report.py`), which reads every committed run log
-through `axes_from_runlog` and reports all three axes, holding `not_checked`
+(`eval/harness/e2e/corpus_report.py`), which reads each committed run log in
+the window through `axes_from_runlog` and reports all three axes, holding `not_checked`
 compliance separate from clean:
 
 ```

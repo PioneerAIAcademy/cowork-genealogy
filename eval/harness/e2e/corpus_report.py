@@ -34,7 +34,14 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from e2e.guardrail_shadow_report import all_result_jsons, result_jsons_for
+from e2e.runlog_selection import (
+    add_since_arg,
+    all_result_jsons,
+    describe_window,
+    filter_since,
+    parse_since,
+    result_jsons_for,
+)
 from e2e.result import axes_from_runlog
 
 VERDICT_ORDER = ("pass", "partial", "fail", "skipped")
@@ -91,14 +98,18 @@ def main(argv: list[str] | None = None) -> int:
         description="Three-axis totals over committed e2e runs (issue #972)."
     )
     ap.add_argument("--test", help="restrict to one fixture slug")
+    add_since_arg(ap)
     args = ap.parse_args(argv)
 
-    paths = result_jsons_for(args.test) if args.test else all_result_jsons()
+    all_paths = result_jsons_for(args.test) if args.test else all_result_jsons()
+    cutoff = parse_since(args.since)
+    paths = filter_since(all_paths, cutoff)
     if not paths:
         print("No committed runs found.", file=sys.stderr)
         return 1
 
     recall, compliance, gate, problems = tally(paths)
+    print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
     print(format_report(recall, compliance, gate, n_runs=len(paths)))
     for problem in problems:
         print(f"  skip {problem}", file=sys.stderr)

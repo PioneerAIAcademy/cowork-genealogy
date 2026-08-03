@@ -65,9 +65,16 @@ from pathlib import Path
 from typing import Any
 
 from e2e.result import axes_from_runlog
+from e2e.runlog_selection import (
+    E2E_RUNLOGS,
+    add_since_arg,
+    describe_window,
+    filter_since,
+    is_result_json as _is_result_json,
+    parse_since,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-E2E_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "e2e"
 
 
 def _bare_tool_name(tool: str) -> str:
@@ -381,17 +388,6 @@ def format_skill_phases(bd: LatencyBreakdown) -> str:
 
 # --- Run discovery + CLI ----------------------------------------------------
 
-def _is_result_json(p: Path) -> bool:
-    """A committed structured result, not its tree/research/ann siblings."""
-    name = p.name
-    return (
-        name.startswith("run-")
-        and name.endswith(".json")
-        and not name.endswith(".ann.json")
-        and ".final-" not in name
-    )
-
-
 def latest_run_for(test_slug: str) -> Path | None:
     d = E2E_RUNLOGS / test_slug
     if not d.is_dir():
@@ -422,6 +418,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("files", nargs="*", help="explicit result JSON paths")
     ap.add_argument("--test", help="latest committed run for this fixture slug")
     ap.add_argument("--all", action="store_true", help="latest run per fixture")
+    add_since_arg(ap)
     ap.add_argument("--markdown", action="store_true", help="emit a Markdown table")
     ap.add_argument(
         "--by-skill",
@@ -439,7 +436,15 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         paths.append(r)
     if args.all:
-        paths.extend(all_latest_runs())
+        # The window applies to --all only. An explicit path or --test is a
+        # deliberate request for that run; the cutoff guards *aggregate* reads,
+        # where a fixture nobody has re-run in months would otherwise be
+        # averaged in as if it described current latency.
+        latest = all_latest_runs()
+        cutoff = parse_since(args.since)
+        fresh = filter_since(latest, cutoff)
+        print(describe_window(cutoff, n_runs=len(fresh), n_total=len(latest)))
+        paths.extend(fresh)
     if not paths:
         print("Nothing to analyze. Pass files, --test <slug>, or --all.", file=sys.stderr)
         return 1

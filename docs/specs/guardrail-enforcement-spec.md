@@ -99,7 +99,8 @@ genealogical consequences, not just procedural ones.
 
 **Scale.** Replaying the windowed check across 99 committed runs
 (`eval/harness/e2e/guardrail_shadow_report.py`, no API spend — `tool_calls` is
-persisted per run):
+persisted per run). The table below is a whole-corpus replay; the report now
+defaults to the last 14 days, so reproduce it with `SINCE=all`:
 
 | window | violations | runs affected |
 |---|---|---|

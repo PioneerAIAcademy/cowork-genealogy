@@ -25,43 +25,20 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from e2e.runlog_selection import (
+    add_since_arg,
+    all_result_jsons,
+    describe_window,
+    filter_since,
+    is_result_json as _is_result_json,
+    parse_since,
+    result_jsons_for,
+)
 from harness.skill_invocation import find_unguarded_protected_writes
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-E2E_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "e2e"
 
 DEFAULT_WINDOWS = (10, 20, 40, 80, 150)
-
-
-def _is_result_json(p: Path) -> bool:
-    """A committed structured result, not its tree/research/ann/session siblings."""
-    name = p.name
-    return (
-        name.startswith("run-")
-        and name.endswith(".json")
-        and not name.endswith(".ann.json")
-        and ".final-" not in name
-    )
-
-
-def all_result_jsons() -> list[Path]:
-    """EVERY committed run, not just the latest per fixture — calibration
-    wants maximum sample size, unlike latency_report's "latest only" (which
-    exists to avoid stale per-fixture latency numbers, a different goal)."""
-    if not E2E_RUNLOGS.is_dir():
-        return []
-    out: list[Path] = []
-    for d in sorted(E2E_RUNLOGS.iterdir()):
-        if d.is_dir():
-            out.extend(sorted(p for p in d.iterdir() if _is_result_json(p)))
-    return out
-
-
-def result_jsons_for(test_slug: str) -> list[Path]:
-    d = E2E_RUNLOGS / test_slug
-    if not d.is_dir():
-        return []
-    return sorted(p for p in d.iterdir() if _is_result_json(p))
 
 
 def scan_one(path: Path, *, window: int) -> list[dict[str, Any]]:
@@ -126,15 +103,19 @@ def main(argv: list[str] | None = None) -> int:
         help=f"comma-separated window sizes to compare (default: {','.join(str(w) for w in DEFAULT_WINDOWS)})",
     )
     ap.add_argument("--detail", action="store_true", help="also print every violation at the smallest window given")
+    add_since_arg(ap)
     args = ap.parse_args(argv)
 
     windows = sorted({int(w) for w in args.windows.split(",") if w.strip()})
-    paths = result_jsons_for(args.test) if args.test else all_result_jsons()
+    all_paths = result_jsons_for(args.test) if args.test else all_result_jsons()
+    cutoff = parse_since(args.since)
+    paths = filter_since(all_paths, cutoff)
     if not paths:
         print("No committed runs found.", file=sys.stderr)
         return 1
 
     by_window = scan_corpus(paths, windows=windows)
+    print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
     print(format_summary(by_window, n_runs=len(paths)))
 
     if args.detail:
