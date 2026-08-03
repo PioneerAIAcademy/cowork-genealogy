@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 8, flag adds_daughter, confidence 3). Draft transcribed from a Brazilian Catholic marriage record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 8, flag adds_daughter, confidence 3). Resolved as a true match: corroborated by an independent marriage record for a previously undocumented son (Manuel Domingos de Oliveira) naming the same parents. See README Notes for reviewers."
 }

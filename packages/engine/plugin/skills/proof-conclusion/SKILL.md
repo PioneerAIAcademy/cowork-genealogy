@@ -58,8 +58,16 @@ This gate runs regardless of how proof-conclusion was invoked.
    Unlinked *fact* and *negative* assertions (a birth year, a co-residence, an
    "unknown father") that pertain to a person already identified above are
    **advisory, not blockers** — their person is already resolved, and GPS
-   requires them to be analyzed in the narrative, not separately linked. Note
-   any unlinked fact/negative IDs as advisory and proceed.
+   requires them to be analyzed in the narrative, not separately linked. The
+   same holds for **additional identity assertions of a person already
+   identified** — a second name/surname assertion for that person, or that
+   same person appearing as another record's persona (e.g. the father who is
+   also the groom in the marriage register). Once a person carries **one**
+   linked identity assertion, further name parts or personas for that *same*
+   person are advisory corroboration, **not a fresh identity to resolve**: the
+   gate is satisfied **per person**, not per persona or per assertion. Do not
+   defer to person-evidence over extra unlinked personas of an
+   already-identified person. Note any advisory IDs and proceed.
 4. **Conflicts (hard block).** For each conflict touching this question's
    assertions, confirm it is `resolved` or carries an explicit
    acknowledgment. List any conflict IDs that fail this check.

@@ -3,18 +3,19 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Manoel Melquiades de Oliveira and Cândida de Oliveira had a daughter, Josefa Dias Da Conceição, who married Elfridio Justino Da Silva on 12 March 1926 in Natal, Rio Grande do Norte, in addition to their children Abel and Maria Lila already in the tree.",
+      "description": "Manoel Melquiades de Oliveira and Cândida de Oliveira had a daughter, Josefa Dias Da Conceição, who married Elfridio Justino Da Silva in Natal, Rio Grande do Norte, in addition to their children Abel and Maria Lila already in the tree. The exact marriage date is unresolved between two FamilySearch entries (see below) and either should be accepted.",
       "details": {
         "subject_person": "Manoel Melquiades de Oliveira (GHJ6-2WV)",
         "relation": "child",
         "target_person": {
           "name": "Josefa Dias Da Conceição",
           "birth": "unknown, likely Rio Grande do Norte, Brazil",
-          "marriage": "12 March 1926, Natal, Rio Grande do Norte, to Elfridio Justino Da Silva"
+          "marriage": "Natal, Rio Grande do Norte, to Elfridio Justino Da Silva — date unresolved, accept either 12 March 1926 (ark:/61903/1:1:6XWC-328L) or 15 December 1924 (ark:/61903/1:1:6XWH-BNG7). Both entries name the same bride, groom, and both sets of parents. The page images FamilySearch links to each entry are mismatched (neither actually shows this marriage), so the discrepancy could not be resolved by examining the originals; do not penalize a run for reporting either date."
         }
       },
       "supporting_sources": [
-        "Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019 — marriage registration, 12 Mar 1926, Natal, naming the bride's parents as Manuel Melchiades de Oliveira and Candida de Oliveira"
+        "Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019 — marriage registration index entry, 12 Mar 1926, Natal, naming the bride's parents as Manuel Melchiades de Oliveira and Candida de Oliveira (ark:/61903/1:1:6XWC-328L)",
+        "Brasil, Rio Grande do Norte, Registros da Igreja Católica, 1755-2019 — marriage registration index entry, 15 Dec 1924, Natal, naming the same bride, groom, and parents (ark:/61903/1:1:6XWH-BNG7)"
       ],
       "required": true
     }

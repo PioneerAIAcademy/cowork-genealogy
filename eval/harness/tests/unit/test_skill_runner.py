@@ -79,3 +79,45 @@ def test_skill_run_result_shape():
     # that constructs SkillRunResult directly (stubs, tests) gets the
     # field for free, and the orchestrator's uncovered-call gate reads it.
     assert r.attempted_mcp_calls == []
+    assert r.unread_skill_calls == []
+
+
+def test_read_skill_tool_input_reads_the_documented_key():
+    """"skill" is the claude-agent-sdk 0.1.81 contract."""
+    from harness.skill_runner import read_skill_tool_input
+
+    assert read_skill_tool_input({"skill": "timeline"}) == ("timeline", [])
+
+
+def test_read_skill_tool_input_falls_back_to_name():
+    from harness.skill_runner import read_skill_tool_input
+
+    assert read_skill_tool_input({"name": "timeline"}) == ("timeline", [])
+
+
+def test_read_skill_tool_input_prefers_skill_over_name():
+    from harness.skill_runner import read_skill_tool_input
+
+    got, unread = read_skill_tool_input({"name": "wrong", "skill": "timeline"})
+    assert (got, unread) == ("timeline", [])
+
+
+def test_read_skill_tool_input_reports_keys_it_cannot_read():
+    """The SDK-drift signal. If the Skill tool moves the name to a key we
+    don't read, the name must come back None WITH the keys that were there —
+    otherwise skills_invoked silently undercounts and every routing verdict
+    reads as "never activated" with nothing anywhere saying why."""
+    from harness.skill_runner import read_skill_tool_input
+
+    got, unread = read_skill_tool_input({"skill_name": "timeline", "args": {}})
+    assert got is None
+    assert unread == ["args", "skill_name"]
+
+
+def test_read_skill_tool_input_treats_an_empty_name_as_unread():
+    """A present-but-empty key is drift too, not an invocation."""
+    from harness.skill_runner import read_skill_tool_input
+
+    got, unread = read_skill_tool_input({"skill": ""})
+    assert got is None
+    assert unread == ["skill"]
