@@ -604,7 +604,7 @@ def main(argv: list[str] | None = None) -> int:
     concurrency = min(concurrency, len(specs))
     print(
         f"Concurrency: {concurrency} "
-        f"({'--concurrency' if conc_source == 'flag' else 'auto: ' + conc_detail})"
+        f"({'--concurrency' if conc_source == 'flag' else 'auto: ' + (conc_detail or 'unknown')})"
     )
 
     # Accumulate test entries grouped by skill. After all tests have run,

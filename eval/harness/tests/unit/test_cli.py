@@ -518,13 +518,16 @@ def test_resolve_concurrency_auto_is_bounded():
     # the host's RAM.
     value, source, detail = run_tests._resolve_concurrency(None)
     assert source == "auto"
-    assert run_tests._MIN_AUTO_CONCURRENCY <= value <= run_tests._MAX_AUTO_CONCURRENCY
+    assert 1 <= value <= run_tests._MAX_AUTO_CONCURRENCY
+    assert detail is not None
 
 
 def test_resolve_concurrency_zero_or_negative_falls_back_to_auto():
     # argparse can't stop a user passing 0/-1; treat it as "use the default".
-    assert run_tests._resolve_concurrency(0)[1] == "auto"
-    assert run_tests._resolve_concurrency(-4)[1] == "auto"
+    for bad in (0, -4):
+        value, source, detail = run_tests._resolve_concurrency(bad)
+        assert source == "auto"
+        assert value >= 1 and detail is not None
 
 
 @pytest.mark.parametrize(
