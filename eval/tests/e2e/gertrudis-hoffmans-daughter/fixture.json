@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 24, flag adds_daughter, confidence 3). Draft transcribed from a Dutch archival vital-records index; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 24, flag adds_daughter, confidence 3). RESOLVED (issue #874): TRUE MATCH - the 30 Mar 1713 Wanroij baptism of Elisabeth, daughter of Petrus Jansen + Gertrudis Geerts/Gerits, establishes Elisabeth Jansen as a previously unrecorded daughter of the tree couple Gertrudis Hoffmans (KN19-Q19) + Petrus Jansen (between the 1711 and 1717 sons). Confirmed by an original + contemporary duplicate register, the mother's documented 'Gerits Hoffmans' patronymic (matching her own 1709 marriage record) and a Geerts godparent from her paternal family, and the absence of any competing same-named couple in Wanroij. expected-findings.json keeps its original recover finding. See README 'Notes for reviewers'."
 }
