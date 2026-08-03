@@ -304,12 +304,12 @@ that produced a tree without its `.ann.json` (a treeless skip run is exempt).
 
 ## Example
 
-User: "Why did the smith-parents-1850 run fail?"
+User: "Why did the <slug> run fail?"
 
 You should:
-1. Read `eval/runlogs/e2e/smith-parents-1850/run-<latest>.json` (harness
+1. Read `eval/runlogs/e2e/<slug>/run-<latest>.json` (harness
    fields only — skip `judge_output`, `verdict`, and `outcome`).
-2. Read `eval/tests/e2e/smith-parents-1850/expected-findings.json` and the
+2. Read `eval/tests/e2e/<slug>/expected-findings.json` and the
    final tree; the tree contains **none** of the required findings.
 3. See `stop_reason: tool_cap`.
 4. Skim the last 30 tool calls in the transcript — agent is looping

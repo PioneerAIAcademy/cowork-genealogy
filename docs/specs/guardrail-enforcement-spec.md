@@ -189,23 +189,38 @@ carry `"hooks"`) and the two upstream reports that do **not** reproduce.
 also loads the plugin — but "the plugin loader does what you'd expect in the
 hosted path" is exactly the assumption issue #939 disproved for agents. Both
 fire until one hosted run confirms otherwise; they deny the same thing with the
-same reason, so the redundancy is harmless. Tracked in `docs/TODOs.md`.
+same reason, so the redundancy is harmless. Tracked as issue #1129, which also
+covers the third copy in `eval/harness/e2e/orchestrator.py` — no test asserts
+the three agree, so a future addition to `PROTECTED_PROJECT_FILES` can silently
+lag in two of them.
 
 **Deliberate gaps.**
 
-- **`Bash` is not covered.** The guard matches on `file_path`, so
-  `cat > research.json`, `sed -i`, and `python -c` all get through. Skills run
+- **`Bash` is not covered.** All three copies of the guard match on `file_path`,
+  so `cat > research.json`, `sed -i`, and `python -c` all get through. Skills run
   their stdlib-only scripts through `Bash` so it cannot be revoked, and matching
   command text would deny a legitimate `python script.py research.json > out`
   while still missing a variable-built path. A false deny is the worse failure
   mode: it turns a silent quality bug into a loud availability regression. No
-  bypass in the corpus has used the shell; close this if one appears.
+  bypass in the corpus has used the shell; close this if one appears in a runlog
+  or a feedback case.
 - **`Read` is not revoked, and should not be** until there is a way to read the
   same data. `research_query` covers 11 of `research.json`'s ~15 top-level
   sections (missing `project`, `researcher_profile`, `known_holdings`,
-  `localities`) and caps at 50 items with no pagination, and no MCP tool reads
-  `tree.gedcomx.json` at all (`person_read` hits the live FamilySearch API — a
-  different data source). Closing that is a build project, not a config change.
+  `localities`) and caps at 50 items with no pagination. For
+  `tree.gedcomx.json` there is **no query surface at all** — nothing that stands
+  to the tree as `research_query` stands to `research.json`. Plenty of tools
+  *open* the file: `project_context` (`project-context.ts:115`) loads it, and
+  roughly a dozen writer/validator tools (`tree_edit`, `tree_correct`,
+  `tree_forget`, the merge tools, `materialize_facts`, `research_append`,
+  `validate_research_schema`, …) load it to validate or rewrite it. But none of
+  them hand the agent its contents to inspect: the writers return a result, not
+  the tree, and `project_context` returns only a flat person roster
+  (`{id, name, gender, sourceRefs}`) — no facts, no dates or places, no
+  relationships, no per-fact sources. An agent that needs to see what the tree
+  actually says has `Read` and nothing else. (`person_read` is not a substitute
+  — it hits the live FamilySearch API, a different data source.) Closing that is
+  a build project, not a config change.
 - **Scope this correctly: it is hygiene.** Both observed bypass shapes write via
   `research_append`, never via raw `Write`. This closes an escape hatch; §5 and
   §7 are the gates that address the observed bug.
@@ -230,7 +245,10 @@ Design points that were paid for and should not be re-derived:
   fills in itself is attested by the party we don't trust at the moment it
   matters. Direct precedent: `person-evidence`'s `match_score` was meant to
   attest that `same_person` was consulted, and its provenance guard was cut in
-  #695 for "zero observed true positives… against a real false-positive class."
+  #695 for zero observed true positives across **all 15**
+  `eval/tests/unit/person-evidence/` cases as of that PR, against a real
+  false-positive class. (That suite has since grown past 15 — the count is the
+  scope of the measurement, not of the directory.)
 - **Success-gated, via `PostToolUse`.** An errored `Skill` call must not open
   the window, or "invoke the skill, let it fail, finish the write inline"
   evades this check and §8 at once — a `Skill` call really is in the log.
@@ -315,8 +333,12 @@ this section before reopening one.
 
 ## 10. Residual risks
 
-Live queue items are in `docs/TODOs.md` § "Guardrail enforcement in production";
-this section keeps only the risks that outlive any one of them.
+Live queue items are GitHub issues — #1129 (confirm the plugin hook binds in the
+hosted path, then delete the SDK copy), #1144 (do the guardrail skills'
+on-demand reference `Read`s survive compaction?), #1145 (is `gps-mentor`'s own
+gate skippable?), and #1146 (other same-batch self-satisfying gates in
+`research_append`). This section keeps only the risks that outlive any one of
+them.
 
 - **§7's window is a heuristic.** A model that invokes the right skill and then
   does something unrelated while the window is open passes. It bounds the
@@ -342,13 +364,98 @@ this section keeps only the risks that outlive any one of them.
 
 ---
 
+## 11. Caller-attributed protected writes (shadow mode)
+
+**Status:** shadow only. Instrumented, never denied. Graduating it is gated on
+the same calibration as §7 (issue #911).
+
+### The rule
+
+A **protected write** — one `owning_skills` attributes to one of the four
+`GUARDRAIL_SKILLS`, or any `extraction_append` call — is legitimate **iff its
+caller is one of**:
+
+- the **main thread** (no `agent_id` on the ledger entry), or
+- one of the four **dedicated Cowork agents** (`DEDICATED_AGENT_NAMES`), which
+  carry their own self-contained doctrine.
+
+`extraction_append` is narrower still: only `agent_type == "record-extractor"`
+exactly. It is hard-restricted at the TypeScript layer to `sources`/`assertions`
+(`extraction-append.ts`) and `record-extractor.md` is the only agent file that
+declares it, so a *different* dedicated agent holding it is not a case any
+agent's `tools:`/`disallowedTools:` declaration is set up to permit, and is
+itself worth flagging.
+
+Anything else — most importantly a `general-purpose` subagent the model spawned
+itself — is a bypass.
+
+### The decision, and what it beat
+
+**Caller identity decides. Doctrine presence does not.** Settled by the lead
+2026-08-02.
+
+The case that forced it is `ogletree-children/run-2026-07-21_13-24-05.json`, a
+**committed, judge-`pass`** run: the model spawned a `general-purpose` subagent,
+that subagent **called `Skill(person-evidence)` itself** at `tool_calls[267]` —
+so the doctrine genuinely loaded — and then made three protected writes
+(`materialize_facts` with no `personId` at 278, `tree_edit` at 279,
+a 19-op `research_append` at 280). Under a doctrine-presence rule that run is
+compliant. Under this rule it is a bypass.
+
+**Rejected: doctrine presence.** Two reasons, either sufficient.
+
+1. A `general-purpose` subagent binds **none** of the `tools:` /
+   `disallowedTools:` declarations that every other capability restriction in
+   this system depends on (`CLAUDE.md`, issue #939). It is precisely the shape
+   that escapes them, so "it read the doctrine" guarantees nothing enforceable.
+2. It cannot bind in production. A `PreToolUse` hook can see *who is calling*;
+   it cannot see *whether doctrine was loaded*. A rule that is uncheckable at
+   the enforcement point is a rule that only ever runs in a post-hoc report.
+
+This is [ADR-0006](../adrs/ADR-0006-restrict-capability-by-tool-identity.md)
+("restrict capability by tool identity, not by prompt or parameter") applied to
+callers that have no declared identity at all. It does not supersede that ADR;
+it extends it to the dynamically-spawned case, which ADR-0006 does not cover.
+
+**Also rejected: two separate shadow axes** (unnamed-caller and doctrine-absent,
+calibrated independently). It would produce two uncalibrated numbers when #911
+is already blocked on calibrating one, and the second axis needs exactly the
+adjacency heuristic retired below.
+
+### Why this needs no window
+
+The retired predecessor — `find_skill_call_without_doctrine` — guessed "who is
+currently executing" from `Skill`/`Agent`/`Read` adjacency in a flat,
+unattributed `tool_calls` list, and missed real bypasses because it asked the
+wrong question: whether doctrine was *reloaded*, not who was permitted to act on
+it. It is retired, not tuned.
+
+Attribution removes the guess. `e2e/orchestrator.py`'s `pretool_hook` stamps
+every ledger entry with the PreToolUse hook's own `agent_id` / `agent_type`
+(`claude_agent_sdk` `_SubagentContextMixin`: present only inside a Task-spawned
+subagent, **absent** — not merely falsy — on the main thread). With true
+per-call caller identity the check needs no window and no episode boundary.
+`harness/context_policy.py::is_subagent_call` is the probe-verified precedent
+for keying on exactly this, though that module is unit-harness-only and does not
+itself cover e2e.
+
+A call still in flight when a run aborts never receives these fields — the same
+degradation `response_summary` already has.
+
+### Where it surfaces
+
+`E2eResult.protected_writes_by_unnamed_delegate`, a list of human-readable
+violation strings. **Deliberately not read by `__post_init__`**: it must not
+move the `compliance` axis until its false-positive rate is measured. Detector:
+`harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate`.
+
 ## Related
 
 - `docs/specs/e2e-test-spec.md` §7.5 — the detectors, specified
 - `docs/specs/research-append-tool-spec.md` §5, §11 — the write-boundary
   invariant and the `extraction_append` lane-gating precedent this extends
-- `docs/specs/skill-architecture-spec.md` §1 — note that its "guardrail skills"
-  means the schema-validation skills, a different set from the four here
+- `docs/architecture.md` §5 — the three capability-binding surfaces and which
+  of them bind in production; §9.4 lists what nothing checks
 - `CLAUDE.md` — "Plugin hooks", "Cowork plugin agents"
 - Issues #911 (calibrate §7), #913 (what past verdicts are worth), #1054
   (retain a hosted ledger, then port §8), #998 (§8 check 1's seed-state arm),

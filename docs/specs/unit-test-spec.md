@@ -41,6 +41,7 @@ True multi-turn dialogue support (canned user replies, scripted turn arrays) is 
 - **Multi-turn dialogue support.** See above.
 - **Skill chains.** A single test exercises one skill in isolation. Tests that span multiple skills (e.g., `research-plan` → `search-records` → `record-extraction`) belong in the e2e framework (`docs/specs/e2e-test-spec.md`).
 - **Schema versioning.** Schema breakage is acceptable during build-out (per `research-schema-spec.md` §7). No migration story in v1.
+- **Skill-body length, in either direction.** A test grades a **single invocation in fresh context**, so this harness cannot see multi-hour retention — and that is where a large SKILL.md earns or wastes its tokens. A skill body enters context once, via the `Skill` tool, and nothing reloads it; successive auto-compactions evict it. Measured over one real 309-turn session, `search-records` (then 41.6 KB) was resident for **228 of 309 turns** and invoked exactly once, after which its *unanchored* rules decayed: `count: 50` held at 100% while the body was resident and fell to 45%, and "always call `rank_search_matches`" fell from 77% to 3%, leaving 114 searches hand-triaged. Every rule with a **structural anchor** — the tool rejects the violation, its output feeds a step that cannot proceed without it, or it leaves a durable trace the agent re-reads — held at 100%. Consequence for this harness: it will bless a cut that removes something only a long session needs, and equally bless an addition that earns nothing. A deep cut to, or sustained growth of, a large skill body needs a gate other than this suite — which is what blocks issues #1154 (`search-records`, 50.2 KB) and #1153 (`person-evidence`, 719 lines). Size *visibility* is #976. Plugin **agents** are exempt: they run in fresh context per invocation and cannot decay this way.
 
 ### Division of labor
 
@@ -1128,7 +1129,6 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
   "judge_model": "string (e.g. claude-haiku-4-5-20251001)",
   "rubric_hash": "string (SHA-256 of eval/tests/unit/<skill>/rubric.md at run time)",
   "judge_prompt_hash": "string (SHA-256 of eval/harness/judge/prompt.md at run time)",
-  "test_content_hash": "string (SHA-256 of the resolved test — test JSON minus cosmetic fields + scenario directory contents + referenced fixture file contents — used by cross-PR comparison to auto-exclude tests whose grading-relevant content changed; see docs/per-pr-review-workflow.md §2.4)",
 
   "scenario": "string or null (scenario directory name)",
   "mcp_fixtures": ["string (fixture file names used)"],
@@ -1814,6 +1814,15 @@ Every test runs under hard limits. Exceeding any one aborts the run with `outcom
 | `max_wall_clock_seconds` | 300 | `execution.max_wall_clock_seconds` | Catches hangs and excessively slow responses. 5 min handles even complex synthesis skills |
 | `max_tool_calls` | 50 | `execution.max_tool_calls` | Bounds MCP fixture consumption and prevents accidental fan-out (e.g., a skill that calls `place_search` for every word in the user message) |
 | `max_input_tokens_per_turn` | 200000 | `execution.max_input_tokens_per_turn` | Catches scenarios where the skill re-reads files into context until the window saturates. **Post-hoc**: the SDK exposes `usage.input_tokens` only after a turn returns, so the offending turn is billed before the harness aborts. Catches runaway *growth* between turns, not the first oversized turn. A preemptive cap requires a `PreSendMessage` hook with token estimation; deferred to v2 |
+
+**Decided against: mass-tightening oversized `max_wall_clock_seconds` caps.**
+Roughly 80 tests carry a cap far above their real duration. Since
+`_est_test_seconds` (`eval/harness/run_tests.py`) weights longest-first
+scheduling by each test's *last observed actual* duration and falls back to the
+cap only when no run log exists, an over-generous cap costs nothing in makespan —
+it is purely a safety ceiling. Tightening 80+ caps would add abort/flakiness risk
+for no scheduling gain. Revisit only if one specific runaway needs a faster
+ceiling.
 
 Test JSON may override per-test (rare — mostly used for `proof-conclusion` and `research-plan`, which legitimately take more turns):
 

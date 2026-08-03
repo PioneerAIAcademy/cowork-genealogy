@@ -174,6 +174,16 @@ camelCase convenience fields the same way `research_log_append` does.
 
 ### 3.3 Batch form (`ops`) — persist a whole record in one call
 
+> **Batching cuts round-trips, not generation time.** Measured on a real
+> session: a correctly batched 45-entry `research_append` still cost ~60–90 s of
+> raw token streaming, because wall-clock is linear in output tokens emitted
+> (~57 tok/s, intercept ≈ 2 s) and a batch emits the same tokens in one turn
+> instead of many. Batching removes turn overhead and validation round-trips; it
+> does not make the model write less. A skill that is slow because it
+> deliberates or narrates at length is not fixed by batching its writes — that
+> is a prose-volume problem (`docs/specs/unit-test-spec.md`, "Out of v1 scope" —
+> skill-body length).
+
 To persist many entries at once (e.g. a record's source + every assertion + its
 person-evidence links), pass an optional `ops` array instead of the top-level
 `section`/`op`/`entry`/`entryId`/`fields`/`planId` (which are ignored when `ops`
@@ -811,4 +821,10 @@ instrument, only of the caller-attribution rule it would need.
 `match_score` also remains fabricable by `person-evidence` itself. It is not
 derivable at the tool boundary: `same_person`'s tree side is a hand-curated
 "record-sized" slice, and a local stub returns a degenerate near-zero score the
-skill must interpret as *no score*. The lever there is eval/rubric, not tooling.
+skill must interpret as *no score*. The *value* therefore cannot be validated
+here; what can be is its **presence**, which is the engine invariant on
+`personEvidenceInvariants` decided in issue #1006 (2026-08-01). That decision
+supersedes an earlier reading of this paragraph as "the lever is eval/rubric,
+not tooling" — #1006 explicitly concedes that a present `match_score` does not
+prove `same_person` ran, and takes the presence check anyway rather than
+over-engineering past it.

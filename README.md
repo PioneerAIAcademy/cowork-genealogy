@@ -506,6 +506,10 @@ clobbering a hook it didn't write. Details in
 
 ### Where to read next
 
+- [docs/architecture.md](./docs/architecture.md) — how the system fits
+  together and where a change lands. Each section ends with an "If you're
+  asked to…" block naming every site a change touches and which of them
+  nothing checks. **Read this before your first PR.**
 - [DEVELOPMENT.md](./DEVELOPMENT.md) — building, testing, smoke-tests,
   adding tools and skills, running the eval harness.
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — what kinds of contributions

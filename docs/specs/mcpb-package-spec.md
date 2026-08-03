@@ -10,9 +10,9 @@ The `.mcpb` is a ZIP archive of the compiled MCP server plus a
 `manifest.json` that conforms to the official MCPB manifest schema. It is
 built from `packages/engine/mcp-server/` with the official `@anthropic-ai/mcpb` CLI.
 
-This spec is the source of truth the `spec-review` agent and
-`packages/engine/mcp-server/tests/packaging/manifest.test.ts` check the manifest and build
-against.
+This spec is the source of truth that
+`packages/engine/mcp-server/tests/packaging/manifest.test.ts` — and any manual
+review — checks the manifest and build against.
 
 ---
 

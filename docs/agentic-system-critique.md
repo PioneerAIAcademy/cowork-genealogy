@@ -11,12 +11,12 @@ against how comparable production agent systems are built, and a prioritized
 list of what to do next. It is a critique and a work list, not a plan — each
 item that gets picked up should get its own plan or issue.
 
-**Evidence base.** 126 committed e2e runs (`eval/runlogs/e2e/`), the latest unit
+**Evidence base.** 133 committed e2e runs (`eval/runlogs/e2e/`), the latest unit
 run log for the 25 skills with suites, the specs under `docs/specs/`, the
 measured performance work in `docs/plan/research-performance-2026-07-27.md`, the
-plugin bodies, the packaging lints, and ~90 open issues (115 as of 08-01,
-counting the 07-31 filing wave). Numbers cited are reproducible from the repo —
-see §7.
+plugin bodies, the packaging lints, and ~170 open issues (115 before the retired
+staging queue's 54 items were filed as #1117-#1157 on 08-02). Numbers cited are
+reproducible from the repo — see §7.
 
 > **rev. 5 supersedes rev. 4 after a fourth, deliberately narrow pass** — a
 > fresh-eyes attack on only the rev. 4 diff, because each revision's errors
@@ -36,36 +36,62 @@ see §7.
 **0.1 — We proved the right law and have not applied it to the router's
 judgment rows.** `research-performance-2026-07-27.md` §5.3 is the strongest
 piece of agent engineering in this repo: across 309 turns of a real session,
-every rule with a **structural anchor** held at **100%**, and both rules that
-had none decayed — the ranking doctrine from 77% compliance to **3%** once
+every rule with a **structural anchor** held at **100%**, and **both rules that
+decayed had none** — the ranking doctrine from 77% compliance to **3%** once
 compaction evicted the skill body. We acted on that for `record_search` (the
 ranking fold, C7). The routing table — 17 rows at `research/SKILL.md:128-146`,
 inside a 431-line body that is resident longer than any other in the system — is
 still prose.
 
-Two caveats that rev. 1 got wrong and that constrain what follows. First,
+**The law runs one direction only.** An anchor *guarantees* survival; the absence
+of one merely *permits* decay. It is not the converse — "unanchored" does not
+predict failure. The audit's own table lists **three** unanchored rules and one
+of them **improved**: `givenName` went 54% → 94%, annotated "Not decay — the
+early surname-only queries were deliberate broad sweeps. Rate *rose*." So the
+inference an anchor licenses is one-way, and an unanchored rule still has to be
+measured before it is called a problem.
+
+Three caveats that rev. 1 got wrong and that constrain what follows. First,
 **whether this is in fact the largest unanchored rule we own is unmeasured**:
 `research-performance-2026-07-27.md:692-697` explicitly scopes its audit to
 `search-records` and says the per-skill audit "should not be assumed." No
 compaction-segment audit of `research/SKILL.md` exists; doing one is cheap and
-should precede any structural change to the router. Second, **only 6 of the 17
-rows are mechanically computable** (§3, P2 spike) — and those six are the ones
-that were never failing.
+should precede any structural change to the router. Second, that same scope note
+**exempts plugin agents entirely** — they run in fresh context per invocation, so
+`record-extractor` (48 KB) and `gps-mentor` (34 KB) reload every time and
+cannot decay this way; nothing below about anchoring applies to them. Third,
+**only 6 of the 17 rows are mechanically computable** (§3, P2 spike) — and those
+six are the ones that were never failing.
 
 **0.2 — The dominant failure mode is process compliance, not genealogy — but the
 instrument measuring it has three open defects, two unnamed false-positive
 classes, and one false-negative blind spot (see the P0).** Since the post-run compliance
 detector shipped (#914, 2026-07-27), **8 of 25** e2e runs carry at least one
-guardrail-bypass violation. In the five most recent failing runs (all
-2026-07-30) the LLM judge scored the *genealogy* **pass on three and partial on
+guardrail-bypass violation. In the five failing runs of 2026-07-30 that
+completed (the window §7 describes — they are not the five most recent on the
+committed corpus) the LLM judge scored the *genealogy* **pass on three and partial on
 two** — every one was failed by the detector.
+
+> **On the full committed window that rate is worse, not better: 12 of 29 runs
+> and 45 violations (§7).** The 8/25 window stops at `2026-07-30_19-43-58` and
+> drops timed-out runs — and that truncation is *not* neutral: the four excluded
+> runs carry **20 of the 45**, so W1 understates both incidence (32% vs 41% of
+> runs) and severity (1.0 vs 1.55 violations/run). The narrow window is retained
+> here only because §3's P0 and §9's "≤9 of 25" gate-reach figure are derived
+> against it. **Which window is canonical is an open decision — see #1176**,
+> which also records the third, undeclared window §7's tool mix uses.
 
 **That rate is a floor with an unquantified false-positive rate and should not
 be quoted without this caveat.** The arm producing **16 of the 25** violations
-(`find_person_evidence_missing_same_person`) is the subject of **#1006**, which
-states that "doctrine gap" and "a check measuring its own introduction date"
-predict identical data and cannot be separated on the current corpus — a
-confound partially resolved by a 07-31 comment (see the P0). **#998**
+(34 of 45 on the full window) is `find_person_evidence_missing_same_person`.
+**16 is a count of violations, not of what a gate could prevent** — §3's P0 puts
+the reach of any gate consistent with the skill contract at **≤9 of the 25**,
+because 7 of the 16 flagged persons have zero record-sourced links (§9, rev. 3
+row). It is the subject of **#1006**, which was
+**settled 2026-08-01: this is a doctrine gap, not a check measuring its own
+introduction date.** Splitting every run with a tool ledger on the doctrine's
+landing date shows compliance *falling* afterwards (27% before, 19% after) and
+`same_person` calls predating the rule by three weeks (see the P0). **#998**
 documents a second arm firing on seeded tree state with no `starting_tree`
 baseline (3 of the 25). **#999** documents that `is_error` is never populated,
 so a *failed* `Skill` call is credited as a successful invocation across all four
@@ -87,9 +113,15 @@ follow-up.
 `pierre-desobry-spouse` called `same_person` three times and still drew four
 "never called for it" violations — the check is per-person, so partial
 compliance is the norm rather than wholesale skipping. **The gap is inside the
-skill, not in the route to it.** At most 9 of the 25 violations (the
-exhaustiveness / proof-conclusion / conflict arms) are the "router did the work
-inline" shape, and only `cornelius-booysen-death` is a clean instance.
+skill, not in the route to it.** **9 of the 25 violations** — the
+exhaustiveness / proof-conclusion / conflict arms, 3+3+3 — are the "router did
+the work inline" shape, and only `cornelius-booysen-death` is a clean instance.
+
+> **Two different "9 of 25" figures appear in this document and they are
+> disjoint sets, not the same claim.** This one is the inline-shape subset
+> (3+3+3 from the non-`same_person` arms). §3's P0 and §9's "≤9 of 25" is the
+> *gate-reach* figure — 16 minus the 7 flagged persons with no record-sourced
+> links, i.e. the complement. Their union is the whole 25; they do not add.
 
 **0.3 — Everything we know about this system, we know from the bench.**
 `apps/server/app/obs.py` is PII-free stdout logging; tool events go to a capped
@@ -120,13 +152,22 @@ yields — *a rule that must hold for hours needs a structural anchor; prose
 survives about three compactions* — is stated qualitatively in Anthropic's own
 published guidance (deterministic hooks over model choice, "poka-yoke your
 tools" in *Building Effective Agents*, the context-engineering post) — and the
-quantification itself now has a public precedent: arXiv 2606.22528 ("Governance
-Decay", June 2026, one month before this document) measures constraint
-violations rising 0% → 30–59% after compaction on a purpose-built benchmark.
-What remains distinctive here is the derivation from production: the §5.3 audit
-reached the same law from 309 turns of real work and yields an operational
-decay horizon (~3 compactions) the benchmark paper does not give.
-Two rules were converted on the strength of it and the fold verified 7/7.
+quantification itself now has a public precedent: Shiyang Chen, *"Governance
+Decay: How Context Compaction Silently Erases Safety Constraints in Long-Horizon
+LLM Agents"*, [arXiv:2606.22528](https://arxiv.org/abs/2606.22528) (June 2026,
+one month before this document; verified against arxiv.org 2026-08-02). Its
+**ConstraintRot** benchmark measures constraint violations rising from 0% under
+full policy visibility to **30% after compaction, 59% on some models**, and its
+"Constraint Pinning" mitigation — quarantining governance rules from lossy
+compression — returns them to 0%. What remains distinctive here is the
+derivation from production: the §5.3 audit reached the same law from 309 turns
+of real work and yields an operational decay horizon (~3 compactions, its own
+extrapolation from an early/late segment split rather than a counted quantity)
+that the benchmark does not give. Note the paper's mitigation is platform-side
+and not available to us, which is why our answer is a structural anchor.
+Two rules were converted on the strength of it — the `count: 50` default and
+the ranking fold, both now in `record-search.ts`. (The fold was reported as
+verifying 7/7; that result is not recorded in any committed test or runlog.)
 
 **1.2 Capability restriction by tool identity, not by prose or by parameter.**
 `extraction_append` is `research_append` narrowed to `sources` + `assertions`,
@@ -216,11 +257,11 @@ write is treated as a recoverable mistake, not a stop.
 | # | Gap | Evidence in this repo |
 |---|---|---|
 | 2.1 | Production telemetry / trace ledger | `obs.py` is logging only; `sandbox_server.py` records to a capped replay buffer; all detectors run on eval runlogs (#1054). Per-call tracing is now *median* industry practice (OTel GenAI semantic conventions; ~89% observability adoption in the LangChain survey) — this repo is below median on exactly the axis it leads everywhere else |
-| 2.2 | Deterministic control flow where control flow is deterministic | 6 of the router's 17 rows are mechanically computable and none of them is computed; the other 11 need judgment and should stay in prose |
+| 2.2 | Deterministic control flow where control flow is deterministic | 6 of the router's 17 rows are mechanically computable and none of them is computed; of the other 11, 7 need judgment outright and 4 are mixed (§3, P2) |
 | 2.3 | A cheap test for the component that fails most | No `eval/tests/unit/research/` suite; the router is only exercised by live e2e runs at ~$8 / 55 min |
 | 2.4 | Per-step model and effort routing | Effort is session-wide and never set by `real_agent.build_options`; per-step routing exists only via plugin agents. The 26 skill `model:` pins are **dead weight, not a fidelity gap** — 26 of the 27 skills pin `claude-sonnet-4-6` (`forget-and-rederive` never had one), which *is* `DEFAULT_MODEL` (`skill_runner.py:57`), and only the unit harness reads them (`harness/orchestrator.py:206`); the e2e harness never does. Deleting all 26 changes nothing anywhere; leaving them makes per-step routing look like it exists |
 | 2.5 | Automated production → eval mining | `mine-unit-test` exists; the trigger is a hand-triaged feedback zip |
-| 2.6 | Parallel / tiered e2e | `run_e2e.py` takes one fixture per invocation with no concurrency; a 20-fixture pass is ≈$146–165 (20 × median-to-mean run cost) and ~20.5 h serial, with no budget enforcement |
+| 2.6 | Parallel / tiered e2e | `run_e2e.py` takes one fixture per invocation with no concurrency; a 20-fixture pass is ≈$147–171 (20 × median-to-mean run cost) and ~17–20 h serial, with no budget enforcement |
 | 2.7 | Generated schema mirrors | 4+ hand-maintained copies of the closed enums (#1087, #1015, #1014; #1013 closed 08-01 into a retitled #1015); CLAUDE.md needs a three-case table to say which sites an edit touches |
 | 2.8 | Unit-side judge calibration | `calibrate_judge` is e2e-only; the unit judge has `.ann` corrections but no agreement metric |
 
@@ -230,7 +271,7 @@ write is treated as a recoverable mistake, not a stop.
 `research-query.ts:29`; #1031). proof-conclusion's "collect every assertion"
 gate saw 50 of 57. rev. 2 called this "silent" — it is not: the response has
 carried a `truncated` flag and a pre-cap `count` since the tool shipped on
-07-26 (`research-query.ts:226-228`), and the schema description says to check
+07-26 (`research-query.ts:243-244`, typed at `:66-71`), and the schema description says to check
 the flag and narrow. The real defect is narrower and still real: there is no
 way to fetch items 51+ when the filter cannot be narrowed further, and the
 consuming skill ignored the flag it was given. A correctness bug wearing a
@@ -264,8 +305,11 @@ kept writing*: `Glob` for `settings.json` and a read of the **global**
 interleaved throughout (9 of the 13 precede the last denied attempt). rev. 2
 said the agent escalated first and "only then" wrote raw; the log refutes that
 ordering (§9) — the escalation was concurrent with the writes, not a prelude to
-them. `eval/harness/harness/auth.py:133-138`
-already documents the "falls back to write JSON directly" mode as known. Two
+them. The behaviour was known before the
+incident: the pre-#1173 comment in `eval/harness/harness/auth.py` recorded the
+agent "falls back to write JSON directly" — though it attributed the cause to a
+flag polarity that turned out to be inverted, so the ferber runs and #941 are
+the durable evidence, not that comment (whose text is now deleted). Two
 gaps follow, neither of which rev. 1 named — see 2.11.
 
 The narrow lesson still stands: a guard needs a test that runs in the
@@ -275,7 +319,7 @@ the three lockdown copies agree**, so the next change to
 deserves naming: all three copies match only `Write`/`Edit`/`NotebookEdit` — the
 `Bash` route is deliberately open (`real_agent.py:132-139`: pattern-matching
 command text would false-deny the skills' own stdlib scripts; recorded in
-`docs/TODOs.md`).
+`docs/specs/guardrail-enforcement-spec.md` §6).
 
 **2.11 The system fails open when its tool layer disappears, and a skill is
 reachable as a permission-escalation path.** Nothing treats "the writer tools
@@ -342,11 +386,19 @@ not sufficient, per the issue itself: a skill that runs and produces nothing
 still returns success. #998 needs a `starting_tree` baseline so the
 proof-conclusion arm stops firing on seeded relationships (the arm keys on *any*
 ParentChild/Couple in the final tree; `starting_tree` is consulted only for
-person fact-counts). #1006 needs a date floor — and its confound is now
-partially resolved: a 2026-07-31T20:38Z comment supplies a post-doctrine run
-(`bagley-father-1884`, `run-2026-07-31_18-06-28`) that created and linked a
-person with zero `same_person` calls, the data point the
-check-measures-its-own-introduction reading predicts should not exist.
+person fact-counts).
+
+**#1006's confound is settled, not partially resolved (2026-08-01).** The issue
+is now titled "(settled: doctrine gap, not an anachronistic check)". The
+separating measurement is not the bagley run but the full before/after split on
+the doctrine's landing date (`same_person` entered `research/SKILL.md`
+2026-07-15, PR #657): of runs writing `person_evidence`, **13 of 48 (27%) called
+`same_person` before that date and 16 of 83 (19%) after** — compliance *fell*
+after the rule landed, which the check-measures-its-own-introduction reading
+predicts cannot happen; and `same_person` calls appear from 2026-06-23, three
+weeks before the line existed. **Do not re-open this as a confound.** What
+remains open in #1006 is the *rollout* — 94% of current `person_evidence` writes
+would fail the invariant it decided — plus its three scope questions.
 
 **Two false-positive classes rev. 2 did not name — both from the detector
 enforcing the router's paraphrase rather than the owning skill's contract.**
@@ -368,7 +420,7 @@ for runs after it), and the three ferber raw-write runs count as clean in the
 8/25 denominator, because raw writes are shadow-mode only.
 
 **Until these land, the 8/25 rate cannot be trended and no gate should be
-graduated on it.** `guardrail-enforcement-spec.md:324-327` is explicit that
+graduated on it.** `guardrail-enforcement-spec.md:346` is explicit that
 false-deny is the asymmetric risk.
 
 **Exit:** the five 2026-07-30 runs re-scored under corrected detectors; each
@@ -403,11 +455,17 @@ Constraints any design must satisfy, distilled from the three failures:
    `materialize_facts` time, and gate there too — the tree write is where the
    violation lands, so a `person_evidence`-append gate alone cannot be the
    enforcement point.
-2. **A non-fabricable attestation.** Nothing today persists `same_person`
-   output, and `research-append-tool-spec.md:812-815` is explicit that
-   `match_score` is caller-fabricable ("the lever there is eval/rubric, not
-   tooling"). The counter-design: `same_person` itself persists a
-   (person, record, persona)-keyed attestation the writer tools can check.
+2. **An attestation — but note the owner has already decided against holding
+   out for a non-fabricable one.** Nothing today persists `same_person` output.
+   `research-append-tool-spec.md:821-829` records the 2026-08-01 decision
+   (#1006): validate `match_score`'s **presence** on the
+   `personEvidenceInvariants` path, explicitly conceding that presence does not
+   prove the call happened, and *"do not over-engineer past this."* That
+   paragraph **supersedes** the earlier "the lever there is eval/rubric, not
+   tooling" reading this document quoted through rev. 5. The stronger
+   counter-design — `same_person` persisting a (person, record, persona)-keyed
+   attestation the writer tools check — is not what was decided; propose it
+   *against* that decision, not into a vacuum.
 3. **Persona granularity.** Key on (`record_id`, `record_persona_id`), not
    `record_id` — bagley's `QPQP-R8T8` carries ≥3 personas, and a record-level
    exemption lets a second persona of an already-linked record attach
@@ -448,7 +506,8 @@ conflict is unresolved. It does **not** refuse when:
 2. a resolved question's `ps_id` has no `focus: "proof-critique"` entry in
    `evaluations[]` (the mentor gate).
 
-Both are prose today, both are the shape §5.3 says decays, and both are
+Both are prose today, both are the shape §5.3 says *can* decay (unanchored —
+which permits decay rather than predicting it, §0.1), and both are
 computable from files the tool already loads. Follow `proofSummaryInvariants`'
 pre-call-state discipline. Land the mentor gate first — it is a pure FK check
 into `evaluations[]`; the tree-encoding gate carries the caveat below.
@@ -531,7 +590,7 @@ it grades a single routing decision in fresh context. It guards against routing
 
 The largest measured single lever (58% of output tokens are unstored billed
 reasoning; generation is linear in output tokens at ~57 tok/s). Nobody has
-measured this product at any effort other than `high`. `docs/TODOs.md` notes
+measured this product at any effort other than `high`. Issue #1136 notes
 `ClaudeAgentOptions.effort` may make it a one-line change instead of a
 settings-file write, and that the five-minute check has not been done. Do the
 check first.
@@ -553,12 +612,17 @@ lever #2, P2 was internally inconsistent.)* 387 calls across 28 recent runs
 turn-shaped cost. rev. 3 hypothesized the flag's polarity was inverted; the
 rev. 3 review **confirmed it** against the installed CLI (v2.1.220 — verify
 against the pinned version before relying on it): a truthy
-`ENABLE_TOOL_SEARCH` *enables* deferred/tool-search mode, while all three
-comment sites (`auth.py:140`, `orchestrator.py:829`, the hosted
-`real_agent.py`) describe it as eager-loading — one even says "Forcing tool
-search off" while setting `"true"`. Both harnesses and the hosted path have
-been running the opposite of their intent. The fix is one line at three sites;
-re-measure the tool mix after. A related production hazard the packaging lint
+`ENABLE_TOOL_SEARCH` *enables* deferred/tool-search mode, unset also means on,
+and only a falsy value disables it. Both harnesses and the hosted path have
+been running the opposite of their comments' stated intent.
+
+**Update 2026-08-02 — the comment half is done.** #1173 corrected the three
+inverted sites (`auth.py`, `e2e/orchestrator.py`, `real_agent.py`) and a
+follow-up corrected the last two in `CLAUDE.md` and
+`tests/packaging/agent-tool-names.test.ts`. **What remains in #1110 is the flip
+itself** — a behavior change in both harnesses and the hosted path that requires
+re-measuring the tool mix before and after. It is no longer a one-line fix.
+A related production hazard the packaging lint
 cannot see: agents *generate* hardcoded `select:mcp__genealogy__…` ToolSearch
 queries at runtime (the ferber transcripts show them), which would miss under
 the Cowork bridge prefix. Strictly worse in Cowork, which offers no equivalent
@@ -590,10 +654,12 @@ deletes the three-case "which sites does this edit touch" table from CLAUDE.md.
 what comes next changes nothing when the router already got there.
 
 **The strongest objection**, which rev. 1 did not engage:
-`guardrail-enforcement-spec.md:299-304` rejected per-skill write tools because
+`guardrail-enforcement-spec.md:314-320` rejected per-skill write tools because
 *"a split tool is exactly as callable by the router as a section branch is."*
 The same logic applies here — "call `research_next` every turn" is itself
-unanchored prose in the body that decays. The disconfirming evidence is in our
+unanchored prose in the body, so nothing protects it from decaying. The
+one-way law (§0.1) does not make that decay certain; the disconfirming
+evidence for this proposal, which does not depend on it, is in our
 own data: `project_context`, the projection tool built for exactly this, is
 called **~3 times per run** against `Read`'s ~19.
 
@@ -607,9 +673,10 @@ advances through `plan-design-review`.
 `unknown`, ship it beside `project_context`, and measure adoption before
 building further. **Exit:** an adoption rate, not a violation count.
 
-The cheaper 80% is already in flight: fold `logIndex.hasLinkedAssertion` into
-`project_context` per the state-diet plan — rows 6, 7 and 11 for free, no new
-tool and no new prose rule to remember.
+The cheaper 80% is scoped but **iceboxed** (#1157 — "candidate work, no decision
+made"): fold `logIndex.hasLinkedAssertion` into `project_context` — rows 6, 7
+and 11 for free, no new tool and no new prose rule to remember. There is no
+`docs/plan/` state-diet document; #693 is closed.
 
 ### P2 — Finish the state diet
 
@@ -646,27 +713,35 @@ network and validation."
 **Data: yes, in the mirrors.** Four-plus hand-maintained copies of one set of
 closed enums is complexity that can simply be deleted (§3, P2).
 
-**Prose: yes.** 912 KB of plugin markdown; SKILL.md bodies alone are 7,730
+**Prose: yes.** 915 KB of plugin markdown; SKILL.md bodies alone are 7,730
 lines. `search-records` is 50 KB, `person-evidence` 39.5 KB, the router 29 KB,
 `record-extractor` 824 lines, `gps-mentor` 635.
-`references/validation-protocol.md` is duplicated **12×**,
-`places-guidance.md` **9×** in skills (a stray 10th copy sits at the plugin's
-top-level `references/`), `research-log-protocol.md` **3×**. The duplication
-is a *correct* response to a platform limitation (#17741) and is lint-guarded,
-so it is managed rather than accidental. The real cost is that doctrine which
+`references/validation-protocol.md` is duplicated **12×** (10 distinct — already
+drifted), `places-guidance.md` **9× in skills** from a canonical copy at the
+plugin's top-level `references/` (which is the lint's source, not a stray),
+`research-log-protocol.md` **3×** (all three distinct). The duplication is a
+*correct* response to a platform limitation (#17741), but **only
+`places-guidance.md` is lint-guarded** (`skill-guidance.test.ts`, and its
+`research-plan` exemption is existence-only); the other two are unlinted and
+have drifted (#1112). So it is managed for one of three and accidental for the
+rest — which also means §5 item 7 ("shrink the duplicated references") is a
+larger job than it reads: 10 of the 12 copies are not in sync to begin with.
+The real cost is that doctrine which
 should be tool contracts is living in bodies that get evicted — and, as §3's P2
 spike shows, most of the router's body is *not* that doctrine and cannot move.
 
-**Governance: at the edge.** 58 specs, a 577-line `TODOs.md`, 277 MB of tracked
-run logs, ~90 open issues, and a CLAUDE.md that is itself a load-bearing
-operating manual. Defensible when the prompt is the product; but the marginal
+**Governance: at the edge.** 55 specs, 284 MB of tracked run logs, ~170 open
+issues, and a CLAUDE.md that is itself a load-bearing operating manual. (This
+count included a 577-line staging-queue file when written; it was retired
+2026-08-02, its 54 items becoming issues #1117–#1157 — which is why the open-issue
+figure jumped rather than fell.) Defensible when the prompt is the product; but the marginal
 doc now costs more to keep current than it returns.
 
-**One doc is actively misleading.** `docs/specs/skill-architecture-spec.md` §2
-still states "Cowork lacks programmatic skill invocation" and "there is no
-orchestrator skill in v1," and carries a current→canonical rename map for tools
-renamed long ago. Skills call `Skill("…")` throughout and the orchestrator has
-existed for months. Rewrite or retire it.
+**Resolved (2026-08-02).** `docs/specs/skill-architecture-spec.md` — whose §2
+still claimed "Cowork lacks programmatic skill invocation" and "there is no
+orchestrator skill in v1" — was rewritten as an as-built binding map (#1107) and
+then folded into [`docs/architecture.md`](architecture.md) and deleted. The
+governance count above is one doc lighter.
 
 ---
 
@@ -674,18 +749,19 @@ existed for months. Rewrite or retire it.
 
 1. **Generate the schema mirrors** — deletes four issues and a doc table.
 2. **Ship the two gate ports, and spec the `same_person` invariant.** Each retires
-   prose that decays, which is the *right* prose to retire — unlike a general
-   assault on body length.
+   unanchored prose — the shape §5.3 says *can* decay — which is the *right*
+   prose to retire, unlike a general assault on body length.
 3. **Delete the 26 dead `model:` pins.** They change nothing anywhere and make
    per-step routing look like it exists (§2.4).
-4. **Rewrite or retire `skill-architecture-spec.md` §2.**
+4. ~~Rewrite or retire `skill-architecture-spec.md` §2.~~ **Done 2026-08-02** —
+   rewritten in #1107, then folded into `docs/architecture.md` and deleted.
 5. **Reconcile the two `address_first` verdict tables** in `research/SKILL.md`
    — one behavior, one table.
 6. **Adopt #985's retention rule** — every `.ann.json` and released `v{N}` kept
    forever, latest two candidates per skill, snapshots stripped from annotated
    older candidates, e2e transcripts deleted after 60 days once graded. (rev. 2
    paraphrased this as "keep the latest run per fixture, archive the rest" —
-   that is not the issue's rule.) 277 MB tracked, most of it inert.
+   that is not the issue's rule.) 284 MB tracked, most of it inert.
 7. **Shrink the duplicated references rather than re-linking them.**
    `validation-protocol.md` ×12 largely restates rules that `research_append`'s
    error contract already enforces at write time. Every rule in a reference doc
@@ -709,17 +785,33 @@ Current measured economics:
 
 | | |
 |---|---|
-| e2e run, median / mean | **$7.29 / $8.26** (107 runs with cost recorded) |
-| e2e recent range (07-25 → 07-30) | $2.89 – $14.00, 18–87 min |
+| e2e run, median / mean | **$7.35 / $8.54** (111 runs record a cost; 22 record none) |
+| e2e run, worst case | **$25.24** and **180 min** (corpus maxima; duration median 52, mean 59) |
+| e2e recent window (07-25 → 07-30), 32 runs / 27 costed | **$2.89 – $21.50**, **18 – 180 min** |
 | Full unit sweep (25 suites) | **≈$77** |
-| Committed e2e spend to date | ≈$884 |
+| Committed e2e spend to date | **≈$948** |
+
+**The tail is the expense, and it is easy to truncate away.** Read those ranges
+with two facts. First, **capped and timed-out runs are not exceptions** — 8 runs
+hit `stop_reason: cost_cap` and 19 hit `timeout`, 27 in all. Quoting a
+range that stops at the last *completed, uncapped* run understates the top badly:
+inside the 07-25 → 07-30 window that framing gives $2.89 – $14.00 / 18 – 87 min,
+while the window's real extremes are **$21.50 / 119 min**
+(`jimmie-jewel-neal` 07-25, `stop_reason: cost_cap`) plus **two 180-minute
+timeouts** (`jimmie-jewel-neal`, 07-30). Second, **all 19 timed-out runs record no
+cost at all**, so they are absent from the median and mean entirely — $8.54 is a
+floor, not a centre. Corpus-wide the worst single run is `jimmie-jewel-neal`
+07-31 at **$25.24 / 168 min**, and that fixture accounts for five of the ten
+longest runs on record. Cost work should be aimed at the tail; the median run is
+already cheap.
 
 Levers, ranked:
 
 1. **C0 — reasoning effort.** Largest measured lever, unshipped, possibly one
    line.
-2. **ToolSearch flag flip** — ~11% of all tool calls; polarity inversion
-   confirmed against the installed CLI, one-line fix at three sites (P1).
+2. **ToolSearch flag flip** — ~11% of all tool calls; polarity settled and the
+   five inverted comment sites corrected (#1173 + follow-up), **the flip itself
+   unshipped** (#1110, P1).
 3. **Finish the state diet** — `Read` still leads the tool mix.
 4. **Shrink the resident bodies** — but only behind a gate the unit suite cannot
    provide. Our own caveat holds: the unit suite grades single invocations in
@@ -733,23 +825,37 @@ Levers, ranked:
 
 ## 7. Evidence appendix
 
-Reproducible from the repo at the date above — with one carve-out: the
-#1006-separating bagley run of 07-31 (`run-2026-07-31_18-06-28`) is uncommitted
-and exists only in that issue's comment thread.
+Reproducible from the repo at the date above.
 
-**E2e corpus (126 committed runs).** Outcomes 81 pass / 22 partial / 23 fail
-(these are fused pre-#1050 verdicts: 7 of the 23 fails are judge-pass/partial
-runs failed by the compliance detector).
-Stop reasons: 93 completed, 16 timeout, 8 error, 7 cost_cap, 1 inactivity, 1
-natural_end.
+> **Correction (2026-08-02).** This appendix carried a carve-out saying the
+> #1006-separating bagley run of 07-31 (`run-2026-07-31_18-06-28`) was
+> uncommitted and existed only in that issue's comment thread. **It is
+> committed** — it landed in `d5d26d00`. Every count below has been recomputed
+> over the whole committed corpus, including it.
 
-**Guardrail violations since the detector shipped (2026-07-27 20:00):** 8 of 25
-runs. Violation counts by type across that window: 16 × "tree person is new this
-run and has a person_evidence link" (with no `same_person`), 3 × exhaustiveness
-declared without `research-exhaustiveness`, 3 × proof/conclusion effect without
-`proof-conclusion`, 3 × conflict analysis without `conflict-resolution`. **Read
-with §0.2's caveat: #998/#999/#1006 make this a floor with an unquantified
-false-positive rate.**
+**E2e corpus (133 committed runs).** Outcomes 81 pass / 22 partial / 30 fail
+(these are fused pre-#1050 verdicts: 8 of the 30 fails are judge-pass/partial
+runs failed by the compliance detector — 6 judge-pass, 2 judge-partial).
+Stop reasons: 96 completed, 19 timeout, 8 error, 8 cost_cap, 1 inactivity, 1
+natural_end. **This is the same 133 §6's economics use** — 111 of them record a
+cost and 22 do not (all 19 timeouts, 2 errors, 1 inactivity). One corpus, one
+denominator.
+
+**Guardrail violations since the detector shipped (2026-07-27 20:00):** **12 of
+the 29 runs** in that window carry at least one, **45 violations** in total:
+34 × "tree person is new this run and has a `person_evidence` link" (with no
+`same_person`), 4 × exhaustiveness declared without `research-exhaustiveness`,
+4 × proof/conclusion effect without `proof-conclusion`, 3 × conflict analysis
+without `conflict-resolution`. **Read with §0.2's caveat: #998/#999/#1006 make
+this a floor with an unquantified false-positive rate.**
+
+> **Why other sections say "8 of 25" and "16 ×".** Those are the same
+> measurement over a **narrower window** — it stopped at `2026-07-30_19-43-58`
+> and dropped timed-out runs, which excluded four runs (two `jimmie-jewel-neal`
+> timeouts and both 07-31 runs) that are all committed. Those four carry 20 of
+> the 45. The narrow window is what §3's P0 and §9's **"≤9 of 25"** gate-reach
+> figure are stated against, so both are left on it; **the ≤9 has not been
+> re-derived on the full window — do not rescale it by eye.**
 
 **The five 07-30 failures.** isabel-carvajal-daughter (judge pass, 5
 violations), heinrich-zinsmeister-death (judge partial, 1),
@@ -757,7 +863,12 @@ amelia-gioiello-marriage (judge pass, 3), cornelius-booysen-death (judge pass,
 5), pierre-desobry-spouse (judge partial, 5). `person-evidence` invocations and
 `same_person` calls per run: see the table in §0.2.
 
-**Tool mix, 28 runs since 2026-07-25 (3,659 calls).** Read 544 · research_append
+**Tool mix, 28 runs (2026-07-25 → 2026-07-30 19:43, timeouts and one `cost_cap`
+run excluded; 3,659 calls).** *This is a third window, narrower than either
+violation window above — "since 2026-07-25" over the whole corpus gives 34 runs
+/ 5,431 calls. Every figure derived from it (§2.13's 159/13, §3 P1's 387, §3
+P2's 544/246/91, §8's 46/31) inherits the same truncation. Recomputing on the
+stated window is queued with the window decision below.* Read 544 · research_append
 486 · **ToolSearch 387** · research_query 246 · record_search 227 · Skill 219 ·
 record_read 204 · research_log_append 169 · Agent 159 · wiki_place_page 121 ·
 Glob 99 · extraction_append 92 · project_context 91 · … · same_person 21.
@@ -789,10 +900,11 @@ proof-conclusion 13/19 (68%), validate-schema 8/10, search-familysearch-wiki
 **Routing corpus.** 83 distinct skill→correct_skill edges, **38 reciprocal**
 (consistent with #945).
 
-**Prose sizes.** Plugin markdown 912 KB total, of which `references/` is 353 KB.
+**Prose sizes.** Plugin markdown 915 KB total, of which per-skill `references/` is 353 KB
+(357 KB including the canonical top-level copy).
 SKILL.md bodies 7,730 lines. Largest: search-records 50,185 B · person-evidence
 39,572 · research 29,132 · citation 28,172 · proof-conclusion 26,820 ·
-conflict-resolution 24,504. Agents: record-extractor 824 lines · gps-mentor 635.
+conflict-resolution 24,504. Agents: record-extractor 824 lines · gps-mentor 706 (635 before #1082).
 The router's routing table proper is 17 rows at `research/SKILL.md:128-146`.
 
 **Raw-write incident.** `eval/runlogs/e2e/william-ferber-origins/` runs
@@ -823,8 +935,8 @@ Named so nobody mistakes silence for a clean bill.
   beyond the agent-configuration path.
 - The **`.mcpb` install and OAuth paths**, except where they bear on tool-name
   binding.
-- **Individual tool implementations** against their specs — that is
-  `spec-review`'s job, per tool.
+- **Individual tool implementations** against their specs — that is a per-tool
+  review against `docs/specs/<tool>-tool-spec.md`, not this document's scope.
 - Whether the **judge itself** is well-calibrated on the unit side. §2.8 notes
   the metric is missing; measuring it is separate work. (#1090, filed 07-31, is
   direct e2e-side evidence of the risk: the judge scored a relationship finding
@@ -852,7 +964,7 @@ Named so nobody mistakes silence for a clean bill.
 
 | rev. 2 claim | Why it was wrong |
 |---|---|
-| `research_query` "**silently** truncates" | The response has carried `truncated` + a pre-cap `count` since the tool shipped on 07-26 (`research-query.ts:226-228`), five days before rev. 2. The defect is missing pagination and an ignored flag, not silence |
+| `research_query` "**silently** truncates" | The response has carried `truncated` + a pre-cap `count` since the tool shipped on 07-26 (`research-query.ts:243-244`), five days before rev. 2. The defect is missing pagination and an ignored flag, not silence |
 | "A suite built today would **deny** the router `research_append`" | Backwards: `compute_allowed_tools` unions `@plugin:gps-mentor`'s `tools:` into the router's allowlist (`allowed_tools.py:61-68`), so a suite would *grant* it — and nothing denies the router using it inline. The real gap is held-only-for-the-subagent tools (#911; #1012 is the inverse — a `Skill()` callee runs toolless) |
 | The ferber agent escalated permissions and "**only then**" wrote raw | The first raw `Edit` (idx 33) precedes every denied settings attempt (idx 46, 102); 9 of 13 writes precede the last one. Escalation was interleaved with the writes, not a prelude — a tidier story than the log supports, the same failure mode §9 exists to catch |
 | "46 MCP tools" / "all 26 skills with suites" | 47 (`allToolSchemas`, unchanged since 07-26) and 25 (27 skills − `research` − `forget-and-rederive`) |
@@ -867,7 +979,7 @@ Named so nobody mistakes silence for a clean bill.
 | The conditioned gate "touches 16 of the 25 measured violations" | Inherited from the unconditional rev. 2 version. 7 of the 16 flagged persons have zero record-sourced links (null `record_persona_id` throughout, by schema design), so the conditioned gate's reach is ≤9 of 25 |
 | Held-only-for-the-subagent tools cited as #1012 | Wrong issue: that gap is tracked by #911. #1012 is the inverse — a `Skill()` callee runs toolless in the unit path |
 | "~70 open issues"; 20-fixture pass "≈$185"; "(26 suites)" in §6 | 115 open as of 08-01 (91 pre-wave); $150–165 from the corpus's own per-run stats; 25 suites — a §9 correction rev. 3 applied in one place and missed in another |
-| "Exactly two are genuinely novel," counting the quantified compaction-decay law | arXiv 2606.22528 ("Governance Decay", June 2026) quantified compaction-driven constraint decay a month earlier. The production-derived ~3-compaction horizon remains distinctive; "no public precedent" does not |
+| "Exactly two are genuinely novel," counting the quantified compaction-decay law | Chen, "Governance Decay", [arXiv:2606.22528](https://arxiv.org/abs/2606.22528) (June 2026) quantified compaction-driven constraint decay a month earlier — verified against arxiv.org 2026-08-02. The production-derived decay horizon remains distinctive; "no public precedent" does not |
 
 ### rev. 4 claims, refuted in the rev. 5 (narrow) pass
 

@@ -13,7 +13,6 @@ dependencies = [
     "python-multipart>=0.0.12",
     "pydantic-settings>=2.14.2",
     "claude-agent-sdk>=0.2.128",
-    "ably>=3.1.2",
     "e2b>=2.35.0",
     # Postgres driver (Neon on Fly); SQLite remains the local default. The
     # [binary] extra bundles libpq → no Dockerfile/apt change on python:3.12-slim.
