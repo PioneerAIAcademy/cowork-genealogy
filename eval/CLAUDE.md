@@ -100,6 +100,8 @@ Filenames classify into three kinds:
 
 A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anything else writes a `scratch_` file.
 
+**Retention: the harness keeps the newest 5 candidates per skill.** `write_run_log` prunes older ones — with their `.ann.json` siblings — on every write (`harness/runlog.py::prune_old_candidates`, K in `versioning.DEFAULT_KEEP_CANDIDATES`). So a harness run produces deletions alongside the new candidate; commit them. Released `v{N}.json` are kept forever, a skill's newest candidate is never pruned (so this cannot move what rule 2 gates on), and scratch/partial logs are untouched. There is no CI rule for this — pruning at the writer is what keeps the cap holding without one; the versioning plan's manual candidate tier was never once performed and the corpus reached 312 candidates / 205 MB. `make prune-runlogs PRUNE=1` is the catch-up sweep, not part of the normal loop.
+
 The harness picks the next filename per `eval/harness/harness/versioning.py::next_filename_for`:
 1. Scan the skill dir for the highest released `v{N}.json` (call it R) and the highest candidate `v{M}_<ts>.json` (call it U).
 2. If a candidate above the latest release exists (`U > R`): next candidate is `v{U}_<ts>.json`.

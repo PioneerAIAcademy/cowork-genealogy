@@ -424,3 +424,67 @@ def test_activated_shared_tool_alone_does_not_activate():
         files_created=[],
         text_response="",
     ) is False
+
+
+# ---- prune-on-write (retention, GitHub issue #985) -----------------------
+
+
+SKILL_DIR_NAME = "search-familysearch-wiki"
+
+
+def _write_at(tmp_path, timestamp: str):
+    """Write one candidate run log at the given timestamp."""
+    log = _wrap_envelope(_make_entry(), timestamp=timestamp)
+    return write_run_log(
+        log, runlogs_root=tmp_path, filename=f"v1_{timestamp}.json"
+    )
+
+
+def _candidates(tmp_path):
+    d = tmp_path / "unit" / SKILL_DIR_NAME
+    return sorted(p.name for p in d.iterdir() if p.name.endswith(".json"))
+
+
+def test_write_prunes_beyond_k_keeping_newest(tmp_path):
+    """Writing the (K+1)th candidate drops the oldest, so the cap holds with
+    no CI rule and no step for the junior to remember."""
+    stamps = [f"2026-07-{d:02d}_10-00-00" for d in range(1, 8)]  # 7 writes
+    for ts in stamps:
+        _write_at(tmp_path, ts)
+
+    kept = _candidates(tmp_path)
+    assert len(kept) == 5
+    assert kept == [f"v1_{ts}.json" for ts in stamps[-5:]]
+
+
+def test_write_prunes_the_annotation_sibling_too(tmp_path):
+    """An annotation for a pruned run log is dead — nothing reads a
+    correction for a superseded unit run."""
+    for d in range(1, 7):
+        ts = f"2026-07-{d:02d}_10-00-00"
+        path = _write_at(tmp_path, ts)
+        path.with_name(f"v1_{ts}.ann.json").write_text("{}", encoding="utf-8")
+
+    d = tmp_path / "unit" / SKILL_DIR_NAME
+    assert not (d / "v1_2026-07-01_10-00-00.ann.json").exists()
+    assert (d / "v1_2026-07-06_10-00-00.ann.json").exists()
+
+
+def test_write_never_prunes_the_newest(tmp_path):
+    """check_runlogs rule 2 gates on a skill's latest run log; pruning must
+    never move which file that is."""
+    for d in range(1, 10):
+        _write_at(tmp_path, f"2026-07-{d:02d}_10-00-00")
+    assert _candidates(tmp_path)[-1] == "v1_2026-07-09_10-00-00.json"
+
+
+def test_write_leaves_scratch_runs_alone(tmp_path):
+    """Scratch logs are gitignored local artifacts, not part of the cap."""
+    d = tmp_path / "unit" / SKILL_DIR_NAME
+    d.mkdir(parents=True, exist_ok=True)
+    for i in range(1, 9):
+        (d / f"scratch_2026-07-{i:02d}_10-00-00.json").write_text("{}", encoding="utf-8")
+    _write_at(tmp_path, "2026-07-20_10-00-00")
+
+    scratch = [p.name for p in d.iterdir() if p.name.startswith("scratch_")]
+    assert len(scratch) == 8

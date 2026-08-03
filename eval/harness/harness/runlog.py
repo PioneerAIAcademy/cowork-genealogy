@@ -1,6 +1,6 @@
 """Assemble and validate multi-test run logs.
 
-Schema v2: one run log per harness invocation, per skill. Wraps a list
+Schema v3: one run log per harness invocation, per skill. Wraps a list
 of per-test entries in an envelope carrying version + snapshot +
 metadata. See docs/plan/eval-runlog-versioning.md.
 
@@ -9,7 +9,8 @@ Pieces this module exposes:
   - `assemble_test_entry(...)` — produce the per-test dict that goes
     inside the envelope's `tests[]`.
   - `build_run_log(...)` — wrap per-test entries in the envelope.
-  - `write_run_log(...)` — write to `<runlogs_root>/unit/<skill>/<filename>`.
+  - `write_run_log(...)` — write to `<runlogs_root>/unit/<skill>/<filename>`,
+    then prune candidates beyond the newest `DEFAULT_KEEP_CANDIDATES`.
   - `derive_activated(...)` — the §6 four-rule definition reused by the
     orchestrator.
   - `aggregate_dimensions(...)` / `aggregate_per_run_outcome(...)` —
@@ -28,6 +29,12 @@ from typing import Any
 
 import jsonschema
 from referencing import Registry, Resource
+
+from harness.versioning import (
+    DEFAULT_KEEP_CANDIDATES,
+    ann_filename_for,
+    prunable_candidates,
+)
 
 
 HARNESS_DIR = Path(__file__).resolve().parents[1]
@@ -525,7 +532,38 @@ def write_run_log(
             f"or pass an explicit non-conflicting timestamp."
         )
     out.write_text(json.dumps(log, indent=2), encoding="utf-8")
+    prune_old_candidates(target_dir)
     return out
+
+
+def prune_old_candidates(
+    skill_dir: Path, *, keep: int = DEFAULT_KEEP_CANDIDATES
+) -> list[Path]:
+    """Delete candidate run logs beyond the `keep` newest, with their
+    annotations. Returns what was removed.
+
+    Called on every write, so the cap holds by construction — no CI rule, no
+    step for the junior to remember, and the corpus cannot re-accumulate. The
+    versioning plan left this tier manual and it was never once performed:
+    312 candidates, 0 released, 205 MB (GitHub issue #985).
+
+    Released `v{N}.json` are never pruned, and a skill's newest candidate is
+    never pruned, so this cannot change which run log `check_runlogs` rule 2
+    evaluates. Scratch and partial logs are gitignored local artifacts and are
+    left alone.
+    """
+    try:
+        names = [p.name for p in skill_dir.iterdir() if p.is_file()]
+    except OSError:
+        return []
+
+    removed: list[Path] = []
+    for name in prunable_candidates(names, keep=keep):
+        for target in (skill_dir / name, skill_dir / ann_filename_for(name)):
+            if target.is_file():
+                target.unlink()
+                removed.append(target)
+    return removed
 
 
 # ---- Partial (in-progress) run logs ---------------------------------------

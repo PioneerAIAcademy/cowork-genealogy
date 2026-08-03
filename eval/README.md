@@ -204,9 +204,9 @@ The CRUD UI's run-log detail page (`/results/<skill>/<filename-without-ext>`) is
 See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the canonical release/active/candidate workflow and [`docs/per-pr-review-workflow.md`](../docs/per-pr-review-workflow.md) for the per-PR cadence. Short version:
 
 1. Junior edits a skill / tests / scenarios / fixtures.
-2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` candidate.
+2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` candidate. The harness also **prunes that skill down to its 5 newest candidates**, deleting older ones with their annotations — so `git status` will show deletions you did not make. Commit them; they are the retention rule doing its job (GitHub issue #985). Released `v{N}.json` and the newest candidate are never pruned.
 3. Junior opens the CRUD UI, reviews every dimension on the latest candidate (sparse `.ann.json` becomes complete).
-4. Junior commits the candidate + annotation, pushes the PR.
+4. Junior commits the candidate + annotation + any pruned deletions, pushes the PR.
 5. GH Action enforces (blocking): ≤1 added released file, latest full-skill run log is active on skill-side files (snapshot matches working tree), and its `.ann.json` is complete. Two warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture) and a judge-prompt-hash match (rule 2b).
 6. Senior reviews via GitHub diff + the CRUD UI compare page. Disagreements go to PR comments via the 📋 button.
 7. Senior clicks **Release** on the active candidate → `v{N}_<ts>.json` → `v{N}.json` rename. Commits, pushes, approves.

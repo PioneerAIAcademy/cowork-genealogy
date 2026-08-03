@@ -3,6 +3,8 @@
 
     --rehash        migrate pre-v3 run logs: snapshot content -> sha256
                     digests, dropping the dead mcp-server/src keys.
+    --prune-unit K  one-time backfill to the keep-newest-K rule the harness
+                    now applies on every write (harness.runlog).
 
 Run via `make prune-runlogs`. Read-modify-write over
 `eval/runlogs/unit/<skill>/*.json`; scratch and partial logs are gitignored
@@ -24,7 +26,9 @@ HERE = Path(__file__).resolve().parent
 HARNESS_DIR = HERE.parent
 sys.path.insert(0, str(HARNESS_DIR))
 
+from harness.runlog import prune_old_candidates  # noqa: E402
 from harness.snapshot import _MCP_SRC_PREFIX, hash_snapshot, is_hashed_snapshot  # noqa: E402
+from harness.versioning import DEFAULT_KEEP_CANDIDATES, prunable_candidates  # noqa: E402
 
 REPO_ROOT = HARNESS_DIR.parents[1]
 RUNLOGS_UNIT = REPO_ROOT / "eval" / "runlogs" / "unit"
@@ -104,12 +108,54 @@ def cmd_rehash(root: Path, *, dry_run: bool) -> int:
     return 0
 
 
+def cmd_prune_unit(root: Path, *, keep: int, dry_run: bool) -> int:
+    """Backfill the keep-newest-K rule across every skill dir.
+
+    The harness prunes on write from now on, so this only has to catch up the
+    backlog the manual tier never cleared: 312 candidates, 0 released.
+    """
+    if not root.is_dir():
+        print(f"no unit runlog root at {root}")
+        return 0
+
+    total_removed = 0
+    freed = 0
+    for skill_dir in sorted(p for p in root.iterdir() if p.is_dir()):
+        before = [p for p in skill_dir.iterdir() if p.is_file()]
+        if dry_run:
+            names = [p.name for p in before]
+            total_removed += len(prunable_candidates(names, keep=keep))
+            continue
+        sizes = {p.name: p.stat().st_size for p in before}
+        removed = prune_old_candidates(skill_dir, keep=keep)
+        total_removed += len(removed)
+        freed += sum(sizes.get(p.name, 0) for p in removed)
+
+    mb = 1024 * 1024
+    if dry_run:
+        print(f"prune --dry-run: {total_removed} candidate run log(s) would be removed")
+    else:
+        print(
+            f"prune: removed {total_removed} file(s) (run logs + annotations), "
+            f"{freed / mb:.1f} MB reclaimed; keeping the newest {keep} per skill"
+        )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument(
         "--rehash",
         action="store_true",
         help="migrate pre-v3 run logs to hashed snapshots",
+    )
+    ap.add_argument(
+        "--prune-unit",
+        nargs="?",
+        type=int,
+        const=DEFAULT_KEEP_CANDIDATES,
+        metavar="K",
+        help=f"keep the newest K candidates per skill (default: {DEFAULT_KEEP_CANDIDATES})",
     )
     ap.add_argument("--dry-run", action="store_true", help="report, change nothing")
     ap.add_argument(
@@ -120,9 +166,17 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = ap.parse_args(argv)
 
-    if not args.rehash:
-        ap.error("nothing to do — pass --rehash")
-    return cmd_rehash(args.runlogs_root, dry_run=args.dry_run)
+    if not args.rehash and args.prune_unit is None:
+        ap.error("nothing to do — pass --rehash and/or --prune-unit")
+
+    rc = 0
+    if args.rehash:
+        rc |= cmd_rehash(args.runlogs_root, dry_run=args.dry_run)
+    if args.prune_unit is not None:
+        rc |= cmd_prune_unit(
+            args.runlogs_root, keep=args.prune_unit, dry_run=args.dry_run
+        )
+    return rc
 
 
 if __name__ == "__main__":
