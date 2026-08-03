@@ -838,3 +838,25 @@ def test_pending_pe_link_deduped_when_same_new_person_appears_twice():
         "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids=set()
     )
     assert out == ["I1"]
+
+
+# --- unguarded_new_person_evidence_links: defensive/empty shapes -------------
+
+
+def test_unguarded_links_args_none_does_not_panic():
+    assert unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", None, scored_ids=set(), starting_ids=set()
+    ) == []
+
+
+def test_unguarded_links_args_empty_dict_returns_empty():
+    assert unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", {}, scored_ids=set(), starting_ids=set()
+    ) == []
+
+
+def test_unguarded_links_pe_op_missing_person_id_is_skipped():
+    args = {"section": "person_evidence", "op": "append", "entry": {}}
+    assert unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append", args, scored_ids=set(), starting_ids=set()
+    ) == []

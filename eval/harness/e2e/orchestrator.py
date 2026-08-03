@@ -200,6 +200,96 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     return name if name in PROTECTED_PROJECT_FILES else None
 
 
+# Cap on how many person ids the issue-#963 deny reason names inline. A single
+# batch research_append can append person_evidence for many new persons; without
+# a cap the permissionDecisionReason (and the transcript line) could balloon to
+# an unreadable length. Show the first N, then "+M more".
+_MAX_DENY_IDS = 10
+
+
+def load_seed_person_ids(starting_tree_path: Path) -> set[str] | None:
+    """Seed-tree person ids for the issue-#963 same_person deny, read from the
+    IMMUTABLE fixture file.
+
+    `starting_tree_path` is `FixtureCaps`/`Fixture.starting_tree_path`, which
+    `load_fixture` sets to `<fixture_dir>/starting-tree.gedcomx.json` — the
+    committed fixture input, NOT the per-run workspace copy `build_workspace`
+    makes at `<workspace>/tree.gedcomx.json` and the run then mutates. Reading
+    the fixture path (not the workspace) is what guarantees these ids are the
+    run's *starting* state, so "new this run" is computed against a baseline the
+    run can't have changed.
+
+    Returns the id set, or **None on any read/parse failure** so the deny FAILS
+    OPEN (the caller skips the check). An empty set would instead mis-classify
+    every legitimate seed-person link as "new + unscored" and mass-deny mid-run
+    on nothing worse than a fixture/IO hiccup. Failing open loses only the
+    in-run nudge; the post-run hard-fail (find_person_evidence_missing_same_person,
+    which does its own seed read) still backstops any real bypass.
+
+    The failure is printed to stderr rather than swallowed or sent to a logger:
+    the harness has no module logger, and every other operator-facing signal
+    here (`_emit`, the blocked-tool notices) is a direct stderr print for the
+    same reason — it always shows in the run's captured output on the
+    genealogist team's Windows consoles. Kept diagnosable, not silent.
+    """
+    try:
+        seed = json.loads(starting_tree_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        print(
+            f"  [warn] could not read seed tree {starting_tree_path} "
+            f"({type(e).__name__}: {e}) — issue #963 same_person deny DISABLED "
+            "for this run; the post-run guardrail check still applies.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return None
+    persons = seed.get("persons") if isinstance(seed.get("persons"), list) else []
+    return {p.get("id") for p in persons if isinstance(p, dict)}
+
+
+def person_evidence_deny_reason(
+    tool_name: str,
+    tool_input: dict[str, Any] | None,
+    *,
+    tool_calls: list[dict[str, Any]],
+    pending_tool_uses: dict[str, dict[str, Any]],
+    starting_person_ids: set[str],
+) -> str | None:
+    """The issue-#963 deny reason for a pending `research_append` that links a
+    brand-new, unscored tree person via `person_evidence`, or None to allow.
+
+    Pure decision logic, extracted from `pretool_hook` so the same-turn-allow,
+    fail-open, and deny paths are unit-testable without spinning up the SDK.
+
+    Counts a `same_person` still IN FLIGHT this turn (`pending_tool_uses`) as
+    scoring, not just committed calls (`tool_calls`) — the two lists are
+    populated together the moment a turn's ToolUseBlocks are parsed, so a
+    correct agent that batches `same_person` and the `person_evidence` write in
+    one turn is not spuriously denied. `pending_tool_uses` values share the
+    `tool_calls` entry shape (`{"tool", "args", ...}`, built in the
+    AssistantMessage branch), so both feed `same_person_scored_ids` directly. An
+    in-flight call has no result yet, so it can't be success-gated; accepted —
+    if it later errors, the post-run hard-fail still catches the link.
+    """
+    scored = same_person_scored_ids(tool_calls) | same_person_scored_ids(
+        list(pending_tool_uses.values())
+    )
+    unguarded = unguarded_new_person_evidence_links(
+        tool_name, tool_input, scored_ids=scored, starting_ids=starting_person_ids
+    )
+    if not unguarded:
+        return None
+    shown = ", ".join(unguarded[:_MAX_DENY_IDS])
+    if len(unguarded) > _MAX_DENY_IDS:
+        shown += f", +{len(unguarded) - _MAX_DENY_IDS} more"
+    return (
+        f"Cannot write a person_evidence link for new tree person(s) {shown}: a "
+        "brand-new identity must be scored with same_person before it is asserted. "
+        "Call same_person for the identity first, then write the person_evidence "
+        "entry (research/SKILL.md doctrine; issue #963)."
+    )
+
+
 @dataclass
 class FixtureCaps:
     # The DEFAULT caps every fixture inherits for any cap it doesn't set.
@@ -573,35 +663,11 @@ async def _run_agent(
     tool_calls: list[dict[str, Any]] = []
     transcript: list[str] = []
     pending_tool_uses: dict[str, dict[str, Any]] = {}
-    # Seed-tree person ids, read once from the IMMUTABLE fixture file (not the
-    # workspace copy the run mutates). The issue #963 same_person-provenance
-    # deny (in pretool_hook) uses this to flag only persons that are NEW this
-    # run — a person_evidence link to a pre-existing seed person is not a new
-    # identity and never needs scoring. See skill_invocation.
-    #
-    # None (NOT an empty set) on a read failure, so the deny FAILS OPEN. An
-    # empty seed set would mis-classify every legitimate seed-person link as
-    # "new + unscored" and mass-deny mid-run on nothing worse than a fixture/IO
-    # hiccup — a confusing availability regression. Failing open loses only the
-    # in-run nudge for this run; the post-run hard-fail
-    # (find_person_evidence_missing_same_person, which does its own seed read)
-    # still backstops any real bypass. The failure is printed, not swallowed,
-    # so it's diagnosable rather than surfacing as silent mass-denials.
-    starting_person_ids: set[str] | None
-    try:
-        _seed_tree = json.loads(fixture.starting_tree_path.read_text(encoding="utf-8"))
-        starting_person_ids = {
-            p.get("id") for p in _seed_tree.get("persons", []) if isinstance(p, dict)
-        }
-    except (OSError, json.JSONDecodeError) as e:
-        starting_person_ids = None
-        print(
-            f"  [warn] could not read seed tree {fixture.starting_tree_path} "
-            f"({type(e).__name__}: {e}) — issue #963 same_person deny DISABLED "
-            "for this run; the post-run guardrail check still applies.",
-            file=sys.stderr,
-            flush=True,
-        )
+    # Seed-tree person ids for the issue-#963 same_person-provenance deny (in
+    # pretool_hook), read once from the IMMUTABLE fixture file. None on a read
+    # failure => the deny fails open for this run. See load_seed_person_ids for
+    # the full rationale (immutable-path guarantee, fail-open, stderr warning).
+    starting_person_ids: set[str] | None = load_seed_person_ids(fixture.starting_tree_path)
 
     # docs/specs/guardrail-enforcement-spec.md §11, "Step 0" — every
     # tool_use_id's (agent_id, agent_type) as PreToolUse saw it, joined onto
@@ -803,43 +869,32 @@ async def _run_agent(
         # would (new, unscored persons; seed persons excluded), so it adds no
         # new false-positive class — it just converts a silent end-of-run
         # failure into an in-run nudge to call same_person first.
+        # Skipped entirely when starting_person_ids is None (seed read failed —
+        # fail open; see load_seed_person_ids). The bare == "research_append"
+        # gate just avoids a needless tool_calls scan on every other call —
+        # person_evidence_deny_reason also returns None for any non-
+        # research_append tool, so it's safe either way. Decision logic lives in
+        # that helper so it's unit-testable without the SDK.
         if bare == "research_append" and starting_person_ids is not None:
-            # Count a same_person still IN FLIGHT this turn as scoring, not just
-            # committed ones — otherwise a correct agent that batches
-            # same_person and the person_evidence write in one assistant turn
-            # gets a spurious deny that only self-corrects on retry. Both
-            # tool_calls and pending_tool_uses are populated together the moment
-            # the turn's ToolUseBlocks are parsed (see the AssistantMessage
-            # branch), so a same-turn sibling same_person is visible here. In
-            # flight has no result yet, so it can't be success-gated — accepted:
-            # if it later errors, the post-run hard-fail still catches the link.
-            scored = same_person_scored_ids(tool_calls) | same_person_scored_ids(
-                list(pending_tool_uses.values())
-            )
-            unguarded = unguarded_new_person_evidence_links(
+            deny_reason = person_evidence_deny_reason(
                 tool_name,
                 input_data.get("tool_input") or {},
-                scored_ids=scored,
-                starting_ids=starting_person_ids,
+                tool_calls=tool_calls,
+                pending_tool_uses=pending_tool_uses,
+                starting_person_ids=starting_person_ids,
             )
-            if unguarded:
-                ids = ", ".join(unguarded)
+            if deny_reason:
                 transcript.append(
-                    f"\n**[BLOCKED]** person_evidence link for new person(s) "
-                    f"{ids} denied — score the identity with `same_person` first.\n"
+                    f"\n**[BLOCKED]** person_evidence link for a new person "
+                    "denied — score the identity with `same_person` first. "
+                    f"{deny_reason}\n"
                 )
-                _emit(f"[blocked person_evidence w/o same_person] {ids}")
+                _emit("[blocked person_evidence w/o same_person]")
                 return {
                     "hookSpecificOutput": {
                         "hookEventName": "PreToolUse",
                         "permissionDecision": "deny",
-                        "permissionDecisionReason": (
-                            f"Cannot write a person_evidence link for new tree "
-                            f"person(s) {ids}: a brand-new identity must be scored "
-                            "with same_person before it is asserted. Call same_person "
-                            "for the identity first, then write the person_evidence "
-                            "entry (research/SKILL.md doctrine; issue #963)."
-                        ),
+                        "permissionDecisionReason": deny_reason,
                     },
                 }
 

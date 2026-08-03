@@ -411,7 +411,15 @@ def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
     that side's `primaryId` equals the tree `person_id` (see
     `find_person_evidence_missing_same_person` for the confirmed-live basis of
     that equality), so this doubles as "which tree persons have been scored."
-    Errored calls don't count — the plan's success-gating (§4.1)."""
+    Errored calls don't count — the plan's success-gating (§4.1).
+
+    Ids are strings throughout: FamilySearch persona/tree ids (`primaryId1/2`
+    and `person_evidence.person_id`) are always string identifiers. The
+    `isinstance(v, str)` guard deliberately ignores any non-string value rather
+    than coercing it — a numeric or structured `primaryId` would be a malformed
+    call, and silently `str()`-ing it could fabricate a match against a
+    stringified `person_id`. Same string-only assumption in
+    `_person_id_from_pe_op` and `unguarded_new_person_evidence_links`."""
     scored: set[str] = set()
     for entry in tool_calls:
         if entry.get("is_error") is True:
@@ -458,7 +466,15 @@ def unguarded_new_person_evidence_links(
     Fact-based, no proximity window (unlike `find_unguarded_protected_writes`)
     — `same_person` is a required tool call, so "was it called for this
     person" is a fact, which is why the plan (§9) never gave it a shadow
-    period. Returns ids in first-seen order, de-duped."""
+    period. Returns ids in first-seen order, de-duped.
+
+    Keying the check on `research_append` is sound because it is the SOLE tool
+    that creates `person_evidence` entries: `extraction_append` explicitly does
+    not (see its tool header, "Identity links (`person_evidence`) are NOT
+    written here"), and the merge/`tree_forget` tools only re-point or count
+    existing entries. If a future tool starts creating `person_evidence` links,
+    this gate (and the caller's `bare == "research_append"` fast-path) must be
+    widened to cover it, or that tool becomes a bypass route."""
     args = args or {}
     if bare_tool_name(tool) != "research_append":
         return []
