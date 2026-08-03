@@ -175,6 +175,19 @@ export default function ResearchLogSection(): React.JSX.Element {
                                       <> &middot; {entry.external_site.capture_filename}</>
                                     )}
                                   </div>
+                                  {/* Kept in step with packages/viewer-ui's copy (#1166). */}
+                                  {entry.external_site.url_generated && (
+                                    <div className={styles.fieldValue}>
+                                      <a
+                                        href={entry.external_site.url_generated}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={styles.externalUrl}
+                                      >
+                                        {entry.external_site.url_generated}
+                                      </a>
+                                    </div>
+                                  )}
                                 </div>
                               )}
 

@@ -87,6 +87,14 @@
   color: var(--text-primary);
 }
 
+/* The generated search URL. Long and unbreakable, so it must wrap rather than
+   widen the log row — see #1166. */
+.externalUrl {
+  color: var(--accent, var(--text-primary));
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
 .queryBlock {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);

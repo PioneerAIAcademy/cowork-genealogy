@@ -197,6 +197,24 @@ export default function ResearchLogSection(): React.JSX.Element {
                                       <> &middot; {entry.external_site.capture_filename}</>
                                     )}
                                   </div>
+                                  {/* The search URL the researcher was handed. Required by
+                                      schema and written by search-external-sites, but three
+                                      of its four siblings rendered and this one did not —
+                                      the gap the field-render lint now guards (#1166). It
+                                      is the one part of an external-site entry a reader
+                                      needs to reproduce the search. */}
+                                  {entry.external_site.url_generated && (
+                                    <div className={styles.fieldValue}>
+                                      <a
+                                        href={entry.external_site.url_generated}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={styles.externalUrl}
+                                      >
+                                        {entry.external_site.url_generated}
+                                      </a>
+                                    </div>
+                                  )}
                                 </div>
                               )}
 
