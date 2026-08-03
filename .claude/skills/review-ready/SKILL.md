@@ -41,17 +41,37 @@ Other entry points:
   those, in any column.
 - **Straight after `fill-ready`** — review what it just proposed, before the lead
   approves the promotions. Its verdicts then feed back into that decision.
-- **`--all`** — include unassigned `genealogist` items. Off by default: their
-  failure mode is adjudication quality, not a wrong merge, and it is caught
-  downstream by review rather than by CI.
+- **`--all`** — include unassigned `genealogist` items. Off by default, and not
+  because they matter less. The three passes are **developer-shaped**: blast
+  radius from the architecture guide, the verifying command, §9.4 exposure.
+  Pointed at a `test <slug>` fixture adjudication they mostly return "checked,
+  clean" and spend ~110k tokens saying it. Gating that pool needs a different and
+  much shorter agent — does the hint record exist, is the ark resolvable, is
+  anyone else on this fixture — not a wider fan-out of this one.
 
-**Cap the fan-out at 12 per run.** Above that, take the ones nobody has reviewed
-before, oldest first, and **say in the report exactly which candidates you did
-not review** — a silent cap reads as "everything is clear" when it is not.
+### Review on entry, not daily
 
-Skip an item and say why when: it already carries a `task-reviewer` verdict in a
-comment and its body has not changed since; or its body is empty (that is a
-`fill-ready` rewrite verdict, not a review).
+**Skip an item whose body already opens with the review marker**, unless the body
+has been edited since that date:
+
+```sh
+gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy \
+  --json body,updatedAt -q '"\(.updatedAt[0:10])  \(.body[0:80])"'
+```
+
+§5 writes that marker as the first line of every reviewed body, so this is the
+whole re-review check. Get it wrong and the daily run re-reviews the entire
+standing pool — ~20 items at ~110k tokens each — instead of the three to five
+`fill-ready` promoted that morning.
+
+Also skip, and say why: a body that is empty or a single line. That is a
+`fill-ready` rewrite verdict, not a review.
+
+**Cap the fan-out at 20 per run** — one full standing pool. The cap binds only on
+a first run or after a gap; the steady-state delta never approaches it. When it
+does bind, take the ones nobody has reviewed before, oldest first, and **say in
+the report exactly which candidates you did not review** — a silent cap reads as
+"everything is clear" when it is not.
 
 ## 2. Fan out — one agent per issue, all in one message
 
@@ -146,8 +166,17 @@ Four rules on the writes:
 
 - **Edit the body, not a comment.** The junior reads the body. A finding in a
   comment thread is a finding that evaporates.
-- **Prepend, never replace.** Keep the original text below your addition, so the
-  next reader can see what the issue asked for before the review touched it.
+- **Prepend, never replace.** Keep the original text below your addition under an
+  `## Original issue` heading, so the next reader can see what the issue asked
+  for before the review touched it.
+- **Open every reviewed body with the marker, verbatim** — it is what §1's skip
+  check reads, and without it tomorrow's run reviews this issue again:
+
+  ```
+  > **Reviewed <YYYY-MM-DD> before junior handoff.** <one clause: decision
+  > settled / no decision needed / premise was false>; the original body follows
+  > unchanged under "Original issue".
+  ```
 - **Carry the rationale to the destination the agent named** — a spec section, a
   comment at the constraining site. It is part of the task, not a nicety;
   `CLAUDE.md` keeps settled tradeoffs out of issue bodies for a reason.
