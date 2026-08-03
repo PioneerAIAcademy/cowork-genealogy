@@ -1097,10 +1097,10 @@ skips silently**, which looks identical to passing.
 
 | Command | Covers | **Does not cover** |
 |---|---|---|
-| **`make test-all`** (= `scripts/test.sh`) | **everything**: typecheck, JS workspace, `apps/server`, engine + packaging lints, CRUD UI, eval harness **including** the e2e-marked contract test. The target delegates to the script, so the two are one command; the PR template names it. Runs every suite before reporting, so one failure doesn't hide the next. | a live-API check of any single tool (`dev/try-<tool>.ts`), agent tool binding (`make agent-smoke`), skill behaviour (`make eval-skill`) |
+| **`make test-all`** (= `scripts/test.sh`) | **everything offline**: typecheck, JS workspace, `apps/server`, engine + packaging lints, CRUD UI, eval harness. The target delegates to the script, so the two are one command; the PR template names it. Runs every suite before reporting, so one failure doesn't hide the next. Deterministic and free — **no suite in it calls a model**, which is what keeps it ~30s and therefore actually run. | anything needing a model or a live API: a single tool (`dev/try-<tool>.ts`), agent tool binding (`make agent-smoke`), skill behaviour (`make eval-skill`) |
 | `make test` | JS workspace + server tests | **engine, packaging lints, harness** — an engine-only change gets *zero* coverage |
 | `make engine-test` | `packages/engine/mcp-server` (vitest) + all packaging lints | the `packages/schema` mirror; anything needing a live API |
-| `make harness-test` | `eval/harness` (pytest, excludes e2e) — **the sole gate on the `packages/schema` mirror** | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug |
+| `make harness-test` | `eval/harness` (pytest) — **the sole gate on the `packages/schema` mirror** | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug |
 | `make typecheck` | the whole JS workspace (turbo) — the only gate on viewer code | Python |
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
 | **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
@@ -1170,6 +1170,7 @@ tools — what happens after you grant one). And
 | **No prompt-injection doctrine exists anywhere.** A grep of the whole plugin and MCP source returns **zero hits**, while untrusted free text reaches an agent holding `research_append` via `image_transcribe` OCR, `fulltext_search`, and every record the extractor reads. | Unmitigated, unmeasured. | #847 |
 | **Nothing treats "the writer tools are absent" as a halt condition.** | Three runs once made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget. The raw-write path is closed since #984/#989; the silent failure is not. | #941 |
 | **A `Skill()` callee can bind toolless** in the unit-harness path. | A delegated skill runs with zero tools. | #1012 |
+| **Nothing exercises the live Agent SDK path.** Every harness test monkeypatches `run_skill`, so no gate constructs real SDK options or loads the plugin. | An SDK-options or plugin-loading break passes `make test-all` green and surfaces only on a paid `make eval-skill` run. | #1207 |
 
 ### If you're asked to…
 
