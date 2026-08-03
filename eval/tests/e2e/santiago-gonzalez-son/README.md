@@ -43,3 +43,5 @@ plausible diminutive/nickname variant ("Petita" from "Petra"), not a contradicti
 presumed eldest child; there is no independent tree evidence (no marriage date, no
 other pre-1921 record) that contradicts the couple already having a child by 1915,
 and none was found to contradict this identification.
+
+**Independent corroboration**: a separate cemetery/civil-death record for the couple's daughter Bartola independently names the same father, "Santiago Gonzalez," and gives the mother's name in full as "Petra Tumbaco." The original register images were transcribed directly, confirming "Petita" is genuinely what is written on Manuel's record — not an indexing error — while Bartola's record, filed eighteen years later by a different registrant, independently uses the full "Petra Tumbaco" for the same mother. That is source-level, independent confirmation that "Petita" is a variant of "Petra" for this specific couple, not merely a plausible guess based on diminutive-form reasoning alone.
