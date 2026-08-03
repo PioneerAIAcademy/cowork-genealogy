@@ -377,4 +377,33 @@ describe("research_query", () => {
     if (result.ok) return;
     expect(result.errors.join(" ")).toMatch(/offset must be a non-negative whole number/);
   });
+
+  // The error names what was actually sent. JSON.stringify renders NaN and
+  // Infinity as `null`, which would report a value no caller ever sent — the
+  // dev script's `Number(value)` coercion makes `offset=abc` land here as NaN.
+  it("names NaN and Infinity in the rejection instead of reporting 'null'", async () => {
+    await writeResearch({ assertions: [{ id: "a_0" }] });
+    for (const [bad, shown] of [
+      [NaN, "NaN"],
+      [Infinity, "Infinity"],
+    ] as const) {
+      const result = await researchQuery({ projectPath: dir, section: "assertions", offset: bad });
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.errors.join(" ")).toContain(`(got ${shown})`);
+      expect(result.errors.join(" ")).not.toContain("got null");
+    }
+  });
+
+  it("still quotes a string offset so the type mismatch is visible", async () => {
+    await writeResearch({ assertions: [{ id: "a_0" }] });
+    const result = await researchQuery({
+      projectPath: dir,
+      section: "assertions",
+      offset: "50" as any,
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toContain('(got "50")');
+  });
 });
