@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Not recovered, and over-claimed. Zero 'Sampson' anywhere in the final tree. The run linked Joseph B Wood (I7) as Martha's father by a ParentChild relationship. Graded late, on 2026-07-31, so the run log could ship with the tool PR — the run itself is from 2026-07-25 and stopped on wall-clock timeout.",
+    "f2": "Not recovered: Mary E Wood (I8) linked as mother. This is the same wrong couple run 6 reached six days later, which is what makes the pair worth keeping together — it identifies a stable attractor rather than a one-off, and that is the useful signal for anyone tuning the judge or the fixture. Caveat on independence: this annotation was written after the run's verdict was already known to me from the harness stdout, so it is weaker calibration evidence than a same-day blind grade. The tree evidence is unambiguous either way — no Sampson person exists in it."
+  },
+  "annotator": "edesonchristopher@gmail.com"
+}

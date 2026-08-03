@@ -60,8 +60,29 @@ name: genealogist-queue
 # is what makes the queue eventually correct. If you ever remove the schedule,
 # something else must answer "what re-checks a PR after CI finishes?"
 
+# TRIGGER CHOICE: `pull_request_target`, switched from `pull_request` on
+# 2026-07-31 when we started taking PRs from developers who have no write
+# access to this repo and therefore contribute from forks. Under
+# `pull_request` a fork PR gets a read-only GITHUB_TOKEN, so `addLabels` would
+# 403 — which is why the job carried an `if:` guard skipping cross-repository
+# PRs outright. That guard is removed with this switch: `github.event_name` is
+# no longer `pull_request`, so its first clause would always pass and it would
+# be dead code that reads as protection.
+#
+# What the guard cost, for the record: fork PRs lost the low-latency path
+# entirely. They were still labelled — `pull_request_review` already runs in
+# base context with a writable token, and the sweep below catches everything —
+# but a fork PR that opened green and pre-approved waited up to 30 minutes for
+# its label instead of seconds.
+#
+# Safe here for the same two reasons as labeler.yml: the job is a single inline
+# `actions/github-script` step with no `actions/checkout` and no `run:`, so
+# nothing fork-authored ever executes; and the script is read from the base
+# branch, so a fork cannot edit the readiness rules in its own PR. Adding a
+# checkout of PR content here would turn this into a pwn-request vector.
+
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
   pull_request_review:
     types: [submitted, dismissed]
@@ -120,12 +141,8 @@ jobs:
   promote:
     name: genealogist-queue
     runs-on: ubuntu-latest
-    # Fork PRs get a read-only token; the label write would 403.
-    if: >-
-      github.event_name != 'pull_request'
-      || github.event.pull_request.head.repo.full_name == github.repository
     steps:
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@v9
         env:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
         with:
