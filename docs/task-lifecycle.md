@@ -18,13 +18,14 @@ Everything below is detail on those four.
 
 ## If you read nothing else, read this
 
-Two things are mandatory before you request review. Everything else in this
-document is guidance you can scale to the task; these two are not.
+Two things are mandatory on every task, and a third whenever you touch a skill.
+Everything else in this document is guidance you can scale to the task; these
+are not.
 
 > ### 1. Run **both** test commands
 >
 > ```sh
-> make test-all        # JS + server + engine + harness + typecheck
+> make test-all        # typecheck + JS + server + engine + harness + CRUD UI
 > scripts/test.sh      # what the PR template's checkbox actually requires
 > ```
 >
@@ -38,10 +39,20 @@ document is guidance you can scale to the task; these two are not.
 > Not the session that wrote the code — that one is anchored on its own
 > reasoning and will agree with you. Open a new one, hand it your plan and the
 > diff, and ask where they diverge.
+>
+> ### 3. If you touched `packages/engine/plugin/skills/`, run the eval
+>
+> ```sh
+> make eval-skill SKILL=<name>   # then commit the run log + its .ann.json
+> ```
+>
+> `.github/workflows/check-runlogs.yml` blocks merge otherwise, even for a
+> one-word change. It has no `paths:` filter — it runs on every PR — so this
+> catches you on a task that is otherwise pure developer work.
 
-Skipping either of these moves work onto your reviewer that a machine or a
-fresh context would have caught for free. Everything else here is about doing
-the task well; these two are about not wasting someone else's afternoon.
+Skipping these moves work onto your reviewer that a machine or a fresh context
+would have caught for free. Everything else here is about doing the task well;
+these are about not wasting someone else's afternoon.
 
 Details in [step 5](#5-verify-it-yourself) and [step 6](#6-review-your-own-diff-in-a-fresh-session).
 
@@ -184,7 +195,8 @@ either.
 ### 3. Attack the plan
 
 ```
-/critique-plan PLAN.md
+/critique-plan PLAN.md               # Normal tier
+/critique-plan docs/plan/<file>.md   # Risky tier
 ```
 
 The command dispatches to the `plan-critic` subagent. Use it rather than asking
@@ -294,25 +306,25 @@ Everything you decided not to do becomes a GitHub issue, in this PR:
 gh issue create --label developer --title "…" --body "…"
 ```
 
-- `--label developer` for anything with a mechanical pass/fail;
-  `--label genealogist` for fixture adjudication, record research, doctrine
-  prose.
-- Add `--label icebox` if it's a maybe. The test: would you do it given a free
-  afternoon? If yes it's not icebox.
-- **Creating the issue is the whole job.** A CI workflow adds it to Backlog.
-  Do not run `gh project` commands — a token without the `project` scope fails
-  the board write *while still creating the issue*, which looks like it worked.
-- Keep the body short: what the work is, and enough of why it's still open that
-  nobody re-opens a settled question. Reasoning goes in the spec or a comment
-  at the line it constrains — nobody re-reads an issue body after triage.
-- **Reference the numbers in your PR description**, so your reviewer can see
-  what you chose not to do.
+**Creating the issue is the whole job** — a CI workflow adds it to Backlog, and
+you must not run `gh project` commands yourself. The rest of the rules — which
+label, the free-afternoon test for `icebox`, why the `gh project` write fails
+in a way that looks like success, how short to keep the body — are in
+[`DEVELOPMENT.md`](../DEVELOPMENT.md) under "Follow-on work you find along the
+way." Read them there; they are not repeated here, because two copies of a rule
+means one of them is wrong within a quarter and nobody can tell which.
+
+**Reference the issue numbers in your PR description**, so your reviewer can see
+what you chose not to do.
 
 **Don't leave a `TODO` comment, and don't start a to-do file.** A TODO isn't a
 queue — nobody is assigned to it, nobody is notified about it, and nobody reads
-it. If you were about to write one, that is exactly the case the `icebox` label
-is for: file it as an issue, label it `icebox`, and it lands in Backlog where
-triage can see it and skip it until something changes. A `TODO` in the source
+it. That was tried at file scale: `docs/TODOs.md` reached 932 lines and 54
+unassignable items before it was retired (2026-08-02). **Do not reintroduce a
+queue file under any name.** If you were about to write a TODO, that is exactly
+the case the `icebox` label is for: file it as an issue, label it `icebox`, and
+it lands in Backlog where triage can see it and skip it until something
+changes. A `TODO` in the source
 is invisible to every one of those steps.
 
 And don't over-file. Fifteen issues from one PR isn't thoroughness, it's noise
@@ -440,10 +452,10 @@ git worktree add .claude/worktrees/<branch> -b <branch> origin/main
 # 2. write PLAN.md at the worktree root (gitignored)
 
 # 3. attack the plan (max 2 rounds)
-/critique-plan PLAN.md
+/critique-plan PLAN.md               # or docs/plan/<file>.md on Risky tier
 
 # 5. verify — run BOTH; neither is a superset of the other
-make test-all                        # JS + server + engine + harness + typecheck
+make test-all                        # typecheck + JS + server + engine + harness + CRUD UI
 scripts/test.sh                      # what the PR template requires
 make eval-skill SKILL=<name>         # any packages/engine/plugin/skills/ file
 make agent-smoke                     # plugin agents / hooks / tool binding

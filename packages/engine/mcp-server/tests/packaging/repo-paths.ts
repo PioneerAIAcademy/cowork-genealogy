@@ -46,6 +46,10 @@ export function citedPaths(text: string): string[] {
   for (const m of text.matchAll(/`([^`\n]+)`/g)) {
     // First word only: a span is often a command with arguments
     // (`scripts/setup-feedback-case.sh <zip>`), and only the head is a path.
+    // Known false negative: when the head is itself a command (`cd`, `npx`,
+    // `make`), the whole span is dropped — including any repo path later in
+    // it, e.g. `cd packages/engine/mcp-server && npx tsx dev/try-<tool>.ts`
+    // contributes nothing. Tracked in issue #1180.
     const token = m[1].trim().split(/\s+/)[0];
     if (!token.includes("/")) continue;
     if (!REPO_ROOTS.some((r) => token.startsWith(r))) continue;

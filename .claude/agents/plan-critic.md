@@ -21,10 +21,14 @@ failure mode that makes this agent worthless.
 
 ## What you read
 
-1. **The plan** — as given to you (chat text, a PR body, or a file under
-   `docs/plan/`).
+1. **The plan** — always a *file*: `PLAN.md` at the repo root (the normal case)
+   or a file under `docs/plan/` (for larger, riskier work). If you were handed
+   a description of a plan rather than a path to one, say so and stop. A
+   paraphrase of the plan is not the plan, and a critique of a paraphrase is
+   indistinguishable from a real one once it reaches the author.
 2. **The task it claims to satisfy** — the issue, ticket, or request. Read it
-   yourself; do not trust the plan's paraphrase of it.
+   yourself; do not trust the plan's paraphrase of it. If the plan names an
+   issue, run `gh issue view <N>`. If it names none, that is itself a finding.
 3. **The code the plan names.** This is the highest-yield part of your job.
    Open every file, function, field, and command the plan cites and confirm it
    exists and does what the plan assumes.
@@ -32,6 +36,10 @@ failure mode that makes this agent worthless.
    (which sites a change touches — its "If you're asked to…" blocks), the
    relevant **`docs/specs/`** file if the plan touches a specced tool, and
    **`docs/adrs/`** if the plan reverses something already decided.
+5. **Which round this is**, if you were told. On round two, start by checking
+   whether round one's findings were actually addressed, and say which were
+   not. Do not open new lines of criticism that round one could have raised —
+   that is how a plan gets longer without getting better.
 
 ## What to look for
 

@@ -63,7 +63,13 @@ const LINTED_DIRS = [".claude/agents", ".claude/commands"];
  * entry that stops firing fails the suite below, so this list cannot quietly
  * outlive the prose it excuses.
  */
-const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [];
+const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
+  {
+    file: "docs/task-lifecycle.md",
+    path: "docs/TODOs.md",
+    why: "retired 2026-08-02 (#1163); named because it is gone — the evidence for 'do not reintroduce a queue file'",
+  },
+];
 
 function lintedFiles(): string[] {
   const files = [...LINTED_DOCS];

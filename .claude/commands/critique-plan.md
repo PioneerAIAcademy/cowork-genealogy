@@ -24,13 +24,16 @@ Subagents start in fresh context and see **only** what the prompt hands them.
 A plan described rather than pasted arrives as your paraphrase — which is
 exactly the input the critic is told not to trust.
 
+- `$ARGUMENTS` names a path that exists → use it.
+- `$ARGUMENTS` names a path that does **not** exist → say so and stop. Do not
+  silently fall back to a search; the user named a file, and guessing at a
+  different one produces a critique of the wrong plan.
 - `$ARGUMENTS` empty → look for `PLAN.md` at the repo root, then any
   `docs/plan/*.md` modified on this branch (`git diff --name-only main...`).
-- Found exactly one → use it, and say which.
-- Found none → the plan exists only in this conversation. Write it to
+  Found exactly one → use it, and say which. Found several → ask which.
+- Nothing found → the plan exists only in this conversation. Write it to
   `PLAN.md` first (it is gitignored), then continue. Do not paste a summary
   into the agent prompt instead.
-- Found several → ask which.
 
 ## Step 2 — Find the task it claims to satisfy
 
