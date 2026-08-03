@@ -1,6 +1,7 @@
 # Neon Postgres on Fly, SQLite locally — DB backend plan
 
-**Date:** 2026-06-06. **Branch:** `hosted-web-workbench`. **Read with:**
+**Date:** 2026-06-06. **Branch:** merged to `main` — the `hosted-web-workbench`
+branch this was written on no longer exists. **Read with:**
 `fly-deploy-plan.md` (the deploy this amends), `docs/realtime-rearch-status.md`
 (current state). **Touches:** `apps/server/app/{config,db,models,main}.py`,
 `apps/server/pyproject.toml`, `deploy/fly.toml`.

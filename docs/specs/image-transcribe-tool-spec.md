@@ -6,7 +6,7 @@
 > below), so the build is unblocked and the §12 fallback is not triggered.
 > §4 is retained as the record of the experiment that was run.
 >
-> Owner: unassigned. Reviewer: spec-review agent (once implemented).
+> Owner: unassigned. Review against this spec once implemented.
 >
 > **Revision (2026-07-17) — three changes from the original draft, per a
 > design review:**
@@ -553,9 +553,9 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
   and `docs/specs/image-reader-agent-spec.md` is updated to match. Follow the
   **lane rule** (`docs/skill-lifecycle.md` §5): this is a tooling change
   (lane 1).
-- Record any deferred follow-ups (e.g. multi-image batching) in
-  `docs/TODOs.md` in the same PR that defers them (tech-debt-in-TODOs
-  convention).
+- File any deferred follow-ups (e.g. multi-image batching) as a GitHub issue in
+  the same PR that defers them — `gh issue create --label developer`, see
+  `CLAUDE.md` § "Deferring work creates an issue".
 
 ## 11. Cost & privacy
 
@@ -658,7 +658,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `dev/try-image-transcribe.ts`
 - `tests/tools/image-transcribe.test.ts`
 - `tests/tools/configure-openrouter.test.ts`
-- Phase 0 results write-up *(done: PR 723; conclusions folded into `docs/TODOs.md` § "Engine — image reading & transcription")*
+- Phase 0 results write-up *(done: PR 723; the model-comparison conclusions live in §5 of this spec — Qwen 67% / Sonnet 5 76% / Sonnet 4.6 60% on hard hands, and why an opt-in Sonnet-5 second opinion was dropped)*
 
 **Modify**
 - `src/types/auth.ts` — `openRouterApiKey`, `openRouterModel` on `AppConfig`
@@ -672,7 +672,8 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
   path to `image_transcribe`
 - `docs/specs/image-read-spec.md` — cross-reference
 - `CLAUDE.md` — new per-user config keys in the config table
-- `docs/TODOs.md` — any deferred follow-ups (e.g. multi-image batching)
+- A GitHub issue per deferred follow-up (e.g. multi-image batching), filed in
+  the same PR — see root `CLAUDE.md` § "Deferring work creates an issue"
 
 *Image-persistence increment (§8.5):*
 - `src/tools/research-append.ts` — TTL-GC sweep of unreferenced `images/*.jpg` after each write

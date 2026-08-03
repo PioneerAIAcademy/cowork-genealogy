@@ -194,11 +194,73 @@ describe("research_query", () => {
     expect(result.errors.join(" ")).toMatch(/not found/);
   });
 
-  it("evaluations takes no filters — combining any filter with it is an error", async () => {
+  it("evaluations takes only targetId/focus — another filter is an error naming them", async () => {
     await writeResearch({ evaluations: [{ id: "ev_001" }] });
     const result = await researchQuery({ projectPath: dir, section: "evaluations", status: "open" } as any);
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.errors.join(" ")).toMatch(/this section takes no filters/);
+    expect(result.errors.join(" ")).toMatch(
+      /'status' is not a supported filter for section 'evaluations' \(supported: targetId, focus\)/,
+    );
+  });
+
+  it("filters evaluations by targetId + focus", async () => {
+    await writeResearch({
+      evaluations: [
+        { id: "ev_001", focus: "proof-critique", target_id: "ps_001", superseded_by: "ev_003" },
+        { id: "ev_002", focus: "on-demand", target_id: "ps_001", superseded_by: null },
+        { id: "ev_003", focus: "proof-critique", target_id: "ps_001", superseded_by: null },
+        { id: "ev_004", focus: "proof-critique", target_id: "ps_002", superseded_by: null },
+      ],
+    });
+
+    const result = await researchQuery({
+      projectPath: dir,
+      section: "evaluations",
+      targetId: "ps_001",
+      focus: "proof-critique",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(2);
+    expect(result.items.map((e: any) => e.id)).toEqual(["ev_001", "ev_003"]);
+  });
+
+  // The filter layer deliberately cannot express `superseded_by: null` —
+  // `matches()` compares against a string, and the field is `string | null`.
+  // Both the superseded and the live verdict come back; picking the live one
+  // is the caller's step (gps-mentor.md's existing-verdict skip says so). This
+  // test pins that boundary so a future reader doesn't assume it filters.
+  it("does not filter evaluations by superseded_by — both entries are returned", async () => {
+    await writeResearch({
+      evaluations: [
+        { id: "ev_001", focus: "proof-critique", target_id: "ps_001", superseded_by: "ev_002" },
+        { id: "ev_002", focus: "proof-critique", target_id: "ps_001", superseded_by: null },
+      ],
+    });
+
+    const result = await researchQuery({
+      projectPath: dir,
+      section: "evaluations",
+      targetId: "ps_001",
+      focus: "proof-critique",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(2);
+    expect(result.items.filter((e: any) => e.superseded_by === null)).toHaveLength(1);
+  });
+
+  it("returns the whole evaluations section when no filter is supplied", async () => {
+    await writeResearch({
+      evaluations: [
+        { id: "ev_001", focus: "proof-critique", target_id: "ps_001" },
+        { id: "ev_002", focus: "on-demand", target_id: "project" },
+      ],
+    });
+    const result = await researchQuery({ projectPath: dir, section: "evaluations" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(2);
   });
 });
