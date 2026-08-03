@@ -160,6 +160,39 @@ def test_no_new_conflicts_without_competing(before_state, after_state):
     assert not errors, "New conflicts without competing assertions:\n" + "\n".join(errors)
 
 
+def test_creates_no_new_conflict(before_state, after_state, test):
+    """Tag-gated (`no-new-conflict`) no-harm invariant for the
+    classification-vs-conflict-resolution negative
+    (ut_conflict_resolution_010): a request to *classify* evidence
+    (information_quality / source_classification labels) is
+    record-extraction's job, not conflict-resolution's. The
+    routing-independent gate is that no NEW `c_` conflict entry appears
+    after the skill runs — whether the model auto-routes to
+    record-extraction or loads conflict-resolution and declines (or
+    over-explains) in-body, state must be untouched. Mirrors
+    test_citation.py::test_does_not_add_new_source_entries; pure tag-gate
+    like test_tree_edit.py::test_tree_edit_noop so it never touches the
+    positive conflict tests that legitimately create conflicts.
+    """
+    if "no-new-conflict" not in test.get("tags", []):
+        pytest.skip("not a no-new-conflict scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    before_ids = {c.get("id") for c in before.get("conflicts", [])}
+    new = [
+        c.get("id")
+        for c in after.get("conflicts", [])
+        if c.get("id") not in before_ids
+    ]
+    assert not new, (
+        "conflict-resolution fabricated a conflict from a classification "
+        f"request; new conflict id(s): {new}. Classifying evidence is "
+        "record-extraction's job — it must not create a c_ entry here."
+    )
+
+
 # --- Tag-gated verdict checks ----------------------------------------
 
 def _find_conflict(after_state, cid):

@@ -66,7 +66,7 @@ The CRUD UI (spec: `docs/specs/eval-crud-ui-spec.md`) is where juniors:
 - Author and edit unit tests (form maps to the unit-test JSON schema; no raw JSON editing).
 - View run logs (the harness writes them to disk via `RunTests.bat`; the CRUD UI auto-refreshes on tab focus).
 - Annotate run logs with **per-dimension numeric corrections** on a 1–3 scale (3=pass, 2=partial, 1=fail). The LLM judge's score is shown alongside an editable corrected-score field that defaults to the LLM's score; the junior changes only the dimensions they disagree with. Optional per-dimension comment field for the rationale on disagreement. The UI writes one `.ann.json` file per PR per skill.
-- Compare the PR's run log against main's most recent run log for that skill, side-by-side (weighted mean + count histogram). Tests whose `test_content_hash` differs between the two are flagged as excluded from the headline comparison.
+- Compare the PR's run log against main's most recent run log for that skill, side-by-side (weighted mean + count histogram). Tests the two run logs' `snapshot` blocks disagree on are flagged as excluded from the headline comparison.
 
 The CRUD UI is not the gate — the senior's PR-merge action is. The UI shows numbers; the senior reads them holistically alongside the prompt diff, test diff, and `.ann` file.
 

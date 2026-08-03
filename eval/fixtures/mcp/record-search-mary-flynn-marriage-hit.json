@@ -1,0 +1,103 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search returning an 1862 Schuylkill County marriage for Mary Flynn to Michael Doyle. Mary is I3 in flynn-record-matching — a prior-research sibling stub (St. Mary's baptism 1841, per the scenario README), so a marriage in her early twenties is chronologically consistent with the tree. Used by the ad-hoc-with-results test: no plan item covers Mary's marriage (the active plan targets Patrick's parentage via the 1850 census and Thomas's probate), so the search is ad-hoc, and unlike the nil ad-hoc case in ut_search_records_011 this one returns something — exercising the sidecar-written / plan_item_id-null combination.",
+  "args": {
+    "surname": "~Flynn",
+    "givenName": "~Mary"
+  },
+  "response": {
+    "query": {
+      "surname": "Flynn",
+      "givenName": "Mary"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "9XKD-R7M",
+        "recordId": "9XKD-R7M",
+        "personName": "Mary Flynn",
+        "score": 0.91,
+        "sex": "Female",
+        "birthDate": "1841",
+        "birthPlace": "Ireland",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "14 June 1862",
+            "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:9XKD-R7M",
+        "collectionId": "1681048",
+        "collectionTitle": "Pennsylvania, County Marriages, 1845-1963",
+        "recordTitle": "Mary Flynn and Michael Doyle marriage",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Mary",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1841",
+                  "place": "Ireland"
+                },
+                {
+                  "id": "F2",
+                  "type": "Marriage",
+                  "date": "14 June 1862",
+                  "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Michael",
+                  "surname": "Doyle",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Marriage",
+                  "date": "14 June 1862",
+                  "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "R1",
+              "type": "Couple",
+              "person1": "P1",
+              "person2": "P2"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

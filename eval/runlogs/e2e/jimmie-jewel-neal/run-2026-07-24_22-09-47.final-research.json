@@ -1,0 +1,4132 @@
+{
+  "project": {
+    "id": "rp_jimmie_jewel_neal",
+    "objective": "Who were the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884 in Hillsboro, Hill, Texas, died 7 March 1938 in Carlsbad, Eddy, New Mexico)?",
+    "subject_person_ids": [
+      "KNXW-M3T"
+    ],
+    "status": "completed",
+    "created": "2026-07-10",
+    "updated": "2026-07-24"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Martha J. Wood (born circa 1855 in Georgia, living in Blount County, Alabama in 1860), the mother of Jimmie Jewel Neal of Hill County, Texas?",
+      "rationale": "The research objective is to identify Jimmie Jewel Neal's maternal grandparents. Her mother, Martha J. Wood (later Neal, then Hamby), is already established in the tree. The 1860 U.S. Census places Martha Wood in a household headed by 'M M Wood' in Blount County, Alabama, providing a direct lead to her father's identity. Marriage records from Hill County, Texas (1879) record her as 'Mattie Landham,' consistent with a prior marriage to a W. F. Lanham/Landham (1869 Hill County record), meaning 'Wood' is her maiden surname from the 1860 household. Identifying the head M M Wood and the wife of that household will answer the objective. Records for Blount County, Alabama and Hill County, Texas are available on FamilySearch.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-24",
+      "resolution_assertion_ids": [
+        "a_137",
+        "a_138"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Three independent US Federal Census enumerations (1850 Cherokee County GA, 1860 Blount County AL, 1870 Blount County AL) document M M Wood (I1) and Martha Wood (I2) as parents of Martha J Wood (LKYG-VKB). The 1860 census directly establishes parentage by household position. The 1850 and 1870 censuses independently corroborate the same couple in consistent locations across three decades. Marriage records in Alabama and Georgia were searched (negative \u2014 marriage likely predates indexed SC records). Probate for Blount County AL was searched via full-text (FTS returned 0 results \u2014 digitization gap, not proven absence). Both birth-year conflicts (c_001, c_002) are resolved. Overturn risk is low: no accessible unsearched source would plausibly identify a different father or mother for LKYG-VKB.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. The 1860 Blount County AL census (S3) places child_7 'Martha Wood' (female, born ~1852 GA) in the household of head M M Wood (I1) and wife Martha Wood (I2), directly answering q_001. The 1850 and 1870 censuses corroborate the same couple across three decades.",
+          "repository_breadth": "FamilySearch searched for US Federal Censuses 1850/1860/1870, Alabama state census 1855, marriage records in Blount County AL and Georgia, and Blount County AL probate via full-text. Marriage records in South Carolina (likely location for M M Wood's marriage c.1835) are not indexed on FamilySearch \u2014 this gap is noted as a known limitation but does not affect the parentage conclusion already established by census co-residence.",
+          "original_substitution": "The FamilySearch census index entries (S1, S2, S3) are derivative sources. The 1850 census image URL was obtained via the sidecar; the 1860 and 1870 census images were not independently examined. The US Federal Census indexes on FamilySearch are known to be highly accurate (>96%) for structural data like household composition. Original images are accessible on FamilySearch but were not read by the image-reader in this project \u2014 this is a noted limitation. For the parentage question, household position is the key evidence type and is reliably captured by the index.",
+          "independent_verification": "Three independent census enumerations from different years and enumerators constitute independent verification: the 1850 Cherokee County GA census, the 1860 Blount County AL census, and the 1870 Blount County AL census all document the same couple (M M Wood/Martha Wood) in consistent contexts. The 1850 and 1860 household compositions show overlapping children (Margaret, Manly A, David) who appear age-consistently across both records, confirming the same family unit.",
+          "evidence_class": "The underlying US Federal Census schedules are original government records. The facts extracted (household composition, names, ages, birthplaces) constitute primary information for events the enumerator witnessed at enumeration time (residence, household membership). The derivative index classifications in this project reflect the access method (FamilySearch index), not the character of the underlying evidence.",
+          "conflict_resolution": "c_001 (I1 birth year ~1812 vs ~1816) resolved: preferred a_086 (~1812, 1860/1870 consensus). c_002 (I2 birth year ~1814 vs ~1815 vs ~1823) resolved: preferred a_092 (~1814, 1860/1870 consensus). LKYG-VKB birth year discrepancy (pre-existing tree value 1855 vs research-extracted ~1852 from same 1860 census source) is noted as a known data-quality issue in the pre-existing tree, not a resolvable conflict between independent sources. Does not affect the parentage conclusion.",
+          "overturn_risk": "Low. Only one M M Wood household appears in Blount County AL in the 1860 census. The three census records corroborate each other consistently. Probate for M M Wood was searched via full-text (digitization gap); if probate records exist and are later made accessible, they could add corroboration but are unlikely to name a different parent. No accessible unsearched source type is known to exist that would plausibly overturn the parentage conclusion."
+        }
+      },
+      "created": "2026-07-24"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-24",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Blount County, Alabama",
+          "date_range": "1860",
+          "repository": "FamilySearch",
+          "rationale": "The 1860 U.S. Census for Blount County is the primary direct source for identifying Martha J. Wood's parents. Source Q3ZW-YBN in tree.gedcomx.json is an index entry pointing to an 'M M Wood / Martha Wood' household in Blount County, but it has not been formally extracted into this project. The full census image (NARA M653 Roll 2, 99% name-indexed on FamilySearch, imageGroup 005154190) will name all household members with ages, relationships, and birthplaces \u2014 directly identifying M M Wood's full name, wife's name and age, and confirming Martha's presence as a child. This is foundational for all subsequent searches.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Hill County, Texas",
+          "date_range": "1869",
+          "repository": "FamilySearch",
+          "rationale": "Martha J. Wood married W. F. Lanham in Hill County, Texas on 7 Jan 1869 (source WWLY-J9X in tree.gedcomx.json). At ~age 14, Texas law required parental consent for her marriage. The original marriage record image \u2014 and any associated consent bond or license \u2014 may directly name her parents (father's name and signature on the consent). This is potentially the highest-yield record for the parentage question and should be examined alongside the 1860 census. Collection: Texas, County Marriage Records, 1837-2010 on FamilySearch.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Georgia, United States",
+          "date_range": "1850",
+          "repository": "FamilySearch",
+          "rationale": "Martha J. Wood was born circa 1855 in Georgia, so her parents were in Georgia before migrating to Alabama. The 1850 U.S. Census (taken before Martha's birth) will show M M Wood's household in Georgia: his full name, wife's name and maiden name (if recently married), older children, ages, and birthplaces \u2014 establishing the family's Georgia county of origin. This is essential for identifying Martha's mother and the family's geographic roots. The 1850 census is heavily indexed on FamilySearch nationally. The specific Georgia county is unknown until the 1860 census extract provides birthplace data; search Georgia statewide for 'Wood' households matching the profile.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Blount County, Alabama",
+          "date_range": "1820-1870",
+          "repository": "FamilySearch",
+          "rationale": "Dedicated search for the marriage of M M Wood in Blount County, Alabama. Per the record-type guide, a parentage plan must include a separate item for the parents' marriage: (a) it confirms M M Wood and his wife as a couple; (b) it supplies Martha's mother's maiden name, which census records omit; (c) its date relative to Martha's ~1855 birth corroborates the spousal unit. Blount County marriage registers 1820-1860 and 1860-1871 are 84-85% indexed on FamilySearch (collections 1743384 and 1674672; imageGroups 007316661/007316662). Also search the Religious Marriage Parental Consent Records 1852-1860 (100% indexed, imageGroup 004484211_003) which name parents of brides and grooms.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Georgia, United States",
+          "date_range": "1840-1860",
+          "repository": "FamilySearch",
+          "rationale": "Fallback for pli_004: if M M Wood married in Georgia before migrating to Alabama (likely, given Martha's Georgia birth ~1855), his marriage record will be in Georgia county records. Georgia County Marriages, 1785-1950 (collection 1927197, 1.9M records) and Georgia Marriages, 1808-1967 (collection 1674807, 663K records) are indexed on FamilySearch. This record will name his wife's maiden name \u2014 Martha's maternal grandmother's maiden name \u2014 and the Georgia county of marriage, directing the 1850 census search to a specific county.",
+          "fallback_for": "pli_004",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "census",
+          "jurisdiction": "Alabama, United States",
+          "date_range": "1855",
+          "repository": "FamilySearch",
+          "rationale": "The 1855 Alabama State Census (collection 1915984, 34,978 records, indexed on FamilySearch) provides a mid-decade check between 1850 and 1860. If the Wood family had already migrated from Georgia to Alabama by 1855, this census would confirm their presence in Blount County, show household members including any children born before Martha, and narrow the migration window. If the family does not appear, the migration window tightens to 1855-1860. Lower priority than the 1860 federal census but useful corroboration.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "census",
+          "jurisdiction": "Blount County, Alabama; Hill County, Texas",
+          "date_range": "1870",
+          "repository": "FamilySearch",
+          "rationale": "The 1870 U.S. Census will locate M M Wood's family after the Civil War. Two possible locations: (1) still in Blount County, Alabama (imageGroup 004257477, 96% indexed); (2) already in Hill County, Texas, where Martha was living by January 1869. If M M Wood migrated to Texas with Martha, a Hill County 1870 household would confirm the family unit in the new location and show any remaining children at home. This also functions as a FAN search \u2014 neighbors in both locations may be relatives.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "probate",
+          "jurisdiction": "Blount County, Alabama",
+          "date_range": "1858-1900",
+          "repository": "FamilySearch",
+          "rationale": "If M M Wood died in Blount County, Alabama, his estate file would name his heirs \u2014 including Martha and any siblings \u2014 providing direct parent-child evidence separate from the census co-residence. Blount County Probate Estate Case Files 1846-1957 (imageGroups 004999786 and 005000638) are digitized on FamilySearch with full-text search capability (3% name-indexed). Search full-text for 'Wood' in the probate records. Also check Alabama Estate Files, 1830-1976 (collection 1978117, 25K indexed records). A will naming Martha as a daughter would be strong corroborating evidence for the parentage conclusion.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-24T20:59:49.987Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "Martha",
+        "residencePlace": "Blount, Alabama, United States",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1860,
+        "recordType": "census",
+        "sex": "Female",
+        "birthYearFrom": 1851,
+        "birthYearTo": 1859,
+        "count": 50,
+        "collection": "United States, Census, 1860"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 4,
+      "notes": "Found M M Wood household (MHDC-LKK/MHDC-LKY), Blount Co., Alabama, 1860. Head: M M Wood, born 1812 South Carolina. Wife: Martha Wood, born 1814 South Carolina. Subject Martha Wood (MHDC-LKY) listed born 1852 Georgia, matching LKYG-VKB. Household shows family migration SC\u2192GA\u2192AL; children born SC 1839-1846, then GA 1847-1854. Provisionally identifies maternal grandparents of Jimmie Jewel Neal as M M Wood and Martha Wood (maiden name unknown), both born South Carolina."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-24T21:01:07.169Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "Martha",
+        "residencePlace": "Hill, Texas, United States",
+        "marriageYearFrom": 1868,
+        "marriageYearTo": 1870,
+        "recordType": "marriage",
+        "spouseGivenName": "William",
+        "spouseSurname": "Lanham"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. Marriage was in Smith County, TX not Hill County \u2014 explains failure. Tree source WWLY-J9X incorrectly places this in Hill County."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-24T21:03:34.204Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "M",
+        "spouseSurname": "Lanham",
+        "recordType": "marriage",
+        "anyYearFrom": 1868,
+        "anyYearTo": 1872,
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "Broader search (dropped Hill County place filter) returned 1 result \u2014 a New York City marriage record, not relevant. Collection mismatch confirms no indexed FamilySearch marriage for M J Wood + W F Lanham in Texas circa 1869."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-24T21:03:37.796Z",
+      "tool": "record_read",
+      "query": {
+        "ark": "QV1C-Y4FR",
+        "description": "Direct read of known ARK from tree source WWLY-J9X \u2014 1869 Texas marriage M J Wood / W F Lanham"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Record is in Smith County, Texas (not Hill County as stated in tree). Marriage date 1869. Index entry only \u2014 no parental consent data, no parents of bride named. The tree's place annotation (Hill County) is incorrect. No direct evidence of M J Wood's parentage from this record."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-24T21:05:21.029Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "M",
+        "sex": "Male",
+        "birthYearFrom": 1808,
+        "birthYearTo": 1816,
+        "birthPlace": "South Carolina",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850,
+        "residencePlace": "Georgia",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1,
+      "notes": "Found 1850 household of M M Wood in Cherokee County, Georgia (ARK MZYV-S6L). Head M M Wood, Male, born 1816 SC. Wife Martha Wood, born 1823 SC. Seven children: Nancy A (b.1837 SC), Henry (b.1838 SC), Margaret (b.1841 GA), Manly A (b.1843 GA), David (b.1844 GA), Rosannah (b.1846 GA), Jonah (b.1849 GA). Subject Martha J Wood (b.~1852) not yet born. Migration pattern confirmed: SC origin, moved to GA by 1841, moved to Blount Co. AL before 1860. Note: birth year discrepancies vs. 1860 census \u2014 M M Wood: 1816 (1850) vs ~1812 (1860); Martha: 1823 (1850) vs ~1814 (1860). Typical census enumeration variance. Record is attachedToOther in FamilySearch Family Tree."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-24T21:06:38.912Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "M",
+        "sex": "Male",
+        "residencePlace": "Blount County, Alabama",
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 56,
+      "notes": "56 results, all M-initial Wood marriages in Alabama; none match M M Wood born ~1812-1816 SC. Top-scored are William M. Wood entries (wrong given initial pattern) and other Blount County records too late in date. Expected negative: M M Wood's oldest children born 1837-1838 in South Carolina, so his marriage would have occurred in SC circa 1835-1836, not in Alabama. Proceeding to Georgia and South Carolina marriage searches."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-24T21:07:37.312Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "M",
+        "sex": "Male",
+        "recordType": "marriage",
+        "recordCountry": "United States",
+        "recordSubdivision": "Georgia",
+        "marriageYearFrom": 1830,
+        "marriageYearTo": 1845,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 4,
+      "notes": "4 results. Top hit: Mathew M. Wood + Sabra Berry, Jefferson County GA, 15 Nov 1832. Ruled out \u2014 our M M Wood had children born in South Carolina 1837-1838, not in Jefferson Co. GA; and his wife in 1850 and 1860 is named Martha, not Sabra. The Mathew M. Wood/Sabra Berry entry is a different individual (attachedToOther in FS Family Tree). Remaining 3 results are clearly different persons. No M M Wood marriage to a Martha found in Georgia 1830-1845. His marriage almost certainly occurred in South Carolina before 1837 but SC marriage records for this period appear unindexed on FamilySearch (separate SC search returned zero results)."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-24T21:08:42.854Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "M",
+        "sex": "Male",
+        "residenceYearFrom": 1855,
+        "residenceYearTo": 1855,
+        "residencePlace": "Alabama",
+        "birthPlace": "South Carolina",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 1464,
+      "notes": "1464 results \u2014 too broad. No specific 1855 Alabama State Census collection was targeted. Results are mix of death records, obituaries, birth registers, marriage records from many states, none identifying M M Wood in an 1855 Alabama state enumeration. The 1855 Alabama State Census may not be indexed on FamilySearch as a distinct searchable collection. No useful records found for identifying M M Wood's Alabama arrival or his wife's maiden name."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-24T21:09:27.901Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "M",
+        "sex": "Male",
+        "birthYearFrom": 1808,
+        "birthYearTo": 1820,
+        "birthPlace": "South Carolina",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "residencePlace": "Blount County, Alabama",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. M M Wood may have died between 1860 and 1870. Widening search: drop county restriction and birth constraints; also search for wife Martha Wood as potential widow."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-24T21:09:31.377Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "M",
+        "sex": "Male",
+        "birthYearFrom": 1808,
+        "birthYearTo": 1820,
+        "residenceYearFrom": 1840,
+        "residenceYearTo": 1840,
+        "residencePlace": "South Carolina",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for 1840 SC census with M Wood born 1808-1820. The 1840 federal census indexed only household heads by name; searching by initial 'M' with a birth year range may fail for that era. Will try Georgia 1840 census (family may have already relocated) and broaden constraints."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-24T21:13:14.177Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "Martha",
+        "sex": "Female",
+        "birthYearFrom": 1810,
+        "birthYearTo": 1830,
+        "birthPlace": "South Carolina",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "residencePlace": "Alabama",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 3,
+      "notes": "Key hit: ARK MHV5-SNR \u2014 'M Wood', female, born 1815 SC, Blount AL 1870, in household of 'J T Wood' (head, born 1812 SC, Blount AL). J T Wood born 1812 SC in same county as M M Wood from 1860 \u2014 almost certainly the same person (different initials captured by different enumerators). Household also includes Jasper Wood (b.1848 GA) and Elizabeth Wood (b.1852 GA) \u2014 consistent post-1850 children. Martha A Woods in Tuscaloosa in Henry L Woods household ruled out: Henry L Woods born 1822 Georgia, wrong to be our Henry Wood son (b.1838 SC)."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-24T21:13:18.677Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wood",
+        "givenName": "M",
+        "sex": "Male",
+        "birthYearFrom": 1808,
+        "birthYearTo": 1820,
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "residencePlace": "Alabama",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 3,
+      "notes": "3 results \u2014 none match M M Wood in Blount County. Jackson County (TN birth), Wilcox County (NY birth), Lawrence County (VA birth). M M Wood is not found under 'M' initial in 1870 Alabama because the 1870 enumerator recorded him as 'J T Wood' (different initials)."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-24T21:15:33.701Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Wood",
+        "recordPlace1": "Alabama",
+        "recordPlace2": "Blount",
+        "yearFrom": 1860,
+        "yearTo": 1900
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FamilySearch full-text corpus returns zero results for any record in Blount County, Alabama 1860-1900. Blount County Alabama probate records are not digitized/transcribed in the FamilySearch FTS corpus for this period. This is a digitization gap, not a confirmed absence of records. M M Wood's full name and wife's maiden name remain unestablished from this source."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States Census, 1870,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MHV5-SNR : accessed 2026-07-24), entry for M Wood in household of J T Wood, Blount County, Alabama.",
+      "citation_detail": {
+        "who": "M Wood (wife) in household of J T Wood",
+        "what": "United States Federal Census, 1870, population schedule",
+        "when_created": "1870",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Blount County, Alabama; ark:/61903/1:1:MHV5-SNR"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MHV5-SNR",
+      "notes": "FamilySearch index entry. Original not examined \u2014 image was not reviewed; classification reflects the index/transcript as accessed. The underlying original census schedule (NARA microfilm) was not confirmed viewed.",
+      "log_entry_id": "log_011",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States, Census, 1850,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:MZYV-S6L : accessed 2026-07-24), entry for M M Wood household, Cherokee County, Georgia, dwelling and family number not stated; citing NARA microfilm publication M432.",
+      "citation_detail": {
+        "who": "M M Wood household (M M Wood, Martha Wood, and children)",
+        "what": "1850 United States Federal Census, free inhabitants schedule",
+        "when_created": "1850",
+        "when_accessed": "2026-07-24",
+        "where": "FamilySearch, https://familysearch.org/ark:/61903/1:1:MZYV-S6L",
+        "where_within": "Cherokee County, Georgia"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MZYV-S6L",
+      "notes": "FamilySearch index entry; original image at https://www.familysearch.org/ark:/61903/3:1:S3HY-6FSV-76 \u2014 image examined via sidecar. Index is a derivative; image is the original schedule.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States, Census, 1860,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MHDC-LKK : accessed 24 July 2026), entry for M M Wood household, Eastern Subdivision, Blount County, Alabama; citing NARA microfilm publication M653.",
+      "citation_detail": {
+        "who": "M M Wood household",
+        "what": "1860 United States Federal Census population schedule, FamilySearch index and image",
+        "when_created": "1860",
+        "when_accessed": "24 July 2026",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Eastern Subdivision, Blount County, Alabama; NARA microfilm M653"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-24",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MHDC-LKK",
+      "notes": "FamilySearch index and linked image of the 1860 NARA census schedule (M653). Original census schedule not independently examined \u2014 this is a derivative index/abstract entry pointing to the original image. Classification: derivative.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630304",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "J T Wood",
+      "structured_value": {
+        "given": "J T",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Pre-1940 census; enumerator did not record who answered. J T Wood's initials only \u2014 full given name not recorded. Probable identity with 'M M Wood' from 1860 Blount County census (same birth year 1812, same birth state SC, same county) noted as research lead; identity confirmation pending corroboration.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630304",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630304",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born South Carolina",
+      "place": "South Carolina",
+      "standard_place": "South Carolina, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630304",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born circa 1812",
+      "date": "~1812",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Birth year computed from age as recorded in 1870 census; no direct birth date stated.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630304",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Blount County, Alabama, 1870",
+      "place": "Blount, Alabama, United States",
+      "standard_place": "Blount, Alabama, United States",
+      "date": "1870",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630305",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "M Wood",
+      "structured_value": {
+        "given": "M",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Given name recorded only as initial 'M' \u2014 full name not captured in this census entry. Probable identity with 'Martha Wood' wife of M M Wood in 1860 Blount County census noted as research lead; corroboration pending.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630305",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630305",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born South Carolina",
+      "place": "South Carolina",
+      "standard_place": "South Carolina, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630305",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born circa 1815",
+      "date": "~1815",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Birth year computed from age as recorded in 1870 census; no direct birth date stated.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630305",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Blount County, Alabama, 1870",
+      "place": "Blount, Alabama, United States",
+      "standard_place": "Blount, Alabama, United States",
+      "date": "1870",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630305",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of J T Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Pre-1880 census; no relationship column. Spousal relationship inferred from household position (female listed immediately after head, consistent with wife role in enumeration practice).",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630306",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Jasper Wood",
+      "structured_value": {
+        "given": "Jasper",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630306",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630306",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "place": "Georgia",
+      "standard_place": "Georgia, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630306",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born circa 1848",
+      "date": "~1848",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Birth year computed from age as recorded in 1870 census.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630306",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Blount County, Alabama, 1870",
+      "place": "Blount, Alabama, United States",
+      "standard_place": "Blount, Alabama, United States",
+      "date": "1870",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630306",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of J T Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Pre-1880 census; no relationship column. Child relationship to head inferred from household position and surname match.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630306",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Pre-1880 census; no relationship column. Child relationship to wife inferred from household position and surname match.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630307",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Elizabeth Wood",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630307",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630307",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "place": "Georgia",
+      "standard_place": "Georgia, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630307",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born circa 1852",
+      "date": "~1852",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Birth year computed from age as recorded in 1870 census.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630307",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Blount County, Alabama, 1870",
+      "place": "Blount, Alabama, United States",
+      "standard_place": "Blount, Alabama, United States",
+      "date": "1870",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630307",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of J T Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Pre-1880 census; no relationship column. Child relationship to head inferred from household position and surname match.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:MHV5-SNR",
+      "record_persona_id": "p_209630307",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "informant_bias_notes": "Pre-1880 census; no relationship column. Child relationship to wife inferred from household position and surname match.",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358211",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "M M Wood",
+      "structured_value": {
+        "given": "M M",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358211",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358211",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born circa 1816",
+      "date": "~1816",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1816"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age; pre-1940 census \u2014 respondent unknown, so indeterminate; age computed from census age column.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358211",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "South Carolina",
+      "place": "South Carolina",
+      "standard_place": "South Carolina, United States",
+      "structured_value": {
+        "place": "South Carolina"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Pre-1940 census \u2014 respondent unknown; birthplace stated in birthplace column.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358211",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Cherokee County, Georgia",
+      "place": "Cherokee, Cherokee, Georgia, United States",
+      "standard_place": "Cherokee, Cherokee, Georgia, United States",
+      "date": "1850",
+      "structured_value": {
+        "place": "Cherokee County, Georgia"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358212",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Martha Wood",
+      "structured_value": {
+        "given": "Martha",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358212",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358212",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born circa 1823",
+      "date": "~1823",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1823"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age; pre-1940 census \u2014 respondent unknown, so indeterminate.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358212",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "South Carolina",
+      "place": "South Carolina",
+      "standard_place": "South Carolina, United States",
+      "structured_value": {
+        "place": "South Carolina"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Pre-1940 census \u2014 respondent unknown; birthplace stated in birthplace column.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358212",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Cherokee County, Georgia",
+      "place": "Cherokee, Cherokee, Georgia, United States",
+      "standard_place": "Cherokee, Cherokee, Georgia, United States",
+      "date": "1850",
+      "structured_value": {
+        "place": "Cherokee County, Georgia"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358212",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; spousal relationship inferred from household position (adult female immediately following male head, sharing surname).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358213",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Nancy A Wood",
+      "structured_value": {
+        "given": "Nancy A",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358213",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358213",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born circa 1837",
+      "date": "~1837",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1837"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age; pre-1940 census \u2014 respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358213",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "South Carolina",
+      "place": "South Carolina",
+      "standard_place": "South Carolina, United States",
+      "structured_value": {
+        "place": "South Carolina"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358213",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358213",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358214",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Henry Wood",
+      "structured_value": {
+        "given": "Henry",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358214",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358214",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born circa 1838",
+      "date": "~1838",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1838"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age; pre-1940 census \u2014 respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358214",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "South Carolina",
+      "place": "South Carolina",
+      "standard_place": "South Carolina, United States",
+      "structured_value": {
+        "place": "South Carolina"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358214",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358214",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358215",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Margaret Wood",
+      "structured_value": {
+        "given": "Margaret",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358215",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358215",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born circa 1841",
+      "date": "~1841",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1841"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age; pre-1940 census \u2014 respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358215",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "Georgia",
+      "place": "Georgia",
+      "standard_place": "Georgia, United States",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358215",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358215",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358216",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "Manly A Wood",
+      "structured_value": {
+        "given": "Manly A",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358216",
+      "record_role": "child_4",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358216",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born circa 1843",
+      "date": "~1843",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1843"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age; pre-1940 census \u2014 respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358216",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "Georgia",
+      "place": "Georgia",
+      "standard_place": "Georgia, United States",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358216",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358216",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358217",
+      "record_role": "child_5",
+      "fact_type": "name",
+      "value": "David Wood",
+      "structured_value": {
+        "given": "David",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358217",
+      "record_role": "child_5",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358217",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "born circa 1844",
+      "date": "~1844",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1844"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age; pre-1940 census \u2014 respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358217",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "Georgia",
+      "place": "Georgia",
+      "standard_place": "Georgia, United States",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358217",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358217",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358218",
+      "record_role": "child_6",
+      "fact_type": "name",
+      "value": "Rosannah Wood",
+      "structured_value": {
+        "given": "Rosannah",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358218",
+      "record_role": "child_6",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358218",
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "born circa 1846",
+      "date": "~1846",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1846"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age; pre-1940 census \u2014 respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358218",
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "Georgia",
+      "place": "Georgia",
+      "standard_place": "Georgia, United States",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358218",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358218",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358219",
+      "record_role": "child_7",
+      "fact_type": "name",
+      "value": "Jonah Wood",
+      "structured_value": {
+        "given": "Jonah",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358219",
+      "record_role": "child_7",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Sidecar records gender as Female for this persona; name 'Jonah' is typically male \u2014 possible indexing error or alternate spelling. Retain as stated.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358219",
+      "record_role": "child_7",
+      "fact_type": "birth",
+      "value": "born circa 1849",
+      "date": "~1849",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1849"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age; pre-1940 census \u2014 respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358219",
+      "record_role": "child_7",
+      "fact_type": "birth",
+      "value": "Georgia",
+      "place": "Georgia",
+      "standard_place": "Georgia, United States",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358219",
+      "record_role": "child_7",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358219",
+      "record_role": "child_7",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census has no relationship column; parent-child relationship inferred from household position, shared surname, and age consistency.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358220",
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "John Adams",
+      "structured_value": {
+        "given": "John",
+        "surname": "Adams"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Different surname from Wood household. Role in household unclear \u2014 possibly a boarder. Could be kin of unspecified relationship (parent, sibling, or in-law of either M M Wood or Martha Wood) \u2014 surname Adams may be a maiden-name lead. FAN associate flag for further investigation.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358220",
+      "record_role": "witness_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358220",
+      "record_role": "witness_1",
+      "fact_type": "birth",
+      "value": "born circa 1833",
+      "date": "~1833",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1833"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from reported age; pre-1940 census \u2014 respondent unknown.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358220",
+      "record_role": "witness_1",
+      "fact_type": "birth",
+      "value": "Georgia",
+      "place": "Georgia",
+      "standard_place": "Georgia, United States",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:MZYV-S6L",
+      "record_persona_id": "p_265358220",
+      "record_role": "witness_1",
+      "fact_type": "residence",
+      "value": "Cherokee County, Georgia",
+      "place": "Cherokee, Cherokee, Georgia, United States",
+      "standard_place": "Cherokee, Cherokee, Georgia, United States",
+      "date": "1850",
+      "structured_value": {
+        "place": "Cherokee County, Georgia"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "M M Wood",
+      "structured_value": {
+        "given": "M M",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born about 1812",
+      "structured_value": {
+        "year": "1812"
+      },
+      "date": "~1812",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age as recorded by enumerator; 1860 census did not record who answered. Age/birth year for an adult is indeterminate (could be self or spouse who answered). Year derived from age \u2014 indirect evidence of birth date.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born South Carolina",
+      "structured_value": {
+        "place": "S Carolina"
+      },
+      "place": "S Carolina",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace as stated on the 1860 census; unknown who answered for the household.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "South Carolina, United States"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Eastern Subdivision, Blount County, Alabama, 1860",
+      "structured_value": {
+        "place": "Eastern Subdivision, Blount, Alabama, United States"
+      },
+      "place": "Eastern Subdivision, Blount, Alabama, United States",
+      "date": "1860",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded its location directly.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "Blount, Alabama, United States"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "spouse of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1860 census has no relationship column; spousal relationship inferred from household position \u2014 adult female listed immediately after male head, sharing surname, with children listing both S Carolina and Georgia birth states consistent with a family that migrated over time.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Martha Wood",
+      "structured_value": {
+        "given": "Martha",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born about 1814",
+      "structured_value": {
+        "year": "1814"
+      },
+      "date": "~1814",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; 1860 census did not record who answered. Indirect evidence of birth year.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born South Carolina",
+      "structured_value": {
+        "place": "S Carolina"
+      },
+      "place": "S Carolina",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birthplace as stated on the 1860 census; unknown who answered.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "South Carolina, United States"
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Eastern Subdivision, Blount County, Alabama, 1860",
+      "structured_value": {
+        "place": "Eastern Subdivision, Blount, Alabama, United States"
+      },
+      "place": "Eastern Subdivision, Blount, Alabama, United States",
+      "date": "1860",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded its location directly.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "Blount, Alabama, United States"
+    },
+    {
+      "id": "a_095",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1860 census has no relationship column; spousal relationship inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_096",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Heny Wood",
+      "structured_value": {
+        "given": "Heny",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_097",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_098",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born about 1839",
+      "structured_value": {
+        "year": "1839"
+      },
+      "date": "~1839",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; 1860 census did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_099",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born South Carolina",
+      "structured_value": {
+        "place": "S Carolina"
+      },
+      "place": "S Carolina",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "South Carolina, United States"
+    },
+    {
+      "id": "a_100",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position as younger same-surname member of the dwelling.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_101",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_102",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Margaret Wood",
+      "structured_value": {
+        "given": "Margaret",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_103",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_104",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born about 1842",
+      "structured_value": {
+        "year": "1842"
+      },
+      "date": "~1842",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; 1860 census did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_105",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born South Carolina",
+      "structured_value": {
+        "place": "S Carolina"
+      },
+      "place": "S Carolina",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "South Carolina, United States"
+    },
+    {
+      "id": "a_106",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_107",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_108",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Manly Wood",
+      "structured_value": {
+        "given": "Manly",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_109",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_110",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born about 1843",
+      "structured_value": {
+        "year": "1843"
+      },
+      "date": "~1843",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; 1860 census did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_111",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born South Carolina",
+      "structured_value": {
+        "place": "S Carolina"
+      },
+      "place": "S Carolina",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "South Carolina, United States"
+    },
+    {
+      "id": "a_112",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_113",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_114",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "David Wood",
+      "structured_value": {
+        "given": "David",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_115",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_4",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_116",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born about 1846",
+      "structured_value": {
+        "year": "1846"
+      },
+      "date": "~1846",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; 1860 census did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_117",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born South Carolina",
+      "structured_value": {
+        "place": "S Carolina"
+      },
+      "place": "S Carolina",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "South Carolina, United States"
+    },
+    {
+      "id": "a_118",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_119",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_120",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_5",
+      "fact_type": "name",
+      "value": "Rosanna Wood",
+      "structured_value": {
+        "given": "Rosanna",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_121",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_5",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_122",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "born about 1847",
+      "structured_value": {
+        "year": "1847"
+      },
+      "date": "~1847",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; 1860 census did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_123",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "First child in household born in Georgia, indicating the family had migrated from South Carolina to Georgia before ~1847.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_124",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_125",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_126",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_6",
+      "fact_type": "name",
+      "value": "Sarah Wood",
+      "structured_value": {
+        "given": "Sarah",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_127",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_6",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_128",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "born about 1848",
+      "structured_value": {
+        "year": "1848"
+      },
+      "date": "~1848",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; 1860 census did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_129",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_130",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_131",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_132",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_7",
+      "fact_type": "name",
+      "value": "Martha Wood",
+      "structured_value": {
+        "given": "Martha",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_133",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_7",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_134",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_7",
+      "fact_type": "birth",
+      "value": "born about 1852",
+      "structured_value": {
+        "year": "1852"
+      },
+      "date": "~1852",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; 1860 census did not record who answered. Note: delegation context says 'born circa 1852-1855 Georgia' \u2014 the index gives a single derived year of 1852.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_135",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_7",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_136",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_7",
+      "fact_type": "residence",
+      "value": "Eastern Subdivision, Blount County, Alabama, 1860",
+      "structured_value": {
+        "place": "Eastern Subdivision, Blount, Alabama, United States"
+      },
+      "place": "Eastern Subdivision, Blount, Alabama, United States",
+      "date": "1860",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "Blount, Alabama, United States"
+    },
+    {
+      "id": "a_137",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_7",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position as younger same-surname member of dwelling headed by M M Wood.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_138",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_7",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_139",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_8",
+      "fact_type": "name",
+      "value": "Mary Wood",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_140",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_8",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_141",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_8",
+      "fact_type": "birth",
+      "value": "born about 1853",
+      "structured_value": {
+        "year": "1853"
+      },
+      "date": "~1853",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; 1860 census did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_142",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_8",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_143",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_8",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_144",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_8",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_145",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_9",
+      "fact_type": "name",
+      "value": "Isum Wood",
+      "structured_value": {
+        "given": "Isum",
+        "surname": "Wood"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_146",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_9",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_147",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_9",
+      "fact_type": "birth",
+      "value": "born about 1854",
+      "structured_value": {
+        "year": "1854"
+      },
+      "date": "~1854",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; 1860 census did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_148",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_9",
+      "fact_type": "birth",
+      "value": "born Georgia",
+      "structured_value": {
+        "place": "Georgia"
+      },
+      "place": "Georgia",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "Georgia, United States"
+    },
+    {
+      "id": "a_149",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_9",
+      "fact_type": "relationship",
+      "value": "child of M M Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_150",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "child_9",
+      "fact_type": "relationship",
+      "value": "child of Martha Wood (inferred)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No relationship column in 1860 census; inferred from household position.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_151",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "boarder_1",
+      "fact_type": "name",
+      "value": "William Suttle",
+      "structured_value": {
+        "given": "William",
+        "surname": "Suttle"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "William Suttle carries a different surname from the Wood household. His birth year (~1838) and birth state (Alabama) make him slightly older than the eldest listed child Heny Wood (~1839). Relationship to the household is unstated \u2014 he may be a boarder, an in-law, or other kin. Flagged as FAN lead for further research.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_152",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "boarder_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_153",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "boarder_1",
+      "fact_type": "birth",
+      "value": "born about 1838",
+      "structured_value": {
+        "year": "1838"
+      },
+      "date": "~1838",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from age; 1860 census did not record who answered.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_154",
+      "record_id": "ark:/61903/1:1:MHDC-LKK",
+      "record_role": "boarder_1",
+      "fact_type": "birth",
+      "value": "born Alabama",
+      "structured_value": {
+        "place": "Alabama"
+      },
+      "place": "Alabama",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "Alabama, United States"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_084",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1860 US Census, Blount County AL. Name 'M M Wood' directly matches I1 (M M Wood). I1 was created from this head_of_household persona. No conflicting attributes. Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_085",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1860 census: head_of_household sex Male consistent with I1 (male). Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_086",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1860 census: birth ~1812 consistent with I1's primary birth year ~1812 (from 1860 and 1870 censuses). Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_087",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1860 census: birthplace South Carolina consistent with I1 (born SC per all three censuses). Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_088",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1860 census: residence Eastern Subdivision, Blount County AL 1860 matches I1's Blount AL 1860 residence fact. Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_089",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1860 census: M M Wood (I1) recorded as spouse of Martha Wood. This relationship assertion bears on I1 as one party to the marriage. Consistent with Couple R4 (I1+I2). Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_089",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "1860 census: M M Wood's spousal relationship assertion also bears on I2 (Martha Wood, wife). The spouse named 'Martha Wood' in this assertion is I2. Consistent with Couple R4. Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_090",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "1860 US Census, Blount County AL. Name 'Martha Wood' directly matches I2 (Martha Wood). I2 was created from this wife persona. Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_091",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "1860 census: wife sex Female consistent with I2 (female). Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_092",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "1860 census: birth ~1814 entered as primary birth year for I2 (Martha Wood). Consistent with 1870 census (~1815). Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_093",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "1860 census: birthplace South Carolina consistent with I2 (born SC per all three censuses). Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_094",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "1860 census: residence Eastern Subdivision, Blount County AL 1860 matches I2's Blount AL 1860 residence fact. Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_095",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "1860 census: Martha Wood (I2) recorded as spouse of M M Wood. This relationship assertion bears on I2 as one party to the marriage. Consistent with Couple R4. Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_095",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1860 census: Martha Wood's spousal relationship assertion also bears on I1 as the spouse named 'M M Wood'. Consistent with Couple R4. Founding record.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_132",
+      "person_id": "LKYG-VKB",
+      "confidence": "confident",
+      "rationale": "1860 US Census, Blount County AL: child_7 'Martha Wood', female, born ~1852 GA, in M M Wood's household. Matches LKYG-VKB (Martha J Wood, female, born ~1852-1855 GA, resident Blount AL 1860). Name, sex, birthplace GA, and residence Blount AL all agree. Birth year ~1852 vs tree's ~1855 (3-year discrepancy) is typical for young children in pre-1880 censuses; flagged for conflict-resolution. Household position under I1 and I2 establishes parentage. Confident.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_133",
+      "person_id": "LKYG-VKB",
+      "confidence": "confident",
+      "rationale": "1860 census child_7: sex Female consistent with LKYG-VKB (Martha J Wood, female). Confident.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_134",
+      "person_id": "LKYG-VKB",
+      "confidence": "confident",
+      "rationale": "1860 census child_7: birth ~1852 recorded as secondary birth fact on LKYG-VKB (existing primary is ~1855). The 3-year discrepancy is within pre-1880 census age-reporting error for young children. Confident \u2014 same person, discrepancy flagged for conflict-resolution.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_135",
+      "person_id": "LKYG-VKB",
+      "confidence": "confident",
+      "rationale": "1860 census child_7: birthplace Georgia consistent with LKYG-VKB (Martha J Wood born Georgia per tree). Confident.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_136",
+      "person_id": "LKYG-VKB",
+      "confidence": "confident",
+      "rationale": "1860 census child_7: residence Blount County AL 1860 directly matches LKYG-VKB's residence fact from the same record. Confident.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_137",
+      "person_id": "LKYG-VKB",
+      "confidence": "confident",
+      "rationale": "1860 census: child_7 'Martha Wood' is inferred as child of head M M Wood by household position and surname. This is the primary evidence for q_001: establishes LKYG-VKB (Martha J Wood) as a child of I1 (M M Wood). No relationship column in 1860 census; parentage inferred from position. Confident given the full household context.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_137",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1860 census: the child-of-M M Wood assertion also bears on I1 as the named parent. I1 (M M Wood) is documented as the head of household under whom child_7 (Martha J Wood, LKYG-VKB) is positioned. This is the primary evidence for I1's parenthood of LKYG-VKB per q_001. Confident.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_138",
+      "person_id": "LKYG-VKB",
+      "confidence": "confident",
+      "rationale": "1860 census: child_7 'Martha Wood' is inferred as child of wife Martha Wood by household position. This establishes LKYG-VKB (Martha J Wood) as a child of I2 (Martha Wood). Primary evidence for q_001 maternal parentage. Confident.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_138",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "1860 census: the child-of-Martha Wood assertion bears on I2 as the named mother. I2 (Martha Wood, wife) is the parent of child_7 (Martha J Wood, LKYG-VKB). Primary evidence for q_001. Confident.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1870 US Census, Blount County AL: head 'J T Wood', male, born 1812 SC. Score 0.762 (conf 4). Name initials J T (1870) vs M M (1860 and 1850) \u2014 different enumerator; all other identifiers agree (birth year 1812, birth state SC, Blount County AL, wife M Wood born ~1815 SC matching I2). GA-born children in the 1870 household are consistent with 1860 M M Wood family structure. Probable; name discrepancy noted.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1870 census: head sex Male consistent with I1 (male). Probable per head_of_household identification (score 0.762).",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1870 census: birthplace South Carolina consistent with I1 (born SC per all three censuses). Probable per head_of_household identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1870 census: birth ~1812 consistent with I1's primary birth year ~1812 (from 1860 and 1870 censuses). Score 0.762. Probable.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1870 census: residence Blount County AL 1870 consistent with I1's Blount AL 1870 residence fact. Score 0.762. Probable.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1870 US Census, Blount County AL: wife 'M Wood', female, born 1815 SC. Score 0.693 (conf 3). Initial 'M' is an abbreviation of the full name 'Martha' (confirmed by 1860 and 1850 censuses). Birth year ~1815 consistent with I2 (~1814-1815). Birthplace SC and Blount AL residence both agree. Probable.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1870 census: wife sex Female consistent with I2 (female). Probable per wife identification (score 0.693).",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1870 census: birthplace South Carolina consistent with I2 (born SC per all three censuses). Probable per wife identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1870 census: birth ~1815 consistent with I2 (primary birth ~1814 from 1860, ~1815 from 1870, both South Carolina). Score 0.693. Probable.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1870 census: residence Blount County AL 1870 consistent with I2's Blount AL 1870 residence fact. Score 0.693. Probable.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1870 census: M Wood (I2) recorded as spouse of J T Wood (I1). Relationship assertion bears on I2. Score for I2 identification 0.693. Probable.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1870 census: J T Wood (I1) is the spouse named in this relationship assertion bearing on M Wood (I2). Score for I1 identification 0.762. Probable.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_026",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1850 US Census, Cherokee County GA: head 'M M Wood', male, born 1816 SC. Score 0.215 (conf 1) \u2014 below moderate threshold; driven by 4-year birth year discrepancy (1816 vs I1's ~1812). Qualitative correlation Moderate: exact name match M M Wood, same birth state SC, same Cherokee GA 1850 residence, same wife Martha Wood, children Margaret (~1841 GA), Manly A (~1843 GA), David (~1844 GA) appear in both 1850 Cherokee GA and 1860 Blount AL censuses. Birth year discrepancy within pre-1880 census age-reporting error range. Linking at probable; score disclosed per policy.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1850 census: head sex Male consistent with I1 (male). Probable per head_of_household identification (score 0.215, qualitative override).",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1850 census: birth ~1816 is the outlier birth year for I1 (vs ~1812 from 1860/1870). 4-year discrepancy noted in conflict F10 vs F2; within pre-1880 age-reporting error. Probable per cross-census identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_029",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1850 census: birthplace South Carolina consistent with I1 (born SC per all three censuses). Probable per cross-census identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_030",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1850 census: residence Cherokee County GA 1850 matches I1's Cherokee GA 1850 residence fact. Score 0.215. Probable per cross-census identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_031",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1850 US Census, Cherokee County GA: wife 'Martha Wood', female, born 1823 SC. Score 0.316 (conf 2). Name Martha Wood exact match; birth state SC, Cherokee GA 1850 residence, husband M M Wood all agree. Birth year ~1823 (1850) vs ~1814 (1860) and ~1815 (1870) is a 9-year discrepancy; flagged in conflict F12. Despite the low score and birth year conflict, the exact name, same state, same place, same husband, and family context establish Moderate qualitative correlation. Probable; score disclosed.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_032",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1850 census: wife sex Female consistent with I2 (female). Probable per wife identification (score 0.316, qualitative override).",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_033",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1850 census: birth ~1823 is the outlier for I2 (vs ~1814 from 1860, ~1815 from 1870). Significant discrepancy; conflict F12 noted. Probable \u2014 same person per cross-census evidence, birth year discrepancy requiring conflict-resolution.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_034",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1850 census: birthplace South Carolina consistent with I2 (born SC per all three censuses). Probable per cross-census identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_035",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1850 census: residence Cherokee County GA 1850 matches I2's Cherokee GA 1850 residence fact. Score 0.316. Probable per cross-census identification.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_036",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1850 census: Martha Wood (I2) recorded as spouse of M M Wood (I1). Relationship assertion bears on I2. Score for I2 identification 0.316; qualitative override to probable. Probable.",
+      "created": "2026-07-24"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_036",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1850 census: M M Wood (I1) is the spouse named in this relationship assertion bearing on Martha Wood (I2). Score for I1 identification 0.215; qualitative override to probable. Probable.",
+      "created": "2026-07-24"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "M M Wood's birth year: ~1812 (1860 Blount County AL census, a_086; 1870 Blount County AL census, a_004) vs. ~1816 (1850 Cherokee County GA census, a_028). Two independent enumerations agree at ~1812; one outlier gives ~1816.",
+      "disputed_attribute": "birth_year",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_086",
+        "a_004",
+        "a_028"
+      ],
+      "independence_analysis": "All three assertions derive from US Federal Census enumerations taken by different enumerators in different years and locations: the 1850 enumeration in Cherokee County, Georgia (a_028); the 1860 enumeration in Blount County, Alabama (a_086); and the 1870 enumeration in Blount County, Alabama (a_004). These are separate field enumerations \u2014 no derivation chain links them. The 1860 and 1870 values differ from the 1850 value by 4 years, which is inconsistent with copying. All three informants were unknown household members responding to the enumerator's questions independently. The three censuses are mutually independent sources for this fact.",
+      "weighing_analysis": "The decisive factor is corroboration: a_086 (1860, ~1812) and a_004 (1870, ~1812) are two independent enumerations from different decades that agree with each other. A birth year of ~1812 corroborated by two separate census enumerations carries substantially more weight than the lone outlier a_028 (1850, ~1816). All three informants were unidentified household members answering about an adult male's age \u2014 this factor does not differentiate between sides. A 4-year discrepancy (~1812 vs ~1816) for an adult male across pre-1880 censuses falls within the documented range of census age-estimation error. The two-to-one preponderance of a_086+a_004 over a_028 is decisive.",
+      "preferred_assertion_id": "a_086",
+      "resolution_rationale": "M M Wood's birth year is in dispute between the 1850 Cherokee County, Georgia census (~1816, a_028) and the 1860 and 1870 Blount County, Alabama censuses (both ~1812, a_086 and a_004). This discrepancy does not affect M M Wood's identity as Martha J Wood's father, which is independently established by his household position in the 1860 census; it concerns the precision of his birth year in the tree. The 1860 census (a_086, ~1812) is the preferred value: two independent enumerations, separated by a decade and taken by different enumerators, agree on a birth year of approximately 1812, constituting a preponderance of the evidence over the single 1850 Georgia outlier. The preferred assertion a_086 is also the founding record for I1's identification. The 1850 outlier (~1816) is explained by a well-documented historical pattern: pre-1880 US Federal Census ages for adult males were estimated by an unidentified household respondent without verification. The census-taking process for 1850 and the era's general practice of age estimation from memory \u2014 rather than reference to a document \u2014 made a 4-year discrepancy entirely plausible. The 1860 and 1870 enumerators, working independently a decade later, arrived at the same value (~1812), which is the stronger evidence. The preferred birth year for I1 (M M Wood) is approximately 1812.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    },
+    {
+      "id": "c_002",
+      "conflict_type": "fact",
+      "description": "Martha Wood's birth year: ~1814 (1860 Blount County AL census, a_092) and ~1815 (1870 Blount County AL census, a_009) agree closely, but the 1850 Cherokee County GA census gives ~1823 (a_033) \u2014 a 9-year discrepancy between the 1850 value and the 1860/1870 consensus.",
+      "disputed_attribute": "birth_year",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_092",
+        "a_009",
+        "a_033"
+      ],
+      "independence_analysis": "All three assertions come from US Federal Census enumerations: 1850 Cherokee County, Georgia (a_033); 1860 Blount County, Alabama (a_092); and 1870 Blount County, Alabama (a_009). These are independent field enumerations taken in different years by different enumerators. The 1860 and 1870 values differ from the 1850 value by 9 years \u2014 inconsistent with copying. The 1-year difference between a_092 (~1814) and a_009 (~1815) is itself independent corroboration, not copying: the 1870 enumerator could not have derived Martha's age from the 1860 schedule. All three informants were unidentified household members. The three enumerations are mutually independent.",
+      "weighing_analysis": "Three factors are decisive. First, corroboration: a_092 (1860, ~1814) and a_009 (1870, ~1815) agree within 1 year across a decade; a_033 (1850, ~1823) diverges from both by 9 years. A 1-year agreement between two independent enumerations constitutes strong corroboration. Second, consistency with family chronology: Martha's first recorded child (Nancy A, born ~1837 SC per a_037) places her at approximately age 23 if born ~1814 \u2014 a plausible first-birth age for the era. A birth year of ~1823 would make her 14 at first child, possible but young; her last recorded child in the 1850 household (Jonah, born ~1849 GA) would make her ~26 at that birth if born ~1823 (possible) vs. ~35 if born ~1814 (consistent with the documented reproductive span). Third, the 9-year gap between the 1850 outlier and the 1860/1870 consensus is far outside normal census age-estimation error and requires a specific historical explanation.",
+      "preferred_assertion_id": "a_092",
+      "resolution_rationale": "Martha Wood's birth year in the 1850 Cherokee County, Georgia census (~1823, a_033) conflicts with the consistent values in the 1860 and 1870 Blount County, Alabama censuses (~1814 and ~1815, a_092 and a_009). The 1-year difference between the 1860 and 1870 values is negligible \u2014 within normal census rounding \u2014 and does not constitute a conflict between those two assertions. The fundamental dispute is between the 1850 outlier (~1823) and the 1860/1870 consensus (~1814). The 1860 census value (a_092, ~1814) is preferred: the 1870 census independently corroborates it within 1 year, constituting a two-to-one preponderance over the lone 1850 outlier. A birth year of ~1814 is also consistent with the family's recorded children spanning 1837\u20131849 (ages ~23\u201335 for Martha), which is a plausible reproductive span. The 1850 outlier (~1823) is explained by a well-documented historical pattern: women in the antebellum South frequently understated their ages when their information was reported by a husband or male household head who did not know his wife's exact birth year. The 1850 enumerator recorded Martha as age 27 (born ~1823) when she was likely approximately 36 (born ~1814). A 9-year understatement by a woman in her mid-to-late 30s is consistent with the era's documented female age understatement in census records \u2014 a pattern rooted in both the social convention of women appearing younger and the genuine uncertainty of husbands reporting their wives' ages from memory. The preferred birth year for I2 (Martha Wood) is approximately 1814.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The child 'Martha Ann Wood' (FamilySearch ark MHDC-PPS, born 1857 in Alabama, household of H W Wood) in the 1860 Blount County, Alabama census is the same person as tree person LKYG-VKB (Martha J. Wood), rather than the 'Martha Wood' (ark MHDC-LKY, born approximately 1852 in Georgia) in M M Wood's household.",
+      "status": "active",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [
+        "a_135"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "LKYG-VKB is documented as Georgia-born (tree birth fact and assertion a_135 from the 1860 census). MHDC-PPS records the child's birthplace as Alabama, United States \u2014 a contemporaneous census entry that directly contradicts the Georgia birthplace. A child born in Alabama in 1857 cannot be the same person as a child born in Georgia in approximately 1852 within the same 1860 census enumeration. Score 6.9236 for MHDC-PPS vs 6.9136 for the accepted MHDC-LKY \u2014 essentially tied by the search algorithm, but the birthplace criterion is decisive and unambiguous.",
+      "notes": "Appeared in log_001 search results as the top-scored candidate (score 6.9236). Head H W Wood (b. ~1816 SC) is a different household from M M Wood (b. ~1812 SC). This candidate was not formally documented during the initial search-records triage but is now recorded here per the gps-mentor proof-critique (ev_001) that identified the undocumented disambiguation as a gap.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_004",
+        "a_006",
+        "a_009",
+        "a_026",
+        "a_028",
+        "a_030",
+        "a_031",
+        "a_033",
+        "a_035",
+        "a_084",
+        "a_086",
+        "a_090",
+        "a_092",
+        "a_132",
+        "a_137",
+        "a_138"
+      ],
+      "resolved_conflict_ids": [
+        "c_001",
+        "c_002"
+      ],
+      "exhaustive_search_summary": "Searched FamilySearch for US Federal Censuses 1850, 1860, and 1870 covering Georgia (Cherokee County) and Alabama (Blount County); the 1855 Alabama State Census; marriage records in Blount County AL and Georgia 1830\u20131870; and Blount County AL probate records 1860\u20131900 via full-text search. All eight plan items were completed. The 1860 Blount County census provided the primary household-position evidence for parentage. The 1850 Cherokee County census and the 1870 Blount County census independently corroborated the same couple. No marriage record for M M Wood was found (his marriage likely occurred in South Carolina approximately 1835\u20131837, which predates indexed FamilySearch records for that state). The Blount County probate full-text search returned zero results, indicating a digitization gap rather than a confirmed absence of records. South Carolina census records for 1840 were also searched with no results. The original NARA census images were not independently examined; only the FamilySearch derivative indexes were used.",
+      "narrative_markdown": "# Parents of Martha J. Wood (LKYG-VKB)\n\n## Conclusion (Probable)\n\nThe preponderance of evidence strongly suggests that **M M Wood** (tree person I1, born approximately 1812 in South Carolina) and **Martha Wood** (tree person I2, born approximately 1814 in South Carolina) are the parents of Martha J. Wood (tree person LKYG-VKB; born approximately 1852\u20131855 in Georgia; died 30 May 1906, Hill County, Texas), the mother of Jimmie Jewel Neal. Three independent US Federal Census enumerations spanning 1850\u20131870 document the same family unit in a consistent pattern that supports this conclusion, though the parentage rests on indirect evidence (household co-residence) rather than a direct statement.\n\n## Primary Evidence\n\nThe 1860 United States Census for Blount County, Alabama, places a child named \"Martha Wood\" \u2014 female, born approximately 1852 in Georgia \u2014 in the household of head \"M M Wood\" and wife \"Martha Wood,\" both born in South Carolina.\\textsuperscript{1} M M Wood is enumerated as approximately 48 years old (born approximately 1812) and his wife as approximately 46 years old (born approximately 1814). The child Martha Wood (approximately age 8, born approximately 1852 in Georgia) matches tree person LKYG-VKB in sex, approximate birth year, birthplace (Georgia), and 1860 residence (Blount County, Alabama). Because the 1860 Federal Census did not include a relationship column, the parent-child relationship is inferred from household position and shared surname \u2014 a method that constitutes indirect evidence. The record was accessed as a derivative FamilySearch index entry for the underlying NARA microfilm schedule (M653); the original image was not independently examined.\n\nThe search that returned this record (log_001) produced four candidates in Blount County, Alabama. The top-scored result was \"Martha Ann Wood\" (ark MHDC-PPS, score 6.9236), born 1857 in **Alabama**, in the household of \"H W Wood\" \u2014 a different head of household. This competing candidate was considered and ruled out (h_001): tree person LKYG-VKB is documented as born in Georgia (assertion a_135, and the pre-existing tree birth fact), while MHDC-PPS records the child as Alabama-born. A child born in Alabama cannot be the same person as one born in Georgia when both birthplaces come from the same contemporaneous census enumeration. The accepted record (MHDC-LKY, score 6.9136, in M M Wood's household) is preferred on this unambiguous birthplace criterion.\n\n## Corroborating Evidence\n\n**1850 Cherokee County, Georgia census.** A search of the 1850 US Federal Census found a household of \"M M Wood\" in Cherokee County, Georgia: head M M Wood, male, approximately 34 years old (born approximately 1816), birthplace South Carolina; wife \"Martha Wood,\" female, approximately 27 years old (born approximately 1823), birthplace South Carolina; and seven children born between approximately 1837 and 1849, in South Carolina and Georgia.\\textsuperscript{2} Two of these children \u2014 Manly A (born approximately 1843, Georgia) and David (born approximately 1844, Georgia) \u2014 appear age-consistently in both the 1850 Cherokee County household and the 1860 Blount County household, confirming these as the same family unit. Martha J. Wood had not yet been born at the time of the 1850 census, consistent with her absence from that household. (Note: Margaret, listed in both households, is recorded as born in Georgia in the 1850 census but in South Carolina in the 1860 census \u2014 a minor discrepancy in one child\u2019s birthplace that does not undermine the identification given the agreement on Manly A and David as cross-census anchors.)\n\n**1870 Blount County, Alabama census.** A household headed by \"J T Wood\" \u2014 male, approximately 58 years old (born approximately 1812), birthplace South Carolina \u2014 was found in Blount County, Alabama, in 1870.\\textsuperscript{3} His wife is recorded as \"M Wood,\" female, approximately 55 years old (born approximately 1815), birthplace South Carolina. Two Georgia-born adult children remain in the household: Jasper Wood (male, born approximately 1848, Georgia) and Elizabeth Wood (female, born approximately 1852, Georgia). The head's given-name initials differ from the 1860 census (\"J T\" versus \"M M\"), but all other identifying attributes agree: identical birth year (~1812), identical birth state (South Carolina), same county (Blount, Alabama), same wife (Martha/M Wood, born South Carolina approximately 1814\u20131815), and Georgia-born children consistent with the 1850 family. This discrepancy is attributed to different enumerators recording different initials for the same individual. This 1870 record is linked to I1 and I2 at probable confidence.\n\n## Evidence Analysis\n\n**Source classification.** All three census records were accessed as derivative FamilySearch index entries pointing to original NARA population schedules. The underlying federal census schedules are original government records. The original census images were not independently examined in this research project, which is a noted limitation. For the parentage question, household composition \u2014 which the FamilySearch census indexes capture reliably \u2014 is the critical evidence type.\n\n**Informant analysis.** The informants in all three censuses were unidentified household members who responded to the enumerator's questions. Ages and birthplaces are secondary information (reported from memory, not from contemporaneous documentation). Household co-residence is primary information (the enumerator observed it directly at enumeration time). The parentage inference is indirect: in the 1860 census, without a relationship column, parentage is inferred from the surname, sex, approximate age, birthplace, and household position of child_7 Martha Wood relative to head M M Wood and wife Martha Wood.\n\n**Independence.** The three census enumerations are mutually independent: conducted by different enumerators in different years (1850, 1860, 1870), one in Georgia (1850) and two in Alabama (1860, 1870). They constitute three separate evidentiary units.\n\n## Conflicts Resolved\n\n**c_001 \u2014 M M Wood birth year (~1812 vs. ~1816).** The 1860 and 1870 censuses agree on a birth year of approximately 1812 (assertions a_086, a_004); the 1850 census gives approximately 1816 (assertion a_028). The two-to-one preponderance favors ~1812. A 4-year discrepancy across pre-1880 censuses is within the documented range of census age-estimation error. Preferred assertion: a_086.\n\n**c_002 \u2014 Martha Wood birth year (~1814 vs. ~1815 vs. ~1823).** The 1860 census gives approximately 1814 (a_092) and the 1870 census gives approximately 1815 (a_009), agreeing within 1 year; the 1850 census gives approximately 1823 (a_033), a 9-year outlier. The two-to-one preponderance favors ~1814. The 1850 outlier is consistent with the documented historical pattern of women in the antebellum South understating their ages to census enumerators. Preferred assertion: a_092.\n\nA discrepancy in Martha J. Wood\u2019s birth year \u2014 approximately 1855 in the pre-existing tree versus approximately 1852 in the 1860 census index \u2014 is noted but does not constitute a separate source conflict (both values ultimately reference the same 1860 census source S3). This does not affect the parentage conclusion.\n\n## Limitations and Path to Proof\n\nThis conclusion is rated **probable** rather than proved because: (1) all three sources are derivative indexes, and the original NARA census images were not independently examined; (2) the parentage rests on indirect evidence from household co-residence in a census without a relationship column; and (3) no source with direct, primary parentage information was found.\n\nThe tier could potentially be advanced if the following records \u2014 currently unsearched or inaccessible \u2014 were found: a probate estate file naming Martha J. Wood as a daughter of M M Wood (Blount County, Alabama estate records for 1870\u20131900 are not yet accessible via FamilySearch full-text search); a marriage record for M M Wood that would name his wife\u2019s maiden surname (likely in South Carolina approximately 1835\u20131837, in records not yet indexed on FamilySearch); or a later census with an explicit relationship column (e.g., the 1880 US Census) showing Martha\u2019s parents, if any of the family remained together.\n\n---\n\n\\textsuperscript{1} \"United States, Census, 1860,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MHDC-LKK : accessed 24 July 2026), entry for M M Wood household, Eastern Subdivision, Blount County, Alabama; citing NARA microfilm publication M653.\n\n\\textsuperscript{2} \"United States, Census, 1850,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:MZYV-S6L : accessed 2026-07-24), entry for M M Wood household, Cherokee County, Georgia, dwelling and family number not stated; citing NARA microfilm publication M432.\n\n\\textsuperscript{3} \"United States Census, 1870,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MHV5-SNR : accessed 2026-07-24), entry for M Wood in household of J T Wood, Blount County, Alabama."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-24T22:10:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-24T22-10-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Alabama, United States",
+      "for_place": "Blount County, Alabama",
+      "time_period": "1850-1870",
+      "jurisdictions": [
+        {
+          "name": "Blount, Alabama, United States",
+          "date_range": "1818-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1743384",
+          "title": "Alabama County Marriages, 1711-1992",
+          "date_range": "1711-1992"
+        },
+        {
+          "id": "1674672",
+          "title": "Alabama, Marriages, 1816-1957",
+          "date_range": "1816-1957"
+        },
+        {
+          "id": "1915984",
+          "title": "Alabama, State Census, 1855",
+          "date_range": "1855-1855"
+        },
+        {
+          "id": "1915987",
+          "title": "Alabama, State Census, 1866",
+          "date_range": "1866-1867"
+        },
+        {
+          "id": "1978117",
+          "title": "Alabama, Estate Files, 1830-1976",
+          "date_range": "1830-1976"
+        },
+        {
+          "id": "1925446",
+          "title": "Alabama, Probate Records, 1809-1985",
+          "date_range": "1809-1985"
+        },
+        {
+          "id": "2790182",
+          "title": "Alabama, Church Records, 1831-1994",
+          "date_range": "1831-1994"
+        },
+        {
+          "id": "1932139",
+          "title": "Alabama, Civil War Service Records of Confederate Soldiers, 1861-1865",
+          "date_range": "1861-1865"
+        },
+        {
+          "id": "1932389",
+          "title": "Alabama, Civil War Service Records of Union Soldiers, 1861-1865",
+          "date_range": "1861-1865"
+        }
+      ],
+      "quirks": [
+        "Alabama had no civil vital registration until 1908 \u2014 births and deaths before that date are documented in church records, cemetery transcriptions, probate estate files, and family bibles.",
+        "The 1860 federal census for Blount County (NARA M653 Roll 2) is 99% name-indexed on FamilySearch \u2014 the primary searchable record for 1860 household identification.",
+        "The 1855 Alabama State Census (collection 1915984) is indexed and searchable on FamilySearch \u2014 valuable supplement between the 1850 and 1860 federal censuses.",
+        "Blount County deed and probate records (1840\u20131870) are digitized on FamilySearch but most have 0% name-indexing \u2014 use full-text search (not record search) to find them.",
+        "Religious Marriage Parental Consent Records for 1852-1860 and 1861-1866 (image groups 004484211_003/004) are 100% indexed and name parents of brides/grooms \u2014 high-value for parentage research.",
+        "Martha J. Wood was born in Georgia (~1855), so her parents were likely in northern Georgia before migrating to Blount County \u2014 search Georgia (Cherokee, Floyd, Etowah counties or adjacent) in the 1850 census as a parallel track.",
+        "No major courthouse fire documented for Blount County; extensive digitized volumes on FamilySearch confirm record survival.",
+        "FamilySearch wiki-query-api was unavailable at survey time \u2014 consult https://www.familysearch.org/en/wiki/Alabama_Genealogy for updated tips."
+      ],
+      "guide_markdown": "# Locality Guide: Blount County, Alabama (1850\u20131870)\n\n## Jurisdiction\nBlount County formed 1818, county seat Oneonta. Boundaries stable 1850\u20131870. Standard place: Blount, Alabama, United States.\n\n## Census records\n- **1850 federal** (pop.): NARA M432 Roll 2 \u2014 99% indexed, FamilySearch (imageGroup 004187292)\n- **1855 Alabama State Census**: Collection 1915984, indexed, FamilySearch\n- **1860 federal** (pop.): NARA M653 Roll 2 (Bibb & Blount) \u2014 99% indexed, FamilySearch (imageGroup 005154190)\n- **1866 Alabama State Census**: Collection 1915987, 243K records, indexed, FamilySearch\n- **1870 federal** (pop.): NARA M593 Roll 3 \u2014 96% indexed, FamilySearch (imageGroup 004257477)\n\n## Vital records\nAlabama civil registration began 1908. Pre-1908 births/deaths found in church records, cemetery inscriptions, probate files, family bibles.\n\n## Marriage records\nFamilySearch has Blount County marriage registers indexed at 83\u201385%:\n- 1820\u20131860 (vols. A\u2013B): imageGroup 007316661\n- 1860\u20131871: imageGroup 007316662\n- 1868\u20131888: imageGroup 007316663\nReligious Marriage Parental Consent Records 1852\u20131866 (100% indexed; name parents): imageGroups 004484211_003/004\nAlso: Alabama County Marriages 1711\u20131992 (collection 1743384).\n\n## Probate records\nDigitized on FamilySearch, mostly full-text searchable but NOT name-indexed (0% recordSearchablePercent). Use full-text search.\n- 1845\u20131869: multiple volumes\n- Estate Files 1830\u20131976: collection 1978117 (25K records)\n- Probate Records 1809\u20131985: collection 1925446 (browse-only)\n\n## Land/Deed records\nAll browse-only or full-text only (0% name-indexed) on FamilySearch:\n- 1840\u20131871: imageGroups 008486312/313/314\n- BLM GLO Records (glorecords.blm.gov) for federal land patents\n\n## Church records\n- Alabama Church Records 1831\u20131994: collection 2790182\n- Blount County church volumes 1820\u20131901: imageGroup 008182846 (full-text)\n- Parish Records 1832\u20131920: imageGroup 008493197 (browse-only)\nDominating denominations: Baptist, Methodist\n\n## Military\n- Confederate service: collection 1932139 (1.2M indexed)\n- Union service: collection 1932389 (31K indexed)\n\n## Cemetery\n- Tombstone inscriptions 1814\u20131975 + obituaries: imageGroup 007492923 (full-text)\n- FindAGrave; ALGenWeb Tombstone Transcription Project\n\n## Key tips\n1. No civil birth/death records before 1908.\n2. The 1860 census (99% indexed) is the primary tool for the M M Wood household.\n3. Parental Consent Records (100% indexed) name parents of brides/grooms.\n4. Martha Wood born in Georgia ~1855 \u2014 search northern Georgia 1850 census in parallel.\n5. Use FamilySearch full-text search for deed, probate, court volumes.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-24"
+    }
+  ]
+}

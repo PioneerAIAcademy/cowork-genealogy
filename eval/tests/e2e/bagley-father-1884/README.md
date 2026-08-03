@@ -58,8 +58,8 @@ authoring made it look.
 
 ## Notes for reviewers
 
-Authored to exercise the changes in
-`docs/plan/research-guardrail-bypass-plan.md` end to end against a
+Authored to exercise the GPS guardrail-enforcement changes
+(`docs/specs/guardrail-enforcement-spec.md`) end to end against a
 real, cheap `/research` run — not as a benchmark stress case. The
 authoring source data had two data-quality issues fixed by hand in
 `unstripped-tree.gedcomx.json` before `strip`/`validate` would accept
@@ -86,8 +86,8 @@ confirming *which* David Bagley, with a pinned birth/death and an
 explicit ruling-out of the Jr., is not, and this fixture's expected
 findings don't currently require it.
 
-Separately, the same run is the source example for
-`docs/plan/research-guardrail-bypass-plan.md`'s §9 and GitHub issues
+Separately, the same run is the source example in
+`docs/specs/guardrail-enforcement-spec.md` §3 and GitHub issues
 [#911](https://github.com/PioneerAIAcademy/cowork-genealogy/issues/911)
 and
 [#913](https://github.com/PioneerAIAcademy/cowork-genealogy/issues/913):
