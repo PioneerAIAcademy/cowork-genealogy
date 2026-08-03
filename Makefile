@@ -263,11 +263,10 @@ typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
 
 .PHONY: test-all
 test-all: ## Run EVERY check before a PR: typecheck + JS + server + engine + CRUD UI + eval harness. Alias for scripts/test.sh
-	# One command, one contract. This used to inline the suite list and reach
-	# the harness via `harness-test` (`-m 'not e2e'`), so it and scripts/test.sh
-	# each covered something the other missed and both had to be run. They are
-	# the same command now; scripts/test.sh owns the implementation because it
-	# reports every failure instead of stopping at the first.
+	# One command, one contract. scripts/test.sh owns the implementation
+	# because it reports every failure instead of stopping at the first.
+	# Everything it runs is offline and deterministic — keep it that way; a
+	# gate slow enough to skip is a gate nobody runs.
 	scripts/test.sh
 
 .PHONY: test
@@ -312,8 +311,8 @@ engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-se
 # still happen": a missing build wearing the costume of a code regression.
 # Python deps still need no stamp — `uv run` auto-syncs the venv.
 .PHONY: harness-test
-harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest, excludes e2e; uv auto-syncs the venv)
-	cd eval/harness && uv run pytest -m 'not e2e' -q
+harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest; uv auto-syncs the venv)
+	cd eval/harness && uv run pytest -q
 
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool

@@ -11,6 +11,7 @@ import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "n
 import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateRawSync } from "node:zlib";
+import { resolvePython } from "./python-interpreter.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGIN = join(ROOT, "packages", "engine", "plugin");
@@ -57,28 +58,21 @@ function walk(dir) {
 
 function validateFrontmatter() {
   const script = join(ROOT, "eval", "harness", "scripts", "check_skill_frontmatter.py");
-  // Try real interpreters in order. The `--version` probe first launches the
-  // candidate harmlessly, which skips the Windows Store `python3` alias (it
-  // "runs" but isn't Python and would otherwise look like a failed check).
-  const candidates = [["python3"], ["python"], ["py", "-3"], ["uv", "run", "python"]];
-  for (const [cmd, ...pre] of candidates) {
-    try {
-      execFileSync(cmd, [...pre, "--version"], { stdio: "ignore" });
-    } catch {
-      continue; // not installed (or Store alias) -> try the next
-    }
-    console.log("Validating skill + agent frontmatter...");
-    try {
-      execFileSync(cmd, [...pre, script], { stdio: "inherit", cwd: ROOT });
-    } catch {
-      console.error("\nPlugin frontmatter validation failed (see above) -- not packaging.");
-      process.exit(1);
-    }
+  const python = resolvePython();
+  if (!python) {
+    console.warn(
+      "WARNING: no Python found -- skipping plugin frontmatter validation (CI still enforces it).",
+    );
     return;
   }
-  console.warn(
-    "WARNING: no Python found -- skipping plugin frontmatter validation (CI still enforces it).",
-  );
+  const [cmd, ...pre] = python;
+  console.log("Validating skill + agent frontmatter...");
+  try {
+    execFileSync(cmd, [...pre, script], { stdio: "inherit", cwd: ROOT });
+  } catch {
+    console.error("\nPlugin frontmatter validation failed (see above) -- not packaging.");
+    process.exit(1);
+  }
 }
 
 // Minimal ZIP writer: method 8 (deflate), no data descriptors, no zip64.
