@@ -121,7 +121,7 @@ Present ranked candidates with `personId`, confidence, key facts. In single-turn
 Call `person_read({ personId: "<id>" })` with exactly that single argument (no optional flags). Returns simplified GedcomX: person (name, gender, facts), relatives with IDs, relationships, source descriptions. Auth error → tell user to log in.
 
 **User-stated facts vs. FamilySearch conflicts:**
-- **tree.gedcomx.json:** use FamilySearch data (primary source being surveyed)
+- **tree.gedcomx.json:** use FamilySearch data (the source being surveyed)
 - **Research objective:** use user's stated facts (reflects user's understanding)
 - **Flag the discrepancy** with user's statement first: "You stated [Y]; FamilySearch shows [X] — both will need verification."
 - Never frame the user's information as an error.

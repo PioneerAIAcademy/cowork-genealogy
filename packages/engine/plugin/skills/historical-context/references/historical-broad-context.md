@@ -109,7 +109,7 @@ customs, governance, laws, and regulations.
 
 - Civil registration start dates vary widely (France 1792, England
   1837, various US states 1860-1920). Before civil registration,
-  church records are the primary source for vital events.
+  church records are the original source for vital events.
 - Census questions changed over time. Each census year collected
   different information, which determines what you can and cannot
   learn from it.
