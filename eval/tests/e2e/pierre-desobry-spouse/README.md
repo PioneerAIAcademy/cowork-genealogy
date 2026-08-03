@@ -37,3 +37,18 @@ What confirmed it:
 - **The couple identity holds despite the tree's conflation.** Pierre Henri's profile carries two conflicting baptismal facts (1753 and 1774, a 21-year gap — possibly two men already conflated in the starting tree, a pre-existing data-quality issue this fixture neither introduces nor resolves). The record cluster nonetheless links the child-bearing Pierre Henri (children 1800–1813) to Clémence consistently, so the 1809 Julien belongs to that same couple, not a namesake.
 
 Accordingly `expected-findings.json` keeps both original findings: f1 (wife Clémence Sauselle) and f2 (son Julien, b. 1808, d. 7 Sep 1809, Pecquencourt).
+
+**2026-08-03: corrected f2's cited record (issue #970).** Adding a real ark
+surfaced a discrepancy: this fixture's own committed run log
+(`eval/runlogs/e2e/pierre-desobry-spouse/run-2026-07-30_19-34-46.final-research.json`)
+ran an exhaustive live search (four query variants, 1808-1850, collection
+3216848) for Julien's death registration and found none — only his birth
+registration (Act 53, 5 Sep 1808, `ark:/61903/1:1:8NW1-RP6Z`), with death
+in infancy reached at **Probable** tier by inference from the absence of
+any later record, not from a located death registration. This note
+doesn't overturn the true-match verdict above (Julien is still confirmed
+as the couple's son); it corrects what specifically is and isn't directly
+documented, since "death registration, 8 Sep 1809" as a citation was not
+substantiated by the actual research. f1's citation is now the real
+marriage record (28 Apr 1798, `ark:/61903/1:1:8NW5-26T2`, recorded under
+the "Lancelle" spelling variant) rather than the unlocated death record.
