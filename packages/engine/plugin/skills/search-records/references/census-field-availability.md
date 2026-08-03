@@ -176,6 +176,33 @@ rather than an enumerator's transcription.
   lacks — check the collection description rather than assuming the federal
   pattern.
 
+### Phrasing a pre-1880 household
+
+The rule in `SKILL.md` Step 4 is short because it is read on every invocation.
+The worked form:
+
+❌ WRONG: "1860 Springfield household of Daniel Ragan: head Daniel Ragan b.1800
+Ireland + wife Margaret Ragan b.1810 Ireland + daughter Hannah b.1845 MA + son
+Patrick b.1847 MA."
+
+✅ CORRECT: "1860 Springfield, one dwelling listing, in order, Daniel Ragan
+b.1800 Ireland, Margaret Ragan b.1810 Ireland, Hannah b.1845 MA, Patrick b.1847
+MA. The 1860 schedule states no relationships — a Daniel/Margaret couple with
+two children is inferred from shared surname, ages and listing order, not
+documented."
+
+This is not a wording preference. The inferred phrasing keeps the next step
+visible — find a record that *states* the relationship, an 1880 census, a
+marriage record, a probate naming heirs. The asserted phrasing is what makes
+the next reader stop looking, because it reads as a settled question.
+
+The same caution applies to any other fact the schedule for that year did not
+collect: parents' birthplaces (1880+), marital status (1880+), years married
+and children borne (1900+), exact month of birth (1900 only). The record's own
+`ParentChild` / `Couple` edges never rescue a pre-1880 relationship — those are
+the indexer's inference from surname, age and order, the same three signals
+available to you, not something the schedule says.
+
 ---
 
 ## Sources
