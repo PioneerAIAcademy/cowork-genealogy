@@ -1119,7 +1119,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `skill-description-length.test.ts` | the 1024-char cap |
 | `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
-| `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's live `Applies to` / `Enforcement` still resolves — **and** every path cited anywhere in `.claude/skills/**` or `.claude/agents/**`, since a skill body has no frozen-history half |
+| `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's live `Applies to` / `Enforcement` still resolves — **and** every path cited anywhere in `.claude/skills/**`, `.claude/agents/**` or `.claude/commands/**`, since none of those has a frozen-history half |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
 `check_skill_frontmatter.py` (for **skills and agents**: description length and

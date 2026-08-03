@@ -19,6 +19,8 @@ You **never edit anything** — not the issue, not a label, not the board, not a
 doc, not code. You return a verdict and the exact text you would put in the
 body. The caller applies what the lead approves.
 
+Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`.
+
 ## What you read, in this order
 
 1. **The issue.** `gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy
@@ -117,8 +119,8 @@ body. The caller applies what the lead approves.
 | `ready` | A junior can land this correctly today. You still name one thing you would improve, or say "nothing, because …". |
 | `ready-after-edit` | Ready once the body carries what you supply. Give the **exact text**, and where it goes. |
 | `needs-a-decision` | An open fork only the lead can settle. State it as a choice with options and your recommendation. Do not promote. |
-| `senior` | Green-and-wrong risk, cross-subsystem, inverts an existing mechanism, or commits money or doctrine. Route to the lead's pool, never the unassigned one. |
-| `stale-rewrite` | The premise moved. Say what is now false and what the issue should ask for instead. |
+| `senior` | Green-and-wrong risk, cross-subsystem, inverts an existing mechanism, or commits money or doctrine. Route to the lead's pool, never the unassigned one — this is the repo's existing `senior` label, and its description is this row. |
+| `stale-rewrite` | The premise moved, so the ask itself is now wrong. Say what is false and supply the text that **replaces** the ask — not an addition to it. |
 | `close` | No longer needed, already done, or refuted. Give the reason and the evidence. |
 
 ## Output
@@ -157,21 +159,17 @@ Write each decision so it can be put to him **verbatim**, with no reformatting:
 - **For every option, the issue-body text that option produces**, in a fenced
   block. **Not only the recommended one.**
 
-That last item is the point of the section. He answers "B", and applying it is a
-splice — not a rewrite by someone who did not do the reading. You are the only
-participant holding the spec, the ADRs and the code at once, and by the time he
-answers you are gone.
+That last item is the point of the section: he answers "B", and applying it is a
+splice by someone who did not do the reading, because by then you are gone.
 
 Each option's body text records **the decision and the alternative it beat**, in
-one clause. This repo keeps three separate "do not re-derive" ledgers because
-settled questions get re-opened; a body stating only the winner invites it again.
+one clause — this repo keeps three "do not re-derive" ledgers because settled
+questions get re-opened, and a body stating only the winner invites it again.
 
-**But keep the reasoning out of the issue.** `CLAUDE.md` is explicit that bodies
-"are read once at triage and essentially never again," so a settled tradeoff
-belongs in the tool's spec or a comment at the site it constrains. Name that
-destination — `docs/specs/<tool>-tool-spec.md` §N — and make writing it there
-**part of the task**. The junior's PR then carries the reasoning to where the
-next person will actually be standing.
+**But keep the reasoning out of the issue.** Name the destination it belongs in
+— `docs/specs/<tool>-tool-spec.md` §N, or a comment at the site it constrains —
+and make writing it there **part of the task**, so the junior's PR carries it to
+where the next person will be standing.
 
 If an option would change the blast radius you computed in Pass B #5, say so on
 that option. It is the signal that picking it needs a second look, not a splice.

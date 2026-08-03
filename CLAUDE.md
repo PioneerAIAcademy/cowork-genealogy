@@ -644,6 +644,7 @@ explicitly with the Agent tool.
   premise was already refuted, the blast radius the issue omits, what verifies
   the change, and which decisions are the lead's. Fanned out one-per-issue by
   the `review-ready` skill; never edits an issue, the board, or any code.
+  Spec: `docs/specs/task-review-spec.md`.
 
 **Three others were deleted on 2026-08-02** (issue #1161): `spec-review`,
 `mcp-tool-scaffolder`, and `cowork-skill-builder`. All three had gone stale

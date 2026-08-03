@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "what's most important next", "groom the board", "what should I take on", or a bare "/fill-ready" the morning after standup. The intended follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog and holds Ready at three standing depths — ~10 unassigned developer tasks, ~10 unassigned genealogist tasks, and 3-5 cross-cutting items assigned to the lead — promoting only what is genuinely unblocked, and swapping a lower-priority Ready item back to Backlog whenever a pool is already at target. Ranks against the project's two committed milestones (the in-house beta, then the public RootsTech rollout) — reserving at least half the lead's pool for work that gates a date, starting long-lead items before they are urgent, and reporting whether the critical path moved. Routes by seniority before priority — the team's developers are juniors working with Claude Code, so anything needing a senior developer goes to the lead and never into the unassigned pool. Labels each promoted item developer or genealogist, splits any item that is really two tasks, and proposes grooming for stale issues. Verifies every claim against the repo before repeating it. Proposes first and applies only what the lead approves; never starts the work itself.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at three standing depths — ~10 unassigned developer tasks, ~10 unassigned genealogist tasks, 3-5 items assigned to the lead — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: the team's developers are juniors working with Claude Code, so senior-required work goes to the lead. Gates the developer shortlist through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -171,6 +171,11 @@ place in the unassigned pool by being important; it wins a place in the lead's.
   retention rule that deletes tracked artifacts, a model/effort sweep).
 - The obvious implementation is already known to be wrong, and the issue's own
   measurement says so — someone has to design past it.
+
+That list is the repo's existing **`senior` label** description. Apply the label
+when you route an item here, so the routing is visible on the board and not only
+in your report. `task-reviewer`'s `senior` verdict is the authoritative version of
+this same test — yours is the cheap pre-filter that decides what reaches it.
 
 **Report the mix every time.** Count the Backlog's developer-oriented issues into
 *junior-safe and unblocked*, *junior-safe but blocked*, *junior after one decision
@@ -365,8 +370,8 @@ sequenced, not blocked. Promote them — but the pairing has to survive into the
 issues themselves, because the two people who pick them up will never read your
 report.
 
-**Write a reciprocal note as the first line of both bodies**, in the lead's own
-form:
+**Write a reciprocal note at the top of both bodies** — below a `> **Reviewed …**`
+marker if `/review-ready` already left one — in the lead's own form:
 
 ```
 **IMPORTANT**: If you do this, do #999 at the same time.
@@ -463,12 +468,17 @@ Verify with a fresh `gh project item-list`. New issues land in Backlog via an
 auto-add workflow that sets nothing else — a freshly filed issue that belongs in
 Ready still needs this move.
 
-**An unassigned `developer` promotion is provisional until `/review-ready` clears
-it.** Your seniority test (§1) is a pre-filter read off the issue body; that skill
-fans out one agent per item to check the same call against the cited code, the
-architecture guide's site list, and §9.4's what-nothing-checks list — which is
-where a "junior-safe" item turns out to hide an open API decision. Say in your
-report which promotions are awaiting it, and hand the lead the list.
+**Gate the unassigned `developer` shortlist through `/review-ready` before you
+promote it.** Your seniority test (§1) is a pre-filter read off the issue body;
+that skill fans out one agent per item to check the same call against the cited
+code, the architecture guide's site list, and §9.4's what-nothing-checks list —
+which is where a "junior-safe" item turns out to hide an open API decision.
+
+Promote what comes back `ready` or `ready-after-edit`. A `senior` or
+`needs-a-decision` verdict is a §1 miss caught in time: route it to the lead's
+pool (§6) instead, and it never enters the junior pool at all. Running the gate
+after promotion instead works, but pays for the same deep read twice — see
+`docs/specs/task-review-spec.md` §2.
 
 ## 6. The lead's pool — 3–5 assigned, in Ready
 
@@ -613,22 +623,15 @@ git log --diff-filter=D --all -- '<cited path>'          # was it deliberately d
 ```
 
 **Read the mechanism the issue proposes to build, before agreeing it needs
-building.** Two worked cases from 2026-08-01, both of which changed the
-disposition rather than a detail:
+building.** A near-miss extension of something that exists is a different,
+smaller, safer task than a new mechanism, and finding that out changes the
+disposition rather than a detail. Worked cases:
+`docs/specs/task-review-spec.md` §7.
 
-- #995 asked for "value-level ground truth" as a new harness mechanism. Reading
-  `test_expected_classifications` showed the matcher already selected on
-  `record_role` + `fact_type` + an `attribute` facet enumerated `"date" | "place"`,
-  with normalization, list-of-alternatives and an `optional` flag — everything but
-  the value comparison. A build became a ~15-line extension, and the *real*
-  finding was that the test which motivated it declared no matchers at all
-  (10 of 27 did).
-- #607 asked for diminutive name searching across "search". Reading the four
-  search tools showed `record_search` already ships two candidate mechanisms
-  (`.exact` is opt-in, plus unused `givenNameAlt` slots) and Ancestry handles it
-  upstream — so half the issue was work nobody needed to do, and the half that
-  remained sharpened: `fulltext_search` sets `m.queryRequireDefault=on`, which
-  makes an unexpanded given name a hard *exclusion*, not a ranking miss.
+**Do not repeat this read for the shortlist you are about to gate.**
+`/review-ready` (§5) does it per issue in fresh context, which is the point of
+the fan-out. Spend §8 here on what the gate never sees: the items you are about
+to close, consolidate, split, or route to the lead.
 
 Cite so the lead can re-check in seconds: `file:line`, an issue number, a
 command and its output. When a check refutes something you already said, correct

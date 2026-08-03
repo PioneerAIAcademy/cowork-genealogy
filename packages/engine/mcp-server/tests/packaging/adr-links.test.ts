@@ -73,10 +73,11 @@ function liveSectionText(body: string): string {
  * Backticked tokens that look like repo paths.
  *
  * The scope note above is the contract: no false positives, or the lint gets
- * ignored. So three shapes are not paths and never resolve —
+ * ignored. So four shapes are not paths and never resolve —
  *   - `docs/specs/<tool>-tool-spec.md`  a template the reader substitutes into
  *   - `eval/fixtures/mcp/record-search-*.json`  a glob
  *   - `scripts/setup-feedback-case.sh <zip>`  a command line
+ *   - `eval/tests/unit/$ARGUMENTS/rubric.md`  a slash-command substitution
  * — and are skipped rather than allowlisted, because each is correct prose that
  * would otherwise have to be rewritten to satisfy a linter.
  */
@@ -86,7 +87,7 @@ function citedPaths(text: string): string[] {
     const token = m[1].trim();
     if (!token.includes("/")) continue;
     if (!REPO_ROOTS.some((r) => token.startsWith(r))) continue;
-    if (/[<>*\s]/.test(token)) continue;
+    if (/[<>*\s$]/.test(token)) continue;
     // Strip a trailing line/anchor reference: path.ts:123 or path.md#section
     found.add(token.replace(/[:#].*$/, ""));
   }
@@ -188,8 +189,8 @@ describe("ADR hygiene", () => {
 });
 
 /**
- * The same staleness lint, scoped to the project's Claude Code skills and
- * subagents — the ones under `.claude/`, not the shipped plugin.
+ * The same staleness lint, scoped to the project's Claude Code skills, subagents
+ * and slash commands — the ones under `.claude/`, not the shipped plugin.
  *
  * These have the ADR problem in a harsher form. An ADR is read by a human who
  * can notice a path is wrong; a skill body is read by a model that will act on
@@ -203,10 +204,10 @@ describe("ADR hygiene", () => {
  * path. That is also why these bodies should carry no rationale prose — they
  * are billed prompt tokens on every invocation.
  */
-describe(".claude skill and agent path hygiene", () => {
+describe(".claude skill, agent and command path hygiene", () => {
   const claudeDir = join(projectRoot, ".claude");
 
-  /** Every .md under .claude/skills/ and .claude/agents/, recursively. */
+  /** Every .md under the linted .claude/ subtrees, recursively. */
   function claudeMarkdown(dir: string): string[] {
     if (!existsSync(dir)) return [];
     const out: string[] = [];
@@ -221,6 +222,7 @@ describe(".claude skill and agent path hygiene", () => {
   const files = [
     ...claudeMarkdown(join(claudeDir, "skills")),
     ...claudeMarkdown(join(claudeDir, "agents")),
+    ...claudeMarkdown(join(claudeDir, "commands")),
   ].sort();
 
   /**
@@ -233,8 +235,8 @@ describe(".claude skill and agent path hygiene", () => {
    */
   const EXAMPLE_PATHS = new Set<string>([]);
 
-  it("finds the skills and agents to lint", () => {
-    expect(files.length, ".claude/skills and .claude/agents are both empty").toBeGreaterThan(0);
+  it("finds the skills, agents and commands to lint", () => {
+    expect(files.length, ".claude/{skills,agents,commands} are all empty").toBeGreaterThan(0);
   });
 
   it.each(files.map((f) => relative(projectRoot, f)))(
