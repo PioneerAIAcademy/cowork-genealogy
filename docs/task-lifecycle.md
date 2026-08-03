@@ -245,10 +245,9 @@ so their time goes to whether the approach is right.
 this process. Turning up with `make test-all` green, `/code-review` run, and its
 findings resolved is what keeps that gate spent on judgment.
 
-A senior may escalate a PR to the managed cloud review by commenting
-`@claude review` on it — a deeper multi-agent pass, governed by
-[`REVIEW.md`](../REVIEW.md). It costs real money per run and it is their call,
-entirely optional. Don't trigger it yourself.
+`.github/workflows/claude-review.yml` posts an automated pass on every PR. Treat it as a peer
+whose findings you verify, not a gate — it can be wrong, and a senior's review
+still has to happen.
 
 One or two revision rounds is normal. Three means something upstream was wrong,
 usually the plan. Say so rather than grinding through a fourth.
@@ -282,9 +281,10 @@ returns as an input to your review, never as your review.
    Give Claude the PR description (which has it), the diff, and the relevant
    spec, then ask directly: does this implementation match what was agreed?
 
-If you are a senior and the change is big enough that this is going to cost you
-an hour, `@claude review` on the PR buys a deeper multi-agent pass instead. It
-bills per run, so it's a judgment call — see step 9.
+`.github/workflows/claude-review.yml` has already posted an automated pass on the PR. Read it
+before you start — but verify anything you repeat, the same as your own
+findings, and don't treat it as having covered the ground you're responsible
+for.
 
 ---
 
@@ -326,6 +326,5 @@ gh pr checkout <N>
 | Which sites a change touches | [`docs/architecture.md`](./architecture.md) |
 | The rules that override normal defaults | [`CLAUDE.md`](../CLAUDE.md) |
 | Why something is the way it is | [`docs/adrs/`](./adrs/) |
-| What the cloud reviewer flags, and how hard | [`REVIEW.md`](../REVIEW.md) |
 | Improving a skill from eval results | [`docs/skill-lifecycle.md`](./skill-lifecycle.md) |
 | Contributing a skill or an MCP server | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
