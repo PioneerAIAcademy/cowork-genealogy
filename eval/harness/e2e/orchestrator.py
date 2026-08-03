@@ -45,6 +45,7 @@ from harness.skill_invocation import (
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
+    find_protected_writes_by_unnamed_delegate,
     find_unguarded_protected_writes,
 )
 
@@ -558,15 +559,28 @@ async def _run_agent(
     str | None,
     str | None,
     list[dict[str, Any]],
+    list[dict[str, Any]],
+    list[str],
 ]:
     """Spawn the agent SDK and consume messages until done or capped.
 
     Returns (tool_calls, transcript_chunks, usage, aborted_reason, error,
-    blocked_tree_reads).
+    blocked_tree_reads, guardrail_shadow_violations,
+    unnamed_delegate_violations).
     """
     tool_calls: list[dict[str, Any]] = []
     transcript: list[str] = []
     pending_tool_uses: dict[str, dict[str, Any]] = {}
+    # docs/specs/guardrail-enforcement-spec.md §11, "Step 0" — every
+    # tool_use_id's (agent_id, agent_type) as PreToolUse saw it, joined onto
+    # the matching tool_calls entry when its ToolResultBlock arrives below.
+    # (None, None) for a main-thread call — the SDK omits agent_id entirely
+    # from a main-thread PreToolUse payload, and .get() returns None either
+    # way, so "key absent" and "key present as None" read identically
+    # downstream. This is what makes every guardrail-bypass check in
+    # skill_invocation.py caller-aware instead of guessing from Skill/Agent
+    # adjacency in the flat list.
+    caller_by_tool_use_id: dict[str, tuple[str | None, str | None]] = {}
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
@@ -639,6 +653,15 @@ async def _run_agent(
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
+        # spec §11 Step 0 — record caller identity for EVERY call, including ones
+        # about to be denied below (an unnamed subagent attempting a raw
+        # Write bypass is exactly the kind of call worth attributing), so
+        # this must run before any early return in this function, not just
+        # before the mcp__ filter further down.
+        caller_by_tool_use_id[_tool_use_id] = (
+            input_data.get("agent_id"),
+            input_data.get("agent_type"),
+        )
         # Count EVERY tool the agent issues (Skill, Read, mcp__, …) toward the
         # no-progress signal — invoking a sub-skill is progress even when that
         # skill writes nothing. The mcp__-only budget cap is tool_call_count,
@@ -805,13 +828,26 @@ async def _run_agent(
         # hook, not the allowlist, so it can deny per-call with arguments.
         allowed_tools=BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"],
         permission_mode="dontAsk",
-        # Idea 3a (speedup plan §3a): eager-load the genealogy MCP tool schemas.
-        # The bundled CLI defers MCP tool schemas above a token threshold (the
-        # ~38-tool genealogy server trips it), forcing repeated ToolSearch
-        # re-discovery (17x in the spriggs run). Forcing tool search off loads
-        # them once at session start. `env` MERGES onto the inherited environment
-        # (claude_agent_sdk subprocess_cli merges os.environ, then options.env),
-        # so this adds the var without dropping PATH.
+        # ENABLE_TOOL_SEARCH turns tool search ON, not off. This comment used to
+        # say "forcing tool search off" while setting "true"; the polarity is
+        # inverted (issue #1110). Read off the installed CLI (v2.1.220): a truthy
+        # value (`true|1|yes|on`) selects deferred/tool-search mode, `auto`/
+        # `auto:N` is the adaptive variant, and only a FALSY value
+        # (`false|0|no|off`) selects "standard" mode, where every schema is
+        # loaded up front. Unset also lands on tool-search mode, so deleting the
+        # variable eager-loads nothing. (Additionally forced off on a
+        # non-first-party ANTHROPIC_BASE_URL, on Vertex, and under
+        # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
+        #
+        # So "true" below means e2e runs WITH tool search: the ~38-tool
+        # genealogy server's schemas are deferred and re-discovered via
+        # ToolSearch mid-session (the 17x in the spriggs run, ~11% of all tool
+        # calls across recent runs). Idea 3a of the speedup plan wanted the
+        # opposite; flipping to "false" is a separate, tracked decision that
+        # requires re-measuring the tool mix, so the value is left as it has been
+        # running. `env` MERGES onto the inherited environment (claude_agent_sdk
+        # subprocess_cli merges os.environ, then options.env), so this adds the
+        # var without dropping PATH.
         #
         # env_for_sdk(resolve_auth()) routes the agent run to the operator's
         # subscription when one is available (suppressing the ANTHROPIC_API_KEY
@@ -947,6 +983,21 @@ async def _run_agent(
                                 summary = _summarize_tool_response(block.content)
                                 if entry is not None:
                                     entry["response_summary"] = summary
+                                    # spec §11 Step 0 — join caller identity onto
+                                    # this entry now that pretool_hook is
+                                    # guaranteed to have already run for it
+                                    # (the CLI always completes the
+                                    # PreToolUse round-trip before executing
+                                    # the tool and streaming this result).
+                                    # pop, not get: this id is joined exactly
+                                    # once, and an unpopped mapping would grow
+                                    # for the life of the run. Mirrors
+                                    # pending_tool_uses.pop() just above.
+                                    agent_id, agent_type = caller_by_tool_use_id.pop(
+                                        block.tool_use_id, (None, None)
+                                    )
+                                    entry["agent_id"] = agent_id
+                                    entry["agent_type"] = agent_type
                                     tool_result_names.append(
                                         _timeline_tool_label(entry["tool"], entry.get("args"))
                                     )
@@ -1107,6 +1158,24 @@ async def _run_agent(
             "with no recent matching Skill invocation (shadow mode — not denied)"
         )
 
+    # SHADOW MODE ONLY, same as the block above — see
+    # harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate
+    # (docs/specs/guardrail-enforcement-spec.md §11) for the bypass shape
+    # this detects: a guardrail skill's (or record-extraction's) protected
+    # write whose PreToolUse-sourced agent_id/agent_type shows it was made
+    # by neither the main thread nor one of the four dedicated Cowork
+    # agents. Relies on the caller attribution `pretool_hook` now stamps
+    # onto every tool_calls entry (spec §11's "Step 0") — historical runlogs
+    # simply lack the keys, so this logs rather than overrides the verdict
+    # until real runs accumulate a shadow-mode sample (tracked as its own
+    # backlog item — task #980).
+    unnamed_delegate_violations = find_protected_writes_by_unnamed_delegate(tool_calls)
+    if unnamed_delegate_violations:
+        _emit(
+            f"[unnamed-delegate] {len(unnamed_delegate_violations)} protected write(s) "
+            "made by neither the main thread nor a dedicated agent (shadow mode — not denied)"
+        )
+
     return (
         tool_calls,
         transcript,
@@ -1115,6 +1184,7 @@ async def _run_agent(
         error,
         blocked_tree_reads,
         guardrail_shadow_violations,
+        unnamed_delegate_violations,
     )
 
 
@@ -1249,6 +1319,7 @@ async def run_e2e_test(
             error,
             blocked_tree_reads,
             guardrail_shadow_violations,
+            unnamed_delegate_violations,
         ) = await _run_agent(
             fixture=fixture,
             workspace=workspace,
@@ -1348,6 +1419,7 @@ async def run_e2e_test(
             blocked_tree_reads=blocked_tree_reads,
             guardrail_bypass_violations=guardrail_bypass_violations,
             guardrail_shadow_violations=guardrail_shadow_violations,
+            protected_writes_by_unnamed_delegate=unnamed_delegate_violations,
             subagents=subagents,
         )
 

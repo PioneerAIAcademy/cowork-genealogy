@@ -582,8 +582,8 @@ share a branch.
 just `packages/engine/plugin/skills/<skill>/SKILL.md`).
 
 Occasionally you're not fixing a skill but creating one. For a new
-tool-wrapping skill, ask Claude Code to scaffold it with the
-`cowork-skill-builder` agent; otherwise write the file directly, to the prose
+tool-wrapping skill, copy `packages/engine/plugin/skills/search-wikipedia/` —
+the canonical minimal example of the full pipeline — and write to the prose
 standard in [`docs/skill-authoring-guide.md`](skill-authoring-guide.md). (That
 guide's "What kind of skill are you writing?" section covers whether it should
 be a skill at all, and which of the three kinds — workflow, reference, or
@@ -646,7 +646,7 @@ hand-catching the same class of issue ten rounds in, the loop isn't learning.
 | 6 Verify | ⌨️ terminal | `make gate-skill SKILL=<name> TEST=<id>` | `eval\GateSkill.bat` |
 | 7 Confirm in Cowork | 🖥️ Cowork | `make plugin`, `make mcpb`, then reinstall | `eval\BuildPlugin.bat`, `eval\BuildMcpb.bat` |
 | 8 Re-run + grade + PR | ⌨️ terminal → 🌐 → GitHub | `make eval-skill`, grade all, commit, PR | `eval\RunTests.bat`, then GitHub Desktop |
-| *(side)* new skill | 🤖 Claude Code | the authoring guide + `cowork-skill-builder` | same |
+| *(side)* new skill | 🤖 Claude Code | the authoring guide + copy `search-wikipedia/` | same |
 | *(side)* description | ⌨️ terminal | `make optimize-skill SKILL=<name>` | `eval\OptimizeSkill.bat` |
 
 **To run the improver on skill `X`:** it needs an *active*, *annotated* run
@@ -880,7 +880,7 @@ these to follow the flow above:
 
 | Topic | Spec / plan |
 |---|---|
-| Skill architecture & the three skill kinds | [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md) |
+| Skill architecture — how skills, agents, and tools bind | [`docs/architecture.md`](architecture.md) |
 | Test JSON format, fixtures, validators | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
 | Per-PR review + run-log versioning mechanics | [`docs/per-pr-review-workflow.md`](per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
 | The vendored description optimizer | `eval/triggering/` (vendoring notes in `VENDORED.md`) |

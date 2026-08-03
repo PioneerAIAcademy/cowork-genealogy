@@ -114,6 +114,32 @@ image, never a request for the caller to fetch it:
 - If `looking_for` was set: `FOUND` / `NOT FOUND` + the matching line — as
   a pointer for the caller, never a substitute for the full transcription.
 
+### 5.1 Considered and rejected: compressing non-matching pages
+
+For a multi-page `search-images` browse, relay only the likely-matching page's
+full transcription and compress the rest to a one-line verdict, so a ten-page
+browse doesn't accumulate ten full transcriptions in the caller's context.
+
+**Rejected 2026-07-17 on a correctness ground, not cost.** Asking the reader to
+judge relevance and shorten its output was found to encourage hallucination,
+whereas this agent's contract is faithful full OCR that never slants toward an
+asked-for answer (§5, and the `looking_for` row in §3.1). Raised again
+independently while designing `image-reader-opus` (2026-07-29) and rejected
+again for the same reason. It binds both agents: `image-reader-opus-agent-spec.md`
+§6 inherits this protocol, and its anti-slant charter is weaker (no tool-side
+prompt backstop), so the risk is higher there.
+
+**One candidate distinction is unresolved, and is the only thing worth reopening
+on:** gate the caller-facing *relay* on `image_transcribe`'s own `FOUND` /
+`NOT FOUND` field, which is deterministically regex-parsed (`parseFound`,
+`packages/engine/mcp-server/src/tools/image-transcribe.ts`) off a **forced,
+always-full** transcription the tool produces regardless. Full-fidelity OCR still
+happens every time; only the relay is conditional, keyed off a mechanical parse
+rather than a fresh relevance judgment by the relaying agent. Whether that avoids
+the hallucination failure mode or is a distinction without a difference is **not
+investigated**. It needs the same genealogist scrutiny that produced the
+2026-07-17 rejection — not a unilateral call. Do not build it without that.
+
 ## 6. Failure Behavior
 
 The agent's only reader is `image_transcribe` (host-side Qwen3-VL OCR, any

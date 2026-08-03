@@ -39,7 +39,22 @@ $(JS_DEPS): package.json pnpm-lock.yaml
 # builds can't dirty package-lock.json (some npm versions re-normalize the `libc`
 # tags on rolldown's optional binaries). It hard-fails if package.json and the
 # lockfile drift out of sync — run `npm install` in $(ENGINE_DIR) to re-sync.
+#
+# The symlink guard: in a linked worktree, node_modules is a symlink to the
+# primary checkout's copy (scripts/link-worktree.sh), and `npm ci` deletes the
+# existing install THROUGH that symlink before repopulating — gutting the
+# shared copy for every other worktree at once (verified 2026-08-02: an
+# interrupted run left the primary missing `open`, which disarmed the two
+# packaging guard suites while everything else stayed green). A fresh worktree
+# always trips this rule, too: checkout stamps package.json with the current
+# time, which is newer than the shared stamp. Dropping the symlink first keeps
+# the reinstall local — this worktree forks its own node_modules and the
+# primary is never touched.
 $(ENGINE_DEPS): $(ENGINE_DIR)/package.json $(ENGINE_DIR)/package-lock.json
+	@if [ -L $(ENGINE_DIR)/node_modules ]; then \
+	  echo "engine deps: node_modules is a symlink (linked worktree) — unlinking so npm ci installs locally instead of gutting the shared copy"; \
+	  rm $(ENGINE_DIR)/node_modules; \
+	fi
 	cd $(ENGINE_DIR) && npm ci
 	@touch $@
 
@@ -247,13 +262,12 @@ typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
 	pnpm typecheck
 
 .PHONY: test-all
-test-all: ## Run EVERY test suite (JS workspace + server + engine + eval harness + CRUD UI)
-	$(MAKE) test-js
-	$(MAKE) server-test
-	$(MAKE) engine-test
-	$(MAKE) harness-test
-	$(MAKE) eval-ui-test
-	@echo "✓ all test suites passed"
+test-all: ## Run EVERY check before a PR: typecheck + JS + server + engine + CRUD UI + eval harness. Alias for scripts/test.sh
+	# One command, one contract. scripts/test.sh owns the implementation
+	# because it reports every failure instead of stopping at the first.
+	# Everything it runs is offline and deterministic — keep it that way; a
+	# gate slow enough to skip is a gate nobody runs.
+	scripts/test.sh
 
 .PHONY: test
 test: ## Quick loop: JS workspace + server tests (a subset of test-all)
@@ -297,8 +311,8 @@ engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-se
 # still happen": a missing build wearing the costume of a code regression.
 # Python deps still need no stamp — `uv run` auto-syncs the venv.
 .PHONY: harness-test
-harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest, excludes e2e; uv auto-syncs the venv)
-	cd eval/harness && uv run pytest -m 'not e2e' -q
+harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest; uv auto-syncs the venv)
+	cd eval/harness && uv run pytest -q
 
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
