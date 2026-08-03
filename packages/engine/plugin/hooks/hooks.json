@@ -1,0 +1,17 @@
+{
+  "description": "Raw writes to research.json / tree.gedcomx.json must go through the MCP writer tools, which validate before persisting.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/guard_project_files.py",
+            "timeout": 20
+          }
+        ]
+      }
+    ]
+  }
+}

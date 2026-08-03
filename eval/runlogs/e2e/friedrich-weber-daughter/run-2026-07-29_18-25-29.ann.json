@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Recovered in full: person I1 'Anna Maria Eva Weber' with Birth 26 Feb 1870 and ParentChild links to both GTDL-981 (Friedrich Carl Weber) and GTD2-RXP (Catharina Carell), all sourced to the expected Diocese of Limburg Kirchenbuch (S1, ark 1:1:D43H-7DN2) plus its Kirchenbuchduplikat (S2, ark 1:1:D43D-J2MM). Two non-material divergences from the finding's wording, both graded through: (1) the birth fact carries the date only and Hoechst sits on the christening fact (13 Mar 1870, standard_place 'Hoechst, Hesse-Nassau, Prussia, Germany') rather than the birth -- a fact-attachment choice, not a recall gap; (2) the finding calls Anna Maria Eva 'the couple's first known child', but the agent's own research surfaced a Rosina Weber baptized 3 May 1869 at Nied (died same day, ark 1:1:D4WC-V9PZ) naming the same couple, which would displace that clause -- the agent cited her as corroboration without adding her to the tree. The 'first known child' phrasing is a fixture-text issue for adjudication, not an agent error."
+  },
+  "annotator": "Milescia"
+}

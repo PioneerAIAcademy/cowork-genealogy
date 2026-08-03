@@ -848,8 +848,7 @@
           "expected_events": ["marriage", "1870_census", "1880_census", "1900_census", "residence", "occupation"],
           "severity": "high"
         }
-      ],
-      "impossibilities": []
+      ]
     }
   ],
 

@@ -48,6 +48,8 @@ research_query({
   assertionId?: string,
   planItemId?: string,
   status?: string,
+  targetId?: string,
+  focus?: string,
 })
 ```
 
@@ -81,7 +83,8 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `timelines` | `personId` | `person_ids` | contains |
 | `proof_summaries` | `questionId` | `question_id` | exact |
 | | `assertionId` | `supporting_assertion_ids` | contains |
-| `evaluations` | *(none)* | — | — |
+| `evaluations` | `targetId` | `target_id` | exact |
+| | `focus` | `focus` | exact |
 
 Supplying a filter not in this table for the chosen `section` is a rejected
 call (`'<key>' is not a supported filter for section '<section>'`), not a
@@ -124,8 +127,18 @@ Omitting every filter returns the whole section, subject to the same cap.
   params, not a free-text query language), validated per-section — the same
   reasoning that rejected an open-ended query surface for `project_context`
   would reject one here too. What's different from that prior rejection is
-  scope: eight named parameters across eleven sections, not an arbitrary path
+  scope: ten named parameters across eleven sections, not an arbitrary path
   language.
+- **No `superseded_by` filter on `evaluations`, deliberately.** `targetId` +
+  `focus` narrow to the verdicts about one target; picking the *live* one
+  (`superseded_by: null`) stays the caller's step. The filter layer compares a
+  string against a field (`matches()`), and `superseded_by` is `string | null`
+  — expressing "is null" would need either a sentinel (`"null"`, ambiguous
+  against a real `ev_` id) or a second filter *kind*. Neither is worth it for a
+  result set that is a handful of entries by construction: one target, one
+  focus. `gps-mentor.md`'s existing-verdict skip states the null-check step
+  explicitly so it cannot be forgotten, and
+  `tests/tools/research-query.test.ts` pins the boundary.
 - **Verbatim snake_case `items`, not a camelCase projection.** Unlike
   `project_context`'s curated fields (which ARE a wire surface, so camelCase
   per the repo's casing rule), this tool returns the underlying section
