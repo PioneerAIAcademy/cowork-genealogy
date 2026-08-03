@@ -355,6 +355,16 @@ eval-timings: ## Weekly timing review: scan the latest run log per skill, rank t
 	# week over week. TOP overrides how many slowest tests to list.
 	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),)
 
+.PHONY: prune-runlogs
+prune-runlogs: ## Maintenance sweep over the committed unit run logs: make prune-runlogs REHASH=1 [DRY=1]
+	# Read-modify-write over eval/runlogs/unit/. Commit the result.
+	# REHASH=1 migrates pre-v3 logs (snapshot content -> sha256 digests,
+	# dropping dead mcp-server/src keys). Idempotent, and exact — the stored
+	# value is the same normalized string build_snapshot hashes, so no re-run
+	# is needed and no skill's active state changes.
+	cd eval/harness && uv run python -m scripts.prune_runlogs \
+	  $(if $(REHASH),--rehash,) $(if $(DRY),--dry-run,)
+
 .PHONY: optimize-skill
 optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
 	# Builds a [{query,should_trigger}] set from the unit-test corpus, then runs the

@@ -1,5 +1,5 @@
 /**
- * Tests for lib/activate.ts + lib/release.ts.
+ * Tests for lib/release.ts.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
@@ -9,55 +9,7 @@ import {
   makeFixtureTree,
   type FixtureTreeHandle,
 } from '../helpers/fixtureTree';
-import { activateRunLog } from '../../lib/activate';
 import { deleteCandidate, releaseRunLog } from '../../lib/release';
-
-describe('activateRunLog', () => {
-  let handle: FixtureTreeHandle;
-  beforeEach(async () => {
-    handle = await makeFixtureTree({
-      skills: [{ name: 'search-familysearch-wiki', skillMd: 'old\n', rubricMd: '# rubric\n' }],
-    });
-    process.env.EVAL_DIR = handle.root;
-  });
-  afterEach(async () => {
-    delete process.env.EVAL_DIR;
-    await handle.cleanup();
-  });
-
-  it('writes snapshot files back to repo', async () => {
-    const log = buildRunLog({
-      skill: 'search-familysearch-wiki',
-      version: 1,
-      timestamp: '2026-05-18_10-30-00',
-      snapshot: {
-        'packages/engine/plugin/skills/search-familysearch-wiki/SKILL.md': 'new content\n',
-        'eval/tests/unit/search-familysearch-wiki/rubric.md': '# new rubric\n',
-      },
-    }) as never;
-    const written = await activateRunLog(log);
-    expect(written).toEqual([
-      'eval/tests/unit/search-familysearch-wiki/rubric.md',
-      'packages/engine/plugin/skills/search-familysearch-wiki/SKILL.md',
-    ]);
-    const skillMd = await fs.readFile(
-      path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', 'search-familysearch-wiki', 'SKILL.md'),
-      'utf8',
-    );
-    expect(skillMd).toBe('new content\n');
-  });
-
-  it('refuses scratch runs (non-releasable)', async () => {
-    const log = buildRunLog({
-      skill: 'search-familysearch-wiki',
-      version: null,
-      releasable: false,
-      invocation: 'test',
-      timestamp: '2026-05-18_10-30-00',
-    }) as never;
-    await expect(activateRunLog(log)).rejects.toThrow(/non-releasable/);
-  });
-});
 
 describe('releaseRunLog', () => {
   let handle: FixtureTreeHandle;

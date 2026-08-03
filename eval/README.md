@@ -174,7 +174,7 @@ Run logs are JSON envelopes validated against [`docs/specs/schemas/run-log.schem
 
 - `schema_version` (currently `2`), `skill`, `version`, `released`, `releasable`, `invocation`, `timestamp`, `model`, `harness_version`.
 - `judge_prompt_hash` — SHA-256 of the normalized `eval/harness/judge/prompt.md` at run time (NOT in the snapshot — the judge prompt is project-global, so it's tracked separately so judge edits don't clobber every skill on activate).
-- `snapshot` — `{repo-relative-path: normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures, and the whole MCP source tree `packages/engine/mcp-server/src/**`). The active-state check compares this map to the working tree, so an MCP code change also makes prior run logs inactive and forces a re-run.
+- `snapshot` — `{repo-relative-path: sha256-of-normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures). Values are digests, not content: git already holds the bytes, and the active-state check only has to compare. MCP source (`packages/engine/mcp-server/src/**`) is **not** tracked — the harness serves tool calls from mock fixtures, so a `src/` change does not make prior run logs inactive.
 - `tests[]` — per-test entries:
   - `outcome` (`pass | partial | fail | aborted | xfail | xpass`)
   - `flaky`, `outcome_summary.aggregated_dimensions[]` (1–3 per-dimension scores)

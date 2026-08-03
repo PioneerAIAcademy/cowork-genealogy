@@ -1,7 +1,7 @@
 /**
  * Read run logs under `eval/runlogs/unit/<skill>/<filename>`.
  *
- * Schema v2 only — no legacy model-dir or per-test file format. Filenames
+ * Schema v3 — no legacy model-dir or per-test file format. Filenames
  * are classified via `lib/versioning.ts` into released / candidate /
  * scratch / other.
  *
@@ -113,7 +113,7 @@ async function readAnnotationAt(filePath: string): Promise<AnnotationFile | null
 }
 
 function rawToRunLog(raw: unknown): RunLogFile {
-  // Schema v2 only — pass-through with shallow type assertion. The Zod
+  // Pass-through with shallow type assertion. The Zod
   // validator in the API route catches malformed shapes.
   return raw as RunLogFile;
 }
@@ -184,6 +184,37 @@ export async function readRunLogById(
   } catch {
     return null;
   }
+}
+
+/**
+ * Read the current on-disk content of every path a run log's snapshot names.
+ *
+ * From `schema_version` 3 the snapshot stores sha256 digests, not content, so
+ * the review panes (scenario state, per-test JSON, MCP fixture bodies) have no
+ * bytes to render. They get them from here instead — read fresh, server-side,
+ * for the one run log being viewed, and never persisted.
+ *
+ * This is current content, not the content the run saw. For an *active* run
+ * log those are the same by definition, and the results page already shows an
+ * active/inactive badge (`detectActiveRunLog`) so a stale log is visibly
+ * flagged before anyone reads its panes. Missing/unreadable paths are omitted;
+ * every consumer already treats an absent key as "nothing to show".
+ */
+export async function readSnapshotFiles(
+  snapshot: Record<string, string>,
+): Promise<Record<string, string>> {
+  const root = repoRoot();
+  const out: Record<string, string> = {};
+  await Promise.all(
+    Object.keys(snapshot).map(async (rel) => {
+      try {
+        out[rel] = await fs.readFile(path.join(root, rel), 'utf8');
+      } catch {
+        // omitted — consumers treat a missing key as "nothing to show"
+      }
+    }),
+  );
+  return out;
 }
 
 /**

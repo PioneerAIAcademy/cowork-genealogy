@@ -249,7 +249,7 @@ def test_aggregate_dimensions_all_null_stays_null():
 def test_envelope_validates():
     log = _wrap_envelope(_make_entry())
     validate_run_log(log)
-    assert log["schema_version"] == 2
+    assert log["schema_version"] == 3
     assert log["skill"] == "search-familysearch-wiki"
     assert log["version"] == 1
     assert log["released"] is False

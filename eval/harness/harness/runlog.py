@@ -410,7 +410,7 @@ _TOTALS_KEYS = (
 
 def build_run_log(
     *,
-    schema_version: int = 2,
+    schema_version: int = 3,
     skill: str,
     version: int | None,
     released: bool,
@@ -514,7 +514,7 @@ def write_run_log(
                 sidecar_rel = f"runs/{safe}.text.md"
                 sidecar_abs = target_dir / sidecar_rel
                 sidecar_abs.parent.mkdir(parents=True, exist_ok=True)
-                sidecar_abs.write_text(text)
+                sidecar_abs.write_text(text, encoding="utf-8")
                 output["text_response"] = {"ref": sidecar_rel}
 
     validate_run_log(log)
@@ -524,7 +524,7 @@ def write_run_log(
             f"run log already exists at {out} — wait one second and rerun, "
             f"or pass an explicit non-conflicting timestamp."
         )
-    out.write_text(json.dumps(log, indent=2))
+    out.write_text(json.dumps(log, indent=2), encoding="utf-8")
     return out
 
 

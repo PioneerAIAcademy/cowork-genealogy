@@ -110,7 +110,7 @@ Same-second collisions raise `RunlogCollisionError` rather than overwriting.
 
 ### Format details
 
-- **Run-log envelope** — schema at `docs/specs/schemas/run-log.schema.json` (v2; mirror at `packages/schema/schemas/run-log.schema.json` — edit both). One envelope per harness invocation per skill, containing `tests[]` (per-test entries), the `snapshot` of every skill-side file used, and metadata (`version`, `released`, `releasable`, `invocation`, `judge_prompt_hash`, …). Per-run **timing instrumentation** (all optional, so historical logs still validate): `duration_api_ms` (SDK API time — `duration_ms − duration_api_ms` ≈ local/stall overhead), `num_turns`, `judge.duration_ms`, `skill_attempts` (>1 = transient-stall retries), and `started_at`/`ended_at` epoch brackets. Totals additionally carry `wall_clock_ms` (true makespan `max(ended)−min(started)`, vs the summed `duration_ms`) plus summed `duration_api_ms`/`judge_duration_ms`/`num_turns`. The harness prints a "Timing breakdown" from these at the end of every run.
+- **Run-log envelope** — schema at `docs/specs/schemas/run-log.schema.json` (v3; mirror at `packages/schema/schemas/run-log.schema.json` — edit both). One envelope per harness invocation per skill, containing `tests[]` (per-test entries), the `snapshot` of every skill-side file used, and metadata (`version`, `released`, `releasable`, `invocation`, `judge_prompt_hash`, …). Per-run **timing instrumentation** (all optional, so historical logs still validate): `duration_api_ms` (SDK API time — `duration_ms − duration_api_ms` ≈ local/stall overhead), `num_turns`, `judge.duration_ms`, `skill_attempts` (>1 = transient-stall retries), and `started_at`/`ended_at` epoch brackets. Totals additionally carry `wall_clock_ms` (true makespan `max(ended)−min(started)`, vs the summed `duration_ms`) plus summed `duration_api_ms`/`judge_duration_ms`/`num_turns`. The harness prints a "Timing breakdown" from these at the end of every run.
 - **Annotation** — schema at `docs/specs/schemas/ann.schema.json`. **Sparse**: corrections entries exist only for dimensions the annotator has explicitly reviewed. Missing entries = not reviewed (NOT the same as "agreed"). The CRUD UI's "Agree with all" button creates entries with `corrected_score == llm_score`, marking them reviewed. Schema fields: `run_log` (filename), `annotator` (team identifier), `corrections[]` with per-dimension `llm_score` / `corrected_score` (integer 1–3) / optional `comment`.
 
 The "active" run log for a skill is the newest releasable run log whose snapshot matches the working tree (compared via `normalize()`). The CRUD UI computes this lazily on the per-skill page (`detectActiveRunLog` in `lib/fs/runlogs.ts`).
@@ -125,7 +125,7 @@ The run-log-level `outcome` (`pass | partial | fail | aborted | xfail | xpass`) 
 
 ## Snapshot model
 
-Every run log embeds a `snapshot: {repo-relative-path: normalized content}` block covering every file the run depended on:
+Every run log embeds a `snapshot: {repo-relative-path: sha256-of-normalized-content}` block covering every file the run depended on:
 
 - `packages/engine/plugin/skills/<skill>/**`
 - `eval/tests/unit/<skill>/**` (rubric + test JSONs)

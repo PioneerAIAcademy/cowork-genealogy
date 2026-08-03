@@ -28,6 +28,10 @@ const MCP_SRC_PREFIX = 'packages/engine/mcp-server/src/';
 // tests/unit/snapshot.test.ts + tests/unit/test_snapshot.py).
 const AGENT_REF_RE = /@plugin:([a-z0-9-]+)/g;
 
+// A snapshot value in `schema_version` >= 3 — sha256 hex. Shared shape with
+// `_HASH_RE` in eval/harness/harness/snapshot.py.
+const HASH_RE = /^[a-f0-9]{64}$/;
+
 const COSMETIC_TEST_FIELDS = ['name', 'description', 'tags'] as const;
 const JSON_EXTS = new Set(['.json']);
 const TEXT_EXTS = new Set([
@@ -171,14 +175,31 @@ export function hashSnapshot(snapshot: Record<string, string>): Record<string, s
 }
 
 /**
+ * True when every value is a sha256 hex digest (`schema_version` >= 3).
+ * Mirrors Python `is_hashed_snapshot()`. Detected by shape rather than by
+ * `schema_version` because callers pass only the map; requiring *every*
+ * value to match keeps a legacy content snapshot from being misread.
+ */
+export function isHashedSnapshot(snapshot: Record<string, string>): boolean {
+  const values = Object.values(snapshot);
+  return values.length > 0 && values.every((v) => HASH_RE.test(v));
+}
+
+/**
  * Compare snapshot against on-disk files under `repoRoot`. Returns a
  * `{path: reason}` map of mismatches. Mirrors Python's
  * `diff_snapshot_vs_disk()`.
+ *
+ * Accepts both shapes: `schema_version` 3 stores sha256 digests, so disk
+ * bytes are hashed before comparing; pre-3 run logs stored normalized
+ * content and are compared directly. Drop the content arm once no pre-3
+ * run log remains.
  */
 export async function diffSnapshotVsDisk(
   snapshot: Record<string, string>,
   repoRoot: string,
 ): Promise<Record<string, 'missing-on-disk' | 'content-differs'>> {
+  const hashed = isHashedSnapshot(snapshot);
   const out: Record<string, 'missing-on-disk' | 'content-differs'> = {};
   for (const [rel, expected] of Object.entries(snapshot)) {
     if (rel.startsWith(MCP_SRC_PREFIX)) continue;
@@ -190,7 +211,8 @@ export async function diffSnapshotVsDisk(
       out[rel] = 'missing-on-disk';
       continue;
     }
-    const actual = normalize(rel, bytes);
+    const normalized = normalize(rel, bytes);
+    const actual = hashed ? hashContent(normalized) : normalized;
     if (actual !== expected) {
       out[rel] = 'content-differs';
     }

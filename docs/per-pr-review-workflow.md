@@ -120,9 +120,9 @@ The histogram is what makes bimodality visible — a skill with 5 fails + 5 pass
 
 > **Superseded by `docs/plan/eval-runlog-versioning.md` §A2/A4/A7.**
 > The per-test `test_content_hash` field is gone. The whole-snapshot
-> model replaces it: each run log embeds the normalized contents of
-> every skill-side file used in the run, and the comparison view
-> diffs the two snapshots to decide which tests are "edited."
+> model replaces it: each run log embeds a sha256 digest of every
+> skill-side file used in the run, and the comparison view diffs the
+> two snapshots to decide which tests are "edited."
 
 **Decision:** Junior genealogists may update existing tests freely. The harness writes a `test_content_hash` field per test in every run log — SHA-256 over **the resolved test**, computed as:
 
