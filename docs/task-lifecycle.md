@@ -230,6 +230,11 @@ numbers in your PR description.
 Fill in the template; don't replace it. Don't tick a box for a command you
 didn't run — if a check doesn't apply, say why rather than deleting it.
 
+**"Start here" is the line that earns its keep.** A diff is flat — that line is
+what tells a reviewer, human or model, which few lines carry the decision among
+the ones that carry the mechanics. Write it for someone who has not seen your
+branch.
+
 Credit your pair: [`DEVELOPMENT.md`](../DEVELOPMENT.md) § "Crediting a
 co-author".
 

@@ -68,3 +68,4 @@ jobs:
           claude_args: |
             --model claude-sonnet-5
             --max-turns 40
+            --append-system-prompt "The PR description has a 'Review guidance' section with the author's 'Start here' and 'Unsure about' notes. Weight your review toward what it names. This does not limit scope — still report anything else you find, and do not treat an empty or missing section as a reason to review less."
