@@ -3,20 +3,25 @@
 > **Read before you:** wonder why `/critique-plan` is a command instead of "ask
 > Claude to review this" · want to add a third critique round · want to skip
 > writing `PLAN.md` because the plan is already in the chat · want per-task
-> plans filed under `docs/plan/` · want the critic to fix what it finds.
+> plans filed under `docs/plan/` · want the critic to fix what it finds · want
+> to add a "Risky" tier back to the lifecycle · wonder why a junior does not
+> classify their own task's risk · are about to hand a schema, auth, or
+> plugin-agent change to a junior.
 
 - **Status:** Accepted
 - **Decided:** 2026-08-02 (#1177)
 - **Recorded:** 2026-08-02
+- **Amended:** 2026-08-02 (#1188) — §2 of Context / Decision / Alternatives /
+  Consequences below. The Risky tier is retired; risk is settled at triage.
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
-- **Applies to:** `docs/task-lifecycle.md`, `.claude/agents/plan-critic.md`, `.claude/commands/critique-plan.md`
-- **Related:** ADR-0006, ADR-0008 (retires the Risky tier this file's Decision
-  bullet 5 and `docs/plan/` alternatives row refer to; the rest stands),
-  `docs/skill-lifecycle.md`
+- **Applies to:** `docs/task-lifecycle.md`, `.claude/agents/plan-critic.md`, `.claude/commands/critique-plan.md`, `.claude/agents/task-reviewer.md`, `docs/specs/task-review-spec.md`
+- **Related:** ADR-0006, `docs/skill-lifecycle.md`, `docs/specs/task-review-spec.md` §3.1
 
 ## Context
+
+### 1. Attacking the plan
 
 Working with Claude moves the expensive mistake. Writing code is no longer the
 slow part; deciding what code to write is — and a wrong decision now gets
@@ -37,7 +42,35 @@ Two properties of the collaborator shape the mechanism:
    first commit cited a `/code-review` command that does not exist here — three
    times, inside the document warning about exactly that.
 
+### 2. Where risk is settled *(added 2026-08-02, #1188)*
+
+The original decision gave the **developer** a three-tier choice — Trivial /
+Normal / Risky — with seven triggers for Risky, the rule "when in doubt, Risky,"
+and the consequence that the lead reviewed the plan in a draft PR before code.
+
+Four days later `review-ready` / `task-reviewer` (#1181) gave the **lead** a
+`senior` verdict on the same axis, applied at triage before the task is handed
+out, with a stronger consequence: `docs/specs/task-review-spec.md` §3 assigns
+the issue to the lead and swaps it out of the junior pool entirely.
+
+The two trigger lists overlapped but were not identical. Four of the tier's
+seven — schema change, credentials, plugin-agent `tools:` binding, hard-to-undo
+— were absent from the `senior` row, reachable there only by inference from the
+blast-radius pass and `docs/architecture.md` §9.4.
+
+Three facts about the tier, all verifiable in the files as they stood:
+
+1. It asked the person with the least context, at the point where they had
+   already been handed the work, to re-derive a judgment that requires knowing
+   the architecture guide, the ADRs, and the schema site lists.
+2. Its tie-break routed junior uncertainty into the lead's inbox as a plan
+   review — the interrupt `review-ready` exists to remove.
+3. Nothing enforced it. The Enforcement section below: no check confirms a
+   Risky plan reached the lead, and nothing blocks a PR leaving the tier blank.
+
 ## Decision
+
+### 1. Attacking the plan
 
 **The plan is a file, and a read-only subagent attacks it before any code is
 written.** Concretely:
@@ -49,9 +82,32 @@ written.** Concretely:
   lead as a task problem, not a plan problem.
 - Findings are verified by the author before being acted on or relayed —
   proposals included.
-- Risky-tier plans are reviewed by the lead **in the draft PR description**.
+- ~~Risky-tier plans are reviewed by the lead **in the draft PR description**.~~
+  **Retired 2026-08-02 (#1188)** — superseded by §2.
+
+### 2. Where risk is settled *(added 2026-08-02, #1188)*
+
+**Task risk is classified once, at triage, by `task-reviewer`'s `senior`
+verdict.** `docs/task-lifecycle.md` keeps two tiers, Trivial and Normal, and the
+`senior` row in the agent body becomes the single written list of risk triggers
+— gaining the four the tier had and it did not.
+
+Risk that only becomes visible once a developer is in the code is handled by a
+**stop rule** in lifecycle step 4, not by a tier: on hitting one of the
+categorical triggers (schema, credentials, plugin-agent binding, a new or
+changed tool contract, an ADR reversal, anything hard to undo), the developer
+stops and returns to the lead rather than re-planning around it. A stop is a
+defect report against the `senior` trigger list.
+
+Separately and not to be confused with it, a developer who is **not confident**
+— in a question, a mechanism, or the task as a whole — asks a senior and keeps
+working. That is a continue-with-help rule, not a stop rule, and it is not a
+`senior` trigger: see Consequences §2 for why it is routed to `task-reviewer`'s
+Pass B instead.
 
 ## Alternatives considered
+
+### 1. Attacking the plan
 
 | Option | Why rejected | Evidence |
 |---|---|---|
@@ -62,7 +118,20 @@ written.** Concretely:
 | **Let the critic apply its own findings** | Collapses the verification step the design rests on. Read-only forces someone to decide which findings are real — the part that teaches the codebase | This branch's own round: one finding was rejected as wrong, and one *proposal* was relayed as though it existed when it did not |
 | **Risky plans as files under `docs/plan/`** | That directory holds multi-week design docs reviewed with a designer and an engineer; a per-task plan is a different genre with a different lifespan. Filing one there means it lands on `main` and must be deleted when the work ships | `CLAUDE.md` § `docs/plan/`: "Two files here spent weeks claiming 'not yet implemented' and 'not yet branched' for things that had shipped" |
 
+### 2. Where risk is settled *(added 2026-08-02, #1188)*
+
+| Option | Why rejected | Evidence |
+|---|---|---|
+| **Keep all three tiers** | Two mechanisms deciding one thing, with the weaker one sited where the information is worst and the stakes are already sunk. The tier's only action — a pre-code plan review — is strictly weaker than the `senior` verdict's, which removes the task from the junior pool | `docs/specs/task-review-spec.md` §3 (`senior` → assign `DallanQ`, swap out) vs. the tier (lead reviews the plan) |
+| **Collapse to one tier — everything is Normal** | Taxes the highest-frequency, lowest-risk changes: a typo or doc-link fix would carry `PLAN.md` plus a `/critique-plan` round. Trivial is a call a junior makes reliably from the diff in front of them; Risky is one that needs the architecture guide. Deleting both treats two different qualities of judgment as one | Argued, not measured |
+| **Keep Risky, drop the pre-code plan review** | The plan review *was* the tier's consequence. Without it the tier is a label with no action, which is the shape that rots — nobody notices when it is wrong | Enforcement below: nothing blocks a PR that leaves the tier blank |
+| **Leave the four extra triggers implicit in Pass B #5 and §9.4** | Reachable-by-inference is how a triage miss happens. With the tier gone the `senior` row is the only written list, so completeness stops being a nicety | `.claude/agents/task-reviewer.md` `senior` row as it stood — named neither schema, credentials, plugin-agent binding, nor hard-to-undo |
+| **Make "the developer isn't confident" a `senior` trigger** | Not a property of the change, so `task-reviewer` cannot evaluate it — it does not know who will pick the issue up, and confidence varies by person and by week. A trigger the agent cannot check reads as coverage and is not | The other eight triggers are all checkable from the issue and the code; this one is checkable from neither |
+| **A CI check that fails a PR touching `src/auth/` without the `senior` label** | The trigger set is about *intent* as much as paths (an ADR reversal, a doctrine commitment), so a path lint would catch the easy third and imply coverage of the rest | Argued, not measured. `doc-links.test.ts` is a staleness lint, not a policy gate |
+
 ## Consequences
+
+### 1. Attacking the plan
 
 **Gains.** Bad approaches die in a paragraph instead of a branch. The author,
 not the reviewer, discovers implement-vs-plan drift. The lead's review is spent
@@ -84,6 +153,44 @@ judgement can degrade silently if the prompt drifts. The lint below catches
 stale paths, not weak criticism. Nothing currently measures whether the
 critique step changes outcomes.
 
+### 2. Where risk is settled *(added 2026-08-02, #1188)*
+
+**Gains.** One classification, made by the party with the whole picture, before
+the work is handed out. Risky work leaves the junior pool rather than being
+gated inside it. The junior's process choice collapses to a question they can
+actually answer — is this a typo or not. The lead stops receiving plan reviews
+generated by junior uncertainty.
+
+**Costs, knowingly accepted.**
+
+- **`review-ready` becomes the single point of risk classification.** The
+  junior's tier call was a second net. It was weak and unenforced, but it was a
+  net, and the first time triage misclassifies something the discovery moves
+  from the plan stage to a PR.
+- The stop rule is convention, exactly as the tier was. Nothing blocks a branch
+  that quietly edits `src/auth/`.
+- Two lists now have to be kept in step — the agent's `senior` triggers and the
+  lifecycle's step-4 stop rule, which is a deliberate subset. A trigger added to
+  one and not the other is invisible.
+
+**Where a confidence escalation lands, and why not here.** A developer saying "I
+am not sure I can do this correctly" is a real signal, but it is almost never a
+missing `senior` trigger. The `senior` list holds properties of the *change*;
+confidence is a property of the *pairing* between a person and a task, which
+triage cannot see — it does not know who will pick the issue up. What such an
+escalation usually means is that the issue body was thin: the blast radius, the
+verifying command, or an open decision was left implicit. That is a **Pass B**
+miss, and the verdict that should have fired is `ready-after-edit` or
+`needs-a-decision`, not `senior`. Routing it to the `senior` list would
+mis-attribute most instances and grow that list with entries nothing can check.
+So `task-reviewer`'s `ready` row instead names the part most likely to need a
+senior, and `docs/task-lifecycle.md` tells developers to ask.
+
+**Risks.** Nothing measures how often triage misses a category, so the cost
+above is unquantified in either direction. The stop rule is the only instrument
+that would surface it, and it depends on a junior volunteering that their task
+was mis-scoped.
+
 ## Enforcement
 
 > `packages/engine/mcp-server/tests/packaging/doc-links.test.ts` — every repo
@@ -96,13 +203,22 @@ critique step changes outcomes.
 `.github/pull_request_template.md` carries the tier and the plan; nothing
 blocks a PR that leaves them blank.
 
-Decision bullet 5 (lead review of Risky-tier plans) no longer applies — ADR-0008
-retired that tier, and risk is classified at triage instead. The bullet stays as
-written because this section is history.
+For §2: `packages/engine/mcp-server/tests/packaging/adr-links.test.ts` lints
+this file's `Applies to` and `Enforcement` paths. Nothing checks that a `senior`
+verdict was applied, that the agent's trigger list and the lifecycle's stop rule
+agree, or that a developer stopped or asked when they should have. Convention —
+the same standing the retired tier had.
 
 ## Revisit when
 
 A plan-stage critique demonstrably misses a defect that a third round would
-have caught, or when a Risky plan turns out to need review by someone who is
+have caught, or when a per-task plan turns out to need review by someone who is
 not on the PR — at which point the `docs/plan/` question reopens with a
 concrete reader, rather than as a filing preference.
+
+For §2: a junior hits the step-4 stop rule twice for the same class of change,
+or a `senior`-shaped change reaches a junior and lands. Either is triage missing
+a category, and the fix is a trigger in the `senior` row — not a tier restored
+to `docs/task-lifecycle.md`. Also revisit if `review-ready` stops being run on
+the shortlist before promotion: §2 rests on every task passing that gate, and a
+pool promoted without it has no risk classification at all.

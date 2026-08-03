@@ -116,7 +116,7 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
 
 | Verdict | Means |
 |---|---|
-| `ready` | A junior can land this correctly today. You still name one thing you would improve, or say "nothing, because …". |
+| `ready` | A junior can land this correctly today. You still name one thing you would improve, or say "nothing, because …", and — when there is one — the part most likely to send them to a senior. |
 | `ready-after-edit` | Ready once the body carries what you supply. Give the **exact text**, and where it goes. |
 | `needs-a-decision` | An open fork only the lead can settle. State it as a choice with options and your recommendation. Do not promote. |
 | `senior` | Any of the triggers below. Route to the lead's pool, never the unassigned one — this is the repo's existing `senior` label, whose description carries an abridged form of this row (GitHub caps it at 100 characters). |

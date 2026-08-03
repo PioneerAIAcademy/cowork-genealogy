@@ -51,7 +51,7 @@ a verdict the caller cannot act on is a verdict that silently does nothing.
 `docs/task-lifecycle.md` used to carry a third tier, **Risky**, whose seven
 triggers overlapped this row and whose consequence was that the lead reviewed the
 junior's plan in a draft PR before code. It was retired in favour of this verdict
-(ADR-0008). Three reasons, in order of weight:
+(ADR-0007 §2). Three reasons, in order of weight:
 
 1. **This gate makes the same call earlier, with more information, and acts on
    it harder.** A `senior` verdict removes the task from the junior pool; the
@@ -72,10 +72,21 @@ and deliberately **not** mirrored into the lifecycle's stop rule: it is precisel
 what Pass B #5 computes from the issue body, so it is triage's to catch, not
 something a junior should re-derive mid-branch.
 
-What the retirement gives up is stated in ADR-0008's costs: this gate is now the
-single point of risk classification. The backstop is the lifecycle's step-4 stop
-rule, which fires on the four categorical triggers a junior can only discover in
+What the retirement gives up is stated in ADR-0007 §2's costs: this gate is now
+the single point of risk classification. The backstop is the lifecycle's step-4
+stop rule, which fires on the categorical triggers a junior can only discover in
 the code. A stop is a defect report against this row.
+
+**A developer's lack of confidence is not a trigger for this row.** It is a
+property of the pairing between a person and a task, and this gate cannot see it
+— it does not know who will pick the issue up. When a junior escalates because
+they are unsure, the usual cause is that the body left the blast radius, the
+verifying command, or an open decision implicit: a **Pass B** miss, whose right
+verdict was `ready-after-edit` or `needs-a-decision`. Adding it here would
+mis-attribute most instances and grow this list with entries nothing can check.
+Two mechanisms carry it instead — the `ready` verdict names the part most likely
+to need a senior, and `docs/task-lifecycle.md` § "Ask early" tells developers to
+ask. Argued in ADR-0007 §2 Alternatives.
 
 `stale-rewrite` is the one case that replaces rather than prepends, and it is why
 the caller's "prepend, never replace" rule carries an exception. It is kept

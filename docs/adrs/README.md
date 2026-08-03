@@ -34,32 +34,46 @@ ADR's number stays retired.
 frontmatter," not "Tool naming." A reader scanning the index should see what was
 decided, not what it was about.
 
-**3. Immutable where it is history; live where it is a pointer.**
+**3. Append-only where it is history; live where it is a pointer.**
 
 | Section | Rule |
 |---|---|
-| Context, Decision, Alternatives considered, Consequences | **Frozen.** History does not rot. To change a decision, write a new ADR and mark this one `Superseded by`. Never edit these to reflect new reality. |
+| Context, Decision, Alternatives considered, Consequences | **Append-only.** History does not rot. Never *rewrite* these to reflect new reality — add to them, under a dated subsection, and strike the clause that no longer holds rather than deleting it. |
 | Applies to, Enforcement, Related | **Live.** These are pointers into a moving codebase. Fix them in the PR that moves the code. |
 
 That split is deliberate. Classic ADR practice freezes the whole file, which is
 right for an archive and wrong for us — a developer reads these *while working*,
 so a stale path is not a curiosity, it is a wrong answer they will act on.
 
-**4. Every path is linted.** `tests/packaging/adr-links.test.ts` asserts that
+**4. Prefer amending an existing ADR to writing a new one.** The set is a
+routing surface, and its value falls as it grows: eight ADRs get read, thirty
+get skimmed, and a decision split across two files is one nobody holds in their
+head. So the default is to amend.
+
+| Situation | Do |
+|---|---|
+| The core decision stands; a clause under it is retired or narrowed | **Amend.** Add `**Amended:** <date> (#PR)` to the header, add a dated subsection to each section that gains material, and strike the retired clause with `~~…~~` plus a pointer to what replaced it. ADR-0007 §2 is the worked example. |
+| The core decision is reversed | **New ADR**, and mark the old one `Superseded by`. |
+| A genuinely separate decision that happens to touch the same files | **New ADR.** Sharing a file list is not sharing a decision. |
+
+An amendment that makes the original unreadable is the signal you were in row
+two all along.
+
+**5. Every path is linted.** `tests/packaging/adr-links.test.ts` asserts that
 every repo path cited in `Applies to` or `Enforcement` resolves. Move the code,
 and CI fails until the ADR is updated or superseded. This is the only thing
 keeping the set trustworthy past a few months — do not weaken it.
 
-**5. `Read before you:` is the routing line.** It is the field that decides
+**6. `Read before you:` is the routing line.** It is the field that decides
 whether the ADR is ever opened, so write it like a skill `description`: the
 concrete tasks that should send someone here, in their words. Under-trigger and
 the ADR is invisible; over-trigger and it dilutes the index.
 
-**6. Say what it costs.** The `Costs, knowingly accepted` paragraph is not
+**7. Say what it costs.** The `Costs, knowingly accepted` paragraph is not
 optional and is not a formality. If the answer is "nothing," the decision was
 not a tradeoff and probably does not need an ADR.
 
-**7. Evidence, not assertion.** This repo rejects things by measurement — the
+**8. Evidence, not assertion.** This repo rejects things by measurement — the
 `record-extractor` playbook A/B, the compaction-decay audit, the model
 downgrade. When that evidence exists, cite it with a number. When it does not,
 say "argued, not measured." Both are fine; pretending is not.
@@ -72,6 +86,9 @@ superseded ADR stays in the directory: the record of a decision that was
 reversed is often worth more than the decision that replaced it.
 
 ## Writing a new one
+
+First check rule 4 — most of the time the right move is amending an ADR that
+already exists, and the new file is the exception.
 
 Copy [`_template.md`](_template.md). Fill every field — an empty section means
 "we did not think about this," so write that if it is true.
