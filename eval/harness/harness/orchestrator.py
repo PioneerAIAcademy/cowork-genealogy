@@ -17,6 +17,8 @@ from typing import Any
 
 from harness.allowed_tools import (
     compute_allowed_tools,
+    format_uncovered_callee_fixtures,
+    uncovered_callee_fixtures,
     declared_skill_tools,
     load_skill_frontmatter,
 )
@@ -207,7 +209,33 @@ async def _run_one_test_async(
     if isinstance(skill_model, str) and skill_model.strip():
         model = skill_model.strip()
     scenario_readme = _load_scenario_readme(paths.scenarios_dir, spec.scenario)
-    skill_baseline = compute_allowed_tools(spec.skill, paths.skills_dir)
+
+    # Sub-skills this test declares it will really run (`execution.run_skills`).
+    # Their tools join the allowlist; every other `Skill()` callee named in the
+    # body is left un-unioned, so an undeclared delegation behaves exactly as it
+    # did before this field existed. See allowed_tools.compute_allowed_tools.
+    run_skills = set(spec.execution.get("run_skills") or [])
+    skill_baseline = compute_allowed_tools(
+        spec.skill, paths.skills_dir, run_skills=run_skills
+    )
+
+    # Permission is not existence: the union lets the callee call its tools,
+    # but only a fixture makes them resolvable. Without this gate the first
+    # such call trips the Phase 2 uncovered-tool-call check below and aborts
+    # the CALLER's test ~20 turns in, naming the wrong skill. Fail here
+    # instead, before a single token is spent.
+    if run_skills:
+        declared_fixtures = load_fixtures(spec.mcp_fixtures, paths.fixtures_dir)
+        missing = uncovered_callee_fixtures(
+            spec.skill,
+            paths.skills_dir,
+            stubbed_skills=set(parse_stub_skills(spec.execution)),
+            registered_tools={f["tool"] for f in declared_fixtures},
+        )
+        # Only the callees this test opted into can actually run.
+        missing = [(c, t) for c, t in missing if c in run_skills]
+        if missing:
+            raise ValueError(format_uncovered_callee_fixtures(spec.id, missing))
 
     # Negative tests may route to a different skill whose MCP tools
     # differ from the skill under test's allowed-tools.  The test author
@@ -439,6 +467,12 @@ async def _execute_single_run(
             "expected_classifications": spec.raw.get(
                 "expected_classifications", []
             ),
+            # Also threaded in: `execution`, so test_tool_allowlist can widen
+            # by the same `run_skills` rule the session allowlist used. A
+            # callee's calls land in this run's tool_calls log, and without
+            # the declaration the validator reads a legal hand-off as a
+            # violation (issue #1012).
+            "execution": spec.execution,
         },
     )
     validators_passed = compute_validators_passed(

@@ -573,6 +573,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
 | `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
+| `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
 
 **`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
@@ -597,6 +598,44 @@ Two forms, and the choice turns on the **caller's** contract, not the callee's:
 unable to finish — which under the first form required a judge instruction
 ("do not penalize the skill for not producing Ancestry URLs") to keep the test
 green. A grading patch over a harness gap is the signal you needed `response`.
+
+**`run_skills` — letting a sub-skill really run.** The opposite declaration:
+this test wants the callee to execute. Naming it here unions the callee's
+`allowed-tools` into the session allowlist, because `Skill()` loads the
+callee's instructions into the **same conversation** — its tool calls are
+checked against the caller's allowlist, not one of its own.
+
+Two things must both be true before a callee can work, and they are enforced
+in different places:
+
+| | grants | enforced by | failure |
+|---|---|---|---|
+| `run_skills` | the tool is **permitted** | `compute_allowed_tools` | SDK denies the call |
+| `mcp_fixtures` | the tool **exists** | `mock_mcp.build_manifest` | `unmatched_tool_call` aborts the *caller's* test |
+
+So a test that names a callee in `run_skills` must also stock a fixture for
+each of that callee's tools. The harness checks this **before the run starts**
+and fails with the missing pairs named, rather than letting the callee's first
+call abort the caller twenty turns in. Fixtures stay explicitly declared rather
+than auto-loaded from a per-skill default set: auto-loading would let a test
+pass on fixtures it never named, and a later change to the default set would
+alter that test's behaviour with no diff in the test file.
+
+Opt-in, not automatic. `search-records` names four callees but any one test
+drives at most one, so unioning every `Skill()` reference would arm that abort
+across the whole suite to serve the one test that wants it. A callee that is
+neither in `run_skills` nor in `stub_skills` behaves exactly as it did before
+this field existed — it runs without its own tools.
+
+> **Correction (2026-07-31, issue #1012).** This section previously described
+> stubbing as trading away integration coverage at the caller/callee seam.
+> There was no such coverage to trade: until `run_skills` existed, a callee had
+> no way to obtain its tools, so *not* stubbing bought a callee that improvised.
+> `ut_search_records_018` passed for weeks on an Ancestry URL missing
+> `name_x=ps_ps` — the phonetic-match parameter that is the entire reason the
+> escalation exists. Note this is a harness limitation only: production builds
+> no per-skill allowlist (`permission_mode="bypassPermissions"` with no
+> `allowed_tools`), so a real session holds every tool and the callee works.
 
 Assert the hand-off with a deterministic `skills_invoked` validator, not the
 judge, which reads a transcript and can misread it. Note the limit: the harness
