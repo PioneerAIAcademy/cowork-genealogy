@@ -23,6 +23,16 @@ score below 3" as "do not score *fail*" and settling one band down. Partial is a
 deduction; if the only blemish is a name-variant fixture miss, there is nothing
 to deduct for. The score is 3.
 
+**Wording alone has not fixed this — stock the variant instead.** The paragraph
+above was strengthened on 2026-07-31 precisely to stop the compromise, and on
+2026-08-03 a judge did it again on ut_search_records_024 (`Wilkens`), quoting
+the override and scoring 2 in the same breath. Treat this section as a
+mitigation, not a guarantee. **The reliable fix is to stock a nil fixture for
+the specific variant a test's name plausibly attracts**, so no
+`fixture_not_found` occurs and the judge has nothing to weigh — that is what
+024 now does with `record-search-wilkens-variant-no-results`. Reach for a
+narrow, single-spelling nil, never the catch-all warned against below.
+
 This overrides the global "Critical: Tool Usage Errors" rule for this one case,
 under that prompt's own provision for a skill's rubric to claim an axis and be
 deferred to.

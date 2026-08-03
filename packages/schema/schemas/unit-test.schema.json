@@ -191,6 +191,12 @@
         "max_tool_calls": { "type": "integer", "minimum": 1 },
         "max_input_tokens_per_turn": { "type": "integer", "minimum": 1 },
         "sdk_message_silence_seconds": { "type": "integer", "minimum": 1 },
+        "run_skills": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Positive tests only. Sub-skills this test expects to EXECUTE for real (opt-in). Their allowed-tools join the session allowlist, and the test must stock a fixture for each of those tools. Omit to leave a Skill() callee un-unioned, which is the default for every test. Mutually exclusive with stub_skills for the same skill.",
+          "uniqueItems": true
+        },
         "stub_skills": {
           "type": "array",
           "description": "Positive tests only. Sub-skills this test does not want executed. The PreToolUse hook records the delegation in skills_invoked, denies the launch, and lets the run continue, so the caller still finishes its own logging. Use when the callee has its own unit suite. Two forms: a bare string denies the launch and returns nothing; an object with `response` hands that text back as the callee's result, which is required when the CALLER's own remaining work consumes the output (e.g. search-records is specced to present the URLs search-external-sites returns). See eval/harness/harness/skill_stubs.py.",
