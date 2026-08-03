@@ -73,9 +73,17 @@ body. The caller applies what the lead approves.
    — that is what "green and wrong" means.
 7. **Open decisions.** List every decision the body leaves to the implementer.
    Claude Code will not stall on one; it will pick, confidently, and the choice
-   ships. Any decision about an API shape, a doctrine position, an enum value, a
-   retention rule, or spend is the lead's → verdict `needs-a-decision`, and you
-   state the fork as a choice with a recommendation.
+   ships.
+
+   **Settle what you can; escalate only what you cannot.** Most forks are already
+   answered in a spec, an ADR, or the code — resolve those yourself and say in
+   one clause where the answer came from. What reaches the lead is only what is
+   genuinely undetermined: an API shape, a doctrine position, an enum value, a
+   retention rule, spend. Nine issues at three questions each is thirty
+   questions, and he stops reading at the fourth.
+
+   Anything that does reach him → verdict `needs-a-decision`, written to the
+   **For the lead** contract below. Do not promote it.
 8. **Hidden cost.** Editing a skill body, a rubric, or a unit test flips that
    skill's run log inactive, so landing it needs a fresh `make eval-skill
    SKILL=<name>` run plus a genealogist annotation — roughly $8–12 and 45–65
@@ -123,14 +131,50 @@ body. The caller applies what the lead approves.
 **Why** — three sentences, maximum.
 
 **Body edit** — the exact text to add or replace, in a fenced block, with where
-it goes. Omit the section when the verdict needs no edit.
+it goes. This covers only what is true whichever way the decisions below go.
+Omit the section when the verdict needs no edit.
 
-**For the lead** — each open decision as a question with options and your
-recommendation. Omit when there are none.
+**For the lead** — one block per genuinely open decision, to the contract below.
+Omit when there are none.
 
 **Checked** — one line per claim, cited: `file:line`, an issue or PR number, or
 a command and its output. Include the checks that came back clean.
 ```
+
+### The "For the lead" contract
+
+Write each decision so it can be put to him **verbatim**, with no reformatting:
+
+- **Header** — ≤12 characters, e.g. `#1031 API`, `Lint policy`. It is the chip he
+  scans.
+- **Question** — one sentence ending in `?`, naming what in the repo left it open
+  (a spec line, an architecture-guide open question, silence where you expected a
+  rule).
+- **Two or three options.** Label each in ≤5 words, recommended one **first** and
+  marked `(recommended)`. Each option's description is **the consequence that
+  decides it** — a cost, a count, a failure mode, what it forecloses. Never a
+  restatement of the label.
+- **For every option, the issue-body text that option produces**, in a fenced
+  block. **Not only the recommended one.**
+
+That last item is the point of the section. He answers "B", and applying it is a
+splice — not a rewrite by someone who did not do the reading. You are the only
+participant holding the spec, the ADRs and the code at once, and by the time he
+answers you are gone.
+
+Each option's body text records **the decision and the alternative it beat**, in
+one clause. This repo keeps three separate "do not re-derive" ledgers because
+settled questions get re-opened; a body stating only the winner invites it again.
+
+**But keep the reasoning out of the issue.** `CLAUDE.md` is explicit that bodies
+"are read once at triage and essentially never again," so a settled tradeoff
+belongs in the tool's spec or a comment at the site it constrains. Name that
+destination — `docs/specs/<tool>-tool-spec.md` §N — and make writing it there
+**part of the task**. The junior's PR then carries the reasoning to where the
+next person will actually be standing.
+
+If an option would change the blast radius you computed in Pass B #5, say so on
+that option. It is the signal that picking it needs a second look, not a splice.
 
 ## Hard rules
 
