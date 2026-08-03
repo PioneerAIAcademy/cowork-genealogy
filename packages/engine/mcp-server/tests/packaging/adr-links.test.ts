@@ -7,16 +7,16 @@ import { citedPaths, pathResolves } from "./repo-paths.js";
 /**
  * ADR staleness lint.
  *
- * ADRs are read *at the moment of work* by developers (and by Claude) who
- * treat them as authoritative. Classic ADR practice freezes the whole file,
- * which is right for an archive and wrong for us: a stale path is not a
- * curiosity, it is a wrong answer someone will act on.
+ * ADRs are read *at the moment of work* by Claude and by developers, who treat
+ * them as authoritative. Classic ADR practice freezes the whole file, which is
+ * right for an archive and wrong for us: a stale path is not a curiosity, it is
+ * a wrong answer someone will act on.
  *
- * So `docs/adrs/README.md` splits each ADR in two — Context / Decision /
- * Alternatives / Consequences are frozen history, while **Applies to** and
- * **Enforcement** are live pointers into a moving codebase. This test is what
- * makes the live half true: every repo path cited in those two places must
- * resolve. Move the code and CI fails until the ADR is updated or superseded.
+ * So `docs/adrs/README.md` rule 3 makes the whole file a living document —
+ * rewritten in place as decisions change, rather than accreting amendments.
+ * **Applies to** and **Enforcement** are the two sections that cite repo paths,
+ * so they are what this lint can mechanically hold to that standard: every path
+ * in them must resolve. Move the code and CI fails until the ADR is updated.
  *
  * Without this the set is trustworthy for about two months.
  *
@@ -33,7 +33,7 @@ const engineRoot = join(here, "..", "..", ".."); // packages/engine/
 const projectRoot = join(engineRoot, "..", ".."); // repo root
 const adrDir = join(projectRoot, "docs", "adrs");
 
-/** Sections whose paths must resolve. The rest of an ADR is frozen history. */
+/** Sections that cite repo paths, and so are the ones this lint can check. */
 const LIVE_SECTIONS = ["Applies to", "Enforcement"];
 
 const ADR_FILE = /^ADR-(\d{4})-[a-z0-9-]+\.md$/;
@@ -89,7 +89,7 @@ describe("ADR hygiene", () => {
       "Read before you:",
       "**Status:**",
       "**Decided:**",
-      "**Recorded:**",
+      "**Last updated:**",
       "**Applies to:**",
     ]) {
       expect(body, `${file} is missing "${field}"`).toContain(field);
@@ -133,8 +133,9 @@ describe("ADR hygiene", () => {
     expect(
       missing,
       `${file} cites paths that no longer exist: ${missing.join(", ")}\n` +
-        `Fix the "Applies to" / "Enforcement" pointers in the same PR that moved the code, ` +
-        `or supersede the ADR. Do not edit its Context/Decision/Alternatives — those are frozen history.`,
+        `Fix the "Applies to" / "Enforcement" pointers in the same PR that moved the code. ` +
+        `ADRs are living documents (docs/adrs/README.md rule 3) — edit the whole file freely ` +
+        `to describe what is true now; only "Alternatives considered" rows are never deleted.`,
     ).toEqual([]);
   });
 

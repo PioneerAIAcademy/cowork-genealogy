@@ -34,30 +34,42 @@ ADR's number stays retired.
 frontmatter," not "Tool naming." A reader scanning the index should see what was
 decided, not what it was about.
 
-**3. Append-only where it is history; live where it is a pointer.**
+**3. These are living documents. Edit them freely.**
 
-| Section | Rule |
-|---|---|
-| Context, Decision, Alternatives considered, Consequences | **Append-only.** History does not rot. Never *rewrite* these to reflect new reality — add to them, under a dated subsection, and strike the clause that no longer holds rather than deleting it. |
-| Applies to, Enforcement, Related | **Live.** These are pointers into a moving codebase. Fix them in the PR that moves the code. |
+Every section is live. When a decision changes, **rewrite the file to describe
+what is true now** — no dated amendment subsections, no `~~struck~~` clauses, no
+"§2 supersedes §1" scaffolding. Update `**Last updated:**` and move on.
 
-That split is deliberate. Classic ADR practice freezes the whole file, which is
-right for an archive and wrong for us — a developer reads these *while working*,
-so a stale path is not a curiosity, it is a wrong answer they will act on.
+This is a deliberate break from classic ADR practice, which freezes the record
+and accretes supersessions. The reason is the reader. These are read far more
+often by Claude, in a fresh context, *while doing the work* than by a person
+doing history. For that reader a file whose current state must be reconstructed
+from struck text and layered amendments is actively dangerous: it costs tokens on
+every read, and a model skimming a strikethrough acts on the retired clause. A
+coherent document that states one thing is the digestible form.
 
-**4. Prefer amending an existing ADR to writing a new one.** The set is a
-routing surface, and its value falls as it grows: eight ADRs get read, thirty
-get skimmed, and a decision split across two files is one nobody holds in their
-head. So the default is to amend.
+**The history is in `git log -p docs/adrs/`.** It does not need to be in the
+reading path.
+
+**One thing is never deleted: a rejected alternative.** `Alternatives considered`
+is not archive — it is the working payload, the thing that stops the next
+session proposing the option that was already tried. When a decision reverses,
+the old decision does not vanish; it **becomes a row in that table**, with the
+evidence that changed the call. That is strictly more useful than freezing it in
+place, because it lands in the form the reader actually consults.
+
+**4. Prefer editing an existing ADR to writing a new one.** The set is a routing
+surface, and its value falls as it grows: eight ADRs get read, thirty get
+skimmed, and a decision split across two files is one nobody holds in their head.
 
 | Situation | Do |
 |---|---|
-| The core decision stands; a clause under it is retired or narrowed | **Amend.** Add `**Amended:** <date> (#PR)` to the header, add a dated subsection to each section that gains material, and strike the retired clause with `~~…~~` plus a pointer to what replaced it. ADR-0007 §2 is the worked example. |
-| The core decision is reversed | **New ADR**, and mark the old one `Superseded by`. |
+| The decision changed, in whole or in part | **Edit it.** Rewrite for current reality; demote what it replaced to an `Alternatives considered` row. ADR-0007 is the worked example — it absorbed a reversal of its own tier rule this way. |
 | A genuinely separate decision that happens to touch the same files | **New ADR.** Sharing a file list is not sharing a decision. |
+| The whole ADR is obsolete, not merely changed | **Delete it** and note the removal in the PR. Its number stays retired (rule 1). A `Superseded by` chain is only worth keeping when the old decision is still load-bearing somewhere — which, if it is, means it belongs in an `Alternatives` row instead. |
 
-An amendment that makes the original unreadable is the signal you were in row
-two all along.
+The test for row two is whether a reader arriving with either question would be
+served by one file. If yes, it is one ADR.
 
 **5. Every path is linted.** `tests/packaging/adr-links.test.ts` asserts that
 every repo path cited in `Applies to` or `Enforcement` resolves. Move the code,
@@ -80,10 +92,15 @@ say "argued, not measured." Both are fine; pretending is not.
 
 ## Superseding
 
-Add `**Superseded by:** ADR-00NN` to the old file's header and nothing else —
-leave its body untouched. Add `**Supersedes:** ADR-00MM` to the new one. A
-superseded ADR stays in the directory: the record of a decision that was
-reversed is often worth more than the decision that replaced it.
+Mostly you don't. Rule 4 says edit the ADR in place, so a reversal usually leaves
+one file that reads correctly, with the old decision demoted to an `Alternatives
+considered` row.
+
+The `Supersedes` / `Superseded by` fields survive for the one case that is not
+an edit: a decision that **splits** into two ADRs, or one whose replacement is
+genuinely a different decision rather than a revision of this one. Then add
+`**Superseded by:** ADR-00NN` to the old header and `**Supersedes:** ADR-00MM`
+to the new. Do not reach for this to avoid rewriting a file.
 
 ## Writing a new one
 

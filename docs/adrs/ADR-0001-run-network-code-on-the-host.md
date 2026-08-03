@@ -6,7 +6,7 @@
 
 - **Status:** Accepted
 - **Decided:** pre-2026-05 (reconstructed — this predates the specs directory)
-- **Recorded:** 2026-08-02
+- **Last updated:** 2026-08-02
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —

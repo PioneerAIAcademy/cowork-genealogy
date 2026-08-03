@@ -7,7 +7,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-12 (the three-way split reached its current shape with the `record-extractor` agent, #650)
-- **Recorded:** 2026-08-02
+- **Last updated:** 2026-08-02
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
