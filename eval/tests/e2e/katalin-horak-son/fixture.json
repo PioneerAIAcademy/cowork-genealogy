@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 20, flag adds_son, confidence 3). Resolved: false match, no findable substitute. The hint names a different wife (Káti Liskovics, not Katalin Horák); 'Banyári' is common enough in this parish that the tree's own data already shows an unrelated same-named man erroneously merged in. See README Notes for reviewers."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 20, flag adds_son, confidence 3). Resolved: answerable, but differently. The baptism event (János, father István Banyári, 1 Sep 1844) is real and well-evidenced -- Probable. The tree's 'Katalin Horák' as the mother is Not Proved: no baptismal record found for this Banyári family (including the tree's own existing 1846 son) names a mother 'Horák'. Flag LDSJ-SXL's surname as unverified rather than renaming to either alternative found (Liskovics, Szeget). See README Notes for reviewers."
 }
