@@ -2,7 +2,7 @@
 
 **Project:** Cowork Genealogy — an AI genealogy research assistant
 **Scope:** Next.js app for creating, managing, and reviewing eval tests, scenarios, fixtures, and run results
-**Status:** Draft — structure and key decisions captured, implementation TBD. Aligned to `docs/plan/per-pr-review-workflow.md` (per-PR per-skill iteration model).
+**Status:** Draft — structure and key decisions captured, implementation TBD. Aligned to `docs/per-pr-review-workflow.md` (per-PR per-skill iteration model).
 
 ---
 
@@ -161,7 +161,7 @@ Phase 1: fixtures are read-only in the UI (created by devs). The UI displays the
 
 ## 6. Results Section
 
-Per the per-PR review workflow (`docs/plan/per-pr-review-workflow.md`), the team submits one PR per skill containing the updated skill prompt, tests, one run log, and one `.ann` file (per skill touched). Senior feedback flows through PR comments. There is no separate adjudication artifact.
+Per the per-PR review workflow (`docs/per-pr-review-workflow.md`), the team submits one PR per skill containing the updated skill prompt, tests, one run log, and one `.ann` file (per skill touched). Senior feedback flows through PR comments. There is no separate adjudication artifact.
 
 ### Results home
 
@@ -197,7 +197,7 @@ The Results section opens to a dashboard with two panels:
 
 - For a given skill, shows the current PR's run log side-by-side with main's most recent run log for that skill.
 - Both sides display: weighted mean, count histogram (number of `3`s / `2`s / `1`s across all dimensions), and per-dimension breakdown.
-- Per-test rows: tests in both run logs are listed once, with their corrected weighted means on each side. Tests whose `test_content_hash` differs between the two run logs are flagged "edited — excluded from headline comparison" and visually de-emphasized; the senior can still inspect them individually.
+- Per-test rows: tests in both run logs are listed once, with their corrected weighted means on each side. Tests the two run logs' `snapshot` blocks disagree on are flagged "edited — excluded from headline comparison" and visually de-emphasized; the senior can still inspect them individually. (The per-test `test_content_hash` this used to key on was never built — the whole-snapshot model replaced it; see `docs/plan/eval-runlog-versioning.md` §A2/A4/A7.)
 - **Within-variance advisory:** when the weighted-mean delta between PR and main is below 0.3, the comparison view displays "within typical run-to-run variation — interpret cautiously." Advisory only; the senior decides what to make of it. Either party can re-run the harness for a second sample via the Python script. Per plan §2.10.
 - No statistical gate; no auto-merge. The senior reviews holistically (prompt diff + test diff + `.ann` + comparison) and accepts or rejects the PR through standard GitHub UI.
 
@@ -271,9 +271,9 @@ Resolved (covered above):
 
 - `docs/specs/unit-test-spec.md` — Unit test JSON format, JSON Schema, harness behavior, runnability gate, integer grade scale
 - `docs/specs/schemas/ann.schema.json` — `.ann` file schema (the annotation view writes against this)
-- `docs/specs/schemas/run-log.schema.json` — Run log schema (the Results section reads against this; includes `test_content_hash`)
+- `docs/specs/schemas/run-log.schema.json` — Run log schema (the Results section reads against this; the `snapshot` block is what comparison keys on)
 - `eval/CLAUDE.md` — Directory layout, naming conventions, annotation file conventions
 - `docs/specs/research-schema-spec.md` — Research.json schema (for scenario builder)
 - `docs/specs/simplified-gedcomx-spec.md` — GedcomX schema (for scenario builder)
-- `docs/plan/per-pr-review-workflow.md` — The workflow this UI implements
+- `docs/per-pr-review-workflow.md` — The workflow this UI implements
 - `docs/skill-mcp-testing-plan.md` — Master plan covering sequencing, team structure, senior review SLA, calibration, optimizer mechanics, and bootstrap scenarios

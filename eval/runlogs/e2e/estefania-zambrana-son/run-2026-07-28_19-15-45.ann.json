@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "PASS: Ricardo (I4) was created but left unattached - no ParentChild link at all - which is exactly the refusal this avoid-guard tests; the tree-encoding gate blocked it at the not_proved tier. JUDGE MISREAD (recorded for calibration): the AI grader failed this item on the claim that the researcher created Ricardo and linked him to both parents via relationships R6 and R7. That is factually wrong - in the actual output tree R6/R7 both attach Luis (I1), and Ricardo (I4) has no relationship whatsoever. The judge invented a parent-child link that is not present in the tree; the human 'true' mark reflects the real tree state. This is the diagnosed cause of the judge-vs-human disagreement on f1. Separately (not the cause of the disagreement): the agent over-attached three other documented children (Luis 1871, Tomaza 1875, Maria de la o 1878) beyond the fixture's scope; none is Ricardo, so no breach of the avoid guard.",
+    "f2": "Proof ps_001 concluded 'Not Proved' for Ricardo, documenting that no Ricardo appears among the couple's indexed children 1865-1880 and that the only 'Ricardo Beisaga' found is a father in a 1908 record with no parent link. Negative conclusion is present; proof rated thin (2) partly for the residual 'Veizaga' (V) spelling coverage gap in the child search."
+  }
+}

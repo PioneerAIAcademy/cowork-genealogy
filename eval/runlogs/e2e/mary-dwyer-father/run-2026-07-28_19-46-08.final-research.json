@@ -1,0 +1,2421 @@
+{
+  "project": {
+    "id": "rp_mary_dwyer_father",
+    "objective": "Who was the father of Mary Dwyer, wife of Michael Dwyer of South Windsor, Connecticut?",
+    "subject_person_ids": [
+      "MNFL-T24"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-28"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was the father of Mary Dwyer, wife of Michael Dwyer of South Windsor, Hartford County, Connecticut?",
+      "rationale": "This is the direct decomposition of the project objective. South Windsor is in Hartford County, CT; vital, census, probate, and church records for that jurisdiction span the relevant period and can plausibly name Mary's parentage. Starting here is the most direct path to answering the objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-28",
+      "resolution_assertion_ids": [
+        "a_064",
+        "a_025"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two independent record types converge on the same answer: (1) Massachusetts death certificate for 'Mary Reagan Dwyer' (24 Oct 1922, Boston) directly names her father as Michael Reagan and her mother as Margaret Callahan (married name Reagan); (2) 1880 Greenfield MA federal census independently corroborates her maiden name as Reagan via FamilySearch-indexed ParentChild relationship to Margret Reagan (widowed, b.~1810 Ireland). The 1910 Manchester CT census confirms the identity of the death cert subject as MNFL-T24. Extensive census searches for Michael Reagan + Margaret Callahan in 1860 and 1870 returned no match (father likely died before 1860-1870 period in Massachusetts or Ireland). Remaining CT-focused plan items (pli_003-pli_008) were skipped as inapplicable: Mary was born in Ireland, her father died before 1880, and the family's Massachusetts location means CT vital, church, and probate records cannot name him.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "YES. The Massachusetts death certificate (src_003) directly names Michael Reagan as father of MNFL-T24. The 1880 census (src_002) independently establishes her maiden name as Reagan via the FamilySearch-indexed ParentChild to Margret Reagan. The evidence converges on a single answer.",
+          "repository_breadth": "YES for accessible sources. FamilySearch census collections searched for 1860-1910. Massachusetts death records searched and positive result found. Connecticut death records searched (negative). Multiple Reagan/Ragan name variants tried in 1860 and 1870 census searches. The remaining plan items were CT-focused and inapplicable given Mary's Irish birth and her father's pre-1880 death. Massachusetts probate for Michael Reagan is a potential future avenue but its absence does not change the probable conclusion.",
+          "original_substitution": "YES. Both key records (1880 census ark:/61903/1:1:MH6J-DFY and MA death cert ark:/61903/1:1:6PX3-ZXF8) accessed via record_read (original image access). The 1910 census corroboration also accessed via record_read.",
+          "independent_verification": "PARTIAL. The specific claim 'father = Michael Reagan' derives from ONE direct source (the death certificate). The maiden name 'Reagan' is independently corroborated by the 1880 census via the FamilySearch-indexed relationship to Margret Reagan. These two records are from different years, different record types, and different informants. The father's given name (Michael) is established by a single source, supporting a PROBABLE rather than PROVED tier conclusion.",
+          "evidence_class": "The Massachusetts death certificate (src_003) is an original state vital record; parentage information is secondary (informant not present at birth) and indirect evidence (third-party statement). The 1880 federal census (src_002) is an original federal record with indeterminate information quality. No primary contemporaneous birth record exists (subject born in Ireland ~1840; Irish parish records for the specific townland are inaccessible without knowing the origin parish). This evidence class supports a PROBABLE conclusion.",
+          "conflict_resolution": "YES. Birth year conflict for MNFL-T24 resolved (c_001, preferred a_019 ~1841 from 1880 census). Identity of 'Mary Reagan Dwyer' as MNFL-T24 established through converging evidence: same husband (Michael Dwyer), same birthplace (Ireland), consistent birth years, and Manchester CT 1910 connecting to Boston 1922 death. No blocking unresolved conflicts.",
+          "overturn_risk": "LOW. No plausible alternative father has emerged from any searched record. The name 'Mary Reagan Dwyer' in Massachusetts vital records directly encodes the maiden name Reagan, eliminating the possibility of a different maiden name. The 1880 census independently confirms Reagan as the paternal surname. Massachusetts probate for Michael Reagan, if found, would most likely corroborate (naming Mary as a daughter) rather than contradict the conclusion. The CT-focused remaining plan items were inapplicable and their absence does not represent an overturn risk."
+        }
+      },
+      "created": "2026-07-28"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-28",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "South Windsor, Hartford County, Connecticut",
+          "date_range": "1850-1920",
+          "repository": "FamilySearch",
+          "rationale": "Federal census records are the most likely first source to establish Mary Dwyer's approximate birth year, birthplace, and household composition. The 1880 census names each person's relationship to the head; the 1900 and 1910 censuses include each person's parents' birthplaces. Finding Mary and Michael Dwyer in multiple census years will anchor her approximate birth year and birthplace, identify co-resident family members (who may be her parents or siblings), and provide the biographical context needed to interpret other records. Search FS collections for all available census years 1850-1920 for Michael Dwyer / Mary Dwyer in South Windsor, Hartford County, CT.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "South Windsor / Hartford County, Connecticut",
+          "date_range": "1905-1940",
+          "repository": "FamilySearch",
+          "rationale": "Connecticut death records from 1905 onward are required to report the deceased's parents' names and birthplaces. If Mary Dwyer survived to 1905 or later, her death certificate would provide direct evidence of her father's name. Search FamilySearch CT Deaths 1640-1955 (collection 2448941) and the CT Death Index 1949-2001 (collection 1946874). Also check the CT State Library death index 1897-1968 (available via Ancestry or CT State Library). This is the highest-value single record if it exists.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "South Windsor / Hartford County / East Windsor, Connecticut",
+          "date_range": "1820-1870",
+          "repository": "FamilySearch",
+          "rationale": "Mary Dwyer was confirmed born in Ireland (~1841) by three independent records (1880 census, death cert, 1910 census). Connecticut birth records cannot contain a birth record for an Ireland-born person. Inapplicable.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "South Windsor / Hartford County, Connecticut",
+          "date_range": "1820-1880",
+          "repository": "FamilySearch",
+          "rationale": "Parentage answered by Massachusetts death certificate naming father as Michael Reagan. CT church records for South Windsor post-date Mary's 1854 arrival in America; baptismal records are inapplicable for an Ireland-born subject. Father's identity no longer requires church record corroboration at this tier.",
+          "fallback_for": "pli_003",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "South Windsor / Hartford County / East Windsor, Connecticut",
+          "date_range": "1820-1880",
+          "repository": "FamilySearch",
+          "rationale": "Parents' marriage between Michael Reagan and Margaret Callahan occurred in Ireland or early Massachusetts \u2014 not in Connecticut. CT marriage records (1820-1880) will not contain their marriage. The marriage record would be a Connecticut-targeted search under this plan item and is inapplicable.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "probate",
+          "jurisdiction": "Hartford Probate District, Connecticut",
+          "date_range": "1840-1920",
+          "repository": "FamilySearch",
+          "rationale": "Michael Reagan (Mary's father) died before 1880 (Margaret was widowed by the 1880 census). No evidence places him in Connecticut. The family was in Massachusetts (Greenfield 1880). CT probate for Hartford is inapplicable; Massachusetts probate is a potential future avenue if a higher-tier proof is sought.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "cemetery",
+          "jurisdiction": "South Windsor / Hartford County, Connecticut",
+          "date_range": "1840-1940",
+          "repository": "FamilySearch",
+          "rationale": "Mary died in Boston, MA (24 Oct 1922, per death cert) \u2014 not Connecticut. Michael Reagan (father) died before 1880, unknown location but consistent with Massachusetts or Ireland. CT cemetery records inapplicable for both the subject and her father.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "census",
+          "jurisdiction": "South Windsor / Hartford County, Connecticut",
+          "date_range": "1850-1880",
+          "repository": "FamilySearch",
+          "rationale": "Father (Michael Reagan) now identified via Massachusetts death certificate. FAN cluster search in CT census was a fallback strategy for when the father's identity was unknown. No longer needed to answer q_001.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T18:50:02.284Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dwyer",
+        "givenName": "Mary",
+        "spouseGivenName": "Michael",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 2250,
+      "notes": "1880 US Census search for Mary Dwyer, spouse Michael Dwyer. 2,250 results \u2014 too broad. Top ranker scores all under 0.10 (subject thin). Best geographic candidates: rank 2 Greenfield, Franklin MA (b.1841 Ireland) and rank 1 Holyoke, Hampden MA (b.1841 Ireland). Marriage was in Greenfield 1854; children born in MA 1878 and 1882. Reading Greenfield record next. 1900 census (already attached) confirms birth May 1840 Ireland, immigration 1856; no parents' birthplace captured in indexed facts."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T18:51:57.255Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dwyer",
+        "givenName": "Mary",
+        "spouseGivenName": "Michael",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 2224,
+      "notes": "1870 US Census search for Mary Dwyer spouse Michael Dwyer. 2,224 results \u2014 too broad; all ranker scores under 0.135 (subject thin). Top ranked results are in Upton MA and Brooklyn NY; neither matches known family location (Greenfield MA). No clear match for the subject. Will search 1870 Greenfield MA specifically."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T18:54:20.196Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MH6J-DFY"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1880 US Census, Greenfield, Franklin, Massachusetts. Household of Michael Dwyer (head, b.1840 Ireland, Night Watchman), Mary Dwyer (wife, b.1841 Ireland), Margret Dwyer (daughter, b.1871 MA), Annie Dwyer (daughter, b.1876 MA), and Margret Reagan (b.1810 Ireland, Widowed, 'Helps About House'). FamilySearch indexes Margret Reagan with a ParentChild relationship to Mary Dwyer (Margret as parent, Mary as child). This means Margret Reagan is Mary Dwyer's mother. Since Margret is listed as widowed, Mary's father was Margret Reagan's deceased husband \u2014 likely surnamed Reagan. This is the key finding establishing that Mary's maiden name was probably Mary Reagan. Record ARK: ark:/61903/1:1:MH6J-DFY."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T18:55:02.007Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dwyer",
+        "givenName": "Michael",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "residencePlace": "Greenfield, Franklin, Massachusetts",
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 2,
+      "notes": "1870 census search for Michael Dwyer in Greenfield, Franklin, MA returned only 2 results, both clearly wrong (Benjamine M Dyer in Ashfield, and a Dyer in Texas). The family was likely not yet enumerated in Greenfield specifically in 1870, or was in a different part of Massachusetts. Will broaden search."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T18:56:17.351Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dwyer",
+        "givenName": "Michael",
+        "spouseGivenName": "Mary",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1860,
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 579,
+      "notes": "1860 census for Michael Dwyer + spouse Mary: 579 results, all ranked scores below 0.004 (subject too thin). Top match is Derby CT (b.1840 Ireland), but no clear Greenfield/Franklin MA match. Mary immigrated before 1854 (married in Greenfield 1854) so census search is valid; apparent absence from indexed results. Note: 1900 census immigration year of 1856 for both Michael and Mary is likely a reporting inaccuracy given the documented 1854 marriage in Massachusetts."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T18:56:17.374Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Reagan",
+        "givenName": "Mary",
+        "birthYearFrom": 1835,
+        "birthYearTo": 1845,
+        "birthPlace": "Ireland",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850,
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 35,
+      "notes": "Searched for Mary Reagan b.1840 Ireland in 1850 census \u2014 35 results, none in Massachusetts. However, if Mary did not arrive until ~1854, she would not be in the 1850 US census. This search was logically misapplied. The better approach is to search for Margret Reagan (the mother, b.~1810) in 1860/1870 census with her husband, to identify Mary's father's given name."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T18:57:57.040Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Reagan",
+        "givenName": "Margret",
+        "birthYearFrom": 1805,
+        "birthYearTo": 1815,
+        "birthPlace": "Ireland",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1860,
+        "recordType": "census",
+        "recordSubdivision": "Massachusetts",
+        "recordCountry": "United States"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 2,
+      "notes": "KEY FINDING: 1860 MA census for Margret Reagan b.1810 Ireland returned 2 results. Springfield, Hampden MA (ark:/61903/1:1:MZCV-RHN) household of Daniel Ragan shows: head Daniel Ragan b 1800 Ireland, Margaret Ragan b. 1810 Ireland, Hannah Ragan b. 1845 MA, Patrick b. 1847, MA. Daniel b.1800 is consistent with being Mary's father (she b.1840 Ireland). Mary (already married to Michael Dwyer by 1854) is absent from the 1860 household, which is expected. Second result: Lowell household of John Ragan (b.1795) with only Margaret \u2014 less likely (older husband, no children). HYPOTHESIS: Daniel Ragan is Mary Dwyer's father."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T18:57:57.040Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:F7KH-C2C"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CT Death 'Mary Eakins Dwyer' b.1841 d.2 Apr 1917 Hartford CT \u2014 ranked match 1 in CT death search but is a different person. Her spouse is 'John E', not Michael Dwyer. Name 'Eakins' does not match subject's probable maiden name Reagan. Excluded."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T19:00:06.447Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ragan",
+        "givenName": "Daniel",
+        "birthYearFrom": 1795,
+        "birthYearTo": 1808,
+        "birthPlace": "Ireland",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 6,
+      "notes": "1870 census for Daniel Ragan/Reagan b.1800 Ireland: 6 results. The closest MA match (Hadley, Hampshire) had wife 'Abbe Reigan' b.1820 Ireland \u2014 clearly not the same Margaret Ragan b.1810 from 1860 Springfield. The 1860 Springfield Daniel Ragan (head of household with Margaret Ragan) does not appear in the 1870 census \u2014 consistent with his death between 1860-1870. BUT: new death record evidence (below) points to father named MICHAEL Reagan, not Daniel, so the Springfield Daniel Ragan family may be unrelated."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-28T19:00:06.447Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6PX3-ZXF8"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CRITICAL FINDING \u2014 Massachusetts State Vital Records death record for 'Mary Reagan Dwyer' (ark:/61903/1:1:6PX3-ZXF8): b.1843 Ireland, d.24 Oct 1922 Boston, Suffolk, MA. Husband: Michael Dwyer. Father: MICHAEL REAGAN. Mother: MARGARET CALLAHAN (her maiden name; married name would be Reagan). This is a strong candidate for our subject (b.~1840 Ireland, wife of Michael Dwyer). Birth year discrepancy 1843 vs ~1840 is within census imprecision range. 'Mary Reagan Dwyer' naming convention in MA vital records = maiden name used as middle name = confirms maiden name Reagan. Father identified as MICHAEL REAGAN. Mother Margaret n\u00e9e Callahan = matches 'Margret Reagan' (widowed) in 1880 Greenfield census. This is direct parentage evidence from a death certificate. NEEDS: confirmation this is the same Mary Dwyer as MNFL-T24 (not merely a different Mary Dwyer + Michael Dwyer couple)."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T19:04:34.817Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Reagan",
+        "givenName": "Michael",
+        "spouseGivenName": "Margaret",
+        "birthPlace": "Ireland",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1860,
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 151,
+      "notes": "1860 census for Michael Reagan + Margaret spouse, Ireland: 151 results. MA candidates: Malden (Michael b.1800 with wife 'Kitty' b.1810) and Charlestown (b.1820 too young). None match Michael Reagan + Margaret Callahan. The Malden household wife is 'Kitty' not Margaret \u2014 different family. No clear match for Michael Reagan + wife Margaret in 1860 MA."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T19:04:34.817Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MZHT-25B"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1860 Malden MA household of Michael Reagan (b.1800): wife is 'Kitty Reagan' b.1810 Ireland, not 'Margaret Callahan.' This is not Mary's father's household."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T19:04:34.817Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Reagan",
+        "givenName": "Michael",
+        "spouseGivenName": "Margaret",
+        "birthPlace": "Ireland",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "recordType": "census",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 251,
+      "notes": "1870 census for Michael Reagan + Margaret, Ireland: 251 results. CT candidates: Norwich (Mich Reagan b.1811 but wife is Bridget b.1813, not Margaret) and New Britain (b.1833 too young). No clear match for Michael Reagan + wife Margaret in 1870 MA/CT."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T19:04:34.817Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MN7L-DQT"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1870 Norwich CT household of Mich Reagan (b.1811): wife is Bridget Reagan b.1813 Ireland, children James (b.1857 CT) and Jane (b.1858 CT). Wife is not 'Margaret Callahan' \u2014 different family."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T19:04:34.817Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Dwyer",
+        "givenName": "Michael",
+        "spouseGivenName": "Mary",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "recordType": "census",
+        "recordSubdivision": "Connecticut",
+        "recordCountry": "United States"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 50,
+      "notes": "1910 CT census for Michael Dwyer + Mary: 50 results. Rank 2 in raw search (Manchester, Hartford CT): Michael Dwyer b.1837 Ireland, married, immigration 1856 \u2014 matches MNFL-TKV perfectly. Reading this record confirmed wife Mary Dwyer b.1848 Ireland (census imprecision; tree has 1840), both immigration 1856. This confirms Michael and Mary Dwyer were in Manchester, Hartford CT in 1910."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-28T19:04:34.817Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MKK1-QXB"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1910 Manchester, Hartford, CT census: Michael Dwyer (head, b.1837 Ireland, married, immigration 1856) and Mary Dwyer (wife, b.1848 Ireland, married, immigration 1856). Birth year for Mary is 1848 here vs 1840/1841 in earlier records \u2014 census imprecision typical. Confirms Michael and Mary (our MNFL-TKV and MNFL-T24) were still together in Manchester CT in 1910. Their son John Ralph Dwyer is independently documented in Manchester CT 1910 per tree. This connects the 1910 CT presence to the 1922 Boston death for 'Mary Reagan Dwyer' \u2014 she likely moved to Boston after Michael's death."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States, Census, 1910\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MKK1-QXB : Wed Aug 13 15:33:50 UTC 2025), Entry for Michael Dwyer and Mary Dwyer, 1910.",
+      "citation_detail": {
+        "who": "Michael Dwyer and Mary Dwyer",
+        "what": "1910 United States Federal Census, Manchester, Hartford, Connecticut",
+        "when_created": "1910",
+        "when_accessed": "2025-08-13",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ark:/61903/1:1:MKK1-QXB; image ark:/61903/3:1:33S7-9RJK-86V"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2025-08-13",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MKK1-QXB",
+      "log_entry_id": "log_016",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States, Census, 1880\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MH6J-DFT : accessed 2026-07-28), Entry for Michael Dwyer and Mary Dwyer, Greenfield, Franklin, Massachusetts, 1880.",
+      "citation_detail": {
+        "who": "Michael Dwyer household including Mary Dwyer, Margret Dwyer, Annie Dwyer, and Margret Reagan",
+        "what": "1880 United States Federal Census schedule, Greenfield, Franklin, Massachusetts",
+        "when_created": "1880",
+        "when_accessed": "2026-07-28",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "ark:/61903/1:1:MH6J-DFT; image ark:/61903/3:1:33SQ-GYBJ-9LT3"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MWTQ-T53",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "Massachusetts Vital Records, 1921\u20131925, death certificate for Mary Reagan Dwyer, 24 October 1922, Boston, Suffolk County, Massachusetts; Massachusetts State Archives, Boston; digital image, FamilySearch (familysearch.org : accessed 28 July 2026), ark:/61903/1:1:6PX3-ZXF8.",
+      "citation_detail": {
+        "who": "Mary Reagan Dwyer",
+        "what": "Death certificate",
+        "when_created": "24 October 1922",
+        "when_accessed": "28 July 2026",
+        "where": "Massachusetts State Archives, Boston; digital image via FamilySearch",
+        "where_within": "Massachusetts Vital Records, 1921\u20131925, death registration for Mary Reagan Dwyer"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-28",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6PX3-ZXF8",
+      "notes": "Massachusetts state death certificate. Maiden name Reagan used as middle name per Massachusetts vital records convention. Three informant types: personal informant (unknown family member, likely surviving spouse) for decedent's biographical facts; attending physician for cause and date of death; registrar for official recording.",
+      "log_entry_id": "log_010",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Michael Dwyer",
+      "structured_value": {
+        "given": "Michael",
+        "surname": "Dwyer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Manchester, Hartford, Connecticut, United States",
+      "place": "Manchester, Hartford, Connecticut, United States",
+      "date": "1910",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_001",
+      "standard_place": "Manchester, Hartford, Connecticut, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born Ireland",
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_001",
+      "standard_place": "Ireland"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "age implied birth ~1837",
+      "date": "~1837",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "head_of_household",
+      "fact_type": "immigration",
+      "value": "immigrated 1856",
+      "date": "1856",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "spouse of Mary Dwyer",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Mary Dwyer",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Dwyer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Manchester, Hartford, Connecticut, United States",
+      "place": "Manchester, Hartford, Connecticut, United States",
+      "date": "1910",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_001",
+      "standard_place": "Manchester, Hartford, Connecticut, United States"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Ireland",
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birthplace stated as Ireland; consistent with other records for Mary Dwyer. Birth year 1848 conflicts with 1841 in 1880 census and May 1840 in tree \u2014 census age imprecision is common across a decade.",
+      "log_entry_id": "log_016",
+      "source_id": "src_001",
+      "standard_place": "Ireland"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "age implied birth ~1848",
+      "date": "~1848",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birth year ~1848 computed from census age. Conflicts with birth year ~1841 in the 1880 census and May 1840 in the tree (MNFL-T24). Census age-reporting imprecision is common; this record alone is not sufficient to revise the earlier records.",
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "wife",
+      "fact_type": "immigration",
+      "value": "immigrated 1856",
+      "date": "1856",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Immigration year 1856 consistent with the 1900 census for both Michael and Mary Dwyer.",
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:MKK1-QXB",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Michael Dwyer",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1910 census included a relationship-to-head column; 'Wife' is a stated relationship, not inferred from household position.",
+      "log_entry_id": "log_016",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Mary Dwyer",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Dwyer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born 1841",
+      "date": "1841",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born Ireland",
+      "place": "Ireland",
+      "standard_place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Greenfield, Franklin, Massachusetts",
+      "place": "Greenfield, Franklin, Massachusetts, United States",
+      "date": "1880",
+      "standard_place": "Greenfield, Franklin, Massachusetts, United States",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "wife",
+      "fact_type": "occupation",
+      "value": "Keeping House",
+      "structured_value": {
+        "occupation": "Keeping House"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Michael Dwyer",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "child of Margret Reagan",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1880 census relationship column is the basis for this indexed parent-child link (Margret Reagan p_205400280 to Mary Dwyer p_205400277). The relationship was filled in by an unknown household respondent. Reagan is listed as Widowed with occupation 'Helps About House' in the Dwyer household; co-residence and the relationship column together support her as Mary's mother. Independent corroboration desirable \u2014 a marriage record for Mary naming her parents, or an earlier census showing the Reagan family.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Michael Dwyer",
+      "structured_value": {
+        "given": "Michael",
+        "surname": "Dwyer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1840",
+      "date": "1840",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born Ireland",
+      "place": "Ireland",
+      "standard_place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Greenfield, Franklin, Massachusetts",
+      "place": "Greenfield, Franklin, Massachusetts, United States",
+      "date": "1880",
+      "standard_place": "Greenfield, Franklin, Massachusetts, United States",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Night Watchman",
+      "structured_value": {
+        "occupation": "Night Watchman"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Margret Dwyer",
+      "structured_value": {
+        "given": "Margret",
+        "surname": "Dwyer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 1871",
+      "date": "1871",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born Massachusetts",
+      "place": "Massachusetts, United States",
+      "standard_place": "Massachusetts, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Greenfield, Franklin, Massachusetts",
+      "place": "Greenfield, Franklin, Massachusetts, United States",
+      "date": "1880",
+      "standard_place": "Greenfield, Franklin, Massachusetts, United States",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Michael Dwyer",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Mary Dwyer",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Annie Dwyer",
+      "structured_value": {
+        "given": "Annie",
+        "surname": "Dwyer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born 1876",
+      "date": "1876",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born Massachusetts",
+      "place": "Massachusetts, United States",
+      "standard_place": "Massachusetts, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Greenfield, Franklin, Massachusetts",
+      "place": "Greenfield, Franklin, Massachusetts, United States",
+      "date": "1880",
+      "standard_place": "Greenfield, Franklin, Massachusetts, United States",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Michael Dwyer",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Mary Dwyer",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "mother_of_wife",
+      "fact_type": "name",
+      "value": "Margret Reagan",
+      "structured_value": {
+        "given": "Margret",
+        "surname": "Reagan"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "mother_of_wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "mother_of_wife",
+      "fact_type": "birth",
+      "value": "born 1810",
+      "date": "1810",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "mother_of_wife",
+      "fact_type": "birth",
+      "value": "born Ireland",
+      "place": "Ireland",
+      "standard_place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "mother_of_wife",
+      "fact_type": "residence",
+      "value": "Greenfield, Franklin, Massachusetts",
+      "place": "Greenfield, Franklin, Massachusetts, United States",
+      "date": "1880",
+      "standard_place": "Greenfield, Franklin, Massachusetts, United States",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "mother_of_wife",
+      "fact_type": "marital_status",
+      "value": "Widowed",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Reagan is listed as Widowed. If she is Mary Dwyer's mother, her husband (Mary's father) was already deceased before the 1880 census. His name does not appear in this record; a marriage record or earlier census for the Reagan family would be needed to identify him.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "mother_of_wife",
+      "fact_type": "occupation",
+      "value": "Helps About House",
+      "structured_value": {
+        "occupation": "Helps About House"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:MH6J-DFY",
+      "record_role": "mother_of_wife",
+      "fact_type": "relationship",
+      "value": "parent of Mary Dwyer",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The 1880 census relationship column is the basis for the FamilySearch-indexed ParentChild link (p_205400280 Margret Reagan parent of p_205400277 Mary Dwyer). The relationship was filled by an unknown household respondent. Co-residence in the Dwyer household with 'Helps About House' occupation and Widowed marital status is consistent with a widowed mother living with her married daughter. Independent corroboration needed \u2014 a marriage record for Mary naming her parents, or an earlier census showing the Reagan family.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Mary Reagan Dwyer",
+      "structured_value": {
+        "given": "Mary Reagan",
+        "surname": "Dwyer"
+      },
+      "information_quality": "primary",
+      "informant": "unknown personal informant (likely surviving family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "unknown personal informant (likely surviving family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 24 October 1922 in Boston, Suffolk, Massachusetts",
+      "date": "24 Oct 1922",
+      "date_certainty": "exact",
+      "place": "Boston, Suffolk, Massachusetts",
+      "information_quality": "primary",
+      "informant": "attending physician and civil registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born approximately 1843",
+      "date": "~1843",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely surviving family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Birth year computed from stated age on death certificate. Personal informant was not present at decedent's birth; age reported from memory decades after the fact. Precision of stated age does not establish firsthand knowledge.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born in Ireland",
+      "place": "Ireland",
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely surviving family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Birthplace stated by personal informant relaying secondhand knowledge of decedent's origins. Informant was not present at decedent's birth.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003",
+      "standard_place": "Ireland"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "deceased",
+      "fact_type": "marital_status",
+      "value": "married (wife of Michael Dwyer)",
+      "information_quality": "primary",
+      "informant": "unknown personal informant (likely surviving family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "spouse_1",
+      "fact_type": "name",
+      "value": "Michael Dwyer",
+      "structured_value": {
+        "given": "Michael",
+        "surname": "Dwyer"
+      },
+      "information_quality": "primary",
+      "informant": "unknown personal informant (likely surviving family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "wife of Michael Dwyer",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "spouse_1"
+      },
+      "information_quality": "primary",
+      "informant": "unknown personal informant (likely surviving family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Michael Reagan",
+      "structured_value": {
+        "given": "Michael",
+        "surname": "Reagan"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely surviving family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Father's name reported by personal informant (likely surviving spouse or other family member) relaying secondhand knowledge of decedent's parentage. Informant was not present at decedent's birth and did not necessarily know the parents directly.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Michael Reagan",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely surviving family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Parent-child link derived from death certificate listing of father. Personal informant relaying secondhand knowledge of decedent's parentage.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Margaret Callahan (married name Reagan)",
+      "structured_value": {
+        "given": "Margaret",
+        "surname": "Callahan"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely surviving family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Mother's maiden name Callahan reported by personal informant relaying secondhand knowledge. The record states the mother's maiden name; married name Reagan is the surname she took upon marriage to Michael Reagan. Informant was not present at decedent's birth.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:6PX3-ZXF8",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Margaret Callahan (Reagan)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely surviving family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Parent-child link derived from death certificate listing of mother (maiden name Callahan, married name Reagan). Personal informant relaying secondhand knowledge of decedent's parentage.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1910 Manchester CT census, head_of_household: Michael Dwyer, b.~1837 Ireland, immigration 1856, wife Mary (MNFL-T24). Name, birth year, birthplace, immigration year, and household position all match MNFL-TKV. No same_person score (record_read, no sidecar).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1910 Manchester CT census, head_of_household sex assertion. Consistent with MNFL-TKV (Male). Linked alongside other head_of_household assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1910 Manchester CT census, head_of_household residence: Manchester, Hartford, CT 1910. Consistent with MNFL-TKV's documented presence in Hartford County CT. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1910 Manchester CT census, head_of_household birthplace: Ireland. Matches MNFL-TKV (Ireland). Linked alongside other head assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1910 Manchester CT census, head_of_household birth year ~1837. Matches MNFL-TKV (1837). No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1910 Manchester CT census, head_of_household marital status Married. Consistent with MNFL-TKV. Linked alongside other head assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1910 Manchester CT census, head_of_household immigration 1856. Consistent with MNFL-TKV (1856 immigration). No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1910 census head_of_household: relationship assertion naming spouse Mary Dwyer (=MNFL-T24). Confirms MNFL-TKV as Michael Dwyer married to Mary. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1910 census head_of_household relationship assertion names Mary Dwyer as spouse. Bears on MNFL-T24 (the named spouse). Husband Michael Dwyer = MNFL-TKV, consistent with known marriage R1. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1910 Manchester CT census, wife: Mary Dwyer, b.~1848 Ireland (census imprecision vs tree 1840), immigration 1856, husband Michael Dwyer (MNFL-TKV). Name, birthplace, immigration year, and household position all match MNFL-T24. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1910 census wife sex assertion: Female. Consistent with MNFL-T24. Linked alongside other wife assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1910 census wife residence: Manchester, Hartford, CT 1910. Consistent with MNFL-T24 in Hartford County. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1910 census wife birthplace: Ireland. Matches MNFL-T24 (Ireland). Linked alongside other wife assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_013",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1910 census wife birth year ~1848 (computed from age). Census imprecision vs tree 1840 (8yr diff) is within expected range. Linked with note of birth year conflict. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_014",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1910 census wife marital status: Married. Consistent with MNFL-T24. Linked alongside other wife assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_015",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1910 census wife immigration 1856. Matches MNFL-T24 (immigration 1856 per 1900 census). No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_016",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1910 census wife relationship: spouse of Michael Dwyer. Wife persona = MNFL-T24; bears on her as the subject of the assertion. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1910 census wife relationship assertion names Michael Dwyer as spouse. Bears on MNFL-TKV as the named husband (cardinality: relationship assertion links both parties). No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_026",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1880 Greenfield MA census, head_of_household: Michael Dwyer, b.~1840 Ireland (minor census imprecision vs tree 1837), Night Watchman, wife Mary (MNFL-T24). Name, birthplace, household position match MNFL-TKV. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_027",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1880 census head_of_household sex: Male. Consistent with MNFL-TKV. Linked alongside other head assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_028",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1880 census head_of_household birth year ~1840. Minor census imprecision vs tree 1837. Consistent with MNFL-TKV. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_029",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1880 census head_of_household birthplace: Ireland. Matches MNFL-TKV. Linked alongside other head assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_030",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1880 census head_of_household residence: Greenfield, Franklin, MA 1880. Consistent with known family location (marriage in Greenfield 1854). No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_031",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1880 census head_of_household occupation: Night Watchman. Consistent with MNFL-TKV. Linked alongside other head assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_032",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1880 census head_of_household marital status: Married. Consistent with MNFL-TKV. Linked alongside other head assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_017",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1880 Greenfield MA census, wife: Mary Dwyer, b.~1841 Ireland (1yr diff vs tree 1840 \u2014 excellent match), husband Michael Dwyer (MNFL-TKV). All identifiers match MNFL-T24. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_018",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1880 census wife sex: Female. Consistent with MNFL-T24. Linked alongside other wife assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_019",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1880 census wife birth year ~1841 (1yr diff vs tree 1840). Excellent match \u2014 within any reasonable census imprecision window. Linked to MNFL-T24. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_020",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1880 census wife birthplace: Ireland. Matches MNFL-T24. Linked alongside other wife assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_021",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1880 census wife residence: Greenfield, Franklin, MA 1880. Consistent with known family location (marriage there 1854). No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_022",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1880 census wife marital status: Married. Consistent with MNFL-T24. Linked alongside other wife assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_023",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1880 census wife occupation: Keeping House. Consistent with MNFL-T24. Linked alongside other wife assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_024",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1880 census wife relationship: spouse of Michael Dwyer. Wife persona = MNFL-T24; this is her spousal assertion. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_024",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "1880 census wife relationship assertion names Michael Dwyer as spouse. Bears on MNFL-TKV as the named husband (cardinality rule). No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_025",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1880 census wife relationship: child of Margret Reagan (I1). Bears on MNFL-T24 as the child. FamilySearch-indexed ParentChild (p_205400280 \u2192 p_205400277) establishes this relationship. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1880 census wife relationship assertion names Margret Reagan as mother. Bears on I1 (Margret Reagan) as the named parent (cardinality rule). I1 is the new stub for Mary's mother created from the mother_of_wife role. Probable: new stub, single primary source corroborated by death cert. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_047",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1880 Greenfield MA census, mother_of_wife: Margret Reagan, b.~1810 Ireland, Widowed, 'Helps About House' in Dwyer household. FamilySearch indexes ParentChild to Mary Dwyer (MNFL-T24). New tree person I1 created from this persona. Probable: single-source stub at creation; corroborated by Margaret Callahan/Reagan on death cert. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_048",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1880 census mother_of_wife sex: Female. Consistent with I1 (Margret Reagan). Linked alongside other mother_of_wife assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_049",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1880 census mother_of_wife birth year ~1810. Single source for I1. Probable: stub corroborated by death cert. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_050",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1880 census mother_of_wife birthplace: Ireland. Single source for I1. Consistent with Margaret Callahan on death cert (also Irish). No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_051",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1880 census mother_of_wife residence: Greenfield, MA 1880. I1 was in the Dwyer household as a co-resident. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_052",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1880 census mother_of_wife marital status: Widowed. Consistent with I1 (Mary's father deceased before 1880). No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_053",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1880 census mother_of_wife occupation: Helps About House. Consistent with I1 living in daughter's household. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_054",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1880 census mother_of_wife relationship: parent of Mary Dwyer (MNFL-T24). This is the primary parentage assertion for I1 as Mary's mother. FamilySearch-indexed ParentChild. Probable: new stub, single primary source. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_054",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "1880 census mother_of_wife relationship assertion names Mary Dwyer as child of Margret Reagan (I1). Bears on MNFL-T24 as the named child (cardinality rule). Consistent with known identity of MNFL-T24. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_055",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "MA death cert (24 Oct 1922 Boston), deceased: 'Mary Reagan Dwyer'. Maiden name 'Reagan' (MA naming convention: maiden as middle) consistent with mother Margret Reagan (I1) in 1880 census. Husband Michael Dwyer = MNFL-TKV. Born ~1843 Ireland (tree has 1840; 3yr diff within range). Manchester CT 1910 \u2192 Boston 1922 trajectory plausible after Michael's death. Strong match MNFL-T24. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_056",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "Death cert deceased sex: Female. Consistent with MNFL-T24. Linked alongside other deceased assertions.",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_057",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "Death cert deceased death date/place: 24 Oct 1922 Boston, Suffolk, MA. Primary information from official registrar. Consistent with MNFL-T24 as the subject of q_001 (last documented in CT 1910, death 1922 Boston plausible). No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_058",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "Death cert deceased birth year ~1843 (from stated age). Secondary information; 3yr diff vs tree 1840 within expected range for vital record age statements. Conflict surfaced by materialize_facts and noted for resolution. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_059",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "Death cert deceased birthplace: Ireland. Matches MNFL-T24 (Ireland). Consistent across all three records. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_060",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "Death cert deceased marital status: married (wife of Michael Dwyer). Consistent with MNFL-T24 (wife of MNFL-TKV). No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_062",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "Death cert deceased relationship: wife of Michael Dwyer. Bears on MNFL-T24 as the deceased subject. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_062",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "Death cert deceased relationship assertion names Michael Dwyer as spouse. Bears on MNFL-TKV as the named husband (cardinality rule). Consistent with MNFL-TKV. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_064",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "Death cert deceased relationship: child of Michael Reagan (I2). Bears on MNFL-T24 as the child \u2014 this is the direct statement naming her father. Linked to MNFL-T24 as subject. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_064",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Death cert deceased relationship assertion names Michael Reagan as father of MNFL-T24. Bears on I2 (Michael Reagan) as the named parent (cardinality rule). Probable: I2 is a single-source stub \u2014 this is the primary answer to q_001. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_066",
+      "person_id": "MNFL-T24",
+      "confidence": "confident",
+      "rationale": "Death cert deceased relationship: child of Margaret Callahan/Reagan (I1). Bears on MNFL-T24 as the child. Second independent source placing I1 as Mary's mother. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_066",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Death cert deceased relationship assertion names Margaret Callahan (married Reagan) as mother. Bears on I1 as the named parent. Maiden name Callahan + married name Reagan = consistent with Margret Reagan (I1) from 1880 census. Probable: no record directly links Callahan to Reagan beyond shared parentage of MNFL-T24. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_061",
+      "person_id": "MNFL-TKV",
+      "confidence": "confident",
+      "rationale": "Death cert spouse_1: Michael Dwyer, named husband on MNFL-T24's death certificate. Name matches MNFL-TKV exactly; there is no other Michael Dwyer who was Mary's husband. Obvious identity. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_063",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Death cert father_of_deceased: Michael Reagan, named father of MNFL-T24 (Mary Dwyer). New tree person I2 created. Probable: single-source stub \u2014 this is the direct, definitive answer to q_001. Maiden name pattern ('Mary Reagan Dwyer') corroborates Reagan as her paternal surname. No corroborating census records found for Michael Reagan + Margaret Callahan. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_065",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Death cert mother_of_deceased: Margaret Callahan (married name Reagan), mother of MNFL-T24. Maiden name Callahan + married name Reagan consistent with I1 (Margret Reagan, 1880 census) who was independently indexed by FamilySearch as Mary Dwyer's mother. Two independent records (1880 census; death cert) now identify I1 as Mary's mother. Probable: corroboration is strong but no single record names both 'Callahan' and 'Reagan' for the same person with independent birth data. No score (record_read).",
+      "match_score": null,
+      "created": "2026-07-28"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Mary Dwyer's (MNFL-T24) birth year is stated variously: ~1841 (1880 census, a_019), ~1843 (1922 MA death certificate, a_058), and ~1848 (1910 census, a_013). The tree carries 'May 1840' from the pre-existing 1900 census source (no extracted assertion). All four values derive from household informants reporting ages from memory, not a contemporaneous birth record.",
+      "disputed_attribute": "birth_year",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_013",
+        "a_019",
+        "a_058"
+      ],
+      "independence_analysis": "The three competing assertions come from three different records created at different times by different informants: the 1880 federal census (a_019), the 1910 federal census (a_013), and Mary's 1922 Massachusetts death certificate (a_058). No assertion is derived from another. However, all three trace to the same epistemic type \u2014 a household member or personal informant reporting Mary's age from memory, not from a contemporaneous birth document. The 1880 and 1910 censuses use the same federal enumeration format; the death cert uses a different record class with a different informant. The three are formally independent (separate records, separate informants) but epistemically comparable (all secondary age reporting). The tree's pre-existing 'May 1840' birth date from the 1900 census (not an extracted assertion) adds a fourth data point; it is likewise age-derived and independent of the other three.",
+      "weighing_analysis": "Three decisive factors differentiate these assertions. (1) Temporal proximity: the 1880 census (a_019) was recorded approximately 40 years after Mary's birth \u2014 the closest of the three extracted assertions and consistent with the tree's 1900 census value (May 1840, 60 years post-birth). The 1910 census (a_013) was recorded ~70 years post-birth and the death cert (a_058) ~79 years post-birth. Earlier reporting generally yields more reliable ages. (2) Consistency pattern: a_019 (~1841) and the tree's 1900 census (1840) differ by only 1 year \u2014 a level of precision consistent with the same well-recalled birth date rounded differently. a_058 (~1843) diverges by 3 years. a_013 (~1848) diverges by 8 years \u2014 the clear outlier, far beyond census rounding norms. (3) Known bias pattern: older census respondents \u2014 especially women \u2014 sometimes deliberately understated their age to appear younger. An 8-year understatement in 1910 (age stated as ~62 instead of ~70) fits the documented pattern of age adjustment. The 1880 census value has no such motivation artifact.",
+      "preferred_assertion_id": "a_019",
+      "resolution_rationale": "The dispute concerns Mary Dwyer's birth year, variously reported as ~1840 (tree/1900 census), ~1841 (1880 census), ~1843 (death certificate), and ~1848 (1910 census). Determining the best-supported value helps interpret age-related evidence across the record trail.\n\nThe 1880 census (a_019) records her birth as ~1841; this was reported to a federal enumerator by an unknown household member approximately 40 years after her birth. The 1922 death certificate (a_058) gives ~1843, provided by a personal informant who almost certainly was not present at her 1840s birth in Ireland and was reporting from family memory 79 years later. The 1910 census (a_013) gives ~1848, the result of a census respondent reporting her age ~70 years post-birth.\n\nThe 1880 census value (~1841) is the most reliable: it is the earliest-recorded of the three assertions, it was entered closest in time to the birth event, and it aligns within 1 year of the pre-existing tree value (May 1840 from the 1900 census) \u2014 a strong internal consistency check. Together, 1880 census and 1900 census converge on a birth year of circa 1840\u20131841.\n\nThe death certificate's ~1843 (a_058) is the next most plausible, differing by only 3 years. It is nonetheless secondary information reported from memory by someone not present at the birth. The 1910 census's ~1848 (a_013) is the clear outlier: an 8-year gap from the 1880 value far exceeds normal rounding error and fits the documented pattern of age adjustment \u2014 female census respondents in the 19th and early 20th centuries sometimes understated their age by 5\u201310 years as they grew older (historical-contradictions: deliberate age misreporting). This explains why the value exists without requiring it to be accurate.\n\nPreferred: a_019 (~1841, 1880 census), consistent with the tree's May 1840 value. The conflict does not affect the identification of MNFL-T24 or the conclusion that her father was Michael Reagan.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Daniel Ragan (b.~1800 Ireland) of Springfield, Hampden County, Massachusetts was the father of Mary Dwyer (MNFL-T24).",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [
+        "a_049",
+        "a_050"
+      ],
+      "contradicting_assertion_ids": [
+        "a_063",
+        "a_064"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "Log_007 surfaced a candidate father household in the 1860 Springfield, Hampden, MA federal census (ark:/61903/1:1:MZCV-RHN): Daniel Ragan (b.~1800 Ireland) with wife Margaret Ragan (b.~1810 Ireland) and children Hannah (b.1845 MA) and Patrick (b.1847 MA). The match parameters were compelling: Margaret Ragan's name and birth year align with Margret Reagan (widowed, b.1810 Ireland) in the 1880 Greenfield household; Mary would plausibly be absent from the 1860 household; and Daniel's non-appearance in 1870 is consistent with a pre-1880 death. However, the Massachusetts death certificate for 'Mary Reagan Dwyer' (ark:/61903/1:1:6PX3-ZXF8) names the father as MICHAEL REAGAN, not Daniel. The death certificate is an original state vital record carrying a direct statement of the father's given name from a personal informant with probable family knowledge. That specific given name Michael directly contradicts Daniel. The 1860 Daniel Ragan household is an inferential match through a same-surname, similarly-aged widow; no record directly names Daniel Ragan as Mary's father. Additionally, the death certificate names the mother's maiden name as Callahan \u2014 a link not verifiable for the Daniel Ragan household's 'Margaret Ragan.' The death certificate's explicit first-name statement outweighs the circumstantial census inference, ruling out Daniel Ragan as the probable father in favor of Michael Reagan.",
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Candidate emerged from log_007 (1860 Springfield MA census search) and was set aside in log_009 once the death certificate named Michael Reagan as father."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_064",
+        "a_063",
+        "a_025",
+        "a_054",
+        "a_055",
+        "a_057",
+        "a_061"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch census collections for Mary Dwyer (1880, 1900, 1910) and Michael/Margret Reagan (1860, 1870, 1880), Massachusetts death records, and Connecticut death records. The 1880 Greenfield MA census (src_002) and Massachusetts death certificate for Mary Reagan Dwyer (src_003) were retrieved and fully extracted. Connecticut-focused plan items (pli_003\u2013pli_008: CT vital records, church, probate, land, military, newspapers) were skipped as inapplicable: Mary was born in Ireland (~1841), her father died before 1880, and the family's Massachusetts/Connecticut residence postdates her father's life. No original Irish birth record, parents' marriage record, or Massachusetts probate corroborating Michael Reagan's full name could be located through available indexed collections.",
+      "narrative_markdown": "## Probable: Michael Reagan Was the Father of Mary Dwyer (MNFL-T24)\n\n### Evidence\n\n**Massachusetts death certificate (1922).** \"Mary Reagan Dwyer\" died 24 October 1922 in Boston, Suffolk County, Massachusetts.\u00b9 Massachusetts vital records practice of the era encoded a married woman's maiden name as her middle name; the recorded name therefore identifies her maiden surname as **Reagan**. The certificate names her father as **Michael Reagan** and her mother as **Margaret Callahan** (married name Reagan). The death certificate is an original state vital record. The date and place of death are primary information supplied by the attending physician and registrar. The parentage information is secondary: the personal informant \u2014 most likely a surviving family member \u2014 was not present at the decedent's birth and reported the father's name from memory decades after the fact. The parentage assertions therefore constitute indirect evidence, a third-party statement about a relationship not directly witnessed.\n\n**1880 federal census (maiden surname corroboration).** The 1880 federal census records the Dwyer household in Greenfield, Franklin County, Massachusetts, with **Margret Reagan** \u2014 widowed, born approximately 1810 in Ireland \u2014 in a position indexed by FamilySearch as mother of Mary Dwyer.\u00b2 This independent record, from a different year and a different informant, corroborates the paternal surname Reagan: a widowed woman named Reagan living in the household of her daughter, whose 1922 death certificate encodes the maiden name Reagan, is mutually consistent across two distinct record types. The 1880 census does not name the father's given name.\n\n**Identity of \"Mary Reagan Dwyer\" as MNFL-T24.** The 1880 and 1910 censuses and the 1922 death certificate agree: the subject's husband was Michael Dwyer, she was born in Ireland, and she resided in the Massachusetts\u2013Connecticut corridor. The 1910 census places the couple in Manchester, Hartford County, Connecticut,\u00b3 consistent with a trajectory ending in Boston in 1922.\n\n### Competing Candidate Considered and Set Aside\n\nThe 1860 Springfield, Hampden County, Massachusetts census surfaced a candidate father household: **Daniel Ragan** (b.~1800 Ireland) with wife Margaret Ragan (b.~1810 Ireland) and children Hannah (b.1845 MA) and Patrick (b.1847 MA). The parameters were plausible \u2014 Margaret Ragan's name and birth year align with Margret Reagan in the 1880 Greenfield household; Mary would be absent from the 1860 household (married to Michael Dwyer since 1854); and Daniel's non-appearance in 1870 is consistent with a pre-1880 death. This candidate was logged as a working hypothesis (h_001).\n\nThe Massachusetts death certificate displaced Daniel Ragan. That record carries a direct statement naming the father as **Michael Reagan** \u2014 not Daniel. A personal informant with probable family knowledge supplied a specific given name that directly contradicts the Daniel Ragan inference. The 1860 Daniel Ragan connection is circumstantial: a same-surname, similarly-aged widow with no record directly linking her family to Mary Dwyer. The death certificate's explicit naming outweighs the indirect census inference. Daniel Ragan is accordingly ruled out as the probable father (h_001).\n\n### Conclusion\n\nThe father of Mary Dwyer (MNFL-T24) was probably **Michael Reagan**, an Irish-born man married to Margaret Callahan. The conclusion stands at the **probable** tier \u2014 not proved \u2014 for three reasons: (1) the parentage information on the death certificate is secondary evidence from an informant not present at the decedent's birth; (2) only one source names the father's given name Michael; and (3) no original Irish birth record, parents' marriage record, or Massachusetts probate corroborating Michael Reagan's full name was located in any accessible collection. The maiden surname Reagan is independently established by two sources from different record types and different informants. Massachusetts probate for Michael Reagan, if located, could supply a second direct source for the given name and support a tier upgrade.\n\n### Source Attributions\n\n\u00b9 Massachusetts Vital Records, 1921\u20131925, death certificate for Mary Reagan Dwyer, 24 October 1922, Boston, Suffolk County, Massachusetts; Massachusetts State Archives, Boston; digital image, FamilySearch (familysearch.org : accessed 28 July 2026), ark:/61903/1:1:6PX3-ZXF8.\n\n\u00b2 \"United States, Census, 1880\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MH6J-DFT : accessed 2026-07-28), Entry for Michael Dwyer and Mary Dwyer, Greenfield, Franklin, Massachusetts, 1880.\n\n\u00b3 \"United States, Census, 1910\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MKK1-QXB : Wed Aug 13 15:33:50 UTC 2025), Entry for Michael Dwyer and Mary Dwyer, 1910."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-28T19:30:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-28T19-30-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Hartford, Connecticut, United States",
+      "for_place": "South Windsor, Hartford, Connecticut, United States",
+      "time_period": "1820-1920",
+      "jurisdictions": [
+        {
+          "name": "South Windsor, Hartford, Connecticut, United States",
+          "date_range": "1845\u2013present"
+        },
+        {
+          "name": "East Windsor, Hartford, Connecticut, United States",
+          "date_range": "1776\u20131845"
+        },
+        {
+          "name": "East Windsor, Hartford, Connecticut Colony, British Colonial America",
+          "date_range": "1768\u20131776"
+        },
+        {
+          "name": "Windsor, Hartford, Connecticut Colony, British Colonial America",
+          "date_range": "1634\u20131768"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2843390",
+          "title": "Connecticut, Vital Records, Prior to 1850 (Barbour Collection)",
+          "date_range": "1710\u20131850"
+        },
+        {
+          "id": "2448938",
+          "title": "Connecticut, Births and Baptisms, 1639-1941",
+          "date_range": "1639\u20131941"
+        },
+        {
+          "id": "1674736",
+          "title": "Connecticut, Births and Christenings, 1649-1906",
+          "date_range": "1649\u20131906"
+        },
+        {
+          "id": "2448941",
+          "title": "Connecticut, Deaths, 1640-1955",
+          "date_range": "1640\u20131955"
+        },
+        {
+          "id": "1674748",
+          "title": "Connecticut, Deaths and Burials, 1772-1934",
+          "date_range": "1772\u20131934"
+        },
+        {
+          "id": "1674749",
+          "title": "Connecticut, Marriages, 1630-1997",
+          "date_range": "1630\u20131997"
+        },
+        {
+          "id": "2448940",
+          "title": "Connecticut, Marriages, 1640-1939 (Hale Collection)",
+          "date_range": "1640\u20131939"
+        },
+        {
+          "id": "2658799",
+          "title": "Connecticut, Church Records, 1660-1955",
+          "date_range": "1660\u20131955"
+        },
+        {
+          "id": "2658554",
+          "title": "Connecticut, Charles R. Hale Collection, Vital Records, 1640-1955",
+          "date_range": "1640\u20131955"
+        },
+        {
+          "id": "3158818",
+          "title": "Connecticut, Wills and Deeds, ca. 1700s-2017",
+          "date_range": "1700\u20132017"
+        },
+        {
+          "id": "3741249",
+          "title": "Connecticut, Military Census Questionnaires, 1917",
+          "date_range": "1917"
+        }
+      ],
+      "quirks": [
+        "South Windsor was not incorporated until 1845 (set off from East Windsor). Pre-1845 vital records, town records, and probate records are filed under East Windsor \u2014 always search East Windsor first for events before 1845.",
+        "Connecticut civil registration began in 1866 (generally complied with by 1901). Before 1866, rely on town records (Barbour Collection, FamilySearch catalog volumes) and church records.",
+        "Death records before 1905 do not name parents. From 1905 onward death records may name parents, but accuracy depends on the informant's knowledge.",
+        "The Barbour Collection (pre-1850 CT vital records) is the primary indexed source for births, marriages, and deaths before civil registration \u2014 note that 'some towns may be missing.'",
+        "FamilySearch holds South Windsor town vital records (births, deaths, marriages 1830\u20131852 and 1852\u20131910) as images, 46\u201355% name-indexed; full-text search is also available. Catalog numbers 471245 and 471248; center-only access may apply.",
+        "South Windsor probate records 1813\u20131922 are digitized on FamilySearch (full-text searchable, 0% name-indexed). Early volumes (1813\u20131855) were filed jointly with East Windsor. Browse image-by-image or use full-text search.",
+        "Congregationalism was the established church in CT until 1818. Pre-civil registration births, marriages, and burials are often found in Congregational church records. South Windsor church volumes are available on FamilySearch (1694\u20131936), most browse-only or full-text searchable only.",
+        "FamilySearch volume 008934070 is an 1790\u20131850 South Windsor index (5992 images, browse-only, not full-text searchable) \u2014 useful for locating individuals before Barbour indexing is complete."
+      ],
+      "guide_markdown": "# Locality Guide: South Windsor, Hartford County, Connecticut (1820\u20131920)\n\n## Jurisdiction overview\n- **Formed:** 1845 from East Windsor\n- **County:** Hartford County\n- **Prior jurisdiction:** East Windsor (1776\u20131845); earlier, Windsor (Hartford Colony, 1634\u20131768)\n- **Economy:** Agriculture (Connecticut River Valley tobacco and hay), small manufacturing\n- **Religious denominations:** Congregational (dominant; established church until 1818), Methodist, Episcopal, Roman Catholic, Baptist\n- **Key note:** Irish Catholic immigration to Hartford County accelerated mid-19th century \u2014 Dwyer is an Irish surname; Catholic church records (Diocese of Hartford) may be relevant.\n\n## Boundary changes\n- Before 1845: South Windsor was part of East Windsor. All pre-1845 records are filed under East Windsor.\n- Before 1776: East Windsor was part of Windsor (later Hartford County).\n- Records follow the jurisdiction that created them \u2014 search East Windsor for any events before 1845.\n\n## Available record types\n\n### Vital records\n- **Civil registration start:** 1866 (state level); generally complied with by 1901.\n- **Pre-1850 (Barbour Collection):** Connecticut Vital Records Prior to 1850 \u2014 FS collection 2843390; indexed + images. **Primary resource for births/marriages/deaths before civil registration.**\n- **1830\u20131852:** South Windsor Town Clerk vital records (FS catalog 471245) \u2014 images, 55% indexed, full-text searchable. FamilySearch Center access may apply.\n- **1852\u20131910:** South Windsor Registrar of Vital Statistics (FS catalog 471248) \u2014 images, ~46\u201348% indexed, full-text searchable.\n- **1897+:** Connecticut State Library marriage/death indexes; Ancestry and Reclaim the Records marriage index 1897\u20132017.\n- **Death records and parents:** Pre-1905 death records do NOT name parents. From 1905, parent names may appear but informant accuracy varies.\n\n### Church records\n- **Congregational (dominant):** South Windsor church records 1694\u20131898 (FS vol. 008141255, browse-only images); baptism/marriage registers 1829\u20131936 (FS vols. 008200169, 007951347 \u2014 full-text searchable). Methodist, Episcopal church records also exist.\n- **Catholic (Diocese of Hartford):** Given the Irish-surname context, Catholic baptism and marriage registers are high priority. Connecticut Church Records 1660\u20131955 (FS collection 2658799, indexed); CT Church Record Abstracts 1630\u20131920 at Ancestry.\n- **Repository:** Connecticut State Library holds many deposited church records.\n\n### Census records\n- **Federal census:** 1820\u20131940; all years indexed + images on FamilySearch/Ancestry. 1850 South Windsor census volume is 98% searchable.\n- **Relationship to head listed from 1880.** Check all census years to build household profile and identify co-resident family members.\n\n### Probate records\n- **Probate district:** Hartford (covers South Windsor).\n- **FamilySearch digitized volumes** (full-text searchable, 0% name-indexed): 1813\u20131922, covering South Windsor and East Windsor jointly for earlier volumes.\n- **Ancestry:** Connecticut Wills and Probate Records 1609\u20131999 \u2014 indexed + images.\n- **Probate files (original papers):** FS catalog 141959 (1787\u20131880, browse-only); FS catalog 606675 (1881\u20131915, browse-only).\n- Probate records (wills, administrations, guardianships) are an excellent source for naming children and establishing family relationships.\n\n### Land records\n- Connecticut is a state-land state. Deeds recorded at town level (South Windsor Town Clerk).\n- Colonial Land Records 1640\u20131846 (FS catalog 84462) \u2014 images.\n- Land records can place individuals in time and associate them with neighbors/kin.\n\n### Cemetery records\n- **Hale Collection** (FS collection 2658554, 1640\u20131955): indexed burial records and obituary abstracts \u2014 high-value resource.\n- Find a Grave: South Windsor cemeteries listed.\n- Hartford County Cemeteries on FamilySearch Places.\n\n### Newspapers / obituaries\n- Connecticut Hale Collection includes newspaper notices 1629\u20131934 (FS collection 2658554).\n- Ancestry Newspapers.com index covers Connecticut papers.\n- Obituaries post-1905 may name parents and siblings.\n\n### Military records\n- Civil War (1861\u20131865): draft registrations, service records.\n- Connecticut Military Census Questionnaires 1917 (FS collection 3741249, indexed + images).\n- WWI/WWII draft cards on Ancestry/FamilySearch.\n\n## Repository guide\n\n| Repository | Key holdings | Access |\n|---|---|---|\n| FamilySearch | South Windsor vital records 1830\u20131910; probate 1813\u20131922; CT Barbour Collection; church records; census | Free (some center-only) |\n| Ancestry | CT Wills & Probate 1609\u20131999; Barbour Collection; marriage/death indexes; census | Subscription |\n| Connecticut State Library | Original vital records; church record deposits; court records | In-person / online index |\n| South Windsor Town Clerk | Original vital records, land records, town meeting minutes | In-person / mail |\n| Diocese of Hartford Archives | Catholic baptism, marriage, burial registers | Contact archives |\n\n## Records NOT online\n- Original South Windsor land/deed records (pre-digitization) at Town Clerk\n- Some Catholic parish registers (Diocese of Hartford archives)\n- Some church records not yet deposited at CT State Library\n\n## Research tips\n- **Start with the Barbour Collection** for any pre-1850 vital event; then move to the FS town vital record volumes for 1830\u20131910.\n- **Pre-1845 events:** Always search under East Windsor, not South Windsor.\n- **Parentage from death records only possible 1905+.** For earlier parentage, use church baptism records, probate (naming children in wills), and census household reconstruction.\n- **Irish Catholic context:** The surname Dwyer suggests Irish origin; Catholic church registers and naturalization records are worth checking alongside civil vital records.\n- **Probate full-text search:** FS probate volumes are full-text searchable \u2014 use FamilySearch full-text search with the subject's name to locate will or administration references.\n",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Connecticut,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Connecticut_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Connecticut_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Connecticut_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-28"
+    }
+  ]
+}

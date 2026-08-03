@@ -19,9 +19,13 @@
     "user_message": "Search the 1850 census for Patrick Flynn in Schuylkill County per plan item pli_001.",
     "scenario": "flynn-record-matching"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "record-search-conflict-household-flynn",
-    "rank-search-matches-flynn-conflict"
+    "rank-search-matches-flynn-conflict",
+    "record-read-patrick-flynn-cflt-9k2"
   ],
   "judge_context": [
     "After record_search (with projectPath) stages results, the skill should pass subjectId to record_search and triage from the inline `ranked` block it returns. the inline `ranked` block returns the Patrick Flynn record at matchRank 1 with a high match score (0.85, matchConfidence 5).",
@@ -29,6 +33,7 @@
     "The result should be categorized as needs-review or flagged-conflict with explicit reasoning citing the impossible head-of-household role: e.g., 'match score is 0.85 but the record lists a 5-year-old as head of household — likely a transcription or attribution error; flagged for human review'. Reason, not score, is the arbiter.",
     "This tests that the skill treats the inline ranking's match score as one input to triage reasoning, not as the final word — the ranked list is a review surface for the existing role/age cross-checks, not an accept/reject classifier.",
     "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
-    "IMPORTANT — Completeness grading: score 3 if the skill (a) found the conflicted result, (b) flagged the conflict with reasoning, (c) logged and offered next steps. Do NOT penalize for stopping after the conflicted result — stopping is CORRECT behavior. A conflicted result is NOT nil; the nil-escalation rules do not apply here. The Completeness dimension should NOT require the skill to search further after identifying a qualitative conflict"
+    "IMPORTANT — Completeness grading: score 3 if the skill (a) found the conflicted result, (b) flagged the conflict with reasoning, (c) logged and offered next steps. Do NOT penalize for stopping after the conflicted result — stopping is CORRECT behavior. A conflicted result is NOT nil; the nil-escalation rules do not apply here. The Completeness dimension should NOT require the skill to search further after identifying a qualitative conflict",
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ]
 }

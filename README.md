@@ -23,7 +23,7 @@ has to live in the server.
 > runs under the Claude Agent SDK in a per-user sandbox; the viewer is shared
 > with the Electron app via `packages/viewer-ui`). It runs fully on mocks with
 > `make install && make server-mock && make web-dev` — no E2B/Anthropic/OAuth needed.
-> See **`DEVELOPMENT.md`** and **`docs/plan/realtime-rearch-status.md`** for the run guide,
+> See **`DEVELOPMENT.md`** and **`docs/realtime-rearch-status.md`** for the run guide,
 > what-works table, and provisioning checklist, and `make help` for commands.
 
 The plugin manages two project files:
@@ -178,7 +178,7 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **person-evidence** | Links assertions to persons. Evaluates identity matches with threshold enforcement. Creates stub persons when needed. | "Is this the same person?" / "Link all roles in this record" |
-| **timeline** | Builds chronological timelines with distances between consecutive events. Surfaces gaps and impossibilities. | "Build a timeline" / "Do these events fit one life?" |
+| **timeline** | Builds chronological timelines with distances between consecutive events. Surfaces gaps and geographic feasibility (logical impossibilities are check-warnings' job). | "Build a timeline" / "Do these events fit one life?" |
 | **conflict-resolution** | Analyzes conflicting evidence — independence analysis + preponderance hierarchy. | "These sources disagree" |
 | **hypothesis-tracking** | Tracks competing candidates with evidence for/against each. Manages elimination. | "Could this be the same person?" |
 
@@ -506,6 +506,10 @@ clobbering a hook it didn't write. Details in
 
 ### Where to read next
 
+- [docs/architecture.md](./docs/architecture.md) — how the system fits
+  together and where a change lands. Each section ends with an "If you're
+  asked to…" block naming every site a change touches and which of them
+  nothing checks. **Read this before your first PR.**
 - [DEVELOPMENT.md](./DEVELOPMENT.md) — building, testing, smoke-tests,
   adding tools and skills, running the eval harness.
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — what kinds of contributions

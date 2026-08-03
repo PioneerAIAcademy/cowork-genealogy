@@ -1,0 +1,98 @@
+{
+  "tool": "record_read",
+  "description": "Full record for Mary Flynn (Mary Flynn and Michael Doyle marriage), Pennsylvania, County Marriages, 1845-1963. Mirrors the gedcomx already embedded in record-search-mary-flynn-marriage-hit — same persons, same relationships, no new genealogical claims. record_read is in search-records' allowed-tools and the skill sometimes reads a record it has just found before reporting on it, which is sound practice. Without a stocked fixture the tool is never registered in the mock, so that call aborts the whole run as an unregistered tool (Type 1) even when the search work was correct and validators passed — observed on 019, 023 and 014. Coverage for record_read used to be ut_search_records_006, deleted 2026-06-18 as a side effect of a runlog commit.",
+  "args": {
+    "recordId": "~9XKD-R7M"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Mary",
+            "surname": "Flynn",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "1841",
+            "place": "Ireland"
+          },
+          {
+            "id": "F2",
+            "type": "Marriage",
+            "date": "14 June 1862",
+            "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+          }
+        ],
+        "ark": "ark:/61903/1:1:9XKD-R7M",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Pennsylvania, County Marriages, 1845-1963"
+          }
+        ]
+      },
+      {
+        "id": "P2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Michael",
+            "surname": "Doyle",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F3",
+            "type": "Marriage",
+            "date": "14 June 1862",
+            "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Pennsylvania, County Marriages, 1845-1963"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "R1",
+        "type": "Couple",
+        "person1": "P1",
+        "person2": "P2"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Pennsylvania, County Marriages, 1845-1963",
+        "collectionId": "1681048",
+        "ark": "ark:/61903/1:1:9XKD-R7M"
+      }
+    ],
+    "places": [
+      {
+        "id": "PL1",
+        "name": "Ireland"
+      },
+      {
+        "id": "PL2",
+        "name": "Pottsville, Schuylkill, Pennsylvania, United States"
+      }
+    ]
+  }
+}

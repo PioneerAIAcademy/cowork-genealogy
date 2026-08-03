@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 10, flag adds_daughter, confidence 3). Draft transcribed from a Colombian Catholic marriage record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 10, flag adds_daughter, confidence 3). RESOLVED (issue #860): TRUE MATCH - the 9 Oct 1929 Matanza (Nuestra Señora de las Mercedes, Santander) marriage of Juana Martinez to Ismael Alvarez names parents Emilio + Isabel Carvajal, confirming Juana as a daughter of the tree couple Isabel Carvajal Chinchilla + Emilio Martínez. Five converging lines: both-parents match with father's surname confirmed via the bride's Martinez surname; same parish as the children's 1911 burials + 1923 marriages; behavioral pattern; chronological fit (children ~1881-1895); no competing Emilio x Isabel Carvajal couple. expected-findings.json keeps its original recover finding. See README 'Notes for reviewers'."
 }

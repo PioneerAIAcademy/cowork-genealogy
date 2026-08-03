@@ -13,15 +13,17 @@ Durability across a sandbox pause/resume (or any agent_runner restart): the
 ResultMessage's session_id is persisted to /project/.agent_session, and a
 relaunched RealAgent passes it as resume= so the SDK reloads the prior
 conversation from the on-disk transcript (which survives the E2B pause). See
-docs/plan/ably-realtime-migration.md is unrelated; the resume contract is
-sandbox-provider-interface.md decision #1.
+docs/realtime-architecture.md is unrelated; the resume contract is
+sandbox-provider-spec.md decision #1.
 
-Config (build_options) — three load-bearing choices: do NOT set skills="all" (the
+Config (build_options) — four load-bearing choices: do NOT set skills="all" (the
 SDK turns it into `--allowedTools Skill`, restricting to only the Skill tool);
 append the project path via system_prompt so the agent reads research.json from
-cwd, not HOME; and stage the plugin's agents into the project rather than letting
+cwd, not HOME; stage the plugin's agents into the project rather than letting
 plugin discovery name them (see stage_plugin_agents — plugin loading registers
-them ONLY as `genealogy-research:<agent>`, which no SKILL.md asks for).
+them ONLY as `genealogy-research:<agent>`, which no SKILL.md asks for); and pass
+the PreToolUse hook, which is the session's ONLY restraint given
+permission_mode="bypassPermissions" with no allowlist (see _pretool_hook).
 
 The Anthropic key comes from the per-connect secrets file, NOT from this
 process's env (see current_api_key + app/agent_secrets.py). A sandbox's env is
@@ -108,6 +110,83 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
     return staged
 
 
+# ── Raw-write lockdown (guardrail-enforcement-spec §6, issue #940) ──
+
+# The two project files no raw Write/Edit may touch. Every write to them goes
+# through the MCP writer tools (research_append, research_log_append, tree_edit,
+# tree_correct), which validate before persisting; a direct file write never
+# validates. research/SKILL.md already forbids it in prose and no skill's
+# allowed-tools lists bare Write/Edit — this makes it a denial instead of a
+# convention.
+#
+# This matters MORE here than in e2e, not less. The e2e harness runs
+# permission_mode="dontAsk", which by itself denies Write/Edit on CLI >=2.1
+# (see eval/harness/harness/skill_runner.py's note); this path runs
+# bypassPermissions with no allowlist, so nothing stops a raw write today.
+#
+# Duplicated from eval/harness/e2e/orchestrator.py rather than shared: this
+# module also runs as a loose script in the baked E2B image and cannot import
+# from eval/ or from the control-plane package (see the module docstring).
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+
+# Tools that write a file directly, by `file_path`. Bash is deliberately NOT
+# here: the skills run their stdlib-only scripts through it, and the only way to
+# catch a shell write would be pattern-matching command text — which would deny
+# a legitimate `python script.py research.json > out` while still missing
+# `python -c` with the path built from a variable. A false deny is the worse
+# failure mode, so the shell route is left open and recorded in
+# docs/specs/guardrail-enforcement-spec.md §6 ("Deliberate gaps") instead —
+# close it only if a bypass appears in a runlog or a feedback case.
+_FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
+
+
+def direct_project_file_write(tool_name: str, tool_input: dict | None) -> str | None:
+    """The protected filename a raw file-write tool targets, or None.
+
+    Matched on the basename, so an absolute or relative path is caught alike.
+    Both separators are handled: the sandbox is Linux, but the model composes
+    this path itself and a hook that silently stops matching is worse than a
+    redundant split.
+    """
+    if tool_name not in _FILE_WRITE_TOOLS:
+        return None
+    file_path = str((tool_input or {}).get("file_path") or "")
+    name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
+    return name if name in PROTECTED_PROJECT_FILES else None
+
+
+async def _pretool_hook(input_data, _tool_use_id, _ctx):
+    """PreToolUse: deny raw writes to the two project files.
+
+    A hook binds under `bypassPermissions` — the unit harness has run exactly
+    this combination since the per-context policy landed
+    (`eval/harness/harness/skill_runner.py`), and its deny decisions are what
+    enforce that policy today. `disallowed_tools` is not usable here: it takes
+    whole tool names, and Write/Edit are needed for every other file.
+
+    No `stopReason` — a denied write is a recoverable mistake. The turn
+    continues so the agent can reach for the writer tool instead, matching how
+    the e2e tree-read block behaves.
+    """
+    tool_name = input_data.get("tool_name", "")
+    protected = direct_project_file_write(tool_name, input_data.get("tool_input"))
+    if not protected:
+        return {}
+    _log(f"[agent] denied raw {tool_name} on {protected}")
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": (
+                f"{tool_name} on {protected} is disabled — all writes to "
+                "research.json/tree.gedcomx.json must go through the writer tools "
+                "(research_append, research_log_append, tree_edit, tree_correct), "
+                "which validate before persisting. Direct file writes never validate."
+            ),
+        },
+    }
+
+
 def current_api_key() -> str:
     """The operator's Anthropic key for the next turn.
 
@@ -126,7 +205,7 @@ def current_api_key() -> str:
 
 
 def build_options(project_dir: Path, resume: str | None = None, api_key: str | None = None):
-    from claude_agent_sdk import ClaudeAgentOptions
+    from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
 
     # Side effect, deliberately here: the plugin's agents are registered by
     # staging their .md files into the project, not by plugin discovery (see
@@ -155,17 +234,33 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         mcp_servers={
             "genealogy": {"type": "stdio", "command": "node", "args": [_MCP_BUILD]},
         },
+        # The only restraint on this session. permission_mode is
+        # bypassPermissions with no allowlist, so the hook is what keeps raw
+        # Write/Edit off research.json and tree.gedcomx.json (see
+        # _pretool_hook). matcher=None fires it for every tool.
+        hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[_pretool_hook])]},
         # Stream partial assistant content. Without it a block reaches the UI only
         # when its whole message completes, so a long turn — a record-extraction
         # subagent reasoning before its next tool call — shows nothing at all for
         # minutes. The deltas are also what keeps the socket's data frames flowing
         # through the sandbox's edge proxy during that stretch.
         include_partial_messages=True,
-        # ENABLE_TOOL_SEARCH=true eager-loads the genealogy MCP tool schemas
-        # instead of deferring them above the bundled CLI's token threshold
-        # (the ~38-tool server trips it), which otherwise forces repeated
-        # ToolSearch re-discovery mid-session. See speedup plan §3a — kept in
-        # sync with the e2e orchestrator so hosted-web users get the same win.
+        # ENABLE_TOOL_SEARCH turns tool search ON, not off — the polarity is the
+        # opposite of what this comment claimed until issue #1110. Read off the
+        # installed CLI (v2.1.220): a truthy value (`true|1|yes|on`) selects
+        # deferred/tool-search mode, `auto`/`auto:N` is the adaptive variant, and
+        # only a FALSY value (`false|0|no|off`) selects "standard" mode, where
+        # every schema is loaded up front. Unset also lands on tool-search mode,
+        # so deleting the variable eager-loads nothing. (Additionally forced off
+        # on a non-first-party ANTHROPIC_BASE_URL, on Vertex, and under
+        # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
+        #
+        # So "true" below means hosted sessions run WITH tool search: the
+        # ~38-tool genealogy server's schemas are deferred and re-discovered via
+        # ToolSearch mid-session. Speedup plan §3a wanted the opposite; flipping
+        # to "false" is a separate, tracked decision that requires re-measuring
+        # the tool mix, so the value is left as it has been running — and kept in
+        # sync with the e2e orchestrator either way.
         env={
             "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
             "ENABLE_TOOL_SEARCH": "true",

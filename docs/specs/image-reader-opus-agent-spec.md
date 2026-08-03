@@ -45,7 +45,8 @@ Cowork and the Claude Agent SDK itself honor a subagent's own `model:`
 frontmatter (confirmed: `proj_skill_model_frontmatter_inert_in_prod` memory;
 this is SDK-level subagent-resolution behavior, not something either
 integration layer constructs itself). No key, no bridge, no fork. Full
-design history: `docs/plan/image-reader-opus-agent-plan.md`.
+design history: this spec's §2.1 (why not a `fidelity` param) and §9 (the size
+ceiling) are the surviving record; the plan doc was deleted once it shipped.
 
 ## 3. Files to Create / Modify
 
@@ -192,7 +193,8 @@ hosted web workbench if raising there too. Giving this agent its own larger
 ceiling, or exploring a downscale-before-read path (needs an image-processing
 dependency in the cross-platform `.mcpb`, previously deferred for the same
 reason — see `image-read-spec.md`), are both still on the table but blocked
-on that verification, not on more usage data. Tracked: `docs/TODOs.md`.
+on that verification, not on more usage data. The verification itself is
+issue #1130.
 
 ## 10. Boundaries
 

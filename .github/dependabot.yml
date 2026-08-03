@@ -1,0 +1,305 @@
+# Dependabot configuration.
+#
+# ── ONE BATCH A MONTH, DELIBERATELY ───────────────────────────────────────────
+# Every ecosystem is `interval: monthly`. Dependency work should arrive on a
+# schedule someone chose, in a quantity one person can actually read.
+#
+# The pull-request limits are npm 5 and 2 everywhere else — a ceiling of 13, and
+# realistically about 5 a month once the current backlog drains. They are NOT
+# uniform, because the ecosystems do not have the same slot demand:
+#
+#   npm              The group covers only minor+patch, so every MAJOR arrives
+#                    as its own PR and competes for a slot. npm also spans three
+#                    directories and holds most of the dependencies. Hence 5.
+#   github-actions   `patterns: "*"` with no update-types, so EVERYTHING —
+#   docker           majors included — collapses into one grouped PR. These two
+#                    genuinely need 1; they get 2 so a security advisory has
+#                    somewhere to land alongside. docker is quieter still, since
+#                    major and minor tag moves are ignored (see below).
+#   uv (x2)          Group minor+patch, majors individual, but there are few
+#                    Python deps and two of the noisy ones are pinned. 2 is fine.
+#
+# Do not "simplify" these to one number. A uniform 5 would be a ceiling of 25 —
+# worse than the 23 that caused the 2026-07-31 flood — and a uniform 2 would
+# deadlock npm (see the note at that entry).
+#
+# TWO THINGS ABOUT THAT LIMIT, both of which surprised us on 2026-07-31:
+#
+#   1. It is PER ECOSYSTEM ENTRY, not per repo. Five entries means the ceiling
+#      is the SUM — 5+2+2+2+2 = 13 here, not 5. The previous values (5/5/3/5/5)
+#      summed to 23, which is how a config that read as "limit 5" produced about
+#      a dozen PRs in one afternoon.
+#   2. It caps CONCURRENTLY-OPEN PRs, not PRs per run. GitHub: "If five pull
+#      requests with version updates are open, no further pull requests are
+#      raised until some of those open requests are merged or closed." So
+#      merging one frees a slot — on `weekly` that invited a replacement days
+#      later, which is the other half of what happened. On `monthly` the refill
+#      waits for the next monthly check, so clearing the batch does not pull
+#      more in.
+#
+# Note also that adding or editing this file triggers an immediate run, so
+# expect a batch when this lands regardless of the schedule.
+#
+# WHY NOT OFF ENTIRELY (considered and rejected, 2026-07-31): Dependabot ALERTS
+# come from the dependency graph, not from this file, so /security/dependabot
+# would keep working with version updates disabled. But the dashboard only says
+# what is vulnerable — it does not do the work. Most of the 24 alerts that
+# accumulated before #1030 were a plain lockfile refresh that nothing upstream
+# was blocking; they sat open because no one ran it. Turning updates off puts
+# that refresh back on a human. Monthly keeps the refresh automatic while
+# keeping the interruption on our calendar.
+#
+# WHAT WENT WRONG THE FIRST TIME, since it explains the pins below: #1030 landed
+# on 2026-07-31 and three of its PRs merged green and broke `main`, because no
+# CI job then covered the trees they touched:
+#
+#   #1044  @vitejs/plugin-react 6 needs Vite 8; the repo is on Vite 7. Broke the
+#          viewer-ui tests AND `pnpm --filter web build` — the exact command
+#          deploy/Dockerfile runs. Reverted in #1052.
+#   #1043  eslint 10 removed `context.getFilename()`. Broke apps/electron lint.
+#   #1047  same, for eval/app. Both reverted in #1053.
+#
+# That gap is closed: #1049 added server-tests.yml and js-tests.yml, so every
+# tree in this repo now gets tests, typecheck, and the production web build on a
+# dependency PR. The batch arrives with real signal now.
+#
+# Everything is grouped and monthly. A separate PR per dependency across five
+# manifests is how a config like this gets muted, so minor/patch updates land as
+# one grouped PR per ecosystem and only majors arrive individually — a major is
+# the one that deserves to be read.
+#
+# ── Pins that must NOT be floated ─────────────────────────────────────────────
+# Three pins are load-bearing and have explicit `ignore` rules below. They are
+# correctness pins, not staleness:
+#
+#   mcp>=1.29,<2          mcp 2.0.0 removed/renamed Server.list_tools, which
+#                         claude_agent_sdk.create_sdk_mcp_server calls. It broke
+#                         CI the day it shipped (PR #932). Delete the ignore only
+#                         when claude-agent-sdk itself supports mcp 2.x.
+#   claude-agent-sdk<0.2  workspace.py depends on behavior present since 0.1.x.
+#                         For a 0.x package Dependabot classifies 0.1 -> 0.2 as
+#                         semver-MINOR, so the ignore must cover minor as well as
+#                         major or the bound gets raised anyway.
+#   eslint ^9             eslint 10 removed `context.getFilename()`. The Next
+#                         config that apps/electron and eval/app both lint
+#                         through still bundles eslint-plugin-react 7.37.5,
+#                         eslint-plugin-import 2.32.0 and eslint-plugin-jsx-a11y
+#                         6.10.2, all of which call it and all of which cap their
+#                         eslint peer at 9. Raise this only when those plugins
+#                         ship eslint-10-compatible releases.
+#   json-schema-to-zod    eval/app pins `zod ^3` and generates lib/schema/*.ts
+#         2.6.1           with this at postinstall (scripts/gen-zod.ts). 2.8.x
+#                         emits the zod-v4 API (`z.core.$ZodIssue`), which does
+#                         not typecheck against zod 3 — `npm run typecheck`
+#                         fails with 8 errors. Raise this only together with
+#                         moving eval/app to zod 4.
+#
+# All four ignores are scoped to `version-update:*` update-types, so they
+# suppress only routine version bumps rather than security advisories.
+#
+# All four are live and doing work — each one is a thing that has already broken
+# this repo once. Do not "clean them up" because the packages look stale.
+#
+# TWO OF THESE WERE ALREADY PINNED, AND THE BOT FLOATED THEM ANYWAY. That is the
+# pattern worth internalizing, because it recurs:
+#
+#   - eslint was documented in a comment at the top of eval/app/eslint.config.mjs
+#     naming the three plugins and `context.getFilename()` by name. #1043/#1047
+#     bumped the version and left the prose behind; both merged green and broke
+#     `npm run lint` in both trees (#1053 reverted them).
+#   - json-schema-to-zod was pinned EXACTLY — `"2.6.1"`, no caret, unlike its
+#     caret-ranged neighbours. #1042 proposed 2.8.1 regardless.
+#
+# Dependabot does not read prose and does not treat an exact pin as intent. A pin
+# it can reach needs an `ignore` here, where it will actually be read.
+#
+# And note the update-type on this one: 2.6.1 -> 2.8.1 is semver-MINOR, so a
+# major-only ignore would not have caught it — the same trap as python
+# 3.12 -> 3.14 under the docker entry below. Match the ignore to how the version
+# actually moves, not to how breaking the change feels.
+#
+# ── Engine lockfile caveat ────────────────────────────────────────────────────
+# packages/engine/mcp-server pins `npm@11.12.1` via its packageManager field, and
+# .github/workflows/check-engine-lockfile.yml fails any PR whose lockfile would be
+# rewritten by that exact npm. Dependabot resolves with its own npm build, so an
+# engine PR from Dependabot can trip that gate through no fault of the bump. The
+# fix is mechanical, not a reason to distrust the PR: check the branch out, run
+# `npm install` under npm 11.12.1, and commit the re-normalized lockfile.
+
+version: 2
+
+updates:
+  # ── JavaScript / TypeScript ─────────────────────────────────────────────────
+  # Three separate trees by design (see CLAUDE.md): the root pnpm workspace for
+  # the web/electron side, and two npm-managed trees — the engine, kept out of
+  # the workspace so the .mcpb release pipeline is untouched, and the Eval CRUD
+  # UI. Dependabot reads pnpm-lock.yaml and package-lock.json alike.
+  - package-ecosystem: npm
+    directories:
+      - "/"
+      - "/packages/engine/mcp-server"
+      - "/eval/app"
+    schedule:
+      interval: monthly
+    # 5, not 2: npm groups only minor+patch, so every MAJOR arrives as its own
+    # PR competing for a slot — and npm spans three directories with most of the
+    # dependencies. At 2 (one grouped + one major) a single major left open would
+    # block the whole ecosystem until the next monthly check. The other four
+    # ecosystems stay at 2 because they need far less: see the header.
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - javascript
+    commit-message:
+      prefix: deps
+      include: scope
+    ignore:
+      # See "Pins that must NOT be floated" above. Security updates still fire.
+      - dependency-name: eslint
+        update-types:
+          - version-update:semver-major
+      # Minor as well as major: 2.6.1 -> 2.8.1 is a semver-MINOR bump that
+      # breaks the typecheck. See the note above.
+      - dependency-name: json-schema-to-zod
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    groups:
+      npm-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # ── GitHub Actions ──────────────────────────────────────────────────────────
+  # Action majors (actions/checkout@v5, setup-node@v4, …) drift silently and are
+  # a supply-chain surface; group them so the bump is one reviewable PR.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2   # per ECOSYSTEM, not per repo — see header
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # ── Container base images ───────────────────────────────────────────────────
+  # /deploy is the production Fly path (`fly deploy --dockerfile deploy/Dockerfile`,
+  # see the Makefile); /apps/server/sandbox is the E2B sandbox image.
+  #
+  # Scope this honestly: both files pin *floating* tags (node:22-bookworm-slim,
+  # python:3.12-slim-bookworm, ubuntu:24.04), not digests, so Dependabot will
+  # propose tag moves — python 3.12 -> 3.13, ubuntu 24.04 -> 26.04 — and nothing
+  # else. Patch-level base-image CVEs land via upstream rebuilding the same tag,
+  # which a rebuild picks up and Dependabot never sees. This entry is cheap and
+  # worth having; it is NOT a base-image security net. Pin by digest if that is
+  # ever wanted, and Dependabot will track digests instead.
+  #
+  # ── Why runtime-line moves are ignored ────────────────────────────────────────
+  # Those tag moves are never routine here, because each tag IS a pin that other
+  # files in the repo are written against:
+  #
+  #   ubuntu:24.04       e2b.Dockerfile's own header says 24.04 is chosen because
+  #                      "Python 3.12 is Ubuntu 24.04's system python ... (Debian
+  #                      bookworm is only 3.11; deadsnakes would be required
+  #                      there)". Moving the base silently moves the agent's
+  #                      interpreter and makes that comment false.
+  #   python:3.12-*      apps/server/.python-version pins 3.12. requires-python is
+  #                      only ">=3.12", so a bump resolves fine and diverges
+  #                      silently from what anyone develops against.
+  #   node:22-*          .nvmrc is 22, package.json engines is ">=22", and all four
+  #                      CI workflows use 22.
+  #
+  # Nothing in CI builds either Dockerfile, so such a PR arrives green and the
+  # first real signal is a failed `fly deploy` or E2B template build. PR #1035
+  # (closed) proposed all three at once, including node 25 — an odd-numbered,
+  # non-LTS line — for the production web build.
+  #
+  # Moving a runtime line is a coordinated change: bump the tag together with
+  # .python-version / .nvmrc / the pyproject floor, and rebuild the E2B template.
+  # Do it deliberately, not by merging a bot PR.
+  #
+  # Both major AND minor are ignored, deliberately. Dependabot reads a docker tag
+  # as a version, so ubuntu 24.04 -> 26.04 and node 22 -> 25 are semver-MAJOR but
+  # python 3.12 -> 3.14 is semver-MINOR — a major-only ignore would let exactly the
+  # Python bump through. Patch moves (e.g. 3.12.1 -> 3.12.2) still open PRs, and
+  # because both ignores are scoped to `version-update:*`, a genuine security
+  # advisory on a base image still does too.
+  - package-ecosystem: docker
+    directories:
+      - "/deploy"
+      - "/apps/server/sandbox"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2   # per ECOSYSTEM, not per repo — see header
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "ci(docker)"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    groups:
+      docker-base-images:
+        patterns:
+          - "*"
+
+  # ── Python: hosted control plane (apps/server) ──────────────────────────────
+  - package-ecosystem: uv
+    directory: "/apps/server"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2   # per ECOSYSTEM, not per repo — see header
+    labels:
+      - dependencies
+      - python:uv
+      - developer
+    commit-message:
+      prefix: "deps(server)"
+    groups:
+      uv-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # ── Python: eval harness ────────────────────────────────────────────────────
+  # CI runs `uv sync --frozen` / `uv run --frozen` (PR #932), so the committed
+  # uv.lock is authoritative and never re-resolved on CI. That makes a Dependabot
+  # PR the deliberate, reviewable way this lock moves — which is the point.
+  - package-ecosystem: uv
+    directory: "/eval/harness"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2   # per ECOSYSTEM, not per repo — see header
+    labels:
+      - dependencies
+      - python:uv
+      - developer
+    commit-message:
+      prefix: "deps(eval)"
+    ignore:
+      # See "Pins that must NOT be floated" above. Security updates still fire.
+      - dependency-name: mcp
+        update-types:
+          - version-update:semver-major
+      - dependency-name: claude-agent-sdk
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    groups:
+      uv-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch

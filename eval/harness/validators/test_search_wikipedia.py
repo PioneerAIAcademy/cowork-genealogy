@@ -74,6 +74,46 @@ def test_wrote_one_markdown_file(before_state, after_state, test):
     assert len(md) == 1, f"expected exactly one new .md file; got {md}"
 
 
+# --- Negative no-harm invariant (tag-gated) ---------------------------
+
+def test_no_wiki_no_write(tool_calls, before_state, after_state, test):
+    """Tag-gated (no-wiki-no-write): the search-wikipedia no-harm invariant
+    for a request that belongs to another skill (e.g. narrative migration
+    history → historical-context).
+
+    search-wikipedia's job is to look a topic up on Wikipedia and SAVE a
+    markdown summary. For an out-of-scope request the skill must not perform
+    that workflow. This is the deterministic gate for the grade_on_invariant
+    negative ut_search_wikipedia_007: whether the model declines in place or
+    routes elsewhere is a known-unstable model prior, and the harness's
+    activation heuristic counts a thorough (>=30-word) in-place decline as
+    activation — but the state-harm invariant always holds and is what we
+    assert here.
+
+    Fails iff the run:
+      - made a `wikipedia_search` MCP call (the lookup was executed), or
+      - wrote a new `.md` file (the summary was saved).
+    """
+    if "no-wiki-no-write" not in test.get("tags", []):
+        pytest.skip("not a no-wiki-no-write scenario")
+
+    # 1. No wikipedia_search executed.
+    wiki_calls = [
+        tc for tc in (tool_calls or [])
+        if "wikipedia_search" in tc.get("tool", "")
+    ]
+    assert not wiki_calls, (
+        "out-of-scope request must not execute a Wikipedia lookup; got "
+        f"wikipedia_search call(s) with args: {[c.get('args') for c in wiki_calls]}"
+    )
+
+    # 2. No markdown summary saved.
+    new_md = [p for p in _files_created(before_state, after_state) if p.endswith(".md")]
+    assert not new_md, (
+        f"out-of-scope request must not save a Wikipedia summary; wrote: {new_md}"
+    )
+
+
 # --- Slug-normalization regression checks (tag-gated) -----------------
 
 def _new_md_basenames(before_state, after_state) -> list[str]:

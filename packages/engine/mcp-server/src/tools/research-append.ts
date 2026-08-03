@@ -174,7 +174,7 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
   ];
 }
 
-/** Tier/exhaustiveness cross-field guardrail (docs/plan/research-guardrail-bypass-plan.md
+/** Tier/exhaustiveness cross-field guardrail (docs/specs/guardrail-enforcement-spec.md
  *  §4.2). `proved`/`disproved` claim the research is reasonably exhaustive by
  *  definition, so either tier requires the referenced question's
  *  `exhaustive_declaration.declared` to already be `true` — checked against

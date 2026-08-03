@@ -126,15 +126,21 @@ three categories of assumptions (from BCG Standard 45):
 
 ### Fundamental Assumptions
 
-These are accepted as true without needing proof. Violations
-constitute impossibilities:
+These are accepted as true without needing proof. Violations are
+significant — but note the boundary with **check-warnings**:
 
-- **No one acts after death.** A person cannot appear in a record
-  dated after their documented death (unless the death record is
-  wrong).
-- **No one acts before birth.** A person cannot appear in a record
-  dated before their documented birth.
-- **Travel is constrained by period technology.** A person cannot
+- **No one acts after death** and **no one acts before birth** are
+  single-person, date-vs-lifespan checks that **check-warnings** owns
+  (its `person_warnings` tool detects them deterministically and
+  distinguishes a genuine identity mix-up from a posthumous mention).
+  When the chronology makes such a violation visible, **note it in your
+  reply and recommend a check-warnings pass** — do **not** adjudicate it
+  yourself (the timeline schema has no field to persist it, by design).
+- **Travel is constrained by period technology** is **this skill's own**
+  check — it depends on arranging events across sources and place
+  distances, which check-warnings does not do. Report a violation as a
+  geographic-feasibility coherence signal in your reply (see below). A
+  person cannot
   cross an ocean in a day before steamships. They cannot travel
   coast-to-coast in the US in a week before railroads. Approximate
   maximum travel speeds by era:

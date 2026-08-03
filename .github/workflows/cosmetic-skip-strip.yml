@@ -1,0 +1,61 @@
+name: cosmetic-skip-strip
+
+# Removes the `eval-cosmetic-skip` label from a PR when a new commit lands.
+#
+# THIS IS COSMETIC AND IS NOT WHAT ENFORCES THE RULE. The rule — "a new commit
+# voids the bypass" — is decided from the event inside check-runlogs.yml, which
+# needs no token to do it and therefore holds even when this workflow does not
+# run. All this job does is keep the PR's UI honest, so nobody reads a label
+# that has already lapsed as an active bypass. If you are changing the safety
+# behavior of the hatch, you are in the wrong file: see check-runlogs.yml.
+#
+# WHY IT IS A SEPARATE WORKFLOW. The strip needs a write token, and a PR from a
+# fork gets a read-only one under `pull_request` regardless of `permissions:`.
+# `pull_request_target` is the only trigger that supplies a writable token for a
+# fork PR. check-runlogs.yml cannot use that trigger — it checks out and runs
+# PR-authored Python, and doing that with a write token in scope is the
+# textbook pwn-request. Splitting the write out is what lets each half hold the
+# trigger it can safely carry: the half that runs contributor code has no write,
+# and the half that writes runs no contributor code.
+#
+# Safe under `pull_request_target` for the usual two reasons: there is no
+# `actions/checkout` and the only PR input touched is the number, so nothing
+# fork-authored executes; and this file is read from the base branch, so a fork
+# cannot edit it in its own PR. Do not add a checkout here.
+#
+# No feedback loop: the removal is made with GITHUB_TOKEN, and GitHub does not
+# start a workflow run from a GITHUB_TOKEN-triggered event, so the `unlabeled`
+# event this produces re-triggers nothing.
+
+on:
+  pull_request_target:
+    types: [synchronize]
+
+permissions:
+  # Labels live on the issues API even for PRs, so `issues: write` is what
+  # actually authorizes this; `pull-requests: write` is granted alongside it for
+  # the same reason genealogist-queue.yml does — the mapping between the two is
+  # inconsistent enough that relying on one alone has bitten other repos.
+  issues: write
+  pull-requests: write
+
+jobs:
+  strip:
+    # Free pre-filter straight from the event payload: no API call, and the run
+    # list stays quiet on the overwhelming majority of pushes, which carry no
+    # label. A push that races the senior's labelling is not a concern — the
+    # bypass is already void for that commit either way (check-runlogs.yml
+    # decides it from the event), and the next push strips the label.
+    if: contains(github.event.pull_request.labels.*.name, 'eval-cosmetic-skip')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Drop the stale cosmetic-skip label
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # `|| true`: a concurrent removal (or a senior pulling it by hand
+          # first) makes this a no-op, and gh exits non-zero when the label is
+          # already gone. Nothing here is load-bearing enough to fail a PR over.
+          gh pr edit "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --remove-label "eval-cosmetic-skip" || true

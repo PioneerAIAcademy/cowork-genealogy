@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 2, flag adds_son, confidence 3). Draft transcribed from a Massachusetts vital record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 2, flag adds_son, confidence 3). Resolved 2026-07-27: true match, confirmed by a genealogist against the death record naming Mary Kavanagh as mother."
 }

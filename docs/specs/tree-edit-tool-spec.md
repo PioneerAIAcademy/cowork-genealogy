@@ -87,6 +87,17 @@ denies every rename/rewrite/delete at the tool boundary — enforcement is
 allowlist-level everywhere (Cowork `allowed-tools`, agent `tools:`
 frontmatter, the eval harness), not per-run validator prose.
 
+**Granularity ceiling — splitting the tool is the only lever.** Authorization
+here is whole-tool. There is no `allowedOperations` caller contract, so a
+context can be granted `tree_edit` or denied it, but cannot be granted a
+*subset* of its ops. A finer split — say `add_name` but not `add_person` — has
+no mechanism today except splitting the tool a second time, the way
+`tree_correct` was split out of `tree_edit`. That ceiling is deliberate rather
+than an oversight: the guarantee holds precisely because it is enforced at
+allowlist level on all three binding surfaces named above, and a per-op contract
+would have to be re-implemented and re-verified in each of them. Reach for
+another tool split before reaching for per-op authorization.
+
 Both tools keep identical batched `ops`, id rules, validate-on-write, and
 `.bak` semantics (everything in §4–§7). An op sent to the wrong tool is
 rejected before anything is applied, with a redirect naming the sibling tool
@@ -339,6 +350,17 @@ non-empty array ```). Not a supported call form — callers should pass real JSO
 it stops a correct-but-stringified batch from being rejected into a slow
 one-op-per-call fallback. `research_append` applies the same tolerance to its
 `ops`/`entry`/`fields`; see that spec (§3.3) for the originating rationale.
+
+**Singular `name` → `names[]` lift (`add_person`).** The same category of shape
+slip, and it was the single largest driver of recovered validation retries
+(observed on ~15% of `add_person` calls, ut_001/ut_003): the model supplies
+`name: {given, surname, preferred?}` where the schema wants `names: [{…}]`. The
+tool lifts the object into a single-element array before validation. **Shape
+only** — object → one-element array; no flat-string parsing, no name content
+inferred or invented. Supplying **both** `name` and `names` is rejected loudly
+(`add_person: supply `names` (an array) OR a single `name`, not both`) rather
+than silently resolving one, because the downstream one-preferred normalizer
+would otherwise receive ambiguous input.
 
 ---
 

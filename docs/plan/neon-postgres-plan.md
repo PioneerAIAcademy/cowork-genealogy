@@ -1,7 +1,8 @@
 # Neon Postgres on Fly, SQLite locally — DB backend plan
 
-**Date:** 2026-06-06. **Branch:** `hosted-web-workbench`. **Read with:**
-`fly-deploy-plan.md` (the deploy this amends), `realtime-rearch-status.md`
+**Date:** 2026-06-06. **Branch:** merged to `main` — the `hosted-web-workbench`
+branch this was written on no longer exists. **Read with:**
+`fly-deploy-plan.md` (the deploy this amends), `docs/realtime-rearch-status.md`
 (current state). **Touches:** `apps/server/app/{config,db,models,main}.py`,
 `apps/server/pyproject.toml`, `deploy/fly.toml`.
 
@@ -199,7 +200,7 @@ Fly is on Neon and local is on SQLite.
   (`fly volumes destroy …`).
 - **Realtime stays `local_ws` for the Fly alpha** (this container relays `/ws`).
   The affinity-free hosted path is `REALTIME=sandbox_ws` — the relay moves *into*
-  the sandbox (see `ably-realtime-migration.md`); Ably is no longer used.
+  the sandbox (see `docs/realtime-architecture.md`); Ably is no longer used.
 
 ## What this does and doesn't unblock
 
@@ -221,7 +222,7 @@ So `fly scale count > 1` needs one more piece beyond this plan:
   authenticated WSS the browser connects to directly; `agent_runner`'s stdio
   protocol is unchanged. The control plane holds **zero** per-session state, so any
   instance serves any request. Ably is dropped. **This is the committed fix** — see
-  `ably-realtime-migration.md`.
+  `docs/realtime-architecture.md`.
 - ~~**Fly session-sticky routing** as a stopgap~~ — **superseded.** Production
   runs on AWS behind a standard load balancer with **no sticky routing**
   allowed, so affinity must be removed, not routed around. Do not rely on sticky
@@ -237,7 +238,7 @@ runs the schema+seed once, before any Machine starts.
 Then `auto_stop_machines` / `min_machines_running` / concurrency limits are retuned
 for multi-Machine. Update `fly-deploy-plan.md`'s "Horizontal-scaling caveat": the
 **DB** blocker is cleared by this plan; the `LiveSession` pin (the
-sandbox-as-server fix in `ably-realtime-migration.md`) is the real remaining one.
+sandbox-as-server fix in `docs/realtime-architecture.md`) is the real remaining one.
 
 ---
 

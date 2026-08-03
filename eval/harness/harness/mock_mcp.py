@@ -89,6 +89,7 @@ LIVE_TOOLS: set[str] = {
     "tree_edit",
     "tree_correct",
     "materialize_facts",
+    "merge_warnings",
     "project_context",
     # Read-only projection over the workspace's own research.json — same shape
     # as project_context, and deterministic, so mocking it would only invite
@@ -425,6 +426,10 @@ def _make_live_handler(
     if tool_name == "materialize_facts":
         return _make_compiled_tool_handler(
             "materialize_facts", "materialize-facts.js", "materializeFacts", workspace, call_log
+        )
+    if tool_name == "merge_warnings":
+        return _make_compiled_tool_handler(
+            "merge_warnings", "merge-warnings.js", "mergeWarnings", workspace, call_log
         )
     if tool_name == "project_context":
         return _make_compiled_tool_handler(
