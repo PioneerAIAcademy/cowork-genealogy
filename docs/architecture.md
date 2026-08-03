@@ -204,7 +204,9 @@ The four agents are `gps-mentor`, `record-extractor`, `image-reader`, and
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
 > (`.claude/agents/`, which are developer tooling for this repo — today
-> `rubric-critic` and `skill-improver`).
+> `plan-critic`, `rubric-critic`, `skill-improver`, and `task-reviewer`). The
+> dual-spelling rule in §5.2 applies to plugin agents only; these declare bare
+> tool names.
 
 ### 3.1 The most important rule in this repo: anchor rules structurally
 
@@ -1255,4 +1257,4 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 | A user submitted a feedback zip | [`alpha-feedback-guide.md`](alpha-feedback-guide.md), then [`feedback-case-spec.md`](specs/feedback-case-spec.md) |
 | The hosted web product | [`hosted-web-workbench-spec.md`](specs/hosted-web-workbench-spec.md), [`sandbox-provider-spec.md`](specs/sandbox-provider-spec.md), [`realtime-architecture.md`](realtime-architecture.md) (reasoning, not current state) |
 | I'm a genealogist, not a developer | `eval/JUNIOR-WALKTHROUGH.md`, `eval/SENIOR-WALKTHROUGH.md` |
-| What work is queued but not yet started? | The **Backlog column** on the project board. `docs/TODOs.md` was retired 2026-08-02 (#1163) — its 54 items became issues #1117–#1157. Deferred work goes straight to an issue; there is no staging file. |
+| What work is queued but not yet started? | The **Backlog column** on the project board. The repo's staging queue was retired 2026-08-02 (#1163) — its 54 items became issues #1117–#1157. Deferred work goes straight to an issue; there is no staging file. |

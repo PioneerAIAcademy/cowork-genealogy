@@ -14,9 +14,9 @@ item that gets picked up should get its own plan or issue.
 **Evidence base.** 133 committed e2e runs (`eval/runlogs/e2e/`), the latest unit
 run log for the 25 skills with suites, the specs under `docs/specs/`, the
 measured performance work in `docs/plan/research-performance-2026-07-27.md`, the
-plugin bodies, the packaging lints, and ~170 open issues (115 before `docs/TODOs.md`'s 54 items were filed as
-#1117-#1157 on 08-02). Numbers cited are reproducible from the repo —
-see §7.
+plugin bodies, the packaging lints, and ~170 open issues (115 before the retired
+staging queue's 54 items were filed as #1117-#1157 on 08-02). Numbers cited are
+reproducible from the repo — see §7.
 
 > **rev. 5 supersedes rev. 4 after a fourth, deliberately narrow pass** — a
 > fresh-eyes attack on only the rev. 4 diff, because each revision's errors
@@ -732,7 +732,7 @@ spike shows, most of the router's body is *not* that doctrine and cannot move.
 
 **Governance: at the edge.** 55 specs, 284 MB of tracked run logs, ~170 open
 issues, and a CLAUDE.md that is itself a load-bearing operating manual. (This
-count included a 577-line `docs/TODOs.md` when written; it was retired
+count included a 577-line staging-queue file when written; it was retired
 2026-08-02, its 54 items becoming issues #1117–#1157 — which is why the open-issue
 figure jumped rather than fell.) Defensible when the prompt is the product; but the marginal
 doc now costs more to keep current than it returns.

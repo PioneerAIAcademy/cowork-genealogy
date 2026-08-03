@@ -2,8 +2,8 @@
 
 > **Status:** proposed (2026-07-16), branch `image-read-context-policy`, merged up
 > to main `6829b087` (#715/#712/#714). **Premise probe-verified — see §3.1.** This
-> supersedes an earlier `docs/TODOs.md` framing (that file was retired 2026-08-02;
-> the surviving item is issue #1130), whose central premise — *"no environment can
+> supersedes an earlier framing from the retired staging queue (the surviving
+> item is issue #1130), whose central premise — *"no environment can
 > currently deny a main session a tool an agent needs"* — is **false as written**.
 > It is true of the *allowlist* layer and false of the *hook* layer.
 > The consequence is large: this is not an open design question needing a
@@ -382,8 +382,8 @@ and cite it rather than re-arguing the philosophy.
 
 Docs to fix:
 
-- ~~`docs/TODOs.md:120-125`~~ — done: the file was retired 2026-08-02 and the item
-  survives, re-scoped to production per §5, as issue #1130.
+- ~~The staging queue's entry~~ — done: the file was retired 2026-08-02 and the
+  item survives, re-scoped to production per §5, as issue #1130.
 - `docs/specs/unit-test-spec.md:1529-1542` — stale (line refs shifted ~+14 by #715's
   §5.10 insertion; verify before editing). Its `compute_allowed_tools` pseudocode is
   `return baseline + declared` — missing **both** the agent-union step
