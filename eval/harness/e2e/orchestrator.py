@@ -581,12 +581,14 @@ async def _run_agent(
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
 ) -> tuple[
-    list[dict[str, Any]],
-    list[str],
-    dict[str, Any],
-    str | None,
-    str | None,
-    list[dict[str, Any]],
+    list[dict[str, Any]],  # tool_calls
+    list[str],  # transcript_chunks
+    dict[str, Any],  # usage
+    str | None,  # aborted_reason
+    str | None,  # error
+    list[dict[str, Any]],  # blocked_tree_reads
+    list[dict[str, Any]],  # blocked_context_calls
+    list[dict[str, Any]],  # guardrail_shadow_violations
 ]:
     """Spawn the agent SDK and consume messages until done or capped.
 
