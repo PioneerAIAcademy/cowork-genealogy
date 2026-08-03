@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Not recovered. The final tree has 6 persons and no Sampson of any kind; Martha (LKYG-VKB) has no parent attached, so there is no maternal grandfather asserted at all. Surname 'Sampson' appears zero times in the agent's tool arguments. Worth crediting separately: the agent did NOT over-claim the compiled tree's M M Wood, unlike the 2026-07-24 run — its proof summary states plainly that no examined record names Martha's parents. That is correct restraint on this fixture's central trap, so 'false' here is a recall miss, not an over-claim.",
+    "f2": "Not recovered, same basis as f1 — no Louisa Sampson and no mother attached to Martha. Recording the near-miss because it is the useful calibration signal: the agent resolved Martha to three married surnames (Martha J Wood / Martha J Hamby / Mattie Landham) and documented an 1888 Hamby marriage, so it had assembled the 'none of these is her maiden name' wedge. It never searched Arkansas for the couple's own marriage, which is the one record (1875 Nevada Co., AR) that yields Sampson. Every marriage search was anchored to Hill County, Texas, the later residence the starting tree's R1 marriage fact points at."
+  },
+  "annotator": "edesonchristopher@gmail.com"
+}

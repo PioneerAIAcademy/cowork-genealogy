@@ -25,7 +25,7 @@ in code yet.
 ## Step 2 — Summarize and confirm scope
 
 Summarize what changed in 2–4 plain-prose bullets, in the dev's terms
-("shipped the search tool", "added the spec-review agent", "renamed X
+("shipped the search tool", "added the rubric-critic agent", "renamed X
 to Y"). Don't list every file — group by intent.
 
 Then use `AskUserQuestion` to confirm:

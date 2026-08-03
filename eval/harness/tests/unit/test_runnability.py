@@ -194,6 +194,45 @@ def test_blocks_when_negative_correct_skill_has_typo(tmp_path):
     assert "not an existing skill" in result.reason
 
 
+def _stub_check(execution):
+    d = _runnable_test_dict()
+    d["execution"] = execution
+    return check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+    )
+
+
+@pytest.mark.parametrize(
+    "entry",
+    [
+        "search-external-site",  # typo: missing trailing 's'
+        {"skill": "search-external-site", "response": "Ancestry: https://x"},
+    ],
+    ids=["bare-string-form", "canned-response-form"],
+)
+def test_blocks_when_stub_skills_names_a_nonexistent_skill(entry):
+    """A stub is matched by exact name in the PreToolUse hook, so a typo is a
+    silent no-op — the callee runs for real and the run log looks identical to
+    a working stub. Both declared forms must be gated."""
+    result = _stub_check({"stub_skills": [entry]})
+    assert result.runnable is False
+    assert "search-external-site" in result.reason
+    assert "not an existing skill" in result.reason
+
+
+def test_allows_stub_skills_naming_a_real_skill():
+    result = _stub_check(
+        {"stub_skills": ["search-external-sites", {"skill": "record-extraction"}]}
+    )
+    assert result.runnable is True
+
+
+@pytest.mark.parametrize("execution", [{}, {"stub_skills": []}, {"max_turns": 35}])
+def test_stub_skills_gate_is_inert_when_nothing_is_declared(execution):
+    assert _stub_check(execution).runnable is True
+
+
 def _invariant_test_dict(tags):
     d = _runnable_test_dict()
     d["test"]["type"] = "negative"

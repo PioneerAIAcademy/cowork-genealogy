@@ -13,7 +13,9 @@ plane is a thin, stateless auth + lifecycle layer; **Ably is removed entirely.**
 Long-term, research is uploaded to the user's FamilySearch tree — FamilySearch is
 the eventual durable system-of-record (see §6).
 
-**Branch:** `hosted-web-workbench`.
+**Where the code is:** **merged to `main`** — `apps/server`, `apps/web`, and
+`packages/{schema,viewer-ui}` all live there now. The `hosted-web-workbench`
+branch this was written on no longer exists; do not go looking for it.
 **Filename note:** kept as `docs/realtime-architecture.md` for cross-reference
 continuity even though the conclusion is to *drop* Ably; rename can happen
 separately.
@@ -26,6 +28,11 @@ references were updated to point here), `docs/plan/fly-deploy-plan.md` (likewise
 ---
 
 ## 1. The problem this solves — control-plane session affinity
+
+> **Tense note:** the present tense below describes the design *as it stood
+> before* the re-architecture, and is kept because the affinity bug is the whole
+> reason for §2. The code it names — `ws.py`, `live_session.py` — has since been
+> deleted (see `realtime-rearch-status.md` C5); don't go looking for it.
 
 Today the browser holds one WebSocket to the control plane (`apps/server/app/ws.py`)
 at `/ws/sessions/{id}`. On that socket the control plane multiplexes outbound
