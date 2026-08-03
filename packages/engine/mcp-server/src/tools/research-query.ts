@@ -208,8 +208,15 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     // as a ResearchQueryError so the catch returns the tool's { ok:false } shape
     // (a plain Error would escape to index.ts as a different { error } shape).
     if (input.offset !== undefined && (!Number.isInteger(input.offset) || input.offset < 0)) {
+      // JSON.stringify renders NaN and Infinity as `null`, which would make the
+      // message name a value the caller never sent; Number.isFinite picks those
+      // off. Everything else keeps JSON.stringify so a string "50" stays quoted.
+      const got =
+        typeof input.offset === "number" && !Number.isFinite(input.offset)
+          ? String(input.offset)
+          : JSON.stringify(input.offset);
       throw new ResearchQueryError(
-        `offset must be a non-negative whole number (got ${JSON.stringify(input.offset)}). ` +
+        `offset must be a non-negative whole number (got ${got}). ` +
           `Send it as a number, not a string.`,
       );
     }
