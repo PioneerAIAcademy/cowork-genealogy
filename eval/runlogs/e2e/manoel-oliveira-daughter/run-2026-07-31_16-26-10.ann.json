@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Person correctly identified and sourced (I1: Josefa Dias Da Conceição, sourced to S1), but the tree contains no relationship connecting her to Manoel Melquiades de Oliveira / Cândida de Oliveira as parents, and no Couple/Marriage relationship to Elfridio Justino Da Silva (who is not a tree person at all). The finding requires both the parent-child relationship and the marriage fact; neither was encoded."
+  },
+  "annotator": "Ikennaya1"
+}
