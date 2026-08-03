@@ -75,17 +75,22 @@ falsely blocking installs.
 ### Tool list (`tools`)
 
 Every tool registered in `src/index.ts`'s `ListTools` handler MUST appear
-in `manifest.tools`, and no extras. As of this spec the set is the 19
-tools below; the drift test enforces equality with `allToolSchemas`
-(`src/tool-schemas.ts`):
+in `manifest.tools`, and no extras.
 
-```
-wikipedia_search, place_search, login, logout, auth_status,
-collections_search, collection_read, wiki_search, place_distance,
-place_population, external_links_search, image_read, record_search,
-same_person, person_read, fulltext_search, wiki_read, wiki_place_page,
-validate_research_schema
-```
+**This spec deliberately does not enumerate the set.** It used to, and the
+enumeration went stale twice over — the prose said 19 in one place and 21 in
+another while the live list had grown to 47, because a hand-copied list has no
+reason to track a growing registry. The contract is the equality, not a
+snapshot of it:
+
+- `tests/packaging/manifest.test.ts` asserts `manifest.tools` == `allToolSchemas`
+  (`src/tool-schemas.ts`), both directions.
+- The same file asserts every registered tool has a dispatch case in
+  `src/index.ts` (issue #1164) — advertised-but-undispatchable is the failure
+  the list-equality check alone cannot see.
+
+For the current set, read `allToolSchemas`, or `README.md`'s tables for the
+user-facing catalog.
 
 ---
 
@@ -143,7 +148,8 @@ Output: `releases/genealogy-mcp.mcpb` (gitignored via `releases/*`).
    is absent (per the Bundle contract).
 3. Launch `node build/index.js` from the unpacked dir and drive a
    JSON-RPC `initialize` → `initialized` → `tools/list` handshake over
-   stdio. Assert the response lists exactly the 21 tools above.
+   stdio. Assert the response lists exactly the tools in `allToolSchemas`
+   — derive the expectation, never a pasted count.
 
 This proves the packed artifact — not just the source tree — boots and
 advertises its tools, which is the closest programmatic stand-in for an
