@@ -1,6 +1,6 @@
 """E2e result schema and persistence.
 
-A run produces four artifacts under eval/runlogs/e2e/<test-id>/, named by
+A run produces three artifacts under eval/runlogs/e2e/<test-id>/, named by
 outcome (see runlog_prefix):
 
 - a gradeable run (verdict pass / partial / fail) uses the committable
@@ -12,10 +12,10 @@ outcome (see runlog_prefix):
   tree, so there is nothing to grade) uses `scratch_<timestamp>.*`, which
   `.gitignore` keeps out of version control.
 
-The four files per run ({prefix} = `run-` or `scratch_`):
+The three files per run ({prefix} = `run-` or `scratch_`):
 
-- {prefix}<timestamp>.json — structured result (this module)
-- {prefix}<timestamp>.transcript.md — human-readable transcript
+- {prefix}<timestamp>.json — structured result (this module), including the
+  ordered `narration` stream that replaced the old `.transcript.md`
 - {prefix}<timestamp>.final-tree.gedcomx.json — agent's final tree
 - {prefix}<timestamp>.final-research.json — agent's final research.json
 
@@ -36,7 +36,10 @@ from typing import Any
 # `axes_from_runlog` has to do for pre-v1 logs (see that function).
 #   1 — the three-axis split: top-level `compliance` / `outcome` /
 #       `guardrail_bypass_violations` (GitHub issue #972).
-HARNESS_SCHEMA_VERSION = 1
+#   2 — `narration` replaces the `.transcript.md` artifact. A v1 run has no
+#       `narration` key and no transcript to fall back on if it was pruned;
+#       readers must treat it as absent, not empty-by-choice.
+HARNESS_SCHEMA_VERSION = 2
 
 
 @dataclass
@@ -99,6 +102,19 @@ class E2eResult:
     # In every case the call was denied, so it never reaches `tool_calls` —
     # this list is the only record that it was attempted.
     blocked_tree_reads: list[dict[str, Any]] = field(default_factory=list)
+
+    # The agent's prose between tool calls, plus the two harness-side events
+    # that only mean anything in trace order (a denied tool, a continue-nudge).
+    # Entries are {after_tool_index, kind, text} with kind in
+    # {assistant, blocked, harness}; `after_tool_index` is len(tool_calls) at
+    # the moment it happened, so the stream replays against tool_calls without
+    # being interleaved into it.
+    #
+    # This replaces the `.transcript.md` artifact (removed 2026-08-03). That
+    # file was 93% a re-render of tool_calls; the assistant prose was the only
+    # thing it held that lived nowhere else, and diagnosing a mid-loop yield or
+    # a stall needs that prose *in position* — see issue #1104.
+    narration: list[dict[str, Any]] = field(default_factory=list)
 
     # Compact per-subagent transcript summaries (agent_type, per-turn
     # stop_reason / output_tokens / block shape, and a `runaway_thinking` flag).
@@ -297,25 +313,22 @@ def write_result_files(
     *,
     result: E2eResult,
     runlog_dir: Path,
-    transcript: str,
     final_tree: dict[str, Any] | None,
     final_research: dict[str, Any] | None,
     timestamp: str | None = None,
 ) -> dict[str, Path]:
-    """Write the four committed artifacts. Returns the paths written."""
+    """Write the three committed artifacts. Returns the paths written."""
     runlog_dir.mkdir(parents=True, exist_ok=True)
     ts = timestamp or timestamp_slug()
     stem = f"{runlog_prefix(result.verdict)}{ts}"
 
     paths = {
         "result": runlog_dir / f"{stem}.json",
-        "transcript": runlog_dir / f"{stem}.transcript.md",
         "tree": runlog_dir / f"{stem}.final-tree.gedcomx.json",
         "research": runlog_dir / f"{stem}.final-research.json",
     }
 
     paths["result"].write_text(json.dumps(asdict(result), indent=2), encoding="utf-8")
-    paths["transcript"].write_text(transcript, encoding="utf-8")
     if final_tree is not None:
         paths["tree"].write_text(json.dumps(final_tree, indent=2), encoding="utf-8")
     if final_research is not None:

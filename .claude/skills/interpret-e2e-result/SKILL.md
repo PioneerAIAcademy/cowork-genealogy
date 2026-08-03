@@ -1,7 +1,7 @@
 ---
 name: interpret-e2e-result
 model: claude-sonnet-4-6
-description: Reads an e2e benchmark run log and explains what happened — which expected findings the agent recovered and which it missed (read from its final tree, not the judge's grade), what proof conclusion it wrote, why it stopped, and the most likely cause (agent reasoning regression, /research routing regression, sub-skill regression, FamilySearch data drift, or single-run jitter). Points the user at the right transcript section to read next. Use when the user says "what happened in this e2e run", "interpret this e2e result", "why did this fixture fail", or "read the latest e2e runlog". Do NOT use to author or modify a fixture (use author-e2e-fixture), to interpret a unit-test scratch run (those are developer-facing — read the run log directly), to grade a single research question in a live project (use the relevant analysis skills like timeline or conflict-resolution), or to grade this run into its calibration annotation (use grade-e2e-run — this skill only explains the result and never writes the .ann.json).
+description: Reads an e2e benchmark run log and explains what happened — which expected findings the agent recovered and which it missed (read from its final tree, not the judge's grade), what proof conclusion it wrote, why it stopped, and the most likely cause (agent reasoning regression, /research routing regression, sub-skill regression, FamilySearch data drift, or single-run jitter). Points the user at the exact tool call and narration turn to read next. Use when the user says "what happened in this e2e run", "interpret this e2e result", "why did this fixture fail", or "read the latest e2e runlog". Do NOT use to author or modify a fixture (use author-e2e-fixture), to interpret a unit-test scratch run (those are developer-facing — read the run log directly), to grade a single research question in a live project (use the relevant analysis skills like timeline or conflict-resolution), or to grade this run into its calibration annotation (use grade-e2e-run — this skill only explains the result and never writes the .ann.json).
 ---
 
 # Interpret E2E Result
@@ -9,14 +9,13 @@ description: Reads an e2e benchmark run log and explains what happened — which
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` if one exists in the working folder; otherwise default to concise narration.
 
 Reads the files an e2e run produces and tells the user what happened in
-plain language, with pointers to the relevant transcript section.
+plain language, with pointers to the exact turn to read.
 
-Each run writes four files to `eval/runlogs/e2e/<test-id>/`:
+Each run writes three files to `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<ts>.json` | Structured result. **Read only the harness facts from it — `stop_reason`, `tool_calls[]`, `usage`, `blocked_tree_reads[]`, `error`, `compliance`, `guardrail_bypass_violations[]`. Do NOT read `judge_output`, `verdict`, or `outcome` (see "Stay blind to the judge").** |
-| `run-<ts>.transcript.md` | Readable transcript of the agent's turns |
+| `run-<ts>.json` | Structured result. **Read only the harness facts from it — `stop_reason`, `tool_calls[]`, `narration[]`, `usage`, `blocked_tree_reads[]`, `error`, `compliance`, `guardrail_bypass_violations[]`. Do NOT read `judge_output`, `verdict`, or `outcome` (see "Stay blind to the judge").** |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — the ground truth for what it recovered |
 | `run-<ts>.final-research.json` | The agent's final `research.json`, including the proof conclusion it wrote |
 
@@ -69,7 +68,7 @@ tool counts, and cost come from `run-<ts>.json` (harness fields only). What the
 agent found / missed comes from the final tree vs `expected-findings.json`.
 Anything more specific — *which* collections were searched, *which* records were
 found, *which* index confirmed a date — must come from
-`tool_calls[].args`/`response_summary`, the transcript, or `final-research.json`
+`tool_calls[].args`/`response_summary`, `narration[]`, or `final-research.json`
 (the agent's proof summaries and log entries name the actual sources, with ARKs
 — quote/cite those). If a specific source name isn't in any of those files,
 don't assert it; a plausible-sounding collection name you didn't actually read
@@ -99,7 +98,8 @@ not quote a judge verdict; describe what you see:
 - **None present** — the run recovered nothing. The agent stalled or went
   sideways; `stop_reason` usually explains.
 - **No tree at all** (`run-<ts>.final-tree.gedcomx.json` missing) — the agent
-  crashed before producing tree state. Read the transcript for the crash.
+  crashed before producing tree state. Read the last `narration` entries and
+  `error` for the crash.
 
 For a fixture with **negative findings** (`polarity: "avoid"` in
 `expected-findings.json`), the correct outcome is the tree **not** asserting the
@@ -155,7 +155,7 @@ overall — that is the `outcome` gate, which is judge-derived and off-limits.
 
 If the fixture has a `provided-documents/` folder (bundled external
 captures — Ancestry PDFs, Find A Grave pages the FS tools can't reach),
-check the transcript / `tool_calls` for `Read` of those filenames. **How
+check `tool_calls` for `Read` of those filenames. **How
 the answer was obtained is part of the result**, so say it plainly:
 
 - **A finding came from a provided PDF** — note it (e.g. "the burial
@@ -166,7 +166,7 @@ the answer was obtained is part of the result**, so say it plainly:
   capability against FamilySearch.
 - **A provided doc the run needed was never read** — flag it: the agent
   may have missed the bundled evidence, which can explain a miss the
-  transcript otherwise makes look like a search failure.
+  tool calls otherwise make look like a search failure.
 
 If the fixture has no `provided-documents/`, skip this step.
 
@@ -179,13 +179,14 @@ Translate `stop_reason` into something a researcher can act on:
 - `natural_end` — SDK ended the conversation but the agent didn't
   declare done. Either the agent thought it was done without setting
   the flag (skill regression), or the conversation drifted to silence.
-  Check the last few transcript turns.
+  Check the last few `narration` entries.
 - `inactivity` — agent went silent for the inactivity cap window
-  (default ~10 min). It's stuck. Find the last tool call in the
-  transcript; the issue is usually right after it.
+  (default ~10 min). It's stuck. Find the last entry in `tool_calls`;
+  the `narration` entry with the matching `after_tool_index` is usually
+  where the issue shows.
 - `timeout` — wall-clock cap fired (default 60 min). Either the
   question is too big for the cap or the agent looped. Skim the tail
-  of the transcript for repeating tool-call patterns.
+  of `tool_calls` for repeating patterns.
 - `tool_cap` — agent hit the per-run tool-call cap (default 200).
   Almost always means looping. Read the last 20 tool calls; the loop
   shape is usually obvious.
@@ -194,7 +195,7 @@ Translate `stop_reason` into something a researcher can act on:
 - `max_turns` — SDK turn limit fired. Rare; usually means a
   conversational loop rather than a tool loop.
 - `error` — SDK or harness exception. Read `result.error` for the
-  message and the transcript for the surrounding context.
+  message and the last `narration` entries for the surrounding context.
 
 ### Step 4 — Compare expected vs found (when the tree is missing some findings)
 
@@ -211,9 +212,10 @@ agent's `run-<ts>.final-tree.gedcomx.json` and decide:
   somewhere the finding's shape doesn't expect (e.g. on a stub person
   rather than the principal). Diagnosis: finding shape, not agent capability.
 
-For each `missed` finding, search the transcript for the relevant
-person name or place. The agent often *touched* the right evidence
-but didn't conclude from it; that turn is the diagnostic moment.
+For each `missed` finding, search `narration[].text` and
+`tool_calls[].args`/`response_summary` for the relevant person name or
+place. The agent often *touched* the right evidence but didn't conclude
+from it; that turn is the diagnostic moment.
 
 ### Step 5 — Identify the most likely cause
 
@@ -226,7 +228,7 @@ useful questions are about *this* run:
 - **It never researched** — the agent stopped after setup (e.g. wrote a
   question, then `stop_reason: natural_end` with no `record_search` /
   `fulltext_search` in `tool_calls`). The GPS loop didn't advance.
-  Pointer: tool counts (no FS search tools) + the last transcript turn.
+  Pointer: tool counts (no FS search tools) + the last `narration` entry.
 - **It ran out of budget** — `stop_reason` is `max_turns` / `timeout` /
   `tool_cap` / `cost_cap`. It researched but didn't finish. Pointer: high
   turn/tool counts; check whether `proof-conclusion` was ever reached.
@@ -270,8 +272,8 @@ ambiguity:
 - Re-run the fixture (cheap and decisive if you suspect jitter).
 - Diff against the last passing run log (cheap; commits make this
   easy).
-- Open the transcript at a specific turn (point the user at the
-  line number or the tool-call index).
+- Point the user at a specific turn (the `tool_calls` index, and the
+  `narration` entry whose `after_tool_index` matches).
 - Update the fixture's `README.md` to record what shifted if it
   looks like FS data drift.
 - File a regression issue if the cause looks like an agent or
@@ -312,7 +314,7 @@ You should:
 2. Read `eval/tests/e2e/<slug>/expected-findings.json` and the
    final tree; the tree contains **none** of the required findings.
 3. See `stop_reason: tool_cap`.
-4. Skim the last 30 tool calls in the transcript — agent is looping
+4. Skim the last 30 entries in `tool_calls` — agent is looping
    on `place_search` for "Augusta County" with three near-duplicate
    queries.
 5. Tell the user: "Recovered none of the required findings; stopped at the

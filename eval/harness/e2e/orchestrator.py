@@ -564,12 +564,21 @@ async def _run_agent(
 ]:
     """Spawn the agent SDK and consume messages until done or capped.
 
-    Returns (tool_calls, transcript_chunks, usage, aborted_reason, error,
+    Returns (tool_calls, narration, usage, aborted_reason, error,
     blocked_tree_reads, guardrail_shadow_violations,
     unnamed_delegate_violations).
     """
     tool_calls: list[dict[str, Any]] = []
-    transcript: list[str] = []
+    # The agent's prose between tool calls, plus the two harness-side events
+    # that only make sense in trace order (a denied tool, a continue-nudge).
+    # Each entry carries `after_tool_index` = len(tool_calls) at the moment it
+    # happened, which is what makes the stream reconstructible against
+    # tool_calls without being interleaved *into* it — that would break the
+    # specced {tool, args, response_summary} entry shape and, worse, shift the
+    # index windows find_unguarded_protected_writes() and recently_succeeded()
+    # compute (skill_invocation.py), silently changing the §7 shadow-window
+    # violation rate between old and new runs.
+    narration: list[dict[str, Any]] = []
     pending_tool_uses: dict[str, dict[str, Any]] = {}
     # docs/specs/guardrail-enforcement-spec.md §11, "Step 0" — every
     # tool_use_id's (agent_id, agent_type) as PreToolUse saw it, joined onto
@@ -715,9 +724,15 @@ async def _run_agent(
                     "blocked_by": "tree",
                 }
             )
-            transcript.append(
-                f"\n**[BLOCKED]** `{bare}` denied — tree-reading tools are "
-                "disabled in e2e runs; recover the answer from records.\n"
+            narration.append(
+                {
+                    "after_tool_index": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied — tree-reading tools are disabled in "
+                        "e2e runs; recover the answer from records."
+                    ),
+                }
             )
             _emit(f"[blocked tree-read] {bare}")
             return {
@@ -740,9 +755,15 @@ async def _run_agent(
                     "blocked_by": "fixture",
                 }
             )
-            transcript.append(
-                f"\n**[BLOCKED]** `{bare}` denied — disabled by this fixture "
-                "(fixture.json `blocked_tools`).\n"
+            narration.append(
+                {
+                    "after_tool_index": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied — disabled by this fixture "
+                        "(fixture.json `blocked_tools`)."
+                    ),
+                }
             )
             _emit(f"[blocked fixture tool] {bare}")
             return {
@@ -790,10 +811,16 @@ async def _run_agent(
             return {}
         continue_nudges["n"] += 1
         last_nudge_activity_count["n"] = activity_count["n"]
-        transcript.append(
-            f"\n**[HARNESS]** continue-nudge {continue_nudges['n']}/"
-            f"{fixture.caps.max_continue_nudges}: agent yielded before "
-            "project.status=='completed'; instructing it to resume the loop.\n"
+        narration.append(
+            {
+                "after_tool_index": len(tool_calls),
+                "kind": "harness",
+                "text": (
+                    f"continue-nudge {continue_nudges['n']}/"
+                    f"{fixture.caps.max_continue_nudges}: agent yielded before "
+                    "project.status=='completed'; instructing it to resume the loop."
+                ),
+            }
         )
         _emit(
             f"[continue-nudge {continue_nudges['n']}/"
@@ -888,7 +915,6 @@ async def _run_agent(
     )
 
     user_message = _render_user_message(fixture)
-    transcript.append(f"# E2e run: {fixture.id}\n\n## User message\n\n```\n{user_message}\n```\n\n## Trace\n")
 
     def _should_resume() -> bool:
         # Resume only in a provably-safe state: the flag is on, we have a session
@@ -941,10 +967,16 @@ async def _run_agent(
                     assistant_tool_names: list[str] = []
                     for block in message.content:
                         if isinstance(block, TextBlock):
-                            transcript.append(f"\n**assistant:** {block.text}\n")
-                            narration = " ".join(block.text.split())
-                            if narration:
-                                _emit(narration[:200])
+                            narration.append(
+                                {
+                                    "after_tool_index": len(tool_calls),
+                                    "kind": "assistant",
+                                    "text": block.text,
+                                }
+                            )
+                            one_line = " ".join(block.text.split())
+                            if one_line:
+                                _emit(one_line[:200])
                             progressed = True
                         elif isinstance(block, ToolUseBlock):
                             entry = {
@@ -956,10 +988,6 @@ async def _run_agent(
                             pending_tool_uses[block.id] = entry
                             assistant_tool_names.append(
                                 _timeline_tool_label(block.name, block.input)
-                            )
-                            args_short = _summarize_tool_response(block.input)
-                            transcript.append(
-                                f"\n**tool_use** `{block.name}` — args: {args_short}\n"
                             )
                             if block.name == "Skill":
                                 _emit(f">> skill: {(block.input or {}).get('skill', '?')}")
@@ -1001,7 +1029,6 @@ async def _run_agent(
                                     tool_result_names.append(
                                         _timeline_tool_label(entry["tool"], entry.get("args"))
                                     )
-                                transcript.append(f"\n**tool_result:** {summary}\n")
                                 progressed = True
                     timeline.append(
                         [round(now - run_started, 1), "tool_result", tool_result_names]
@@ -1178,7 +1205,7 @@ async def _run_agent(
 
     return (
         tool_calls,
-        transcript,
+        narration,
         usage,
         aborted_reason,
         error,
@@ -1195,7 +1222,7 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     to ``~/.claude/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
     the workspace tempdir, so it survives the TemporaryDirectory cleanup — but it
     is otherwise only discoverable by hand. It is strictly richer than the
-    runlog's own ``transcript.md`` (which is a lossy summary): only the JSONL has
+    runlog's own structured trace: only the JSONL has
     per-message timestamps, per-turn token/cache usage, thinking blocks, and
     untruncated tool payloads — everything needed to diagnose latency and cost.
 
@@ -1313,7 +1340,7 @@ async def run_e2e_test(
 
         (
             tool_calls,
-            transcript_chunks,
+            narration,
             usage,
             aborted,
             error,
@@ -1417,6 +1444,7 @@ async def run_e2e_test(
             error=error,
             tags=fixture.tags,
             blocked_tree_reads=blocked_tree_reads,
+            narration=narration,
             guardrail_bypass_violations=guardrail_bypass_violations,
             guardrail_shadow_violations=guardrail_shadow_violations,
             protected_writes_by_unnamed_delegate=unnamed_delegate_violations,
@@ -1427,14 +1455,13 @@ async def run_e2e_test(
         paths = write_result_files(
             result=result,
             runlog_dir=runlog_dir,
-            transcript="".join(transcript_chunks),
             final_tree=final_tree,
             final_research=final_research,
             timestamp=result.captured_at,
         )
 
-        # Copy the raw SDK session transcript next to the runlog. The runlog's
-        # transcript.md is a lossy summary; this JSONL carries per-message
+        # Copy the raw SDK session transcript next to the runlog. The runlog
+        # carries a summarized trace; this JSONL carries per-message
         # timestamps, per-turn token/cache usage, thinking, and untruncated
         # payloads. Best-effort — a missing session file never fails an
         # otherwise-successful run. Done inside the tempdir block so `workspace`

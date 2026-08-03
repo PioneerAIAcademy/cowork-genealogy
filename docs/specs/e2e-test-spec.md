@@ -821,8 +821,8 @@ parameter.
 
 Before the suite grows beyond the first fixture, sanity-check the
 judge prompt against the first run trace: if the judge's verdict
-diverges from what eyeballing the transcript would say, fix the
-prompt before adding more tests.
+diverges from what eyeballing `narration` + `tool_calls` would say, fix
+the prompt before adding more tests.
 
 ### 7.4 Judge calibration
 
@@ -966,8 +966,7 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result. The three axes first — `verdict` (genealogical), `compliance`, `guardrail_bypass_violations`, `outcome` (the gate), and `harness_schema_version`; see §7.2.1. Then `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; **`usage_source`** — `result_message` when the SDK's `ResultMessage` arrived (authoritative), or `streamed_fallback` when it did not. Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts the stream before that message, which used to leave `usage` with no turns, duration or tokens at all — blinding exactly the runs worth investigating. The fallback reconstructs the block from the streamed assistant messages: token counts are **exact** (deduplicated by message id — the SDK re-emits one message per content block, each copy repeating that message's cumulative usage, so summing on arrival multiplies the totals), `duration_ms` comes from the monotonic clock, and the distinct-message count is reported as `assistant_messages`. `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** in a fallback block rather than synthesized — the SDK counts turns differently from distinct assistant messages, only it knows the API/local split, and a run spans several models so one price lookup would be wrong. Never compare a `streamed_fallback` cost against a clean run's; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
-| `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
+| `run-<timestamp>.json` | Structured result. The three axes first — `verdict` (genealogical), `compliance`, `guardrail_bypass_violations`, `outcome` (the gate), and `harness_schema_version`; see §7.2.1. Then `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1); a `narration` array — each entry `{ after_tool_index, kind, text }` with `kind` in `assistant` / `blocked` / `harness`, carrying the agent's prose between tool calls plus the two harness-side events that only mean anything in trace order, anchored to the `tool_calls` index they followed (this replaced the `.transcript.md` artifact, removed 2026-08-03: that file was 93% a re-render of `tool_calls`, and the prose is the part that lived nowhere else). `usage` carries tokens / cost; **`usage_source`** — `result_message` when the SDK's `ResultMessage` arrived (authoritative), or `streamed_fallback` when it did not. Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts the stream before that message, which used to leave `usage` with no turns, duration or tokens at all — blinding exactly the runs worth investigating. The fallback reconstructs the block from the streamed assistant messages: token counts are **exact** (deduplicated by message id — the SDK re-emits one message per content block, each copy repeating that message's cumulative usage, so summing on arrival multiplies the totals), `duration_ms` comes from the monotonic clock, and the distinct-message count is reported as `assistant_messages`. `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** in a fallback block rather than synthesized — the SDK counts turns differently from distinct assistant messages, only it knows the API/local split, and a run spans several models so one price lookup would be wrong. Never compare a `streamed_fallback` cost against a clean run's; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
 | `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
@@ -1167,14 +1166,18 @@ changing anything, because the fix differs completely by cause.
 
 ### Evidence to read, in order
 
-1. **`run-<ts>.transcript.md`** — the agent's reasoning and tool calls in
-   order. Most failures are obvious here: it stopped, looped, or made the
-   wrong call.
+1. **`run-<ts>.json::narration` alongside `::tool_calls`** — the agent's
+   reasoning in order. Each narration entry is
+   `{after_tool_index, kind, text}` with `kind` one of `assistant` (the
+   agent's own prose), `blocked` (a denied tool), or `harness` (a
+   continue-nudge); `after_tool_index` is the position in `tool_calls` it
+   followed, so the two replay as one trace. Most failures are obvious
+   here: it stopped, looped, or made the wrong call.
 2. **`run-<ts>.final-tree.gedcomx.json`** — what the agent actually built,
    compared against `expected-findings.json`. Note that an answer recorded
    *only* outside the tree is an **agent failure**, not a judge miss (§7.1).
 3. **`stop_reason`** — `inactivity` / `timeout` means the agent stalled;
-   the transcript shows where. `tool_cap` / `max_turns` means it may be
+   the last `narration` entry shows where. `tool_cap` / `max_turns` means it may be
    looping — look for repeated similar tool calls near the end.
 4. **For a regression, diff `run-<ts>.json::tool_calls` against the last
    passing run.** Each entry carries `tool`, `args`, and `response_summary`:
@@ -1186,9 +1189,9 @@ changing anything, because the fix differs completely by cause.
 ### The run log has no `skills_invoked` field
 
 Unlike the unit-test run log, the e2e run log records no structured list of
-which sub-skills ran. To reconstruct the chain, scan the transcript for
-`Skill` tool-use blocks. Stated here because an absence cannot be inferred
-from §8's field enumeration.
+which sub-skills ran. To reconstruct the chain, filter `tool_calls` for
+entries whose `tool` is `Skill` and read `args.skill`. Stated here because an
+absence cannot be inferred from §8's field enumeration.
 
 ### Recording what you learned
 
