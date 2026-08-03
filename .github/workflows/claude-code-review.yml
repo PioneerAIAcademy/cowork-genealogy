@@ -58,9 +58,15 @@ jobs:
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
-          # Bills against the Claude subscription seat this token belongs to,
-          # not API credits. Swap to `anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}`
-          # to move CI spend onto the API bill instead — that secret is set.
+          # Deliberate: bills against the Claude subscription seat this token
+          # belongs to rather than API credits, which is what makes reviewing
+          # every PR affordable here. `ANTHROPIC_API_KEY` was considered and
+          # removed from this repo's secrets — do not reintroduce it for CI
+          # without deciding to move the spend.
+          #
+          # The tradeoff to know: this token is one person's, and it expires.
+          # When it does, every PR review starts failing at once — re-mint it
+          # with `/install-github-app` and update the secret.
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
