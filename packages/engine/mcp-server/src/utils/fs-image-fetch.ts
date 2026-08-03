@@ -26,6 +26,33 @@ const DGS_URL_PATTERN =
   /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
 const DOCUMENT_IMAGE_ARK_PATTERN = /^ark:\/61903\/3:[12]:[A-Za-z0-9.-]+$/;
 
+// A `3:1:`/`3:2:` ARK is not always self-sufficient: some are waypoints into
+// a multi-image film/register, and the bare resolver redirect can land on an
+// arbitrary image within that group rather than the one the caller means.
+// FamilySearch's own browser viewer disambiguates with query params — e.g.
+// .../ark:/61903/3:1:XXXX-XXX?lang=en&i=112&cc=1858355&groupId=1858355 — so
+// when the caller passes a full URL carrying these, forward them rather than
+// discarding them the way toArk()'s bare-ARK extraction otherwise would.
+// Confirmed live (2026-08-03): the bare ARK for a multi-image entry did not
+// resolve to any document at all without this context.
+const IMAGE_CONTEXT_PARAMS = ["i", "cc", "groupId"] as const;
+
+function extractImageContextQuery(raw: string): string {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return "";
+  }
+  const params = new URLSearchParams();
+  for (const key of IMAGE_CONTEXT_PARAMS) {
+    const value = url.searchParams.get(key);
+    if (value !== null) params.set(key, value);
+  }
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export interface FsImageInput {
   imageId?: string;
   ark?: string;
@@ -47,7 +74,7 @@ function arkToImageUrl(ark: string): string {
   }
   const canonical = toArk(ark);
   if (DOCUMENT_IMAGE_ARK_PATTERN.test(canonical)) {
-    return arkToUrl(canonical);
+    return arkToUrl(canonical) + extractImageContextQuery(ark);
   }
   throw new Error(
     "Unrecognized ark. Expected a FamilySearch document-image ARK " +
