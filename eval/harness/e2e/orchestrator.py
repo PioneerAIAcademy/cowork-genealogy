@@ -490,9 +490,14 @@ _RUNLOG_VERBATIM_MAX = 500
 # Still far under the judge tier's 2000, because that copy is a throwaway prompt
 # and this one is committed to git.
 _RUNLOG_STRING_MAX = 500
-# Backstop only, and honestly a weak one: measured against that run, just 3 of
-# 284 responses reach it. The real growth comes from per-key expansion, which is
-# the point of the change and is accounted for in the PR rather than capped here.
+# Backstop for the widest tail: 11 of the 1544 tool results across the six
+# committed jimmie-jewel-neal runs (0.7%) reach it. Kept at 4000 rather than
+# raised, because at that hit rate a bigger cap grows a git-committed artifact for
+# the long tail alone. Must stay ABOVE _RUNLOG_VERBATIM_MAX or the never-shorter
+# floor at the end of _summarize_tool_response silently defeats it. Note what
+# happens for those 11: the output degrades to a head cut *of a summary*, which
+# reintroduces the un-reasonable-about bound this function otherwise rejects —
+# acceptable at 0.7%, but that is the trade, not an absence of one.
 _RUNLOG_MAX_CHARS = 4000
 
 
@@ -520,10 +525,25 @@ def _summarize_tool_response(content: Any) -> str:
     unconditionally *lost* content for 91 of the 284 tool results in
     `run-2026-07-31_13-02-13` — short responses made of many small items, which
     the old bound captured whole. Summarize only what the old code would have cut.
+
+    KNOWN CONSEQUENCE of that passthrough: `response_summary` now has two shapes.
+    Under the threshold it keeps the raw MCP envelope, where the tool's document is
+    an escaped string (`[{"type": "text", "text": "{\\"totalMatches\\": 0}"}]`);
+    over it, the document is unwrapped and its keys are real JSON keys. Two things
+    follow. A call whose payload crosses the threshold between runs flips
+    representation and shows a spurious diff, which matters because
+    `docs/specs/e2e-test-spec.md` tells readers to diff `response_summary` across
+    runs. And grepping a quoted key (`'"rankingSkipped"'`) undercounts, because the
+    escaped form does not contain it — grep the bare name, which matches both.
     """
     try:
         raw = content if isinstance(content, str) else json.dumps(content)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, RecursionError):
+        # RecursionError for the same reason as in `_unwrap_mcp_text_blocks`: it is
+        # not a ValueError, and letting it escape aborts a run costing $7-25.
+        # Unreachable today (`ToolResultBlock.content` is a str or a shallow list
+        # of dicts), but this function had no `json.dumps` of caller data at all
+        # before, so the exposure is new and cheap to close.
         raw = repr(content)
     if len(raw) <= _RUNLOG_VERBATIM_MAX:
         return raw
@@ -538,17 +558,23 @@ def _summarize_tool_response(content: Any) -> str:
     if len(text) > _RUNLOG_MAX_CHARS:
         text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
 
-    # Never emit less than the old head-truncation would have. A key-preserving
-    # summary can come out shorter on a long list of small items — 14 of the 284
-    # tool results in `run-2026-07-31_13-02-13` — and in those cases it is
-    # arguably the better record, since `_full_length: 26` beats an arbitrary
+    # Never emit a SHORTER capture than the old head-truncation would have. A
+    # key-preserving summary can come out shorter on a long list of small items —
+    # 14 of the 284 tool results in `run-2026-07-31_13-02-13` — and in those cases
+    # it is arguably the better record, since `_full_length: 26` beats an arbitrary
     # 497-char prefix that never says how many entries there were. But "arguably
-    # better" is a judgement a reader has to take on trust, whereas "never
-    # captures less than before" is a property they can check. In a forensic
-    # artifact the checkable guarantee is worth more than the cleverer output,
-    # and its absence is exactly what made the first cut of this change a
-    # regression.
-    head = raw if len(raw) <= _RUNLOG_VERBATIM_MAX else raw[: _RUNLOG_VERBATIM_MAX - 3] + "..."
+    # better" is a judgement a reader takes on trust, whereas "never shorter" is a
+    # property they can check, and its absence is exactly what made the first cut
+    # of this change a regression.
+    #
+    # It is a LENGTH floor, not a content guarantee: a payload can clear it on one
+    # wide key while a sampled list drops entries the head cut happened to include.
+    # Zero of the 1544 tool results across the six committed runs do that, but do
+    # not restate this as "captures everything it used to".
+    #
+    # `_RUNLOG_MAX_CHARS` must stay above `_RUNLOG_VERBATIM_MAX`, or this floor
+    # silently defeats the cap applied just above it.
+    head = raw[: _RUNLOG_VERBATIM_MAX - 3] + "..."  # raw > _RUNLOG_VERBATIM_MAX here
     return text if len(text) >= len(head) else head
 
 

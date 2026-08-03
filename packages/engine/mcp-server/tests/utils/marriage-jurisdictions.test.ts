@@ -286,12 +286,17 @@ describe("isSubCountryPlace", () => {
     // the empty-string filter and counts as a locality. So a place that is only
     // an abbreviated qualifier plus a country reads as sub-country.
     //
-    // Recorded rather than fixed, deliberately. `placeParts` also feeds
+    // Worth fixing eventually: the failure mode is exactly the one this guard
+    // exists to prevent, a country-wide search reading as scoped.
+    //
+    // Recorded rather than fixed here, deliberately. `placeParts` also feeds
     // `placeTokens` -> `samePlace`, i.e. the jurisdiction EXCLUSION and ordering
     // that the spec flags as load-bearing and requiring a live run to re-verify.
     // "Co., USA" is not an input any real caller produces — `marriagePlace` and
     // `recordSubdivision` always carry a name — so the risk of touching ranking
-    // code in a PR about something else is worse than the wart.
+    // code in a PR about something else is worse than the wart. Also written up
+    // in `docs/specs/record-search-tool-spec-v2.md` § Place matching, so it does
+    // not live only in a test comment.
     expect(isSubCountryPlace("Co., USA")).toBe(true);
   });
 });

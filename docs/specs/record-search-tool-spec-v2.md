@@ -290,15 +290,27 @@ The capture side was widened in the same change
 key rather than head-truncating at 497 chars). Both halves are kept: the response
 is read by more than one consumer, and only one of them was fixed.
 
-That capture carries a hard invariant — **it can never record less than the old
-head-truncation did.** A response that already fit is passed through verbatim, and
-where a key-preserving summary comes out shorter than a 497-char prefix would
-(a long list of small items) the longer of the two is kept. Both halves are
-needed: an unconditional summarize narrowed 91 of 284 real tool results, because
-`_summarize_response` samples any list past three entries. Measured across all six
-committed `jimmie-jewel-neal` runs, 1544 tool results: **567,545 → 1,228,354 chars
-(2.16x), with 0 results capturing less.** Run logs are committed to git, so that
-growth is the price of the change and is stated rather than discovered later.
+That capture carries a hard invariant — **it never emits a shorter capture than
+the old head-truncation would have.** A response that already fit is passed
+through verbatim, and where a key-preserving summary comes out shorter than a
+497-char prefix would (a long list of small items) the longer of the two is kept.
+Both halves are needed: an unconditional summarize narrowed 91 of 284 real tool
+results, because `_summarize_response` samples any list past three entries.
+
+Note what that invariant is and is not. It is a **length** floor, not a content
+guarantee: a payload can clear it on one wide key while a sampled list drops
+entries the old head cut happened to include. Zero of the 1544 tool results across
+the six committed runs do that, but do not restate this as "captures everything it
+used to".
+
+Two consequences worth knowing. Measured across those six runs, captured response
+text grows **567,545 → 1,228,354 chars (2.16x)** — run logs are committed to git,
+so that is the price of the change, stated rather than discovered later. And
+`response_summary` now has **two shapes**: under the verbatim threshold it keeps
+the raw MCP envelope, in which the tool's document is an escaped string; over it,
+the document is unwrapped into real JSON keys. So a call whose payload crosses the
+threshold between runs shows a spurious diff, and grepping a *quoted* key
+undercounts. Grep the bare key name, which matches both forms.
 
 #### What this does not do
 
@@ -430,6 +442,25 @@ A country term alone does not count as a scoped place: `isSubCountryPlace()` gat
 the hint, and it is exported from `marriage-jurisdictions.ts` rather than duplicated
 here because `placeTokens` deliberately collapses the distinction it tests (its
 empty-fallback makes a country-only place look like any other single-token place).
+
+`isSubCountryPlace` returns `boolean` and is deliberately **not** a
+`place is string` type predicate. The predicate is unsound in its negative branch —
+`isSubCountryPlace("United States")` is `false` while the argument is plainly a
+string — so it would let TypeScript narrow an `else` to `undefined`. Callers that
+need the string narrowed test `!== undefined` themselves; that explicit check is
+what makes `jurisdictionHints.searchedPlace` a sound required `string`.
+
+**Known wart, recorded rather than fixed.** `isSubCountryPlace("Co., USA")` returns
+`true`. `placeParts` strips `co` out of `co.` and leaves the bare `"."`, which
+survives the empty-string filter and counts as a locality. The failure mode is
+precisely the one this guard exists to prevent — a country-wide search reading as
+scoped — so it is worth an eventual fix. It is left alone here because `placeParts`
+also feeds `placeTokens` → `samePlace`, i.e. the jurisdiction **exclusion and
+ordering** this spec flags as load-bearing and requiring a live run to re-verify,
+and because no real caller produces that input (`marriagePlace` and
+`recordSubdivision` always carry a name). Pinned by a `KNOWN WART` test in
+`tests/utils/marriage-jurisdictions.test.ts` so a future change to `placeParts`
+surfaces it.
 
 It is compared to each candidate on comma-separated tokens, lowercased, with
 `County`/`Co.` dropped and the country term dropped unless it is all that remains.

@@ -358,13 +358,15 @@ def test_summarize_tool_response_truncates_long_content():
     # so a reader can tell a summary from a real response and knows what was lost.
     assert "[truncated by harness" in out
     assert "full length 2000 chars" in out
-    # REGRESSION GUARD. This test previously asserted only `len(out) <= 500`,
+    # TWO-SIDED, deliberately. This asserted only `len(out) <= 500` at first,
     # which a *smaller* bound also satisfies — so it passed while a 200-char
     # string bound quietly cut 112 of the 284 tool results in
     # run-2026-07-31_13-02-13 below what the old 497-char head-truncation kept.
-    # A summarizer whose job is to widen the artifact must never narrow it, so
-    # assert the floor, not just the ceiling.
-    assert out.count("x") >= 497
+    # Replacing it with a bare floor then had the mirror-image hole: nothing
+    # bounded the constants from ABOVE, so `_RUNLOG_STRING_MAX` could go to 50,000
+    # and the whole suite still passed, in a module that justifies both numbers by
+    # "this lands in a run log that is committed to git". Pin both ends.
+    assert 497 <= out.count("x") <= 600
 
 
 def test_summarize_tool_response_keeps_keys_after_a_huge_results_array():
@@ -388,11 +390,36 @@ def test_summarize_tool_response_keeps_keys_after_a_huge_results_array():
 
 
 def test_summarize_tool_response_unwraps_an_mcp_text_block():
-    """MCP results wrap the whole document in a text block, hiding its keys."""
-    inner = json.dumps({"totalMatches": 0, "rankingSkipped": "No `subjectId`"})
-    out = _summarize_tool_response([{"type": "text", "text": inner}])
-    assert "rankingSkipped" in out
-    assert "totalMatches" in out
+    """MCP results wrap the whole document in a text block, hiding its keys.
+
+    Two things this has to get right, both of which an earlier version got wrong:
+
+    The payload must exceed the verbatim-passthrough threshold, or
+    `_summarize_tool_response` returns at its `len(raw) <= 500` early exit and
+    `_unwrap_mcp_text_blocks` never runs at all — leaving the mechanism the whole
+    `record_search` legibility fix depends on with zero coverage.
+
+    And the assertion must be on the UNESCAPED key (`'"rankingSkipped"'`, with
+    quotes). The bare substring `rankingSkipped` is present either way, inside the
+    escaped `"text": "{\\"rankingSkipped\\": …}"` wrapper, so asserting on it
+    cannot tell an unwrapped document from a wrapped one.
+    """
+    inner = json.dumps(
+        {
+            "totalMatches": 0,
+            "rankingSkipped": "No `subjectId`, so ranking did not run. " + "pad " * 150,
+        }
+    )
+    wrapped = [{"type": "text", "text": inner}]
+    assert len(json.dumps(wrapped)) > 500, "fixture must clear the verbatim exit"
+
+    out = _summarize_tool_response(wrapped)
+
+    # Unescaped keys: only reachable if the inner document was actually parsed.
+    assert '"rankingSkipped"' in out
+    assert '"totalMatches"' in out
+    # And the escaped wrapper is gone.
+    assert '\\"rankingSkipped\\"' not in out
 
 
 def test_summarize_tool_response_passes_through_non_json_text():
@@ -400,13 +427,19 @@ def test_summarize_tool_response_passes_through_non_json_text():
     assert "not json at all" in out
 
 
-def test_summarize_tool_response_never_captures_less_than_the_old_bound():
+def test_summarize_tool_response_never_emits_a_shorter_capture():
     """The invariant that makes this change safe to land.
 
     A key-preserving summary can be SHORTER than a 500-char head cut on a long
     list of small items, which is how the first cut of this change silently
     narrowed 91 of 284 real tool results. Whatever the summarizer decides, the
-    output must never carry less than head-truncating would have.
+    output is never shorter than head-truncating would have produced.
+
+    Note precisely what this is: a **length** floor, not a content guarantee. A
+    payload can clear it on one wide key while a sampled list drops entries the
+    old head cut happened to include. Measured across all 1544 tool results in the
+    six committed jimmie-jewel-neal runs, zero do — but the property asserted here
+    is the length one, and the docstring says so rather than implying more.
     """
     shapes = [
         # long list of small items — samples to 3, so the summary is short
@@ -437,6 +470,20 @@ def test_summarize_tool_response_keeps_a_short_response_verbatim():
     assert _summarize_tool_response(shape) == raw
     # No sampling marker, because nothing was sampled.
     assert "_summary_truncated" not in _summarize_tool_response(shape)
+
+
+def test_summarize_tool_response_honours_the_overall_cap():
+    """The 4000-char backstop, which 11 of 1544 real tool results reach.
+
+    Untested until now, which is how a "backstop" quietly becomes decorative. The
+    shape is a dict of many wide keys: `_summarize_response` preserves every key
+    (that is the point), so key COUNT is the one axis the per-string bound and the
+    list sampling do not constrain.
+    """
+    shape = {f"key_{i:04d}": "v" * 120 for i in range(200)}
+    out = _summarize_tool_response(shape)
+    assert len(out) <= 4000
+    assert out.endswith("...")
 
 
 # --- timeline tool labeling ---------------------------------------------------
