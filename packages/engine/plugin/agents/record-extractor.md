@@ -514,6 +514,8 @@ the "who answered" record that would justify it.
   from memory" reasoning (that is death-certificate doctrine and does not
   transfer here). The **only** `indirect` value on a marriage record is a
   birth *year* computed from a stated age (its own `birth` assertion).
+  **Concretely: a stated parent name (the groom's or bride's father /
+  mother) is `evidence_type: direct` — never `indirect`.**
 - **Officiant / clerk:** informant for the marriage event itself (date,
   place, ceremony). Proximity `official_duty` (officiant) or `witness`
   (clerk who recorded the signed return).
