@@ -192,18 +192,14 @@ List every person mentioned and assign a `record_role`:
   could surface a maiden name) and flag it in your summary for
   hypothesis-tracking. Never assert a specific relationship without
   evidence; report ambiguity rather than resolving it silently.
-  - **`record_role` follows apparent within-group structure, not raw
-    position after the head.** Do NOT number every person after the head
-    `child_1, child_2, …` — that fabricates a parent-child link to the head
-    the record never states, and on a pre-1880 census there is no
-    relationship column at all. A co-resident family keeps *its own*
-    structure: an adult couple + their child are that family's
-    `head_of_household` / `wife` / `child_1`, not `child_1/2/3` of the
-    differently-surnamed head. An adult plainly too old to be the head's
-    child (e.g. a 42-year-old under a 62-year-old head) is never `child_N`
-    of that head. When the tie to the head is unknown, label by the
-    person's own apparent role and leave the cross-group link to a
-    hypothesis, not the `record_role`.
+  - **`record_role` = apparent within-group structure, not raw position
+    after the head.** Don't number everyone after the head `child_1,
+    child_2, …` — that fabricates a parent-child link the record never
+    states (pre-1880 has no relationship column). A co-resident family
+    keeps its own `head`/`wife`/`child_N`; an adult too old to be the
+    head's child isn't `child_N` of that head. Unknown tie to the head →
+    label by the person's own role, leave the cross-group link to a
+    hypothesis.
 - **Obituaries — read the survivor list precisely.** A name with a
   parenthetical follows one of two conventions; disambiguate by *what is in
   the parens*:
@@ -277,15 +273,12 @@ one with `date` set (the `indirect` computed-year claim). Field
 population — `place` vs `date` — is what tells them apart, not the type
 name.
 
-**A birth claim computed from a stated age is an approximate YEAR only
-(`~1845`) — never an exact date.** Even on a death certificate where
-"died 3 Jan 1908, age 63 years 2 months 10 days" would let you subtract to
-an exact day, do NOT compute a precise birth date: the record states an
-**age**, not a birth date, and the subtraction manufactures precision the
-source never recorded (ages are routinely rounded/misremembered). Emit the
-inferred birth as `~<year>` (indirect), and keep the stated age as its own
-assertion. This holds for any record that states an age rather than a birth
-date.
+**A birth computed from a stated age is an approximate YEAR (`~1845`), never
+an exact date** — even when "died 3 Jan 1908, age 63y 2m 10d" would let you
+subtract to a day. The record states an **age**, not a birth date; the
+subtraction manufactures precision the source never had (ages are routinely
+rounded). Emit `~<year>` (indirect) and keep the stated age as its own
+assertion.
 
 **Assertion fields — closed set, schema rejects extras.**
 **Required:** `record_id`, `record_role`, `fact_type`, `value`,
@@ -325,14 +318,12 @@ matching `gedcomx.persons[]` id. `extraction_append` verifies every
 supplied id (and auto-fills the searched persona as a safety net — do
 not rely on it; supply the id yourself). No sidecar (`record_read`,
 image, PDF, full-text) → leave it out on every assertion — supplying one
-is a hard error. **"No sidecar" is keyed on whether the delegation gave
-you a `resultsRef`, NOT on whether the record content carries persona
-ids.** A gedcomx result **handed to you inline in the message without a
-`resultsRef`** (a user-provided / search-handoff record) has no sidecar
-even though its JSON may include `primaryId` and `persons[].id` — those
-ids cannot be canonicalized, so `record_persona_id` must be **omitted**
-on every assertion. Do not copy an id out of the inline JSON. Set
-`record_persona_id` **only** when the delegation handed you a `resultsRef`.
+is a hard error. **"No sidecar" is keyed on whether the delegation gave a
+`resultsRef`, not on whether the content carries persona ids.** An inline
+gedcomx handed to you without a `resultsRef` (user-provided / search-handoff)
+has no sidecar even if its JSON includes `primaryId`/`persons[].id` — those
+can't be canonicalized, so omit `record_persona_id` and never copy an id
+from inline JSON. Set it **only** when handed a `resultsRef`.
 
 **`value`** — human-readable, what the record says, not your
 interpretation: "age 5", not "born 1845". `[?]` for uncertain readings,
@@ -515,47 +506,22 @@ the "who answered" record that would justify it.
 **Marriage record informants** — the parties speak for themselves:
 - **Groom and bride:** informants for their own identifying facts (age,
   birthplace, parents, occupation), proximity `self`. **Every fact the
-  parties state about themselves and their family is `direct` evidence —
-  name, age, birthplace, occupation, residence, AND parents' names alike —
-  because the record states each one outright.** A party self-reporting
-  their own **age** makes the stated age `direct` (do NOT import the
-  death-certificate rule that a THIRD-party-reported age is `indirect` —
-  here the party reported it themselves). The **only** `indirect`
-  classification on a marriage record is the birth *year* you compute from
-  a stated age (arithmetic inference) — split that into its own `birth`
-  assertion. Do not invent an `indirect` story ("computed from memory",
-  "relaying another person's identity") for any fact the record plainly
-  states. Their parents'
-  names on the license are `direct` evidence — the party stated them.
-  A marriage-record party reporting their OWN parents' names is
-  proximity `self` (`family_not_present` is death-certificate doctrine).
-  **Do NOT mark these parent-name facts `indirect`.** The record states
-  the parent's name outright, so no inference is needed to answer "who
-  was the parent?" — that makes it `direct`, full stop. The party's
-  knowledge of a parent being secondhand (they are the child, not the
-  parent) is an **`information_quality`** question, not an `evidence_type`
-  one: record it as `information_quality: secondary` if you like, but the
-  `evidence_type` stays `direct`. Never downgrade a stated parent name to
-  `indirect` on "relaying another person's identity" / "not present at the
-  parent's events" reasoning — that is the **death-certificate** rule
-  above (where parents' names ARE `indirect`); it does **not** transfer to
-  a marriage record, where the party themselves supplied the name at
-  proximity `self`. (Only the birth *year* computed from a stated age is
-  `indirect` on a marriage record — arithmetic inference — never the
-  parent names.)
+  parties state — their own name/age/birthplace/occupation/residence AND
+  their parents' names — is `direct`; the record states each outright.** A
+  party's secondhand knowledge of a parent is an `information_quality`
+  matter (mark `secondary` if apt), NOT `evidence_type` — never downgrade a
+  stated fact to `indirect` on "relaying another's identity" / "computed
+  from memory" reasoning (that is death-certificate doctrine and does not
+  transfer here). The **only** `indirect` value on a marriage record is a
+  birth *year* computed from a stated age (its own `birth` assertion).
 - **Officiant / clerk:** informant for the marriage event itself (date,
   place, ceremony). Proximity `official_duty` (officiant) or `witness`
   (clerk who recorded the signed return).
-  - **Place = the locality, not the building.** The event's standardized
-    `place` is the civil jurisdiction — town, county, state (e.g.
-    "Shenandoah, Schuylkill, Pennsylvania"). A **church, cemetery,
-    hospital, or other venue is a building, not a jurisdiction**: keep the
-    venue name in the assertion's `value`/notes, but set `place` to the
-    locality. Feeding a building name ("Church of the Annunciation,
-    Shenandoah, PA") to the place resolver makes it mis-geocode the
-    building token to an unrelated jurisdiction (a place literally named
-    "Church" in the wrong county). This applies to every record type —
-    burials at a cemetery, births at a hospital — not just marriages.
+  - **Place = the locality, not the venue.** Set `place` to the civil
+    jurisdiction (town/county/state); keep a church/cemetery/hospital name
+    in `value`/notes. A building name fed to the resolver mis-geocodes (e.g.
+    "Church of the Annunciation" → a place named "Church" in the wrong
+    county). Applies to every record type.
 - **Witnesses:** note as FAN associates; extract their identifying facts
   only unless a question targets them. A witness attests the ceremony they
   watched — for that attestation the informant is the witness at proximity
@@ -717,31 +683,15 @@ bears on (the caller may name them; otherwise use `project_context`'s
 **Call the tool before narrating anything.** The transcript must show the
 actual `extraction_append` invocation, not text claiming you made it.
 
-**Evidence-type self-check before you persist.** Scan every assertion's
-`evidence_type` one last time. `evidence_type` follows the **record type**,
-so check it against the right rule:
-- **Self-reported record** (marriage license, affidavit, civil-registration
-  application — the party supplies their OWN facts): everything the party
-  states about themselves is `direct` — name, **stated age**, birthplace,
-  occupation, residence, and **stated parent names** alike. The *only*
-  `indirect` value is a birth *year* you compute from the stated age. Do
-  NOT emit a self-reported age or a stated parent name as `indirect`; the
-  classic bug is a marriage-record parent name (or a self-reported age)
-  marked `indirect` even though the record states it outright — if an
-  assertion reads `indirect` while its own `informant_bias_notes` argue the
-  record states the fact, that mismatch is the bug; set it `direct`. Don't
-  let one parent name slip to `indirect` while the other three are `direct`.
-- **Third-party-informant record** (death certificate, where a family
-  informant reports the *decedent's* facts): the death-certificate rule
-  above governs — the informant's own observations (name, occupation,
-  marital status) are `direct`, but the decedent's **age, birth date/place,
-  and parents** are `indirect` (secondhand knowledge of an event the
-  informant did not witness). Do NOT force these to `direct`.
-
-In all cases `indirect` is for a value the record does not state that you
-computed or inferred (a birth *year* from an age; a relationship from
-household position) — the self-check is that the label matches the record
-type, not a blanket "stated ⇒ direct."
+**Evidence-type self-check before you persist.** Re-scan every
+`evidence_type`: the label follows the record type. Self-reported facts
+(marriage license/affidavit — name, age, birthplace, parents) are `direct`;
+a third-party informant's report of the decedent's age/birth/parents (death
+cert) is `indirect`. `indirect` is only for a value the record does *not*
+state that you inferred (a birth *year* from an age; a relationship from
+household position) — never a blanket "stated ⇒ direct." A stated fact
+marked `indirect` while its own `informant_bias_notes` admit the record
+states it is the bug: set it `direct`.
 
 Make **one** `extraction_append` call with top-level `sourceDescription:
 { title, author?, url? }` (omit inapplicable fields entirely — never
