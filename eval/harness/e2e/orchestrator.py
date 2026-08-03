@@ -38,10 +38,10 @@ from claude_agent_sdk import (
 )
 
 from harness.auth import env_for_sdk, resolve_auth
-from harness.judge import _summarize_response
 from harness.context_policy import (
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
 )
+from harness.judge import _summarize_response
 from harness.skill_invocation import (
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
@@ -484,9 +484,17 @@ _RUNLOG_VERBATIM_MAX = 500
 # function REGRESSES the artifact it exists to widen: a string-valued result
 # (`Read`, `Glob`, `Grep`, and a `record_search` that came back as the MCP
 # over-limit error) is one long string with no keys to preserve, so the string
-# bound is the whole budget for it. At 200 this cut 112 of the 284 tool results
-# in `run-2026-07-31_13-02-13` by 237 chars each. 500 keeps every one of them at
-# least as legible as before while the key-preserving path widens the rest.
+# bound is the whole budget for it.
+#
+# What this constant is and is NOT responsible for, since a first draft of this
+# comment credited it with the whole regression: at 200, 112 of the 284 tool
+# results in `run-2026-07-31_13-02-13` captured less than the old head cut, but
+# only **12** of those are string-valued (9 of them losing exactly 237 chars).
+# The other 100 are list-valued, losing ~60 chars on average to
+# `_summarize_response`'s list sampling, which no string bound can fix — that is
+# what the verbatim passthrough below is for. Raising 200 -> 500 fixes 21 of the
+# 112; the passthrough fixes the rest.
+#
 # Still far under the judge tier's 2000, because that copy is a throwaway prompt
 # and this one is committed to git.
 _RUNLOG_STRING_MAX = 500
@@ -538,13 +546,17 @@ def _summarize_tool_response(content: Any) -> str:
     """
     try:
         raw = content if isinstance(content, str) else json.dumps(content)
-    except (TypeError, ValueError, RecursionError):
-        # RecursionError for the same reason as in `_unwrap_mcp_text_blocks`: it is
-        # not a ValueError, and letting it escape aborts a run costing $7-25.
-        # Unreachable today (`ToolResultBlock.content` is a str or a shallow list
-        # of dicts), but this function had no `json.dumps` of caller data at all
-        # before, so the exposure is new and cheap to close.
+    except (TypeError, ValueError):
         raw = repr(content)
+    except RecursionError:
+        # NOT `repr(content)`: repr recurses too, so on the only input class that
+        # can raise here the fallback raises identically and the guard is a no-op.
+        # (Measured: a 20,000-deep nested list raises in json.dumps AND in repr.)
+        # Letting it escape aborts a run costing $7-25, so degrade to a marker
+        # instead. Unreachable today — `ToolResultBlock.content` is a str or a
+        # shallow list of dicts — but this function had no `json.dumps` of caller
+        # data at all before, so the exposure is new.
+        raw = f"<unserializable {type(content).__name__}: nesting too deep>"
     if len(raw) <= _RUNLOG_VERBATIM_MAX:
         return raw
 

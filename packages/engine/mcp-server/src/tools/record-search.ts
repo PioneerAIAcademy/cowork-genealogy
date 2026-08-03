@@ -575,11 +575,20 @@ export async function recordSearchTool(
     // legitimate is answered at analysis time from the args already in the runlog.
     //
     // Truthiness, not `=== undefined`, on `subjectId`, so an empty string reports
-    // the same way the ranking gate below treats it. Note the two are NOT
-    // equivalent in the other direction: ranking also requires `out.staged`, so a
-    // nil search WITH a `subjectId` skips ranking and correctly gets no note here
-    // (4 of the 18 subject-carrying calls in `run-2026-07-31_13-02-13`). Absence
-    // of the note therefore means "a subject was named", not "ranking ran".
+    // the same way the ranking gate below treats it.
+    //
+    // The two conditions are NOT equivalent, in two directions, and the note's
+    // contract is the weaker of them — "absence means a subject was named", never
+    // "ranking ran":
+    //   - ranking additionally needs `out.staged`, so a nil search WITH a subject
+    //     skips ranking and correctly gets no note (4 of the 18 subject-carrying
+    //     calls in `run-2026-07-31_13-02-13`);
+    //   - and this uses `projectPath !== undefined` where ranking uses truthiness
+    //     plus successful staging, so `projectPath: ""` or a path that does not
+    //     exist emits the note while supplying `subjectId` would still enable
+    //     nothing. Both leave a `stagingError` on the response, which is the
+    //     accurate signal for that case; per #1073 this condition is the args
+    //     alone and must not start reading staging state.
     ...(input.projectPath !== undefined && !input.subjectId
       ? { rankingSkipped: RANKING_SKIPPED_NOTE }
       : {}),

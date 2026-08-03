@@ -42,6 +42,52 @@ describe("results-staging", () => {
       expect(typeof envelope.retrieved).toBe("string");
     });
 
+    it("strips the advisory rankingSkipped note from the persisted payload", async () => {
+      // The sidecar records what the upstream search RETURNED. `rankingSkipped`
+      // is a ~250-char instruction to the model about how to call the tool
+      // better next time, and it would otherwise be retained in 112 of 171
+      // sidecars on a real run. Same reasoning as the `projectPath`/`subjectId`
+      // strip on the echoed query: this file moves between machines.
+      const response = {
+        query: { surname: "Smith" },
+        rankingSkipped: "No `subjectId`, so match-score ranking did not run.",
+        results: [{ recordId: "R1" }],
+      };
+      const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response });
+
+      const envelope = JSON.parse(await readFile(join(dir, handle!.resultsRef), "utf-8"));
+      expect(envelope.payload.rankingSkipped).toBeUndefined();
+      // Everything else is still verbatim, including key order.
+      expect(envelope.payload).toEqual({
+        query: { surname: "Smith" },
+        results: [{ recordId: "R1" }],
+      });
+      // And the caller's own object is untouched — the strip must not mutate the
+      // live response the model is about to read.
+      expect(response.rankingSkipped).toBeTruthy();
+    });
+
+    it("keeps rankingSkipped out of the finalized sidecar too", async () => {
+      const response = {
+        query: { surname: "Smith" },
+        rankingSkipped: "No `subjectId`, so match-score ranking did not run.",
+        results: [{ recordId: "R1" }],
+      };
+      const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response });
+      const final = await finalizeStagedResults({
+        projectPath: dir,
+        logId: "log_001",
+        stagedResultsRef: handle!.resultsRef,
+        expectedTool: "record_search",
+      });
+
+      const sidecar = JSON.parse(
+        await readFile(join(dir, "results", "log_001.json"), "utf-8"),
+      );
+      expect(JSON.stringify(sidecar)).not.toContain("rankingSkipped");
+      expect(final.resultsRef).toBe("results/log_001.json");
+    });
+
     it("returns null and writes nothing for a nil search", async () => {
       const handle = await stageSearchResults({
         projectPath: dir,

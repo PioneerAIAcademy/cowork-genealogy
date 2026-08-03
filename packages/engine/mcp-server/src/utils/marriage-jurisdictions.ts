@@ -106,8 +106,7 @@ function placeParts(place: string): string[] {
  * because `placeTokens` below deliberately collapses the distinction this
  * predicate needs: its empty-fallback makes a country-only place look like any
  * other single-token place.
- */
-/*
+ *
  * Deliberately `boolean` and NOT a `place is string` type predicate, though it
  * was written that way first. The predicate is unsound in its negative branch:
  * `isSubCountryPlace("United States")` is false while `place` is very much a

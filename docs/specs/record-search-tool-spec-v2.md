@@ -273,17 +273,25 @@ Falsiness, not `=== undefined`, is the test on `subjectId`, because the ranking
 gate is itself `input.subjectId &&`. Matching it exactly is what stops the field
 claiming ranking was skipped when it ran, or the reverse.
 
-#### Key order is load-bearing
+#### Key order
 
-`rankingSkipped` is emitted **before `results`** in the response object, and this
-is not stylistic. `results` is by far the largest field in the response, so
-anything serialized after it is the first thing any size bound drops. Across the
-46 `record_search` calls in `run-2026-07-31_13-02-13` the existing `ranked` field
-appears in the run log **0 times**, though 18 of those calls supplied `subjectId`
-and **14 were actually ranked** (the other 4 were nil searches, where staging
-returns `null` so the `out.staged &&` half of the ranking gate never fires). A
-signal whose whole purpose is to be measurable from the run log cannot sit behind
-the field that crowds it out.
+`rankingSkipped` is emitted **before `results`** in the response object. `results`
+is by far the largest field, so anything serialized after it is the first thing any
+size bound drops. The motivating evidence: across the 46 `record_search` calls in
+`run-2026-07-31_13-02-13` the existing `ranked` **field** appears in the run log
+**0 times**, though 18 of those calls supplied `subjectId` and **14 were actually
+ranked** (the other 4 were nil searches, where staging returns `null` so the
+`out.staged &&` half of the ranking gate never fires).
+
+**Be honest about how much of that argument survives the capture fix.** With the
+run-log capture now key-preserving, position no longer affects run-log visibility
+except for the 11 of 1544 results (0.7%) that hit `_RUNLOG_MAX_CHARS` and degrade
+to a head cut of the summary. The two halves of this change partly obviate each
+other. What still justifies the ordering is weaker and different: the model's own
+context window, and any other consumer that bounds this response without the
+harness's key preservation. #1073's Definition of Done requires the ordering
+regardless, so it stays — but do not cite the run log as the reason after this
+lands.
 
 The capture side was widened in the same change
 (`eval/harness/e2e/orchestrator.py::_summarize_tool_response` now summarizes by
@@ -298,19 +306,37 @@ Both halves are needed: an unconditional summarize narrowed 91 of 284 real tool
 results, because `_summarize_response` samples any list past three entries.
 
 Note what that invariant is and is not. It is a **length** floor, not a content
-guarantee: a payload can clear it on one wide key while a sampled list drops
-entries the old head cut happened to include. Zero of the 1544 tool results across
-the six committed runs do that, but do not restate this as "captures everything it
+guarantee, and there are two ways a payload can clear it while still losing
+something the old head cut kept: a sampled list can drop entries, and
+`_summarize_response`'s depth cap replaces anything nested past 8 levels with a
+`_truncated_for_depth` marker. Zero of the 1544 tool results across the six
+committed runs hit either case, but do not restate this as "captures everything it
 used to".
 
-Two consequences worth knowing. Measured across those six runs, captured response
-text grows **567,545 → 1,228,354 chars (2.16x)** — run logs are committed to git,
-so that is the price of the change, stated rather than discovered later. And
-`response_summary` now has **two shapes**: under the verbatim threshold it keeps
+**Size cost, both callers.** `_summarize_tool_response` feeds two artifacts, and an
+earlier version of this section stated only the first. Measured across the six
+committed runs:
+
+| Artifact | Old | New | Growth |
+|---|---|---|---|
+| `response_summary` (1544 results, in `run-<ts>.json`) | 567,545 | 1,228,354 | +660,809 |
+| tool-call `args` (1545 calls, `transcript.md` only) | 343,403 | 584,489 | +241,086 |
+
+`run-<ts>.transcript.md` renders both, so it grows **+901,895 chars on a 1,434,248
+byte baseline (+62.9%)**. Both files are committed to git. That is the price of the
+change, stated rather than discovered later.
+
+**`response_summary` now has two shapes.** Under the verbatim threshold it keeps
 the raw MCP envelope, in which the tool's document is an escaped string; over it,
-the document is unwrapped into real JSON keys. So a call whose payload crosses the
-threshold between runs shows a spurious diff, and grepping a *quoted* key
-undercounts. Grep the bare key name, which matches both forms.
+the document is unwrapped into real JSON keys. Consequences, and the reason
+`docs/specs/e2e-test-spec.md` §8 carries a matching caveat: **741 of the 1544
+captures (48%) differ from what the old code produced**, so the first run after
+this lands shows a changed `response_summary` on half of all calls against every
+earlier baseline — which that spec's triage rule would otherwise read as an agent
+regression. And grepping a *quoted* key misses the escaped form, while grepping the
+bare name over-matches agent prose (`ranked` appears 4 times in
+`run-2026-07-31_13-02-13` as narrative text and a `Grep` pattern, against 0
+occurrences of the actual field). Neither form is reliable alone.
 
 #### What this does not do
 

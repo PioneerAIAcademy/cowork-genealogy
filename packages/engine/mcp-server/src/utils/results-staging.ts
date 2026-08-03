@@ -68,11 +68,28 @@ export async function stageSearchResults(args: {
   await pruneStale(stagingDir);
 
   const filename = `${randomUUID()}.json`;
+  // Advisory, model-facing fields are stripped from the persisted payload for the
+  // same reason `projectPath`/`subjectId` are stripped from the echoed query
+  // below: this envelope becomes `results/<logId>.json`, part of the shared
+  // project state that moves between machines, and it exists to record what the
+  // upstream search RETURNED. `rankingSkipped` is not that — it is a ~250-char
+  // instruction to the model about how to call the tool better next time, and it
+  // would land in 112 of 171 sidecars on a real run (the searches that omitted
+  // `subjectId`). It stays in the live tool response, where the model reads it;
+  // it must not be retained as though FamilySearch had said it.
+  //
+  // Stripped HERE rather than by assigning the field after `stageSearchResults`,
+  // because the field has to be serialized before `results` (spec § key order),
+  // and assigning it later would put it after.
+  const { rankingSkipped: _advisory, ...persistablePayload } = response as Record<
+    string,
+    unknown
+  >;
   const envelope: StagingEnvelope = {
     tool,
     retrieved: new Date().toISOString(),
     returned_count: results.length,
-    payload: response,
+    payload: persistablePayload,
   };
   await writeFile(
     join(stagingDir, filename),

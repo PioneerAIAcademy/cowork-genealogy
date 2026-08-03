@@ -423,8 +423,54 @@ def test_summarize_tool_response_unwraps_an_mcp_text_block():
 
 
 def test_summarize_tool_response_passes_through_non_json_text():
-    out = _summarize_tool_response([{"type": "text", "text": "not json at all"}])
+    """The unwrap's "anything that does not parse is left alone" branch.
+
+    The fixture must clear _RUNLOG_VERBATIM_MAX or this test pins nothing: under
+    it, `_summarize_tool_response` returns at its verbatim early exit and the
+    unwrap never runs. That is how the first version of this test survived every
+    mutation of the module, including replacing the unwrap with the identity.
+    """
+    body = "not json at all, " + "prose " * 120
+    wrapped = [{"type": "text", "text": body}]
+    assert len(json.dumps(wrapped)) > 500, "fixture must clear the verbatim exit"
+
+    out = _summarize_tool_response(wrapped)
+
     assert "not json at all" in out
+    # Still a text block, not a parsed document: the wrapper survives.
+    assert '"type"' in out and '"text"' in out
+
+
+def test_summarize_tool_response_does_not_coerce_json_scalars():
+    """A tool result of "1" or "true" must stay the string the tool returned.
+
+    Only reachable above the verbatim threshold, which is why it needs padding —
+    a short scalar never reaches the unwrap at all.
+    """
+    for scalar, wrong in (("1" * 600, 1), ("true" + " " * 600, True)):
+        wrapped = [{"type": "text", "text": scalar}]
+        assert len(json.dumps(wrapped)) > 500
+        out = _summarize_tool_response(wrapped)
+        # The digits/word survive as text; no bare JSON value replaced them.
+        assert '"text"' in out, f"{wrong!r} case lost its text block"
+
+
+def test_summarize_tool_response_survives_pathological_nesting():
+    """RecursionError must not escape and abort a run.
+
+    Note the fallback cannot be `repr()`: repr recurses too, so on this input it
+    raises identically and the guard becomes a no-op. That was the first version.
+    """
+    deep: list = []
+    node: list = deep
+    for _ in range(20_000):
+        child: list = []
+        node.append(child)
+        node = child
+
+    out = _summarize_tool_response(deep)  # must not raise
+    assert isinstance(out, str)
+    assert out
 
 
 def test_summarize_tool_response_never_emits_a_shorter_capture():

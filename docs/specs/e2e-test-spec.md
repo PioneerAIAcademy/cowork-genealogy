@@ -983,7 +983,8 @@ validation. The `.ann.json` is committed when a run is graded. To investigate
 a regression — a test that previously passed and now fails
 — diff the old and new `tool_calls` arrays: each entry's `response_summary`
 captures the FS result inline, so collection-hit changes, hint-count shifts, or
-record-visibility changes show up directly.
+record-visibility changes show up directly. (Note the one-time capture-format
+change of 2026-08-03 before diffing across it — see §8 step 4.)
 
 ---
 
@@ -1182,6 +1183,25 @@ changing anything, because the fix differs completely by cause.
    - different hit counts on the same search → FS may have reindexed;
    - **same calls, different `response_summary` → likely an agent or skill
      regression.**
+
+   > **One-time exception: `response_summary` changed format on 2026-08-03.**
+   > `_summarize_tool_response` stopped head-truncating at 497 chars and now
+   > summarizes by key (`eval/harness/e2e/orchestrator.py`). Measured against the
+   > six committed `jimmie-jewel-neal` runs, **741 of 1544 captures (48%) differ
+   > from what the old code would have produced** — so the first run after that
+   > change shows a changed `response_summary` on roughly half of all calls
+   > against **every** earlier baseline. That is a capture-format change, not an
+   > agent or skill regression. Do not read the third bullet above across that
+   > boundary; compare runs on the same side of it.
+   >
+   > Two format details that matter when diffing or grepping. Captures at or under
+   > 500 chars are passed through verbatim, so they keep the raw MCP envelope in
+   > which the tool's document is an **escaped** string; larger ones have the
+   > document unwrapped into real JSON keys. So (a) a call whose payload crosses
+   > 500 chars between runs flips representation and shows a diff that means
+   > nothing, and (b) grepping a *quoted* key (`'"ranked"'`) misses the escaped
+   > form while grepping the bare name (`ranked`) also matches agent prose and
+   > `Grep` patterns. Neither form is reliable alone — read the surrounding entry.
 
 ### The run log has no `skills_invoked` field
 
