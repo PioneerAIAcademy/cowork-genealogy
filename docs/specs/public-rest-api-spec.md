@@ -151,6 +151,17 @@ fall through to FastAPI's defaults.
   the life of the sandbox. Without a refresh token the session works only until the
   access token expires. The token is injected straight into the sandbox and is **not**
   written to the `familysearch_tokens` table (so /v1 sidesteps encrypt-at-rest).
+- **No re-sync surface, by design.** The browser path re-injects on every
+  `/connect` (`sessions.sync_fs_token` refreshes within 10 min of expiry and returns
+  `familysearch: ok|expired|none`, so `SessionView` can show a "Reconnect
+  FamilySearch" banner). `/v1` injects **once, at create, and never again**: bearer
+  clients have no front door, so there is no interactive re-auth to hang a reconnect
+  off. FamilySearch caps a grant at 8h idle / 24h absolute (`auth.fresh_fs_token`), so
+  a `/v1` session that outlives its **refresh** token goes FS-tool-less with no way
+  back — the client must `DELETE` it and create a new session with a fresh token,
+  losing that sandbox's project files. Accepted because no `/v1` client has hit it.
+  If one does, the fix is to accept a `familysearch_token` on `POST /messages` (or add
+  a refresh endpoint), not to give bearer sessions a login flow.
 
 ### `POST /v1/sessions/{session_id}/messages` → send + reply
 ```jsonc

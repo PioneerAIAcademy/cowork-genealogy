@@ -7,12 +7,22 @@ name: Engine tests
 # specialized research-plan's copy. This is the same gap eval-harness-tests.yml
 # was created to close one layer over, and it names that precedent on purpose.
 #
-# Path scope covers both halves the suite reads:
+# Path scope covers every half the suite reads:
 #   - packages/engine/mcp-server/**  — the tools, utils, validators under test.
 #   - packages/engine/plugin/**      — the packaging tests read the shipped
 #     skills, agents, and shared references (manifest drift, dual-spelled agent
 #     tool names, skill-description length, the places-guidance drift lint).
-# A change to either can red the suite, so either must trigger it.
+#   - packages/schema/schemas/** and docs/specs/schemas/** — the enum-drift lint
+#     (tests/packaging/enum-drift.test.ts) diffs the plugin's prose enum lists
+#     and the validator's CLOSED_ENUMS against enums.schema.json. Catching a
+#     schema edit that leaves those copies stale is the whole point of it, and a
+#     PR adding one value to one enum need touch nothing else — without these
+#     two paths, that exact PR reports success without running the lint written
+#     to stop it.
+#   - eval/tests/unit/** — the same enum-drift lint scans rubric files for ∈
+#     declarations. No rubric carries one today, but including the path arms
+#     the lint the day one lands (mirroring the references/ class above).
+# A change to any of them can red the suite, so any of them must trigger it.
 #
 # `npm test` runs the `pretest` build first (tsc), which the packaging tests do
 # not strictly need but the tool-dispatch tests do — it also fails the job fast
@@ -37,12 +47,12 @@ jobs:
   vitest:
     runs-on: ubuntu-latest
     steps:
-      - name: Does this PR touch the engine or the plugin?
+      - name: Does this PR touch the engine, plugin, schema, or rubric?
         id: scope
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^packages/engine/mcp-server/|^packages/engine/plugin/|^\.github/workflows/engine-tests\.yml$'
+          PATTERNS: '^packages/engine/mcp-server/|^packages/engine/plugin/|^packages/schema/schemas/|^docs/specs/schemas/|^eval/tests/unit/|^\.github/workflows/engine-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -51,16 +61,16 @@ jobs:
             echo "relevant=true" >> "$GITHUB_OUTPUT"
           else
             echo "relevant=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No engine or plugin path changed; reporting success without running vitest."
+            echo "::notice::No engine, plugin, schema, or rubric path changed; reporting success without running vitest."
           fi
 
       - name: Check out PR
         if: steps.scope.outputs.relevant == 'true'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up Node
         if: steps.scope.outputs.relevant == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'

@@ -6,7 +6,7 @@ Every write to those two files must go through the MCP writer tools
 validate before persisting. A direct file write never validates.
 `research/SKILL.md` has forbidden it in prose since the beginning and no
 skill's `allowed-tools` lists bare Write/Edit; this is the same rule as a
-denial. See `docs/plan/research-guardrail-bypass-plan.md` §4.3, issue #940.
+denial. See `docs/specs/guardrail-enforcement-spec.md` §6, issue #940.
 
 **Why this ships in the plugin rather than only in the host.** A `PreToolUse`
 hook is the only instrument that can restrain the MAIN THREAD — a per-agent

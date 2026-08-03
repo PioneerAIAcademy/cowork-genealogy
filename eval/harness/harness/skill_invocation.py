@@ -1,6 +1,6 @@
 """Guardrail-skill invocation detection.
 
-docs/plan/research-guardrail-bypass-plan.md §4.1/§4.4 — autonomous `/research`
+docs/specs/guardrail-enforcement-spec.md §7/§8 — autonomous `/research`
 sometimes lets the four GPS guardrail skills (`research-exhaustiveness`,
 `proof-conclusion`, `person-evidence`, `conflict-resolution`) get bypassed:
 their documented effect lands in the project files without the skill ever
@@ -17,7 +17,7 @@ Three consumers, all described in the plan:
   - `owning_skills` + `recently_succeeded` — the live, shadow-mode caller-id
     check (§4.1): before a protected write is allowed to proceed, was its
     owning skill successfully invoked recently?
-  - `find_effects_without_invocation` — the post-run hard detector (§4.4):
+  - `find_effects_without_invocation` — the post-run hard detector (§8):
     does the FINAL project state show a guardrail skill's effect with no
     matching successful invocation anywhere in the whole run?
   - `find_protected_writes_by_unnamed_delegate` — the post-run shadow-mode
@@ -67,7 +67,7 @@ def _question_id_from_skill_call(args: dict[str, Any] | None) -> str | None:
     (e.g. `"--autonomous q_001 projectPath=..."`, the shape observed in
     committed runlogs). Returns None when not derivable — callers must treat
     that as "unknown," not "no question," and fall back to a skill-only
-    window (see docs/plan/research-guardrail-bypass-plan.md §4.1/§6)."""
+    window (see docs/specs/guardrail-enforcement-spec.md §7/§10)."""
     text = (args or {}).get("args")
     if not isinstance(text, str):
         return None
@@ -102,7 +102,7 @@ def owning_skills(tool: str, args: dict[str, Any] | None) -> list[str]:
     writes (`primary: true`, a `ParentChild`/`Couple` relationship), not just
     the `proof_summaries` entry. Returns a list (not a single value) since one
     batch call can touch more than one protected section — the caller decides
-    how to key each; see docs/plan/research-guardrail-bypass-plan.md §6 on
+    how to key each; see docs/specs/guardrail-enforcement-spec.md §10 on
     batch semantics not being exhaustively audited beyond the one TOCTOU case
     found in §4.2.
     """
@@ -263,7 +263,7 @@ def find_effects_without_invocation(
     *,
     starting_tree: dict[str, Any] | None = None,
 ) -> list[str]:
-    """Post-run hard detector (§4.4): a guardrail skill's documented effect is
+    """Post-run hard detector (§8): a guardrail skill's documented effect is
     present in the FINAL project state, but the skill was never successfully
     invoked anywhere in the run. Mirrors the unit harness's
     `test_positive_fails_when_skill_not_in_skills_invoked`, extended to cover
@@ -369,7 +369,7 @@ def find_missing_mentor_verdicts(research: dict[str, Any] | None) -> list[str]:
     """Every `ps_id` a resolved question references must carry a matching
     `evaluations[]` entry (`focus: "proof-critique"`, `target_id: <ps_id>`) —
     research/SKILL.md's own final completion check, and per docs/plan/
-    research-guardrail-bypass-plan.md §4.4/§6, this gate is itself just
+    guardrail-enforcement-spec.md §8/§10, this gate is itself just
     another routing-table step the orchestrator could silently skip under the
     same context pressure as the four guardrail skills.
 
@@ -503,7 +503,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     """A protected write attributed to neither the main thread nor a
     dedicated agent.
 
-    docs/plan/research-guardrail-bypass-plan.md §12 (supersedes §11's
+    docs/specs/guardrail-enforcement-spec.md §11 (supersedes §11's
     retired `find_skill_call_without_doctrine`, a heuristic that guessed
     "who is currently executing" from `Skill`/`Agent`/`Read` adjacency in a
     flat, unattributed `tool_calls` list — confirmed to miss real bypasses

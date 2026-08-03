@@ -1,10 +1,11 @@
 # Development
 
 Developer guide for building, testing, and extending this repository.
-For architecture and conventions Claude needs when editing the code,
-see [CLAUDE.md](./CLAUDE.md). For end-user installation and usage, see
-[README.md](./README.md). For contribution criteria, see
-[CONTRIBUTING.md](./CONTRIBUTING.md).
+For how the pieces bind and what a change's blast radius is, see
+[docs/architecture.md](./docs/architecture.md). For architecture and
+conventions Claude needs when editing the code, see [CLAUDE.md](./CLAUDE.md).
+For end-user installation and usage, see [README.md](./README.md). For
+contribution criteria, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Build commands
 
@@ -113,9 +114,50 @@ Example: adding a "list providers" feature.
 
 4. **Manually test by installing both artifacts in Claude Desktop.**
 
-The `mcp-tool-scaffolder` and `cowork-skill-builder` subagents (under
-`.claude/agents/`) generate the boilerplate for steps 1 and 2.
-`spec-review` checks the implementation against the spec before PR.
+Copy the templates for steps 1 and 2: `src/tools/wikipedia.ts` plus its sibling
+four files for a tool, and `packages/engine/plugin/skills/search-wikipedia/` for
+a skill. Before the PR, read the implementation against its
+`docs/specs/<tool>-tool-spec.md` and quote both sides on any drift.
+
+(The `mcp-tool-scaffolder`, `cowork-skill-builder`, and `spec-review` subagents
+did these jobs until 2026-08-02, when all three were deleted as stale — see
+`CLAUDE.md` § "Subagents" and issue #1161.)
+
+### Follow-on work you find along the way
+
+Implementing one task almost always turns up others — a stale doc, a missing
+test, a defect you're not fixing here. **File each one as a GitHub issue in the
+same PR that defers it.** Ask Claude to do it; it is one command and needs no
+board access:
+
+```sh
+gh issue create --label developer --title "…" --body "…"
+```
+
+- **Pick the label by who does the work.** `developer` for anything with a
+  mechanical pass/fail (lints, CI, validators, harness/Python, MCP tools,
+  refactors, tooling bugs). `genealogist` for fixture adjudication, run-log
+  annotation, record research, doctrine prose.
+- **Add `--label icebox` when it's a maybe** — a candidate with no decision
+  behind it. Triage skips those rather than re-ranking them every morning.
+  If you'd actually do it given a free afternoon, it isn't icebox.
+- **Creating the issue is all you do — the board takes care of itself.** A CI
+  workflow (`add-to-project.yml`) adds the card to Backlog the moment the issue
+  opens, and the lead's `/fill-ready` pass moves it from there. Don't run
+  `gh project` commands to place it yourself: a `gh` token without the `project`
+  scope (the default from `gh auth login`) fails a board write *while still
+  creating the issue*, which looks like it worked.
+- **Keep the body short and put the reasoning elsewhere.** Say what the work is
+  and why it's still open. A settled tradeoff, a rejected alternative, or a
+  measurement belongs in the tool's spec or in a comment at the line it
+  constrains — that's where the next person will be standing, and nobody
+  re-reads an issue body after triage.
+- **Mention the number in your PR description** so the reviewer can see what you
+  chose not to do.
+
+Do not park these in a to-do file. That was tried (`docs/TODOs.md`, retired
+2026-08-02): items that live only in a file never get assigned, and the file
+becomes a merge-conflict hotspot once several people work in parallel.
 
 ## How to test a new tool end-to-end
 
@@ -433,7 +475,9 @@ config lives in `deploy/fly.toml` `[env]` (`AGENT_MODE=real`, `SANDBOX_PROVIDER=
 
 **Stay at `count = 1`.** `fly scale count > 1` first needs `init_db()` moved to a
 one-time Fly `release_command` (two Machines otherwise race on `create_all` + the
-allowlist seed); tracked in [`docs/TODOs.md`](./docs/TODOs.md). Sticky routing is
+allowlist seed); tracked in issue #1127, with the race spelled out in
+[`docs/specs/public-rest-api-spec.md`](./docs/specs/public-rest-api-spec.md)
+§ "Prerequisite for `count > 1`". Sticky routing is
 not an option (production is AWS-no-sticky). Because `fly deploy` provisions two
 machines by default, always pass `--ha=false` (above); if a deploy ever leaves
 two, run `fly scale count 1` to drop back to one.

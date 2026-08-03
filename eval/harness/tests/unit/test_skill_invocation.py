@@ -1,8 +1,8 @@
 """Unit tests for harness/skill_invocation.py.
 
-docs/plan/research-guardrail-bypass-plan.md §4.1/§4.4/§12 — pure matching
-logic over the harness's `tool_calls` list shape. No I/O, no SDK types,
-except the one corpus-pinned regression test that reads a committed runlog.
+docs/specs/guardrail-enforcement-spec.md §7/§8/§11 — pure matching logic
+over the harness's `tool_calls` list shape. No I/O, no SDK types, except
+the one corpus-pinned regression test that reads a committed runlog.
 """
 
 import json

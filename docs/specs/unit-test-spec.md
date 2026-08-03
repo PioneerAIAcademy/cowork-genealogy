@@ -41,6 +41,7 @@ True multi-turn dialogue support (canned user replies, scripted turn arrays) is 
 - **Multi-turn dialogue support.** See above.
 - **Skill chains.** A single test exercises one skill in isolation. Tests that span multiple skills (e.g., `research-plan` → `search-records` → `record-extraction`) belong in the e2e framework (`docs/specs/e2e-test-spec.md`).
 - **Schema versioning.** Schema breakage is acceptable during build-out (per `research-schema-spec.md` §7). No migration story in v1.
+- **Skill-body length, in either direction.** A test grades a **single invocation in fresh context**, so this harness cannot see multi-hour retention — and that is where a large SKILL.md earns or wastes its tokens. A skill body enters context once, via the `Skill` tool, and nothing reloads it; successive auto-compactions evict it. Measured over one real 309-turn session, `search-records` (then 41.6 KB) was resident for **228 of 309 turns** and invoked exactly once, after which its *unanchored* rules decayed: `count: 50` held at 100% while the body was resident and fell to 45%, and "always call `rank_search_matches`" fell from 77% to 3%, leaving 114 searches hand-triaged. Every rule with a **structural anchor** — the tool rejects the violation, its output feeds a step that cannot proceed without it, or it leaves a durable trace the agent re-reads — held at 100%. Consequence for this harness: it will bless a cut that removes something only a long session needs, and equally bless an addition that earns nothing. A deep cut to, or sustained growth of, a large skill body needs a gate other than this suite — which is what blocks issues #1154 (`search-records`, 50.2 KB) and #1153 (`person-evidence`, 719 lines). Size *visibility* is #976. Plugin **agents** are exempt: they run in fresh context per invocation and cannot decay this way.
 
 ### Division of labor
 
@@ -1077,6 +1078,7 @@ The harness refuses to execute a test if any of the following are true. The chec
 | The skill's `rubric.md` does not exist or fails to parse per the format in Section 7 | The harness can't compute `rubric_hash`, can't load dimensions, and the judge prompt slot would be empty. Block rather than grade against an empty rubric |
 | For MCP-calling skills (`allowed-tools` non-empty in frontmatter), the `rubric.md` has no tool-usage dimension | Section 7 requires at least one tool-usage dimension (substring match against `tool usage`, `argument quality`, `response interpretation`, `tool selection`, `mcp tool`, `tool work`, `tool call`, or `fixture` in any dimension name). Block rather than grade tool quality with no rubric dimension covering it |
 | For negative tests, any entry in `negative.correct_skill` is not a directory under `packages/engine/plugin/skills/` | A typo silently produces an unsatisfiable test — Claude can route correctly and the test still fails. Catch at gate time with a clear "correct_skill[i]='X' is not an existing skill" message |
+| Any entry in `execution.stub_skills` (Section 5.7) is not a directory under `packages/engine/plugin/skills/` | The hook matches a stub by exact name, so a typo is a silent no-op: the callee executes for real and the run log looks identical to a working stub. Unlike `correct_skill` there is no xfail exemption — a stub naming a not-yet-built skill could never fire, so it is always a typo |
 
 The CRUD UI ([`eval-crud-ui-spec.md`](eval-crud-ui-spec.md)) surfaces non-runnable tests so authors can see their tests are waiting on dev work without burning runs.
 
@@ -1813,6 +1815,15 @@ Every test runs under hard limits. Exceeding any one aborts the run with `outcom
 | `max_wall_clock_seconds` | 300 | `execution.max_wall_clock_seconds` | Catches hangs and excessively slow responses. 5 min handles even complex synthesis skills |
 | `max_tool_calls` | 50 | `execution.max_tool_calls` | Bounds MCP fixture consumption and prevents accidental fan-out (e.g., a skill that calls `place_search` for every word in the user message) |
 | `max_input_tokens_per_turn` | 200000 | `execution.max_input_tokens_per_turn` | Catches scenarios where the skill re-reads files into context until the window saturates. **Post-hoc**: the SDK exposes `usage.input_tokens` only after a turn returns, so the offending turn is billed before the harness aborts. Catches runaway *growth* between turns, not the first oversized turn. A preemptive cap requires a `PreSendMessage` hook with token estimation; deferred to v2 |
+
+**Decided against: mass-tightening oversized `max_wall_clock_seconds` caps.**
+Roughly 80 tests carry a cap far above their real duration. Since
+`_est_test_seconds` (`eval/harness/run_tests.py`) weights longest-first
+scheduling by each test's *last observed actual* duration and falls back to the
+cap only when no run log exists, an over-generous cap costs nothing in makespan —
+it is purely a safety ceiling. Tightening 80+ caps would add abort/flakiness risk
+for no scheduling gain. Revisit only if one specific runaway needs a faster
+ceiling.
 
 Test JSON may override per-test (rare — mostly used for `proof-conclusion` and `research-plan`, which legitimately take more turns):
 

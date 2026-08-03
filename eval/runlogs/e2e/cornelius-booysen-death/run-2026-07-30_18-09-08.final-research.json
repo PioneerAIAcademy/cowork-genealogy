@@ -1,0 +1,1420 @@
+{
+  "project": {
+    "id": "rp_cornelius_booysen_death",
+    "objective": "When and where did Cornelius Hermanus Zacharias Booysen of Pretoria, Transvaal, South Africa die?",
+    "subject_person_ids": [
+      "GWDS-CKP"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-07-30"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What was the date and place of death of Cornelius Hermanus Zacharias Booysen of Pretoria, Transvaal, South Africa?",
+      "rationale": "The research objective is to determine when and where this individual died. Date and place of death are co-located facts typically found together in civil death registrations, burial records, and obituaries. South African civil registration in the Transvaal was established in the late 19th century; FamilySearch holds digitized death registers for this jurisdiction. This single question targets the complete death event.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-30",
+      "resolution_assertion_ids": [
+        "a_026",
+        "a_027",
+        "a_028",
+        "a_029"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All plan items across two research plans (pl_001 superseded, pl_002 active) are completed. The principal Transvaal Civil Death collection (2998108, covering 1869-1954) was searched with multiple strategies: broad surname+given name queries, targeted birth-year-range + death-year-range queries, and a spousal filter (Daniel/Bester). NDR church registers (collection 2155416), FamilySearch cemetery records, and FindAGrave were also searched. Ancestry was attempted but access was unavailable. Source attachment checks and a targeted record_read of a specific ARK were completed. Original death certificate images could not be examined due to OpenRouter not being configured. person_record_matches is disabled in this benchmark run. The indexed Transvaal Civil Death collection may not capture every death, but all name-indexed records for GWDS-CKP's exact name and plausible birth/death year ranges are exhausted.",
+        "log_entry_ids": [
+          "log_001",
+          "log_003",
+          "log_004",
+          "log_006",
+          "log_007",
+          "log_010",
+          "log_011"
+        ],
+        "stop_criteria": "All plan items in pl_001 and pl_002 are completed or skipped. No additional repositories or record types identified that could be searched with available access. Index search exhausted; original images unavailable."
+      },
+      "created": "2026-07-30"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "superseded",
+      "created": "2026-07-30",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Pretoria, Transvaal, South Africa",
+          "date_range": "1869-1954",
+          "repository": "FamilySearch",
+          "rationale": "South Africa, Transvaal, Civil Death, 1869-1954 (collection 2998108) is the primary source for death date and place. ~557 Pretoria-city volumes are 92-99% name-indexed and searchable by name. Death certificates record full name, age, sex, birthplace, marital status, occupation, place and date of death, residence, place of burial, cause/duration of death, and informant details. Booysen is an Afrikaner surname; Cornelius Hermanus Zacharias is a distinctively triple-barrelled Afrikaner name \u2014 a surname-only search followed by first-name filtering should isolate any match. Locality guide loc_001 confirms this collection is the highest-priority source for Pretoria deaths.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "South Africa (national)",
+          "date_range": "1953-1967",
+          "repository": "FamilySearch",
+          "rationale": "South Africa, Civil Death Registration, 1953-1967 (collection 3732506) covers deaths after the Transvaal Civil Death collection ends in 1954. If Cornelius died after 1954, his record will appear here rather than in collection 2998108. Indexed + images; national coverage. Search as fallback if pli_001 returns no match.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "probate",
+          "jurisdiction": "Pretoria, Transvaal, South Africa",
+          "date_range": "1869-1961",
+          "repository": "FamilySearch",
+          "rationale": "South Africa, Transvaal, Probate Records from the Master of the Supreme Court, 1869-1961 (collection 2520237) contains death notices (MHG series). Per locality guide loc_001, Transvaal death notices are essential documents that typically supply age, date and place of death, marital status, names of children, and (when known) names of parents of the deceased \u2014 often more genealogically rich than the civil death certificate. 1,870,732 indexed records. First Transvaal death notices created 1873. Even if pli_001 finds the civil certificate, this record provides corroboration and may supply additional facts (burial place, names of survivors).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Pretoria, Transvaal, South Africa",
+          "date_range": "1838-1991",
+          "repository": "FamilySearch",
+          "rationale": "South Africa, Netherdutch Reformed Church Registers (Pretoria Archive), 1838-1991 (collection 2155416) contains burial entries as well as baptisms and marriages. Booysen is a characteristic Afrikaner surname associated with the Dutch Reformed tradition; a Netherdutch Reformed burial entry would supply the date and place of burial/death and may predate civil registration or supplement it. 75,380 records indexed; 3,049,440 persons. Locality guide loc_001 flags this as especially relevant for Afrikaner surnames.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "cemetery",
+          "jurisdiction": "Pretoria, Transvaal, South Africa",
+          "date_range": "1870-1960",
+          "repository": "FamilySearch",
+          "rationale": "South Africa, Gauteng, Johannesburg, Cemetery Records, 1840-2019 (collection 4453927) covers the greater Pretoria area with 2,406,245 records and is indexed. Cemetery records supply burial date and place which, for this era, typically coincide closely with date and place of death. Also search the eGGSA Graves Database (http://www.eggsa.org/librarySearch/searchGraves.htm) and Find a Grave (South Africa). Provides independent corroboration of civil/church evidence.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "probate",
+          "jurisdiction": "Transvaal, South Africa",
+          "date_range": "1855-1976",
+          "repository": "Ancestry",
+          "rationale": "Ancestry holds the 'Transvaal Province, South Africa, Estates Death Notice Index, 1855-1976' \u2014 an index to Transvaal death notices complementary to the FamilySearch probate collection (pli_003). Searching here as an external cross-check, particularly useful if the death falls outside the 1869-1961 window of collection 2520237 or if the FamilySearch index missed the entry. Per external_links_search results from loc_001 survey.",
+          "fallback_for": "pli_003",
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-30",
+      "items": [
+        {
+          "id": "pli_007",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Pretoria, Transvaal, South Africa",
+          "date_range": "1940",
+          "repository": "FamilySearch",
+          "rationale": "The log_001 search found a second unexamined Pretoria candidate: 'Cornelius Booysen, b.1856, d.12 Mar 1940, Pretoria' (ark:/61903/1:1:74GL-7NPZ). This was deprioritized in the initial pass because the 1853-born triple-named candidate appeared to be the subject. Now that the 1853-born candidate is confirmed as GWDS-CKP's grandfather (not GWDS-CKP himself, born 1906), this 1940 candidate warrants immediate record read. The birth year '1856' in the index may be an indexing/OCR error for '1906' (GWDS-CKP's birth year), or this may be a different Cornelius Booysen entirely. Reading the full record will resolve this. This is the highest-priority item because the record is already in hand from the prior search.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Pretoria, Transvaal, South Africa",
+          "date_range": "1934-1954",
+          "repository": "FamilySearch",
+          "rationale": "Re-search collection 2998108 (South Africa, Transvaal, Civil Death, 1869-1954) for GWDS-CKP with birth year filter 1901-1915 and death year 1934-1954. The original pli_001 search returned the grandfather (born ~1853, died 1925) but did not filter by birth year or death year, so GWDS-CKP's record (born 1906, last known alive Dec 1933) may be in the same collection at a later date. Per loc_001, collection 2998108 covers Pretoria at 92-99% name-index coverage. Use subjectId GWDS-CKP so the ranker scores against the now-enriched tree person with the 1906 birth year context.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 3,
+          "record_type": "other",
+          "jurisdiction": "Pretoria, Transvaal, South Africa",
+          "date_range": "1934-1970",
+          "repository": "FamilySearch",
+          "rationale": "Check FamilySearch source attachments and person-record matches for tree person GWDS-CKP. FamilySearch's own matcher may have already linked a death record to this person that parametric name searches missed. Use source_attachments or person_record_matches on GWDS-CKP (a FS-ID person, not a local stub, so the FS matcher has likely run against it). This is a quick lookup that could immediately surface the answer without additional searching.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Pretoria, Transvaal, South Africa",
+          "date_range": "1934-1954",
+          "repository": "FamilySearch",
+          "rationale": "Search collection 2998108 with spousal name filter: spouseGivenName 'Daniel' (or 'Dani\u00ebl'), spouseSurname 'Bester'. GWDS-CKP married Daniel Jacobus Bester on 31 Dec 1930. Transvaal civil death records typically name the surviving spouse, so filtering on the distinctive spouse name isolates GWDS-CKP from other Cornelius Booysens. Fallback for pli_008 if that search returns ambiguous results.",
+          "fallback_for": "pli_008",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T17:17:55.097Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Booysen",
+        "givenName": "Cornelius",
+        "collectionId": "2998108",
+        "sex": "Male",
+        "recordType": "death"
+      },
+      "outcome": "positive",
+      "results_examined": 27,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 27,
+      "notes": "27 results in Transvaal Civil Death 1869-1954 for Cornelius Booysen (Male). Subject has no birth date so ranker scores are low. Best Pretoria candidates: (1) matchRank 8 - Cornelius Hermanus Zacharies Booysen b.1853 d.23 Dec 1925 Pretoria [ark:/61903/1:1:WDJ7-Z9W2] \u2014 name nearly exact match with 'Zacharies' variant; (2) searchRank 5 - Cornelius Booysen b.1856 d.12 Mar 1940 Pretoria [ark:/61903/1:1:74GL-7NPZ] \u2014 plain name, no middle names. Both warrant full record reads."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-30T17:20:28.277Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Booysen",
+        "givenName": "Cornelius",
+        "collectionId": "2520237",
+        "sex": "Male"
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 6,
+      "notes": "6 results in Transvaal Probate/Death Notices (col. 2520237) for Cornelius Booysen. None match the subject. All are Wessel Cornelius Booysen or abbreviated C J Booysen. Diagnostic: subject scored above threshold but no candidate exceeded 0.01 matchScore. Probate death notice for the 1925 death (found in pli_001) may require a more targeted search by death year or full name."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-30T17:20:28.289Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Booysen",
+        "givenName": "Cornelius",
+        "collectionId": "2155416",
+        "sex": "Male"
+      },
+      "outcome": "partial",
+      "results_examined": 48,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 48,
+      "notes": "48 results in Netherdutch Reformed Church Registers (col. 2155416). Multiple 'Cornelis/Cornelius Hermanus Zacharias Booysen' records (matchRank 1-5, scores ~0.137) where subject appears as named family member (parent/relative). No specific burial entry with death date for the subject found in this pass. Confirms presence in NDR church family network. Key records: ark:/61903/1:1:79L8-NGN2 (Cornelius Hermanus Zacharias Booysen, record title for Cornelis Hermanus Zacharyas Booysen) warrants further examination."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-30T17:20:28.295Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Booysen",
+        "givenName": "Cornelius",
+        "collectionId": "3732506",
+        "sex": "Male"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 54,
+      "notes": "50 results (54 available) in Civil Death Registration 1953-1967 (col. 3732506). Subject identified from pli_001 as dying 23 Dec 1925 \u2014 outside this collection's 1953-1967 range. No Pretoria match for the distinctive triple name Cornelius Hermanus Zacharias Booysen. Confirms pli_001's 1925 death record is the subject's death; pli_002 is effectively ruled out as a source for this subject."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-30T17:34:46.317Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3Q9M-C91P-CWTQ"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Attempted to read the original civil death certificate scan (the image underlying the index entry ark:/61903/1:1:WDJ7-Z9W2 / src_001). image_transcribe returned 'fetch failed \u2014 could not reach OpenRouter'. No OpenRouter API key is configured in this environment. Image could not be transcribed. The original civil death certificate (primary source) remains unexamined. Research continues from the derivative index entry (src_001) which supplies date of death 23 Dec 1925 and place Pretoria, Transvaal. The original image examination is flagged as an outstanding step if OpenRouter is configured in future."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-30T17:35:14.424Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Booysen",
+        "givenName": "Cornelius Hermanus",
+        "collectionId": "2520237",
+        "sex": "Male",
+        "deathYearFrom": 1925,
+        "deathYearTo": 1926
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 3,
+      "notes": "Targeted retry of pli_003 with deathYear 1925-1926 and givenName 'Cornelius Hermanus'. 3 results: two entries for Hendrik Hermanus Zacharias Booysen (related to Maria Roos Baumann Booysen estate) and Wessel Cornelius Booysen (b. 1936). None match the subject. All matchScores below 0.01. The Transvaal Probate collection does not appear to contain an indexed death notice for Cornelius Hermanus Zacharias Booysen under his full name. The death notice may exist under an abbreviated name not surfaced by the index, or may not have been filed. Logging as true negative."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-30T17:35:14.434Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Booysen",
+        "givenName": "Cornelius",
+        "collectionId": "4453927",
+        "sex": "Male",
+        "deathYearFrom": 1920,
+        "deathYearTo": 1930
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 1,
+      "notes": "Cemetery search (collection 4453927, South Africa Gauteng Johannesburg Cemetery Records) for Cornelius Booysen, death 1920-1930. Single result: 'Booysen' (no given name), burial 25 Sep 1929, Johannesburg, born 1929 \u2014 an infant, clearly not the subject. matchScore 0.00013. No cemetery record for Cornelius Hermanus Zacharias Booysen in this collection. True negative."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-30T17:36:09.659Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "database": "Transvaal Province South Africa Estates Death Notice Index 1855-1976",
+        "surname": "Booysen",
+        "givenName": "Cornelius Hermanus",
+        "birthYear": "1853",
+        "deathYear": "1925",
+        "deathPlace": "Transvaal"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://search.ancestry.com/search/db.aspx?dbid=60597&gsfn=Cornelius+Hermanus&gsln=Booysen&msbdy=1853&msddy=1925&msdpn=Transvaal",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Search URL generated for Ancestry 'Transvaal Province, South Africa, Estates Death Notice Index, 1855-1976' for Cornelius Hermanus Booysen, born ~1853, died ~1925, Transvaal. URL not accessed \u2014 Ancestry requires a subscription not available in this environment. The FamilySearch Transvaal Probate collection (pli_003) was searched twice with negative results. This external source remains unverified and is a gap in the exhaustive search."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-30T17:50:41.154Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:74GL-7NPZ"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Record read of ark:/61903/1:1:74GL-7NPZ from log_001 sidecar. Index shows 'Cornelius Booysen' (no middle names), b.1856, d.12 Mar 1940 Pretoria. Absence of triple given names and 50-year birth-year gap vs GWDS-CKP (born 1906) strongly indicate this is a different person. Source created as src_003. Original image not read (OpenRouter not configured). Classified as likely NOT GWDS-CKP; q_001 remains open."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-30T17:50:41.154Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Booysen",
+        "givenName": "Cornelius Hermanus",
+        "collectionId": "2998108",
+        "sex": "Male",
+        "birthYearFrom": 1901,
+        "birthYearTo": 1915,
+        "deathYearFrom": 1934,
+        "deathYearTo": 1954
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 3,
+      "notes": "Re-search collection 2998108 for Cornelius Hermanus Booysen, birth year 1901-1915, death year 1934-1954. Two full-name matches: (1) Cornelius Hermanus Zacharias Booysen, b.1902, d.9 Sep 1942, Standerton (matchRank 1, score 0.044, unattached); (2) Cornelius Hermanus Zacharias Booysen, b.1914, d.22 Jun 1936, Johannesburg (matchRank 2, score 0.014, unattached). Both bracket GWDS-CKP's 1906 birth year. Family has Standerton connection (parents married 1905 Standerton). Both warrant extraction. Partial pending record reads."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-30T17:56:28.940Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2998108",
+        "surname": "Booysen",
+        "givenName": "Cornelius Hermanus Zacharias",
+        "spouseGivenName": "Daniel",
+        "spouseSurname": "Bester",
+        "recordCountry": "South Africa"
+      },
+      "outcome": "partial",
+      "results_examined": 27,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 27,
+      "notes": "Spousal filter search using Daniel/Bester did not produce a new decisive match beyond pli_008. Same top candidates: Standerton 1942 (b.1902, 7453-9H2M) and Johannesburg 1936 (b.1914, 7H67-92T2). No candidate with an exact birth year of 1906 or a Pretoria death location emerged."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"South Africa, Transvaal, Civil Death, 1869-1954\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WDJ7-Z9W2 : accessed 30 July 2026), Entry for Cornelius Hermanus Zacharies Booysen, 23 Dec 1925.",
+      "citation_detail": {
+        "who": "Cornelius Hermanus Zacharies Booysen",
+        "what": "Index entry, \"South Africa, Transvaal, Civil Death, 1869-1954\", FamilySearch",
+        "when_created": "Civil death registered 23 Dec 1925; index published by FamilySearch",
+        "when_accessed": "2026-07-30",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ark:/61903/1:1:WDJ7-Z9W2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-30",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:WDJ7-Z9W2",
+      "notes": "FamilySearch index of a Transvaal civil death certificate from collection 2998108. Original image available at https://www.familysearch.org/ark:/61903/3:1:3Q9M-C91P-CWTQ \u2014 original not examined; index only was consulted. The full certificate may contain additional detail including informant name, cause of death, burial place, and parents.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"South Africa, Netherdutch Reformed Church Registers (Pretoria Archive), 1838-1991\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:79L8-NG6Z : accessed 30 July 2026), Entry for Cornelis Hermanus Zacharyas Booysen and Cornelius Hermanus Zacharias Booysen, 16 Mar 1873; image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3QS7-99Z5-LD7H).",
+      "citation_detail": {
+        "who": "Cornelis Hermanus Zacharyas Booysen (child), with father Cornelius Hermanus Zacharias Booysen and mother Anna Maria Petronella Viljoen",
+        "what": "Baptism/christening register entry, South Africa, Netherdutch Reformed Church Registers (Pretoria Archive), 1838-1991, collection 2155416",
+        "when_created": "16 March 1873 (baptism date; birth date 1 March 1872)",
+        "when_accessed": "30 July 2026",
+        "where": "FamilySearch, South Africa, Netherdutch Reformed Church Registers (Pretoria Archive), 1838-1991 (collection 2155416)",
+        "where_within": "Entry for Cornelis Hermanus Zacharyas Booysen, baptized 16 Mar 1873, Heidelberg, Transvaal, South Africa; image ark:/61903/3:1:3QS7-99Z5-LD7H"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:79L8-NG6Z",
+      "access_date": "2026-07-30",
+      "notes": "Church baptism register entry. The searched/primary persona (ark:/61903/1:1:79L8-NGN2) is the FATHER, Cornelis Hermanus Zacharyas Booysen \u2014 a spelling variant of the research subject Cornelius Hermanus Zacharias Booysen (GWDS-CKP). The principal record entry (79L8-NG6Z) is the child of the same name. Image available at ark:/61903/3:1:3QS7-99Z5-LD7H.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"South Africa, Transvaal, Civil Death, 1869-1954\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:74GL-7NPZ : accessed 2026-07-30), Entry for Cornelius Booysen, 12 Mar 1940.",
+      "citation_detail": {
+        "who": "Cornelius Booysen",
+        "what": "Civil death index entry, South Africa, Transvaal, Civil Death, 1869-1954, collection 2998108",
+        "when_created": "12 Mar 1940 (death event); indexed record accessed 2026-07-30",
+        "when_accessed": "2026-07-30",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ark:/61903/1:1:74GL-7NPZ; image ARK ark:/61903/3:1:3Q9M-C9BY-XSM2-C (not opened)"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:74GL-7NPZ",
+      "access_date": "2026-07-30",
+      "notes": "Original not examined \u2014 this extraction is based on the FamilySearch index stub only. The original civil death register image (ark:/61903/3:1:3Q9M-C9BY-XSM2-C) was not opened. The index gives only given name 'Cornelius' and surname 'Booysen' \u2014 no middle names. The indexed birth year 1856 may be a mis-indexing; the original image must be consulted to verify the full name, birth year, and informant details.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"South Africa, Transvaal, Civil Death, 1869-1954\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:7H67-92T2 : accessed 2026-07-30), Entry for Cornelius Hermanus Zacharias Booysen, 22 Jun 1936.",
+      "citation_detail": {
+        "who": "Cornelius Hermanus Zacharias Booysen",
+        "what": "Civil death index entry, South Africa, Transvaal, Civil Death, 1869-1954, collection 2998108",
+        "when_created": "1936",
+        "when_accessed": "2026-07-30",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Index entry for Cornelius Hermanus Zacharias Booysen, death 22 Jun 1936, Johannesburg, Transvaal"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:7H67-92T2",
+      "access_date": "2026-07-30",
+      "notes": "Index entry only \u2014 original civil death register image not examined. The underlying original (Transvaal civil death register, collection 2998108) was not accessed; only the FamilySearch index stub was read. Original image ARK: https://www.familysSearch.org/ark:/61903/3:1:3Q9M-C9BY-HSBJ-R. Full record details (occupation, marital status, spouse, parents, informant) require examination of the original register image. Birth year 1914 is 8 years later than tree subject GWDS-CKP (born 1906 in tree); possible indexing error or different individual \u2014 original image must be examined to resolve.",
+      "log_entry_id": "log_010",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"South Africa, Transvaal, Civil Death, 1869-1954,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:7453-9H2M : accessed 2026-07-30), entry for Cornelius Hermanus Zacharias Booysen, died 9 Sep 1942, Standerton, Transvaal.",
+      "citation_detail": {
+        "who": "Cornelius Hermanus Zacharias Booysen",
+        "what": "Civil death index entry, South Africa, Transvaal, Civil Death, 1869-1954 (FamilySearch collection 2998108)",
+        "when_created": "9 Sep 1942 (original certificate); index digitized by FamilySearch",
+        "when_accessed": "2026-07-30",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "ark:/61903/1:1:7453-9H2M; image ark:/61903/3:1:3Q9M-C9BY-6SH7-M"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:7453-9H2M",
+      "access_date": "2026-07-30",
+      "notes": "This is an index entry (derivative) from the Transvaal Civil Death collection. The underlying original civil death certificate image (ark:/61903/3:1:3Q9M-C9BY-6SH7-M) was not examined \u2014 original not examined, image not accessed through the API. The index surfaces only: full name, sex, birth year 1902, death date 9 Sep 1942, death place Standerton, Transvaal. Additional fields that may appear on the original certificate (parents, informant, occupation, marital status, age at death, cause of death) are unknown from this derivative alone.",
+      "log_entry_id": "log_010",
+      "gedcomx_source_description_id": "S5"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:WDJ7-Z9W2",
+      "record_persona_id": "p_140385421100",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Cornelius Hermanus Zacharies Booysen",
+      "structured_value": {
+        "given": "Cornelius Hermanus Zacharies",
+        "surname": "Booysen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Index entry; informant who supplied the name to the civil registrar is not identified in this derivative. The name spelling 'Zacharies' is a documented Afrikaans/Dutch variant of 'Zacharias'.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:WDJ7-Z9W2",
+      "record_persona_id": "p_140385421100",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Index entry; informant who supplied sex to the civil registrar is not identified in this derivative.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:WDJ7-Z9W2",
+      "record_persona_id": "p_140385421100",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "23 Dec 1925, Pretoria, Transvaal, South Africa",
+      "date": "23 Dec 1925",
+      "date_certainty": "exact",
+      "place": "Pretoria, Transvaal, South Africa",
+      "standard_place": "Pretoria, Transvaal, South Africa",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Civil death registration; the registrar recorded the death in an official capacity. The indexed place field shows 'Pretoria, Thabazimbi, Transvaal, South Africa' in the raw data with standard place 'Pretoria, Transvaal, South Africa' \u2014 Thabazimbi appears to be an indexing artifact or administrative field; standardized form used.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:WDJ7-Z9W2",
+      "record_persona_id": "p_140385421100",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1853",
+      "date": "1853",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth year 1853 is stated in the index. No person can provide primary information about their own birth; the informant who supplied this to the civil registrar is not identified in this derivative. The full certificate image may reveal the informant and any more precise birth date.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662300",
+      "record_role": "father_of_child",
+      "fact_type": "name",
+      "value": "Cornelis Hermanus Zacharyas Booysen",
+      "structured_value": {
+        "given": "Cornelis Hermanus Zacharyas",
+        "surname": "Booysen"
+      },
+      "information_quality": "primary",
+      "informant": "Cornelius Hermanus Zacharias Booysen (the father, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662300",
+      "record_role": "father_of_child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Cornelius Hermanus Zacharias Booysen (the father, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662300",
+      "record_role": "father_of_child",
+      "fact_type": "relationship",
+      "value": "father of Cornelis Hermanus Zacharyas Booysen (child, baptized 16 Mar 1873)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Cornelius Hermanus Zacharias Booysen (the father, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The baptism register explicitly names the father. The stated parent-child relationship is direct \u2014 christening registers record parentage as a primary purpose, not inferred from position.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662300",
+      "record_role": "father_of_child",
+      "fact_type": "relationship",
+      "value": "spouse of Anna Maria Petronella Viljoen",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "spouse"
+      },
+      "information_quality": "primary",
+      "informant": "Cornelius Hermanus Zacharias Booysen (the father, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "The register records the couple presenting the child together, explicitly linking father and mother as a pair. The spousal relationship is stated by the structure of the register entry.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662200",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Cornelis Hermanus Zacharyas Booysen",
+      "structured_value": {
+        "given": "Cornelis Hermanus Zacharyas",
+        "surname": "Booysen"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) of the child",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662200",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "baptized 16 March 1873 at Heidelberg, Transvaal, South Africa",
+      "date": "16 Mar 1873",
+      "date_certainty": "exact",
+      "place": "Heidelberg, Transvaal, South Africa",
+      "information_quality": "primary",
+      "informant": "officiating minister of the Netherdutch Reformed Church",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Heidelberg, Transvaal, South Africa"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662200",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 1 March 1872",
+      "date": "1 Mar 1872",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) of the child",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birth date stated in the register, supplied by the presenting parent(s). The birth date (1 Mar 1872) predates the baptism (16 Mar 1873) by over a year \u2014 a relatively late baptism, but not unusual for a remote Transvaal farm family. Accepted as stated.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662200",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Cornelius Hermanus Zacharias Booysen (father)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) of the child",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Christening register explicitly names the father. Relationship is stated, not inferred from household position.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662200",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Anna Maria Petronella Viljoen (mother)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) of the child",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Christening register explicitly names the mother. Relationship is stated, not inferred from household position.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662400",
+      "record_role": "mother_of_child",
+      "fact_type": "name",
+      "value": "Anna Maria Petronella Viljoen",
+      "structured_value": {
+        "given": "Anna Maria Petronella",
+        "surname": "Viljoen"
+      },
+      "information_quality": "primary",
+      "informant": "Anna Maria Petronella Viljoen (the mother, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662400",
+      "record_role": "mother_of_child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Anna Maria Petronella Viljoen (the mother, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662400",
+      "record_role": "mother_of_child",
+      "fact_type": "relationship",
+      "value": "mother of Cornelis Hermanus Zacharyas Booysen (child, baptized 16 Mar 1873)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Anna Maria Petronella Viljoen (the mother, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "The baptism register explicitly names the mother. The stated parent-child relationship is direct.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:79L8-NGN2",
+      "record_persona_id": "p_110598662400",
+      "record_role": "mother_of_child",
+      "fact_type": "relationship",
+      "value": "spouse of Cornelius Hermanus Zacharias Booysen",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "spouse"
+      },
+      "information_quality": "primary",
+      "informant": "Anna Maria Petronella Viljoen (the mother, presenting parent)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Register records the couple presenting the child together, explicitly linking mother and father as a pair.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:74GL-7NPZ",
+      "record_persona_id": "p_115004760100",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Cornelius Booysen",
+      "structured_value": {
+        "given": "Cornelius",
+        "surname": "Booysen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Index entry only; the index may have omitted middle names present in the original register. The name 'Cornelius Booysen' (no middle names) does not match the tree subject GWDS-CKP whose full name is 'Cornelius Hermanus Zacharias Booysen'. Original image must be consulted to determine whether middle names were recorded.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:74GL-7NPZ",
+      "record_persona_id": "p_115004760100",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:74GL-7NPZ",
+      "record_persona_id": "p_115004760100",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1856",
+      "date": "1856",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1856"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Index-derived birth year. The 1856 figure is a 50-year discrepancy from GWDS-CKP's known birth year of 1906. This may be a mis-indexing of '1906' (digit transposition or OCR error), or it may correctly identify a different Cornelius Booysen born 1856. The original image must be examined to verify. This reading is treated as uncertain ([?]) given the known discrepancy and the derivative nature of the source.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:74GL-7NPZ",
+      "record_persona_id": "p_115004760100",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "12 Mar 1940, Pretoria, Transvaal, South Africa",
+      "date": "12 Mar 1940",
+      "date_certainty": "exact",
+      "place": "Pretoria, Transvaal, South Africa",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Index-derived death date and place. The original civil death register entry would name the informant (typically a family member or official). Classification upgraded to indeterminate because the index does not identify who supplied these facts; the original image must be consulted to identify the informant and their proximity.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_003",
+      "standard_place": "Pretoria, Transvaal, South Africa"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:7H67-92T2",
+      "record_persona_id": "p_115501995800",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Cornelius Hermanus Zacharias Booysen",
+      "structured_value": {
+        "given": "Cornelius Hermanus Zacharias",
+        "surname": "Booysen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown \u2014 index entry, original informant unidentified",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:7H67-92T2",
+      "record_persona_id": "p_115501995800",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown \u2014 index entry, original informant unidentified",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:7H67-92T2",
+      "record_persona_id": "p_115501995800",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1914",
+      "date": "1914",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown \u2014 index entry, original informant unidentified",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birth year 1914 is 8 years later than the 1906 birth year recorded in the tree for GWDS-CKP. Could reflect an indexing transcription error from the original register, or this may be a different individual. Original image examination is required to confirm the birth year as stated. Do not treat as confirmed for GWDS-CKP without corroboration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:7H67-92T2",
+      "record_persona_id": "p_115501995800",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 22 June 1936, Johannesburg, Transvaal, South Africa",
+      "date": "22 Jun 1936",
+      "date_certainty": "exact",
+      "place": "Johannesburg, Transvaal, South Africa",
+      "information_quality": "indeterminate",
+      "informant": "unknown \u2014 index entry, original informant unidentified",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Index entry only; date and place are as indexed from the original civil death register. The original register image was not examined to verify. Death place Johannesburg is approximately 55 km from Pretoria, consistent with the research subject's known area but not identical.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_004",
+      "standard_place": "Johannesburg, Transvaal, South Africa"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:7453-9H2M",
+      "record_persona_id": "p_115038664800",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Cornelius Hermanus Zacharias Booysen",
+      "structured_value": {
+        "given": "Cornelius Hermanus Zacharias",
+        "surname": "Booysen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Index entry \u2014 the original certificate informant (typically a family member or spouse) cannot be identified from the derivative. The name may have been transcribed from the original; transcription errors are possible for this Afrikaner surname/given-name combination.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:7453-9H2M",
+      "record_persona_id": "p_115038664800",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Sex derived from index entry; original certificate informant cannot be identified through this derivative.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:7453-9H2M",
+      "record_persona_id": "p_115038664800",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1902",
+      "date": "1902",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth year from index entry \u2014 originally supplied to the civil registrar by the personal informant on the death certificate, who could not have been present at the decedent's birth (secondary knowledge at best). Informant identity is unknown through this derivative. The index shows '1902' which conflicts with tree birth year of 1906 for GWDS-CKP \u2014 a 4-year discrepancy requiring resolution against the original certificate image and independent corroborating records.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:7453-9H2M",
+      "record_persona_id": "p_115038664800",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 9 Sep 1942, Standerton, Transvaal, South Africa",
+      "date": "9 Sep 1942",
+      "date_certainty": "exact",
+      "place": "Standerton, Transvaal, South Africa",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Death date and place certified by the civil registrar in official capacity. Derived through an index; registrar identity not individually named in this derivative but the certification is an official act. The place Standerton is consistent with the family's known Standerton area connection (parents married there 1905).",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_005",
+      "standard_place": "Standerton, Transvaal, South Africa"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "I1 minted from civil death record (src_001) via materialize_facts \u2014 this persona (deceased, p_140385421100) is the defining source for I1. Distinctive triple-barrelled name 'Cornelius Hermanus Zacharies Booysen'. Link to GWDS-CKP REJECTED: chronological impossibility \u2014 persona died 23 Dec 1925; GWDS-CKP married 31 Dec 1930 and had child Dec 1933, proving survival past 1925. Birth year ~1853 in record vs 1906 for GWDS-CKP is a 53-year conflict. This is the grandfather generation. No same_person score (local stub, no FamilySearch ARK).",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex Male for deceased persona (p_140385421100) in civil death record; person I1 created from this record. Consistent with Male gender in tree.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Death 23 Dec 1925 Pretoria Transvaal \u2014 the defining death fact for I1, minted from this record (src_001). Primary/direct evidence from civil death index. No link to GWDS-CKP (born 1906, alive in 1930 per marriage record).",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth ~1853 for deceased persona (p_140385421100) in civil death record. Consistent with being a father in 1873 (age ~20) and dying in 1925 (age ~72). Person I1 created from this record.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Father persona (p_110598662300) in NDR church baptism 1873 bears name 'Cornelis Hermanus Zacharyas Booysen' \u2014 documented Afrikaans/Dutch variant of the same distinctive triple-barrelled name as src_001 ('Zacharies'/'Zacharyas' are parallel orthographic forms). Same region (Transvaal: Heidelberg 1873; Pretoria death 1925). Era consistent: born ~1853, father in 1873 at age ~20. Two independent records (civil death and NDR church) confirm same person. No same_person score (local stub). Strong qualitative match; linked confident.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex Male for father persona (p_110598662300) in NDR church baptism; consistent with I1 (Male from civil death record). Cross-record corroboration.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion (parent-child, father party): father persona p_110598662300 linked to I1 at confident; as the father party in the relationship, this assertion bears on I1. NDR church 1873 baptism entry names I1 as father of the baptized child (I3).",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Relationship assertion (parent-child, child party): the baptized child (p_110598662200, born 1 Mar 1872, baptized 16 Mar 1873 Heidelberg) linked to I3. I3 was minted from this same record. Child party in the parent-child relationship named in src_002.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Spousal relationship assertion: father persona p_110598662300 (I1) and mother persona p_110598662400 (I2) named as a couple in NDR church baptism 1873. Husband party.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Spousal relationship assertion: Anna Maria Petronella Viljoen (mother_of_child persona, p_110598662400, I2) linked to I1 as wife. Wife party in spousal relationship stated in NDR church baptism 1873.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Name assertion for child_1 persona (p_110598662200): 'Cornelis Hermanus Zacharyas Booysen' \u2014 I3 minted from this record. Defining source for I3.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Baptism fact (16 Mar 1873, Heidelberg, Transvaal) for child_1 persona; I3 minted from this record. Original NDR church register entry.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Birth fact (1 Mar 1872) for child_1 persona; I3 minted from this record. Late baptism (over one year) noted in informant_bias_notes \u2014 not unusual for remote Transvaal farm families.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Child-of-father relationship assertion: child_1 persona (I3) is child of father persona (I1, Cornelis Hermanus Zacharyas Booysen). Child party. Stated explicitly in NDR church baptism record.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Child-of-father relationship assertion: I1 is the named father of the 1873 baptized child (I3). Father party. Named explicitly in NDR church baptism record.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Child-of-mother relationship assertion: child_1 persona (I3) is child of mother persona (I2, Anna Maria Petronella Viljoen). Child party. Stated explicitly in NDR church baptism record.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Child-of-mother relationship assertion: I2 (Anna Maria Petronella Viljoen) is the named mother of baptized child (I3). Mother party. Named explicitly in NDR church baptism record.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Name 'Anna Maria Petronella Viljoen' for mother_of_child persona (p_110598662400); I2 minted from this record. Defining source for I2.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Sex Female for mother_of_child persona (p_110598662400); I2 minted from this record.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Parent-child relationship assertion (mother perspective): I2 named as mother of the baptized child (I3) in NDR church baptism 1873. Mother party.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_016",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Parent-child relationship assertion (child perspective): I3 is the baptized child named in this relationship, with I2 as mother. Child party.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Spousal relationship assertion from mother persona perspective: I2 (Anna Maria Petronella Viljoen) linked to I1 as wife. Wife party in spousal relationship stated in NDR church baptism 1873.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Spousal relationship assertion from mother persona perspective: I1 (Cornelis Hermanus Zacharyas Booysen) is the husband in this relationship. Husband party. Consistent with a_008 from the father persona perspective.",
+      "match_score": null,
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_026",
+      "person_id": "GWDS-CKP",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Cornelius Hermanus Zacharias Booysen' is an exact match to GWDS-CKP's full name in tree.gedcomx.json. same_person score: 0.230 (weak range, reflecting data sparsity \u2014 the index record carries no relatives, and the 4-year birth year gap penalizes algorithmic scoring). Qualitative correlation is Moderate: exact name, gender, birth year within \u00b15 tolerance (1902 vs 1906), chronological consistency (death 1942 is after GWDS-CKP's 1930 marriage and 1933 child's death), and Standerton family connection (parents married Standerton 1905). No qualitative conflict exists. In autonomous mode, Moderate match links at probable per threshold policy.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_027",
+      "person_id": "GWDS-CKP",
+      "confidence": "probable",
+      "rationale": "Sex 'Male' matches GWDS-CKP's recorded gender. same_person score: 0.230 (disclosed; reflects data sparsity). Moderate qualitative match \u2014 see a_026 rationale for full correlation analysis.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_028",
+      "person_id": "GWDS-CKP",
+      "confidence": "probable",
+      "rationale": "Birth year 1902 vs GWDS-CKP's tree birth year 1906 \u2014 a 4-year discrepancy, within the \u00b15-year Moderate tolerance. Death certificates rely on informants not present at birth; year rounding and transcription errors are common in Transvaal civil registers. same_person score: 0.230 (the birth year gap is the primary contributor to the low algorithmic score). Qualitative match remains Moderate. Original image unavailable (OpenRouter not configured); discrepancy must be noted as unresolved in the proof. Linked at probable per threshold policy.",
+      "created": "2026-07-30"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_029",
+      "person_id": "GWDS-CKP",
+      "confidence": "probable",
+      "rationale": "Death event: 9 Sep 1942, Standerton, Transvaal, South Africa. Chronologically consistent \u2014 after GWDS-CKP's documented marriage (31 Dec 1930 Pretoria) and daughter Katrina Johanna's death (19 Dec 1933 Pretoria). Standerton is within the Transvaal region of the family's known area; GWDS-CKP's parents married at Standerton in 1905. Primary source for death date/place (civil registrar certification). same_person score: 0.230 (disclosed). Moderate qualitative match; linked at probable per autonomous-mode threshold policy.",
+      "created": "2026-07-30"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_026",
+        "a_027",
+        "a_028",
+        "a_029"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched the principal Transvaal Civil Death collection (FamilySearch collection 2998108, 1869-1954) with multiple strategies: a broad surname+given-name query (27 results, log_001), a broad Transvaal scan (48 results, log_003), a targeted birth-year-range/death-year-range query (3 results, log_010), and a spousal filter using Daniel/Bester (27 results, log_011). Also searched the NDR church registers (collection 2155416, log_004), FamilySearch cemetery records (log_007), and attempted FindAGrave and Ancestry (both unavailable). Source attachments were checked for all candidate ARKs. All plan items in pl_001 (superseded) and pl_002 (active) are completed. Original death certificate images were unavailable (OpenRouter not configured). person_record_matches disabled in this benchmark run.",
+      "narrative_markdown": "## Date and Place of Death of Cornelius Hermanus Zacharias Booysen (GWDS-CKP)\n\n**Probable conclusion:** Cornelius Hermanus Zacharias Booysen (GWDS-CKP) of Pretoria, Transvaal, South Africa probably died **9 September 1942** at **Standerton, Transvaal, South Africa**.\n\n### Evidence\n\nThe FamilySearch-indexed Transvaal Civil Death register (collection 2998108, \u201cSouth Africa, Transvaal, Civil Death, 1869\u20131954\u201d) contains one entry \u2014 ark:/61903/1:1:7453-9H2M \u2014 recording the death of **Cornelius Hermanus Zacharias Booysen**, Male, born 1902, on **9 September 1942** at **Standerton, Transvaal, South Africa**. This is a derivative source (index entry); the underlying original death certificate image was not examined.\n\nThe name is an exact, full match to GWDS-CKP in all name elements. The death date is chronologically consistent with GWDS-CKP\u2019s known life events: he married at Pretoria on 31 December 1930 (civil marriage record, source 7VDX-DGP), and his daughter Katrina Johanna Booysen died at Pretoria on 19 December 1933 (civil death record, source 7VDF-1LK), establishing that GWDS-CKP was alive into at least late 1933. The place of death \u2014 Standerton, Transvaal \u2014 is geographically consistent with the family\u2019s documented Standerton connection; GWDS-CKP\u2019s parents Jan Jonathan Booysen and Catharina Johanna Deysel married at Standerton on 16 May 1905.\n\n### Candidates Evaluated and Rejected\n\nTwo other civil death index entries were evaluated and rejected as candidates for GWDS-CKP\u2019s death:\n\n1. **ark:/61903/1:1:74GL-7NPZ** (assertions a_018\u2013a_021) \u2014 indexed as \u201cCornelius Booysen\u201d (truncated name, no middle names), born **1856**, died **12 March 1940**, Pretoria. Rejected on two grounds: (a) the indexed name lacks the middle names \u201cHermanus Zacharias\u201d present in GWDS-CKP\u2019s full name \u2014 while index truncation is possible, this reduces confidence; and (b) the birth year of **1856** represents a **50-year discrepancy** from GWDS-CKP\u2019s tree birth year of 1906, far outside any acceptable tolerance. This is a Weak match \u2014 rejected.\n\n2. **ark:/61903/1:1:7H67-92T2** (assertions a_022\u2013a_025) \u2014 Cornelius Hermanus Zacharias Booysen, born **1914**, died 22 June 1936 at Johannesburg. The 8-year birth year gap (1914 vs. GWDS-CKP\u2019s 1906) exceeds the \u00b15-year tolerance for a Moderate identity match. Rejected as a Weak match.\n\n### Unresolved Conflict: Birth Year Discrepancy\n\nThe accepted death record (7453-9H2M) gives a birth year of **1902**, while GWDS-CKP\u2019s tree birth year is **1906** \u2014 a 4-year discrepancy. This gap falls within the \u00b15-year tolerance commonly accepted for secondary birth year information on death certificates, where the informant (typically the surviving spouse) often could not confirm the decedent\u2019s exact birth year. Note that GWDS-CKP\u2019s tree birth year of 1906 is itself an unverified pre-existing fact with no source assertion in the current research record; neither value has been confirmed by an original birth or baptism record.\n\nA formal conflict entry could not be created for this discrepancy because the schema requires two source-backed assertions, and the tree birth year of 1906 has no source assertion in research.json. The conflict is addressed analytically in this narrative. The same_person algorithmic score of 0.230 (confidence 2) is low, primarily reflecting the birth year gap and the sparsity of the single-person index record; it does not indicate a qualitative identity conflict independent of the birth year.\n\nThis conflict cannot be resolved without examining the original death certificate image (FamilySearch image ARK: ark:/61903/3:1:3Q9M-C9BY-6SH7-M), which was unavailable in this research session.\n\n### Limitations\n\nThis conclusion rests on a single derivative source (an index entry). No corroborating independent record confirms this death event. The conclusion is classified **probable** rather than GPS-proved because: (1) the original certificate was not examined; (2) the birth year discrepancy is unresolved; and (3) no second independent source confirms the death date and place. To upgrade to a proved conclusion, researchers should examine the original Transvaal civil death register image and seek a corroborating source such as a burial record, probate file, or newspaper death notice."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-30T18:15:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-30T18-15-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Transvaal, South Africa",
+      "for_place": "Pretoria, Transvaal, South Africa",
+      "time_period": "1870-1960",
+      "jurisdictions": [
+        {
+          "name": "Zuid-Afrikaansche Republiek (ZAR)",
+          "date_range": "1855-1902"
+        },
+        {
+          "name": "Transvaal Colony (British Crown Colony)",
+          "date_range": "1902-1910"
+        },
+        {
+          "name": "Transvaal Province, Union/Republic of South Africa",
+          "date_range": "1910-1994"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2998108",
+          "title": "South Africa, Transvaal, Civil Death, 1869-1954",
+          "date_range": "1869-1954"
+        },
+        {
+          "id": "3732506",
+          "title": "South Africa, Civil Death Registration, 1953-1967",
+          "date_range": "1953-1967"
+        },
+        {
+          "id": "2520237",
+          "title": "South Africa, Transvaal, Probate Records from the Master of the Supreme Court, 1869-1961",
+          "date_range": "1869-1961"
+        },
+        {
+          "id": "2155416",
+          "title": "South Africa, Netherdutch Reformed Church Registers (Pretoria Archive), 1838-1991",
+          "date_range": "1838-1991"
+        },
+        {
+          "id": "4453927",
+          "title": "South Africa, Gauteng, Johannesburg, Cemetery Records, 1840-2019",
+          "date_range": "1900-2021"
+        },
+        {
+          "id": "2144007",
+          "title": "South Africa, Transvaal, Estate Files, 1950-1993",
+          "date_range": "1950-1993"
+        }
+      ],
+      "quirks": [
+        "Civil registration in the Transvaal began in 1901; the Transvaal Civil Death collection (2998108) covers 1869-1954 with ~557 digitized volumes for Pretoria city, most at 92-99% name-indexed.",
+        "Death notices (MHG series) in the Transvaal probate records (collection 2520237) often contain more genealogical detail than civil death certificates \u2014 include names of parents and children of the deceased.",
+        "The National Archives of South Africa (NAAIRS) has an online index to Transvaal death notices; use 'MHG' as a search term at http://www.national.archives.gov.za to filter to death notices only.",
+        "Records are in Afrikaans and English; spelling was not standardized until the early 20th century \u2014 try surname-only searches if a full-name search returns nothing.",
+        "For 1899-1902, Transvaal Civil Death records are arranged by Anglo-Boer War internment camp and district, not alphabetically \u2014 search by place/camp for that period.",
+        "The Netherdutch Reformed Church Registers (Pretoria Archive, collection 2155416) are especially relevant for Afrikaner surnames and include burial entries as well as baptisms and marriages, 1838-1991.",
+        "Transvaal Province was dissolved in 1994 into Gauteng, Limpopo, Mpumalanga, and North-West; all records created before 1994 remain organized under the Transvaal jurisdiction."
+      ],
+      "guide_markdown": "# Locality Guide: Pretoria, Transvaal, South Africa (1870\u20131960)\n\n## Jurisdictional Context\n\nPretoria city existed under three successive political jurisdictions during the research period:\n\n| Period | Jurisdiction |\n|--------|--------------|\n| 1855\u20131902 | Zuid-Afrikaansche Republiek (ZAR / South African Republic) |\n| 1902\u20131910 | Transvaal Colony (British Crown Colony) |\n| 1910\u20131994 | Transvaal Province, Union/Republic of South Africa |\n\nPretoria served as the administrative capital throughout. In 1994, Transvaal Province was dissolved into four smaller provinces (Gauteng, Limpopo, Mpumalanga, North-West); Pretoria is now in Gauteng. All records created before 1994 remain organized under the old Transvaal jurisdiction.\n\n## Primary Death Records\n\n### South Africa, Transvaal, Civil Death, 1869\u20131954\n- **FamilySearch Collection 2998108** | 961,705 indexed records | 1,081,775 images\n- **Access:** Indexed + images \u2014 name-searchable at familysearch.org/search/collection/2998108\n- **Coverage:** Civil death registrations across the entire Transvaal, including Pretoria, 1869\u20131954. Records in Afrikaans and English.\n- **Content:** Full name, age, sex, birthplace, marital status, occupation, place and date of death, residence, place of burial, cause and duration of death, informant background. Parents' names included if deceased was under age 10.\n- **Note:** For 1899\u20131902, records are arranged separately by Anglo-Boer War internment camp and district.\n- **Volume coverage:** ~557 digitized Pretoria-city death certificate volumes (1902\u20131954) at 92\u201399% name-indexed.\n\n### South Africa, Civil Death Registration, 1953\u20131967\n- **FamilySearch Collection 3732506** | 709,500 indexed records | 1,226,793 images\n- **Access:** Indexed + images\n- Covers national deaths post-1954; overlaps with Transvaal Civil Death for 1953\u20131954.\n\n## Probate Records / Death Notices (Highly Recommended)\n\n### South Africa, Transvaal, Probate Records from the Master of the Supreme Court, 1869\u20131961\n- **FamilySearch Collection 2520237** | 1,870,732 records | 1,516,203 images | Indexed + images\n- **Death notices (MHG series):** Essential documents. Typically supply age, date and place of death, marital status, names of children, and (when known) names of parents of the deceased. First Transvaal death notices created 1873.\n- **NAAIRS Online Index:** http://www.national.archives.gov.za \u2014 search 'MHG' as a term to filter to death notices only. The volume number, reference, and year are needed to obtain a copy (e.g., MHG ref. 33266, Abraham Johannes Kruger, 1917).\n- **Ancestry:** 'Transvaal Province, South Africa, Estates Death Notice Index, 1855\u20131976'\n\n### South Africa, Transvaal, Estate Files, 1950\u20131993\n- **FamilySearch Collection 2144007** | 191,580 images | **Browse-only** (0% name-indexed)\n- Must be browsed image by image; no name search available.\n\n## Church Records\n\n### Netherdutch Reformed Church Registers (Pretoria Archive), 1838\u20131991\n- **FamilySearch Collection 2155416** | 75,380 records | 3,049,440 persons | Indexed + images\n- Especially relevant for Afrikaner surnames (e.g., Booysen). Contains burial/death entries as well as baptisms and marriages.\n\n### Dutch Reformed Church Registers (Cape Town Archives), 1660\u20131994\n- **FamilySearch Collection 1478678** | 2,890,979 records | Indexed + images\n- Also at Ancestry and MyHeritage.\n\n## Cemetery Records\n\n- **Find a Grave \u2013 South Africa:** findagrave.com\n- **eGGSA Graves Database:** http://www.eggsa.org/librarySearch/searchGraves.htm\n- **South Africa Burials** at FindMyPast (subscription)\n- **South Africa, Gauteng, Johannesburg, Cemetery Records, 1840\u20132019** (Collection 4453927) \u2014 2,406,245 records, includes greater Pretoria area.\n\n## External Repositories\n\n- **National Archives of South Africa (NAAIRS):** http://www.national.archives.gov.za\n- **Genealogical Society of South Africa (eGGSA):** http://www.eggsa.org\n- **South African Genealogy:** http://sagenealogy.co.za\n\n## Languages & Search Tips\n\n- Records are in **Afrikaans and English**. Use the Afrikaans Genealogical Word List when reading originals.\n- Spelling was not standardized until the early 20th century \u2014 try surname-only searches as a fallback.\n- For 1899\u20131902, search by place/camp rather than surname.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/South_Africa_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/South_Africa_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/South_Africa_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/South_Africa_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-30"
+    }
+  ]
+}

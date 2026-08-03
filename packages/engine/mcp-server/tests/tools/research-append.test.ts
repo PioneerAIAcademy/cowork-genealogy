@@ -708,7 +708,7 @@ describe("research_append (Phase 3)", () => {
       projectPath: dir,
       section: "timelines",
       op: "append",
-      entry: { label: "John Smith timeline", person_ids: ["I1"], events: [], gaps: [], impossibilities: [] },
+      entry: { label: "John Smith timeline", person_ids: ["I1"], events: [], gaps: [] },
     });
     expect(r.ok && r.entryId).toBe("t_001");
     const t = (await readResearch()).timelines[0];
@@ -734,7 +734,7 @@ describe("research_append (Phase 3)", () => {
     expect(r.ok && r.entryId).toBe("ps_001");
   });
 
-  // docs/plan/research-guardrail-bypass-plan.md §4.2 — tier/exhaustiveness cross-field guardrail.
+  // docs/specs/guardrail-enforcement-spec.md §5 — tier/exhaustiveness cross-field guardrail.
   it("rejects tier 'proved' when the question's exhaustive_declaration.declared is false", async () => {
     await writeProject(); // phase3Research(): q_001 defaults to exhaustive_declaration.declared: false
     const before = await readFile(join(dir, "research.json"), "utf-8");

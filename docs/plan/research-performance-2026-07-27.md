@@ -807,8 +807,9 @@ Consequences for the plan:
   research quality in this session was good; do not perturb the workflow in a
   performance PR.
 
-Anything deferred out of an implementing PR gets a `docs/TODOs.md` entry in that
-same PR.
+Anything deferred out of an implementing PR gets a GitHub issue filed in that
+same PR (`gh issue create --label developer|genealogist` — see `CLAUDE.md`
+§ "Deferring work creates an issue").
 
 ## 7. Refuted in review — do not re-derive
 

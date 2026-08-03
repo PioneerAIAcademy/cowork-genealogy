@@ -47,8 +47,9 @@ function serialize(obj: unknown): string {
  * messages every writer tool phrases identically. Throws a plain Error; the
  * caller maps it onto its own `{ ok: false, errors }` shape.
  *
- * Five tools predate this and carry their own private copy (see docs/TODOs.md);
- * new callers use this one.
+ * Five tools predate this and carry their own private copy (consolidating them
+ * is issue #1158, which also has to identify which five — this comment never
+ * named them); new callers use this one.
  */
 export async function readProjectJson(projectPath: string, filename: string): Promise<any> {
   let text: string;

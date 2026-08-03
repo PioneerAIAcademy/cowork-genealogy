@@ -3,9 +3,12 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 For developer-facing build, test, and feature-addition recipes, see
-[DEVELOPMENT.md](./DEVELOPMENT.md). This file covers architecture,
-conventions, and rules — what Claude needs to know to make correct
-changes.
+[DEVELOPMENT.md](./DEVELOPMENT.md). For how the system fits together and
+which sites a given change touches, see
+[docs/architecture.md](./docs/architecture.md) — its "If you're asked to…"
+blocks are the map, and its §9.4 lists what nothing checks. This file
+covers architecture, conventions, and rules — what Claude needs to know to
+make correct changes; on conflict, this file wins.
 
 ## What this project is
 
@@ -90,7 +93,7 @@ The web side depends on `packages/schema`, never on the engine.
 
 - `packages/schema/` — single source of `research.json` + simplified-GedcomX TS
   types + JSON Schemas (seeded from the viewer). Consumed by viewer-ui, web, server.
-- `packages/viewer-ui/` — the extracted renderer (App, 11 sections, shared
+- `packages/viewer-ui/` — the extracted renderer (App, 13 sections, shared
   components, `ResearchDataProvider`), transport-agnostic via a
   `ResearchTransport` (see `src/transport.ts`). Runs in Electron (IPC) and web (WS).
 - `apps/electron/` — the former `cowork-genealogy-ui` Electron viewer, now an
@@ -109,7 +112,7 @@ mocks (no E2B/Anthropic/OAuth needed).
 
 - `docs/plan/` — Implementation plans for work that is **not yet built**.
   A plan is deleted once the work ships: the spec, the code, and any
-  `docs/TODOs.md` entries become the record. Do not keep shipped plans
+  issues filed from it become the record. Do not keep shipped plans
   as historical artifacts — if a plan's rationale is worth preserving,
   fold it into the spec instead. **A plan's `**Status:**` line is load-bearing** —
   it is what tells the next reader whether the file describes pending work, so
@@ -121,24 +124,43 @@ mocks (no E2B/Anthropic/OAuth needed).
   "is this still pending?" at a glance. Eight such files were moved out in the
   #953 follow-up.
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
-  source of truth the `spec-review` agent checks implementations against.
+  source of truth an implementation is checked against.
   This is the durable tier; a live tool must have a live spec.
-- `docs/TODOs.md` — a **staging queue for the Backlog column**, not a parallel
-  tracker. Every deferred item gets an entry in the same PR that defers it, and
-  the entry's job is to survive only until someone turns it into a GitHub issue.
-  The team picks work off the project board, so an item that lives only in this
-  file is invisible and will never be assigned.
-  **An entry leaves the file when it becomes an issue** — that is the exit event,
-  not "when the work ships". Delete it outright; never check it off, strike it
-  through, or start a "Done" section (a Done tier is how the file reached 932
-  lines with 29 open items buried underneath it, #953). Four entries were found
-  still sitting there months after becoming #703, #694, #943, and #940.
-  **Rationale does not live in `TODOs.md`.** An entry says what the work is plus
-  enough of *why it is still open* to stop the next person re-opening a settled
-  question. Rationale about **code that already shipped** goes to the tool's spec
-  or a comment at the site it constrains — where the next person will actually be
+- **Deferring work creates an issue, not a file entry.** In the same PR that
+  defers something, file it — one command, no board write:
+
+  ```sh
+  gh issue create --label developer|genealogist [--label icebox] \
+    --title "…" --body "…"
+  ```
+
+  The card lands in Backlog on its own — `.github/workflows/add-to-project.yml`
+  fires on `issues: opened` and adds it. **Creating the issue is the whole job:
+  do not call the Projects API yourself** (no `gh project` commands, no
+  `addProjectV2ItemById`). The workflow puts it on the board; `/fill-ready` moves
+  it from there. A `gh` token without the `project` scope — the default after
+  `gh auth login` — would fail a board write *while still creating the issue*,
+  which looks like success. Reference the number in the PR body.
+
+  | Label | Use for |
+  |---|---|
+  | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
+  | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose |
+  | `icebox` | Add alongside either one when the item is a candidate with **no decision behind it**, so triage skips it instead of re-ranking it every morning |
+
+  **Rationale does not go in the issue.** A body says what the work is and enough
+  of *why it is still open* to stop the next person re-opening a settled question
+  — issue bodies are read once at triage and essentially never again. A settled
+  tradeoff, a rejected alternative, or a measurement goes to the tool's spec or a
+  comment at the site it constrains, where the next person will actually be
   standing. If there is no spec to write it into, the item is spec-shaped, not
   queue-shaped. Git history keeps the prose either way.
+
+  This replaced `docs/TODOs.md` (retired 2026-08-02, issues #1117–#1157). That
+  file was a staging queue whose exit event — "an entry leaves when it becomes an
+  issue" — never fired on its own: it reached 932 lines, then 54 unassignable
+  items touched by 54 separate PRs, and became a merge-conflict hotspot across
+  concurrent worktrees. Do not reintroduce a queue file under any name.
 - **Verification is automated, not a manual playbook.** New tools are
   verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
   and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
@@ -234,8 +256,14 @@ cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. Verified
 live in Cowork 2026-07-30 (issue #940): the hook loads, fires for `Write` and
 `Bash` under either matcher form, and its `deny` is honored. Two things that
 run counter to the upstream issues — check behavior, don't trust the threads:
-`SessionStart` hooks do **not** fire in Cowork, and the reported drop of plugin
-`PreToolUse` command hooks (anthropics/claude-code#34573) does not reproduce.
+the reported drop of plugin `PreToolUse` command hooks
+(anthropics/claude-code#34573) does not reproduce; and `SessionStart` hooks do
+**not** fire in Cowork — the same 2026-07-30 probe saw no invocation and no
+`additionalContext` reaching the session, which is the *inverse* of the Cowork
+report in anthropics/claude-code#16288, so that thread is not a reliable guide
+to current behavior either. Nothing depends on `SessionStart` today; it is
+recorded because it is the natural place to put per-session setup (seeding
+state, injecting project context) and it would silently not run.
 Cowork runs `permission_mode: "default"`; the hosted path runs
 `bypassPermissions`; a hook binds under both.
 
@@ -252,7 +280,10 @@ superset — so no allow-list can deny the *main thread* a tool one of its
 subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
 hook layer always could do it: `eval/harness/harness/context_policy.py` denies
 `image_read` when `agent_id` is absent. Don't re-derive a per-context policy
-design; it exists. What is missing is a production port (issue #940).
+design; it exists. What is missing is a production port — issue #911, which
+gates it on calibrating the shadow window first (#940, which used to carry this,
+is closed: its raw-write half shipped in #984/#989 and its detector half moved
+to #1054).
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
@@ -266,12 +297,20 @@ Enforced by `tests/packaging/agent-tool-names.test.ts`, which derives the
 bridge prefix from `display_name` so renaming the extension fails loudly in
 CI instead of silently in production.
 
-**Never hardcode a qualified name in a ToolSearch query.** Cowork defers
-the ~40 genealogy tool schemas (both harnesses set `ENABLE_TOOL_SEARCH=true`
-to avoid this; Cowork offers no such control), so ToolSearch is the real
-load path there. Search by bare tool name — `query: "+research_append"` —
-which matches whatever prefix the session exposes. The same packaging test
-fails any `select:mcp__…` in a plugin body.
+**Never hardcode a qualified name in a ToolSearch query.** Cowork defers the
+genealogy tool schemas above a size threshold and offers no control over it, so
+ToolSearch is the real load path there. Search by bare tool name —
+`query: "+research_append"` — which matches whatever prefix the session exposes.
+The same packaging test fails any `select:mcp__…` in a plugin body.
+
+**`ENABLE_TOOL_SEARCH=true` turns tool search ON, not off.** Verified against
+CLI v2.1.220 (2026-08-02): a truthy value (`true|1|yes|on`) enables
+deferred/tool-search mode, `auto`/`auto:N` is adaptive, and a **falsy** value
+(`false|0|no|off`) is what disables it — **unset also means on**. Both harnesses
+and the hosted path set `"true"`, so they run *with* deferral, which is the
+opposite of what their comments claimed until #1173 corrected them. Nothing here
+depends on the flag's value; the bare-name rule above is correct either way.
+Flipping it is separate work that has to re-measure the tool mix (issue #1110).
 
 **No playbook/reference files for agents — an agent body is self-contained.**
 Everything an agent needs at runtime lives inline in its `.md`. Do **not**
@@ -590,25 +629,31 @@ signal to consolidate; one isn't.
 
 ## Subagents
 
-Three project subagents live under `.claude/agents/`. Claude Code
-invokes them automatically when their description matches the
-request, or you can call them explicitly with the Agent tool.
+Two project subagents live under `.claude/agents/`. Claude Code invokes them
+automatically when their description matches the request, or you can call them
+explicitly with the Agent tool.
 
-- **`spec-review`** — read-only. Compares an MCP tool implementation
-  against its `docs/specs/<tool>-tool-spec.md` and reports drift,
-  quoting both sides. Use it before every PR that touches a specced
-  tool.
-- **`mcp-tool-scaffolder`** — generates the standard four-file
-  scaffolding (`src/types/<name>.ts`, `src/tools/<name>.ts`,
-  `dev/try-<name>.ts`, `tests/tools/<name>.test.ts`) and wires it into
-  `src/tool-schemas.ts`, `src/index.ts`, and `manifest.json`. Follows
-  `wikipedia.ts` as the canonical template. Requires the spec exist first.
-- **`cowork-skill-builder`** — generates a Cowork skill that wraps
-  an existing MCP tool, following `packages/engine/plugin/skills/search-wikipedia/` as
-  the reference. Refuses to put network code in skills (architectural
-  rule: skills run in the VM with no egress).
+- **`rubric-critic`** — read-only. Audits a skill's eval rubric and judge
+  quality from its run logs; flags non-discriminating, flaky, and unexercised
+  dimensions. `/audit-rubric <skill>`.
+- **`skill-improver`** — report-only. Proposes evidence-cited `SKILL.md` edits
+  from a skill's latest annotated run log. `/improve-skill <skill>`.
 
-Each agent's `description` field tells Claude when to invoke it.
+**Three others were deleted on 2026-08-02** (issue #1161): `spec-review`,
+`mcp-tool-scaffolder`, and `cowork-skill-builder`. All three had gone stale
+after the `packages/engine/` move — unresolvable paths, broken template links —
+and `mcp-tool-scaffolder` additionally instructed callers to send
+`User-Agent: genealogy-mcp-server/<version>` **on every request**, which is
+exactly the non-browser UA Imperva 403s on any FamilySearch endpoint. Tooling
+that looks authoritative and is wrong is worse than no tooling.
+
+What replaced them is the templates they pointed at, used directly:
+
+| Was | Do instead |
+|---|---|
+| `mcp-tool-scaffolder` | Copy `src/tools/wikipedia.ts` and its sibling four files. The site list is in `DEVELOPMENT.md` → "How to add a new feature" and `docs/architecture.md` §3. |
+| `cowork-skill-builder` | Copy `packages/engine/plugin/skills/search-wikipedia/`. Its architectural rule still stands: **no network in skill `scripts/`.** |
+| `spec-review` | Read the implementation against `docs/specs/<tool>-tool-spec.md` yourself, or ask a general-purpose subagent to, quoting both sides. The spec is still the source of truth; only the automation is gone. |
 
 ## What NOT to do
 

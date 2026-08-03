@@ -125,7 +125,7 @@ BLOCKED_TREE_TOOLS = frozenset(
 )
 
 
-# docs/plan/research-guardrail-bypass-plan.md §4.1/§6 — trailing tool-call
+# docs/specs/guardrail-enforcement-spec.md §7/§10 — trailing tool-call
 # window for the shadow-mode guardrail check: a first-cut default, not yet
 # empirically tuned against the runlog corpus. Generous on purpose — a
 # guardrail skill legitimately does several reads/searches/writes before its
@@ -172,7 +172,7 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
 # The two project files that must never be touched by raw Write/Edit — all
 # writes go through the MCP writer tools (research_append, research_log_append,
 # tree_edit, tree_correct), which validate before persisting. See
-# docs/plan/research-guardrail-bypass-plan.md §4.3.
+# docs/specs/guardrail-enforcement-spec.md §6.
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
 
 
@@ -571,7 +571,7 @@ async def _run_agent(
     tool_calls: list[dict[str, Any]] = []
     transcript: list[str] = []
     pending_tool_uses: dict[str, dict[str, Any]] = {}
-    # docs/plan/research-guardrail-bypass-plan.md §12, "Step 0" — every
+    # docs/specs/guardrail-enforcement-spec.md §11, "Step 0" — every
     # tool_use_id's (agent_id, agent_type) as PreToolUse saw it, joined onto
     # the matching tool_calls entry when its ToolResultBlock arrives below.
     # (None, None) for a main-thread call — the SDK omits agent_id entirely
@@ -668,7 +668,7 @@ async def _run_agent(
         # incremented separately below.
         activity_count["n"] += 1
 
-        # docs/plan/research-guardrail-bypass-plan.md §4.3 — no skill's
+        # docs/specs/guardrail-enforcement-spec.md §6 — no skill's
         # allowed-tools lists bare Write/Edit, and research/SKILL.md already
         # prose-forbids direct writes to these two files ("all writes go
         # through the writer tools"). This closes that as a real denial
@@ -828,13 +828,26 @@ async def _run_agent(
         # hook, not the allowlist, so it can deny per-call with arguments.
         allowed_tools=BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"],
         permission_mode="dontAsk",
-        # Idea 3a (speedup plan §3a): eager-load the genealogy MCP tool schemas.
-        # The bundled CLI defers MCP tool schemas above a token threshold (the
-        # ~38-tool genealogy server trips it), forcing repeated ToolSearch
-        # re-discovery (17x in the spriggs run). Forcing tool search off loads
-        # them once at session start. `env` MERGES onto the inherited environment
-        # (claude_agent_sdk subprocess_cli merges os.environ, then options.env),
-        # so this adds the var without dropping PATH.
+        # ENABLE_TOOL_SEARCH turns tool search ON, not off. This comment used to
+        # say "forcing tool search off" while setting "true"; the polarity is
+        # inverted (issue #1110). Read off the installed CLI (v2.1.220): a truthy
+        # value (`true|1|yes|on`) selects deferred/tool-search mode, `auto`/
+        # `auto:N` is the adaptive variant, and only a FALSY value
+        # (`false|0|no|off`) selects "standard" mode, where every schema is
+        # loaded up front. Unset also lands on tool-search mode, so deleting the
+        # variable eager-loads nothing. (Additionally forced off on a
+        # non-first-party ANTHROPIC_BASE_URL, on Vertex, and under
+        # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
+        #
+        # So "true" below means e2e runs WITH tool search: the ~38-tool
+        # genealogy server's schemas are deferred and re-discovered via
+        # ToolSearch mid-session (the 17x in the spriggs run, ~11% of all tool
+        # calls across recent runs). Idea 3a of the speedup plan wanted the
+        # opposite; flipping to "false" is a separate, tracked decision that
+        # requires re-measuring the tool mix, so the value is left as it has been
+        # running. `env` MERGES onto the inherited environment (claude_agent_sdk
+        # subprocess_cli merges os.environ, then options.env), so this adds the
+        # var without dropping PATH.
         #
         # env_for_sdk(resolve_auth()) routes the agent run to the operator's
         # subscription when one is available (suppressing the ANTHROPIC_API_KEY
@@ -1125,7 +1138,7 @@ async def _run_agent(
             "max_cost_usd": fixture.caps.max_cost_usd,
         },
     }
-    # docs/plan/research-guardrail-bypass-plan.md §4.1 — SHADOW MODE ONLY:
+    # docs/specs/guardrail-enforcement-spec.md §7 — SHADOW MODE ONLY:
     # computed once over the completed `tool_calls` list (equivalent to
     # checking live at each call, since the check only ever looks backward),
     # so this ships without touching pretool_hook's decision path at all.
@@ -1143,7 +1156,7 @@ async def _run_agent(
 
     # SHADOW MODE ONLY, same as the block above — see
     # harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate
-    # (docs/plan/research-guardrail-bypass-plan.md §12) for the bypass shape
+    # (docs/specs/guardrail-enforcement-spec.md §11) for the bypass shape
     # this detects: a guardrail skill's (or record-extraction's) protected
     # write whose PreToolUse-sourced agent_id/agent_type shows it was made
     # by neither the main thread nor one of the four dedicated Cowork
@@ -1201,6 +1214,55 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
+def check_guardrail_compliance(
+    tool_calls: list[dict[str, Any]],
+    final_research: dict[str, Any] | None,
+    final_tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[str]:
+    """The §8 HARD guardrail detector — every non-windowed check, in one call.
+
+    docs/specs/guardrail-enforcement-spec.md §8. A guardrail skill's
+    effect present in the FINAL project state with no matching successful
+    invocation anywhere in the run, or a resolved question's proof_summary
+    missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
+    harness's `test_positive_fails_when_skill_not_in_skills_invoked`, which
+    had no e2e equivalent. Unlike §4.1's shadow-mode recency check, this only
+    asks whether the skill ran AT ALL across the whole run, so it is far less
+    prone to false positives and was safe to hard-fail on immediately rather
+    than rolling out in shadow mode first.
+
+    `find_person_evidence_missing_same_person` is a separate, also-hard,
+    also-non-windowed check added after the first real run of
+    bagley-father-1884 showed the gap in "invoked anywhere": that run linked a
+    brand-new person across 13 person_evidence entries with zero same_person
+    calls in the whole run, while person-evidence ITSELF was invoked 52 tool
+    calls later for unrelated work — passing the "invoked anywhere" bar while
+    still skipping the identity-scoring doctrine entirely. It checks the
+    specific required tool for the specific person instead of the skill's mere
+    presence in the run.
+
+    Note this is NOT vacuous on a treeless run: `find_missing_mentor_verdicts`
+    takes no tree at all, and the exhaustiveness arm reads only
+    `research["questions"]`. That is why compliance is always a real result
+    and never "not checked" for a run this harness performed.
+
+    Extracted from `run_e2e_test` so it is unit-testable — the fused-verdict
+    bug this replaced (issue #972) lived in an assembly statement buried in a
+    1200-line async function that needs the SDK and a live FamilySearch session.
+    """
+    return (
+        find_effects_without_invocation(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
+        )
+        + find_missing_mentor_verdicts(final_research)
+        + find_person_evidence_missing_same_person(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
+        )
+    )
+
+
 async def run_e2e_test(
     *,
     fixture_dir: Path,
@@ -1239,10 +1301,10 @@ async def run_e2e_test(
             fixture, Path(tmp), skills_dir, effort_level=effort_level, agent_model=agent_model
         )
         # Snapshot BEFORE the agent touches the workspace — build_workspace just
-        # copied fixture.starting_tree_path in. Lets the §4.4 guardrail-effects
+        # copied fixture.starting_tree_path in. Lets the §8 guardrail-effects
         # check (below) tell a fixture's own seeded persons apart from persons
         # the agent created/enriched this run (docs/plan/
-        # research-guardrail-bypass-plan.md §4.4).
+        # guardrail-enforcement-spec.md §8).
         starting_tree = read_tree_json(workspace)
 
         (
@@ -1300,41 +1362,12 @@ async def run_e2e_test(
                 verdict = "skipped"
             judge_seconds = time.monotonic() - judge_start
 
-        # docs/plan/research-guardrail-bypass-plan.md §4.4 — HARD FAIL, not
-        # shadow: a guardrail skill's effect present in the FINAL project
-        # state with no matching successful invocation anywhere in the run,
-        # or a resolved question's proof_summary missing its mandatory
-        # gps-mentor proof-critique verdict. Overrides the judge's verdict
-        # regardless of what it said — mirrors the unit harness's
-        # `test_positive_fails_when_skill_not_in_skills_invoked`, which has no
-        # e2e equivalent otherwise (`skills_invoked` has zero hits in this
-        # module family before this). Unlike §4.1's shadow-mode recency
-        # check, this only looks at whether the skill ran AT ALL across the
-        # whole run, so it's far less prone to false positives and safe to
-        # hard-fail on immediately rather than roll out in shadow mode first.
-        #
-        # find_person_evidence_missing_same_person is a separate, also-hard,
-        # also-non-windowed check added after the first real run of
-        # bagley-father-1884 showed the gap in "invoked anywhere": that run
-        # linked a brand-new person across 13 person_evidence entries with
-        # zero same_person calls in the whole run, while person-evidence
-        # ITSELF was invoked 52 tool calls later for unrelated work — passing
-        # the "invoked anywhere" bar while still skipping the identity-scoring
-        # doctrine entirely. This checks the specific required tool for the
-        # specific person instead of the skill's mere presence in the run.
-        guardrail_effects_without_invocation = (
-            find_effects_without_invocation(tool_calls, final_research, final_tree, starting_tree=starting_tree)
-            + find_missing_mentor_verdicts(final_research)
-            + find_person_evidence_missing_same_person(
-                tool_calls, final_research, final_tree, starting_tree=starting_tree
-            )
+        # The COMPLIANCE axis (§4.4). Deliberately does not touch `verdict` —
+        # `E2eResult` derives `compliance` and the combined `outcome` gate
+        # from these violations. See check_guardrail_compliance.
+        guardrail_bypass_violations = check_guardrail_compliance(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
-        if guardrail_effects_without_invocation:
-            verdict = "fail"
-            judge_output = {
-                **judge_output,
-                "guardrail_bypass_violations": guardrail_effects_without_invocation,
-            }
 
         # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
         # matches the wall-clock cap and the stall watchdog (also monotonic) and
@@ -1380,6 +1413,7 @@ async def run_e2e_test(
             error=error,
             tags=fixture.tags,
             blocked_tree_reads=blocked_tree_reads,
+            guardrail_bypass_violations=guardrail_bypass_violations,
             guardrail_shadow_violations=guardrail_shadow_violations,
             protected_writes_by_unnamed_delegate=unnamed_delegate_violations,
             subagents=subagents,

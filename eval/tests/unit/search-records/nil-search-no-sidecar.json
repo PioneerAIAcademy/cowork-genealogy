@@ -30,6 +30,7 @@
     "Tool Arguments grading: score 3 if the skill's primary searches (seeking the subject directly by name) include givenName. A supplementary search using fatherGivenName/fatherSurname as an escalation pivot after givenName variants are exhausted is acceptable and should NOT reduce the score. Score 2 if a primary search drops givenName entirely without having tried givenName variants first. Score 1 only if multiple primary calls systematically drop givenName."
   ],
   "execution": {
-    "max_turns": 35
+    "max_turns": 35,
+    "max_wall_clock_seconds": 600
   }
 }

@@ -73,10 +73,21 @@ still carries IDs for in-server use).
 Steps:
 
 1. **Search** — `GET /platform/places/search?q=name:{placeName}` (Places_Search_resource).
-2. **Filter by context** — if `contextName` is given, keep only search entries
-   whose `fullName` contains it (case-insensitive substring). **If nothing
-   matches, keep the unfiltered list** — better to return extra results than
-   zero. Filtering happens on the search entries, before any description call.
+2. **Filter by context** — determine an effective context: the explicit
+   `contextName` if given, otherwise one **derived** from a comma-qualified
+   `placeName` — the leaf's immediate parent locality (segment index 1), e.g.
+   `"Bristol, England"` → `"England"`, `"Paris, Bear Lake, Idaho"` → `"Bear Lake"`.
+   A single-token `placeName` derives nothing. Keep only search entries whose
+   `fullName` contains the effective context (case-insensitive substring).
+   **If nothing matches, keep the unfiltered list** — better to return extra
+   results than zero (closes #609: a bare "Bristol" search ranks Bristol,
+   Virginia above Bristol, England). The fallback guarantees the result is never
+   *empty* when a bare search had hits, but a derived context is not strictly
+   safe: if the intended place's `fullName` lacks the derived token while a
+   different candidate contains it (e.g. `"Georgetown, Washington, District of
+   Columbia"` → context `"Washington"` keeps Washington State and drops the DC
+   place), it can exclude the intended result. Filtering happens on the search
+   entries, before any description call.
 3. **Describe** — for each surviving rep ID, `GET /platform/places/description/{repId}`
    (Place_Description_resource). If a description 404s, fall back to the
    search-entry data so the place is not dropped.
@@ -94,6 +105,8 @@ Steps:
 - `placeSearch("Paris", "Idaho")` → Paris places in Idaho.
 - `placeSearch("Paris", "France")` → Paris in France.
 - `placeSearch("Paris")` → all Paris matches FamilySearch returns, unfiltered.
+- `placeSearch("Bristol, England")` → context `"England"` derived from the
+  input; drops the higher-scored Bristol, Virginia hit.
 
 ---
 
