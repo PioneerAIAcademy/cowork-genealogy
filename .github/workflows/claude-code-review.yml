@@ -44,7 +44,18 @@ concurrency:
 
 jobs:
   claude-review:
-    if: github.event.pull_request.draft == false
+    # ⏸ DISABLED 2026-08-03. Automatic review is off while we choose a
+    # replacement; the job now skips on every PR. To restore, delete the
+    # `if: false` and uncomment the line under it.
+    #
+    # Turned off after four consecutive failures (runs 30842086216,
+    # 30844301739, 30845357111, and the santiago-gonzalez-son run) — the last
+    # three returned in ~500ms at one turn and $0, which is the seat failing
+    # before any review ran, not this repo. `CLAUDE_CODE_OAUTH_TOKEN` is shared
+    # with `claude.yml`, so `@claude` tagging fails the same way until the
+    # token is re-minted.
+    if: false
+    # if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 20
 

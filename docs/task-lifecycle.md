@@ -229,9 +229,9 @@ so their time goes to whether the approach is right.
 this process. Turning up with `make test-all` green, `/code-review` run, and its
 findings resolved is what keeps that gate spent on judgment.
 
-`.github/workflows/claude-code-review.yml` posts an automated pass on every PR. Treat it as a peer
-whose findings you verify, not a gate — it can be wrong, and a senior's review
-still has to happen.
+**Automatic Claude review is off** (`.github/workflows/claude-code-review.yml`,
+disabled 2026-08-03). Nothing reviews your PR before a human opens it, so step 6
+is the only pass it gets — arrive with it done.
 
 One or two revision rounds is normal. Three means something upstream was wrong,
 usually the plan. Say so rather than grinding through a fourth.
@@ -263,14 +263,12 @@ returns as an input to your review, never as your review.
    file and check.
 2. **Post it in your own words, and state the edit.** Quote what they wrote,
    give the replacement text. Never paste a Claude review verbatim.
-3. **Review against the plan, not just the diff.** `/review` can't see the plan.
-   Give Claude the PR description (which has it), the diff, and the relevant
-   spec, then ask directly: does this implementation match what was agreed?
-
-`.github/workflows/claude-code-review.yml` has already posted an automated pass on the PR. Read it
-before you start — but verify anything you repeat, the same as your own
-findings, and don't treat it as having covered the ground you're responsible
-for.
+3. **Review against what was agreed, not just the diff.** `/review` reads the
+   diff; it can't tell you whether that was the right change to make. The PR's
+   Summary, "Start here", and Plan sections are where the author says what they
+   set out to do. Give Claude those, the issue, and the relevant spec, then ask
+   directly: does this implementation match what was agreed, and what does it do
+   that nobody asked for?
 
 ---
 
