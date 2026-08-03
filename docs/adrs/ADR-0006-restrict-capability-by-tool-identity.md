@@ -7,7 +7,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#695/#736, after the birkeland lane breach — the agent itself shipped 2026-07-12 in #650 carrying the *prose* lane this replaced)
-- **Recorded:** 2026-08-02
+- **Last updated:** 2026-08-02
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
