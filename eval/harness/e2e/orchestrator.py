@@ -38,6 +38,7 @@ from claude_agent_sdk import (
 )
 
 from harness.auth import env_for_sdk, resolve_auth
+from harness.judge import _summarize_response
 from harness.context_policy import (
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
 )
@@ -434,18 +435,72 @@ def _render_user_message(fixture: Fixture) -> str:
     )
 
 
-def _summarize_tool_response(content: Any) -> str:
-    """Short stringification of a tool result for the run log.
+def _unwrap_mcp_text_blocks(content: Any) -> Any:
+    """Parse the JSON document an MCP tool result carries inside a text block.
 
-    We don't need the full response in the runlog — just enough to
-    diff across runs when investigating drift. ~500 chars is plenty.
+    MCP results arrive as `[{"type": "text", "text": "<a whole JSON document>"}]`,
+    so to any generic summarizer the entire response is one very long *string*.
+    Bounding strings then keeps the head and hides every key, which is the
+    mechanism behind the `record_search` blindness described below. Parsing the
+    inner document first is what lets the summarizer work on real structure.
+
+    Anything that does not parse is passed through untouched — a plain-text tool
+    result stays a plain-text tool result.
     """
+    if not isinstance(content, list):
+        return content
+    out: list[Any] = []
+    for block in content:
+        text = (
+            block.get("text")
+            if isinstance(block, dict)
+            else getattr(block, "text", None)
+        )
+        if isinstance(text, str):
+            try:
+                out.append(json.loads(text))
+                continue
+            except (TypeError, ValueError):
+                pass
+        out.append(block)
+    return out
+
+
+# Tighter than the judge tier's 2000: this lands in a run log that is committed
+# to git, where the judge's copy is a throwaway prompt.
+_RUNLOG_STRING_MAX = 200
+# Backstop only. Key-preserving summarization already bounds the common case;
+# this stops a pathologically wide response from bloating a committed artifact.
+_RUNLOG_MAX_CHARS = 4000
+
+
+def _summarize_tool_response(content: Any) -> str:
+    """Key-preserving summary of a tool result for the run log.
+
+    This head-truncated at 497 chars until 2026-08-03, which made exactly the
+    fields worth diffing invisible. `record_search` leads with `results`, its
+    largest field by far, so every field serialized after it was cut: across the
+    46 `record_search` calls in `run-2026-07-31_13-02-13`, `ranked` appears in
+    the run log **0 times**, even though 18 of those calls supplied `subjectId`
+    and were therefore ranked. The run log is the artifact we assert tool
+    behavior from, and it was silently dropping the evidence — a head bound
+    cannot be reasoned about, because whether a field survives depends on how
+    much data happened to precede it.
+
+    So summarize by KEY instead, reusing the unit tier's `_summarize_response`
+    rather than growing a second summarizer: dicts keep every key, long lists
+    keep their length plus a sample, long strings are bounded with an explicit
+    marker. An overall cap stays as a backstop, since run logs are committed.
+    """
+    summary = _summarize_response(
+        _unwrap_mcp_text_blocks(content), string_max=_RUNLOG_STRING_MAX
+    )
     try:
-        text = content if isinstance(content, str) else json.dumps(content)
+        text = summary if isinstance(summary, str) else json.dumps(summary)
     except (TypeError, ValueError):
-        text = repr(content)
-    if len(text) > 500:
-        text = text[:497] + "..."
+        text = repr(summary)
+    if len(text) > _RUNLOG_MAX_CHARS:
+        text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
     return text
 
 

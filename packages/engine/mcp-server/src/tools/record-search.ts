@@ -41,6 +41,16 @@ const FS_SEARCH_URL =
 const PAGINATION_CAP = 4999;
 /** Most jurisdiction candidates a nil marriage search will offer. See below. */
 const MAX_JURISDICTION_HINTS = 8;
+/**
+ * Emitted on every `projectPath`-carrying search that names no subject. Kept
+ * short on purpose: it rides two thirds of all searches (59 of 171 calls across
+ * the six committed `jimmie-jewel-neal` runlogs carried `subjectId`), so its
+ * cost is paid per call while its benefit is being un-forgettable.
+ */
+const RANKING_SKIPPED_NOTE =
+  "No `subjectId`, so match-score ranking and marriage jurisdiction hints did " +
+  "not run. Pass the tree person this search is about as `subjectId` to enable " +
+  "both. Omit it only for a broad survey with no specific person in mind.";
 const PERSISTENT_ID_URI = "http://gedcomx.org/Persistent";
 const COLLECTION_RESOURCE_TYPE = "http://gedcomx.org/Collection";
 
@@ -544,6 +554,32 @@ export async function recordSearchTool(
     returned: results.length,
     offset: data.index ?? input.offset ?? 0,
     hasMore: data.links?.next?.href != null,
+    // BEFORE `results`, deliberately, and this is load-bearing rather than
+    // stylistic. `results` is by far the largest field in the response, so
+    // anything serialized after it is the first thing any size bound drops:
+    // across the 46 `record_search` calls in `run-2026-07-31_13-02-13` the
+    // existing `ranked` field appears in the runlog **0 times**, though 18 of
+    // those calls supplied `subjectId` and were therefore ranked. A signal whose
+    // entire purpose is to be measurable from the runlog cannot sit behind the
+    // field that crowds it out. (The capture itself is also being widened, in
+    // `eval/harness/e2e/orchestrator.py` — belt and braces, since this response
+    // is read by more than one consumer and only one of them is being fixed.)
+    //
+    // The condition is `projectPath && no subjectId` and NOTHING else. No tree
+    // read, no name/date matching, no attempt to judge whether the search
+    // "looked like" it was about a tree person — that test is a heuristic, and
+    // gating the signal on an unvalidated heuristic would bias the very coverage
+    // measurement the signal exists to produce. A caller running a legitimate
+    // broad survey gets one extra short field; whether an omission was
+    // legitimate is answered at analysis time from the args already in the
+    // runlog.
+    //
+    // Truthiness, not `=== undefined`, on `subjectId`: the ranking gate below is
+    // itself `input.subjectId &&`, so matching it exactly is what keeps this
+    // field from ever claiming ranking was skipped when it ran, or vice versa.
+    ...(input.projectPath !== undefined && !input.subjectId
+      ? { rankingSkipped: RANKING_SKIPPED_NOTE }
+      : {}),
     results,
   };
 

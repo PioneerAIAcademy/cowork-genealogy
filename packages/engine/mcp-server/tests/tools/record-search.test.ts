@@ -1047,3 +1047,99 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
     expect(out.totalMatches).toBe(0);
   });
 });
+
+// The parameter that gates ranking AND the jurisdiction hints above is supplied
+// on 59 of 171 record_search calls across the six committed `jimmie-jewel-neal`
+// runlogs — 0%, 0%, 0%, 100%, 55%, 39% by run. Both features therefore spend
+// most of their life switched off with nothing in the response or the runlog to
+// say so. `rankingSkipped` is the in-band nudge; these tests pin the exact
+// condition and, critically, the key ORDER.
+describe("recordSearchTool — rankingSkipped when no subject was named", () => {
+  let dir: string;
+
+  const oneResult = (): FSSearchResponse => ({
+    results: 1,
+    index: 0,
+    entries: [lincolnEntry()],
+  });
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-search-skipped-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("emits the note when projectPath was given but subjectId was not", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    expect(out.rankingSkipped).toBeTruthy();
+    expect(out.rankingSkipped).toContain("subjectId");
+    expect(out.ranked).toBeUndefined();
+  });
+
+  it("stays absent once a subject IS named", async () => {
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [{ id: "I1", names: [{ preferred: true, given: "A", surname: "B" }], facts: [{ type: "Birth", date: "1900", place: "X" }] }],
+      }),
+      "utf-8",
+    );
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" });
+
+    expect(out.rankingSkipped).toBeUndefined();
+    expect(out.ranked).toBeTruthy();
+  });
+
+  it("stays absent with no projectPath — nothing was on offer to skip", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln" });
+
+    expect(out.rankingSkipped).toBeUndefined();
+  });
+
+  it("fires on a search that DID find results — the condition is the args, not the outcome", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    expect(out.totalMatches).toBeGreaterThan(0);
+    expect(out.rankingSkipped).toBeTruthy();
+  });
+
+  it("treats a falsy subjectId the same way the ranking gate does", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "" });
+
+    // The ranking gate is `input.subjectId &&`, so an empty string skips ranking.
+    // The note has to agree with it or it would report the opposite of what ran.
+    expect(out.ranked).toBeUndefined();
+    expect(out.rankingSkipped).toBeTruthy();
+  });
+
+  it("serializes BEFORE results, so a size-bounded runlog cannot drop it", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    // This is the whole point of the field's position. `results` is the largest
+    // field in the response; anything after it is what a head bound cuts first,
+    // which is why `ranked` appears 0 times across the 46 record_search calls in
+    // run-2026-07-31_13-02-13 despite 18 of them being ranked.
+    const keys = Object.keys(out);
+    expect(keys.indexOf("rankingSkipped")).toBeGreaterThan(-1);
+    expect(keys.indexOf("rankingSkipped")).toBeLessThan(keys.indexOf("results"));
+
+    const serialized = JSON.stringify(out);
+    expect(serialized.indexOf('"rankingSkipped"')).toBeLessThan(
+      serialized.indexOf('"results"'),
+    );
+  });
+});

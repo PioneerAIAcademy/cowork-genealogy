@@ -242,8 +242,59 @@ Strict surname + birth-place match:
 | `returned` | number | Number of results in this response (≤ `count`). |
 | `offset` | number | Echo of the input offset (0 if not supplied). |
 | `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). |
+| `rankingSkipped` | string \| undefined | Present **only** when `projectPath` was supplied and `subjectId` was not. Names the two features that therefore did not run, and how to get them. **Serialized before `results`** — see below. |
 | `results` | RecordSearchResult[] | The ranked results, best-scoring first. |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
+
+### `rankingSkipped` — saying so when no subject was named
+
+Host-side ranking (`ranked`) and `jurisdictionHints` are both gated on
+`subjectId`. When it is absent both silently do nothing: no error, no note,
+nothing in the response or the run log to say a feature was bypassed.
+
+Measured `subjectId` coverage across the six graded `jimmie-jewel-neal` runs is
+**59 of 171 `record_search` calls (34.5%)** — by run, in order: 0%, 0%, 0%, 100%,
+55%, 39%. `search-records/SKILL.md` already carries four "pass `subjectId`"
+instructions, and the tool's own schema says *"supply it for any search where you
+know which tree person you are looking for, which is nearly all of them"*. So the
+answer is not a fifth instruction: this is the same decay curve that motivated
+folding ranking into `record_search` in the first place, and a field re-delivered
+on every call is immune to the compaction that erodes prose.
+
+**The condition is `projectPath` present and `subjectId` absent — and nothing
+else.** No tree read, no name/date matching, no attempt to judge whether the
+search "looked like" it was about a tree person. That test is a heuristic, and
+gating the signal on an unvalidated heuristic would bias the very coverage
+measurement the signal exists to produce. A caller running a legitimate broad
+survey gets one extra short field; whether a given omission was legitimate is
+answered at analysis time from the args already in the run log.
+
+Falsiness, not `=== undefined`, is the test on `subjectId`, because the ranking
+gate is itself `input.subjectId &&`. Matching it exactly is what stops the field
+claiming ranking was skipped when it ran, or the reverse.
+
+#### Key order is load-bearing
+
+`rankingSkipped` is emitted **before `results`** in the response object, and this
+is not stylistic. `results` is by far the largest field in the response, so
+anything serialized after it is the first thing any size bound drops. Across the
+46 `record_search` calls in `run-2026-07-31_13-02-13` the existing `ranked` field
+appears in the run log **0 times**, though 18 of those calls supplied `subjectId`
+and were therefore ranked. A signal whose whole purpose is to be measurable from
+the run log cannot sit behind the field that crowds it out.
+
+The capture side was widened in the same change
+(`eval/harness/e2e/orchestrator.py::_summarize_tool_response` now summarizes by
+key rather than head-truncating at 497 chars). Both halves are kept: the response
+is read by more than one consumer, and only one of them was fixed.
+
+#### What this does not do
+
+`rankingSkipped` is a nudge, not a structural anchor — it neither rejects the
+call nor blocks a downstream step. Unit tests prove the field is emitted; **they
+prove nothing about whether coverage rises.** The only signal for that is the
+next live `make e2e-run TEST=jimmie-jewel-neal`, and the number to compare is
+coverage %, not "the field appears".
 
 ### `jurisdictionHints` — where else to look when a marriage search does not find the subject
 
@@ -288,13 +339,25 @@ field on `RankSearchMatchesResult`, not sniffing the `diagnostic` string.
 A nil-**only** trigger was tried first and is too narrow: in one verification run
 it fired once, at 121 of 180 minutes. Note that both triggers need `subjectId`, so
 a caller that omits it gets neither the hint nor host-side ranking — measured
-`subjectId` coverage across four graded runs was 0% / 100% / 55% / 39%, which
-bounds how often either can fire at all. That gap is tracked separately; do not
-read a run with low coverage as evidence about the trigger width.
+`subjectId` coverage across the six graded runs is **59 of 171 calls (34.5%)**:
+0% / 0% / 0% / 100% / 55% / 39%. That bounds how often either can fire at all. Do
+not read a run with low coverage as evidence about the trigger width.
+
+**The trigger width has not been re-evaluated since, and is still owed a run.**
+Widening from nil-only to `nil || subjectResolvable === false` was decided against
+`run-2026-07-30_23-05-46`, which carried 55% coverage — so the binding constraint
+in that run was reachability, not width. The verification run that followed
+(`run-2026-07-31_13-02-13`) fired the hint **0 times**: 6 of its 7 marriage
+searches omitted `subjectId`, and the one that supplied it found its subject, so
+the trigger correctly stayed quiet. That run is therefore evidence about coverage
+and no evidence at all about width. `rankingSkipped` is the nudge aimed at
+coverage; once a run lands with materially higher coverage, re-read this section
+and check whether the wider trigger now fires too often. Until then, treat the
+width as untested rather than settled.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `searchedPlace` | string \| undefined | Echo of the `marriagePlace` searched. |
+| `searchedPlace` | string | Echo of the place actually searched: `marriagePlace` when given, otherwise `recordSubdivision` + `recordCountry` joined (see "Place matching"). Never absent — `isSubCountryPlace()` gates the hint and returns `false` for `undefined`, so the hint cannot exist without a place. |
 | `candidates` | JurisdictionCandidate[] | Other places these people are on record as having been, ordered by distance from the search's date window (see below). **Capped at 8** — the tail of a distance-ordered list is its least useful part, and this lands in a response whose assembly elsewhere strips `gedcomx` and hoists `collectionTitle` for context economy. The jurisdiction already searched is excluded, including differently-spelled and **narrower** forms of it; a **broader** place is kept, since a wider search reaches the other localities inside it. |
 | `note` | string | Plain-language statement of the rule, so the reason travels with the data — including that these are places to look, never evidence. |
 

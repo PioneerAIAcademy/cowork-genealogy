@@ -265,6 +265,22 @@ export interface RecordSearchToolResponse {
   // succeeded, and `results` is usable unranked. Ranking degrading must never
   // take the search down with it (the reason the two stayed separate tools).
   rankingError?: string;
+  // Present only when `projectPath` was supplied and `subjectId` was not — the
+  // exact condition under which both host-side features above (ranking, and the
+  // marriage `jurisdictionHints` below) silently do nothing. Advisory: it names
+  // what was given up and how to get it, and nothing downstream depends on it.
+  //
+  // Why a per-call field rather than an instruction. `search-records/SKILL.md`
+  // already carries four "pass `subjectId`" instructions and the parameter is
+  // supplied on 59 of 171 calls across the six committed `jimmie-jewel-neal`
+  // runlogs (34.5%), by run: 0%, 0%, 0%, 100%, 55%, 39%. That is the same decay
+  // curve that motivated folding ranking into this tool in the first place, so
+  // the answer cannot be a fifth instruction. A field re-delivered on every call
+  // is immune to the compaction that erodes prose.
+  //
+  // Serialized BEFORE `results` — see the assembly comment in
+  // `tools/record-search.ts` for why that ordering is load-bearing.
+  rankingSkipped?: string;
   // Present only when `projectPath` was supplied. The host-staged handle to pass
   // to research_log_append as `stagedResultsRef`; null for a nil search or when
   // staging failed (see `stagingError`).
@@ -281,7 +297,9 @@ export interface RecordSearchToolResponse {
   // a prompt to try the others, not a finding. Advisory only; nothing downstream
   // depends on it.
   jurisdictionHints?: {
-    searchedPlace?: string;
+    // Required, not optional: `isSubCountryPlace()` gates the hint and returns
+    // false for `undefined`, so a hint without a searched place cannot exist.
+    searchedPlace: string;
     candidates: JurisdictionCandidate[];
     note: string;
   };

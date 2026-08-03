@@ -355,7 +355,43 @@ def test_summarize_tool_response_truncates_long_content():
     long = "x" * 2000
     out = _summarize_tool_response(long)
     assert len(out) <= 500
-    assert out.endswith("...")
+    # The bound is now the judge tier's explicit marker rather than a bare "...",
+    # so a reader can tell a summary from a real response and knows what was lost.
+    assert "[truncated by harness" in out
+    assert "full length 2000 chars" in out
+
+
+def test_summarize_tool_response_keeps_keys_after_a_huge_results_array():
+    """The #1073 regression: head-truncation hid every field after `results`.
+
+    `record_search` puts its largest field early, so a head bound dropped
+    `ranked` from all 46 calls in run-2026-07-31_13-02-13. Summarizing by key
+    means a trailing field survives no matter how much data precedes it.
+    """
+    response = {
+        "totalMatches": 900,
+        "rankingSkipped": "No `subjectId`, so match-score ranking ... did not run.",
+        "results": [{"recordId": f"ark:/61903/1:1:{i:06d}", "filler": "y" * 400} for i in range(200)],
+        "jurisdictionHints": {"searchedPlace": "Hill County, Texas"},
+    }
+    out = _summarize_tool_response(response)
+    assert "rankingSkipped" in out
+    # The point of the change: a field serialized AFTER the big array survives.
+    assert "jurisdictionHints" in out
+    assert "Hill County, Texas" in out
+
+
+def test_summarize_tool_response_unwraps_an_mcp_text_block():
+    """MCP results wrap the whole document in a text block, hiding its keys."""
+    inner = json.dumps({"totalMatches": 0, "rankingSkipped": "No `subjectId`"})
+    out = _summarize_tool_response([{"type": "text", "text": inner}])
+    assert "rankingSkipped" in out
+    assert "totalMatches" in out
+
+
+def test_summarize_tool_response_passes_through_non_json_text():
+    out = _summarize_tool_response([{"type": "text", "text": "not json at all"}])
+    assert "not json at all" in out
 
 
 # --- timeline tool labeling ---------------------------------------------------

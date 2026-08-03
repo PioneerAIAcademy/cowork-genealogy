@@ -107,7 +107,14 @@ function placeParts(place: string): string[] {
  * predicate needs: its empty-fallback makes a country-only place look like any
  * other single-token place.
  */
-export function isSubCountryPlace(place: string | undefined): boolean {
+/*
+ * Typed as a predicate (`place is string`) rather than `boolean` because it is
+ * one: it returns false for `undefined`, so a caller that has passed this gate
+ * provably holds a place. That lets `jurisdictionHints.searchedPlace` be a
+ * required `string` instead of an optional one — the hint cannot exist without a
+ * searched place, and the compiler now enforces what the spec asserts.
+ */
+export function isSubCountryPlace(place: string | undefined): place is string {
   if (!place) return false;
   return placeParts(place).some((part) => !COUNTRY_TERMS.has(part));
 }
