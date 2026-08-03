@@ -30,7 +30,10 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
     fails = sum(1 for r in results if r.verdict == "fail")
     skipped = sum(1 for r in results if r.verdict == "skipped")
 
-    summary = f"E2E suite: {passes}/{total} passed"
+    # The recall line counts the GENEALOGICAL verdict only. It is labelled as
+    # such because it is no longer the whole story: a run can recover the
+    # answer perfectly and still fail the gate on compliance (issue #972).
+    summary = f"E2E suite: {passes}/{total} recall pass"
     if partials:
         summary += f", {partials} partial"
     if fails:
@@ -38,6 +41,21 @@ def print_rollup(results: Iterable[E2eResult]) -> None:
     if skipped:
         summary += f", {skipped} skipped"
     print(summary)
+
+    # Compliance + the combined gate, always printed — a silent compliance
+    # line would put us right back to one number that means two things.
+    non_compliant = [r for r in results if r.compliance == "fail"]
+    if non_compliant:
+        names = ", ".join(r.test_id for r in non_compliant)
+        print(
+            f"  compliance: {total - len(non_compliant)}/{total} clean — "
+            f"{len(non_compliant)} guardrail bypass ({names})"
+        )
+    else:
+        print(f"  compliance: {total}/{total} clean")
+
+    gate_pass = sum(1 for r in results if r.outcome == "pass")
+    print(f"  overall gate: {gate_pass}/{total} pass")
 
     # By-tag breakdowns. Collect tag-dimension → tag-value → counts.
     by_dim: dict[str, dict[str, dict[str, int]]] = defaultdict(

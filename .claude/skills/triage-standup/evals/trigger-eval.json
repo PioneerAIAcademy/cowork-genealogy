@@ -1,0 +1,12 @@
+[
+  {"query": "Here are everyone's updates for today:\n\nSolomon [1:59 AM]\nI finished the annotation and started the e2e test for Isabel Carvajal's daughter, the run failed on the 914 guardrail not on genealogy.\n\nMercy [3:26 AM]\nPicked up Cornelius Booysen's death, the record hint wasn't for him so I did the research by hand.\n\nIsrael [4:38 AM]\nFixed ut_012 and ut_021, both passing now.", "should_trigger": true},
+  {"query": "standup dump below, what should I bring up with the group and what do I need to know? Wilson worked on splitting the PR, Nnanna added day grouping to the admin tabs, Praise built a regression eval for the merge", "should_trigger": false},
+  {"query": "triage the standup for me", "should_trigger": true},
+  {"query": "who didn't submit a status update today? here are the ones I got: mercy, israel, ruth, tife, benter, isaac, jude", "should_trigger": true},
+  {"query": "morning updates are in, anything in here that needs my attention before I reply to people? Ruth found that a research proof was fabricated, Christopher finished the security review with 24 findings, Precious hit the 1024 char limit on two descriptions", "should_trigger": true},
+  {"query": "can you review PR #924 and tell me whether the search-records prose changes are worth the context cost", "should_trigger": false},
+  {"query": "I need to write my own status update for the week, can you summarise what I worked on from the git log", "should_trigger": false},
+  {"query": "the record-extraction suite has 10 tests stuck at partial every run, dig into whether that's the judge or the extractor", "should_trigger": false},
+  {"query": "create a backlog issue for the place-resolver bug where it writes the wrong county into assertions, and put it on the board", "should_trigger": false},
+  {"query": "what's the status of the eval harness work? give me a rundown of the open issues and which ones are blocked", "should_trigger": false}
+]

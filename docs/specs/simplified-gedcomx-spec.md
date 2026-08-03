@@ -177,6 +177,16 @@ Array of relationship objects.
 | `notes` | string[] | no | Free-text notes attached to this relationship. Each entry is the text of one note |
 | `sources` | object[] | no | Source references |
 
+**No ancestry cycles.** The `ParentChild` edges must form a directed acyclic
+graph: no person may appear in their own ancestor chain, directly (recorded as
+their own parent) or through any chain of `parent`/`child` links. This is a
+source-agnostic data-integrity impossibility, so `validateGedcomx` **rejects**
+it (it is not a legacy shape to heal), reporting the offending id chain. Because
+a person stores no parent/child pointer of their own (Section 4.1) and the
+`relationships[]` entry is the single source of truth for both directions, the
+GEDCOM `FAMC`/`FAMS` bidirectional-desync bug class does not arise in this shape —
+only cycles need checking.
+
 ### 4.3 `sources`
 
 Array of source description objects. These are the simplified equivalents of GedcomX SourceDescriptions. `research.json` sources reference these by ID via `gedcomx_source_description_id`.

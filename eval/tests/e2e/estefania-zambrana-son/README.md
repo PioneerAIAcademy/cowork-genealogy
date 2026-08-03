@@ -24,11 +24,18 @@ identical to it so `snapshot --check` can audit upstream drift.
 
 ## Expected difficulty
 
-medium — see "Notes for reviewers" below for the reviewer's read on
-match strength.
+medium — a false-match adjudication (the answer is that the hint is wrong);
+see "Notes for reviewers" below for the evidence that decided it.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch (`filtered-list-samples.csv` row 7, flag `adds_son`, confidence 3) in which roughly half the hint records are **false matches**, and the authors do not know which. `expected-findings.json` was transcribed from the hint record — Bolivia, Catholic Church Records, 1566-2020: baptismal entry, 3 April 1874, Santo Domingo, Cochabamba, naming parents Antonio Veizaga and Estefania Zambrana. The genealogist + developer teams must decide (a) true match — keep the findings; (b) different answer — edit `expected-findings.json`; or (c) no findable answer — replace the findings with a `"polarity": "avoid"` guard naming the 1874 Ricardo baptism, plus a `required` finding that the report documents the rejection.
+**Resolved (issue #857): FALSE MATCH — the 1874 Ricardo hint is not proven to belong to this couple.** The hint — Bolivia, Catholic Church Records, 1566-2020: baptism of Ricardo, 3 April 1874, Santo Domingo, Cochabamba, naming parents "Antonio Veizaga" and "Estefania Zambrana" — should **not** be attached to the tree couple Estefania Zambrana (`9QTV-KDZ`) and Antonio Beisaga (`9QTV-KD3`) without a record that positively ties it to them.
 
-Points a reviewer should weigh: the father's surname is recorded as "Veizaga" in the hint record vs. "Beisaga" in the tree — a common regional spelling variant (both plausible renderings of the same Bolivian surname) also seen on the tree's own children (Beisaga Zambrana). The mother's name "Estefania Zambrana" matches exactly. A baptism in 1874 slots neatly between the tree's two known children (1867, 1877), and the parish (Cochabamba) matches the tree's known family location.
+What decided it:
+- **The couple is real and well-documented.** An 1870 marriage exists (23 March 1870, San José, Cochabamba; ark `QL7X-YN65`; Antonio Beizaga b. 1845 × Estefania Zambrana b. 1848), and the couple had children across 1867–1878: Fructuosa (1867), Luis (1871), Tomaza (1875), Geronimo (1877), Maria de la o (1878). The surname is recorded variantly as Beisaga/Beizaga (betacismo), confirmed by the marriage register itself.
+- **But none of their documented children is a Ricardo.** A broad indexed child search (Beisaga and Beizaga spellings) for 1865–1880 returns the five children above and no Ricardo. The only "Ricardo Beisaga" locatable is himself a *father* in a 1908 Sicaya baptism (ark `QGJC-FX3Y`) whose own parents are not named — no link to Antonio + Estefania.
+- **A parent-name match alone is not proof.** The 1874 Santo Domingo baptism names parents "Antonio Veizaga" and "Estefania Zambrana," which matches — but with the couple's actual children fully accounted for and none a Ricardo, and no record positively tying the 1874 baptism to them, the additional son is not established.
+
+**Correction to an earlier draft of this note:** a prior version claimed no marriage could be found and rested the verdict on that. That was wrong — the 1870 marriage exists (`QL7X-YN65`). The verdict stands on the corrected basis above: the couple is documented, but the specific 1874 Ricardo is not proven to be their child.
+
+**Residual caveat (for re-derivation).** The hint spells the father "Veizaga" (V); the negative child search covered the "Beisaga"/"Beizaga" (B) spellings, so the absence of Ricardo is strong but not exhaustive of every spelling. The verdict is therefore "not proven → do not attach," not a positive disproof; attaching Ricardo would require reading the 1874 baptism (ark `QPCP-VQHZ`) and positively tying it to this documented couple. Accordingly `expected-findings.json` is a `polarity: "avoid"` guard (do not attach the 1874 Ricardo without a positive tie) paired with a `required` documented-negative-conclusion finding.

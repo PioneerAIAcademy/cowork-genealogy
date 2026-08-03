@@ -1,0 +1,119 @@
+{
+  "tool": "record_read",
+  "description": "Full record for Job Purnell (Baptism of Job Purnell, son of Samuel Purnall and Eliza Crabb), England, Wiltshire, Church Records, 1518-1990. Mirrors the gedcomx already embedded in record-search-purnell-1821-decoy — same persons, same relationships, no new genealogical claims. record_read is in search-records' allowed-tools and the skill sometimes reads a record it has just found before reporting on it, which is sound practice. Without a stocked fixture the tool is never registered in the mock, so that call aborts the whole run as an unregistered tool (Type 1) even when the search work was correct and validators passed — observed on 019, 023 and 014. Coverage for record_read used to be ut_search_records_006, deleted 2026-06-18 as a side effect of a runlog commit.",
+  "args": {
+    "recordId": "~6DSR-XD6Y"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Job",
+            "surname": "Purnell",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Christening",
+            "date": "5 August 1821",
+            "place": "Trowbridge, Wiltshire, England"
+          },
+          {
+            "id": "F2",
+            "type": "Birth",
+            "date": "1821",
+            "place": "Trowbridge, Wiltshire, England"
+          }
+        ],
+        "ark": "ark:/61903/1:1:6DSR-XD6Y",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "England, Wiltshire, Church Records, 1518-1990"
+          }
+        ]
+      },
+      {
+        "id": "P2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Samuel",
+            "surname": "Purnall",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "England, Wiltshire, Church Records, 1518-1990"
+          }
+        ]
+      },
+      {
+        "id": "P3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N3",
+            "preferred": true,
+            "given": "Eliza",
+            "surname": "Crabb",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "England, Wiltshire, Church Records, 1518-1990"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "R1",
+        "type": "ParentChild",
+        "parent": "P2",
+        "child": "P1"
+      },
+      {
+        "id": "R2",
+        "type": "ParentChild",
+        "parent": "P3",
+        "child": "P1"
+      },
+      {
+        "id": "R3",
+        "type": "Couple",
+        "person1": "P2",
+        "person2": "P3"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "England, Wiltshire, Church Records, 1518-1990",
+        "collectionId": "4380174",
+        "ark": "ark:/61903/1:1:6DSR-XD6Y"
+      }
+    ],
+    "places": [
+      {
+        "id": "PL1",
+        "name": "Trowbridge, Wiltshire, England"
+      }
+    ]
+  }
+}

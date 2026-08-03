@@ -14,6 +14,7 @@ import {
   type SearchPlaceResult,
   type GetPlaceResult,
 } from "../utils/place-api.js";
+import { deriveContextName } from "../utils/place-resolver.js";
 
 // Re-export the low-level FamilySearch places fetchers so existing tool/test
 // imports keep resolving from here. Their implementations live in
@@ -142,7 +143,12 @@ export async function placeSearch(
 
   let entries = await searchPlace(placeName);
 
-  const context = contextName?.trim().toLowerCase();
+  // When no explicit context is supplied, derive one from a comma-qualified
+  // placeName (e.g. "Bristol, England" -> "England"). This closes #609, where
+  // a bare name search returns the top-scored hit in the wrong jurisdiction
+  // (Bristol, Virginia). Safe by construction: an unmatched context leaves the
+  // set unfiltered (see the fallback below).
+  const context = (contextName?.trim() || deriveContextName(placeName))?.toLowerCase();
   if (context) {
     const filtered = entries.filter((e) =>
       e.fullName.toLowerCase().includes(context)

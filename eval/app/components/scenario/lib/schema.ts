@@ -259,12 +259,6 @@ export interface TimelineGap {
   notes?: string | null
 }
 
-export interface TimelineImpossibility {
-  description: string
-  event_1_assertion_id: string
-  event_2_assertion_id: string
-}
-
 export interface Timeline {
   id: string
   label: string
@@ -273,7 +267,6 @@ export interface Timeline {
   generated: string
   events: TimelineEvent[]
   gaps: TimelineGap[]
-  impossibilities: TimelineImpossibility[]
 }
 
 export interface ProofSummary {

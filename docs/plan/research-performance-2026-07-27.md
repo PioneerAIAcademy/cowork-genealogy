@@ -1,6 +1,17 @@
 # Research-session performance — measured plan
 
-**Status:** DRAFT rev.2, for review (dev + genealogist) · **Date:** 2026-07-27
+**Status:** PARTIALLY SHIPPED — **C1–C7 have landed** (their rationale now lives in
+the tool specs); **C0, the reasoning-effort A/B and the largest remaining lever, has
+not.** · **Date:** 2026-07-27
+
+**Why this file is kept, against the "delete a plan once the work ships" rule:**
+three findings here belong in neither a spec nor a commit message — §1 (the session
+decomposition and the output-tokens/wall-clock equation), §5.1 (the live probe that
+refuted this plan's own F2: the ranker works, the low scores were correct
+negatives), and §5.3 (the rule audit showing that only *unanchored* SKILL.md prose
+decays under compaction, while tool-validated rules hold at 100%). Delete or trim
+this file once C0 is decided, and fold those three somewhere durable rather than
+losing them with it.
 **Source:** alpha-feedback bundle `feedback-2026-07-27T14-24-48-034883Z.zip`
 (project "James L. Stephens's Parents"; tester note: *"This took a long time and
 cost a lot of money. How can we speed things up in the future?"*)
@@ -745,8 +756,8 @@ Consequences for the plan:
   which the scope doc measured as worthless (top 21 hits at *identical* score) —
   but building a second unvalidated ranker before knowing how often the starved
   case survives C2a is the wrong order, and narrowing the query is the cheaper
-  move already prescribed at `search-records/SKILL.md:250-252`. **TODOs entry, not
-  a change in this plan.**
+  move already prescribed at `search-records/SKILL.md:250-252`. **A separate
+  issue, not a change in this plan.**
 - **C1 + C6's ceiling is ~60% of window pressure** (§1.1); the model's own
   output is the other ~40% and only C0 touches it.
 - **C2a is weaker than this plan assumed — see §5.1.** The live probe changed
@@ -796,8 +807,9 @@ Consequences for the plan:
   research quality in this session was good; do not perturb the workflow in a
   performance PR.
 
-Anything deferred out of an implementing PR gets a `docs/TODOs.md` entry in that
-same PR.
+Anything deferred out of an implementing PR gets a GitHub issue filed in that
+same PR (`gh issue create --label developer|genealogist` — see `CLAUDE.md`
+§ "Deferring work creates an issue").
 
 ## 7. Refuted in review — do not re-derive
 

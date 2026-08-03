@@ -174,6 +174,63 @@ const parisSearchResponse: FSPlaceSearchResponse = {
   ],
 };
 
+// ---------------------------------------------------------------------------
+// Bristol fixtures — #609: a bare name search ranks Bristol, Virginia above
+// Bristol, England. Deriving "England" from the comma-qualified placeName must
+// narrow to the England hit even though Virginia scores higher.
+// ---------------------------------------------------------------------------
+
+const bristolSearchResponse: FSPlaceSearchResponse = {
+  entries: [
+    {
+      id: "400",
+      score: 100.0,
+      content: {
+        gedcomx: {
+          places: [
+            {
+              id: "400",
+              display: {
+                name: "Bristol",
+                fullName: "Bristol, Virginia, United States",
+                type: "City",
+              },
+              identifiers: {
+                "http://gedcomx.org/Primary": [
+                  "https://api.familysearch.org/platform/places/8400",
+                ],
+              },
+            },
+          ],
+        },
+      },
+    },
+    {
+      id: "300",
+      score: 80.0,
+      content: {
+        gedcomx: {
+          places: [
+            {
+              id: "300",
+              display: {
+                name: "Bristol",
+                fullName: "Bristol, England, United Kingdom",
+                type: "City",
+              },
+              identifiers: {
+                "http://gedcomx.org/Primary": [
+                  "https://api.familysearch.org/platform/places/8300",
+                ],
+              },
+            },
+          ],
+        },
+      },
+    },
+  ],
+};
+
 function description(
   id: string,
   fullName: string,
@@ -519,6 +576,30 @@ describe("placeSearch (internal)", () => {
     expect(result).toHaveLength(1);
     expect(result[0].placeId).toBe("9001");
     expect(result[0].fullName).toBe("Paris, Bear Lake, Idaho, United States");
+  });
+
+  // #609: with no explicit contextName, derive one from a comma-qualified
+  // placeName so the wrong same-name jurisdiction (the higher-scored hit) is
+  // dropped rather than returned first.
+  it("derives context from a comma-qualified placeName (Bristol, England not Virginia)", async () => {
+    routeByUrl([
+      { match: "search?q=name:", json: bristolSearchResponse },
+      {
+        match: "description/300",
+        json: description("300", "Bristol, England, United Kingdom", "8300"),
+      },
+      { match: "attributes", ok: false, status: 404 },
+    ]);
+
+    const result = await placeSearch("Bristol, England");
+
+    expect(result).toHaveLength(1);
+    expect(result[0].fullName).toBe("Bristol, England, United Kingdom");
+    // The higher-scored Virginia hit must never be fetched or returned.
+    expect(mockFetch).not.toHaveBeenCalledWith(
+      expect.stringContaining("description/400"),
+      expect.anything()
+    );
   });
 });
 
