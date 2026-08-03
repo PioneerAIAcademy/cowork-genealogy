@@ -34,9 +34,8 @@
       <!-- No Windows equivalent exists (issue #1185): `eval\RunTests.bat` is the
            paid per-skill eval run, not this gate. On Windows, say so here and
            lean on CI, which runs the same suites. -->
-      <!-- Note: this runs the harness's e2e-marked contract test, which makes a
-           real (billed) Anthropic call. It skips itself when no key is
-           reachable; CI never runs it. -->
+      <!-- Note: every suite in it is offline and free — nothing here calls a
+           model, which is what keeps it around 30s. Keep it that way. -->
 
 - [ ] For every skill whose **run-log snapshot** I changed (anything under its
       skill dir, an agent it delegates to, its `eval/tests/unit/<skill>/`, or a
