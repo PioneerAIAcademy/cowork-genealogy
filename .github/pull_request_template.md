@@ -1,12 +1,14 @@
 ## Summary
 
 <!-- 1-3 bullets describing what changed and why. Name the tier
-     (Trivial / Normal / Risky) — docs/task-lifecycle.md. -->
+     (Trivial / Normal) — docs/task-lifecycle.md. -->
 
 ## Plan
 
-<!-- Normal tier: paste PLAN.md. Risky tier: paste it here and get the lead's
-     review before writing code. Trivial: delete this section. -->
+<!-- Normal: paste PLAN.md. Trivial: delete this section.
+     If you hit the step-4 stop rule (schema, auth, plugin-agent binding,
+     an ADR reversal, or anything hard to undo), say so here and name the
+     message where you raised it. -->
 
 ## Test plan
 

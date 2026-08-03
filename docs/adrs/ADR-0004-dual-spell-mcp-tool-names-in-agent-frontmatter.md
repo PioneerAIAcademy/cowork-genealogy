@@ -6,7 +6,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#742, repairing #650/#698)
-- **Recorded:** 2026-08-02
+- **Last updated:** 2026-08-02
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —

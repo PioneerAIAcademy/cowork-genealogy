@@ -17,25 +17,50 @@ Say which one in your PR description.
 | Tier | What it is | What you do |
 |---|---|---|
 | **Trivial** | Typo, comment, doc link, version bump, dead-code deletion, one-line fix with an obvious cause | Skip steps 1–3. Change, test, self-review, PR. |
-| **Normal** | Most tasks. A bug fix, a new test, a tool change, a refactor inside one module | All nine steps. |
-| **Risky** | See below | All nine steps, and the lead reviews your plan in the draft PR **before** you write code. |
+| **Normal** | Everything else | All nine steps. |
 
-**Risky if it does any of these:**
+**There is no risky tier, and that is deliberate.** Risk is classified once, at
+triage, by `task-reviewer` — before the task reaches you. Work that is
+schema-touching, credential-touching, plugin-agent-touching, or hard to undo
+carries the `senior` label and is assigned to the lead, not to the unassigned
+pool. So a task you were handed is a task somebody with the whole picture
+already decided a junior can land. Why:
+[ADR-0007](./adrs/ADR-0007-attack-the-plan-before-writing-code.md) §2.
 
-- Changes `research.json` or simplified-GedcomX **schema** — a new field, a new
-  value on a closed enum, or a tree-shape change. Site lists:
-  [`CLAUDE.md`](../CLAUDE.md) § "Researcher profile in `research.json`".
-- Touches `packages/engine/mcp-server/src/auth/`, or anything holding a credential.
-- Changes a **Cowork plugin agent** — `packages/engine/plugin/agents/`,
-  `packages/engine/plugin/hooks/`, and especially `tools:`/`disallowedTools:`.
-  (Claude Code subagents under `.claude/agents/` are Normal.)
-- Adds an MCP tool, or changes an existing tool's contract.
-- Touches more than about three modules, or both the engine and the web side.
-- Reverses something in [`docs/adrs/`](./adrs/) or contradicts a `CLAUDE.md` rule.
-- Is hard to undo: a data migration, a write to user state, anything
-  user-facing or talking to an external service.
+What that leaves you is the **stop rule** in step 4 — the case triage cannot
+see, because it only becomes visible once you are in the code.
 
-When in doubt, Risky.
+---
+
+## Ask early
+
+**When you aren't confident, ask a senior. At any step, about anything.** A
+question you can't answer, a mechanism you don't understand, a finding you can't
+tell is real, a task that is turning out bigger than it looked — all of it. Ask
+while you're still deciding, not after you've built.
+
+This is not the step-4 stop rule and doesn't work like it. That rule hands the
+task back; this one keeps it yours and brings help in. Asking is not a signal
+that the work should be reassigned, and it will not be read as one.
+
+Being handed a task means somebody decided it was landable by a junior. It does
+not mean they decided it was easy, and it does not mean they knew which part
+would be hard for *you* — triage sees the change, not the pairing. So the fact
+that a task reached you is not evidence you should already know how to do it.
+
+Two things make this specific rather than a platitude:
+
+- **A senior is cheaper the earlier you ask.** Five minutes before you plan beats
+  a review round on a branch built the wrong way, which beats three revision
+  rounds in step 9.
+- **Claude will not stall on the thing you're unsure about.** It will pick,
+  confidently, and its choice will look settled in the diff — which is precisely
+  why the thing you couldn't resolve needs a human before it becomes code, not
+  after. The same reasoning is why `task-reviewer` escalates open decisions
+  instead of guessing at them.
+
+The one thing that is not fine is shipping past it — see "The rule that holds it
+together."
 
 ---
 
@@ -94,15 +119,34 @@ run the command, confirm the claim. This covers what the critic *proposes* as
 much as what it criticizes: a suggested command, flag, or file name that you
 repeat unchecked reads like an established thing to whoever you hand it to.
 
-**Risky tier:** open the draft PR now with the plan in its description, and get
-the lead's review before writing code.
-
 ### 4. Implement
 
 **If reality contradicts the plan, stop and re-plan.** Update the plan (a
-sentence in the PR body is enough on Normal tier), then continue — your
-reviewer is reviewing against the plan, so an undocumented deviation is
-invisible to exactly the person whose job is catching it.
+sentence in the PR body is enough), then continue — your reviewer is reviewing
+against the plan, so an undocumented deviation is invisible to exactly the
+person whose job is catching it.
+
+**Stop and go to the lead** — do not re-plan around it — if the change turns out
+to do any of these. Triage said a junior could land this; finding one of these
+means triage was working from something the issue did not say, and the fix is to
+the issue, not to your branch.
+
+- Changes `research.json` or simplified-GedcomX **schema** — a new field, a new
+  value on a closed enum, or a tree-shape change. Site lists:
+  [`CLAUDE.md`](../CLAUDE.md) § "Researcher profile in `research.json`".
+- Touches `packages/engine/mcp-server/src/auth/`, or anything holding a credential.
+- Changes a **Cowork plugin agent** — `packages/engine/plugin/agents/`,
+  `packages/engine/plugin/hooks/`, and especially `tools:`/`disallowedTools:`.
+  (Claude Code subagents under `.claude/agents/` are not this.)
+- Adds an MCP tool, or changes an existing tool's contract.
+- Reverses something in [`docs/adrs/`](./adrs/) or contradicts a `CLAUDE.md` rule.
+- Is hard to undo: a data migration, a write to user state, anything
+  user-facing or talking to an external service.
+
+Saying so costs one message. It is not an admission that you got something
+wrong — every stop is a signal that the `senior` triggers in
+[`.claude/agents/task-reviewer.md`](../.claude/agents/task-reviewer.md) missed a
+shape, which is the only feedback that gate gets.
 
 Keep the diff scoped to the plan. Anything else you spot becomes step 7.
 
@@ -172,7 +216,8 @@ usually the plan. Say so rather than grinding through a fourth.
 **You must be able to explain every line you're shipping.** Not "Claude wrote it
 and the tests pass." If a reviewer asks why a function takes that parameter, or
 what happens when that value is null, you need an answer. If you don't have one,
-go read it before you open the PR.
+go read it — or ask a senior — before you open the PR. Not knowing is normal and
+costs nothing; shipping anyway is the failure.
 
 ---
 

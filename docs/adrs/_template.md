@@ -7,10 +7,10 @@
 
 - **Status:** Proposed | Accepted | Superseded
 - **Decided:** <when the decision was actually taken — or "pre-YYYY-MM (reconstructed)">
-- **Recorded:** <when this file was written>
+- **Last updated:** <date (#PR) — bump on every edit; these are living documents>
 - **Deciders:** <names>
 - **Supersedes:** — <or ADR-00MM>
-- **Superseded by:** — <set when retired; never edit the body instead>
+- **Superseded by:** — <rare; see README § Superseding. A changed decision is an edit, not a supersession>
 - **Applies to:** `path/or/glob` — *linted; keep current*
 - **Related:** <issues, PRs, specs>
 
@@ -36,6 +36,10 @@ concretely means at the code level.
 Every row needs a **why** *and* an **evidence** cell. An alternative with no
 evidence is one nobody actually evaluated — write "argued, not measured" and be
 honest, rather than implying a test that never ran.
+
+**Never delete a row.** The rest of the file is rewritten freely as the decision
+changes (README rule 3); this table only grows. When a decision is reversed, the
+thing it replaced lands here.
 
 Include the alternatives a newcomer will propose. An ADR that only lists exotic
 options will not stop the obvious suggestion from coming back.
