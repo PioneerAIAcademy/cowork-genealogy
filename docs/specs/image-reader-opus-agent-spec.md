@@ -193,7 +193,8 @@ hosted web workbench if raising there too. Giving this agent its own larger
 ceiling, or exploring a downscale-before-read path (needs an image-processing
 dependency in the cross-platform `.mcpb`, previously deferred for the same
 reason — see `image-read-spec.md`), are both still on the table but blocked
-on that verification, not on more usage data. Tracked: `docs/TODOs.md`.
+on that verification, not on more usage data. The verification itself is
+issue #1130.
 
 ## 10. Boundaries
 

@@ -1,6 +1,6 @@
-"""Retroactive calibration tool for the §4.1 shadow-mode recency window.
+"""Retroactive calibration tool for the §7 shadow-mode recency window.
 
-docs/plan/research-guardrail-bypass-plan.md §4.1/§7, GitHub issue #911 — the
+docs/specs/guardrail-enforcement-spec.md §7, GitHub issue #911 — the
 window (`GUARDRAIL_SHADOW_WINDOW` in `e2e/orchestrator.py`) is a first-cut
 default, not yet tuned. Every committed e2e runlog already persists its full
 `tool_calls` list, so `harness.skill_invocation.find_unguarded_protected_writes`
@@ -118,7 +118,7 @@ def format_detail(violations: list[dict[str, Any]]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Retroactive §4.1 shadow-window calibration (issue #911).")
+    ap = argparse.ArgumentParser(description="Retroactive §7 shadow-window calibration (issue #911).")
     ap.add_argument("--test", help="scan every committed run for this fixture slug only")
     ap.add_argument(
         "--windows",

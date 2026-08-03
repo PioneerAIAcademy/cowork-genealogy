@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from e2e.orchestrator import (
+    check_guardrail_compliance,
     PROVIDED_DOCS_DIRNAME,
     FixtureCaps,
     _accumulate_usage,
@@ -460,3 +461,26 @@ def test_fallback_usage_nulls_the_fields_it_cannot_honestly_reconstruct():
     assert usage["total_cost_usd"] is None
     assert usage["num_turns"] is None
     assert usage["duration_api_ms"] is None
+
+
+# --- check_guardrail_compliance (issue #972) --------------------------------
+
+
+def test_check_guardrail_compliance_is_empty_for_a_clean_run():
+    assert check_guardrail_compliance([], {}, {}, starting_tree={"persons": []}) == []
+
+
+def test_check_guardrail_compliance_aggregates_all_three_checks():
+    """One call, three non-windowed §4.4 arms. The `mentor` arm below reads
+    only research.json, which is why compliance is a real result even on a
+    run that produced no tree."""
+    research = {
+        "questions": [{"id": "q1", "status": "resolved"}],
+        "proof_summaries": [{"id": "ps1", "question_id": "q1"}],
+        "exhaustive_declaration": {"declared": True},
+    }
+    violations = check_guardrail_compliance([], research, None)
+    # The gps-mentor arm reads only research.json...
+    assert any("proof-critique" in v for v in violations)
+    # ...and the proof-conclusion arm fires from the same call.
+    assert any("proof-conclusion" in v for v in violations)

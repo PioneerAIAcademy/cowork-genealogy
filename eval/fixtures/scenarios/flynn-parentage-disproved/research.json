@@ -22,10 +22,18 @@
       "resolved": null,
       "resolution_assertion_ids": [],
       "exhaustive_declaration": {
-        "declared": false,
-        "justification": null,
-        "log_entry_ids": [],
-        "stop_criteria": null
+        "declared": true,
+        "justification": "The question — whether Thomas Flynn of Ballingarry was Patrick's father — is decisively answered by the located evidence: Thomas of Ballingarry was buried 14 November 1842 (parish burial register, log_002), and Patrick was born about 1845 (1850 census age, corroborated by the 1908 death-certificate age; log_001/log_003). A death three years before the birth refutes parentage for this specific candidate, so the search that answers this question — locating Thomas's burial — is complete; no further record would overturn a chronological impossibility.",
+        "log_entry_ids": ["log_001", "log_002", "log_003"],
+        "stop_criteria": {
+          "goal_alignment": "Yes — whether Thomas of Ballingarry fathered Patrick is answered: his 1842 burial predates Patrick's ~1845 birth.",
+          "repository_breadth": "FamilySearch record search located the Ballingarry parish burial for Thomas and the records fixing Patrick's ~1845 birth; the decisive burial is an original parish register.",
+          "original_substitution": "The Ballingarry burial register is an original source recording Thomas's death; Patrick's birth estimate rests on original census and death-certificate images.",
+          "independent_verification": "Patrick's ~1845 birth is attested independently by the 1850 census age (a_002) and the 1908 death-certificate age (a_006).",
+          "evidence_class": "Original burial register giving direct evidence of Thomas's 1842 death, plus original census/death-certificate evidence of Patrick's birth year.",
+          "conflict_resolution": "No conflicts — the sources agree; the refutation is chronological and requires no weighing of competing evidence.",
+          "overturn_risk": "Negligible — a death three years before the birth is a decisive impossibility; the conclusion is scoped to Thomas of Ballingarry only, leaving Patrick's actual parentage an open question."
+        }
       }
     }
   ],
@@ -380,8 +388,7 @@
           "assertion_ids": ["a_005"]
         }
       ],
-      "gaps": [],
-      "impossibilities": []
+      "gaps": []
     }
   ],
 

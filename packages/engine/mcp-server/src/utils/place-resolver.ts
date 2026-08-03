@@ -150,10 +150,51 @@ export async function mapWithConcurrency<T, R>(
 // ─── Internal search + selection ─────────────────────────────────────────────
 
 /**
+ * Derive a disambiguating context from a comma-qualified place TEXT — the
+ * immediate parent locality of the leaf (segment index 1). For
+ * "Church of the Annunciation, Shenandoah, Schuylkill County, Pennsylvania"
+ * this is "Shenandoah"; for "Bristol, England" it is "England".
+ *
+ * This is the fix for silent same-name corruption: FamilySearch's place
+ * endpoint is a plain name search that returns the top-scored hit, so an input
+ * whose leaf name also exists in another county ("Church" in Clarion vs.
+ * Shenandoah, "Bristol" in Virginia vs. England) can resolve to the wrong spot.
+ * Feeding the parent locality as `contextName` narrows the candidate set by
+ * substring first, and `getSearchEntries` keeps the unfiltered set whenever
+ * nothing matches (so an unmatched context is a no-op).
+ *
+ * Strength of the guarantee depends on how the caller then SELECTS:
+ * - The `standardPlace`-input fns (standardPlaceToRepId / -ToPlaceId /
+ *   -ToCoords) select via `pickExactOrBest` / an exact pool. The exact-fullName
+ *   candidate contains the derived token by construction, so it always survives
+ *   the filter — these paths are strictly never-worse, only equal or better.
+ * - The free-text `resolveStandardPlace` selects with bare `pickBest` (no exact
+ *   retention). Filtering there is expected-better but NOT strictly safe: if the
+ *   correct top-scored hit lacks the derived token while a wrong hit contains it
+ *   (e.g. "Georgetown, Washington, District of Columbia" → context "Washington"
+ *   drops the DC place and elevates Washington State), it can resolve worse than
+ *   a bare name search. The trade is inherent — a filter that can demote a wrong
+ *   top hit can also demote a correct one. See the regression-direction test in
+ *   place-resolver.test.ts.
+ *
+ * Returns undefined for a single-token input (no parent to disambiguate by),
+ * leaving behavior unchanged for bare names like "Ky" or "Springfield".
+ */
+export function deriveContextName(text: string): string | undefined {
+  const segs = placeSegments(text);
+  if (segs.length < 2) return undefined;
+  return segs[1];
+}
+
+/**
  * Run (and memoize) a name search. Applies the same context-name filter as
  * place_search: narrow by substring, but keep the unfiltered set if nothing
- * matches (better to return extra candidates than zero). Wrapped in withRetry;
- * a successful empty result IS cached (definitive), a thrown error is not.
+ * matches (better to return extra candidates than zero). When the caller passes
+ * no explicit contextName, one is derived from the input text itself
+ * (see deriveContextName) so every resolver path — including the five write
+ * paths that persist standard_place — disambiguates same-name places. Wrapped
+ * in withRetry; a successful empty result IS cached (definitive), a thrown
+ * error is not.
  */
 async function getSearchEntries(
   name: string,
@@ -163,13 +204,14 @@ async function getSearchEntries(
   // any network call. This is the single choke point all resolver fns go
   // through, so every public fn inherits the empty-input guard here.
   if (!normalizeKey(name)) return [];
-  const key = `${normalizeKey(name)}|${normalizeKey(contextName ?? "")}`;
+  const effectiveContext = contextName ?? deriveContextName(name);
+  const key = `${normalizeKey(name)}|${normalizeKey(effectiveContext ?? "")}`;
   const cached = searchEntriesCache.get(key);
   if (cached) return cached;
 
   let entries = await withRetry(() => searchPlace(name));
 
-  const context = contextName?.trim().toLowerCase();
+  const context = effectiveContext?.trim().toLowerCase();
   if (context) {
     const filtered = entries.filter((e) =>
       e.fullName.toLowerCase().includes(context),

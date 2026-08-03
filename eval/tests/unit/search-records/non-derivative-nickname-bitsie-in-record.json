@@ -5,7 +5,15 @@
     "name": "Non-derivative nickname IN the record — formal-name search under-matches; retry with the documented Nickname",
     "type": "positive",
     "description": "The inverse direction of ut_search_records_nickname_bitsie. There: the user typed the nickname and the skill resolved to the formal name. HERE (per Clorinda's PR #442 follow-up): the user supplies the formal name 'Mary Jackson', but the RECORD ITSELF is indexed under the community nickname 'Bitsie Jackson' because the 1900 enumerator recorded what a neighbor-informant said. The formal-name search returns zero. The skill must recognize this as a signal to retry using the documented Nickname on tree person I1 — 'Bitsie' — at which point the record surfaces.",
-    "tags": ["search-records", "nickname", "non-derivative-nickname", "record-side-nickname", "informant-driven", "clorinda-review", "nickname-fallback"]
+    "tags": [
+      "search-records",
+      "nickname",
+      "non-derivative-nickname",
+      "record-side-nickname",
+      "informant-driven",
+      "clorinda-review",
+      "nickname-fallback"
+    ]
   },
   "input": {
     "user_message": "Search the 1900 Lancaster County, Pennsylvania census for Mary Jackson, per plan item pli_002. Log the result and write the sidecar.",
@@ -14,7 +22,8 @@
   "mcp_fixtures": [
     "record-search-jackson-1900-mary-no-results",
     "record-search-jackson-1900-bitsie-record",
-    "rank-search-matches-jackson-bitsie"
+    "rank-search-matches-jackson-bitsie",
+    "record-read-bitsie-jackson-bjkn-90a"
   ],
   "judge_context": [
     "Should first try the formal name: issue a record_search (with projectPath, count:50) with surname='Jackson', givenName='Mary' against the 1900 collection. This returns zero results per the fixture",
@@ -24,9 +33,10 @@
     "Should report the match back to the user and EXPLAIN the reasoning: 'The 1900 record was filed under Mary's community nickname Bitsie rather than her formal BirthName — likely because a non-family informant gave the names to the enumerator. Searching by the documented Nickname on I1 recovered the record, and the inline ranking confirmed it as a strong, unattached match to I1.'",
     "Should explicitly link the recovered record back to I1 in the response (via the inline ranking's match to subjectId I1), even though the record's `personName` differs from I1's preferred BirthName",
     "Tool Arguments: score 3 if both record_search queries (Mary → nil, Bitsie → hit) and the Bitsie search carried subjectId I1 so its pool was ranked inline. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if the Bitsie record_search retry was skipped, had clearly wrong arguments, or omitted subjectId",
-    "FOCUS GRADING NOTE for the judge: this test verifies the NICKNAME-FALLBACK behavior when the record-side carries the nickname. The general search-records hygiene dimension (Log quality) is covered by the existing positive tests and should NOT drag this test below pass purely on description-vs-actual-write or shape concerns — score those dimensions `pass` if the skill correctly executed the two queries, recovered the record via the nickname retry, and triaged it through the inline ranking. The differentiator for THIS test is the retry-on-empty-formal-search behavior driven by the tree's Nickname alias"
+    "FOCUS GRADING NOTE for the judge: this test verifies the NICKNAME-FALLBACK behavior when the record-side carries the nickname. The general search-records hygiene dimension (Log quality) is covered by the existing positive tests and should NOT drag this test below pass purely on description-vs-actual-write or shape concerns — score those dimensions `pass` if the skill correctly executed the two queries, recovered the record via the nickname retry, and triaged it through the inline ranking. The differentiator for THIS test is the retry-on-empty-formal-search behavior driven by the tree's Nickname alias",
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ],
   "execution": {
-    "max_wall_clock_seconds": 300
+    "max_wall_clock_seconds": 600
   }
 }

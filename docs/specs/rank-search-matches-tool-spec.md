@@ -44,6 +44,15 @@ live FamilySearch data (see **Design notes**):
   structural anchor held at 100%; only unanchored prose decayed. A tool contract
   is such an anchor.
 
+  *What the post-fold run does and does not establish.* The verification run
+  (`hannah-earnest-children`, 2026-07-27) ranked 7 of 7 eligible searches with
+  zero `rankingError`, and the `count` split was visible in the data (50 with a
+  subject, 20 without). But it compacted only **4 times in 190 turns**, against
+  the 23 compactions that motivated the fold. It confirms the contract *fires*;
+  it does not demonstrate the contract outlasting prose under real compaction
+  pressure. Treat the durability claim as reasoned, not measured — re-testing it
+  is issue #1155, blocked on #1073.
+
   **Both surviving benefits are preserved.** Graceful degradation: a ranking
   failure inside `record_search` sets `rankingError` and leaves the search
   result intact and usable unranked — ranking is read-only, so unlike a folded
