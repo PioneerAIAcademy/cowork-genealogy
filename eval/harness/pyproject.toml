@@ -36,5 +36,11 @@ python_files = ["test_*.py"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
 markers = [
-    "e2e: end-to-end tests that hit the real Anthropic API (deselect with -m 'not e2e')",
+    # No test carries this marker, deliberately. Every gate that runs this
+    # suite — CI, `make harness-test`, scripts/test.sh — passes
+    # `-m 'not e2e'`, so marking a test `e2e` means it runs nowhere by
+    # default. Keep it that way: a test that bills the Anthropic API cannot
+    # sit on the pre-PR path, where its wall-clock cost is what stops people
+    # running the gate at all.
+    "e2e: hits the real Anthropic API; excluded from every default run",
 ]
