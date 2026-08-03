@@ -1,445 +1,196 @@
-# Task lifecycle — how a developer task gets done here
+# Task lifecycle
 
-**Audience:** developers on this project working with Claude Code.
-**Scope:** developer tasks — code, tools, tests, CI, tooling. If your task is
-improving a skill's prose from eval results, follow
-[`docs/skill-lifecycle.md`](./skill-lifecycle.md) instead; that loop is
-different and it wins for skill work.
+How a developer task gets from issue to merge. Skill-prose work from eval
+results follows [`docs/skill-lifecycle.md`](./skill-lifecycle.md) instead.
 
-The short version:
+> Plan before you code. Have the plan attacked before you code. Verify your own
+> work before you ask anyone to look at it. Never ship a line you can't explain.
 
-> **Plan before you code. Have the plan attacked before you code. Verify your
-> own work before you ask anyone to look at it. Never ship a line you can't
-> explain.**
-
-Everything below is detail on those four.
+Why it is shaped this way: [ADR-0007](./adrs/ADR-0007-attack-the-plan-before-writing-code.md).
 
 ---
 
-## If you read nothing else, read this
+## Pick a tier
 
-Two things are mandatory on every task, and a third whenever you touch a skill.
-Everything else in this document is guidance you can scale to the task; these
-are not.
-
-> ### 1. Run **both** test commands
->
-> ```sh
-> make test-all        # typecheck + JS + server + engine + harness + CRUD UI
-> scripts/test.sh      # what the PR template's checkbox actually requires
-> ```
->
-> Neither is a superset of the other. `make test-all` excludes the e2e-marked
-> harness tests; `scripts/test.sh` skips the JS workspace, `apps/server`, and
-> typecheck. Running one and ticking the template box is the most common way
-> broken work reaches a reviewer.
->
-> ### 2. Self-review the diff in a **fresh** session
->
-> Not the session that wrote the code — that one is anchored on its own
-> reasoning and will agree with you. Open a new one, hand it your plan and the
-> diff, and ask where they diverge.
->
-> ### 3. If you touched `packages/engine/plugin/skills/`, run the eval
->
-> ```sh
-> make eval-skill SKILL=<name>   # then commit the run log + its .ann.json
-> ```
->
-> `.github/workflows/check-runlogs.yml` blocks merge otherwise, even for a
-> one-word change. It has no `paths:` filter — it runs on every PR — so this
-> catches you on a task that is otherwise pure developer work.
-
-Skipping these moves work onto your reviewer that a machine or a fresh context
-would have caught for free. Everything else here is about doing the task well;
-these are about not wasting someone else's afternoon.
-
-Details in [step 5](#5-verify-it-yourself) and [step 6](#6-review-your-own-diff-in-a-fresh-session).
-
----
-
-## Why this shape
-
-Working with Claude changes where the expensive mistakes happen. Writing code
-is no longer the slow part; *deciding what code to write* is, and a wrong
-decision now gets implemented very fast and very completely. A plan that is
-wrong in one sentence becomes a branch that is wrong in forty files.
-
-So the process front-loads scrutiny. The cheapest place to kill a bad approach
-is a paragraph in a plan. The second cheapest is your own review of your own
-diff. Peer review is third, and the lead's review is last and most expensive —
-by the time it reaches him, everything mechanical should already be settled.
-
-The second thing that changes: Claude is a fast, confident, and occasionally
-wrong collaborator. Every step below that says "have Claude do X" is paired
-with a step that says "and then check it." That pairing is the whole method.
-Drop the checking half and this process is worse than no process, because it
-produces work that *looks* reviewed.
-
----
-
-## Pick a tier first
-
-Not every task earns the same ceremony. Decide which of these you're in before
-you start — and say which one in your PR description, so your reviewer knows
-what they're getting.
+Say which one in your PR description.
 
 | Tier | What it is | What you do |
 |---|---|---|
-| **Trivial** | Typo, comment, doc link, version bump, deleting dead code, a one-line fix with an obvious cause | Skip the plan. Make the change, run the tests, self-review, open the PR. Peer review still applies. |
-| **Normal** | Most tasks. A bug fix, a new test, a tool change, a refactor inside one module | The full loop below. |
-| **Risky** | See the trigger list | The full loop, **plus** the plan goes in a file and the lead reviews it *before* you write code. |
+| **Trivial** | Typo, comment, doc link, version bump, dead-code deletion, one-line fix with an obvious cause | Skip steps 1–3. Change, test, self-review, PR. |
+| **Normal** | Most tasks. A bug fix, a new test, a tool change, a refactor inside one module | All nine steps. |
+| **Risky** | See below | All nine steps, and the lead reviews your plan in the draft PR **before** you write code. |
 
-**A task is Risky if it does any of these:**
+**Risky if it does any of these:**
 
 - Changes `research.json` or simplified-GedcomX **schema** — a new field, a new
-  value on a closed enum, or a tree-shape change. These have fixed multi-site
-  edit lists in [`CLAUDE.md`](../CLAUDE.md); getting one site wrong breaks
-  writer tools silently.
-- Touches **auth** (`packages/engine/mcp-server/src/auth/`) or anything holding
-  a credential.
-- Changes a **Cowork plugin agent** — anything under
-  `packages/engine/plugin/agents/` or `packages/engine/plugin/hooks/`, and
-  especially `tools:`/`disallowedTools:`. This is the class of change that has
-  broken production while CI stayed green. (Claude Code subagents under
-  `.claude/agents/` are *not* this — they're developer tooling that ships to
-  nobody, and they're Normal tier.)
-- Adds a **new MCP tool**, or changes an existing tool's contract.
-- Is **cross-cutting** — more than about three modules, or both the engine and
-  the web side.
-- **Reverses a decision** already recorded in [`docs/adrs/`](./adrs/), or
-  contradicts a rule in `CLAUDE.md`.
-- Is **hard to undo**: a data migration, anything that writes user state,
-  anything user-facing or that talks to an external service.
+  value on a closed enum, or a tree-shape change. Site lists:
+  [`CLAUDE.md`](../CLAUDE.md) § "Researcher profile in `research.json`".
+- Touches `packages/engine/mcp-server/src/auth/`, or anything holding a credential.
+- Changes a **Cowork plugin agent** — `packages/engine/plugin/agents/`,
+  `packages/engine/plugin/hooks/`, and especially `tools:`/`disallowedTools:`.
+  (Claude Code subagents under `.claude/agents/` are Normal.)
+- Adds an MCP tool, or changes an existing tool's contract.
+- Touches more than about three modules, or both the engine and the web side.
+- Reverses something in [`docs/adrs/`](./adrs/) or contradicts a `CLAUDE.md` rule.
+- Is hard to undo: a data migration, a write to user state, anything
+  user-facing or talking to an external service.
 
-When in doubt, it's Risky. The cost of over-classifying is one extra review of
-a document; the cost of under-classifying is discovering the problem in
-production.
+When in doubt, Risky.
 
 ---
 
 ## The loop
 
-### 0. Take the issue, and branch in a worktree
-
-Work happens on a branch in a worktree, never on `main`:
+### 0. Branch in a worktree
 
 ```sh
 git worktree add .claude/worktrees/<branch> -b <branch> origin/main
 ```
 
-The `post-checkout` hook links the shared gitignored files for you
-(run `make install-hooks` once per clone if you haven't). One task, one
-worktree, one PR. Two tasks in one branch means one reviewer has to hold both
-in their head, and neither gets reviewed properly.
+Never work on `main`. One task, one worktree, one PR. The `post-checkout` hook
+links the shared gitignored files (`make install-hooks` once per clone).
 
-### 1. Read the ground, not just the ticket
+### 1. Read the ground
 
-Issue bodies here are deliberately thin — the project's convention is that
-rationale lives in specs and in comments at the site it constrains, *not* in
-the issue. So an issue is a pointer, not a briefing. Before planning, read:
+Issue bodies here are pointers, not briefings. Before planning, read the issue,
+the spec under [`docs/specs/`](./specs/) if the thing you're touching has one,
+[`docs/architecture.md`](./architecture.md) (its "If you're asked to…" blocks
+name the sites your change touches), [`CLAUDE.md`](../CLAUDE.md), and the code.
 
-- the issue,
-- the spec, if the thing you're touching has one under
-  [`docs/specs/`](./specs/),
-- [`docs/architecture.md`](./architecture.md) — its "If you're asked to…"
-  blocks tell you which sites your change touches,
-- [`CLAUDE.md`](../CLAUDE.md) — project rules that override normal defaults,
-- and the actual code.
-
-Point Claude at all of it. Then **ask it to ask you questions.** Word it so you
-get the useful ones:
+Point Claude at all of it, then ask it to ask you questions:
 
 > Read this issue, the spec, and the code it touches. Before proposing
-> anything, ask me the questions where a different answer would change what
-> you build. Skip anything with an obvious default — make the call and tell
-> me what you chose.
+> anything, ask me the questions where a different answer would change what you
+> build. Skip anything with an obvious default — make the call and tell me what
+> you chose.
 
-That last sentence matters. Without it you get twelve questions of which ten
-have obvious answers, you rubber-stamp all twelve, and the exercise taught you
-nothing.
+The last sentence is what stops you rubber-stamping twelve questions that had
+ten obvious answers.
 
-### 2. Write the plan
+### 2. Write the plan to a file
 
-The plan is the artifact the rest of the process operates on. Four things,
-always:
+`PLAN.md` at your worktree root. It is gitignored; don't commit it. Four things:
 
-1. **What changes** — the actual file list. Not "update the validator," but the
-   path.
-2. **What doesn't change** — the tempting adjacent thing you're deliberately
-   not touching. This is what stops scope creep during implementation.
-3. **The acceptance check** — how we will know it worked, as something a
-   person can run. The strong form is a *named test that fails today and
-   passes after*. "The tests pass" is not an acceptance check; the tests pass
-   right now.
-4. **What you're deferring** — the things you'll file as issues in step 7.
+1. **What changes** — the file list, by path.
+2. **What doesn't change** — the tempting adjacent thing you're not touching.
+3. **The acceptance check** — a named test that fails today and passes after.
+   "The tests pass" is not one; they pass right now.
+4. **What you're deferring** — becomes issues in step 7.
 
-**Where it lives**, by tier:
-
-- **Normal:** write it to `PLAN.md` at the root of your worktree, *before*
-  step 3. Two later steps consume it — the plan critic and your own fresh-session
-  review — and both run in a context that can't see your chat. Paste it into
-  the PR description at step 8. It's a scratch artifact and is gitignored;
-  don't commit it.
-- **Risky:** a real file under [`docs/plan/`](./plan/), reviewed by the lead
-  before you write code. Note the conventions on that directory: its
-  `**Status:**` line is load-bearing, and the plan is **deleted when the work
-  ships** — the spec and the code become the record. If the decision has a
-  rejected alternative behind it, it wants an ADR too; see
-  [`docs/adrs/README.md`](./adrs/README.md).
-
-A plan that stays in the chat window doesn't exist. Nobody else can see it, so
-nobody can catch you having built something else — and a subagent can't read it
-either.
+A plan that stays in the chat can't be read by the critic, by your fresh-session
+review, or by your reviewer.
 
 ### 3. Attack the plan
 
 ```
-/critique-plan PLAN.md               # Normal tier
-/critique-plan docs/plan/<file>.md   # Risky tier
+/critique-plan PLAN.md
 ```
 
-The command dispatches to the `plan-critic` subagent. Use it rather than asking
-in prose: the session you're in *wrote* the plan, and asking it to review the
-plan gets you a Claude that is anchored on its own reasoning and holds Edit and
-Write. It will agree with itself, and it may start implementing. The command
-also points the critic at the plan **by path** — subagents start in fresh
-context and see only what they're handed, so "review this plan" passes along
-your paraphrase, which is exactly the input the critic is told not to trust.
-
-It reads the plan *and the code the plan claims to touch*, and reports findings
-with a severity and a concrete replacement. Its highest-value check is the
-dullest one: verifying that every file, function, field, and command the plan
-names actually exists. Plans written from an issue body invent call sites
-constantly, and it is a cheap thing to catch and an expensive thing to miss.
-
-**Two rounds maximum.** Round one finds real problems. Round two confirms
-they're fixed and usually finds one more. Round three finds style opinions and
-makes the plan longer without making it better — and reviewers, human or
-otherwise, drift toward agreeing with whatever's in front of them the third
-time they see it.
-
-**If round two still returns a BLOCKING finding, stop and go to the lead.**
-Two rounds of unresolved blocking findings is not a plan problem, it's a task
-problem — the task is underspecified or the approach is wrong, and another
-round of polishing won't fix either.
+Two rounds maximum. **If round two still returns a BLOCKING finding, stop and
+go to the lead** — the task is underspecified, not the plan.
 
 **Check each finding before acting on it.** Some will be wrong. Open the file,
-run the command, confirm the claim. Deciding which findings are real is part of
-the job, and it's the part that teaches you the codebase.
+run the command, confirm the claim. This covers what the critic *proposes* as
+much as what it criticizes: a suggested command, flag, or file name that you
+repeat unchecked reads like an established thing to whoever you hand it to.
 
-This applies to what the critic *proposes* as much as what it criticizes. A
-suggested command, flag, or file name that you pass along unchecked reads like
-an established thing to whoever you hand it to — that is how an invented name
-gets into a document and stays there. If you're going to repeat it, verify it
-first; if you haven't verified it, say so when you repeat it.
+**Risky tier:** open the draft PR now with the plan in its description, and get
+the lead's review before writing code.
 
 ### 4. Implement
 
-Then, and only then, write the code.
+**If reality contradicts the plan, stop and re-plan.** Update the plan (a
+sentence in the PR body is enough on Normal tier), then continue — your
+reviewer is reviewing against the plan, so an undocumented deviation is
+invisible to exactly the person whose job is catching it.
 
-**One rule during implementation: if reality contradicts the plan, stop and
-re-plan.** You will discover that the function doesn't work the way you
-thought, or that the fix needs a change in a third module. That is normal. What
-is not acceptable is quietly improvising around it — because your reviewer is
-reviewing against the plan, and an undocumented deviation is invisible to
-exactly the person whose job is to catch it. Update the plan (a sentence in the
-PR body is enough for Normal tier), then continue.
-
-Keep the diff scoped to the plan. If you spot something else worth fixing, it
-becomes an issue in step 7, not a hitchhiker in this PR.
+Keep the diff scoped to the plan. Anything else you spot becomes step 7.
 
 ### 5. Verify it yourself
 
-This step is not optional, and it is the one most often skipped. Your peer
-reviewer is not your test suite.
-
 ```sh
-make test-all        # typecheck + JS + server + engine + harness + CRUD UI
-scripts/test.sh      # what the PR template's checkbox actually requires
+make test-all      # == scripts/test.sh. Typecheck + JS + server + engine + CRUD UI + harness.
 ```
 
-**Run both.** Neither is a superset of the other, and this trips people up:
-`make test-all` reaches the harness via `make harness-test`, which excludes
-e2e-marked tests; `scripts/test.sh` runs the harness suite in full but skips
-the JS workspace, `apps/server`, and typecheck. The full breakdown of what each
-command does and does not cover is [`docs/architecture.md`](./architecture.md)
-§9.1 — read it once, and don't guess after that.
-
-Plus whatever your change actually touches:
+Plus whatever you actually touched:
 
 | If you changed | Also run |
 |---|---|
-| An MCP tool | `cd packages/engine/mcp-server && npx tsx dev/try-<tool>.ts` against the live API — if a `try-` script exists; write one if not, and run `dev/try-login.ts` first for an authenticated tool. Then re-read the tool's spec under `docs/specs/` against your implementation, quoting both sides. |
-| **Any file under `packages/engine/plugin/skills/`** | `make eval-skill SKILL=<name>`, **and commit the run log + its `.ann.json`**. `.github/workflows/check-runlogs.yml` blocks merge otherwise — even for a one-word change, and even on a task that is otherwise pure developer work. Follow [`docs/skill-lifecycle.md`](./skill-lifecycle.md) for the rest. |
-| Plugin agent frontmatter (`packages/engine/plugin/agents/`), hooks, or tool binding | `make agent-smoke` — the only check that reads what the runtime actually resolved. No CI job covers this path. **It exits 0 when it skips**, so confirm the output lists the resolved agents rather than `1 skipped`; that means no API key was reachable. |
+| An MCP tool | `npx tsx dev/try-<tool>.ts` from `packages/engine/mcp-server/` against the live API — write one if it doesn't exist, and run `dev/try-login.ts` first for an authenticated tool. Then read your implementation against `docs/specs/<tool>-tool-spec.md`, quoting both sides. |
+| Any file in a skill's run-log **snapshot** — `packages/engine/plugin/skills/<skill>/`, an agent it delegates to, `eval/tests/unit/<skill>/`, or a scenario/fixture it references | `make eval-skill SKILL=<name>`, and commit the run log **and its `.ann.json`**. `check-runlogs.yml` blocks merge otherwise — a comment or a typo counts, because the whole skill dir is in the snapshot. For a behaviour-neutral edit, ask a senior for the `eval-cosmetic-skip` label instead of burning a paid run. Rules and the exact snapshot set: [`eval/CLAUDE.md`](../eval/CLAUDE.md) § "Snapshot model" and § "GitHub Action rules". |
+| Plugin agent frontmatter, hooks, or tool binding | `make agent-smoke`. **It exits 0 when it skips**, so confirm the output lists resolved agents rather than `1 skipped` — that means no API key was reachable. |
 | An e2e fixture | `make e2e-validate TEST=<slug>` |
-| Anything user-facing | Actually run it. `make server` / `make web`, or the Claude Desktop install path. |
+| Anything user-facing | Run it. `make server` / `make web`, or the Claude Desktop install path. |
 
-Then **exercise the thing you built**, once, by hand. Not because the tests
-might be wrong — because they might not be testing what you think.
+Then exercise the thing you built, once, by hand.
 
 ### 6. Review your own diff, in a fresh session
 
-The session that wrote the code is the worst available reviewer of it. It is
-anchored on its own reasoning, it believes the plan was followed because it
-believes it followed the plan, and it will confirm both if you ask.
-
-So open a **new** session, give it the plan and the diff, and ask:
+Not the session that wrote the code — it will agree with you. Open a new one,
+give it the plan and the diff, and ask:
 
 > Here is the plan and here is the diff. Where do they diverge? What did the
 > implementation do that the plan didn't call for, and what did the plan call
 > for that isn't here?
 
-You're hunting one specific thing: **implement-vs-plan drift**. It is the most
-common failure mode
-in agent-assisted work and it is nearly invisible in a diff read on its own,
-because the code looks fine — it's just not the code that was agreed to.
-
-Fix what you find. Then read the whole diff yourself, top to bottom.
+You are hunting **implement-vs-plan drift**: code that looks fine and isn't the
+code that was agreed. Fix what you find, then read the whole diff yourself.
 
 ### 7. File the follow-on work
 
-Everything you decided not to do becomes a GitHub issue, in this PR:
+Everything you decided not to do becomes a GitHub issue, in this PR. The rules
+— which label, when to use `icebox`, how short to keep the body, why you must
+not run `gh project` — are in [`DEVELOPMENT.md`](../DEVELOPMENT.md) §
+"Follow-on work you find along the way".
 
-```sh
-gh issue create --label developer --title "…" --body "…"
-```
-
-**Creating the issue is the whole job** — a CI workflow adds it to Backlog, and
-you must not run `gh project` commands yourself. The rest of the rules — which
-label, the free-afternoon test for `icebox`, why the `gh project` write fails
-in a way that looks like success, how short to keep the body — are in
-[`DEVELOPMENT.md`](../DEVELOPMENT.md) under "Follow-on work you find along the
-way." Read them there; they are not repeated here, because two copies of a rule
-means one of them is wrong within a quarter and nobody can tell which.
-
-**Reference the issue numbers in your PR description**, so your reviewer can see
-what you chose not to do.
-
-**Don't leave a `TODO` comment, and don't start a to-do file.** A TODO isn't a
-queue — nobody is assigned to it, nobody is notified about it, and nobody reads
-it. That was tried at file scale: `docs/TODOs.md` reached 932 lines and 54
-unassignable items before it was retired (2026-08-02). **Do not reintroduce a
-queue file under any name.** If you were about to write a TODO, that is exactly
-the case the `icebox` label is for: file it as an issue, label it `icebox`, and
-it lands in Backlog where triage can see it and skip it until something
-changes. A `TODO` in the source
-is invisible to every one of those steps.
-
-And don't over-file. Fifteen issues from one PR isn't thoroughness, it's noise
-that someone has to triage. Use the free-afternoon test.
+Don't leave a `TODO` comment and don't start a to-do file. Reference the issue
+numbers in your PR description.
 
 ### 8. Open the PR
 
-**Fill in the PR template — don't replace it.** Its Test plan checkboxes are
-the repo's contract, and the first one names `scripts/test.sh` specifically.
-Don't tick a box for a command you didn't run; if a check doesn't apply, say
-why rather than deleting it.
+Fill in the template; don't replace it. Don't tick a box for a command you
+didn't run — if a check doesn't apply, say why rather than deleting it.
 
-Under Summary, add:
+Credit your pair: [`DEVELOPMENT.md`](../DEVELOPMENT.md) § "Crediting a
+co-author".
 
-- **The tier** you picked.
-- **The plan** (Normal tier — paste `PLAN.md`) or a link to it (Risky tier).
-- **What you verified** — which commands you ran, what you exercised by hand.
-- **The follow-on issue numbers.**
-
-Credit your pair in the commit — the GitHub **username**, bare, as the last
-line:
-
-```
-Co-authored-by: their-github-username
-```
-
-We squash-merge, so your local commits are the only place that credit can come
-from. A `commit-msg` hook and a CI check both nudge (neither blocks). AI
-co-authors don't satisfy it — the point is recording the human.
-
-Keep PRs small. A forty-file PR from one agentic session is not reviewable, and
-an unreviewable PR silently cancels both of the review steps that follow.
+Keep PRs small. A forty-file PR turns both review steps into rubber stamps.
 
 ### 9. Peer review, then senior review
 
-**Peer review** is another developer on the team. **Senior review** is the
-lead, and it's the last gate for developer tasks. By the time it gets to him,
-everything mechanical — tests, spec compliance, style, plan drift — should
-already be resolved. His time goes to whether the approach is right.
+Peer review is another developer. Senior review is the lead, and it is the last
+gate — by then everything mechanical should be settled, so his time goes to
+whether the approach is right.
 
-Expect revision rounds. One or two is normal. Three is a signal that something
-upstream was wrong: usually the plan, sometimes the task. Say so rather than
-grinding through a fourth.
+One or two revision rounds is normal. Three means something upstream was wrong,
+usually the plan. Say so rather than grinding through a fourth.
 
 ---
 
 ## The rule that holds it together
 
-**You must be able to explain every line you're shipping.**
-
-Not "Claude wrote it and the tests pass." If a reviewer asks why a function
-takes that parameter, or what happens when that value is null, you need an
-answer. If you don't have one, you're not ready to open the PR — go read it,
-and ask Claude to explain the parts you can't account for.
-
-This is the load-bearing rule, and it's the reason the whole process works. The
-lead can only be the last gate if everything before it was genuinely checked by
-someone who understood it. A developer who becomes a conduit — passing Claude's
-output to review without understanding it — moves all the real review onto one
-person and quietly removes their own name from the work.
+**You must be able to explain every line you're shipping.** Not "Claude wrote it
+and the tests pass." If a reviewer asks why a function takes that parameter, or
+what happens when that value is null, you need an answer. If you don't have one,
+go read it before you open the PR.
 
 ---
 
-## Using Claude to review someone else's PR
-
-You should. Just don't let it review *for* you.
+## Reviewing someone else's PR
 
 ```sh
 gh pr checkout <N>
 ```
 
-Then give Claude the PR description (which has the plan), the diff, and the
-relevant spec, and ask for findings with severity and a suggested replacement.
+Give Claude the PR description (which has the plan), the diff, and the relevant
+spec. Then:
 
-Three rules:
-
-1. **Verify every finding before you post it.** Claude review output has false
-   positives — a claim about a function three files away that turns out to be
-   wrong, an "unhandled case" that's handled upstream. Open the file and check.
-   Posting unverified findings wastes the author's time and burns your
-   credibility fast. This covers *suggestions* too: a proposed command or file
-   name, repeated without checking, arrives at the author looking like
-   something that already exists.
+1. **Verify every finding before you post it** — proposals included. Open the
+   file and check.
 2. **Post it in your own words, and state the edit.** Quote what they wrote,
-   give the replacement text. "This will throw when `standardPlace` is
-   unresolvable — resolve it before the map, or guard at line 40" beats a
-   paragraph describing the shape of the problem. Never paste a Claude review
-   verbatim; the author can run that themselves.
-3. **Review against the plan, not just the diff.** You have their plan in the
-   PR body. Ask the same question you ask of your own work: does this
-   implementation match what was agreed?
-
-The peer review that catches the most is usually the least clever one: read the
-plan, read the diff, and ask what's in one and not the other.
-
----
-
-## Failure modes to watch for
-
-Every one of these has happened somewhere, to someone competent.
-
-- **The plan lives only in chat.** Nobody can check the implementation against
-  it, so nobody does.
-- **Round three of plan review.** The plan gets longer, not better.
-- **Skipping step 5** and letting the peer reviewer find that it doesn't build.
-- **Reviewing your own diff in the session that wrote it.** It will agree
-  with you.
-- **Letting Claude apply review comments without re-reading the result.** The
-  fix for one comment routinely breaks the thing another comment was about.
-- **The hitchhiking refactor.** "While I was in there." It doubles the diff and
-  hides the actual change.
-- **"Claude said it was fine."** Not a review. Not a defense.
-- **Filing fifteen follow-on issues** because it's one command.
-- **A forty-file PR.** Both review steps become rubber stamps and everyone
-  involved knows it.
+   give the replacement text. Never paste a Claude review verbatim.
+3. **Review against the plan, not just the diff.** Does this implementation
+   match what was agreed?
 
 ---
 
@@ -452,15 +203,13 @@ git worktree add .claude/worktrees/<branch> -b <branch> origin/main
 # 2. write PLAN.md at the worktree root (gitignored)
 
 # 3. attack the plan (max 2 rounds)
-/critique-plan PLAN.md               # or docs/plan/<file>.md on Risky tier
+/critique-plan PLAN.md
 
-# 5. verify — run BOTH; neither is a superset of the other
-make test-all                        # typecheck + JS + server + engine + harness + CRUD UI
-scripts/test.sh                      # what the PR template requires
-make eval-skill SKILL=<name>         # any packages/engine/plugin/skills/ file
-make agent-smoke                     # plugin agents / hooks / tool binding
+# 5. verify
+make test-all                        # everything; == scripts/test.sh
+make eval-skill SKILL=<name>         # anything in a skill's run-log snapshot
+make agent-smoke                     # plugin agent frontmatter / hooks / tool binding
 make e2e-validate TEST=<slug>        # an e2e fixture changed
-cd packages/engine/mcp-server && npx tsx dev/try-<tool>.ts   # an MCP tool changed
 
 # 6. self-review, in a FRESH session
 #    → "Here is PLAN.md and the diff. Where do they diverge?"

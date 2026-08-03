@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -15,13 +15,14 @@ import {
  * Staleness lint for the process doc and the Claude Code tooling under
  * `.claude/`.
  *
- * `adr-links.test.ts` does this for ADRs; this is the same check pointed at
- * two surfaces that had nothing linting them. The reason is on the record:
- * three subagents under `.claude/agents/` were deleted on 2026-08-02 (issue
- * #1161) because their paths rotted silently after `packages/engine/` was
- * introduced, and nothing noticed. `docs/task-lifecycle.md` names ~15 repo
- * paths, several make targets, and a CI workflow, and is read *while someone
- * is working* — a wrong pointer there is a wrong answer someone acts on.
+ * `adr-links.test.ts` does this for ADRs; this is the same check pointed at the
+ * surfaces that had nothing linting them. The reason is on the record: three
+ * subagents under `.claude/agents/` were deleted on 2026-08-02 (issue #1161)
+ * because their paths rotted silently after `packages/engine/` was introduced,
+ * and nothing noticed. `.claude/skills/` is in scope for the same reason — its
+ * six skills cite eval paths heavily, and eval paths move. Both it and
+ * `docs/task-lifecycle.md` are read *while someone is working*, so a wrong
+ * pointer is a wrong answer someone acts on.
  *
  * The extraction rule, and everything deliberately left unchecked, is
  * documented at the top of `./repo-paths.ts`. Three things resolve here:
@@ -53,31 +54,56 @@ const projectRoot = join(engineRoot, "..", ".."); // repo root
  */
 const LINTED_DOCS = ["docs/task-lifecycle.md"];
 
-/** Claude Code subagents and slash commands. Every `.md` in each is linted. */
-const LINTED_DIRS = [".claude/agents", ".claude/commands"];
+/**
+ * Claude Code subagents, slash commands, and project skills. Every `.md` at or
+ * below each is linted — `.claude/skills/` nests one level
+ * (`<skill>/SKILL.md`), so the walk recurses.
+ */
+const LINTED_DIRS = [".claude/agents", ".claude/commands", ".claude/skills"];
 
 /**
- * A path a document names *because it is gone*. Citing a retired file is not
- * rot, it is the record of a decision — so the exception is listed by name
- * with its reason, rather than inferred from the surrounding sentence. An
- * entry that stops firing fails the suite below, so this list cannot quietly
- * outlive the prose it excuses.
+ * A cited path the lint cannot resolve *and should not*: either it is named
+ * because it is gone, or it never exists on disk at rest. Each is listed by
+ * name with its reason rather than inferred from the surrounding sentence, and
+ * an entry that stops firing fails the suite below — so this list cannot
+ * quietly become a blanket exemption nobody can see.
  */
 const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
   {
-    file: "docs/task-lifecycle.md",
-    path: "docs/TODOs.md",
-    why: "retired 2026-08-02 (#1163); named because it is gone — the evidence for 'do not reintroduce a queue file'",
+    file: ".claude/skills/author-e2e-fixture/SKILL.md",
+    path: "eval/e2e-project/<slug>/",
+    why: "created at runtime by `make e2e-project`; gitignored, so it is absent at rest",
+  },
+  {
+    file: ".claude/skills/mine-unit-test/SKILL.md",
+    path: "eval/e2e-project/<slug>/",
+    why: "created at runtime by `make e2e-project`; gitignored, so it is absent at rest",
+  },
+  {
+    file: ".claude/skills/interpret-e2e-result/SKILL.md",
+    path: "eval/runlogs/e2e/smith-parents-1850/run-<latest>.json",
+    why: "`smith-parents-1850` is a fictional fixture in a worked example, not a real slug",
+  },
+  {
+    file: ".claude/skills/interpret-e2e-result/SKILL.md",
+    path: "eval/tests/e2e/smith-parents-1850/expected-findings.json",
+    why: "`smith-parents-1850` is a fictional fixture in a worked example, not a real slug",
   },
 ];
+
+function walkMarkdown(dir: string, out: string[]): void {
+  for (const entry of readdirSync(join(projectRoot, dir)).sort()) {
+    const rel = `${dir}/${entry}`;
+    if (statSync(join(projectRoot, rel)).isDirectory()) walkMarkdown(rel, out);
+    else if (entry.endsWith(".md")) out.push(rel);
+  }
+}
 
 function lintedFiles(): string[] {
   const files = [...LINTED_DOCS];
   for (const dir of LINTED_DIRS) {
     if (!existsSync(join(projectRoot, dir))) continue;
-    for (const f of readdirSync(join(projectRoot, dir)).sort()) {
-      if (f.endsWith(".md")) files.push(`${dir}/${f}`);
-    }
+    walkMarkdown(dir, files);
   }
   return files;
 }

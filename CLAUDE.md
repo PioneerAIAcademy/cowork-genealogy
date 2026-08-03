@@ -134,33 +134,25 @@ mocks (no E2B/Anthropic/OAuth needed).
     --title "…" --body "…"
   ```
 
-  The card lands in Backlog on its own — `.github/workflows/add-to-project.yml`
-  fires on `issues: opened` and adds it. **Creating the issue is the whole job:
-  do not call the Projects API yourself** (no `gh project` commands, no
-  `addProjectV2ItemById`). The workflow puts it on the board; `/fill-ready` moves
-  it from there. A `gh` token without the `project` scope — the default after
-  `gh auth login` — would fail a board write *while still creating the issue*,
-  which looks like success. Reference the number in the PR body.
-
   | Label | Use for |
   |---|---|
   | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
   | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose |
   | `icebox` | Add alongside either one when the item is a candidate with **no decision behind it**, so triage skips it instead of re-ranking it every morning |
 
-  **Rationale does not go in the issue.** A body says what the work is and enough
-  of *why it is still open* to stop the next person re-opening a settled question
-  — issue bodies are read once at triage and essentially never again. A settled
-  tradeoff, a rejected alternative, or a measurement goes to the tool's spec or a
-  comment at the site it constrains, where the next person will actually be
-  standing. If there is no spec to write it into, the item is spec-shaped, not
-  queue-shaped. Git history keeps the prose either way.
+  **Creating the issue is the whole job: do not call the Projects API yourself**
+  (no `gh project` commands, no `addProjectV2ItemById`).
+  `.github/workflows/add-to-project.yml` fires on `issues: opened` and puts the
+  card in Backlog. A `gh` token without the `project` scope — the default after
+  `gh auth login` — fails a board write *while still creating the issue*, which
+  looks like success. Reference the number in the PR body.
 
-  This replaced `docs/TODOs.md` (retired 2026-08-02, issues #1117–#1157). That
-  file was a staging queue whose exit event — "an entry leaves when it becomes an
-  issue" — never fired on its own: it reached 932 lines, then 54 unassignable
-  items touched by 54 separate PRs, and became a merge-conflict hotspot across
-  concurrent worktrees. Do not reintroduce a queue file under any name.
+  **Do not reintroduce a queue file under any name.** This replaced
+  `docs/TODOs.md`, retired 2026-08-02.
+
+  The rest — how to pick the label, what belongs in a body and what doesn't, the
+  `TODOs.md` postmortem — is in [`DEVELOPMENT.md`](./DEVELOPMENT.md) §
+  "Follow-on work you find along the way", which owns these rules.
 - **Verification is automated, not a manual playbook.** New tools are
   verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
   and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
@@ -637,9 +629,8 @@ explicitly with the Agent tool.
   *before* any code exists: verifies every file/function/command the plan names
   actually exists, checks the plan against the documented multi-site edit lists,
   and rejects plans with no falsifiable acceptance check. Step 3 of
-  [`docs/task-lifecycle.md`](./docs/task-lifecycle.md), which caps it at two
-  rounds — a second round of blocking findings means the *task* is
-  underspecified, not the plan. `/critique-plan [path]`.
+  [`docs/task-lifecycle.md`](./docs/task-lifecycle.md), capped at two rounds
+  (ADR-0007). `/critique-plan [path]`.
 - **`rubric-critic`** — read-only. Audits a skill's eval rubric and judge
   quality from its run logs; flags non-discriminating, flaky, and unexercised
   dimensions. `/audit-rubric <skill>`.

@@ -13,10 +13,8 @@ packages/engine/mcp-server/.mcp.json
 # anchors this to the repo root so it does NOT match packages/engine/mcp-server.
 /mcp-server/
 
-# Normal-tier task plan (docs/task-lifecycle.md §2). A scratch artifact: it is
-# what you hand plan-critic and the fresh-session review, then paste into the
-# PR description. Root-anchored so a real PLAN.md nested in a package is still
-# tracked if one is ever wanted.
+# Per-task plan (docs/task-lifecycle.md step 2) — a scratch artifact that ends
+# up in the PR description. Root-anchored so a nested PLAN.md stays tracked.
 /PLAN.md
 
 releases/*
