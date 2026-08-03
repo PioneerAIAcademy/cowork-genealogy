@@ -64,6 +64,17 @@ together."
 
 ---
 
+## The commands in this document
+
+Every slash command below ships with Claude Code, except `/critique-plan`, which
+lives in this repo at [`.claude/agents/`](../.claude/agents/). Nothing here needs
+a plugin you have to install.
+
+If you have a personal plugin that defines one of these names, **yours wins** —
+which is worth knowing before you wonder why `/review` did something else.
+
+---
+
 ## The loop
 
 ### 0. Branch in a worktree
@@ -165,13 +176,34 @@ Plus whatever you actually touched:
 | Plugin agent frontmatter, hooks, or tool binding | `make agent-smoke`. **It exits 0 when it skips**, so confirm the output lists resolved agents rather than `1 skipped` — that means no API key was reachable. |
 | An e2e fixture | `make e2e-validate TEST=<slug>` |
 | Anything user-facing | Run it. `make server` / `make web`, or the Claude Desktop install path. |
+| An HTTP route or `apps/server/` auth/allowlist code, anything that reads a token or writes to `~/.familysearch-mcp/`, or anything that renders user-supplied data in the viewer | `/security-review` |
 
 Then exercise the thing you built, once, by hand.
 
 ### 6. Review your own diff, in a fresh session
 
-Not the session that wrote the code — it will agree with you. Open a new one,
-give it the plan and the diff, and ask:
+Not the session that wrote the code — it will agree with you. Open a new one and
+do both halves there.
+
+**Bugs.** In the fresh session:
+
+```
+/code-review high
+```
+
+It reads your branch's commits ahead of upstream plus anything uncommitted. Run
+it in the fresh session and not the authoring one: in a terminal it forks the
+session it is invoked from, so from the authoring session it inherits the
+reasoning it is supposed to be checking.
+
+**Check each finding before you act on it**, exactly as in step 3 — `high` casts
+a wider net than `low` or `medium` and includes findings it is less sure of.
+Don't pass `--fix`: you have to be able to explain every line you ship, and
+those edits also land outside `/rewind`. Don't pass `--comment` either — review
+comments go up in your own words.
+
+**Drift.** No bug-finder checks this. Give the same session the plan and the
+diff, and ask:
 
 > Here is the plan and here is the diff. Where do they diverge? What did the
 > implementation do that the plan didn't call for, and what did the plan call
@@ -179,6 +211,9 @@ give it the plan and the diff, and ask:
 
 You are hunting **implement-vs-plan drift**: code that looks fine and isn't the
 code that was agreed. Fix what you find, then read the whole diff yourself.
+
+Arrive at step 9 with this done. A reviewer's round should go to whether the
+approach is right, not to what a free command would have caught.
 
 ### 7. File the follow-on work
 
@@ -202,9 +237,18 @@ Keep PRs small. A forty-file PR turns both review steps into rubber stamps.
 
 ### 9. Peer review, then senior review
 
-Peer review is another developer. Senior review is the lead, and it is the last
-gate — by then everything mechanical should be settled, so his time goes to
-whether the approach is right.
+Peer review is another developer. Senior review is a senior developer or the
+lead, and it is the last gate — by then everything mechanical should be settled,
+so their time goes to whether the approach is right.
+
+**The senior developers are volunteers.** Their time is the scarcest thing in
+this process. Turning up with `make test-all` green, `/code-review` run, and its
+findings resolved is what keeps that gate spent on judgment.
+
+A senior may escalate a PR to the managed cloud review by commenting
+`@claude review` on it — a deeper multi-agent pass, governed by
+[`REVIEW.md`](../REVIEW.md). It costs real money per run and it is their call,
+entirely optional. Don't trigger it yourself.
 
 One or two revision rounds is normal. Three means something upstream was wrong,
 usually the plan. Say so rather than grinding through a fourth.
@@ -227,15 +271,20 @@ costs nothing; shipping anyway is the failure.
 gh pr checkout <N>
 ```
 
-Give Claude the PR description (which has the plan), the diff, and the relevant
-spec. Then:
+For a fast first pass, `/review <N>` reads the PR once, read-only. Treat what it
+returns as an input to your review, never as your review.
 
 1. **Verify every finding before you post it** — proposals included. Open the
    file and check.
 2. **Post it in your own words, and state the edit.** Quote what they wrote,
    give the replacement text. Never paste a Claude review verbatim.
-3. **Review against the plan, not just the diff.** Does this implementation
-   match what was agreed?
+3. **Review against the plan, not just the diff.** `/review` can't see the plan.
+   Give Claude the PR description (which has it), the diff, and the relevant
+   spec, then ask directly: does this implementation match what was agreed?
+
+If you are a senior and the change is big enough that this is going to cost you
+an hour, `@claude review` on the PR buys a deeper multi-agent pass instead. It
+bills per run, so it's a judgment call — see step 9.
 
 ---
 
@@ -255,8 +304,10 @@ make test-all                        # everything; == scripts/test.sh
 make eval-skill SKILL=<name>         # anything in a skill's run-log snapshot
 make agent-smoke                     # plugin agent frontmatter / hooks / tool binding
 make e2e-validate TEST=<slug>        # an e2e fixture changed
+/security-review                     # route, auth, token, or user state touched
 
-# 6. self-review, in a FRESH session
+# 6. self-review, in a FRESH session — not the one that wrote the code
+/code-review high                    # bugs; verify each finding, no --fix/--comment
 #    → "Here is PLAN.md and the diff. Where do they diverge?"
 
 # 7. follow-on work
@@ -264,6 +315,7 @@ gh issue create --label developer --title "…" --body "…"
 
 # 9. review someone else's PR
 gh pr checkout <N>
+/review <N>                          # one read-only pass; an input, not your review
 ```
 
 ## Where to read next
@@ -274,5 +326,6 @@ gh pr checkout <N>
 | Which sites a change touches | [`docs/architecture.md`](./architecture.md) |
 | The rules that override normal defaults | [`CLAUDE.md`](../CLAUDE.md) |
 | Why something is the way it is | [`docs/adrs/`](./adrs/) |
+| What the cloud reviewer flags, and how hard | [`REVIEW.md`](../REVIEW.md) |
 | Improving a skill from eval results | [`docs/skill-lifecycle.md`](./skill-lifecycle.md) |
 | Contributing a skill or an MCP server | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |

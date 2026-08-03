@@ -1170,6 +1170,7 @@ tools — what happens after you grant one). And
 | **No prompt-injection doctrine exists anywhere.** A grep of the whole plugin and MCP source returns **zero hits**, while untrusted free text reaches an agent holding `research_append` via `image_transcribe` OCR, `fulltext_search`, and every record the extractor reads. | Unmitigated, unmeasured. | #847 |
 | **Nothing treats "the writer tools are absent" as a halt condition.** | Three runs once made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget. The raw-write path is closed since #984/#989; the silent failure is not. | #941 |
 | **A `Skill()` callee can bind toolless** in the unit-harness path. | A delegated skill runs with zero tools. | #1012 |
+| **Nothing checks that the `CLAUDE.md` sections `REVIEW.md` escalates still exist.** `REVIEW.md` names eight of them to promote from nit to 🔴; the cloud reviewer is fed it verbatim, so a rename or deletion leaves a pointer to nothing. | The escalation silently stops applying, on exactly the PRs a senior paid to have reviewed. | #1198 |
 
 ### If you're asked to…
 
