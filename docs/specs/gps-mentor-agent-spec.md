@@ -801,44 +801,40 @@ These items are acknowledged but not specified here. They belong in future issue
 |------|-------|
 | Wiring into `/research` orchestrator skill | Depends on `/research` landing on main. DallanQ noted this explicitly in the implementation commit. |
 | Commit pending per-action approval | Not yet understood well enough to specify. Defer to DallanQ for clarification. |
-| Reducing per-gate mentor cost | Do not defer gates ad hoc to chase speed. Follow the staged sequence in §17.1. |
+| Reducing per-gate mentor cost | Largely shipped — see §17.1. Do not defer or sample the surviving `proof-critique` gate to chase speed. |
 
-### 17.1 Reducing per-gate mentor cost (defer until measurable)
+### 17.1 Per-gate mentor cost — what shipped, and what is not a lever
 
-An earlier e2e research-runtime speedup proposal (idea 2b) considered
-collapsing the three mentor gates (pre-exhaustiveness, conclusion-readiness,
-proof-critique) to a single conclusion gate to cut the cost of an autonomous
-`/research` run; the surviving version of that lever is tracked in
-`docs/TODOs.md` § "Research latency (e2e `/research` runs)".
-**That change is explicitly NOT adopted**, for three reasons:
+**Done.** The three auto-gates were collapsed to the single `proof-critique`
+gate. §3.4 is the current contract, and it records why the two early focuses
+were dropped from auto-gating: they duplicated `research-exhaustiveness`'s own
+7-point check and `proof-conclusion`'s tier analysis, the read-only mentor
+cannot verify exhaustiveness without search tools, and their forced rework
+starved the proof step. `pre-exhaustiveness` and `conclusion-readiness` remain
+supported for **on-demand** use.
 
-1. ~~**It is unmeasurable today.**~~ **Stale — reasons 1 and 2 no longer hold
-   (corrected 2026-07-31).** `build_workspace`
-   (`eval/harness/e2e/orchestrator.py:350-392`) *does* stage
-   `packages/engine/plugin/agents/*.md` into `.claude/agents/`, and the mentor
-   runs in benchmark runs: **20 delegations across the 24 e2e runs of
-   2026-07-25 → 07-30.** The agent is also conformant now. So gate count *is*
-   measurable, and the surviving `docs/TODOs.md` entry ("Cut gps-mentor gate
-   count") should be re-costed against real data rather than deferred as
-   unmeasurable — note its "3–4 gates per answering question" is itself stale
-   against ~0.8 delegations/run.
-2. ~~**The agent is not yet conformant.**~~ See above.
-3. **The final gate is the only production backstop.** There is no eval judge
-   in production Cowork, so the `proof-critique` gate is the only fresh-context
-   adversarial proof-quality check a real user receives. Trimming gates trades
-   the GPS workflow's one quality net for speed.
+An earlier revision of this section declared that change "explicitly NOT
+adopted" and prescribed a three-step sequence before it could even be
+considered. Both prerequisites in that sequence had in fact already landed —
+the agent is conformant (§2), and `build_workspace`
+(`eval/harness/e2e/orchestrator.py`) stages `packages/engine/plugin/agents/*.md`
+into the workspace's `.claude/agents/`, so e2e exercises the gate — and the
+decision step was subsequently taken. That text is removed rather than struck
+through, because a spec section forbidding work that has already shipped reads
+as live policy and will be obeyed as such.
 
-If reducing mentor cost later becomes warranted (driven by **production**
-latency/cost evidence, not the e2e benchmark), do it in this sequence — **not**
-by deferring gates first:
+**Also done, and load-bearing for cost:** the gate is invoked at most once per
+proof summary. `/research` first checks `evaluations/` for a
+`proof-critique-<ps_id>-*.json` newer than the last edit to that summary and
+acts on the existing verdict rather than re-invoking. Before that cache, real
+runs showed **3–4 mentor invocations per answering question at ~40–84 s each
+(≈3.5–4 min per question)** on the critical path, because the parent blocks on
+every gate. The model half of the same lever is banked too: the agent was
+repinned `claude-opus-4-8` → `claude-sonnet-5`.
 
-- **(a) Land the mentor conformance PR** (§2) so the agent behaves to spec.
-- **(b) Stage `plugin/agents/` into the e2e harness** (extend `build_workspace`
-  to copy agents into `.claude/agents/`, and add an `evaluations/` verdict
-  fixture) so e2e actually *exercises and measures* the gates — both their cost
-  (turns/tokens per gate) and whether any gate ever changes a verdict or proof
-  tier.
-- **(c) Then decide gating** with the GPS/spec owner, driven by that data plus
-  production cost. If measurement shows the two early gates (pre-exhaustiveness,
-  conclusion-readiness) never change an outcome, that is the evidence to
-  collapse to the single final `proof-critique` gate — earned, not assumed.
+**Not a lever: the surviving ~138 s `proof-critique` call itself.** It is
+doctrine-required — a real second model call, in fresh context, reviewing the
+written conclusion — and there is no eval judge in production Cowork, so it is
+the only adversarial proof-quality check a real user ever receives. Carry it as
+a known fixed cost in any latency re-measurement rather than mistaking it for
+waste. Do not defer or sample it to chase wall-clock.
