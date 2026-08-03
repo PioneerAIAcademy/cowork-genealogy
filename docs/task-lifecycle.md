@@ -229,9 +229,9 @@ so their time goes to whether the approach is right.
 this process. Turning up with `make test-all` green, `/code-review` run, and its
 findings resolved is what keeps that gate spent on judgment.
 
-`.github/workflows/claude-code-review.yml` posts an automated pass on every PR. Treat it as a peer
-whose findings you verify, not a gate — it can be wrong, and a senior's review
-still has to happen.
+**Automatic Claude review is off** (`.github/workflows/claude-code-review.yml`,
+disabled 2026-08-03). Nothing reviews your PR before a human opens it, so step 6
+is the only pass it gets — arrive with it done.
 
 One or two revision rounds is normal. Three means something upstream was wrong,
 usually the plan. Say so rather than grinding through a fourth.
@@ -269,11 +269,6 @@ returns as an input to your review, never as your review.
    set out to do. Give Claude those, the issue, and the relevant spec, then ask
    directly: does this implementation match what was agreed, and what does it do
    that nobody asked for?
-
-`.github/workflows/claude-code-review.yml` has already posted an automated pass on the PR. Read it
-before you start — but verify anything you repeat, the same as your own
-findings, and don't treat it as having covered the ground you're responsible
-for.
 
 ---
 
