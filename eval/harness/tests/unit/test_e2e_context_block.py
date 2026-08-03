@@ -167,6 +167,20 @@ class _HookDrivingAgent:
 
 
 def test_main_thread_extraction_append_is_denied_and_recorded(tmp_path, monkeypatch):
+    # This test drives the real _run_agent but does no real API call (query is
+    # mocked below). _run_agent still evaluates env_for_sdk(resolve_auth()) when
+    # building the query() args, which on keyless CI (eval-harness-tests.yml runs
+    # `-m 'not e2e'` with no key and no ~/.claude) raises AuthError before the
+    # mock runs. Auth is not what this test exercises, so stub resolve_auth to a
+    # canned AuthConfig — the same idiom test_cli.py uses for its 10 resolve_auth
+    # stubs — and let the real env_for_sdk run on it. Order-independent; no key.
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
     sink: dict = {}
 
     def fake_query(**kw):
