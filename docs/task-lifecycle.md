@@ -16,6 +16,37 @@ Everything below is detail on those four.
 
 ---
 
+## If you read nothing else, read this
+
+Two things are mandatory before you request review. Everything else in this
+document is guidance you can scale to the task; these two are not.
+
+> ### 1. Run **both** test commands
+>
+> ```sh
+> make test-all        # JS + server + engine + harness + typecheck
+> scripts/test.sh      # what the PR template's checkbox actually requires
+> ```
+>
+> Neither is a superset of the other. `make test-all` excludes the e2e-marked
+> harness tests; `scripts/test.sh` skips the JS workspace, `apps/server`, and
+> typecheck. Running one and ticking the template box is the most common way
+> broken work reaches a reviewer.
+>
+> ### 2. Self-review the diff in a **fresh** session
+>
+> Not the session that wrote the code — that one is anchored on its own
+> reasoning and will agree with you. Open a new one, hand it your plan and the
+> diff, and ask where they diverge.
+
+Skipping either of these moves work onto your reviewer that a machine or a
+fresh context would have caught for free. Everything else here is about doing
+the task well; these two are about not wasting someone else's afternoon.
+
+Details in [step 5](#5-verify-it-yourself) and [step 6](#6-review-your-own-diff-in-a-fresh-session).
+
+---
+
 ## Why this shape
 
 Working with Claude changes where the expensive mistakes happen. Writing code
@@ -277,10 +308,12 @@ gh issue create --label developer --title "…" --body "…"
 - **Reference the numbers in your PR description**, so your reviewer can see
   what you chose not to do.
 
-**Don't leave a `TODO` comment instead.** A TODO isn't a queue — nobody is
-assigned to it and nobody reads it. Same reason `docs/TODOs.md` was retired
-(2026-08-02, after it reached 932 lines and 54 unassignable items). Don't
-recreate that file under any name.
+**Don't leave a `TODO` comment, and don't start a to-do file.** A TODO isn't a
+queue — nobody is assigned to it, nobody is notified about it, and nobody reads
+it. If you were about to write one, that is exactly the case the `icebox` label
+is for: file it as an issue, label it `icebox`, and it lands in Backlog where
+triage can see it and skip it until something changes. A `TODO` in the source
+is invisible to every one of those steps.
 
 And don't over-file. Fifteen issues from one PR isn't thoroughness, it's noise
 that someone has to triage. Use the free-afternoon test.
