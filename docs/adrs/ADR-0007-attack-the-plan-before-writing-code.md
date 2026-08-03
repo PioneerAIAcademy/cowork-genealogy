@@ -10,7 +10,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-02 (#1177), risk half 2026-08-02 (#1188)
-- **Last updated:** 2026-08-02 (#1188)
+- **Last updated:** 2026-08-03
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -91,7 +91,7 @@ And for risk:
 | **A general-purpose subagent** | Buys the fresh context but not the tool restriction, which is the only part a prompt cannot buy | ADR-0006 is the general form: capability is restricted by tool identity, not by prompt |
 | **Three or more critique rounds** | Round one finds real problems; round two confirms fixes and usually finds one more; round three yields style opinions and a longer plan | Argued, not measured. The originating branch ran two adversarial passes and found seven real defects; the value was in rounds one and two |
 | **Let the critic apply its own findings** | Collapses the verification step the design rests on. Read-only forces someone to decide which findings are real — the part that teaches the codebase | That branch's own round: one finding was rejected as wrong, and one *proposal* was relayed as though it existed when it did not |
-| **Per-task plans as files under `docs/plan/`** | That directory holds multi-week design docs reviewed with a designer and an engineer; a per-task plan is a different genre with a different lifespan. Filing one there means it lands on `main` and must be deleted when the work ships | `CLAUDE.md` § `docs/plan/`: "Two files here spent weeks claiming 'not yet implemented' and 'not yet branched' for things that had shipped" |
+| **Per-task plans as files under `docs/plan/`** | That directory holds multi-week design docs reviewed with a designer and an engineer; a per-task plan is a different genre with a different lifespan. Filing one there means it lands on `main` and must be deleted when the work ships | `CLAUDE.md` § `docs/plan/`: "Two files here spent weeks claiming 'not yet implemented' and 'not yet branched' for things that had shipped." Reopened 2026-08-03 and re-declined: across 8 merged developer PRs (#1178, #1179, #1192, #1195, #1196, #1197, #1202, #1203) the plan's load-bearing half — scope, rejected alternatives, what the PR deliberately does *not* close — was already in the descriptions, unprompted. The template asks for that half directly rather than for the file |
 | **A developer-chosen Risky tier, with the lead reviewing the plan pre-code** *(the original #1177 decision, retired in #1188)* | Duplicated the `senior` verdict at the worst-positioned point: least context, work already handed over, and a weaker consequence than the verdict it duplicated. Its "when in doubt" tie-break converted junior uncertainty into lead interrupts. Nothing enforced it | `docs/specs/task-review-spec.md` §3 (`senior` → assign `DallanQ`, swap out) vs. the tier (lead reviews the plan). Enforcement below: nothing blocks a PR leaving the tier blank |
 | **Collapse to one tier — everything is Normal** | Taxes the highest-frequency, lowest-risk changes: a typo or doc-link fix would carry `PLAN.md` plus a `/critique-plan` round. Trivial is a call a junior makes reliably from the diff in front of them; Risky is one that needs the architecture guide. Deleting both treats two different qualities of judgment as one | Argued, not measured |
 | **Keep Risky but drop the pre-code plan review** | The plan review *was* the tier's consequence. Without it the tier is a label with no action, which is the shape that rots — nobody notices when it is wrong | Enforcement below |

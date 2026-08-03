@@ -263,9 +263,12 @@ returns as an input to your review, never as your review.
    file and check.
 2. **Post it in your own words, and state the edit.** Quote what they wrote,
    give the replacement text. Never paste a Claude review verbatim.
-3. **Review against the plan, not just the diff.** `/review` can't see the plan.
-   Give Claude the PR description (which has it), the diff, and the relevant
-   spec, then ask directly: does this implementation match what was agreed?
+3. **Review against what was agreed, not just the diff.** `/review` reads the
+   diff; it can't tell you whether that was the right change to make. The PR's
+   Summary, "Start here", and Plan sections are where the author says what they
+   set out to do. Give Claude those, the issue, and the relevant spec, then ask
+   directly: does this implementation match what was agreed, and what does it do
+   that nobody asked for?
 
 `.github/workflows/claude-code-review.yml` has already posted an automated pass on the PR. Read it
 before you start — but verify anything you repeat, the same as your own

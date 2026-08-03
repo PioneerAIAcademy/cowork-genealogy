@@ -23,10 +23,24 @@
 
 ## Plan
 
-<!-- Normal: paste PLAN.md. Trivial: delete this section.
-     If you hit the step-4 stop rule (schema, auth, plugin-agent binding,
-     an ADR reversal, or anything hard to undo), say so here and name the
-     message where you raised it. -->
+<!-- Normal: the two parts of PLAN.md nothing else here carries. Trivial:
+     delete this section. Don't paste PLAN.md whole — its file list is the
+     diff, its deferrals are "Follow-on issues", and by the time you open
+     the PR it may be a plan you knowingly deviated from (step 4).
+
+     Didn't change — the tempting adjacent thing you left alone, so a
+     reviewer reads it as a decision rather than an omission.
+
+     Acceptance check — the named test that fails on `main` and passes on
+     this branch. Not "the tests pass"; they passed before.
+
+     Hit the step-4 stop rule (schema, auth, plugin-agent binding, an ADR
+     reversal, anything hard to undo)? Say so here and name the message
+     where you raised it. -->
+
+**Didn't change:**
+
+**Acceptance check:**
 
 ## Test plan
 
