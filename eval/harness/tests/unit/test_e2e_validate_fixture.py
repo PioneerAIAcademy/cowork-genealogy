@@ -18,6 +18,7 @@ from e2e.validate_fixture import (
     check_stripping,
     finding_shape_errors,
     lint_fixture,
+    record_hint_citation_errors,
 )
 
 
@@ -438,3 +439,104 @@ def test_lint_fixture_rejects_an_unrecognized_finding_field(tmp_path):
     )
     _, errors = lint_fixture(tmp_path)
     assert any("expectation" in e for e in errors)
+
+
+# --- record-hint ark citation (issue #970 / #1025) --------------------
+
+def _write_record_hint_meta(fixture_dir, *, resolved: bool, genre: str = "record-hint"):
+    (fixture_dir / "fixture.json").write_text(
+        json.dumps({"id": fixture_dir.name, "genre": genre}), encoding="utf-8"
+    )
+    body = "Notes for reviewers\n\n" + (
+        "Resolved: false match, no findable substitute."
+        if resolved
+        else "DRAFT PENDING ADJUDICATION. Transcribed from an unverified hint."
+    )
+    (fixture_dir / "README.md").write_text(body, encoding="utf-8")
+
+
+def _avoid_pair_findings(supporting_sources_by_finding):
+    """Two findings shaped like a resolved record-hint negative (spec
+    §3.4.1): an `avoid` guard and a paired required conclusion. Each
+    finding's `supporting_sources` comes from `supporting_sources_by_finding`,
+    keyed `"f1"` / `"f2"`."""
+    return {
+        "findings": [
+            {
+                "id": "f1",
+                "type": "fact",
+                "polarity": "avoid",
+                "description": "must not assert the hinted claim",
+                "supporting_sources": supporting_sources_by_finding.get("f1", []),
+                "required": True,
+            },
+            {
+                "id": "f2",
+                "type": "fact",
+                "description": "documents the negative conclusion",
+                "supporting_sources": supporting_sources_by_finding.get("f2", []),
+                "required": True,
+            },
+        ]
+    }
+
+
+def test_record_hint_citation_errors_skips_non_record_hint_genre(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True, genre="strip")
+    findings = _avoid_pair_findings({"f2": ["no ark anywhere"]})
+    assert record_hint_citation_errors(tmp_path, findings) == []
+
+
+def test_record_hint_citation_errors_skips_draft_fixtures(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=False)
+    findings = _avoid_pair_findings({"f2": ["still just a transcribed hint, no ark"]})
+    assert record_hint_citation_errors(tmp_path, findings) == []
+
+
+def test_record_hint_citation_errors_requires_an_ark_on_resolution(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True)
+    findings = _avoid_pair_findings(
+        {"f2": ["Absence of any record in the collection establishing this"]}
+    )
+    errors = record_hint_citation_errors(tmp_path, findings)
+    assert any("ark:/61903/" in e for e in errors)
+
+
+def test_record_hint_citation_errors_rejects_a_bare_id(tmp_path):
+    # Issue #970's rejected shortcut: a bare id is shape-identical to a tree
+    # PID and matches collection date ranges on their own — not discriminating.
+    _write_record_hint_meta(tmp_path, resolved=True)
+    findings = _avoid_pair_findings({"f1": ["disproving record, ark QL7X-YN65"]})
+    errors = record_hint_citation_errors(tmp_path, findings)
+    assert any("ark:/61903/" in e for e in errors)
+
+
+def test_record_hint_citation_errors_passes_with_ark_on_the_disproving_finding(tmp_path):
+    # Issue #1025's split: the ark attaches to the disproving record (here,
+    # on f1, the avoid finding); the absence on f2 carries none and that's fine.
+    _write_record_hint_meta(tmp_path, resolved=True)
+    findings = _avoid_pair_findings(
+        {
+            "f1": ["Marriage record, 7 Feb 1871 (ark:/61903/1:1:6PFD-Q43C) — disproving record"],
+            "f2": ["No record in the collection establishes a findable substitute"],
+        }
+    )
+    assert record_hint_citation_errors(tmp_path, findings) == []
+
+
+def test_lint_fixture_hard_fails_a_resolved_record_hint_fixture_with_no_ark(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True)
+    findings = _avoid_pair_findings({"f2": ["no ark anywhere in this fixture"]})
+    _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")), findings=findings)
+    _, errors = lint_fixture(tmp_path)
+    assert any("ark:/61903/" in e for e in errors)
+
+
+def test_lint_fixture_passes_a_resolved_record_hint_fixture_with_an_ark(tmp_path):
+    _write_record_hint_meta(tmp_path, resolved=True)
+    findings = _avoid_pair_findings(
+        {"f1": ["disproving record (ark:/61903/1:1:6PFD-Q43C)"]}
+    )
+    _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")), findings=findings)
+    _, errors = lint_fixture(tmp_path)
+    assert errors == []

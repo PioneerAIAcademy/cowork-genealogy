@@ -14,7 +14,7 @@
         }
       },
       "supporting_sources": [
-        "England and Wales, Census, 1901 — household of Joseph Davies (b. 1876, Hirwaun) and Hannah Davies (b. 1878, Llanidloes, Montgomeryshire), Merthyr Tydfil, Glamorgan, with daughter Elizabeth A Davies (b. 1899, Treharris)"
+        "England and Wales, Census, 1901 — household of Joseph Davies (b. 1876, Hirwaun) and Hannah Davies (b. 1878, Llanidloes, Montgomeryshire), Merthyr Tydfil, Glamorgan, with daughter Elizabeth A Davies (b. 1899, Treharris) — the hint record itself; no ark on file for this specific Merthyr Tydfil household entry, only the tree-transcribed description"
       ],
       "required": true
     },
@@ -31,7 +31,8 @@
         }
       },
       "supporting_sources": [
-        "Conflict between the 1901 census household's recorded birthplaces/years for both Joseph Davies (b. 1876, Hirwaun) and Hannah Davies (b. 1878, Llanidloes, Montgomeryshire) and the tree's Joseph David and Hannah David of Clydach, Glamorgan"
+        "Conflict between the 1901 census household's recorded birthplaces/years for both Joseph Davies (b. 1876, Hirwaun) and Hannah Davies (b. 1878, Llanidloes, Montgomeryshire) and the tree's Joseph David and Hannah David of Clydach, Glamorgan",
+        "The subject's own 1901 census entry, Merthyr Tydfil registration district (ark:/61903/1:1:XSMQ-X77) — Joseph David and Hannah David's real household, distinct from the Merthyr Tydfil hint household above — the disproving record"
       ],
       "required": true
     }

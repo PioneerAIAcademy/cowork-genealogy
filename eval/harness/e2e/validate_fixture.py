@@ -19,6 +19,14 @@ Three gates, in order:
    field that shipped un-enforced in the record-hint adjudication batch
    (issues #852-883) — a made-up field silently no-ops instead of failing,
    so a fixture can carry ground truth the harness and judge never read.
+   The same gate also requires a resolved `genre: "record-hint"` fixture's
+   `supporting_sources` to cite a resolvable FamilySearch ark somewhere in
+   the fixture (`record_hint_citation_errors`, issue #970) — otherwise a
+   fabricated citation is byte-identical to a real one and no reviewer can
+   check it. Per issue #1025, that requirement attaches to whichever
+   record does the disproving on a documented-negative resolution, never
+   to the absence claim itself (spec §3.6.1); the check is satisfied by a
+   single ark anywhere in the fixture, not one per finding.
 3. **Stripping completeness** (warn-only), described below.
 
 The crux invariant of an e2e fixture: every entry in
@@ -414,6 +422,86 @@ def finding_shape_errors(expected_findings: dict[str, Any]) -> list[str]:
     return errors
 
 
+# Matches a resolvable FamilySearch ark path. Deliberately does NOT accept
+# a bare `XXXX-XXXX`/`XXXX-XXX` id: issue #970 measured that shape against
+# the corpus and found it matches collection date ranges on their own
+# (`Czech Republic, Church Books, 1552-1981` reads as an id-shaped token)
+# and is shape-identical to a FamilySearch tree PID — so a bare id can be
+# satisfied by pasting the fixture's own `source_pid`, which carries zero
+# record provenance. Only a full `ark:/61903/...` path counts.
+_ARK_RE = re.compile(r"ark:/61903/")
+
+# The existing definition of "unresolved" for a record-hint fixture
+# (eval/harness/scripts/check_e2e_fixtures.py:58) — its presence in the
+# README means the fixture is still a draft pending adjudication and #970's
+# requirement does not apply yet (issue #970 is "enforce going forward",
+# i.e. once a fixture is actually resolved).
+_DRAFT_MARKER = "DRAFT PENDING ADJUDICATION"
+
+
+def record_hint_citation_errors(
+    fixture_dir: Path, expected_findings: dict[str, Any]
+) -> list[str]:
+    """Hard-error check (issue #970): a resolved record-hint fixture's
+    ground truth must cite a resolvable FamilySearch ark, so a fabricated
+    citation becomes checkable by a reviewer in one click instead of being
+    byte-identical to a real one.
+
+    Applies only when `fixture.json`'s `genre == "record-hint"` and the
+    fixture is not still a draft (no `_DRAFT_MARKER` in `README.md`). A
+    strip-genre fixture, or a record-hint fixture still pending
+    adjudication, is not checked here.
+
+    The bar is deliberately low, per issue #1025: at least one
+    `supporting_sources` entry, on at least one finding, anywhere in the
+    fixture, must contain a literal `ark:/61903/`. A documented-negative
+    resolution has two different claims — the disproving record (real,
+    ark-able) and the absence itself (nothing exists to cite by
+    definition) — so this does not require every entry to carry an ark,
+    only that the disproving record's ark is present *somewhere* in the
+    fixture (spec §3.6.1).
+
+    Silently returns no errors if `fixture.json` or `README.md` is
+    missing or unparseable — those are reported by other checks, and this
+    check has nothing to apply its rule to without them.
+    """
+    fixture_json_path = fixture_dir / "fixture.json"
+    readme_path = fixture_dir / "README.md"
+    if not fixture_json_path.exists() or not readme_path.exists():
+        return []
+
+    try:
+        fixture_meta = _load_json(fixture_json_path)
+    except (json.JSONDecodeError, OSError):
+        return []
+    if not isinstance(fixture_meta, dict) or fixture_meta.get("genre") != "record-hint":
+        return []
+
+    try:
+        readme_text = readme_path.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    if _DRAFT_MARKER in readme_text:
+        return []
+
+    for finding in expected_findings.get("findings") or []:
+        if not isinstance(finding, dict):
+            continue
+        for source in finding.get("supporting_sources") or []:
+            if isinstance(source, str) and _ARK_RE.search(source):
+                return []
+
+    return [
+        "expected-findings.json: resolved record-hint fixture has no "
+        "`supporting_sources` entry containing a literal `ark:/61903/` on "
+        "any finding — issue #970 requires the disproving record's ark be "
+        "checkable by a reviewer. A bare id (e.g. `QL7X-YN65`) does not "
+        "satisfy this; expand it to the full ark path (issue #1025 / spec "
+        "§3.6.1 covers the disproving-record-vs-absence split for "
+        "documented negatives)."
+    ]
+
+
 @dataclass
 class Suspect:
     finding_id: str
@@ -563,6 +651,7 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
     errors += [f"starting-tree.gedcomx.json: {e}" for e in validate_tree_gedcomx_json(tree)]
     errors += tree_integrity_errors(tree, "starting-tree.gedcomx.json")
     errors += finding_shape_errors(expected)
+    errors += record_hint_citation_errors(fixture_dir, expected)
 
     # Optional: only PID-path fixtures have one. It is committed, so it is held to
     # the same structural and living-person bar as the starting tree.

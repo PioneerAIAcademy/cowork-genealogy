@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 11, flags adds_father/adds_mother, confidence 3). Draft transcribed from a Croatian church baptismal record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 11, flags adds_father/adds_mother, confidence 3). Resolved false match: the 1786 baptismal hint would make Elisabetha 51 at her own last recorded child's 1837 baptism (ark:/61903/1:1:QKMN-LM5B) — no substitute parentage record found."
 }

@@ -3,34 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Elisabetha Sugecz's father was Thomas Sugecz, per a baptismal record dated 14 August 1786 in Madžarevo, Varaždin, Croatia.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Elisabetha Sugecz's parents were Thomas Sugecz and Susanna Petrich, per the hinted baptismal entry dated 14 August 1786 in Madžarevo, Varaždin, Croatia. A birth in 1786 would make Elisabetha about 51 years old at the baptism of her own last recorded child, Andreas Harmiczar, on 8 October 1837 (ark:/61903/1:1:QKMN-LM5B, the disproving record) — well past a biologically plausible childbearing age and inconsistent with a mother of record still bearing children into the 1830s. Pass = the final tree/research contains no Thomas Sugecz/Susanna Petrich parent-child relationship for Elisabetha Sugecz sourced to this 1786 baptismal hint (or the candidate appears only as an explicitly rejected hypothesis).",
       "details": {
         "subject_person": "Elisabetha Sugecz (G4C9-Y6C)",
         "relation": "parent",
-        "target_person": {
-          "name": "Thomas Sugecz",
-          "birth": "unknown, likely Madžarevo, Varaždin, Croatia"
+        "wrong_candidate": {
+          "name": "Thomas Sugecz and Susanna Petrich, per baptismal entry 14 Aug 1786, Madžarevo, Varaždin, Croatia, naming parents Thomæ Sugecz and Susanæ Petrich",
+          "note": "the hint's own baptism date is contradicted by Elisabetha's tree-recorded childbearing: her last recorded child, Andreas Harmiczar, was baptized 8 October 1837 (ark:/61903/1:1:QKMN-LM5B) — a 1786 birth would put her at ~51 at that birth, which is not a credible age for the mother of record in the same parish register series"
         }
       },
       "supporting_sources": [
-        "Croatia, Church Books, 1516-1994 — baptismal entry, 14 Aug 1786, Madžarevo, Varaždin, naming parents Thomæ Sugecz and Susanæ Petrich"
+        "Croatia, Church Books, 1516-1994 — baptismal entry, 14 Aug 1786, Madžarevo, Varaždin, naming parents Thomæ Sugecz and Susanæ Petrich (the contradicted hint record itself; no ark on file for this specific hint entry, only the tree-transcribed description)",
+        "Andreas Harmiczar baptism, 8 October 1837, Madžarevo, Varaždin (ark:/61903/1:1:QKMN-LM5B) — Elisabetha's own last recorded child, the disproving record establishing the age-implausibility"
       ],
       "required": true
     },
     {
       "id": "f2",
-      "type": "relationship",
-      "description": "Elisabetha Sugecz's mother was Susanna Petrich, per the same baptismal record.",
+      "type": "fact",
+      "description": "Having weighed the 1786 baptismal hint naming Thomas Sugecz and Susanna Petrich as Elisabetha Sugecz's parents against her own tree-recorded childbearing (a last child baptized as late as 1837), the agent should document a negative conclusion: the hint is a false match, and no baptismal or marriage record in the collection establishes Elisabetha Sugecz's actual parents.",
       "details": {
         "subject_person": "Elisabetha Sugecz (G4C9-Y6C)",
-        "relation": "parent",
+        "relation": "research conclusion",
         "target_person": {
-          "name": "Susanna Petrich",
-          "birth": "unknown, likely Madžarevo, Varaždin, Croatia"
+          "name": "documented negative conclusion: the 1786 baptismal hint does not establish Elisabetha Sugecz's parents",
+          "birth": "n/a"
         }
       },
       "supporting_sources": [
-        "Croatia, Church Books, 1516-1994 — baptismal entry, 14 Aug 1786, Madžarevo, Varaždin"
+        "Age-implausibility between the 1786 hint baptism and Elisabetha's own last recorded child's baptism in 1837 (ark:/61903/1:1:QKMN-LM5B)",
+        "No baptismal or marriage entry in Croatia, Church Books, 1516-1994 (Madžarevo, Varaždin parish register series) establishes Elisabetha Sugecz's parents — a search of the collection's date range surrounding her documented childbearing years turned up no alternate baptism or marriage record for her"
       ],
       "required": true
     }
