@@ -1,6 +1,7 @@
 # Tree Materialization — Ownership Spec
 
-> **Status:** Draft v1 (2026-07-18). Owns the decision `#701` asks for:
+> **Status:** Shipped 2026-07-18 (#701 → PR #730; batching extended in #897).
+> Owns the decision `#701` asked for:
 > **who promotes extracted record facts onto tree persons, and how
 > provenance rides along.** Introduces one new MCP tool
 > (`materialize_facts`), reassigns ownership across the record→tree
@@ -15,7 +16,7 @@
 > specs under `packages/engine/plugin/skills/`.
 >
 > Grounding evidence is the July record-extraction audit (theme T6) and
-> the closing report §3.4 (`docs/plan/record-extraction-consolidation-closing-report.md`),
+> the closing report §3.4 (`docs/record-extraction-consolidation-closing-report.md`),
 > plus a first-hand diagnosis of the `cruz-corona-ancestry` e2e runs
 > (§1.2).
 
@@ -520,7 +521,7 @@ materialization, applying the **error-block / warning-advisory** tiers, with
 `hasSameCensus` etc. **re-anchored to the pre-materialization state** (they
 currently gate a `merge_record_into_tree` fold that no longer exists). This is
 **wired in this PR** (§12 phase 3, alongside the skill rewrites) — **not**
-deferred to Open Questions or `docs/TODOs.md`. The
+deferred to Open Questions or a follow-up issue. The
 `match-merge-workflow-spec.md` edit and its integration-test coherence
 assertions (`hasSameCensus`, `hasEventsOutsideLifespanFar`) are preserved and
 carried by that phase.
@@ -530,9 +531,10 @@ carried by that phase.
 unintended; the full `vitest` suite and the manifest-drift test
 (`tests/packaging/manifest.test.ts`) pass.
 
-> Any item this PR ends up **deferring** (rather than removing) gets a
-> `docs/TODOs.md` entry in the same PR — e.g. wiring a duplicate-node
-> trigger for `merge_tree_persons`, if that is not done here.
+> Any item this PR ends up **deferring** (rather than removing) gets a GitHub
+> issue in the same PR (`gh issue create --label developer` — see `CLAUDE.md`
+> § "Deferring work creates an issue") — e.g. wiring a duplicate-node trigger
+> for `merge_tree_persons`, if that is not done here.
 
 ---
 
@@ -631,8 +633,8 @@ Each phase is independently reviewable; the suite stays green between them.
 
 - **Duplicate-node trigger for `merge_tree_persons`** — out of scope here
   (this spec makes the tool's *inputs* clean but does not wire the "these two
-  tree persons are the same" detector). If not addressed in the PR, → a
-  `docs/TODOs.md` entry (§9).
+  tree persons are the same" detector). If not addressed in the PR, → its own
+  GitHub issue (§9).
 - **`materialize_facts` input shape — RESOLVED (batch axis).**
   `(personId, recordId, recordRole)` per persona, as recommended, plus a
   batch `ops[]` form added 2026-07-26 once a real need arrived: e2e runlogs

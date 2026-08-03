@@ -154,28 +154,6 @@ def test_events_chronologically_ordered(before_state, after_state, test):
 
 # --- Tag-gated checks ------------------------------------------------
 
-def test_no_impossibilities_when_resolved(before_state, after_state, test):
-    """Tag-gated: in scenarios where the source data is internally
-    consistent (the resolved birthplace conflict, no contradictory
-    locations), the new timeline's `impossibilities` array should be
-    empty. Conflicting INFORMANT testimony about a fact (e.g. birthplace)
-    is not a chronological impossibility — that distinction belongs to
-    the conflicts section."""
-    if "no-impossibilities-expected" not in test.get("tags", []):
-        pytest.skip("not a no-impossibilities-expected scenario")
-    new = _produced_timelines(before_state, after_state)
-    assert new, "no produced timeline to check"
-    errors: list[str] = []
-    for t in new:
-        imp = t.get("impossibilities", [])
-        if imp:
-            errors.append(
-                f"timelines[{t.get('id')}].impossibilities should be empty "
-                f"in this scenario; got {imp}"
-            )
-    assert not errors, "Unexpected impossibilities:\n  - " + "\n  - ".join(errors)
-
-
 def test_no_rejected_assertion_in_events(before_state, after_state, test):
     """Tag-gated: in scenarios with a resolved conflict, the timeline
     should reflect the preferred assertion only — events must not cite

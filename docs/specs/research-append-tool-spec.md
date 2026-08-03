@@ -174,6 +174,16 @@ camelCase convenience fields the same way `research_log_append` does.
 
 ### 3.3 Batch form (`ops`) — persist a whole record in one call
 
+> **Batching cuts round-trips, not generation time.** Measured on a real
+> session: a correctly batched 45-entry `research_append` still cost ~60–90 s of
+> raw token streaming, because wall-clock is linear in output tokens emitted
+> (~57 tok/s, intercept ≈ 2 s) and a batch emits the same tokens in one turn
+> instead of many. Batching removes turn overhead and validation round-trips; it
+> does not make the model write less. A skill that is slow because it
+> deliberates or narrates at length is not fixed by batching its writes — that
+> is a prose-volume problem (`docs/specs/unit-test-spec.md`, "Out of v1 scope" —
+> skill-body length).
+
 To persist many entries at once (e.g. a record's source + every assertion + its
 person-evidence links), pass an optional `ops` array instead of the top-level
 `section`/`op`/`entry`/`entryId`/`fields`/`planId` (which are ignored when `ops`
@@ -255,7 +265,7 @@ The record-extraction unit of work is one record = one tree `S` entry + one
 research source + N assertions. The composite makes that ONE call — the tool, not
 the model, owns every id and every cross-file link (decision D1 of the
 record-extraction consolidation; see
-`docs/plan/record-extraction-consolidation-closing-report.md`).
+`docs/record-extraction-consolidation-closing-report.md`).
 
 - **`sourceDescription: { title, author?, url? }`** (camelCase param; the payload
   keys are exactly the simplified-GedcomX `S`-entry fields). When present, the call
@@ -526,10 +536,24 @@ audit's recommendation #5):
 | `person_evidence` revision | revision is an `append` of the new entry **plus** an `update` setting `superseded_by` on the old one; never a field-overwrite-in-place that loses the prior link | `research-schema-spec.md:427–431` |
 | `project` update → `status: "completed"` | **no unresolved blocking conflict** — reject while any `conflicts[]` entry has `status: "unresolved"` AND (`identity_question: true` OR non-empty `blocks_question_ids`). `resolved` and `moot` both settle a conflict; an unresolved fact-type conflict with empty `blocks_question_ids` and no identity flag does not block. Tool precondition on the transition only — an already-completed document with such a conflict still loads (not a document-validity rule) | wilkins-death-kentucky e2e finding 2026-07-15: agent logged an unresolved identity conflict (wrong-person certificate, 43-year birth mismatch) and completed anyway; GPS Component 4 |
 | `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` epistemic cap |
+| `proof_summaries` append/update setting `tier: proved`/`disproved` | the referenced question must already carry `exhaustive_declaration.declared === true` **as of the start of this call** | `guardrail-enforcement-spec.md` §5; `proofSummaryInvariants` |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-schema-spec.md:101` |
 
 The LLM still makes every substantive decision and supplies the fields — the tool
 only refuses to persist a structurally incoherent combination.
+
+**One of these is checked against pre-call state, not final state.** The batch
+form mutates a single in-memory document across `ops[]` and validates the result
+once (§3.3), so an invariant evaluated at the end can be satisfied by a value
+written earlier *in the same call*. For the tier gate that is a live hole, not a
+theoretical one: a batch could set `exhaustive_declaration.declared: true` and
+`tier: "proved"` together and self-satisfy the precondition inside one atomic
+write — which is also the only shape a bypassing router needs to reach for once
+the naive check exists. `proofSummaryInvariants` therefore takes a snapshot of
+each question's `declared` flag **before** the batch is applied and rejects
+establish-and-consume in one call. Any future precondition of the form "X must
+already be true" needs the same treatment; other same-batch orderings have been
+flagged but not audited (`guardrail-enforcement-spec.md` §10).
 
 ---
 
@@ -786,7 +810,21 @@ calling `image_read` directly). The mitigation is prose in
 the instrument if it recurs is a `context_policy` PreToolUse rule keyed on
 `agent_id`, which is eval-only.
 
+It did recur, for the four GPS guardrail skills rather than for
+`extraction_append`'s lane. What that cost and what now enforces it —
+including why a `PreToolUse` rule keyed on `agent_id` cannot discriminate a
+main-session `Skill` invocation at all — is `docs/specs/guardrail-enforcement-spec.md`.
+A `PreToolUse` hook *does* now reach production (Cowork and hosted, via the
+plugin), so the "eval-only" half of the sentence above is no longer true of the
+instrument, only of the caller-attribution rule it would need.
+
 `match_score` also remains fabricable by `person-evidence` itself. It is not
 derivable at the tool boundary: `same_person`'s tree side is a hand-curated
 "record-sized" slice, and a local stub returns a degenerate near-zero score the
-skill must interpret as *no score*. The lever there is eval/rubric, not tooling.
+skill must interpret as *no score*. The *value* therefore cannot be validated
+here; what can be is its **presence**, which is the engine invariant on
+`personEvidenceInvariants` decided in issue #1006 (2026-08-01). That decision
+supersedes an earlier reading of this paragraph as "the lever is eval/rubric,
+not tooling" — #1006 explicitly concedes that a present `match_score` does not
+prove `same_person` ran, and takes the presence check anyway rather than
+over-engineering past it.

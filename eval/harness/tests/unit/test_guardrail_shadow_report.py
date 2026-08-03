@@ -1,5 +1,5 @@
-"""Unit tests for e2e.guardrail_shadow_report — the retroactive §4.1
-shadow-window calibration tool (docs/plan/research-guardrail-bypass-plan.md,
+"""Unit tests for e2e.guardrail_shadow_report — the retroactive §7
+shadow-window calibration tool (docs/specs/guardrail-enforcement-spec.md,
 GitHub issue #911).
 
 Pure filesystem + aggregation logic over synthetic result JSONs written to

@@ -10,9 +10,23 @@ allowed-tools:
 
 ## Scope guard
 
-If the user's request is not about looking up a topic on Wikipedia — for example, a general
-programming question, a math problem, or anything unrelated to research —
-**decline politely** and explain that the request is outside the toolkit's scope.
+Decline — do **not** call `wikipedia_search`, do not start the workflow below —
+whenever the request is not a Wikipedia article lookup. Two kinds of request to turn away:
+
+- **Unrelated to research** (a programming question, a math problem, anything off-topic):
+  decline politely and explain the request is outside the toolkit's scope.
+- **Research-related, but another skill's job.** These are genealogy topics, but they are
+  *not* a request for a single encyclopedia article, so do not search Wikipedia — decline
+  and name the right skill instead:
+  - Narrative genealogical history — **migration patterns**, settlement, chain migration,
+    **boundary changes**, or "how did X work" synthesis → say this belongs to
+    **historical-context**.
+  - A locality records-availability guide (what records exist for a place and where they are
+    held) → **locality-guide**.
+  - The FamilySearch Research Wiki, or "FamilySearch wiki" → **search-familysearch-wiki**.
+
+Only proceed to the workflow below when the user wants general-encyclopedia background on a
+specific topic, person, place, or historical event.
 
 ## What to do
 

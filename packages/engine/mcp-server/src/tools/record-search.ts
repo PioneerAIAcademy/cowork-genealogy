@@ -25,6 +25,11 @@ import {
 } from "../utils/search-helpers.js";
 import { toArk } from "../utils/ark.js";
 import { stageSearchResults } from "../utils/results-staging.js";
+import { readProjectJson } from "../utils/project-io.js";
+import {
+  isSubCountryPlace,
+  marriageJurisdictionCandidates,
+} from "../utils/marriage-jurisdictions.js";
 import { rankSearchMatches } from "./rank-search-matches.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
@@ -34,6 +39,8 @@ const FS_SEARCH_URL =
   "https://www.familysearch.org/service/search/hr/v2/personas";
 
 const PAGINATION_CAP = 4999;
+/** Most jurisdiction candidates a nil marriage search will offer. See below. */
+const MAX_JURISDICTION_HINTS = 8;
 const PERSISTENT_ID_URI = "http://gedcomx.org/Persistent";
 const COLLECTION_RESOURCE_TYPE = "http://gedcomx.org/Collection";
 
@@ -631,6 +638,96 @@ export async function recordSearchTool(
       });
     } catch (error) {
       out.rankingError = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  // A nil marriage search is a prompt, not a finding. Same reasoning as the
+  // ranking contract above: the rule "when a marriage search comes back empty,
+  // try where the couple were EARLIER, because marriage precedes migration" is
+  // one the model is supposed to remember and measurably does not. Across four
+  // scored `jimmie-jewel-neal` runs every marriage search stayed in the family's
+  // later residence — the jurisdiction the tree's own marriage fact named —
+  // while the answering record sat in the husband's birth state, a fact already
+  // present in the same tree. Computing the alternatives is date arithmetic over
+  // places the tree already holds, so the tool does it instead of asking.
+  //
+  // Fires on a search that did not find the subject here — either literally no
+  // hits, or hits that ranking judged to hold no match (`subjectResolvable`
+  // false). The ranker sets that in TWO branches — a scoreable subject against a
+  // pool with no match, and a subject too thin to discriminate — and the hint
+  // fires on both deliberately; see the spec's `subjectResolvable` paragraph.
+  // Nil-only was too narrow: in one verification run it fired once, at 121 of 180
+  // minutes. A search that returned rows but matched nobody is an equally good
+  // moment to offer the alternative.
+  //
+  // Also gated on the search having been scoped to something NARROWER THAN A
+  // COUNTRY. Unscoped and country-wide are the same situation: every candidate
+  // the tree can offer was already inside the search, so naming localities within
+  // it is noise and the note's "in the place searched" would be false. Across the
+  // six committed runlogs, 9 of 26 marriage-scoped searches carried no place
+  // scope at all — latent only because all 9 also omitted `subjectId`.
+  //
+  // Strictly best-effort and advisory — a tree that cannot be read leaves the
+  // search untouched, exactly like the ranking block.
+  const isMarriageSearch =
+    input.recordType === "marriage" ||
+    input.marriagePlace !== undefined ||
+    input.marriageYearFrom !== undefined ||
+    input.marriageYearTo !== undefined;
+
+  const foundNobody =
+    out.totalMatches === 0 || out.ranked?.subjectResolvable === false;
+
+  // The place that was just searched is not always `marriagePlace`. In practice
+  // the caller usually scopes a marriage search with `recordCountry` +
+  // `recordSubdivision` instead — 6 of 7 marriage searches in one run, 4 of 5 in
+  // another. Reading only `marriagePlace` left `searchedPlace` undefined on those,
+  // so nothing was excluded and the jurisdiction that had just come back empty was
+  // offered back as its own top alternative.
+  const searchedPlace =
+    input.marriagePlace ||
+    [input.recordSubdivision, input.recordCountry].filter(Boolean).join(", ") ||
+    undefined;
+
+  if (
+    isMarriageSearch &&
+    foundNobody &&
+    isSubCountryPlace(searchedPlace) &&
+    input.subjectId &&
+    input.projectPath
+  ) {
+    try {
+      const tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
+      const candidates = marriageJurisdictionCandidates(tree, input.subjectId, {
+        searchedPlace,
+        marriageYearFrom: input.marriageYearFrom,
+        marriageYearTo: input.marriageYearTo,
+      });
+      if (candidates.length > 0) {
+        out.jurisdictionHints = {
+          searchedPlace,
+          // Capped: 4 spouses x 8 placed facts is 40 objects, and this lands in a
+          // response whose own assembly above deliberately strips `gedcomx`, hoists
+          // `collectionTitle` and drops empty `treeMatches` for context economy.
+          // The tail of a distance-ordered list is the least useful part of it.
+          candidates: candidates.slice(0, MAX_JURISDICTION_HINTS),
+          note:
+            "This marriage search did not find the subject in the place searched. A " +
+            "marriage is filed where the wedding happened, not where the couple later " +
+            "lived, and a couple usually married BEFORE they migrated. Listed below are " +
+            "other places these people are on record as having been, ordered by how " +
+            "close they sit to this search's date window — most recent BEFORE the " +
+            "window first, since that is the best guess for where they were when they " +
+            "married; undated places next; places dated after the window last. Search " +
+            "these before concluding no marriage record exists. " +
+            "These are places to LOOK, not evidence of anything: a jurisdiction " +
+            "appearing here is not a reason to attach a person found there. Each entry " +
+            "says whose fact it came from and when, because a place contributed by a " +
+            "spouse from a much later marriage may have no bearing on this one.",
+        };
+      }
+    } catch {
+      // A missing or malformed tree is not a search failure. Stay silent.
     }
   }
 

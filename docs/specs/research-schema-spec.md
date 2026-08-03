@@ -68,6 +68,21 @@ All enums are defined here once and referenced by section schemas. Skills must u
 | `source_classification` | `original`, `derivative`, `authored` | sources |
 | `information_quality` | `primary`, `secondary`, `indeterminate` | assertions |
 | `evidence_type` | `direct`, `indirect`, `negative` | assertions |
+
+> **`no_evidence` was considered and rejected (2026-06-21).** The model reaches
+> for it when a record simply does not speak to the question, and the instinct is
+> GPS-correct — but a *scalar* `evidence_type` cannot represent "no evidence"
+> honestly, and a bare enum add buys that honesty at the cost of new exclusion
+> logic in four consumers, none of it validator-caught, plus an under-specified
+> value. The retry loop it was meant to fix was closed instead by a
+> lower-blast-radius prose pin (#433: state the valid values inline, plus
+> "there is no `no_evidence`; keep best-effort `indirect`"). If the honesty is
+> ever judged worth it, do it deliberately, not as a quick fix: settle the
+> scalar-vs-structural mismatch first, define the structural convention + eval
+> invariant + re-classification trigger, then land all ~6 definition sites, both
+> skills, and the eval rubrics/goldens **in one PR**. This is also the worked
+> example of a closed-enum change's blast radius — see CLAUDE.md's schema-change
+> site list.
 | `conflict_type` | `fact`, `identity` | conflicts |
 | `conflict_status` | `unresolved`, `resolved`, `moot` | conflicts |
 | `hypothesis_status` | `active`, `supported`, `ruled_out` | hypotheses |
@@ -495,7 +510,6 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 | `generated` | string | yes | ISO 8601 datetime when this timeline was last generated |
 | `events` | object[] | yes | Timeline events (see below) |
 | `gaps` | object[] | yes | Identified gaps (may be empty, see below) |
-| `impossibilities` | object[] | yes | Chronological impossibilities (may be empty, see below) |
 
 **Timeline events:**
 
@@ -522,13 +536,14 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 | `severity` | string | yes | `high`, `medium`, or `low` |
 | `notes` | string or null | no | Explanation of why this gap matters to the research question or what it might reveal (e.g., "Missing marriage record could reveal parents' names"). |
 
-**Timeline impossibilities:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `description` | string | yes | What makes this impossible (e.g., "Born in Virginia 1820 but enumerated in Ohio 1819") |
-| `event_1_assertion_id` | string | yes | `a_` reference |
-| `event_2_assertion_id` | string | yes | `a_` reference |
+Timelines have **no** `impossibilities` field. Detecting a single
+person's logical impossibilities — an event after death, an impossible
+age — is the check-warnings skill's job, done deterministically via
+`person_warnings`; the timeline skill surfaces such a contradiction in
+its chat reply and recommends a data-integrity check rather than
+persisting it. (Geographic/travel infeasibility, which depends on
+arranging events across sources, is the timeline skill's own coherence
+signal and is likewise reported in the reply, not persisted.)
 
 ### 5.11 `proof_summaries`
 
@@ -597,8 +612,10 @@ researches; it accumulates across the project's questions (reused, not per-quest
 
 **Applied facts live in `plan_item.rationale`.** `localities` is the knowledge base;
 the per-search decision (e.g. "search Oppland, not Ringebu — see `loc_001`") is
-written as free text in the plan item that uses it. Full design:
-`docs/plan/localities-section-plan.md`.
+written as free text in the plan item that uses it. The section shipped with
+`locality-guide` persisting into it, `research-plan` invoking and reading it, and
+a viewer Localities tab; `search-records` deliberately stays general (see the
+consumer table above).
 
 ---
 
@@ -1479,8 +1496,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
           "expected_events": ["marriage", "1870_census", "1880_census", "1900_census", "residence", "occupation"],
           "severity": "high"
         }
-      ],
-      "impossibilities": []
+      ]
     }
   ],
 
@@ -1516,7 +1532,6 @@ This section documents what changed from the earlier pre-implementation draft an
 | `resolution_rationale` added to conflicts | Captures why the preferred assertion was chosen |
 | Timelines keyed by `t_` ID with label, not person ID | Timeline construction is itself identity resolution; labels support hypothesis testing |
 | `hypothesis_id` and `person_ids` added to timelines | Connects timelines to the hypotheses they test |
-| `impossibilities` added to timelines | Flags chronological impossibilities explicitly |
 | `fan_evidence_ids` removed from hypotheses | FAN findings are regular assertions; no special entity needed |
 | `related_question_ids` added to hypotheses | Connects hypotheses to the questions they help answer |
 | `exhaustive_search_summary` added to proof summaries | Ties conclusions back to search scope for GPS compliance |

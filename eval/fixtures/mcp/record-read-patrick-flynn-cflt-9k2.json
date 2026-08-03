@@ -1,0 +1,65 @@
+{
+  "tool": "record_read",
+  "description": "Full record for Patrick Flynn (Patrick Flynn — Head of Household, 1850), United States Census, 1850. Mirrors the gedcomx already embedded in record-search-conflict-household-flynn — same persons, same relationships, no new genealogical claims. record_read is in search-records' allowed-tools and the skill sometimes reads a record it has just found before reporting on it, which is sound practice. Without a stocked fixture the tool is never registered in the mock, so that call aborts the whole run as an unregistered tool (Type 1) even when the search work was correct and validators passed — observed on 019, 023 and 014. Coverage for record_read used to be ut_search_records_006, deleted 2026-06-18 as a side effect of a runlog commit.",
+  "args": {
+    "recordId": "~CFLT-9K2"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "CP1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Patrick",
+            "surname": "Flynn",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "1845",
+            "place": "Ireland"
+          },
+          {
+            "id": "F2",
+            "type": "Residence",
+            "date": "1850",
+            "place": "Branch Township, Schuylkill, Pennsylvania, United States"
+          }
+        ],
+        "role": "Head",
+        "ark": "ark:/61903/1:1:CFLT-9K2",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "United States Census, 1850"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "United States Census, 1850",
+        "collectionId": "1401638",
+        "ark": "ark:/61903/1:1:CFLT-9K2"
+      }
+    ],
+    "places": [
+      {
+        "id": "PL1",
+        "name": "Branch Township, Schuylkill, Pennsylvania, United States"
+      },
+      {
+        "id": "PL2",
+        "name": "Ireland"
+      }
+    ]
+  }
+}
