@@ -67,9 +67,15 @@ class E2eResult:
     # Token / cost / duration counters from the SDK ResultMessage.
     usage: dict[str, Any] = field(default_factory=dict)
 
-    # Every MCP tool call the agent attempted, in order. Each entry is
-    # {tool, args, response_summary}. Critical for diffing across runs
-    # when investigating drift.
+    # Every tool call the agent attempted, in order — not just mcp__-prefixed
+    # ones (Skill, Agent, Read, … are included too; the entry-construction
+    # code has no such filter). Each entry is {tool, args, response_summary,
+    # agent_id, agent_type}; the last two come from the PreToolUse hook's own
+    # payload (docs/specs/guardrail-enforcement-spec.md §11) and are only
+    # set once a ToolResultBlock arrives for that call — None on the main
+    # thread, the subagent's identifiers otherwise. A call still in-flight
+    # when the run aborts mid-stream never gets any of the last three keys.
+    # Critical for diffing across runs when investigating drift.
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
 
     # Free-text error message when stop_reason == "error".
@@ -159,6 +165,19 @@ class E2eResult:
     # (Logs written from HARNESS_SCHEMA_VERSION >= 1 carry `compliance`
     # directly and do not depend on this.)
     guardrail_shadow_violations: list[dict[str, Any]] = field(default_factory=list)
+
+    # docs/specs/guardrail-enforcement-spec.md §11 — SHADOW MODE ONLY, a
+    # distinct bypass shape from the one above: a protected write (owned by
+    # one of the four GUARDRAIL_SKILLS per owning_skills, or an
+    # extraction_append call) whose own agent_id/agent_type (see tool_calls
+    # above) shows it was made by neither the main thread nor one of the
+    # four dedicated Cowork agents. Each entry is a human-readable violation
+    # string — see
+    # harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate.
+    #
+    # SHADOW: deliberately NOT read by __post_init__ below. It must not move
+    # the compliance axis until its false-positive rate is calibrated (#911).
+    protected_writes_by_unnamed_delegate: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Derive the compliance and gate axes.
