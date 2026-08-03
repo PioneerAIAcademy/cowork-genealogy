@@ -507,23 +507,58 @@ def test_unknown_test_id_returns_empty(tmp_path):
 
 def test_resolve_concurrency_honors_explicit_flag():
     # An explicit --concurrency wins over the RAM-aware default, both ways.
-    assert run_tests._resolve_concurrency(8) == (8, "flag")
-    assert run_tests._resolve_concurrency(1) == (1, "flag")
-    assert run_tests._resolve_concurrency(16) == (16, "flag")
+    # detail is None on the flag path (no RAM reasoning to explain).
+    assert run_tests._resolve_concurrency(8) == (8, "flag", None)
+    assert run_tests._resolve_concurrency(1) == (1, "flag", None)
+    assert run_tests._resolve_concurrency(16) == (16, "flag", None)
 
 
 def test_resolve_concurrency_auto_is_bounded():
     # With no flag, the auto value stays within [floor, cap] regardless of
-    # the host's RAM (None/unknown RAM falls back to the floor).
-    value, source = run_tests._resolve_concurrency(None)
+    # the host's RAM.
+    value, source, detail = run_tests._resolve_concurrency(None)
     assert source == "auto"
-    assert run_tests._MIN_AUTO_CONCURRENCY <= value <= run_tests._MAX_AUTO_CONCURRENCY
+    assert 1 <= value <= run_tests._MAX_AUTO_CONCURRENCY
+    assert detail is not None
 
 
 def test_resolve_concurrency_zero_or_negative_falls_back_to_auto():
     # argparse can't stop a user passing 0/-1; treat it as "use the default".
-    assert run_tests._resolve_concurrency(0)[1] == "auto"
-    assert run_tests._resolve_concurrency(-4)[1] == "auto"
+    for bad in (0, -4):
+        value, source, detail = run_tests._resolve_concurrency(bad)
+        assert source == "auto"
+        assert value >= 1 and detail is not None
+
+
+@pytest.mark.parametrize(
+    "ram_gb, expected",
+    [
+        (1.0, 1),    # int(1//2)=0 -> floored to 1, never 0
+        (2.0, 1),    # a 2 GiB box gets ONE slot, not the old floor of 4 (#1026)
+        (4.0, 2),    # the box from the issue: measurement (2) now wins
+        (6.0, 3),
+        (8.0, 4),
+        (16.0, 8),   # cap
+        (32.0, 8),   # int(32//2)=16 -> capped at 8
+    ],
+)
+def test_resolve_concurrency_honors_measured_ram(monkeypatch, ram_gb, expected):
+    # The RAM measurement drives the slot count; the floor only forbids 0 and
+    # must NOT clamp a low-RAM box upward (that was the #1026 bug).
+    monkeypatch.setattr(run_tests, "_total_ram_gb", lambda: ram_gb)
+    value, source, detail = run_tests._resolve_concurrency(None)
+    assert (value, source) == (expected, "auto")
+    assert detail is not None and "GiB RAM" in detail
+
+
+def test_resolve_concurrency_undetectable_ram_runs_serial(monkeypatch):
+    # When RAM can't be measured we can't rule out a tiny box -> run serially,
+    # NOT the old fallback of 4.
+    monkeypatch.setattr(run_tests, "_total_ram_gb", lambda: None)
+    value, source, detail = run_tests._resolve_concurrency(None)
+    assert value == run_tests._FALLBACK_CONCURRENCY == 1
+    assert source == "auto"
+    assert detail is not None  # explains the fallback in the startup line
 
 
 def test_concurrency_runs_every_test_and_preserves_order(tmp_path, monkeypatch):
