@@ -68,13 +68,12 @@ uses freely: *assertion*, *source*, *proof summary*, *tier*, *exhaustiveness*,
 
 ### First day
 
-0. **Prerequisites on PATH:** `make`, `node` + `npm`, `pnpm`, and `uv`.
-   (`scripts/test.sh`'s preflight names `make`, `npm`, and `uv`; a missing
-   `pnpm` surfaces only when `make install` reaches `pnpm install`.)
-1. `make install`, then **`make test-all && make typecheck`** — confirm green
-   *before* you change anything, so a pre-existing failure isn't mistaken for
-   yours. (`make test-all` does **not** typecheck; turbo runs those as separate
-   tasks.)
+0. **Prerequisites on PATH:** `make`, `node` + `npm`, `pnpm`, and `uv` — all
+   four named by `scripts/test.sh`'s preflight.
+1. `make install`, then **`make test-all`** — confirm green *before* you change
+   anything, so a pre-existing failure isn't mistaken for yours. It is the
+   whole gate (it delegates to `scripts/test.sh`, which the PR template names);
+   nothing else needs running before a PR. See §9.1 for the per-suite targets.
 2. Read [`docs/gps-research-flow.md`](gps-research-flow.md) (the domain).
 3. Read §§1–3 here (the shape).
 4. Open one skill (`packages/engine/plugin/skills/record-extraction/SKILL.md`),
@@ -125,6 +124,7 @@ routing surface — find your task, then open that ADR.
 | [0004](adrs/ADR-0004-dual-spell-mcp-tool-names-in-agent-frontmatter.md) | Dual-spell every MCP tool name in agent frontmatter | grant or deny a tool to a plugin agent · write a `ToolSearch` query · rename the desktop extension |
 | [0005](adrs/ADR-0005-ship-the-write-lockdown-as-a-plugin-hook.md) | Ship the write lockdown as a plugin `PreToolUse` hook | add a guardrail · restrain the main thread · try to stop the agent doing something with an allow-list · change `PROTECTED_PROJECT_FILES` |
 | [0006](adrs/ADR-0006-restrict-capability-by-tool-identity.md) | Restrict capability by tool identity, not by prompt or parameter | need a delegated agent to do *part* of what a tool can do · write "you must only use this for X" in an agent body · add a `mode` parameter to scope a writer tool |
+| [0007](adrs/ADR-0007-attack-the-plan-before-writing-code.md) | Attack the plan before writing code, with a read-only critic | wonder why `/critique-plan` is a command and not a sentence · want a third critique round · want to skip `PLAN.md` because the plan is in the chat · want Risky plans filed under `docs/plan/` |
 
 Conventions, and how to add one: [`docs/adrs/README.md`](adrs/README.md).
 Not yet written: state and the writer/projection tools, self-contained agent
@@ -1095,9 +1095,8 @@ skips silently**, which looks identical to passing.
 
 | Command | Covers | **Does not cover** |
 |---|---|---|
-| **`scripts/test.sh`** | engine + eval app + eval harness (harness **including** e2e-marked tests). **The PR template requires this one.** | the JS workspace, `apps/server`, and typecheck |
+| **`make test-all`** (= `scripts/test.sh`) | **everything**: typecheck, JS workspace, `apps/server`, engine + packaging lints, CRUD UI, eval harness **including** the e2e-marked contract test. The target delegates to the script, so the two are one command; the PR template names it. Runs every suite before reporting, so one failure doesn't hide the next. | a live-API check of any single tool (`dev/try-<tool>.ts`), agent tool binding (`make agent-smoke`), skill behaviour (`make eval-skill`) |
 | `make test` | JS workspace + server tests | **engine, packaging lints, harness** — an engine-only change gets *zero* coverage |
-| `make test-all` | JS, server, engine, eval harness, CRUD UI | **`make typecheck`** (turbo runs `test` and `typecheck` as separate tasks), and the eval suites |
 | `make engine-test` | `packages/engine/mcp-server` (vitest) + all packaging lints | the `packages/schema` mirror; anything needing a live API |
 | `make harness-test` | `eval/harness` (pytest, excludes e2e) — **the sole gate on the `packages/schema` mirror** | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug |
 | `make typecheck` | the whole JS workspace (turbo) — the only gate on viewer code | Python |
@@ -1118,6 +1117,8 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `skill-description-length.test.ts` | the 1024-char cap |
 | `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
+| `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
+| `doc-links.test.ts` | every repo path, markdown link and `make` target cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
 `check_skill_frontmatter.py` (for **skills and agents**: description length and
@@ -1175,7 +1176,7 @@ plus `dev/try-<tool>.ts` against the live API; a schema field → `make engine-t
 `make harness-test`, **and** `make typecheck`; a skill body → `make eval-skill`
 plus the annotation gate (§3); routing or anything cross-skill → a live
 `make e2e-run`, named in the PR; hosted agent config → `make agent-smoke`. Then
-run `scripts/test.sh`, which the PR template requires. **If the thing you changed
+run `make test-all`, which the PR template requires. **If the thing you changed
 appears in §9.4, say so in the PR** rather than implying CI covered you.
 
 **Debug a failing e2e run.** Check the two setup gates first — `make e2e-preflight`
@@ -1236,6 +1237,7 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 | Question | Read |
 |---|---|
 | What is genealogical research, and what are all these words? | [`docs/gps-research-flow.md`](gps-research-flow.md) — **read this first** |
+| How does a task get from issue to merge? | [`docs/task-lifecycle.md`](task-lifecycle.md) — the developer process (plan → attack → implement → verify → review). §0 "First day" above is the setup that precedes it. For skill-prose work, [`docs/skill-lifecycle.md`](skill-lifecycle.md) instead. |
 | How do I build / run / test / deploy? | [`DEVELOPMENT.md`](../DEVELOPMENT.md) |
 | What rule must I follow to make a correct change? | [`CLAUDE.md`](../CLAUDE.md) — the operating manual, auto-loaded every session |
 | What does tool X do? | `docs/specs/<tool>-tool-spec.md` — **wins over this guide on conflict** |

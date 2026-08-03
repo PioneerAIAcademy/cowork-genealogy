@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { citedPaths, pathResolves } from "./repo-paths.js";
 
 /**
  * ADR staleness lint.
@@ -22,24 +23,15 @@ import { fileURLToPath } from "node:url";
  * Scope note: a path is any backticked token containing "/" that starts with a
  * known top-level directory. That deliberately excludes bare filenames
  * (`research.json`), tool names (`mcp__genealogy__record_read`), and prose, so
- * the lint has no false positives to train people to ignore.
+ * the lint has no false positives to train people to ignore. The extraction
+ * rule lives in `./repo-paths.ts` and is shared with `doc-links.test.ts`,
+ * which applies it to `docs/task-lifecycle.md` and the `.claude/` tooling.
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
 const engineRoot = join(here, "..", "..", ".."); // packages/engine/
 const projectRoot = join(engineRoot, "..", ".."); // repo root
 const adrDir = join(projectRoot, "docs", "adrs");
-
-/** Top-level dirs a cited path may start with. */
-const REPO_ROOTS = [
-  "docs/",
-  "packages/",
-  "apps/",
-  "eval/",
-  "scripts/",
-  ".github/",
-  ".claude/",
-];
 
 /** Sections whose paths must resolve. The rest of an ADR is frozen history. */
 const LIVE_SECTIONS = ["Applies to", "Enforcement"];
@@ -67,19 +59,6 @@ function liveSectionText(body: string): string {
   if (enforcement) parts.push(enforcement[1]);
 
   return parts.join("\n");
-}
-
-/** Backticked tokens that look like repo paths. */
-function citedPaths(text: string): string[] {
-  const found = new Set<string>();
-  for (const m of text.matchAll(/`([^`\n]+)`/g)) {
-    const token = m[1].trim();
-    if (!token.includes("/")) continue;
-    if (!REPO_ROOTS.some((r) => token.startsWith(r))) continue;
-    // Strip a trailing line/anchor reference: path.ts:123 or path.md#section
-    found.add(token.replace(/[:#].*$/, ""));
-  }
-  return [...found];
 }
 
 describe("ADR hygiene", () => {
@@ -148,7 +127,7 @@ describe("ADR hygiene", () => {
   it.each(files)("%s cites only paths that still exist", (file) => {
     const body = readFileSync(join(adrDir, file), "utf8");
     const missing = citedPaths(liveSectionText(body)).filter(
-      (p) => !existsSync(join(projectRoot, p)),
+      (p) => !pathResolves(projectRoot, p),
     );
 
     expect(
