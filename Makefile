@@ -448,14 +448,14 @@ e2e-calibrate: ## Run judge calibration against committed run annotations (maint
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-corpus
-e2e-corpus: ## Three-axis totals (recall / compliance / gate) across every committed e2e run: make e2e-corpus | TEST=<slug>
+e2e-corpus: ## Three-axis totals + violation detail across committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=YYYY-MM-DD_HH-MM-SS
 	# Pure analysis over committed run JSONs — no live run, no API. The
 	# cross-run aggregate the per-invocation roll-up can't give (run_e2e runs
 	# one fixture at a time). Reads every log through e2e.result.axes_from_runlog,
 	# so pre-#972 runs whose verdict was overwritten by a guardrail bypass show
 	# their real genealogical verdict. Runs with unknown compliance are reported
 	# as `not_checked` and never counted as clean.
-	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),)
+	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
 e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over committed runs (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40

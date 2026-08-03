@@ -128,9 +128,15 @@ still prose today, and both are computable from files `research_append` already
 loads.
 
 The one instrument that measures the *effect* is the post-run compliance
-detector, and it is uncalibrated (#998, #999, #1006), so its 8-of-25 violation
-rate is a floor with an unquantified false-positive rate and should not be
-trended.
+detector, and it cannot yet give a rate at all. It is uncalibrated (#998, #999,
+#1006), and separately — settled in #1176 — no committed run carries a decidable
+"clean" verdict: before #972 the violations field was written only when
+non-empty, so of the 29 post-detector runs the resolver gives 12 `fail`, **0
+`pass`**, 17 `not_checked`. **Do not quote a violation rate for this decision or
+against it.** `make e2e-corpus [SINCE=…]` reports what is countable — the
+violation total, the per-arm split (one arm dominates) and the per-fixture
+concentration (one fixture supplies roughly two-fifths) — and refuses a
+percentage whose denominator would be doing the work.
 
 ## Revisit when
 
