@@ -20,15 +20,18 @@ repo at least once and no CI job catches any of them. The trigger column is
 only what to look for — apply the rule as `CLAUDE.md` states it, not as
 paraphrased here.
 
+Every section named below is checked to still exist by
+`tests/packaging/review-sections.test.ts`.
+
 | Trigger | `CLAUDE.md` § |
 |---|---|
-| An MCP tool in a plugin agent's `tools:` or `disallowedTools:` listed under only one of the two server spellings | Cowork plugin agents → **Dual-spelled tool names** |
+| An MCP tool in a plugin agent's `tools:` or `disallowedTools:` listed under only one of the two server spellings | **Dual-spelled tool names** |
 | A `research.json` or simplified-GedcomX change that edits some of its sites and not all | **Researcher profile in `research.json`** |
 | Python `read_text` / `write_text` / `open` on a text file without `encoding="utf-8"` as a keyword | **Python file I/O: always pass `encoding="utf-8"`** |
-| A `gh project` command or an `addProjectV2ItemById` call | **Repository layout** → deferring work creates an issue |
-| A `select:mcp__…` query in a plugin skill or agent body | Cowork plugin agents → **Never hardcode a qualified name in a ToolSearch query** |
-| A skill or agent body told to `Read` a sibling reference file at runtime | Cowork plugin agents → **No playbook/reference files for agents** |
-| Network access or a non-stdlib import under a skill's `scripts/` or under `packages/engine/plugin/hooks/` | **Plugin hooks**; **What NOT to do** |
+| A `gh project` command or an `addProjectV2ItemById` call | **Repository layout** |
+| A `select:mcp__…` query in a plugin skill or agent body | **Never hardcode a qualified name in a ToolSearch query** |
+| A skill or agent body told to `Read` a sibling reference file at runtime | **No playbook/reference files for agents** |
+| Network access or a non-stdlib import under a skill's `scripts/` or under `packages/engine/plugin/hooks/` | **Plugin hooks**, **What NOT to do** |
 | A path in `packages/engine/plugin/hooks/` that can raise instead of falling through to allowing the call | **Plugin hooks** |
 
 Everything else — naming, structure, wording, refactoring, missing tests — is
