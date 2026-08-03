@@ -3,17 +3,36 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Katalin Horák (recorded in the hint as Káti Liskovics) and István Banyári had a son, János Banyári, baptized 1 September 1844 in Kľak, Nová Baňa, close in time to the tree's existing son István (christened 15 April 1846).",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Katalin Horák (LDSJ-SXL) and her husband István Banyári had a son named János Banyári, baptized 1 September 1844, Kľak, Nová Baňa, Slovakia. The baptismal record names János's parents as István Banyári and Káti Liskovics — a different wife from Katalin Horák, not a mistranscription of her name. Even granting that 'Káti' can be a Hungarian diminutive of 'Katalin,' the surname mismatch (Liskovics vs. Horák) is unexplained, and a shared common given name alone is not a sufficient identity anchor. 'Banyári' is evidently a common surname in this small parish — the tree's own existing data already shows a second, apparently unrelated 'István Banyári' erroneously merged into Katalin's profile (a Couple relationship to a man whose child was born in 1938, a different era and place entirely) — making a same-name coincidence between two unrelated István Banyáris the more likely explanation than an error in the hint record. Pass = the final tree/research contains no János Banyári as a child of Katalin Horák and István Banyári (LDSJ-SXL/LDSJ-SX2), and no ParentChild relationship linking them (or such a candidate appears only as an explicitly rejected hypothesis).",
       "details": {
         "subject_person": "Katalin Horák (LDSJ-SXL)",
         "relation": "child",
-        "target_person": {
-          "name": "János Banyári",
-          "birth": "baptized 1 September 1844, Kľak, Nová Baňa, Slovakia"
+        "wrong_candidate": {
+          "name": "János Banyári, baptized 1 September 1844, Kľak, Nová Baňa, Slovakia",
+          "note": "The baptismal record's named mother is Káti Liskovics, not Katalin Horák. No independent record was found confirming 'Liskovics' as Katalin's maiden name, and no birth date exists for either Katalin or her husband István Banyári (in the tree) or for István Banyári/Káti Liskovics (in the hint record) to compare ages. The only two dates in this picture — the hint child János's 1844 baptism and the tree's existing son István's 1846 christening — are not in conflict with each other; the surname mismatch on the mother is the decisive evidence, not a date conflict."
         }
       },
       "supporting_sources": [
-        "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry, 1 Sep 1844, Kľak, Nová Baňa, naming parents István Banyári and Káti Liskovics"
+        "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry, 1 Sep 1844, Kľak, Nová Baňa, naming János Banyári's parents as István Banyári and Káti Liskovics (ark:/61903/1:1:KDVC-BPB)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having compared the hint record against the tree and considered the diminutive-name and maiden-name possibilities, the agent should document a negative conclusion: the hint record's named mother (Káti Liskovics) does not match Katalin Horák's tree surname (Horák), no independent record confirms these as the same woman, and 'Banyári' is common enough in this parish (as shown by an unrelated same-named man already erroneously linked in the tree) that the more likely explanation is a different, unrelated couple. This is the honest limit of the research: no independent record was found either confirming or definitively refuting a maiden-name explanation for 'Liskovics.'",
+      "details": {
+        "subject_person": "Katalin Horák (LDSJ-SXL)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: no son János found for Katalin Horák and István Banyári",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Absence of any source already attached to Katalin Horák (LDSJ-SXL) naming Liskovics or otherwise corroborating the hint",
+        "Tree's own existing data shows a second, unrelated 'István Banyári' (child born 1938) already erroneously merged into Katalin's profile, evidencing the name's commonality in this parish"
       ],
       "required": true
     }
