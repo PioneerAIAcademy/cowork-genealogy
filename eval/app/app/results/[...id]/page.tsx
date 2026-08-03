@@ -805,7 +805,7 @@ const TracePane = memo(function TracePane({
           <Accordion.Control>User message</Accordion.Control>
           <Accordion.Panel>
             <Code block style={{ whiteSpace: 'pre-wrap' }}>
-              {userMessage ?? '(not found in snapshot)'}
+              {userMessage ?? '(not found on disk)'}
             </Code>
             {scenarioNotes ? (
               <Text size="xs" c="dimmed" mt={4}>

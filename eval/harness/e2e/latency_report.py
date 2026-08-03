@@ -71,7 +71,6 @@ from e2e.runlog_selection import (
     describe_window,
     filter_since,
     is_result_json as _is_result_json,
-    parse_since,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -441,7 +440,7 @@ def main(argv: list[str] | None = None) -> int:
         # where a fixture nobody has re-run in months would otherwise be
         # averaged in as if it described current latency.
         latest = all_latest_runs()
-        cutoff = parse_since(args.since)
+        cutoff = args.since
         fresh = filter_since(latest, cutoff)
         print(describe_window(cutoff, n_runs=len(fresh), n_total=len(latest)))
         paths.extend(fresh)

@@ -571,9 +571,12 @@ async def _run_agent(
     tool_calls: list[dict[str, Any]] = []
     # The agent's prose between tool calls, plus the two harness-side events
     # that only make sense in trace order (a denied tool, a continue-nudge).
-    # Each entry carries `after_tool_index` = len(tool_calls) at the moment it
-    # happened, which is what makes the stream reconstructible against
-    # tool_calls without being interleaved *into* it — that would break the
+    # Each entry carries `tool_calls_before` — how many tool calls had already
+    # happened. A value of N means the entry sits between tool_calls[N-1] and
+    # tool_calls[N]; 0 means before any tool call. That is a COUNT, not an
+    # index: naming it as an index would be off by one, and a negative index
+    # would silently wrap in Python. This is what makes the stream
+    # reconstructible against tool_calls without being interleaved *into* it — that would break the
     # specced {tool, args, response_summary} entry shape and, worse, shift the
     # index windows find_unguarded_protected_writes() and recently_succeeded()
     # compute (skill_invocation.py), silently changing the §7 shadow-window
@@ -726,7 +729,7 @@ async def _run_agent(
             )
             narration.append(
                 {
-                    "after_tool_index": len(tool_calls),
+                    "tool_calls_before": len(tool_calls),
                     "kind": "blocked",
                     "text": (
                         f"`{bare}` denied — tree-reading tools are disabled in "
@@ -757,7 +760,7 @@ async def _run_agent(
             )
             narration.append(
                 {
-                    "after_tool_index": len(tool_calls),
+                    "tool_calls_before": len(tool_calls),
                     "kind": "blocked",
                     "text": (
                         f"`{bare}` denied — disabled by this fixture "
@@ -813,7 +816,7 @@ async def _run_agent(
         last_nudge_activity_count["n"] = activity_count["n"]
         narration.append(
             {
-                "after_tool_index": len(tool_calls),
+                "tool_calls_before": len(tool_calls),
                 "kind": "harness",
                 "text": (
                     f"continue-nudge {continue_nudges['n']}/"
@@ -969,7 +972,7 @@ async def _run_agent(
                         if isinstance(block, TextBlock):
                             narration.append(
                                 {
-                                    "after_tool_index": len(tool_calls),
+                                    "tool_calls_before": len(tool_calls),
                                     "kind": "assistant",
                                     "text": block.text,
                                 }

@@ -532,7 +532,12 @@ def write_run_log(
             f"or pass an explicit non-conflicting timestamp."
         )
     out.write_text(json.dumps(log, indent=2), encoding="utf-8")
-    prune_old_candidates(target_dir)
+    # Only a releasable write prunes. `run_tests.py` calls this for every
+    # invocation mode, so pruning unconditionally would let a local
+    # `--test ut_003` scratch run delete *committed* candidates — deletions the
+    # developer never asked for, in a run they meant to keep local.
+    if log.get("releasable"):
+        prune_old_candidates(target_dir)
     return out
 
 
@@ -559,11 +564,38 @@ def prune_old_candidates(
 
     removed: list[Path] = []
     for name in prunable_candidates(names, keep=keep):
-        for target in (skill_dir / name, skill_dir / ann_filename_for(name)):
+        runlog = skill_dir / name
+        targets = [runlog, skill_dir / ann_filename_for(name)]
+        targets.extend(_sidecar_refs(runlog, skill_dir))
+        for target in targets:
             if target.is_file():
                 target.unlink()
                 removed.append(target)
     return removed
+
+
+def _sidecar_refs(runlog: Path, skill_dir: Path) -> list[Path]:
+    """Spilled `runs/<run_id>.text.md` payloads this run log points at.
+
+    `write_run_log` moves any `text_response` over _SIDECAR_TEXT_THRESHOLD out
+    to `runs/`, leaving a `{"ref": ...}` behind. Those files are tracked, so a
+    prune that dropped only the run log would strand each pruned run's
+    *largest* payload — committed forever and referenced by nothing.
+
+    Best-effort: an unreadable run log yields no refs rather than blocking the
+    prune, since a corrupt log is already past saving.
+    """
+    try:
+        log = json.loads(runlog.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    out: list[Path] = []
+    for test in log.get("tests", []) or []:
+        for run in test.get("runs", []) or []:
+            ref = ((run.get("output") or {}).get("text_response") or {})
+            if isinstance(ref, dict) and isinstance(ref.get("ref"), str):
+                out.append(skill_dir / ref["ref"])
+    return out
 
 
 # ---- Partial (in-progress) run logs ---------------------------------------

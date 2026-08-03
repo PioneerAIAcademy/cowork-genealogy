@@ -353,7 +353,7 @@ right afterwards with `/grade-e2e-run`, and seeing the judge's labels first
 would corrupt the calibration number. For the same reason `make e2e-run`
 prints only the stop reason and the compliance result when a run finishes.
 
-If you'd rather read the files yourself, each run writes four:
+If you'd rather read the files yourself, each run writes three:
 
 | File | What's in it |
 |---|---|
@@ -390,8 +390,8 @@ Full field reference: spec §8.
 ## Step 7 — When it fails ⌨️ / 🤖
 
 Read `narration[]` alongside `tool_calls[]` first — most failures are obvious
-from them. Each narration entry carries `after_tool_index`, so the two replay
-as one trace. If something needs fixing, fix it in **Step 4** (Cowork +
+from them. Each narration entry carries `tool_calls_before` — the number of
+tool calls that preceded it — so the two replay as one trace. If something needs fixing, fix it in **Step 4** (Cowork +
 Viewer) and re-run, rather than guessing blind.
 
 One trap worth naming: if the agent found the right answer but recorded it

@@ -141,14 +141,18 @@ def test_rule2_skip_zero_does_not_bypass(monkeypatch, capsys):
 # --- Orchestrator-skill exemption (RUNLOG_GATE_EXEMPT_SKILLS) --------------
 
 
-def _patch_diffs(monkeypatch, paths: list[str]) -> None:
-    """Point both git-diff views at a fixed change set: `git_diff_changes`
+def _patch_diffs(monkeypatch, paths: list[str], *, deleted: list[str] | None = None) -> None:
+    """Point the three git-diff views at a fixed change set: `git_diff_changes`
     (AR view, rule 1) sees every path as an add; `git_diff_touched_paths`
-    (any-status view, touched-skill detection) sees the same paths."""
+    (any-status view, touched-skill detection) sees the same paths;
+    `git_diff_deleted_paths` sees `deleted` (default none)."""
     monkeypatch.setattr(
         check_runlogs, "git_diff_changes", lambda: [("A", p) for p in paths]
     )
     monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(paths))
+    monkeypatch.setattr(
+        check_runlogs, "git_diff_deleted_paths", lambda: list(deleted or [])
+    )
 
 
 def test_exempt_orchestrator_skill_passes(monkeypatch, capsys):
@@ -189,9 +193,8 @@ def test_modified_skill_file_marks_skill_touched(monkeypatch, capsys, tmp_path):
     touched-skill detection uses the any-status view, not rule 1's AR view."""
     path = _make_present_skill(tmp_path, monkeypatch)
     monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
-    monkeypatch.setattr(
-        check_runlogs, "git_diff_touched_paths", lambda: [path]
-    )
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [path])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [])
     rc = check_runlogs.main()
     assert rc == 1
     assert "no run logs" in capsys.readouterr().out
@@ -204,17 +207,17 @@ def test_runlog_modify_or_delete_does_not_touch_skill(monkeypatch, capsys, tmp_p
     or prune sweep fails every skill on drift it did not cause."""
     _make_present_skill(tmp_path, monkeypatch)
     monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    pruned = [
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.ann.json",
+    ]
     monkeypatch.setattr(
         check_runlogs,
         "git_diff_touched_paths",
-        lambda: [
-            # modified in place (rehash)
-            "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json",
-            # deleted (prune), annotation sibling included
-            "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.json",
-            "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.ann.json",
-        ],
+        # modified in place (rehash) + deleted (prune, annotation included)
+        lambda: ["eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json", *pruned],
     )
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: pruned)
     rc = check_runlogs.main()
     assert rc == 0
     assert "no run logs" not in capsys.readouterr().out
@@ -308,6 +311,7 @@ def test_touched_agent_gates_referencing_skill(monkeypatch, capsys, tmp_path):
         "git_diff_touched_paths",
         lambda: ["packages/engine/plugin/agents/spike-echo.md"],
     )
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [])
     rc = check_runlogs.main()
     assert rc == 1
     out = capsys.readouterr().out
@@ -408,3 +412,32 @@ def test_rule4_runs_only_when_tests_touched(monkeypatch, capsys, tmp_path):
     out = capsys.readouterr().out
     assert "::error" in out
     assert "test id `dup`" in out
+
+
+def test_edited_annotation_still_gates_rule3(monkeypatch, capsys, tmp_path):
+    """RUNLOG_PATH_RE matches `.ann.json` too, so the run-log narrowing must
+    not swallow annotation EDITS — walking a grade back from complete to
+    partial has to keep facing rule 3. Only a pruned (deleted) annotation is
+    housekeeping."""
+    _make_present_skill(tmp_path, monkeypatch)
+    ann = "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.ann.json"
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [ann])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [])
+
+    rc = check_runlogs.main()
+    assert rc == 1
+    assert "no run logs" in capsys.readouterr().out
+
+
+def test_deleted_annotation_does_not_gate(monkeypatch, capsys, tmp_path):
+    """The prune deletes an annotation with its run log; that must stay green."""
+    _make_present_skill(tmp_path, monkeypatch)
+    ann = "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.ann.json"
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [ann])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [ann])
+
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "no run logs" not in capsys.readouterr().out

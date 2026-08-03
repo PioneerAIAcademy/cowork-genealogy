@@ -16,8 +16,14 @@ That has already bitten twice, and both times the fix was applied by hand:
     produced 445 violations that "may be measuring its own introduction date".
 
 So: default to 14 days, and make every report *say* which window it used and
-how many runs that was. `--since all` opts back into the whole corpus, which
-is what a retroactive integrity scan (#913, #1145) actually wants.
+how many runs that was. `--since all` opts back into the whole corpus.
+
+The default is per-report, not global. `guardrail_shadow_report` passes
+`default="all"`: its whole job is a retroactive replay to *choose* a window
+size (#911), and `all_result_jsons` exists precisely because that calibration
+wants maximum sample size — a freshness cutoff there would silently shrink the
+sample it is trying to measure. Freshness is right for `corpus_report` and
+`latency_report`, which report on current behaviour.
 
 This is a *query* window, not a retention rule. Nothing here deletes anything:
 the e2e corpus is kept in full precisely because it is the corpus that gets
@@ -88,6 +94,11 @@ def parse_since(value: str | None) -> date | None:
     """Resolve a `--since` value to a cutoff date. None means no cutoff.
 
     Accepts `all` (no cutoff), an integer number of days, or `YYYY-MM-DD`.
+
+    Wired in as argparse's `type=`, so a bad value is a usage error at parse
+    time — on *every* invocation, not only the code paths that go on to use the
+    cutoff. Calling it by hand after `parse_args()` would raise
+    `ArgumentTypeError` where nothing catches it, i.e. a traceback.
     """
     if value is None:
         value = str(DEFAULT_SINCE_DAYS)
@@ -113,12 +124,20 @@ def filter_since(paths: list[Path], cutoff: date | None) -> list[Path]:
     return [p for p in paths if (d := run_date(p)) is None or d >= cutoff]
 
 
-def add_since_arg(ap: argparse.ArgumentParser) -> None:
+def add_since_arg(ap: argparse.ArgumentParser, *, default: str = str(DEFAULT_SINCE_DAYS)) -> None:
+    """Add `--since`, already converted to a cutoff date (or None for 'all').
+
+    `default` is a *string*, so argparse runs it through the same converter —
+    one code path for supplied and defaulted values alike. Pass `default="all"`
+    for a report whose job is a whole-corpus replay.
+    """
     ap.add_argument(
         "--since",
         metavar="WINDOW",
+        type=parse_since,
+        default=default,
         help=(
-            f"only runs from the last N days (default {DEFAULT_SINCE_DAYS}), "
+            f"only runs from the last N days (default: {default}), "
             "or YYYY-MM-DD, or 'all' for the whole corpus"
         ),
     )

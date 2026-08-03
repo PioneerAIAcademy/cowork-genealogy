@@ -482,8 +482,11 @@ e2e-corpus: ## Three-axis totals (recall / compliance / gate) over recent commit
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over committed runs (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD
+e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over the WHOLE committed corpus (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=N to narrow
 	# Also pure analysis, no API. Existed with no make target until #972.
+	# Unlike e2e-corpus / e2e-latency this defaults to the WHOLE corpus:
+	# calibration is choosing a window size, so a freshness cutoff would
+	# shrink the very sample it is measuring.
 	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-latency

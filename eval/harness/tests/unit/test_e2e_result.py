@@ -442,9 +442,9 @@ def test_assistant_narration_persisted(tmp_path: Path):
             {"tool": "b", "args": {}, "response_summary": "y"},
         ],
         narration=[
-            {"after_tool_index": 0, "kind": "assistant", "text": "routing to question-selection"},
-            {"after_tool_index": 1, "kind": "blocked", "text": "`person_read` denied"},
-            {"after_tool_index": 2, "kind": "harness", "text": "continue-nudge 1/20"},
+            {"tool_calls_before": 0, "kind": "assistant", "text": "routing to question-selection"},
+            {"tool_calls_before": 1, "kind": "blocked", "text": "`person_read` denied"},
+            {"tool_calls_before": 2, "kind": "harness", "text": "continue-nudge 1/20"},
         ],
     )
     paths = write_result_files(
@@ -454,7 +454,7 @@ def test_assistant_narration_persisted(tmp_path: Path):
     payload = json.loads(paths["result"].read_text(encoding="utf-8"))
 
     assert [n["kind"] for n in payload["narration"]] == ["assistant", "blocked", "harness"]
-    assert [n["after_tool_index"] for n in payload["narration"]] == [0, 1, 2]
+    assert [n["tool_calls_before"] for n in payload["narration"]] == [0, 1, 2]
     assert payload["narration"][0]["text"] == "routing to question-selection"
 
 
@@ -475,7 +475,7 @@ def test_narration_is_not_interleaved_into_tool_calls(tmp_path: Path):
         verdict="pass",
         stop_reason="completed",
         tool_calls=[{"tool": "a", "args": {}, "response_summary": "x"}],
-        narration=[{"after_tool_index": 0, "kind": "assistant", "text": "hi"}],
+        narration=[{"tool_calls_before": 0, "kind": "assistant", "text": "hi"}],
     )
     paths = write_result_files(
         result=result, runlog_dir=tmp_path,

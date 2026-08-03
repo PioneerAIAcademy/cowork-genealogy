@@ -121,3 +121,35 @@ def test_result_jsons_for_scopes_to_one_fixture(tmp_path, monkeypatch):
 
     assert len(result_jsons_for("fixture-a")) == 1
     assert result_jsons_for("nonexistent-fixture") == []
+
+
+def test_add_since_arg_default_is_converted(tmp_path):
+    """argparse runs `type=` over a STRING default, so supplied and defaulted
+    values take one code path. A non-string default would slip through raw."""
+    ap = argparse.ArgumentParser()
+    from e2e.runlog_selection import add_since_arg
+
+    add_since_arg(ap)
+    assert ap.parse_args([]).since == date.today() - timedelta(days=DEFAULT_SINCE_DAYS)
+
+
+def test_add_since_arg_accepts_a_whole_corpus_default():
+    """guardrail_shadow_report needs the whole corpus by default — calibration
+    picks a window size, so a freshness cutoff would shrink its own sample."""
+    ap = argparse.ArgumentParser()
+    from e2e.runlog_selection import add_since_arg
+
+    add_since_arg(ap, default="all")
+    assert ap.parse_args([]).since is None
+
+
+def test_bad_since_is_a_usage_error_not_a_traceback():
+    """As a `type=` converter argparse catches ArgumentTypeError and exits 2
+    with usage; calling parse_since by hand after parse_args would traceback."""
+    ap = argparse.ArgumentParser()
+    from e2e.runlog_selection import add_since_arg
+
+    add_since_arg(ap)
+    with pytest.raises(SystemExit) as exc:
+        ap.parse_args(["--since", "2weeks"])
+    assert exc.value.code == 2

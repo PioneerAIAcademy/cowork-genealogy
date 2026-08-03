@@ -214,3 +214,16 @@ describe('hashed snapshots (schema_version 3)', () => {
     expect(await diffSnapshotVsDisk({ 'skill.md': hashContent('hello\n') }, dir)).toEqual({});
   });
 });
+
+describe('mixed v2/v3 snapshot comparison', () => {
+  it('hashes the content side so a pre-3 log does not read as fully modified', () => {
+    // Exercised through compare.ts's alignSnapshots via diffSnapshots/testEdited;
+    // this pins the primitive both rely on.
+    const content = { 'a.md': 'body\n', 'b.md': 'other\n' };
+    const hashed = hashSnapshot(content);
+    expect(isHashedSnapshot(hashed)).toBe(true);
+    expect(isHashedSnapshot(content)).toBe(false);
+    // Same files, different shapes -> equal once aligned.
+    expect(hashSnapshot(content)).toEqual(hashed);
+  });
+});

@@ -441,8 +441,14 @@ def _write_at(tmp_path, timestamp: str):
 
 
 def _candidates(tmp_path):
+    """Candidate run logs only — not scratch, not annotations."""
     d = tmp_path / "unit" / SKILL_DIR_NAME
-    return sorted(p.name for p in d.iterdir() if p.name.endswith(".json"))
+    return sorted(
+        p.name
+        for p in d.iterdir()
+        if p.name.startswith("v") and p.name.endswith(".json")
+        and not p.name.endswith(".ann.json")
+    )
 
 
 def test_write_prunes_beyond_k_keeping_newest(tmp_path):
@@ -488,3 +494,39 @@ def test_write_leaves_scratch_runs_alone(tmp_path):
 
     scratch = [p.name for p in d.iterdir() if p.name.startswith("scratch_")]
     assert len(scratch) == 8
+
+
+def test_write_does_not_prune_on_a_scratch_run(tmp_path):
+    """run_tests.py writes a run log for every invocation mode. A filtered
+    (--test/--tag) run is a local artifact and must not delete committed
+    candidates the developer never touched."""
+    for d in range(1, 8):
+        _write_at(tmp_path, f"2026-07-{d:02d}_10-00-00")
+    assert len(_candidates(tmp_path)) == 5
+
+    scratch = _wrap_envelope(
+        _make_entry(), releasable=False, invocation="test",
+        timestamp="2026-07-20_10-00-00",
+    )
+    write_run_log(
+        scratch, runlogs_root=tmp_path, filename="scratch_2026-07-20_10-00-00.json"
+    )
+
+    # still 5 candidates — the scratch write pruned nothing
+    assert len(_candidates(tmp_path)) == 5
+
+
+def test_prune_takes_the_text_response_sidecar_with_it(tmp_path):
+    """A spilled `runs/<id>.text.md` is tracked and is the pruned run's
+    largest payload; leaving it behind strands it, committed and unreferenced."""
+    d = tmp_path / "unit" / SKILL_DIR_NAME
+    for i in range(1, 7):
+        ts = f"2026-07-{i:02d}_10-00-00"
+        run = _stub_run()
+        run.output["text_response"] = "x" * 200_001  # over _SIDECAR_TEXT_THRESHOLD
+        log = _wrap_envelope(_make_entry(runs=[run], timestamp=ts), timestamp=ts)
+        write_run_log(log, runlogs_root=tmp_path, filename=f"v1_{ts}.json")
+
+    sidecars = sorted(p.name for p in (d / "runs").iterdir())
+    # 6 written, oldest pruned when the 6th landed -> 5 remain
+    assert len(sidecars) == 5

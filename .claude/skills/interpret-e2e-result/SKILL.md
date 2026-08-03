@@ -181,9 +181,10 @@ Translate `stop_reason` into something a researcher can act on:
   the flag (skill regression), or the conversation drifted to silence.
   Check the last few `narration` entries.
 - `inactivity` — agent went silent for the inactivity cap window
-  (default ~10 min). It's stuck. Find the last entry in `tool_calls`;
-  the `narration` entry with the matching `after_tool_index` is usually
-  where the issue shows.
+  (default ~10 min). It's stuck. `tool_calls_before` counts the calls that
+  preceded an entry, so for the last call — index `len(tool_calls) - 1` — the
+  narration that followed it carries `tool_calls_before == len(tool_calls)`.
+  That entry is usually where the issue shows.
 - `timeout` — wall-clock cap fired (default 60 min). Either the
   question is too big for the cap or the agent looped. Skim the tail
   of `tool_calls` for repeating patterns.
@@ -272,8 +273,9 @@ ambiguity:
 - Re-run the fixture (cheap and decisive if you suspect jitter).
 - Diff against the last passing run log (cheap; commits make this
   easy).
-- Point the user at a specific turn (the `tool_calls` index, and the
-  `narration` entry whose `after_tool_index` matches).
+- Point the user at a specific turn: the `tool_calls` index `i`, and the
+  `narration` entries with `tool_calls_before == i + 1` (the prose that
+  followed that call).
 - Update the fixture's `README.md` to record what shifted if it
   looks like FS data drift.
 - File a regression issue if the cause looks like an agent or

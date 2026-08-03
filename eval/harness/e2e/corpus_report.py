@@ -39,7 +39,6 @@ from e2e.runlog_selection import (
     all_result_jsons,
     describe_window,
     filter_since,
-    parse_since,
     result_jsons_for,
 )
 from e2e.result import axes_from_runlog
@@ -102,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     all_paths = result_jsons_for(args.test) if args.test else all_result_jsons()
-    cutoff = parse_since(args.since)
+    cutoff = args.since
     paths = filter_since(all_paths, cutoff)
     if not paths:
         print("No committed runs found.", file=sys.stderr)

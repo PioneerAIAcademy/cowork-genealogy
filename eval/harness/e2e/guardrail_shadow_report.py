@@ -31,7 +31,6 @@ from e2e.runlog_selection import (
     describe_window,
     filter_since,
     is_result_json as _is_result_json,
-    parse_since,
     result_jsons_for,
 )
 from harness.skill_invocation import find_unguarded_protected_writes
@@ -103,12 +102,12 @@ def main(argv: list[str] | None = None) -> int:
         help=f"comma-separated window sizes to compare (default: {','.join(str(w) for w in DEFAULT_WINDOWS)})",
     )
     ap.add_argument("--detail", action="store_true", help="also print every violation at the smallest window given")
-    add_since_arg(ap)
+    add_since_arg(ap, default="all")
     args = ap.parse_args(argv)
 
     windows = sorted({int(w) for w in args.windows.split(",") if w.strip()})
     all_paths = result_jsons_for(args.test) if args.test else all_result_jsons()
-    cutoff = parse_since(args.since)
+    cutoff = args.since
     paths = filter_since(all_paths, cutoff)
     if not paths:
         print("No committed runs found.", file=sys.stderr)

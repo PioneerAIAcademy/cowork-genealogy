@@ -105,10 +105,12 @@ class E2eResult:
 
     # The agent's prose between tool calls, plus the two harness-side events
     # that only mean anything in trace order (a denied tool, a continue-nudge).
-    # Entries are {after_tool_index, kind, text} with kind in
-    # {assistant, blocked, harness}; `after_tool_index` is len(tool_calls) at
-    # the moment it happened, so the stream replays against tool_calls without
-    # being interleaved into it.
+    # Entries are {tool_calls_before, kind, text} with kind in
+    # {assistant, blocked, harness}. `tool_calls_before` is how many tool calls
+    # had already happened: N means the entry sits between tool_calls[N-1] and
+    # tool_calls[N], and 0 means before any tool call. A count, not an index —
+    # so the stream replays against tool_calls without being interleaved into
+    # it, and without an off-by-one.
     #
     # This replaces the `.transcript.md` artifact (removed 2026-08-03). That
     # file was 93% a re-render of tool_calls; the assistant prose was the only
