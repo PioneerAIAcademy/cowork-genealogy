@@ -293,6 +293,29 @@ for.
 
 ---
 
+## Tagging `@claude` on an issue or PR
+
+Writing `@claude <instruction>` runs Claude Code in CI against this repo. It
+works in an issue comment, an issue body or title, a PR review comment, and a PR
+review body. It can read the code and the CI results for that PR, reply in
+thread, and push a branch.
+
+```text
+@claude why is `runlogs` failing on this PR?
+@claude update this PR's description to match the final diff
+```
+
+Use it for a question you would otherwise answer by hand, and for mechanical
+edits. Don't use it to implement a task — a task goes through the loop above,
+starting at step 0 with a worktree and a plan.
+
+Each tag bills a shared subscription seat, so it costs the team whether or not
+the answer was useful. One tag with the whole question beats five refining it.
+
+Config: [`.github/workflows/claude.yml`](../.github/workflows/claude.yml).
+
+---
+
 ## Command card
 
 ```sh
@@ -321,6 +344,9 @@ gh issue create --label developer --title "…" --body "…"
 # 9. review someone else's PR
 gh pr checkout <N>
 /review <N>                          # one read-only pass; an input, not your review
+
+# any time — runs Claude in CI, bills a shared seat
+@claude <instruction>                # in an issue or PR comment
 ```
 
 ## Where to read next
