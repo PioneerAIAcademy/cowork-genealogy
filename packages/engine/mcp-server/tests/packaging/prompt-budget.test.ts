@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 // Prompt-budget lint (warn-only). Reports the byte-size delta a PR introduces
 // to every SKILL.md and plugin-agent body, so reviewers see growth at review
@@ -21,8 +21,8 @@ import { execSync } from "node:child_process";
 // reporting absolute sizes only, no deltas.
 
 const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = join(here, "..", "..", "..");
-const pluginRoot = join(repoRoot, "plugin");
+const engineRoot = join(here, "..", "..", "..");
+const pluginRoot = join(engineRoot, "plugin");
 const skillsDir = join(pluginRoot, "skills");
 const agentsDir = join(pluginRoot, "agents");
 
@@ -72,9 +72,20 @@ function baseRefAvailable(): string | null {
   // GITHUB_BASE_REF is set by GitHub Actions for pull_request events.
   const ref = process.env.GITHUB_BASE_REF || "main";
   try {
-    execSync(`git rev-parse --verify "origin/${ref}"`, { stdio: "pipe" });
+    execFileSync("git", ["rev-parse", "--verify", `origin/${ref}`], {
+      stdio: "pipe",
+    });
     return ref;
   } catch {
+    // In CI this means the fetch step failed or was skipped — surface it so a
+    // silent degradation to absolute-only doesn't hide a broken fetch.
+    if (process.env.CI) {
+      console.log(
+        `::warning::prompt-budget: origin/${ref} is not available; ` +
+          "reporting absolute sizes only (no deltas). " +
+          "Check the 'Fetch base branch' step in engine-tests.yml.",
+      );
+    }
     return null;
   }
 }
@@ -90,8 +101,10 @@ function baseRefAvailable(): string | null {
  */
 function gitBlobSize(ref: string, repoRelPath: string): number | null {
   try {
-    // execSync without `encoding` returns a Buffer; .length is byte count.
-    const buf = execSync(`git show "${ref}:${repoRelPath}"`, {
+    // execFileSync without `encoding` returns a Buffer; .length is byte count.
+    // Using execFileSync with an args array avoids shell interpolation of
+    // repo-controlled path segments.
+    const buf = execFileSync("git", ["show", `${ref}:${repoRelPath}`], {
       stdio: ["pipe", "pipe", "pipe"],
     });
     return buf.length;
@@ -105,7 +118,10 @@ function gitBlobSize(ref: string, repoRelPath: string): number | null {
 // ---------------------------------------------------------------------------
 
 function formatKB(bytes: number): string {
-  return `${(bytes / 1024).toFixed(1)} KB`;
+  const kb = bytes / 1024;
+  // Avoid rendering "-0.0" for tiny shrinks (e.g. -1 byte → -0.000976 → "-0.0").
+  const text = kb.toFixed(1);
+  return `${text === "-0.0" ? "0.0" : text} KB`;
 }
 
 function formatDelta(bytes: number): string {
