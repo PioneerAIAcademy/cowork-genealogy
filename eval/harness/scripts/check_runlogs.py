@@ -383,16 +383,28 @@ def main() -> int:
         if classify(filename).kind == "released":
             touched_releases.setdefault(skill, []).append(path)
 
-    # Touched-skill detection for rules 2 + 3 uses the any-status view: a
-    # modification invalidates a snapshot just like an addition.
+    # Touched-skill detection for rules 2 + 3 is asymmetric by path class.
+    #
+    # Skill bodies, tests, and agents use the any-status view: a *modification*
+    # invalidates a snapshot just as surely as an addition.
+    #
+    # Run logs do not. A run log is not an input to its own snapshot, so
+    # modifying or deleting one cannot invalidate anything — only *adding* one
+    # is new evidence about a skill. Housekeeping that rewrites or prunes
+    # committed run logs (scripts/prune_runlogs.py) would otherwise mark every
+    # skill touched and hard-fail rule 2 on pre-existing fixture drift it did
+    # not cause (19 of 26 skills are already inactive on main; issues #1217,
+    # #1094).
+    added_runlog_paths = {p for _, p in changes if p is not None}
     touched_paths = git_diff_touched_paths()
     touched_skills: set[str] = set()
     touched_agents: set[str] = set()
     for path in touched_paths:
         m = RUNLOG_PATH_RE.match(path)
         if m:
-            # Any change under eval/runlogs/unit/<skill>/ touches that skill.
-            touched_skills.add(m.group(1))
+            # Only an added / renamed-into-place run log gates its skill.
+            if path in added_runlog_paths:
+                touched_skills.add(m.group(1))
             continue
         # Changes to skill files / tests surface their owning skill.
         m = re.match(r"^(?:packages/engine/plugin/skills|eval/tests/unit)/([^/]+)/", path)

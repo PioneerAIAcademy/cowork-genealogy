@@ -197,6 +197,42 @@ def test_modified_skill_file_marks_skill_touched(monkeypatch, capsys, tmp_path):
     assert "no run logs" in capsys.readouterr().out
 
 
+def test_runlog_modify_or_delete_does_not_touch_skill(monkeypatch, capsys, tmp_path):
+    """Rewriting or pruning a committed run log is housekeeping, not evidence.
+    A run log is not an input to its own snapshot, so a non-AR change under
+    eval/runlogs/unit/<skill>/ must not gate rules 2 + 3 — otherwise a rehash
+    or prune sweep fails every skill on drift it did not cause."""
+    _make_present_skill(tmp_path, monkeypatch)
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(
+        check_runlogs,
+        "git_diff_touched_paths",
+        lambda: [
+            # modified in place (rehash)
+            "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json",
+            # deleted (prune), annotation sibling included
+            "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.json",
+            "eval/runlogs/unit/present-skill/v1_2026-06-01_00-00-00.ann.json",
+        ],
+    )
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "no run logs" not in capsys.readouterr().out
+
+
+def test_added_runlog_still_marks_skill_touched(monkeypatch, capsys, tmp_path):
+    """The narrowing above must not widen into a blanket pass: *adding* a run
+    log is still evidence about a skill and still gates rules 2 + 3."""
+    _make_present_skill(tmp_path, monkeypatch)
+    _patch_diffs(
+        monkeypatch,
+        ["eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"],
+    )
+    rc = check_runlogs.main()
+    assert rc == 1
+    assert "no run logs" in capsys.readouterr().out
+
+
 # --- Deleted-skill skip (skill dir AND test dir both absent) ---------------
 
 
