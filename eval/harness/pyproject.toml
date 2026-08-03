@@ -35,6 +35,3 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
-markers = [
-    "e2e: end-to-end tests that hit the real Anthropic API (deselect with -m 'not e2e')",
-]
