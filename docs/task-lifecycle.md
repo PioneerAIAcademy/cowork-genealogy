@@ -245,7 +245,7 @@ so their time goes to whether the approach is right.
 this process. Turning up with `make test-all` green, `/code-review` run, and its
 findings resolved is what keeps that gate spent on judgment.
 
-`.github/workflows/claude-review.yml` posts an automated pass on every PR. Treat it as a peer
+`.github/workflows/claude-code-review.yml` posts an automated pass on every PR. Treat it as a peer
 whose findings you verify, not a gate — it can be wrong, and a senior's review
 still has to happen.
 
@@ -281,7 +281,7 @@ returns as an input to your review, never as your review.
    Give Claude the PR description (which has it), the diff, and the relevant
    spec, then ask directly: does this implementation match what was agreed?
 
-`.github/workflows/claude-review.yml` has already posted an automated pass on the PR. Read it
+`.github/workflows/claude-code-review.yml` has already posted an automated pass on the PR. Read it
 before you start — but verify anything you repeat, the same as your own
 findings, and don't treat it as having covered the ground you're responsible
 for.
