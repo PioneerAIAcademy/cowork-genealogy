@@ -155,9 +155,9 @@ gh issue create --label developer --title "…" --body "…"
 - **Mention the number in your PR description** so the reviewer can see what you
   chose not to do.
 
-Do not park these in a to-do file. That was tried and retired 2026-08-02: items
-that live only in a file never get assigned, and the file becomes a
-merge-conflict hotspot once several people work in parallel.
+Do not park these in a to-do file. That was tried (`docs/TODOs.md`, retired
+2026-08-02): items that live only in a file never get assigned, and the file
+becomes a merge-conflict hotspot once several people work in parallel.
 
 ## How to test a new tool end-to-end
 

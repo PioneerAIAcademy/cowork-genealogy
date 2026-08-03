@@ -156,12 +156,11 @@ mocks (no E2B/Anthropic/OAuth needed).
   standing. If there is no spec to write it into, the item is spec-shaped, not
   queue-shaped. Git history keeps the prose either way.
 
-  This replaced a repo-level staging queue, retired 2026-08-02 (its 54 items
-  became issues #1117–#1157). That file's exit event — "an entry leaves when it
-  becomes an issue" — never fired on its own: it reached 932 lines, then 54
-  unassignable items touched by 54 separate PRs, and became a merge-conflict
-  hotspot across concurrent worktrees. Do not reintroduce a queue file under any
-  name.
+  This replaced `docs/TODOs.md` (retired 2026-08-02, issues #1117–#1157). That
+  file was a staging queue whose exit event — "an entry leaves when it becomes an
+  issue" — never fired on its own: it reached 932 lines, then 54 unassignable
+  items touched by 54 separate PRs, and became a merge-conflict hotspot across
+  concurrent worktrees. Do not reintroduce a queue file under any name.
 - **Verification is automated, not a manual playbook.** New tools are
   verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
   and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
@@ -630,7 +629,7 @@ signal to consolidate; one isn't.
 
 ## Subagents
 
-Three project subagents live under `.claude/agents/`. Claude Code invokes them
+Project subagents live under `.claude/agents/`. Claude Code invokes them
 automatically when their description matches the request, or you can call them
 explicitly with the Agent tool.
 

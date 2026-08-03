@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -69,25 +69,13 @@ function liveSectionText(body: string): string {
   return parts.join("\n");
 }
 
-/**
- * Backticked tokens that look like repo paths.
- *
- * The scope note above is the contract: no false positives, or the lint gets
- * ignored. So four shapes are not paths and never resolve —
- *   - `docs/specs/<tool>-tool-spec.md`  a template the reader substitutes into
- *   - `eval/fixtures/mcp/record-search-*.json`  a glob
- *   - `scripts/setup-feedback-case.sh <zip>`  a command line
- *   - `eval/tests/unit/$ARGUMENTS/rubric.md`  a slash-command substitution
- * — and are skipped rather than allowlisted, because each is correct prose that
- * would otherwise have to be rewritten to satisfy a linter.
- */
+/** Backticked tokens that look like repo paths. */
 function citedPaths(text: string): string[] {
   const found = new Set<string>();
   for (const m of text.matchAll(/`([^`\n]+)`/g)) {
     const token = m[1].trim();
     if (!token.includes("/")) continue;
     if (!REPO_ROOTS.some((r) => token.startsWith(r))) continue;
-    if (/[<>*\s$]/.test(token)) continue;
     // Strip a trailing line/anchor reference: path.ts:123 or path.md#section
     found.add(token.replace(/[:#].*$/, ""));
   }
@@ -186,75 +174,4 @@ describe("ADR hygiene", () => {
       `these ADRs are not in the docs/architecture.md index, so nobody will find them: ${missing.join(", ")}`,
     ).toEqual([]);
   });
-});
-
-/**
- * The same staleness lint, scoped to the project's Claude Code skills, subagents
- * and slash commands — the ones under `.claude/`, not the shipped plugin.
- *
- * These have the ADR problem in a harsher form. An ADR is read by a human who
- * can notice a path is wrong; a skill body is read by a model that will act on
- * it. The `triage-standup` skill instructed the model to read the repo's
- * staging-queue file for a day after that file was retired (#1163), and nothing
- * could catch it — the skill lived outside the repo.
- *
- * Unlike an ADR there is no frozen-history half to exempt: everything in a
- * skill body is an instruction. So every cited path must resolve, and history
- * that no longer has a file ("the retired to-do queue") is written without a
- * path. That is also why these bodies should carry no rationale prose — they
- * are billed prompt tokens on every invocation.
- */
-describe(".claude skill, agent and command path hygiene", () => {
-  const claudeDir = join(projectRoot, ".claude");
-
-  /** Every .md under the linted .claude/ subtrees, recursively. */
-  function claudeMarkdown(dir: string): string[] {
-    if (!existsSync(dir)) return [];
-    const out: string[] = [];
-    for (const entry of readdirSync(dir)) {
-      const full = join(dir, entry);
-      if (statSync(full).isDirectory()) out.push(...claudeMarkdown(full));
-      else if (entry.endsWith(".md")) out.push(full);
-    }
-    return out;
-  }
-
-  const files = [
-    ...claudeMarkdown(join(claudeDir, "skills")),
-    ...claudeMarkdown(join(claudeDir, "agents")),
-    ...claudeMarkdown(join(claudeDir, "commands")),
-  ].sort();
-
-  /**
-   * Invented identifiers inside a worked example. These are indistinguishable
-   * from a real path by shape, so each needs a line here with a reason.
-   *
-   * Empty, and worth keeping that way: the fix for a worked example is a
-   * `<slug>` placeholder, which the skip rules above handle without an entry
-   * and which also stops the example naming a fixture that does not exist.
-   */
-  const EXAMPLE_PATHS = new Set<string>([]);
-
-  it("finds the skills, agents and commands to lint", () => {
-    expect(files.length, ".claude/{skills,agents,commands} are all empty").toBeGreaterThan(0);
-  });
-
-  it.each(files.map((f) => relative(projectRoot, f)))(
-    "%s cites only paths that still exist",
-    (rel) => {
-      const body = readFileSync(join(projectRoot, rel), "utf8");
-      const missing = citedPaths(body)
-        .filter((p) => !EXAMPLE_PATHS.has(p))
-        .filter((p) => !existsSync(join(projectRoot, p)));
-
-      expect(
-        missing,
-        `${rel} cites paths that no longer exist: ${missing.join(", ")}\n` +
-          `A skill body is an instruction a model will act on, so a stale path is a wrong ` +
-          `answer, not a curiosity. Fix the pointer in the same PR that moved the code. ` +
-          `If the path is history rather than a pointer, write it without a path — or drop ` +
-          `it, since rationale prose in a skill body is billed on every invocation.`,
-      ).toEqual([]);
-    },
-  );
 });

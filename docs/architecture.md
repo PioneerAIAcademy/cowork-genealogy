@@ -204,8 +204,9 @@ The four agents are `gps-mentor`, `record-extractor`, `image-reader`, and
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
 > (`.claude/agents/`, which are developer tooling for this repo — today
-> `rubric-critic`, `skill-improver`, and `task-reviewer`). The dual-spelling
-> rule in §5.2 applies to plugin agents only; these declare bare tool names.
+> `plan-critic`, `rubric-critic`, `skill-improver`, and `task-reviewer`). The
+> dual-spelling rule in §5.2 applies to plugin agents only; these declare bare
+> tool names.
 
 ### 3.1 The most important rule in this repo: anchor rules structurally
 
@@ -1119,7 +1120,6 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `skill-description-length.test.ts` | the 1024-char cap |
 | `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
-| `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's live `Applies to` / `Enforcement` still resolves — **and** every path cited anywhere in `.claude/skills/**`, `.claude/agents/**` or `.claude/commands/**`, since none of those has a frozen-history half |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
 `check_skill_frontmatter.py` (for **skills and agents**: description length and

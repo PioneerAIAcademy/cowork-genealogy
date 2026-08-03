@@ -160,7 +160,9 @@ line in the staleness check:
 - **A `.claude/commands/` file**, matching how `/audit-rubric` and
   `/improve-skill` dispatch to their agents. Rejected: a command fires only when
   typed, and this needs to fire on "vet these before I hand them out". It is a
-  second pattern for one job, knowingly.
+  second pattern for one job, knowingly — and ADR-0007 rejects the skill form for
+  `/critique-plan` on the opposite ground (description matching can silently
+  no-op). Both are right for their case; the repo has no rule that decides it.
 - **One agent for the whole batch.** Rejected: cheaper, and it is exactly the
   contamination the fresh-context rule exists to stop.
 - **Extending the fan-out to the genealogist pool.** Rejected for now — see §6.
