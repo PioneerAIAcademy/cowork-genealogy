@@ -10,7 +10,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-02 (#1177), risk half 2026-08-02 (#1188)
-- **Last updated:** 2026-08-03
+- **Last updated:** 2026-08-03 (#1210)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
