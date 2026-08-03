@@ -840,20 +840,23 @@ The principle, from `project-context-tool-spec.md`: the writer tools removed
 JSON to think." **Never design a flow that hands the LLM a large document to
 edit and re-emit.**
 
-> **Today:** `research_query` caps at 50 items with a `truncated` flag and **no
-> pagination**, and covers **11 of the 15** `research.json` sections — missing
-> `project`, `researcher_profile`, `known_holdings`, and `localities`. On the tree
-> side, `project_context` returns a fixed projection of tree persons (id, name,
-> gender, sourceRefs), but there is **no query surface over `tree.gedcomx.json`**
-> the way `research_query` gives one over `research.json` — which is why `Read` is
-> not revoked.
-> **Direction (#1031, critique §2.9, §3 P2).** The 50-item cap is a
-> **correctness** bug first: there is no way to fetch items 51+ when the filter
-> cannot be narrowed further, and proof-conclusion's "collect every assertion"
-> gate once saw 50 of 57. **If you consume `research_query`, check the `truncated`
-> flag** — a skill already ignored it once. `Read` is still the most-called tool
-> in the system (544 calls across 28 runs, against 246 `research_query` + 91
-> `project_context`).
+> **Today:** `research_query` returns 50 items per call with a `truncated` flag
+> and an `offset` parameter for paging past 50 (#1031 tool half), and covers
+> **11 of the 15** `research.json` sections — missing `project`,
+> `researcher_profile`, `known_holdings`, and `localities`. On the tree side,
+> `project_context` returns a fixed projection of tree persons (id, name, gender,
+> sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
+> `research_query` gives one over `research.json` — which is why `Read` is not
+> revoked.
+> **Direction (#1031, critique §2.9, §3 P2).** The tool half shipped: `offset`
+> makes items 51+ reachable, closing the "no way to fetch past 50" correctness bug
+> at the tool. What remains is the **skill half (#1183)** — the consumers must
+> actually page. `proof-conclusion/SKILL.md` still says "no offset/pagination
+> guessing," so its "collect every assertion" gate can under-read (it once saw 50
+> of 57) until that line is rewritten. **If you consume `research_query`, check the
+> `truncated` flag and page with `offset`** — a skill already ignored truncation
+> once. `Read` is still the most-called tool in the system (544 calls across 28
+> runs, against 246 `research_query` + 91 `project_context`).
 
 ### 6.4 The casing seam
 
@@ -1215,9 +1218,7 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 1. **The `same_person` write-boundary gate** — direction settled, mechanism not;
    three discriminators have failed review. Details and the "don't re-derive"
    ledger: §5.3, and critique §3 P0 + §9.
-2. **`research_query` pagination past 50 items** (#1031) — the fix is known, the
-   shape of the API is not (§6.3).
-3. **Whether the compliance-detector doctrine should follow the router's
+2. **Whether the compliance-detector doctrine should follow the router's
    paraphrase or the owning skill's contract** (#1006). Until that is decided,
    "true or false positive" has no ground truth at all (critique §3 P0). **Do not
    quote "16 of 25" as the gate's *reach*** — critique §9 retracts that reading.
@@ -1225,12 +1226,16 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
    25 (≤14 of 45 on the full committed window). Note the critique carries two
    windows and two disjoint "9 of 25" figures — read its §0.2 before quoting
    either.
-4. **Why the 1024-character description cap exists** — two lint sites give
+3. **Why the 1024-character description cap exists** — two lint sites give
    contradictory reasons (§3.2). Treat it as hard either way.
-5. **`ENABLE_TOOL_SEARCH`** (#1110) — the polarity is settled as of 2026-08-02
+4. **`ENABLE_TOOL_SEARCH`** (#1110) — the polarity is settled as of 2026-08-02
    (§5.2) and all five inverted comments have been corrected. What remains is
    the **flip itself**, which changes behavior in both harnesses and the hosted
    path and requires re-measuring the tool mix before and after.
+
+*(`research_query` pagination past 50 items — #1031 — has left this list: the
+API shape is settled and the tool half shipped `offset`; the remaining skill
+adoption is tracked work, #1183, not an open question. See §6.3.)*
 
 ---
 
