@@ -72,10 +72,12 @@ specs and the code. Don't go read it all yourself; have Claude do it:
 
 > Read GitHub issue #N and the code it touches. Also read: the spec in
 > `docs/specs/` if one covers what I'm changing, the "If you're asked to…"
-> blocks in `docs/architecture.md`, and `CLAUDE.md`. Summarize what you found in
-> a few sentences. Then ask me the questions where a different answer would
-> change what you build — skip anything with an obvious default, make the call
-> and tell me what you chose.
+> blocks in `docs/architecture.md`, and `CLAUDE.md`. Also check whether any open
+> PR already touches the files I'll change (`gh search prs`, or `gh pr list`) —
+> a collision on a shared file means a rebase later, so flag it now. Summarize
+> what you found in a few sentences. Then ask me the questions where a different
+> answer would change what you build — skip anything with an obvious default,
+> make the call and tell me what you chose.
 
 Read the issue yourself too, and read Claude's summary. You should be able to
 say what the task is in a sentence before you plan it.
@@ -100,7 +102,9 @@ review, or by your reviewer.
 ```
 
 Two rounds maximum. **If round two still returns a BLOCKING finding, stop and
-go to the lead** — the task is underspecified, not the plan.
+go to the lead** — the task is underspecified, or a sub-scope should be split
+into its own issue. Either way it's a task decision, not something a third
+round of planning will fix.
 
 **Check each finding before acting on it.** Some will be wrong. Open the file,
 run the command, confirm the claim. This covers what the critic *proposes* as
