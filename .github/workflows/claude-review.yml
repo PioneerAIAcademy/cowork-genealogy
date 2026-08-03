@@ -24,6 +24,11 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  # Required, and omitted from the action's own minimal example. The action
+  # mints an OIDC token and exchanges it for the Claude GitHub App's
+  # installation token; without this it fails every run before reaching Claude
+  # with "Could not fetch an OIDC token" (verified on run 30839133885).
+  id-token: write
 
 concurrency:
   group: claude-review-${{ github.event.pull_request.number }}
