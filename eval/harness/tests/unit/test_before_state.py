@@ -58,6 +58,44 @@ def test_before_state_block_shows_fourth_source_id():
     assert "S004" in rendered
 
 
+def test_detail_includes_every_source_not_just_the_first_three():
+    """The id list alone is not enough — the judge needs each source's *content*.
+
+    Second half of the same bug. After a37a7fe4 the judge could see `src_006` in
+    `all_ids`, look for its citation in the detail sample, find nothing (the
+    sampler had kept only the first three), and call a correctly-cited source
+    fabricated. Verbatim from a real run against `mid-research-flynn`, whose 9
+    sources include the genuine `src_006`:
+
+        "The before-state shows only 9 sources (src_001 through src_009), and
+         the sample detail provided does not include src_006. The skill
+         fabricates the existence and ARK URL of this source"
+
+    So the detail must carry one entry per source, in order, with its citation.
+    """
+    n = 9  # mid-research-flynn's source count; src_006 is the one that was lost
+    summary = _summarize_before_state_sources(
+        [
+            {"id": f"src_{i:03d}", "citation": f"citation for source {i}"}
+            for i in range(1, n + 1)
+        ]
+    )
+    assert isinstance(summary["detail"], list), (
+        "detail must be a plain list of sources, not the sampler's "
+        "{_summary_truncated, _first_n} envelope"
+    )
+    assert len(summary["detail"]) == n
+    assert summary["detail"][5]["citation"] == "citation for source 6"
+
+    # And end to end: the rendered block a judge actually reads.
+    rendered = _summarize_before_state({"research_json": {"sources": [
+        {"id": f"src_{i:03d}", "citation": f"citation for source {i}"}
+        for i in range(1, n + 1)
+    ]}})
+    assert "citation for source 6" in rendered
+    assert "citation for source 9" in rendered
+
+
 def test_short_lists_still_complete():
     summary = _summarize_before_state_sources(_sources("src_", 2))
     assert summary["count"] == 2

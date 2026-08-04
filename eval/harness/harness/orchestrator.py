@@ -1127,15 +1127,29 @@ def _summarize_before_state_sources(sources: Any) -> dict[str, Any]:
     which silently dropped the 4th+ source and made the judge (and human
     annotators reading the same block) flag a correctly-cited later source
     (`src_004` / `S4`) as fabricated. That is the exact failure this block was
-    written to prevent. So emit the full id list explicitly and only sample the
-    heavy per-source content (citations, notes) for prompt size.
+    written to prevent. So emit the full id list explicitly, and summarize the
+    heavy per-source content (citations, notes) one source at a time.
+
+    Summarizing **per source** rather than handing the array to
+    `_summarize_response` is the point: the sampler only truncates the container
+    it is given, so a list of 9 comes back as 3 while 9 separate calls come back
+    as 9. Fixing this for the ids alone (a37a7fe4 / c7f56c3c) left the misgrade
+    alive in a subtler form — the judge could see `src_006` in `all_ids`, find no
+    citation for it in the detail, and call a correctly-cited source fabricated
+    anyway. That is ut_research_plan_001's recurring base-Correctness 2. Per-string
+    truncation and the depth cap still apply inside each source, and the caller's
+    `_BEFORE_STATE_MAX_CHARS` trim still bounds the block — dropping detail,
+    never ids.
     """
     items = sources if isinstance(sources, list) else []
     ids = [s["id"] for s in items if isinstance(s, dict) and s.get("id")]
     return {
         "count": len(items),
         "all_ids": ids,
-        "detail": _summarize_response(items, string_max=_BEFORE_STATE_STRING_MAX),
+        "detail": [
+            _summarize_response(s, string_max=_BEFORE_STATE_STRING_MAX)
+            for s in items
+        ],
     }
 
 
