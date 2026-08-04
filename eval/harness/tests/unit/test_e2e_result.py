@@ -410,8 +410,17 @@ def test_the_gate_reproduces_todays_fused_verdict_across_the_whole_corpus():
 
     Before the split, a guardrail bypass forced `verdict = "fail"` and the
     exit code keyed on that. Now it forces `outcome = "fail"` and the exit
-    code keys on THAT. Over every committed run the two distributions must be
-    identical — otherwise this refactor silently changed which runs fail CI.
+    code keys on THAT. Over every *pre-split* committed run the two
+    distributions must be identical — otherwise this refactor silently
+    changed which runs fail CI.
+
+    Scoped to runs written before the split (no `harness_schema_version`):
+    for those, write-time code already overwrote `verdict` to `"fail"` on a
+    guardrail bypass, so `data["verdict"]` IS the pre-split fused value this
+    proof compares against. A `harness_schema_version`-present run
+    deliberately keeps `verdict` as the raw judge conclusion — decoupled from
+    `compliance`/`outcome` on purpose, which is the whole point of the split
+    — so `outcome != data["verdict"]` there is correct, not a regression.
     """
     runlogs = Path(__file__).resolve().parents[3] / "runlogs" / "e2e"
     if not runlogs.is_dir():
@@ -421,6 +430,8 @@ def test_the_gate_reproduces_todays_fused_verdict_across_the_whole_corpus():
         if ".final-" in path.name or path.name.endswith(".ann.json"):
             continue
         data = json.loads(path.read_text(encoding="utf-8"))
+        if "harness_schema_version" in data:
+            continue
         _verdict, _compliance, outcome = axes_from_runlog(data)
         assert outcome == data["verdict"], (
             f"{path}: gate disagrees with the pre-split fused verdict"
