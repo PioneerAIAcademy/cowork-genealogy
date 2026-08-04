@@ -81,6 +81,60 @@ def test_research_plan_no_new_plan(before_state, after_state, test):
     )
 
 
+# --- Tag-gated: nothing is written once the search is declared exhaustive ---
+
+def test_no_plan_writes_when_resolved(before_state, after_state, test):
+    """Tag-gated: on a question whose `exhaustive_declaration.declared` is
+    already true, research-plan must add nothing and change nothing.
+
+    Covers the gap the other two leave. `test_research_plan_no_new_plan`
+    catches a whole new `pl_` and `test_plans_no_deletions` catches removals;
+    neither sees an item **appended to an existing plan** or an existing item
+    **edited in place**. Either rewrites the GPS audit trail the declaration
+    rests on — and appending to `pl_002` is the obvious way to write a plan
+    without creating one.
+
+    This is the routing-independent gate for `ut_research_plan_003`
+    (`grade_on_invariant`): whichever skill ends up handling the prompt, no run
+    may leave a mark on `plans[]`.
+    """
+    if "no-plan-writes-when-resolved" not in test.get("tags", []):
+        pytest.skip("not a no-plan-writes-when-resolved scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    before_plans = {
+        p.get("id"): p for p in (before.get("plans") or []) if p.get("id")
+    }
+    errors: list[str] = []
+    for plan in after.get("plans") or []:
+        prior = before_plans.get(plan.get("id"))
+        if prior is None:
+            # A whole new plan is test_research_plan_no_new_plan's finding;
+            # reporting it here too would double-count the same defect.
+            continue
+        before_items = {
+            i.get("id"): i for i in (prior.get("items") or []) if i.get("id")
+        }
+        for item in plan.get("items") or []:
+            was = before_items.get(item.get("id"))
+            if was is None:
+                errors.append(
+                    f"{plan.get('id')}: item {item.get('id')} added to an "
+                    f"existing plan"
+                )
+            elif was != item:
+                errors.append(
+                    f"{plan.get('id')}: item {item.get('id')} modified in place"
+                )
+    assert not errors, (
+        "research-plan wrote to a question whose search is already declared "
+        "exhaustive:\n  - " + "\n  - ".join(errors)
+    )
+
+
 # --- Tag-gated: existing in-progress plan items stay in_progress -----
 
 def test_pli_006_status_unchanged(before_state, after_state, test):
