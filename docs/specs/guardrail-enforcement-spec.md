@@ -99,11 +99,17 @@ genealogical consequences, not just procedural ones.
 
 **Scale.** Replaying the windowed check across 99 committed runs
 (`eval/harness/e2e/guardrail_shadow_report.py`, no API spend — `tool_calls` is
-persisted per run). The table below is a whole-corpus replay; the report
-windows to the last 14 days like every other run-log reader, so reproduce it
-with `SINCE=all`. Step 1 of #911 wants that maximum-sample replay — its own
-step 4 then answers the staleness ("the historical corpus predates several of
-today's skills") with *new* runs:
+persisted per run). The report now windows to the last 14 days like every
+other run-log reader; `SINCE=all` is the whole-corpus mode this table was
+measured in. Step 1 of #911 wants that maximum-sample replay — its own step 4
+then answers the staleness ("the historical corpus predates several of today's
+skills") with *new* runs.
+
+The numbers below are a point-in-time replay over the **99 runs committed when
+they were taken**, kept as the record of what motivated the window. `SINCE=all`
+today scans the whole corpus, which has since grown (134 runs as of
+2026-08-04), so it reports larger absolute counts — the shape, not the
+figures, is what reproduces:
 
 | window | violations | runs affected |
 |---|---|---|

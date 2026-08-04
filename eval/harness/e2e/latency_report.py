@@ -73,8 +73,6 @@ from e2e.runlog_selection import (
     is_result_json as _is_result_json,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-
 
 def _bare_tool_name(tool: str) -> str:
     """`mcp__genealogy__record_search` -> `record_search`; passthrough otherwise."""

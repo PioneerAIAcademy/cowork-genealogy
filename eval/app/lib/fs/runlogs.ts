@@ -113,8 +113,11 @@ async function readAnnotationAt(filePath: string): Promise<AnnotationFile | null
 }
 
 function rawToRunLog(raw: unknown): RunLogFile {
-  // Pass-through with shallow type assertion. The Zod
-  // validator in the API route catches malformed shapes.
+  // Pass-through with a shallow type assertion — nothing validates at read
+  // time. `lib/schema/run-log.ts` is generated from the JSON Schema but has no
+  // importers, and wiring it now would reject the pre-v3 logs still on
+  // in-flight branches. The harness validates on write (`validate_run_log`),
+  // which is where a malformed envelope is actually caught.
   return raw as RunLogFile;
 }
 

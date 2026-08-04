@@ -186,6 +186,30 @@ export function isHashedSnapshot(snapshot: Record<string, string>): boolean {
 }
 
 /**
+ * Put two snapshots on comparable terms.
+ *
+ * schema_version 3 stores sha256 digests; pre-3 logs stored normalized
+ * content. Comparing one of each by equality reports EVERY path as modified —
+ * silently, since nothing validates schema_version at read time — which then
+ * flags every test as edited and drops the whole comparison. Hashing the
+ * content side first makes the mixed case correct.
+ *
+ * Lives here rather than beside one caller because both snapshot-vs-snapshot
+ * comparisons need it: `lib/compare.ts` (the compare page) and the trend
+ * route's `diffTestFiles`. Mirrors the same alignment in Python's
+ * `same_test_inputs`. Drop this once no pre-3 run log remains.
+ */
+export function alignSnapshots(
+  a: Record<string, string>,
+  b: Record<string, string>,
+): [Record<string, string>, Record<string, string>] {
+  const aHashed = isHashedSnapshot(a);
+  const bHashed = isHashedSnapshot(b);
+  if (aHashed === bHashed) return [a, b];
+  return [aHashed ? a : hashSnapshot(a), bHashed ? b : hashSnapshot(b)];
+}
+
+/**
  * Compare snapshot against on-disk files under `repoRoot`. Returns a
  * `{path: reason}` map of mismatches. Mirrors Python's
  * `diff_snapshot_vs_disk()`.

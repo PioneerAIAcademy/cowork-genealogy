@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -496,6 +497,7 @@ def write_run_log(
     *,
     runlogs_root: Path,
     filename: str,
+    on_prune: Callable[[list[Path]], None] | None = None,
 ) -> Path:
     """Write `log` to `<runlogs_root>/unit/<skill>/<filename>`.
 
@@ -536,8 +538,14 @@ def write_run_log(
     # invocation mode, so pruning unconditionally would let a local
     # `--test ut_003` scratch run delete *committed* candidates — deletions the
     # developer never asked for, in a run they meant to keep local.
+    #
+    # `on_prune` lets the CLI announce the deletions at the moment they happen.
+    # Without it the junior meets them first in `git status` as changes they did
+    # not make, which reads as a bug rather than as retention doing its job.
     if log.get("releasable"):
-        prune_old_candidates(target_dir)
+        removed = prune_old_candidates(target_dir)
+        if removed and on_prune is not None:
+            on_prune(removed)
     return out
 
 

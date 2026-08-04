@@ -530,3 +530,30 @@ def test_prune_takes_the_text_response_sidecar_with_it(tmp_path):
     sidecars = sorted(p.name for p in (d / "runs").iterdir())
     # 6 written, oldest pruned when the 6th landed -> 5 remain
     assert len(sidecars) == 5
+
+
+def test_write_reports_what_it_pruned(tmp_path):
+    """The junior should meet the deletions in the harness output, not first in
+    `git status` as changes they did not make."""
+    seen: list[list] = []
+    for d in range(1, 7):
+        ts = f"2026-07-{d:02d}_10-00-00"
+        log = _wrap_envelope(_make_entry(), timestamp=ts)
+        write_run_log(
+            log, runlogs_root=tmp_path, filename=f"v1_{ts}.json",
+            on_prune=seen.append,
+        )
+    # Only the 6th write crosses K=5, so exactly one callback with one file.
+    assert len(seen) == 1
+    assert [p.name for p in seen[0]] == ["v1_2026-07-01_10-00-00.json"]
+
+
+def test_write_does_not_call_on_prune_when_nothing_is_pruned(tmp_path):
+    seen: list[list] = []
+    _write_at(tmp_path, "2026-07-01_10-00-00")
+    write_run_log(
+        _wrap_envelope(_make_entry(), timestamp="2026-07-02_10-00-00"),
+        runlogs_root=tmp_path, filename="v1_2026-07-02_10-00-00.json",
+        on_prune=seen.append,
+    )
+    assert seen == []
