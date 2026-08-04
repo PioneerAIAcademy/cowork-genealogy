@@ -101,6 +101,9 @@ export interface ResearcherProfile {
   experience_level?: ExperienceLevel
   subscriptions?: Subscription[]
   narration_guidance?: string | null
+  /** Who the finished write-ups are for. Read by gps-mentor's narrative-craft
+   *  checks; absent means the mentor infers the audience from the prose. */
+  intended_audience?: string | null
 }
 
 export interface StopCriteria {

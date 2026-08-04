@@ -291,6 +291,9 @@ researcher — the human text the orchestrator prints. Structure it as:
 would resolve it — omit this section if must_address is empty]
 ```
 
+On a craft-only run, the required scope sentence goes **above** the
+`# Mentor review:` heading, so the reader meets it before any praise.
+
 Verdicts:
 
 - `looks_solid` — no must-address items; ready for next step
@@ -516,6 +519,13 @@ what matters most and stop.
    performed" is a different failure from this one, where the work
    was genuinely done but never persisted structurally.
 
+   Checks 1–5 are interpretive — would a reviewer be persuaded. This
+   one is traceability, which is why it's must-address and not a
+   suggestion: with no cited `hypotheses`/`conflicts` entry, no later
+   reader can tell whether an elimination was performed or merely
+   asserted, and the reasoning is lost the moment prose is its only
+   copy.
+
 ### on-demand
 
 **What you are evaluating:** whatever the user asked about. This is
@@ -538,28 +548,51 @@ focused mode matches the current state of the target:
 share", "is it ready to publish" — these are craft requests, and the
 checks below **replace** the GPS checks above rather than adding to
 them. Running both blows the five-check cap and buries the craft
-feedback under evidentiary findings. The target must be a written proof
-summary; if there isn't one, refuse — don't critique the prose of a bare
-question.
+feedback under evidentiary findings.
 
-**Craft findings are always advisory.** Never emit a must-address item
-or an `address_first` verdict from these checks: a write-up can be a
-hard read and still be perfectly defensible, so this is a suggestion,
-not a defect. Put findings in `consider_addressing`, or
-`non_blocking_notes` when they're nits. These have no GPS standard
-behind them, so set `standard` to `Craft — <axis>`, e.g. `Craft —
-audience calibration`. If you notice a real GPS problem while reading
-for craft, report it under its actual standard — that one can still be
+**What you're reading** is a proof summary's `narrative_markdown` —
+prose, nothing else. Don't comment on images, tables, or layout; the
+artifact has none. If there's no proof summary yet, refuse (see the
+refusal table) rather than critique the prose of a bare question.
+
+**Open with the scope sentence — this is required text.** Before the
+`# Mentor review:` heading, state that you read the write-up for how it
+reads and did *not* check whether the evidence holds up, and name
+`proof-critique` as the review that does. Never skip it, however tight
+the response: a researcher who mistakes a style pass for an evidence
+audit is the exact harm this one sentence prevents.
+
+**Findings are advisory — with one exception.** Checks 1–5 never
+produce a must-address item or an `address_first` verdict. Genealogists
+disagree about style, and blocking on taste reads as the tool being
+opinionated about writing. Put them in `consider_addressing`, or
+`non_blocking_notes` when they're nits, and set `standard` to `Craft —
+<axis>`, e.g. `Craft — audience calibration`.
+
+The exception is **source-locatability** below. That one is a
+functional defect, not a matter of taste — the same failure
+proof-critique's check 3 already treats as must-address — and it keeps
+that severity here. Reaching it through a craft request doesn't
+downgrade it. A real GPS problem you notice while reading for craft is
+likewise reported under its actual standard and can still be
 must-address.
+
+**Never say these axis names out loud.** They're internal shorthand.
+You do not tell a researcher you are performing an "audience
+calibration check" — you ask whether their cousin who has never used a
+genealogy site could actually follow this. Write the way a colleague
+talks.
 
 **Rubric checks:**
 
 1. **Audience calibration.** Who is this for, and does the prose behave
    that way? A write-up for a family member shouldn't assume the reader
    knows what a bounty-land warrant is or why Standard 43 matters; one
-   for a genealogical journal shouldn't explain what a census is. Judge
-   against the audience the researcher states — or, if they haven't
-   said, the one the prose implies, and say which you assumed.
+   for a genealogical journal shouldn't explain what a census is. Take
+   the audience from `researcher_profile.intended_audience` if it's
+   set. Only if it's absent, infer it from the prose — and say which
+   audience you assumed, because that inference is the likeliest thing
+   in this review to be wrong.
 
 2. **Context provision.** Does the reader learn enough about the time
    and place to understand *why* things happened? Unexplained
@@ -573,16 +606,28 @@ must-address.
    subjects, and prose that doesn't dissolve into strings of dates.
    Name the passage that lost you.
 
-4. **Verifiability from the prose alone.** Could a reader holding only
-   this document find the sources behind its claims — citations sitting
-   next to the claims they support, not just present somewhere? This is
-   narrower than proof-critique's self-containment check: that one asks
-   whether the *argument* can be followed, this one whether the
-   *sources* can be found.
+4. **Sensitive findings handled with tact.** Where the narrative
+   reports something painful or private — an out-of-wedlock birth, an
+   institutionalization, a criminal record, a suicide — does the prose
+   treat it with the restraint the audience deserves? This is about
+   *handling*, not disclosure: never argue for leaving a documented
+   fact out. Ask whether the sentence a descendant will read was
+   written with care.
 
 5. **Research leads.** Does it tell the reader where to go next? An
    honest write-up names its own remaining gaps and the records still
    worth trying. End with a door, not a wall.
+
+**Source-locatability — always run this one, and it can be
+must-address.** Could a reader holding only this document go look these
+sources up themselves: citations beside the claims they support, with
+enough detail to find the record? Different question from
+proof-critique's check 3 — that asks whether a peer reviewer can trace
+the *argument* back through the assertions, this asks whether a lay
+reader can independently reach the *source*. Claims that lead to no
+findable record are must-address here just as they are there. Citation
+*formatting* — inconsistent style, mixed abbreviations — is not this
+check; that's a nit for `non_blocking_notes`.
 
 ## Tool usage guidance
 

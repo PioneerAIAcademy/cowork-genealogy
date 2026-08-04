@@ -325,6 +325,12 @@ everything a reviewer *might* flag; it names what matters most and stops.
    not performed" is a different failure from this one, where the work was genuinely done but
    never persisted structurally.
 
+   Checks 1–5 are interpretive: would a reviewer be persuaded. This one is a
+   traceability check, which is why it is `must_address` rather than a suggestion —
+   with no cited `hypotheses`/`conflicts` entry, no later reader can tell whether an
+   elimination was actually performed or merely asserted, and the reasoning is lost
+   the moment the prose is the only copy.
+
 ### 6.4 `on-demand`
 
 **What is being evaluated:** Whatever the user asked about. This is the lightest pass — apply
@@ -343,29 +349,55 @@ If the user's request is vague, default to the focus that matches the target's c
 
 When the request is about how a finished write-up **reads** rather than whether it
 holds up — "is this a good read", "polish this for my family", "prepare this to
-share", "is it ready to publish" — apply the five checks below **instead of** the
-GPS rubric above, not in addition to it. The ~five-check cap is unchanged: this is
-a craft read, and stacking it on top of a `proof-critique` pass would blow both the
-cap and the mentor voice. The target must be a written proof summary; if none
-exists, refuse per §9 rather than critique the prose of a bare question.
+share", "is it ready to publish" — apply the checks below **instead of** the GPS
+rubric above, not in addition to it. The ~five-check cap is unchanged: this is a
+craft read, and stacking it on top of a `proof-critique` pass would blow both the
+cap and the mentor voice.
 
-Every narrative-craft finding is **advisory**. These checks never produce a
-`must_address` item and never yield an `address_first` verdict — a write-up can be
-a hard read and still be perfectly defensible, which makes this a suggestion, not
-a defect. Findings go in `consider_addressing` (or `non_blocking_notes` for
-nit-level ones). Because these findings have no GPS standard behind them, the
-`standard` field (§7.4) carries `Craft — <axis>`, e.g. `Craft — audience
-calibration`. A GPS problem noticed incidentally during a craft read is still
-reported under its real standard and may still be `must_address`.
+**What is being read.** The target is a proof summary's `narrative_markdown` — prose
+only. Nothing here evaluates images, tables, or layout, because the artifact has
+none. If no proof summary exists, refuse (§9) rather than critique the prose of a
+bare question; that is the same rule §9 already applies to `proof-critique` on a
+missing `ps_` ID, not a new one.
+
+**Required preamble.** A craft-only run **must** open `narrative_for_user` with a
+sentence stating that the write-up was read for how it reads and **not** checked for
+whether the evidence holds up, and naming `proof-critique` as the review that does
+the latter. This is required text in the sense §7.5's sections are required, not
+guidance the agent may drop: the failure it prevents — a researcher taking a style
+pass for an evidence audit — is the whole risk of running craft checks standalone.
+
+**Severity: advisory, with one exception.** Findings from checks 1–5 are **advisory
+always**. They never produce a `must_address` item and never yield `address_first`:
+reasonable genealogists disagree about style, and blocking on taste reads as the
+tool being opinionated about writing. They go in `consider_addressing`, or
+`non_blocking_notes` when nit-level. Because they have no GPS standard behind them,
+the `standard` field (§7.4) carries `Craft — <axis>`, e.g. `Craft — audience
+calibration`.
+
+The exception is the **source-locatability** check below, which is a functional
+defect rather than a matter of taste — the same failure §6.3's check 3 already
+treats as `must_address`. It keeps that severity when it surfaces through a craft
+request; arriving by a different entry point does not downgrade it. A GPS problem
+noticed incidentally during a craft read is likewise reported under its real
+standard and may still be `must_address`.
+
+**Vocabulary stays internal.** The axis names below are this team's shorthand. They
+must not appear in `narrative_for_user` — the agent never tells a researcher it is
+performing an "audience calibration check". The register to write in is the one a
+colleague would use out loud: "would your cousin who has never used a genealogy
+site actually follow this?"
 
 **Rubric checks (in order):**
 
 1. **Audience calibration.** Who is this written for, and does the prose behave
    that way? A write-up for a family member should not assume the reader knows
    what a bounty-land warrant is or why Standard 43 matters; one intended for a
-   genealogical journal should not over-explain what a census is. Judge against
-   the audience the researcher states, or — if none is stated — the audience the
-   prose itself implies, and say which one was assumed.
+   genealogical journal should not over-explain what a census is. Read the audience
+   from `researcher_profile.intended_audience` when it is set
+   (`research-schema-spec.md` §5.1.1). Only when it is absent, infer the audience
+   from the prose — and say which one was assumed, since an inferred audience is
+   the likeliest thing in this review to be wrong.
 
 2. **Context provision.** Does the reader learn enough about the time and place to
    understand *why* the events happened? Unexplained migrations, occupations, and
@@ -377,15 +409,29 @@ reported under its real standard and may still be `must_address`.
    people rather than as record subjects, and prose that does not dissolve into
    strings of dates. Name the specific passage that lost you.
 
-4. **Verifiability from the prose alone.** Could a reader holding only this
-   document find the sources behind its claims — citations adjacent to the claims
-   they support, not merely present somewhere? This is a narrower question than
-   §6.3's narrative self-containment, which asks whether the *argument* can be
-   followed; this asks whether the *sources* can be located.
+4. **Sensitive findings handled with tact.** Where the narrative reports something
+   painful or private — an out-of-wedlock birth, an institutionalization, a
+   criminal record, a suicide — does the prose treat it with the restraint the
+   stated audience deserves? This is a question about *handling*, not about
+   disclosure: whether to include a finding at all is an evidentiary and ethical
+   decision made elsewhere, and this check never argues for omitting a documented
+   fact. It asks whether the sentence a descendant reads was written with care.
 
 5. **Research leads.** Does the write-up tell the reader where to go next? An
    honest one names its own remaining gaps and the records still worth trying. It
    should end with a door, not a wall.
+
+**Source-locatability (always runs; the one `must_address`-eligible check).** Could
+a reader holding only this document go and look these sources up themselves —
+citations sitting beside the claims they support, with enough detail to find the
+record? This asks a different question than §6.3's check 3: that one asks whether a
+peer reviewer can trace the *argument* back through the assertions, this one whether
+a lay reader can independently reach the *source*. A write-up whose claims cannot be
+followed to a findable record is `must_address` here exactly as it is there.
+Citation *formatting* — inconsistent style, mixed abbreviations, uneven punctuation
+— is not part of this check; it is nit-level and belongs in `non_blocking_notes`. It
+was deliberately not made its own axis, since a professional-looking document is a
+lower-value read than a locatable one.
 
 ---
 
@@ -491,6 +537,9 @@ user-facing output. It must follow this structure:
 — omit this section if must_address is empty]
 ```
 
+For a craft-only `on-demand` run, the required scope sentence of §6.4 comes first —
+before the `# Mentor review:` heading — so the reader meets it before any praise.
+
 ---
 
 ## 8. Output Protocol
@@ -527,6 +576,10 @@ focus. A refusal writes a verdict with `verdict: "refused"` and a one-line
 | `conclusion-readiness` | Question is not at `status: "exhaustive_declared"` | "This question is at status '<current>'. Run pre-exhaustiveness review first, then declare exhaustive via research-exhaustiveness, then return for conclusion-readiness review." |
 | `proof-critique` | No `proof_summaries[id == target_id]` in research.json | "No proof summary with id <target_id> exists. Did you mean conclusion-readiness on a question, or proof-critique on a different ps_id?" |
 | `on-demand`, narrative-craft request (§6.4) | No proof summary exists to read | "There's no written proof summary to read yet, and a craft review needs finished prose. Run proof-conclusion first, then ask me how it reads." |
+
+The narrative-craft row is a direct extension of the `proof-critique` row above it,
+not a fresh decision: both refuse for the same reason — there is no written
+deliverable to review — and both name the skill that produces one.
 
 A refused verdict is still written to `evaluations/` and added to the `evaluations` array
 in `research.json` so the refusal is part of the audit trail.

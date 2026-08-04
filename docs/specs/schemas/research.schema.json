@@ -118,7 +118,11 @@
             ]
           }
         },
-        "narration_guidance": { "type": ["string", "null"] }
+        "narration_guidance": { "type": ["string", "null"] },
+        "intended_audience": {
+          "type": ["string", "null"],
+          "description": "Free text naming who the finished write-ups are for (e.g. \"my cousins, none of them researchers\"; \"submission to NGSQ\"). Read by gps-mentor's narrative-craft checks (gps-mentor-agent-spec.md §6.4) so audience calibration is judged against a stated audience rather than guessed from the prose. Not part of init-project's interview — set by hand, or leave absent and the mentor infers the audience and states which one it assumed."
+        }
       }
     },
     "known_holding": {

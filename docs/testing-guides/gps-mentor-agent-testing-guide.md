@@ -334,6 +334,8 @@ least three to confirm auto-delegation works on varied phrasing:
 - "Second opinion."
 - "Critique my proof."
 - "Am I ready to conclude?"
+- "Is this a good read?" *(craft — see below)*
+- "Polish this for my family." *(craft — see below)*
 
 For each trigger, watch what happens:
 
@@ -410,6 +412,38 @@ action (e.g. "Plan items still in progress: [pli_001]. Complete them
 before pre-exhaustiveness review.") and still write a `refused`
 verdict to disk plus an `ev_NNN` entry — refusals are part of the
 audit trail.
+
+### Verify the narrative-craft path (spec §6.4)
+
+No automated test can cover this — `gps-mentor` is an agent, not a
+skill, so the eval harness has no suite for it. A genealogist reading
+real output is the verification. Run **both** halves; the positive test
+alone does not exercise the refusal.
+
+**Positive.** With a real proof summary in the project, ask:
+
+> "Is this a good read?"
+
+Check that:
+
+- The reply **opens with the scope sentence** — read for how it reads,
+  not for whether the evidence holds up — *above* the
+  `# Mentor review:` heading. A missing scope sentence is a bug, not a
+  stylistic choice.
+- The feedback is genealogical craft advice, not generic writing advice.
+  If it would read the same for a blog post about anything, the wording
+  needs another pass.
+- No axis name from §6.4 appears in the prose ("audience calibration",
+  "source-locatability"). Those are internal shorthand.
+- Style findings land in `consider_addressing` with
+  `standard: "Craft — …"`, and the verdict is **not** `address_first`
+  unless a source-locatability or real GPS problem surfaced.
+
+**Negative.** In a project with no proof summary written yet, ask the
+same question. The agent must refuse cleanly, naming
+`proof-conclusion` as the way to produce something to read — not
+improvise generic advice about writing. A refusal still writes a
+verdict file and an `ev_NNN` entry.
 
 ### What success looks like
 
