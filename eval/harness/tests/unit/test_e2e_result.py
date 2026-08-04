@@ -525,7 +525,7 @@ def test_narration_is_not_interleaved_into_tool_calls(tmp_path: Path):
         captured_at="2026-05-26_14-30-45",
         verdict="pass",
         stop_reason="completed",
-        tool_calls=[{"tool": "a", "args": {}, "response_summary": "x"}],
+        tool_calls=[{"tool": "a", "args": {}, "response_summary": "x", "is_error": False}],
         narration=[{"tool_calls_before": 0, "kind": "assistant", "text": "hi"}],
     )
     paths = write_result_files(
@@ -535,7 +535,12 @@ def test_narration_is_not_interleaved_into_tool_calls(tmp_path: Path):
     payload = json.loads(paths["result"].read_text(encoding="utf-8"))
 
     assert len(payload["tool_calls"]) == 1
-    assert set(payload["tool_calls"][0]) == {"tool", "args", "response_summary"}
+    assert set(payload["tool_calls"][0]) == {
+        "tool",
+        "args",
+        "response_summary",
+        "is_error",
+    }
 
 
 def test_no_transcript_artifact_is_written(tmp_path: Path):
