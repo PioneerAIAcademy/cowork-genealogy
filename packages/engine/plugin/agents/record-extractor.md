@@ -389,7 +389,14 @@ Rules that sharpen the tree:
   answered. Exception: a fact **no possible household respondent** could
   have witnessed — a parent's or grandparent's birthplace — is
   `secondary` regardless of who answered.
-
+- **Exception — residence.** The blanket rule above covers who inside
+  the household answered biographical questions; it does not cover the
+  enumerator's own observation. The enumerator personally visited the
+  dwelling — a known, firsthand witness for the residence fact
+  specifically. Residence stays `informant: census enumerator`,
+  `informant_proximity: witness`, `information_quality: primary` (see
+  the census informant table below). Name, age, birthplace, and
+  relationship on the same record remain governed by the rule above.
 **`informant` and `informant_proximity`** — required on every assertion,
 never omitted. **`informant_proximity`** ∈ `self` | `witness` |
 `household_member` | `family_not_present` | `researcher` |
