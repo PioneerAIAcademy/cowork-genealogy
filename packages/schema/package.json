@@ -10,8 +10,10 @@
     "./schemas/*": "./schemas/*"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit"
+    "generate": "node scripts/gen-enums.mjs",
+    "typecheck": "pnpm generate && tsc --noEmit",
+    "build": "pnpm generate && tsc --noEmit",
+    "postinstall": "pnpm generate"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
