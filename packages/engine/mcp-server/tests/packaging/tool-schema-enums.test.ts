@@ -12,9 +12,16 @@ import { fileURLToPath } from "node:url";
  * advertised schema and the validator can disagree about what the tool accepts,
  * and the model is told the stale set.
  *
- * The rule is mechanical — a literal string array whose value set is exactly a
- * closed enum's value set — so it also catches an enum this test has never
- * heard of, which is the point.
+ * The rule is mechanical — a literal string array whose value set *matches* a
+ * closed enum's — so it also catches an enum this test has never heard of,
+ * which is the point.
+ *
+ * "Matches" is deliberately not "equals". Exact equality only sees a copy while
+ * the copy is still in sync, and goes blind at precisely the moment the header
+ * above describes: a literal that has drifted, or that arrived stale, no longer
+ * equals any enum and vanishes from the report. So a near-miss counts too, and
+ * is the louder failure of the two — an out-of-sync copy is the actual bug,
+ * where an in-sync one is only the bug waiting to happen.
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -51,21 +58,51 @@ interface Hit {
   file: string;
   line: number;
   enumName: string;
+  /** Values the schema has and the literal lacks. Empty on an exact copy. */
+  missing: string[];
+  /** Values the literal has and the schema lacks. Empty on an exact copy. */
+  extra: string[];
 }
 
-/** Every `[ "a", "b", … ]` literal in the file, with its 1-based start line. */
+/**
+ * Every `[ "a", "b", … ]` literal in the file, with its 1-based start line.
+ *
+ * Both quote styles: nothing in this package enforces one (no eslint, no
+ * prettier config, no lint script), so a single-quoted copy would otherwise be
+ * unlintable by construction.
+ */
 function literalArrays(src: string): Array<{ values: Set<string>; line: number }> {
   // Only all-string-literal arrays; anything holding an identifier or a spread
   // already references a shared const and is not a copy.
-  const re = /\[\s*((?:"[^"]*"\s*,\s*)+"[^"]*"\s*,?)\s*\]/g;
+  const re = /\[\s*((?:(["'])[^"']*\2\s*,\s*)+(["'])[^"']*\3\s*,?)\s*\]/g;
   return [...src.matchAll(re)].map((m) => ({
-    values: new Set([...m[1].matchAll(/"([^"]*)"/g)].map((v) => v[1])),
+    values: new Set([...m[1].matchAll(/["']([^"']*)["']/g)].map((v) => v[1])),
     line: src.slice(0, m.index).split("\n").length,
   }));
 }
 
-const sameSet = (a: Set<string>, b: Set<string>) =>
-  a.size === b.size && [...a].every((v) => b.has(v));
+/**
+ * How close a literal must be to a closed enum before it is called a copy of
+ * it, as |intersection| / |union|.
+ *
+ * Measured against the tree as it stands: the two exempt `sex` literals score
+ * 1.00, and the highest score any *other* literal in src/tools reaches is 0.10
+ * (`record-search.ts`'s `recordType` shares only "other" with `holding_type`).
+ * The genuinely tool-local value sets — `operation`, `selector`, `era`,
+ * `["append","update"]` — share nothing with any closed enum at all. So there
+ * is a wide empty band here, and 0.5 sits in the middle of it rather than at
+ * either edge. No allow-list of tool-local enums is needed as a result.
+ */
+const NEAR_MISS = 0.5;
+
+/** Overlap ratio, plus the two directions of difference. */
+function compare(values: Set<string>, schemaValues: Set<string>) {
+  const missing = [...schemaValues].filter((v) => !values.has(v));
+  const extra = [...values].filter((v) => !schemaValues.has(v));
+  const shared = schemaValues.size - missing.length;
+  const union = new Set([...values, ...schemaValues]).size;
+  return { missing, extra, shared, ratio: shared / union };
+}
 
 describe("tool input schemas reference VALIDATOR_ENUMS, not hand-typed values", () => {
   const enums = closedEnums();
@@ -76,7 +113,11 @@ describe("tool input schemas reference VALIDATOR_ENUMS, not hand-typed values", 
     const src = readFileSync(join(toolsDir, file), "utf8");
     for (const { values, line } of literalArrays(src)) {
       for (const [enumName, schemaValues] of enums) {
-        if (sameSet(values, schemaValues)) hits.push({ file, line, enumName });
+        // `shared >= 2` keeps a two-value enum from matching on one word.
+        const { missing, extra, shared, ratio } = compare(values, schemaValues);
+        if (shared >= 2 && ratio >= NEAR_MISS) {
+          hits.push({ file, line, enumName, missing, extra });
+        }
       }
     }
   }
@@ -102,7 +143,23 @@ describe("tool input schemas reference VALIDATOR_ENUMS, not hand-typed values", 
   it("no unexempted literal re-types a closed enum", () => {
     const offenders = hits
       .filter((h) => !EXEMPT.some((e) => e.file === h.file && e.enumName === h.enumName))
-      .map((h) => `src/tools/${h.file}:${h.line} re-types \`${h.enumName}\` — use [...VALIDATOR_ENUMS.${h.enumName}]`);
+      .map((h) => {
+        const where = `src/tools/${h.file}:${h.line}`;
+        const use = `use [...VALIDATOR_ENUMS.${h.enumName}]`;
+        if (h.missing.length === 0 && h.extra.length === 0) {
+          return `${where} re-types \`${h.enumName}\` — ${use}`;
+        }
+        // Already out of sync: the advertised schema and the validator disagree
+        // about what the tool accepts RIGHT NOW, so say so rather than filing it
+        // under the same "don't copy" heading.
+        const drift = [
+          h.missing.length ? `missing ${h.missing.map((v) => `"${v}"`).join(", ")}` : "",
+          h.extra.length ? `has extra ${h.extra.map((v) => `"${v}"`).join(", ")}` : "",
+        ]
+          .filter(Boolean)
+          .join("; ");
+        return `${where} is a STALE copy of \`${h.enumName}\` (${drift}) — the model is being told the wrong set; ${use}`;
+      });
     expect(offenders).toEqual([]);
   });
 });
