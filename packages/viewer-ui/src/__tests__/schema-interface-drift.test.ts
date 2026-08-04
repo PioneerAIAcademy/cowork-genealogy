@@ -32,7 +32,6 @@ const source = readFileSync(join(repoRoot, 'packages', 'schema', 'src', 'index.t
 
 /** `$defs` name → the TS interface name, where PascalCase isn't the answer. */
 const RENAMED: Record<string, string> = {
-  external_site_detail: 'ExternalSite',
   person_evidence_entry: 'PersonEvidence',
 }
 

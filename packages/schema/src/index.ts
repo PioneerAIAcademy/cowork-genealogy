@@ -15,7 +15,7 @@ import type {
   HoldingType, HypothesisStatus, InformantProximity, InformationQuality,
   LogOutcome, PersonEvidenceConfidence, PlanItemStatus, PlanStatus, Priority,
   ProjectStatus, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
-  SourceClassification, Severity,
+  SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
 } from './enums.generated.js'
 
 // These are defined inline in research.schema.json rather than in
@@ -120,8 +120,8 @@ export interface Plan {
   items: PlanItem[]
 }
 
-export interface ExternalSite {
-  site: string
+export interface ExternalSiteDetail {
+  site: ExternalSite
   url_generated: string
   capture_received: boolean
   capture_filename: string | null
@@ -138,7 +138,7 @@ export interface LogEntry {
   results_ref?: string | null
   results_available?: number | null
   notes: string | null
-  external_site: ExternalSite | null
+  external_site: ExternalSiteDetail | null
 }
 
 export interface CitationDetail {
@@ -231,7 +231,7 @@ export interface Hypothesis {
 
 export interface TimelineEvent {
   date: string
-  date_certainty: string
+  date_certainty: DateCertaintyTimeline
   event_type: string
   place: string | null
   /** Standardized place-name sidecar of `place`, resolved via place_search. */
