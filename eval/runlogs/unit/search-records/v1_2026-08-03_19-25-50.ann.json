@@ -679,16 +679,16 @@
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 1,
-      "corrected_score": 1,
-      "comment": null
+      "corrected_score": 3,
+      "comment": "The skill answered the planning question without executing a search or modifying the research project. While the ideal behavior would have been a clean handoff to research-plan, under this invariant-based test the required behavior was satisfied. [Restored in the PR #1097 review from the v1_2026-08-01_13-11-14 annotation, which corrected the identical judge score on this test; not re-adjudicated in this pass.]"
     },
     {
       "test_id": "ut_search_records_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 1,
-      "corrected_score": 1,
-      "comment": null
+      "corrected_score": 3,
+      "comment": "The skill did not execute any record_search, create search logs, or write results. This was a planning request, not a search request, so the invariant is satisfied. The response stayed within planning/advice rather than performing a search. [Restored in the PR #1097 review from the v1_2026-08-01_13-11-14 annotation, which corrected the identical judge score on this test; not re-adjudicated in this pass.]"
     },
     {
       "test_id": "ut_search_records_011",
