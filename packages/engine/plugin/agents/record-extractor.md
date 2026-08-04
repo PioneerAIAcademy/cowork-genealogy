@@ -422,6 +422,11 @@ reporting, secondhand relay, social pressure, duress.
 | Name/age/birthplace (child) | unknown household member (likely a parent) | household_member | a child of N could not report own birth info |
 | Occupation (stated) | unknown household member (likely the worker or spouse) | household_member | |
 | Residence | census enumerator | witness | enumerator visited the dwelling |
+Census residence (record_role any, fact_type: residence, attribute: place) → information_quality: primary.
+informant known? Yes, the enumerator. Did they have firsthand knowledge of this fact? Yes — they personally observed who was living at the dwelling on census day.
+Already consistent with the census informant table in record-extractor.md (line 424: enumerator, witness); 
+Marriage-record parents' names, self-reported by the party (record_role: father_of_groom/mother_of_groom/father_of_bride/mother_of_bride, 
+fact_type: name, informant proximity self) → information_quality: primary. 
 | Relationship (pre-1880) | none — inferred from household position | researcher | no relationship column exists; nobody reported it — the inference is the researcher's, so no record informant exists (same convention as negative evidence) |
 | Relationship (1880+, stated) | unknown household member (likely the head or spouse) | household_member | a household member answered the relationship-to-head column with firsthand knowledge → the stated relationship is `direct` (the 1880-onward rule below), not inferred from position |
 
