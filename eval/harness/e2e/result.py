@@ -36,10 +36,14 @@ from typing import Any
 # `axes_from_runlog` has to do for pre-v1 logs (see that function).
 #   1 — the three-axis split: top-level `compliance` / `outcome` /
 #       `guardrail_bypass_violations` (GitHub issue #972).
-#   2 — `narration` replaces the `.transcript.md` artifact. A v1 run has no
-#       `narration` key and no transcript to fall back on if it was pruned;
-#       readers must treat it as absent, not empty-by-choice.
-HARNESS_SCHEMA_VERSION = 2
+#
+# A change readers can detect from the payload itself does NOT need a bump.
+# `narration` replacing `.transcript.md` is one: the field is a dataclass
+# `default_factory=list` and the writer emits `asdict(result)`, so every run
+# log written since carries the key and every earlier one lacks it. Branch on
+# `"narration" in data`, not on a version. Bump only when a key keeps its name
+# and type while its MEANING changes — that is the case with no structural tell.
+HARNESS_SCHEMA_VERSION = 1
 
 
 @dataclass
