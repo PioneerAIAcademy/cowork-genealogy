@@ -66,7 +66,7 @@ class MockAgent:
                 "objective": None, "log_seq": 0}
 
     def _save_state(self) -> None:
-        (self.dir / STATE_FILE).write_text(json.dumps(self.state, indent=2))
+        (self.dir / STATE_FILE).write_text(json.dumps(self.state, indent=2), encoding="utf-8")
 
     def _read_research(self) -> dict | None:
         p = self.dir / "research.json"
@@ -78,7 +78,7 @@ class MockAgent:
         return None
 
     def _write_research(self, data: dict) -> None:
-        (self.dir / "research.json").write_text(json.dumps(data, indent=2))
+        (self.dir / "research.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
 
     async def interrupt(self) -> bool:
         """The scripted mock has no external call to abort — it cannot self-stop,
@@ -198,7 +198,7 @@ class MockAgent:
                 "facts": [],
             }],
             "relationships": [], "sources": [],
-        }, indent=2))
+        }, indent=2), encoding="utf-8")
         yield _event("tool_result", tool="init_project",
                      summary="research.json + tree.gedcomx.json created")
         yield _event("text", text=(
@@ -258,7 +258,7 @@ class MockAgent:
         }
         results_dir = self.dir / "results"
         results_dir.mkdir(exist_ok=True)
-        (results_dir / f"{log_id}.json").write_text(json.dumps(sidecar, indent=2))
+        (results_dir / f"{log_id}.json").write_text(json.dumps(sidecar, indent=2), encoding="utf-8")
 
         # Append a log entry + source + assertion to research.json.
         research.setdefault("log", []).append({
