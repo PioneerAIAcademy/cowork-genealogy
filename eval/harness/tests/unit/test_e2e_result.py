@@ -383,7 +383,7 @@ def test_the_known_detector_era_runlogs_are_still_identified():
     assert known_detector_era <= fingerprinted
 
 
-def test_no_committed_runlog_is_reported_compliance_pass():
+def test_no_pre_v1_runlog_is_reported_compliance_pass():
     """Corollary of the above, and the correction that matters most: every
     **pre-v1** log resolves to `fail` or `not_checked`, never a bare `pass`.
     The only run that could have claimed `pass` (bagley-father-1884) is one we
@@ -409,7 +409,7 @@ def test_no_committed_runlog_is_reported_compliance_pass():
         assert compliance in {"fail", "not_checked"}, path
 
 
-def test_the_gate_reproduces_todays_fused_verdict_across_the_whole_corpus():
+def test_the_gate_reproduces_todays_fused_verdict_across_the_pre_v1_corpus():
     """Behavior-preservation proof for the exit-code change, scoped to the
     **pre-v1** corpus that existed when the split landed.
 
