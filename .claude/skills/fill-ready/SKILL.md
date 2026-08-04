@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at three standing depths — ~10 unassigned developer tasks, ~10 unassigned genealogist tasks, 1-2 items assigned to the lead — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: the team's developers are juniors working with Claude Code, so senior-required work goes to the lead. Gates the developer shortlist through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at three standing depths — ~10 unassigned developer tasks, ~10 unassigned genealogist tasks, 1-2 items assigned to the lead — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: the team's developers are juniors working with Claude Code, so senior-required work goes to the lead. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates the developer shortlist through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -44,6 +44,31 @@ Two labels carry the routing:
 |---|---|
 | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
 | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose, prepared doctrine questions |
+
+**`feedback` items are fixed in Ready, and they displace.** An issue labelled
+`feedback` is a user's bug report, filed automatically into Ready by
+`add-to-project.yml`. It counts toward the ~10 unassigned `genealogist` target
+exactly like any other `genealogist` item, and you never move it — never promote
+one from Backlog, never return one to Backlog, never unassign one. **Anyone on
+the roster may claim a `feedback` item**, so a developer holding one is not a
+mis-route.
+
+Because a `feedback` item cannot be the loser of a swap, **every return to
+Backlog comes from the non-`feedback` members of the pool.** Over target, return
+the lowest-ranked non-`feedback` genealogist items until the pool is at target —
+and when `feedback` alone reaches ~10, that means all of them. Ten feedback items
+and four `test <slug>` items in Ready is fourteen against a target of ten: the
+four go back. Name them and say why, as with any swap.
+
+**Under target, nothing about `feedback` changes how you promote.** Six feedback
+items in Ready is a pool of six against a target of ten, so promote the best four
+genealogist items out of Backlog as usual. A quiet feedback week is when the rest
+of the genealogist queue moves.
+
+§7 may close a `feedback` item — a duplicate submission, one that doesn't
+reproduce, junk — and that is the only way one leaves Ready. Never propose
+closing one on age or body length; a four-line body and a Drive link is what
+every one of them looks like.
 
 **Exclude `label:icebox` from the Backlog when ranking.** Those are candidates
 with no decision behind them, filed there deliberately; `/review-icebox` owns
@@ -320,10 +345,10 @@ Deprioritise, explicitly and out loud: anything downstream of a broken
 measurement (assigning it buys numbers nobody can read), and anything whose
 cost is a paid eval run that a nearby issue is about to spend anyway.
 
-## 3. The three gates — nothing enters Ready that fails one
+## 3. The four gates — nothing enters Ready that fails one
 
 A Ready item must be startable *today* by one person who reads only that issue.
-Check all three. They fail differently and the distinction matters.
+Check all four. They fail differently and the distinction matters.
 
 ### Gate 1 — hard blocker
 
@@ -365,10 +390,12 @@ is often the strongest argument for the lead's own queue.
 
 ### Gate 3 — soft collision (does *not* disqualify)
 
-Two items that edit the same files, or contend for the same paid eval run, are
-sequenced, not blocked. Promote them — but the pairing has to survive into the
-issues themselves, because the two people who pick them up will never read your
-report.
+Two items that edit the same files are sequenced, not blocked. Promote them — but
+the pairing has to survive into the issues themselves, because the two people who
+pick them up will never read your report.
+
+**Contention over a skill's eval snapshot is the exception and is Gate 4** — that
+one is hard, because the second item cannot land without paying for a second run.
 
 **Write a reciprocal note at the top of both bodies** — below a `> **Reviewed …**`
 marker if `/review-ready` already left one — in the lead's own form:
@@ -392,9 +419,55 @@ Match the wording to the relationship:
 |---|---|
 | One change split in two — do together | "If you do this, do #N at the same time." |
 | Same files, must be ordered | "Do #N first — it threads the same five write paths." |
-| Contend for one paid eval run | "Batch with #N — landing them separately costs two runs." |
 
 Then say it in your report as well, so the lead can hand both to one person.
+
+### Gate 4 — the skill's eval slot is already taken
+
+**At most one item touching a given skill's eval snapshot may be outside Backlog
+at a time.** If one is already in Ready, In Progress or Review, the next one is
+not Ready — leave it in Backlog and name the holder.
+
+*Why it is hard rather than soft.* A skill's run log goes inactive the moment any
+file under its snapshot changes, so two such items cannot share a run however they
+are sequenced: each pays its own `make eval-skill` **plus a fresh `.ann.json` with
+a correction entry for every dimension of every test** — 27 tests for
+`record-extraction`. The second item also invalidates the first's run log if it
+lands first, so promoting both produces rework, not parallelism. PRs #929 and #924
+both edited `search-records/SKILL.md` concurrently; that is the failure.
+
+**The snapshot set — an item takes the slot only if it changes one of these:**
+
+- `packages/engine/plugin/skills/<skill>/**` — including `references/` and comments
+- `eval/tests/unit/<skill>/**` — `rubric.md` and the test JSON
+- `packages/engine/plugin/agents/<agent>.md` for an agent the skill references via
+  `@plugin:` — that gates **every** skill naming it, so check the fan-out:
+  `grep -rl "@plugin:<agent>" packages/engine/plugin/skills/*/SKILL.md`
+
+**Key it on paths, not on the skill's name in the title.** PR #1017 and PR #1196
+are both titled `record-extraction:`; only #1017 touches the snapshot. #1073's own
+DoD says *not* to edit `search-records/SKILL.md` — a tool fix does not take the
+skill's slot. The issue's `**Touches:**` line is the fastest read; fall back to
+the body's file citations.
+
+Find the current holder:
+
+```sh
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open \
+  --search "<skill> -label:icebox" --json number,title,assignees
+gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open \
+  --json number,title,files \
+  --jq '.[] | select(any(.files[].path; test("plugin/skills/<skill>/|tests/unit/<skill>/"))) | .number'
+```
+
+**Reclaim a stalled slot.** A holder that has not moved in ~10 days is blocking a
+whole skill. Say so in your report with the assignee and the idle count, and
+propose returning it to Backlog so the next item can go. Do not reclaim silently —
+it is the lead's call, and today's board carries several week-old cards.
+
+**A queue three or more deep is a finding, not a schedule.** Report it. The fix is
+to merge those issues into fewer, larger ones so one run carries what would have
+been three — that happens in `/audit-board`, not here. Note it and move on.
 
 ## 4. Split before you promote
 
@@ -423,6 +496,15 @@ Split when any of these holds:
 
 Do **not** split for size alone. Three edits to one file by one person is one
 task; splitting it triples the review and merge cost for nothing.
+
+**Do not split one skill-snapshot item into two.** Under Gate 4 the halves cannot
+run in parallel, and landing them sequentially buys a second paid run plus a
+second full annotation pass for work that would have shared one. Split only when
+**at most one half touches the snapshot** — which is usually what the criteria
+above already select for. #1004 is the model: its doctrine question ("is a census
+residence fact primary or indeterminate?") touches nothing and is answerable by a
+genealogist today, while its mechanical half — adding the matchers once the answer
+exists — merges into whichever record-extraction item next takes the slot.
 
 How:
 
@@ -466,7 +548,8 @@ gh project item-edit --id "$ITEM_ID" --project-id "$PROJ_ID" \
 
 Verify with a fresh `gh project item-list`. New issues land in Backlog via an
 auto-add workflow that sets nothing else — a freshly filed issue that belongs in
-Ready still needs this move.
+Ready still needs this move. (The exception is a `feedback` item, which the same
+workflow files directly into Ready and which you never move at all.)
 
 **Gate the unassigned `developer` shortlist through `/review-ready` before you
 promote it.** Your seniority test (§1) is a pre-filter read off the issue body;
@@ -696,6 +779,10 @@ list it does not appear in. Add state when it matters.
    the senior items queued behind it, in the order you would take them.
 6. **Held back, and why** — the items that failed a gate, named with the gate.
    This is the section that stops the lead re-asking about them tomorrow.
+6b. **Skill slots** — one line per skill with anything in flight: the holder, its
+   idle days, and how many are queued behind it. Flag a holder idle ~10 days as a
+   reclaim proposal, and a queue three or more deep as a merge candidate for
+   `/audit-board`. Skip the heading when every slot is free.
 7. **Grooming** — capped, with verdicts.
 
 Then stop and wait for approval. Apply only what he approves, re-reading the

@@ -42,6 +42,28 @@ describe("results-staging", () => {
       expect(typeof envelope.retrieved).toBe("string");
     });
 
+    it("persists the payload verbatim, key order included", async () => {
+      // Verbatim is the contract (search-result-staging-spec.md). Withholding a
+      // caller's advisory field is the CALLER's job — record_search does it by
+      // passing a copy — so this transport, shared by three tools, must not know
+      // one caller's field names.
+      //
+      // Key order asserted on the serialized text, not with toEqual, which is
+      // order-insensitive and would pass against a payload rebuilt in any order.
+      const response = {
+        query: { surname: "Smith" },
+        totalMatches: 1,
+        results: [{ recordId: "R1" }],
+      };
+      const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response });
+
+      const text = await readFile(join(dir, handle!.resultsRef), "utf-8");
+      const envelope = JSON.parse(text);
+      expect(envelope.payload).toEqual(response);
+      expect(text.indexOf('"query"')).toBeLessThan(text.indexOf('"totalMatches"'));
+      expect(text.indexOf('"totalMatches"')).toBeLessThan(text.indexOf('"results"'));
+    });
+
     it("returns null and writes nothing for a nil search", async () => {
       const handle = await stageSearchResults({
         projectPath: dir,

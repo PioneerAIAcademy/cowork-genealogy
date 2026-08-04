@@ -6,6 +6,7 @@ two implementations are forced to agree byte-for-byte.
 """
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -183,6 +184,53 @@ def test_build_snapshot_skips_missing_skill(tmp_path: Path):
     assert snap == {}
 
 
+def _skill_repo(tmp_path: Path, body: str = "body\n") -> Path:
+    """Minimal repo with one skill whose SKILL.md holds `body`."""
+    skill_dir = tmp_path / "packages" / "engine" / "plugin" / "skills" / "s1"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text(body, encoding="utf-8")
+    return tmp_path
+
+
+def test_build_snapshot_stores_hashes_not_content(tmp_path: Path):
+    """schema_version 3: values are sha256 digests, not file bytes. Git holds
+    the content; the snapshot only has to answer "does this still match?"."""
+    repo = _skill_repo(tmp_path, "---\nname: s1\n---\nhello\n")
+    snap = build_snapshot(skill="s1", repo_root=repo)
+
+    rel = "packages/engine/plugin/skills/s1/SKILL.md"
+    assert snap[rel] == hash_content("---\nname: s1\n---\nhello\n")
+    assert all(re.fullmatch(r"[a-f0-9]{64}", v) for v in snap.values())
+
+
+def test_diff_snapshot_hashed_matches_and_detects_drift(tmp_path: Path):
+    """A hashed snapshot compares clean against the tree it was built from,
+    and flags the path once the file changes."""
+    repo = _skill_repo(tmp_path, "original\n")
+    snap = build_snapshot(skill="s1", repo_root=repo)
+    assert diff_snapshot_vs_disk(snap, repo) == {}
+
+    (repo / "packages/engine/plugin/skills/s1/SKILL.md").write_text(
+        "edited\n", encoding="utf-8"
+    )
+    assert diff_snapshot_vs_disk(snap, repo) == {
+        "packages/engine/plugin/skills/s1/SKILL.md": "content-differs"
+    }
+
+
+def test_diff_snapshot_still_reads_legacy_content_snapshot(tmp_path: Path):
+    """Pre-3 run logs stored normalized content. They must keep evaluating
+    correctly so in-flight branches and unmigrated worktrees aren't stranded."""
+    repo = _skill_repo(tmp_path, "original\n")
+    rel = "packages/engine/plugin/skills/s1/SKILL.md"
+
+    legacy = {rel: "original\n"}  # content, not a digest
+    assert diff_snapshot_vs_disk(legacy, repo) == {}
+
+    (repo / rel).write_text("edited\n", encoding="utf-8")
+    assert diff_snapshot_vs_disk(legacy, repo) == {rel: "content-differs"}
+
+
 def test_build_snapshot_embeds_referenced_agent_files(tmp_path: Path):
     """A `@plugin:<name>` reference in SKILL.md embeds the agent's .md —
     editing the agent prompt must flip the run log inactive, exactly like
@@ -205,7 +253,7 @@ def test_build_snapshot_embeds_referenced_agent_files(tmp_path: Path):
 
     snap = build_snapshot(skill="router", repo_root=repo)
     assert "packages/engine/plugin/agents/record-extractor.md" in snap
-    assert snap["packages/engine/plugin/agents/record-extractor.md"] == (
+    assert snap["packages/engine/plugin/agents/record-extractor.md"] == hash_content(
         "---\nname: record-extractor\n---\nagent body\n"
     )
     # Unreferenced agents are NOT embedded.

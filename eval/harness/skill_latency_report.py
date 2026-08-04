@@ -43,6 +43,17 @@ import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from harness.snapshot import hash_snapshot, is_hashed_snapshot
+from harness.since_window import (
+    add_since_arg,
+    age_in_days,
+    describe_stale,
+    describe_window,
+    filter_since,
+    run_date,
+    staleness_cutoff,
+)
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -69,6 +80,11 @@ class SkillLatency:
 
     # test_id -> {"output_tokens": int, "num_turns": int|None, "outcome": str}
     per_test: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+    # Age of the run log this row came from, when it is over the staleness
+    # window. Set by the --all caller, not derived from the envelope: this is a
+    # presentation fact (mark the row, sort it last), and analyze_runlog is pure.
+    stale_days: int | None = None
 
 
 def analyze_runlog(runlog: dict[str, Any], source_file: str | None = None) -> SkillLatency:
@@ -122,11 +138,17 @@ def _test_snapshot_keys(runlog: dict[str, Any], skill: str) -> dict[str, str]:
 
 
 def same_test_inputs(before: dict[str, Any], after: dict[str, Any], skill: str) -> bool:
-    """True iff both run logs embed byte-identical test-side snapshots.
+    """True iff both run logs embed equivalent test-side snapshots.
 
     When False, a token diff between the two conflates prose changes with test
     changes and must be read per-test rather than in aggregate. Returns False if
     either log carries no test-side snapshot (can't prove stability).
+
+    Mixed shapes are aligned first: `schema_version` 3 stores sha256 digests,
+    pre-3 stored normalized content, and comparing one of each by equality
+    reports every path modified — so an unmigrated `--before` would silently
+    downgrade every diff to per-test reading. Mirrors `alignSnapshots` in
+    eval/app/lib/compare.ts. Drop the alignment once no pre-3 run log remains.
 
     (Not named ``test_*`` on purpose — that prefix makes pytest try to collect
     it as a test case.)
@@ -135,6 +157,9 @@ def same_test_inputs(before: dict[str, Any], after: dict[str, Any], skill: str) 
     a = _test_snapshot_keys(after, skill)
     if not b or not a:
         return False
+    if is_hashed_snapshot(b) != is_hashed_snapshot(a):
+        b = b if is_hashed_snapshot(b) else hash_snapshot(b)
+        a = a if is_hashed_snapshot(a) else hash_snapshot(a)
     return b == a
 
 
@@ -251,8 +276,9 @@ def format_skill(sl: SkillLatency) -> str:
         f"{sl.output_tokens / sl.num_turns:.0f}/turn"
         if sl.num_turns else "n/a/turn"
     )
+    stale = f"  [STALE {sl.stale_days}d]" if sl.stale_days is not None else ""
     lines = [
-        f"=== {sl.skill}  ({Path(sl.source_file).name if sl.source_file else '?'}) ===",
+        f"=== {sl.skill}  ({Path(sl.source_file).name if sl.source_file else '?'}) ==={stale}",
         f"  tests: {sl.n_tests}   output tokens: {sl.output_tokens}   turns: {turns}   ({per_turn})",
         f"  cost: ${sl.total_cost_usd}" if sl.total_cost_usd is not None else "  cost: n/a",
     ]
@@ -302,16 +328,17 @@ def format_diff(d: LatencyDiff) -> str:
 
 def format_markdown_table(sls: list[SkillLatency]) -> str:
     header = (
-        "| skill | tests | output tokens | turns | tok/turn | cost |\n"
-        "|---|---|---|---|---|---|"
+        "| skill | tests | output tokens | turns | tok/turn | cost | stale |\n"
+        "|---|---|---|---|---|---|---|"
     )
     rows = []
     for sl in sls:
         per_turn = f"{sl.output_tokens / sl.num_turns:.0f}" if sl.num_turns else "n/a"
         turns = sl.num_turns if sl.num_turns is not None else "n/a"
         cost = f"${sl.total_cost_usd:.2f}" if sl.total_cost_usd is not None else "n/a"
+        stale = f"STALE {sl.stale_days}d" if sl.stale_days is not None else ""
         rows.append(
-            f"| {sl.skill} | {sl.n_tests} | {sl.output_tokens} | {turns} | {per_turn} | {cost} |"
+            f"| {sl.skill} | {sl.n_tests} | {sl.output_tokens} | {turns} | {per_turn} | {cost} | {stale} |"
         )
     return "\n".join([header, *rows])
 
@@ -324,12 +351,18 @@ def _is_releasable_runlog(p: Path) -> bool:
     return n.startswith("v") and n.endswith(".json") and not n.endswith(".ann.json")
 
 
-def releasable_runlogs_for(skill: str) -> list[Path]:
-    """All releasable run logs for a skill, oldest-first (filename sorts by version+ts)."""
+def releasable_runlogs_for(skill: str, cutoff=None) -> list[Path]:
+    """All releasable run logs for a skill, oldest-first (filename sorts by version+ts).
+
+    Windowed by `cutoff` (see harness.since_window): a run log older than the
+    window describes prose that has since changed, so comparing against it
+    reports a delta nobody can act on.
+    """
     d = UNIT_RUNLOGS / skill
     if not d.is_dir():
         return []
-    return sorted((p for p in d.iterdir() if _is_releasable_runlog(p)), key=lambda p: p.name)
+    out = sorted((p for p in d.iterdir() if _is_releasable_runlog(p)), key=lambda p: p.name)
+    return filter_since(out, cutoff)
 
 
 def all_skills() -> list[str]:
@@ -361,6 +394,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--after", help="explicit after run-log path (with --before)")
     ap.add_argument("--all", action="store_true", help="table of latest run log per skill")
     ap.add_argument("--markdown", action="store_true", help="emit a Markdown table (with --all)")
+    add_since_arg(ap, default="all")
     args = ap.parse_args(argv)
 
     # Explicit / positional diff.
@@ -375,9 +409,14 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if args.skill:
-        logs = releasable_runlogs_for(args.skill)
+        logs = releasable_runlogs_for(args.skill, cutoff=args.since)
         if not logs:
-            print(f"No releasable run logs for skill '{args.skill}'.", file=sys.stderr)
+            print(
+                f"No releasable run logs for skill '{args.skill}' in the window "
+                f"({len(releasable_runlogs_for(args.skill))} outside it). "
+                f"Pass --since all to include them.",
+                file=sys.stderr,
+            )
             return 1
         if args.vs_prev:
             if len(logs) < 2:
@@ -390,10 +429,28 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.all:
         sls = []
+        n_total = 0
+        stale_at = staleness_cutoff()
+        stale: list[tuple[str, Any]] = []
         for skill in all_skills():
-            logs = releasable_runlogs_for(skill)
+            n_total += 1 if releasable_runlogs_for(skill) else 0
+            logs = releasable_runlogs_for(skill, cutoff=args.since)
             if logs:
-                sls.append(analyze_runlog(_load(logs[-1]), str(logs[-1])))
+                sl = analyze_runlog(_load(logs[-1]), str(logs[-1]))
+                d = run_date(logs[-1])
+                if d is not None and d < stale_at:
+                    sl.stale_days = age_in_days(d)
+                    stale.append((skill, d))
+                sls.append(sl)
+        # Stale rows sort last so a skim reaches the trustworthy numbers first —
+        # same treatment eval-timings gives them. Filtering instead would delete
+        # the skill from a one-row-per-skill report, hiding that it needs a re-run.
+        sls.sort(key=lambda s: (s.stale_days is not None, s.skill))
+        if args.since is not None:
+            print(describe_window(args.since, n_runs=len(sls), n_total=n_total))
+        if (note := describe_stale(stale)):
+            print(note)
+            print()
         if args.markdown:
             print(format_markdown_table(sls))
         else:
