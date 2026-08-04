@@ -29,6 +29,75 @@ match strength.
 
 ## Notes for reviewers
 
-**Resolved: false match, no findable substitute.** This fixture came from a hint batch (`filtered-list-samples.csv` row 11, flags `adds_father`/`adds_mother`, confidence 3) in which roughly half the hint records are false matches. The genealogist reviewed both the tree person and the hint record and confirmed this is one of them.
+**Resolved 2026-07-31 — the hint is a false match, and no record answers the
+question.** This fixture came from a hint batch (`filtered-list-samples.csv`
+row 11, flags `adds_father`/`adds_mother`, confidence 3) in which roughly half
+the records are false matches. This is one of them. `expected-findings.json` is
+now a restraint test: an `avoid` finding on the hint's claim, plus a `required`
+finding that the report documents the negative conclusion.
 
-**Why it's rejected:** the tree records no birth or baptismal date at all for Elisabetha Sugecz directly, but it does record her children — and her last recorded child, Andreas Harmiczar, was baptized 8 October 1837 (`ark:/61903/1:1:QKMN-LM5B`) in the same parish (Madžarevo, Varaždin). A birth in 1786, per the hint's baptismal entry, would make Elisabetha about 51 years old at that 1837 birth — not a credible age for the mother of record still bearing children into the 1830s. The exact surname and parish match make the hint a plausible-looking candidate on its face, but the age-implausibility it creates against her own documented childbearing rules it out. No substitute baptism or marriage establishing her actual parents was found anywhere in Croatia, Church Books, 1516-1994 for the Madžarevo, Varaždin parish register series across the date range her documented life spans; that absence has no ark to cite by definition (spec §3.6.1) and stands as the negative conclusion alongside the disproving 1837 record, which does.
+**What refuted the hint.** The hint record (`1:1:QKMN-XYBK` — baptism 14 August
+1786, Madžarevo, parents Thomæ Sugecz and Susanæ Petrich) cannot be this woman,
+on age. Her own attached sources place nine children's baptisms at **Remetinec**
+between 1816 and 1837, and the 8 October 1837 baptism of Andreas Harmiczar
+(`1:1:QKMN-LM5B`, attached in the tree to G4C9-Y6C) names Elizabethæ Sugecz,
+wife of Thomæ Harmiczar, as his mother. An August 1786 baptism would put her at
+**51** at that birth and 49 at Sophia's in 1836. Working back instead from a
+sourced 1816 first child and a sourced 1837 last child places her own birth
+around 1793–1798. The original draft note weighed 1786 only against the "abt
+1814" marriage (age 28, plausible) and never tested it against the later
+children — that omission is what made the hint look strong.
+
+Two secondary checks point the same way. The record's own "Possible Tree Match"
+is **LK25-1K1**, a bare September-2015 FamilySearch extraction stub with no
+spouse, no children and no sources (parents likewise stubs, LK25-129 /
+LK25-12S), so the hint cannot be rescued as an unmerged duplicate of
+G4C9-Y6C — and FS lists no possible duplicates for either. Place also diverges:
+the hint is Madžarevo, every one of her children's baptisms is Remetinec, and
+her profile's "Madžarevo" marriage place carries no attached source at all.
+
+**Why no substitute answer was encoded.** Searching *Croatia, Church Books,
+1516-1994* for children of Thomæ Sugecz and Susanæ Petrich (Varaždin,
+1780–1802) returns exactly two: Margaritha, 17 June 1783, and the Elisabetha of
+1786 — so that couple has no later daughter of the right age, and the hint's
+*parents* are wrong, not merely its record. A wider name search surfaces four
+Madžarevo baptisms of an Elisabetha Sugecz, and two survive the age test:
+
+| Baptism | Parents | Verdict |
+|---|---|---|
+| 14 Aug 1786 (`1:1:QKMN-XYBK`) | Thomæ Sugecz + Susanæ Petrich | refuted — 51 at the 1837 birth |
+| 15 Nov 1795 (`1:1:QKMN-XK63`) | Geor Sugecz + a Catharina | age fits (21 in 1816, 42 in 1837); **unlinked** |
+| 9 Nov 1796 (`1:1:QKMN-FHFV`) | Mathiæ Suyecz + Marianæ K??piar | age fits (20 in 1816, 40 in 1837); **unlinked** |
+| 28 Sep 1810 | Thomæ Sugecz + Hellenæ | impossible — age 6 at the 1816 first child |
+
+Search the surname loosely. The 1796 entry is indexed under **`Suyecz`** — a
+g/y misreading of the same hand — so a `Sugecz`-only query misses it, which is
+how the first pass of this adjudication came up with three candidates instead
+of four. Neither age-plausible candidate is linked to the subject by any
+record, so the fourth widens the ambiguity rather than resolving it.
+
+The 1795 entry is already attached to a *different* tree person, **G4N9-RHT**
+(Elisabetha Žugec, parents Georgius Žugec `G4CX-3LJ` and Catharina `G4CX-3LG`,
+five siblings 1799–1811), who has **no spouse and no children** — so she is a
+loose end, not a duplicate of the subject, and nothing links her onward to
+Thomas Pofuk-Harmicar. Her mother's surname is unrecorded in both the index
+(`Cath Sug??`) and the tree, which would make a thin expected finding even if
+the identification were sound.
+
+**What was searched and came up empty:** no indexed marriage entry exists for
+Thomas Pofuk / Poffuk / Harmicar / Harmiczar with Elisabetha Sugecz / Žugec at
+Madžarevo or Remetinec, 1812–1816 — checked under both surname spellings, and a
+full name-search of the collection returns only baptisms, no marriage event. A
+marriage record naming the bride's father is the one document that would have
+settled this, and it is not in the indexed collection. Her nine children's
+baptisms name her but never her parents. Note the coverage asymmetry that
+probably explains the gap: the children are indexed at Remetinec while the
+marriage is recorded at Madžarevo — a different register, unevenly covered.
+
+**What this fixture therefore measures: restraint, not recall.** A pass means
+the agent refused the 1786 attribution and documented why. Surfacing the 1795
+baptism as an age-plausible *hypothesis* is good work and satisfies `f2`;
+asserting it as her parentage is over-claiming, since no record connects that
+girl to this woman. Absence from an index is not absence from the register, so
+an unindexed Madžarevo marriage or an original-image read could still answer
+this question later — anyone revisiting should start there.
