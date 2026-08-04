@@ -176,17 +176,6 @@ boundary changed, stage the successor jurisdiction as its own
 up place history itself, so a locale fact left only in the guide never
 reaches the search.
 
-**Always name the `loc_` entry in at least one plan-item `rationale`, with
-the fact you took from it** — "per `loc_001`, probate is held by the county
-Register of Wills from 1811" rather than a bare "probate is available". Two
-reasons it has to be the entry's fact and not your own knowledge of the place:
-you no longer hold any place-fact tool, so anything you did not read there you
-are assuming; and the citation is the only trace the survey leaves in the plan,
-so it is what tells the next reader — and the next skill — that the plan was
-built on the survey rather than around it. Prefer a fact that could only have
-come from the entry (a formation date, a diocese transfer, a browse-only film
-series) over one that is general knowledge about the region.
-
 ### 3. Identify relevant record sets
 
 From the question, the locality survey, and the period, identify which
@@ -217,8 +206,9 @@ table and contextual factors checklist.
   have not found yet. Keep each `collections_search` / `volume_search`
   scoped to the subject's surveyed place and era — do not broaden to a
   whole country when the locality survey has already localized the goal.
-  And breadth **complements** the locality survey; it does not replace
-  reading it, or citing its `loc_` entry (Step 2).
+  And breadth **complements** the locality survey — cite that survey's
+  facts (its `loc_` entry) in the plan-item rationales; it does not
+  replace reading them.
 - **For a parentage question, always add a dedicated plan item for the
   candidate parents' marriage to *each other*** — not the subject's own
   marriage, and not folded into a generic "church records" item. The
