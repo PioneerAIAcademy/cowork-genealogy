@@ -125,6 +125,7 @@ routing surface — find your task, then open that ADR.
 | [0005](adrs/ADR-0005-ship-the-write-lockdown-as-a-plugin-hook.md) | Ship the write lockdown as a plugin `PreToolUse` hook | add a guardrail · restrain the main thread · try to stop the agent doing something with an allow-list · change `PROTECTED_PROJECT_FILES` |
 | [0006](adrs/ADR-0006-restrict-capability-by-tool-identity.md) | Restrict capability by tool identity, not by prompt or parameter | need a delegated agent to do *part* of what a tool can do · write "you must only use this for X" in an agent body · add a `mode` parameter to scope a writer tool |
 | [0007](adrs/ADR-0007-attack-the-plan-before-writing-code.md) | Attack the plan before writing code and check the diff back against it, with read-only critics; settle task risk at triage (§2) | wonder why `/critique-plan` is a command and not a sentence · want a third critique round · want to skip `PLAN.md` because the plan is in the chat · want per-task plans filed under `docs/plan/` · want to add a "Risky" tier back to the lifecycle · are about to hand a schema, auth, or plugin-agent change to a junior · wonder why the drift check is a second agent instead of a `/code-review` flag |
+| [0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md) | Sync the schema copies by elimination, automatic generation, or lint — never by hand | see four copies of one enum and reach for codegen · add a generate step to a build · wonder why `packages/schema` generates its enums but the engine doesn't · propose defining the schema in Zod · add a fifth copy |
 
 Conventions, and how to add one: [`docs/adrs/README.md`](adrs/README.md).
 Not yet written: state and the writer/projection tools, self-contained agent
@@ -933,16 +934,18 @@ in `packages/schema/src/index.ts`, `CLOSED_ENUMS` in `validator.ts`, and the
 prose tables. `tests/packaging/enum-drift.test.ts` checks prose against the
 schema.
 
-> **Direction (critique §2.7, §3 P2; #1087/#1015/#1014).** These are **four-plus
-> hand-maintained copies of one source**, and the mirrors are slated to be
-> generated from `packages/schema` — which deletes the three-case table from
-> `CLAUDE.md`. **Don't add a fifth copy.** If your change would, say so in the PR.
+> **Direction (#1087/#1015/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
+> These are **four-plus hand-maintained copies of one source**, kept in sync by
+> elimination, automatic generation, or lint — never by a step a human has to
+> remember. `packages/schema`'s enum unions are generated; everything else is
+> linted. **Don't add a fifth copy.** If your change would, say so in the PR.
 
 **Add a field to the tree (simplified GedcomX).** Everything above, **plus** the
 closed per-object field allow-lists in `src/validation/tree-shape.ts`. The
 validator enforces `additionalProperties: false` from those sets, so an unlisted
-field makes **every writer tool reject the write.** Check whether the change
-needs a heal rule in `tree-sanitize.ts` for pre-change trees.
+field makes **every writer tool reject the write.** `tests/validation/tree-shape-drift.test.ts`
+diffs those sets against the schema. Check whether the change needs a heal rule
+in `tree-sanitize.ts` for pre-change trees.
 
 ---
 
@@ -1123,6 +1126,8 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `skill-description-length.test.ts` | the 1024-char cap |
 | `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
+| `tool-schema-enums.test.ts` | no MCP tool input schema re-types a closed enum's values; two documented `sex` exemptions |
+| `research-append-examples.test.ts` | the worked `research_append` payloads ↔ their `research.schema.json` `$def` |
 | `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
 | `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
 
