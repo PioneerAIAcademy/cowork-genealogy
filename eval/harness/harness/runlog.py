@@ -1,6 +1,6 @@
 """Assemble and validate multi-test run logs.
 
-Schema v2: one run log per harness invocation, per skill. Wraps a list
+Schema v3: one run log per harness invocation, per skill. Wraps a list
 of per-test entries in an envelope carrying version + snapshot +
 metadata. See docs/plan/eval-runlog-versioning.md.
 
@@ -9,7 +9,8 @@ Pieces this module exposes:
   - `assemble_test_entry(...)` — produce the per-test dict that goes
     inside the envelope's `tests[]`.
   - `build_run_log(...)` — wrap per-test entries in the envelope.
-  - `write_run_log(...)` — write to `<runlogs_root>/unit/<skill>/<filename>`.
+  - `write_run_log(...)` — write to `<runlogs_root>/unit/<skill>/<filename>`,
+    then prune candidates beyond the newest `DEFAULT_KEEP_CANDIDATES`.
   - `derive_activated(...)` — the §6 four-rule definition reused by the
     orchestrator.
   - `aggregate_dimensions(...)` / `aggregate_per_run_outcome(...)` —
@@ -21,6 +22,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -28,6 +30,12 @@ from typing import Any
 
 import jsonschema
 from referencing import Registry, Resource
+
+from harness.versioning import (
+    DEFAULT_KEEP_CANDIDATES,
+    ann_filename_for,
+    prunable_candidates,
+)
 
 
 HARNESS_DIR = Path(__file__).resolve().parents[1]
@@ -410,7 +418,7 @@ _TOTALS_KEYS = (
 
 def build_run_log(
     *,
-    schema_version: int = 2,
+    schema_version: int = 3,
     skill: str,
     version: int | None,
     released: bool,
@@ -489,6 +497,7 @@ def write_run_log(
     *,
     runlogs_root: Path,
     filename: str,
+    on_prune: Callable[[list[Path]], None] | None = None,
 ) -> Path:
     """Write `log` to `<runlogs_root>/unit/<skill>/<filename>`.
 
@@ -514,7 +523,7 @@ def write_run_log(
                 sidecar_rel = f"runs/{safe}.text.md"
                 sidecar_abs = target_dir / sidecar_rel
                 sidecar_abs.parent.mkdir(parents=True, exist_ok=True)
-                sidecar_abs.write_text(text)
+                sidecar_abs.write_text(text, encoding="utf-8")
                 output["text_response"] = {"ref": sidecar_rel}
 
     validate_run_log(log)
@@ -524,7 +533,76 @@ def write_run_log(
             f"run log already exists at {out} — wait one second and rerun, "
             f"or pass an explicit non-conflicting timestamp."
         )
-    out.write_text(json.dumps(log, indent=2))
+    out.write_text(json.dumps(log, indent=2), encoding="utf-8")
+    # Only a releasable write prunes. `run_tests.py` calls this for every
+    # invocation mode, so pruning unconditionally would let a local
+    # `--test ut_003` scratch run delete *committed* candidates — deletions the
+    # developer never asked for, in a run they meant to keep local.
+    #
+    # `on_prune` lets the CLI announce the deletions at the moment they happen.
+    # Without it the junior meets them first in `git status` as changes they did
+    # not make, which reads as a bug rather than as retention doing its job.
+    if log.get("releasable"):
+        removed = prune_old_candidates(target_dir)
+        if removed and on_prune is not None:
+            on_prune(removed)
+    return out
+
+
+def prune_old_candidates(
+    skill_dir: Path, *, keep: int = DEFAULT_KEEP_CANDIDATES
+) -> list[Path]:
+    """Delete candidate run logs beyond the `keep` newest, with their
+    annotations. Returns what was removed.
+
+    Called on every write, so the cap holds by construction — no CI rule, no
+    step for the junior to remember, and the corpus cannot re-accumulate. The
+    versioning plan left this tier manual and it was never once performed:
+    312 candidates, 0 released, 205 MB (GitHub issue #985).
+
+    Released `v{N}.json` are never pruned, and a skill's newest candidate is
+    never pruned, so this cannot change which run log `check_runlogs` rule 2
+    evaluates. Scratch and partial logs are gitignored local artifacts and are
+    left alone.
+    """
+    try:
+        names = [p.name for p in skill_dir.iterdir() if p.is_file()]
+    except OSError:
+        return []
+
+    removed: list[Path] = []
+    for name in prunable_candidates(names, keep=keep):
+        runlog = skill_dir / name
+        targets = [runlog, skill_dir / ann_filename_for(name)]
+        targets.extend(_sidecar_refs(runlog, skill_dir))
+        for target in targets:
+            if target.is_file():
+                target.unlink()
+                removed.append(target)
+    return removed
+
+
+def _sidecar_refs(runlog: Path, skill_dir: Path) -> list[Path]:
+    """Spilled `runs/<run_id>.text.md` payloads this run log points at.
+
+    `write_run_log` moves any `text_response` over _SIDECAR_TEXT_THRESHOLD out
+    to `runs/`, leaving a `{"ref": ...}` behind. Those files are tracked, so a
+    prune that dropped only the run log would strand each pruned run's
+    *largest* payload — committed forever and referenced by nothing.
+
+    Best-effort: an unreadable run log yields no refs rather than blocking the
+    prune, since a corrupt log is already past saving.
+    """
+    try:
+        log = json.loads(runlog.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    out: list[Path] = []
+    for test in log.get("tests", []) or []:
+        for run in test.get("runs", []) or []:
+            ref = ((run.get("output") or {}).get("text_response") or {})
+            if isinstance(ref, dict) and isinstance(ref.get("ref"), str):
+                out.append(skill_dir / ref["ref"])
     return out
 
 

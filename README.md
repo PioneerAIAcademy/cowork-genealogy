@@ -224,7 +224,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **author-e2e-fixture** | Turns a finished research project into an e2e benchmark fixture — snapshots the resolved state, strips the answer from the tree, records what was stripped as expected findings. Produces the five files in a `<slug>/` subfolder of the working directory, ready to move into `eval/tests/e2e/`. | "Save this research as an e2e test" / "Make a benchmark from this" |
-| **interpret-e2e-result** | Reads an e2e run log and explains what the agent recovered and missed (from its final tree), why it stopped, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.) — blind to the judge's own grades — pointing at the relevant transcript section. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
+| **interpret-e2e-result** | Reads an e2e run log and explains what the agent recovered and missed (from its final tree), why it stopped, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.) — blind to the judge's own grades — pointing at the exact tool call and narration turn. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
 | **grade-e2e-run** | Grades an e2e run into its calibration annotation: presents each expected finding + the agent's evidence (blind to the judge's grades), collects the genealogist's true/partial/false labels, and writes `run-<ts>.ann.json`. | "Grade this e2e run" / "Annotate this run for calibration" |
 
 ## Agents

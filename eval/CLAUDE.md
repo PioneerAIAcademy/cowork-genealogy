@@ -100,6 +100,24 @@ Filenames classify into three kinds:
 
 A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anything else writes a `scratch_` file.
 
+**Run logs over 14 days old are treated as stale**, in both corpora, but the
+two reader families handle it differently (`harness/since_window.py`):
+
+- **Aggregating reports FILTER** — `make e2e-corpus`, `make e2e-guardrail-shadow`,
+  `make e2e-latency` tally many runs into one number, so mixing eras corrupts
+  it. They window to 14 days and print the window plus how many runs they
+  excluded. `SINCE=all` opts back in.
+- **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency` show
+  the newest 1–2 run logs per skill, so there is no sample to narrow: a date
+  cut would delete the *skill*, hiding that it needs a re-run. They show every
+  row, mark stale ones, sort them last, and name them in a summary line.
+  `SINCE=N` filters on demand.
+
+This is a *query* window and deletes nothing — retention is keyed on rank, not
+age, for the reason in the next paragraph.
+
+**Retention: the harness keeps the newest 5 candidates per skill.** `write_run_log` prunes older ones — with their `.ann.json` siblings — on every write (`harness/runlog.py::prune_old_candidates`, K in `versioning.DEFAULT_KEEP_CANDIDATES`). So a harness run produces deletions alongside the new candidate; commit them. Released `v{N}.json` are kept forever, a skill's newest candidate is never pruned (so this cannot move what rule 2 gates on), and scratch/partial logs are untouched. There is no CI rule for this — pruning at the writer is what keeps the cap holding without one; the versioning plan's manual candidate tier was never once performed and the corpus reached 312 candidates / 205 MB. `make prune-runlogs PRUNE=1` is the catch-up sweep, not part of the normal loop.
+
 The harness picks the next filename per `eval/harness/harness/versioning.py::next_filename_for`:
 1. Scan the skill dir for the highest released `v{N}.json` (call it R) and the highest candidate `v{M}_<ts>.json` (call it U).
 2. If a candidate above the latest release exists (`U > R`): next candidate is `v{U}_<ts>.json`.
@@ -110,7 +128,7 @@ Same-second collisions raise `RunlogCollisionError` rather than overwriting.
 
 ### Format details
 
-- **Run-log envelope** — schema at `docs/specs/schemas/run-log.schema.json` (v2; mirror at `packages/schema/schemas/run-log.schema.json` — edit both). One envelope per harness invocation per skill, containing `tests[]` (per-test entries), the `snapshot` of every skill-side file used, and metadata (`version`, `released`, `releasable`, `invocation`, `judge_prompt_hash`, …). Per-run **timing instrumentation** (all optional, so historical logs still validate): `duration_api_ms` (SDK API time — `duration_ms − duration_api_ms` ≈ local/stall overhead), `num_turns`, `judge.duration_ms`, `skill_attempts` (>1 = transient-stall retries), and `started_at`/`ended_at` epoch brackets. Totals additionally carry `wall_clock_ms` (true makespan `max(ended)−min(started)`, vs the summed `duration_ms`) plus summed `duration_api_ms`/`judge_duration_ms`/`num_turns`. The harness prints a "Timing breakdown" from these at the end of every run.
+- **Run-log envelope** — schema at `docs/specs/schemas/run-log.schema.json` (v3; mirror at `packages/schema/schemas/run-log.schema.json` — edit both). One envelope per harness invocation per skill, containing `tests[]` (per-test entries), the `snapshot` of every skill-side file used, and metadata (`version`, `released`, `releasable`, `invocation`, `judge_prompt_hash`, …). Per-run **timing instrumentation** (all optional, so historical logs still validate): `duration_api_ms` (SDK API time — `duration_ms − duration_api_ms` ≈ local/stall overhead), `num_turns`, `judge.duration_ms`, `skill_attempts` (>1 = transient-stall retries), and `started_at`/`ended_at` epoch brackets. Totals additionally carry `wall_clock_ms` (true makespan `max(ended)−min(started)`, vs the summed `duration_ms`) plus summed `duration_api_ms`/`judge_duration_ms`/`num_turns`. The harness prints a "Timing breakdown" from these at the end of every run.
 - **Annotation** — schema at `docs/specs/schemas/ann.schema.json`. **Sparse**: corrections entries exist only for dimensions the annotator has explicitly reviewed. Missing entries = not reviewed (NOT the same as "agreed"). The CRUD UI's "Agree with all" button creates entries with `corrected_score == llm_score`, marking them reviewed. Schema fields: `run_log` (filename), `annotator` (team identifier), `corrections[]` with per-dimension `llm_score` / `corrected_score` (integer 1–3) / optional `comment`.
 
 The "active" run log for a skill is the newest releasable run log whose snapshot matches the working tree (compared via `normalize()`). The CRUD UI computes this lazily on the per-skill page (`detectActiveRunLog` in `lib/fs/runlogs.ts`).
@@ -125,7 +143,7 @@ The run-log-level `outcome` (`pass | partial | fail | aborted | xfail | xpass`) 
 
 ## Snapshot model
 
-Every run log embeds a `snapshot: {repo-relative-path: normalized content}` block covering every file the run depended on:
+Every run log embeds a `snapshot: {repo-relative-path: sha256-of-normalized-content}` block covering every file the run depended on:
 
 - `packages/engine/plugin/skills/<skill>/**`
 - `eval/tests/unit/<skill>/**` (rubric + test JSONs)
@@ -164,6 +182,8 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 | 2b | warn | The same run log's `judge_prompt_hash` matches the current judge prompt. Mismatch is non-blocking (judge edits are a separate cadence). |
 | 3 | block | The same run log's `.ann.json` has a correction entry for every dimension in every test. (Cosmetic-skip keeps the *prior* run log as the target, so its already-complete `.ann.json` satisfies this with no re-grade — and because rule 3 still runs, an unannotated baseline can't be waved through.) |
 | 4 | block | No two files under `eval/tests/unit/**` share a `test.id`. Runs only when the PR touches a test file, and then scans the whole corpus (a duplicate's other half can sit in an untouched skill). Duplicates corrupt grading silently: the harness collects every file, so one run log carries two `tests[]` entries under one `test_id`, and annotations key on `(test_id, dimension_source, dimension_name)` — one test's corrections become the other's, and rule 3 still passes because the lookup finds *a* correction for every dimension. |
+
+**Which changes mark a skill "touched"** (rules 2 + 3) differs by path class. A **modification** to a skill body, a unit test, or a referenced plugin agent gates that skill — the snapshot is invalidated whether the file was added or edited. A run log is different: it is not an input to its own snapshot, so only an **added** (or renamed-into-place) run log gates its skill. Modifying or deleting committed run logs — what `scripts/prune_runlogs.py` does when it rehashes or prunes — marks nothing touched.
 
 The `eval-cosmetic-skip` label is for genuinely behavior-neutral edits only (rewording, typos, comments, formatting). **The bypass expires on every new push**, so it can't outlive the commit it was approved for — a later substantive push re-reds the check until the senior re-applies. Only rule 2 is relaxed.
 
