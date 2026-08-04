@@ -4,7 +4,8 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 /**
- * @genealogy/schema's hand-written interfaces mirror research.schema.json.
+ * @genealogy/schema's hand-written interfaces mirror BOTH persisted schemas —
+ * research.schema.json and tree-gedcomx.schema.json.
  *
  * The enum unions in that package are generated (scripts/gen-enums.mjs) and so
  * cannot drift. The interfaces are still hand-written — for their doc comments,
@@ -13,6 +14,11 @@ import { fileURLToPath } from 'node:url'
  * `TimelineEvent.place_id`, was residue from a completed migration: the type
  * advertised a field `additionalProperties: false` rejects, so a caller who
  * wrote it had the whole write refused.
+ *
+ * The tree half is here for the same reason and against the same failure: the
+ * engine's allow-lists get that guard from tree-shape-drift.test.ts, but the
+ * web mirror's `Gedcomx*` interfaces had no equivalent, so `GedcomxPerson`
+ * could advertise a field every writer tool rejects and stay green.
  *
  * This lives in viewer-ui rather than in packages/schema because viewer-ui
  * already has a vitest runner and a workspace dep on the schema package, and
@@ -28,6 +34,9 @@ const repoRoot = join(here, '..', '..', '..', '..')
 const schema = JSON.parse(
   readFileSync(join(repoRoot, 'docs', 'specs', 'schemas', 'research.schema.json'), 'utf8'),
 )
+const treeSchema = JSON.parse(
+  readFileSync(join(repoRoot, 'docs', 'specs', 'schemas', 'tree-gedcomx.schema.json'), 'utf8'),
+)
 const source = readFileSync(join(repoRoot, 'packages', 'schema', 'src', 'index.ts'), 'utf8')
 
 /** `$defs` name → the TS interface name, where PascalCase isn't the answer. */
@@ -37,6 +46,25 @@ const RENAMED: Record<string, string> = {
 
 /** `$defs` that intentionally have no TS interface. */
 const NO_INTERFACE: string[] = []
+
+/**
+ * tree-gedcomx.schema.json `$defs` → interface. No naming convention connects
+ * the two (`person` → `GedcomxPerson`), so every closed subschema is listed
+ * explicitly and the completeness check below fails on an unlisted one.
+ *
+ * `id` is a bare string `$def` and `relationship` is a `oneOf` over the two
+ * concrete relationship types; neither is a closed object, so neither has —
+ * or needs — an interface.
+ */
+const TREE_INTERFACES: Record<string, string> = {
+  person: 'GedcomxPerson',
+  name: 'GedcomxName',
+  fact: 'GedcomxFact',
+  parent_child_relationship: 'GedcomxParentChildRelationship',
+  couple_relationship: 'GedcomxCoupleRelationship',
+  source_description: 'GedcomxSource',
+  source_reference: 'GedcomxSourceRef',
+}
 
 const pascal = (s: string) => s.split('_').map((p) => p[0].toUpperCase() + p.slice(1)).join('')
 
@@ -52,6 +80,22 @@ function interfaceFields(src: string): Map<string, Set<string>> {
 }
 
 const parsed = interfaceFields(source)
+
+/** One interface against one subschema's `properties`, by field name. */
+function expectMirrors(tsName: string, def: any, help: string) {
+  const fields = parsed.get(tsName)
+  expect(fields, help).toBeDefined()
+
+  const schemaKeys = Object.keys(def.properties).sort()
+  const missing = schemaKeys.filter((k) => !fields!.has(k))
+  const extra = [...fields!].sort().filter((k) => !(k in def.properties))
+
+  expect(
+    { missing, extra },
+    `${tsName} drifted — missing: the schema has it, the type doesn't; ` +
+      `extra: the type advertises a field the schema rejects (additionalProperties: false)`,
+  ).toEqual({ missing: [], extra: [] })
+}
 
 describe('@genealogy/schema interfaces mirror research.schema.json', () => {
   it('parsed a plausible number of interfaces', () => {
@@ -72,24 +116,40 @@ describe('@genealogy/schema interfaces mirror research.schema.json', () => {
     const tsName = RENAMED[defName] ?? pascal(defName)
 
     it(`${tsName} ↔ $defs.${defName}`, () => {
-      const fields = parsed.get(tsName)
-      expect(
-        fields,
+      expectMirrors(
+        tsName,
+        def,
         `no \`export interface ${tsName}\` in packages/schema/src/index.ts — ` +
           `add it, add a RENAMED entry, or list ${defName} in NO_INTERFACE`,
-      ).toBeDefined()
+      )
+    })
+  }
+})
 
-      const schemaKeys = Object.keys(def.properties).sort()
-      const tsKeys = [...fields!].sort()
-      const missing = schemaKeys.filter((k) => !fields!.has(k))
-      const extra = tsKeys.filter((k) => !(k in def.properties))
+describe('@genealogy/schema interfaces mirror tree-gedcomx.schema.json', () => {
+  it('every closed subschema has an interface listed', () => {
+    // The engine's allow-lists get this check from tree-shape-drift.test.ts.
+    // Without the same completeness assertion here, a new closed $def would
+    // simply not be in TREE_INTERFACES and would go unchecked in silence.
+    const closed = Object.entries<any>(treeSchema.$defs)
+      .filter(([, d]) => d.additionalProperties === false)
+      .map(([n]) => n)
+      .sort()
+    expect(closed, 'add the new $def to TREE_INTERFACES').toEqual(
+      Object.keys(TREE_INTERFACES).sort(),
+    )
+  })
 
-      expect(
-        { missing, extra },
-        `${tsName} drifted from $defs.${defName} — ` +
-          `missing: schema has it, the type doesn't; extra: the type advertises a ` +
-          `field the schema rejects (additionalProperties: false)`,
-      ).toEqual({ missing: [], extra: [] })
+  it('GedcomxData ↔ the tree document root', () => {
+    expect(treeSchema.additionalProperties, 'the root must be closed').toBe(false)
+    expectMirrors('GedcomxData', treeSchema, 'no `export interface GedcomxData`')
+  })
+
+  for (const [defName, tsName] of Object.entries(TREE_INTERFACES)) {
+    it(`${tsName} ↔ $defs.${defName}`, () => {
+      const def = treeSchema.$defs[defName]
+      expect(def, `no $defs.${defName} in tree-gedcomx.schema.json`).toBeDefined()
+      expectMirrors(tsName, def, `no \`export interface ${tsName}\``)
     })
   }
 })

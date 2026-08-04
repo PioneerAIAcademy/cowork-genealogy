@@ -119,29 +119,44 @@ will be re-argued; the test is "can a human forget it," not "is it convenient."
 
 > `eval/harness/tests/unit/test_schema_mirrors.py` — the two schema trees are
 > byte-identical. This is also what licenses the generator to read the local
-> mirror.
+> mirror, which is why `.github/workflows/eval-harness-tests.yml` matches
+> **both** `docs/specs/schemas/` and `packages/schema/schemas/`: a PR editing
+> only the mirror must still run this.
 > `packages/engine/mcp-server/tests/packaging/enum-drift.test.ts` —
 > `VALIDATOR_ENUMS` and the prose `∈` tables against `enums.schema.json`.
 > `packages/engine/mcp-server/tests/packaging/tool-schema-enums.test.ts` — no
-> hand-typed closed-enum array in an MCP tool input schema.
+> hand-typed closed-enum array in an MCP tool input schema. Matches a **stale**
+> copy as well as an exact one; exact equality alone goes blind at the moment a
+> copy drifts, which is the moment that matters.
 > `packages/engine/mcp-server/tests/validation/tree-shape-drift.test.ts` and
 > `validator.test.ts`'s `RESEARCH_SHAPES` guard — field allow-lists against the
 > schemas' `additionalProperties: false` subschemas.
 > `packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts` — the
 > hand-written interfaces in `packages/schema/src/index.ts` against
-> `research.schema.json`. Field **names** only.
+> **both** `research.schema.json` and `tree-gedcomx.schema.json`. Field
+> **names** only.
 > `packages/engine/mcp-server/tests/packaging/research-append-examples.test.ts` —
-> the worked payloads the model is shown on a rejection.
-> `apps/server/tests/test_mock_agent_schema.py` — the mock agent's two emitted
-> documents.
+> the worked payloads the model is shown on a rejection: field names against
+> the `$def`, enum **values** against the enum each field is bound to, and one
+> example per writable section.
+> `apps/server/tests/test_mock_agent_schema.py` — the mock agent's emitted
+> `research.json` (both states) and `tree.gedcomx.json`.
+> `packages/viewer-ui/src/__tests__/gen-enums-guards.test.ts` — the generator's
+> own two refusals.
 
-Tier 2 needs no test: a generated file cannot drift from its input.
+Tier 2 needs no test for *drift* — a generated file cannot drift from its
+input. It does need one for its **guards**, which is a different claim: both
+refusals in `gen-enums.mjs` exist because the failure they prevent is silent
+(`export *` shadows a name with no tsc error), so nothing else would report a
+guard that had stopped working. That is what `gen-enums-guards.test.ts` covers.
 
 What this does **not** catch: interface **types** — optionality, `| null`, and
-`date_certainty: string` at `packages/schema/src/index.ts:269` — which need the
+`date_certainty: string` in `packages/schema/src/index.ts` — which need the
 TypeScript compiler API (#1165); the enum tables in
 `docs/specs/research-schema-spec.md`, whose markdown-table format needs its own
-parser; and the `eval/app` fork.
+parser; the sixth inline enum `locality.pages_read[].section`, re-typed in
+`packages/engine/mcp-server/src/tools/wiki-place-page.ts` and bound to no
+validator entry to collapse into (#1270); and the `eval/app` fork.
 
 *Linted: every path in this section must resolve.*
 
