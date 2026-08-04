@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { __testing } from "../../src/tools/research-append-examples.js";
+import { RESEARCH_APPEND_SECTIONS } from "../../src/tools/research-append.js";
 
 /**
  * The worked `research_append` examples conform to research.schema.json.
@@ -12,6 +13,12 @@ import { __testing } from "../../src/tools/research-append-examples.js";
  * trial-and-error loop, not an error. The file's own header says its field
  * lists are transcribed from research.schema.json and its enum literals from
  * enums.schema.json; nothing checked either.
+ *
+ * Both halves are checked here: field NAMES against `properties`/`required`,
+ * and every enum-constrained VALUE — nested objects and array items included —
+ * against the enum the schema binds that field to. A stale value is the worse
+ * of the two failures, since it teaches a value the validator rejects while
+ * looking structurally correct.
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -20,6 +27,44 @@ const projectRoot = join(here, "..", "..", "..", "..", "..");
 const schema = JSON.parse(
   readFileSync(join(projectRoot, "docs", "specs", "schemas", "research.schema.json"), "utf8"),
 );
+const enumsSchema = JSON.parse(
+  readFileSync(join(projectRoot, "docs", "specs", "schemas", "enums.schema.json"), "utf8"),
+);
+
+/**
+ * A subschema's closed value set, following a `$ref` into enums.schema.json.
+ *
+ * `null` for anything open: the `*_recommended` `$defs` carry `examples`, not
+ * `enum`, and are deliberately not constrained.
+ */
+function closedValues(sub: any): string[] | null {
+  if (!sub || typeof sub !== "object") return null;
+  if (Array.isArray(sub.enum)) return sub.enum as string[];
+  const ref = typeof sub.$ref === "string" ? /^enums\.schema\.json#\/\$defs\/(.+)$/.exec(sub.$ref) : null;
+  if (ref) {
+    const def = enumsSchema.$defs?.[ref[1]];
+    if (Array.isArray(def?.enum)) return def.enum as string[];
+  }
+  return null;
+}
+
+/** Every enum-constrained value in `entry` that the schema would reject. */
+function enumViolations(value: unknown, sub: any, path: string, out: string[]): void {
+  if (!sub || typeof sub !== "object") return;
+  const allowed = closedValues(sub);
+  if (allowed && typeof value === "string" && !allowed.includes(value)) {
+    out.push(`${path} = "${value}" — allowed: ${allowed.join(", ")}`);
+  }
+  if (Array.isArray(value)) {
+    value.forEach((v, i) => enumViolations(v, sub.items, `${path}[${i}]`, out));
+    return;
+  }
+  if (value && typeof value === "object" && sub.properties) {
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      enumViolations(v, sub.properties[k], path ? `${path}.${k}` : k, out);
+    }
+  }
+}
 
 /** Writer section → the `$defs` entry describing one of its entries. */
 const DEF_FOR: Record<string, string> = {
@@ -65,8 +110,14 @@ describe("research_append worked examples conform to the schema", () => {
     ).toEqual([]);
   });
 
-  it("checks a plausible number of examples", () => {
-    expect(Object.keys(EXAMPLES).length).toBeGreaterThan(10);
+  it("every writable section has an example", () => {
+    // Checked against the tool's own section list, not a magic number: the
+    // one-way EXAMPLES → DEF_FOR check above cannot see a section that has no
+    // example at all, which is how `localities` — writable, and written by
+    // locality-guide — went without one. `project` is the singleton and has
+    // its own PROJECT_EXAMPLE, so it is not in EXAMPLES.
+    const expected = RESEARCH_APPEND_SECTIONS.filter((s) => s !== "project").sort();
+    expect(Object.keys(EXAMPLES).sort()).toEqual([...expected]);
   });
 
   for (const [section, text] of Object.entries(EXAMPLES)) {
@@ -95,6 +146,15 @@ describe("research_append worked examples conform to the schema", () => {
           `unknown keys are rejected by additionalProperties:false; missing keys ` +
           `are required and not tool-assigned`,
       ).toEqual({ unknown: [], missing: [] });
+
+      const badValues: string[] = [];
+      enumViolations(entry!, def, "", badValues);
+      expect(
+        badValues,
+        `${section} example carries a value the schema's enum rejects — the ` +
+          `model is shown this attached to a rejection, so it would teach the ` +
+          `exact value that was just refused`,
+      ).toEqual([]);
     });
   }
 });

@@ -24,8 +24,17 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dockerfile = join(repoRoot, 'deploy', 'Dockerfile')
 
 // Mutates the host's global node prefix; the ambient pnpm is what `make deploy`
-// callers already have, and the lockfile pins the rest.
-const SKIP_RUN = ['corepack enable']
+// callers already have, and the lockfile pins the rest. Matched by prefix so a
+// `corepack prepare pnpm@x --activate` added later is skipped too rather than
+// silently running against the host.
+const SKIP_RUN_PREFIXES = ['corepack ']
+
+/**
+ * The Dockerfile uses something this replay cannot model — NOT a build failure.
+ * Kept distinct so the operator is told to teach the script, rather than sent
+ * hunting for a broken COPY that isn't there.
+ */
+class UnsupportedInstruction extends Error {}
 
 /** Stage `web`'s instructions, with line continuations folded. */
 function stage(name) {
@@ -58,11 +67,21 @@ function tracked(src) {
   return paths
 }
 
-function replayCopy(args, root) {
-  const dest = args[args.length - 1]
-  const sources = args.slice(0, -1)
+function replayCopy(args, workdir) {
+  // `--from=` copies from another stage, which this replay has not built. The
+  // rest (--chown/--chmod/--link) are no-ops on a plain filesystem copy.
+  for (const flag of args.filter((a) => a.startsWith('--'))) {
+    if (flag.startsWith('--from=')) {
+      throw new UnsupportedInstruction(
+        `COPY ${flag} — this replay builds only stage 'web', so it cannot resolve a cross-stage copy`,
+      )
+    }
+  }
+  const positional = args.filter((a) => !a.startsWith('--'))
+  const dest = positional[positional.length - 1]
+  const sources = positional.slice(0, -1)
   if (sources.length === 0) throw new Error(`COPY needs a source: ${args.join(' ')}`)
-  const destDir = join(root, dest === './' || dest === '.' ? '' : dest)
+  const destDir = join(workdir, dest === './' || dest === '.' ? '' : dest)
 
   for (const src of sources) {
     const paths = tracked(src)
@@ -93,44 +112,72 @@ function main() {
   try {
     execFileSync('pnpm', ['--version'], { stdio: 'ignore' })
   } catch {
-    console.log('⚠️  deploy stage-1 check: pnpm not on PATH — skipping (advisory)')
+    // NOT advisory. `make deploy` runs `fly deploy` against a REMOTE builder and
+    // needs no local pnpm, so a silent skip here is the one case where this gate
+    // reports green on the machine least able to afford it. SKIP_DEPLOY_STAGE1_CHECK
+    // is the deliberate bypass; this is not.
+    console.error('')
+    console.error('✗ deploy stage-1 check: pnpm is not on PATH, so the check could not run.')
+    console.error('  Run `corepack enable` (the Dockerfile does the same), or set')
+    console.error('  SKIP_DEPLOY_STAGE1_CHECK=1 to deploy without replaying stage 1.')
+    process.exitCode = 1
     return
   }
 
   const instructions = stage('web')
   const root = mkdtempSync(join(tmpdir(), 'deploy-stage1-'))
+  // The image's WORKDIR is absolute; the replay rebases it onto the temp root.
+  const IMAGE_ROOT = '/repo'
   let workdir = root
   try {
     for (const line of instructions) {
       const [, verb, rest] = line.match(/^(\w+)\s+(.*)$/) ?? []
       if (verb === 'WORKDIR') {
-        workdir = root // the image's /repo is our temp root
+        const rel = rest.trim() === IMAGE_ROOT ? '' : rest.trim().slice(IMAGE_ROOT.length + 1)
+        if (!rest.trim().startsWith(IMAGE_ROOT) || rel.startsWith('/')) {
+          throw new UnsupportedInstruction(
+            `WORKDIR ${rest.trim()} is outside ${IMAGE_ROOT}; the replay only rebases paths under it`,
+          )
+        }
+        workdir = join(root, rel)
+        mkdirSync(workdir, { recursive: true })
         continue
       }
       if (verb === 'COPY') {
-        replayCopy(rest.split(/\s+/), root)
+        replayCopy(rest.split(/\s+/), workdir)
         continue
       }
       if (verb === 'RUN') {
         const cmd = rest.replace(/\s+#.*$/, '').trim()
-        if (SKIP_RUN.includes(cmd)) continue
+        if (SKIP_RUN_PREFIXES.some((p) => cmd.startsWith(p))) continue
         console.log(`  $ ${cmd}`)
         execFileSync('sh', ['-c', cmd], { cwd: workdir, stdio: 'inherit' })
         continue
       }
       if (verb === 'ENV' || verb === 'ARG' || verb === 'EXPOSE' || verb === 'CMD') continue
-      throw new Error(`unhandled instruction in stage 'web': ${line}`)
+      throw new UnsupportedInstruction(`unhandled instruction in stage 'web': ${line}`)
     }
     console.log('✓ deploy stage-1 check: deploy/Dockerfile builds the web client')
   } catch (err) {
     console.error('')
-    console.error("✗ deploy/Dockerfile stage 'web' does not build. `make deploy` would")
-    console.error('  fail the same way on the Fly builder, several minutes in.')
-    console.error(`  ${err.message.split('\n')[0]}`)
-    console.error('')
-    console.error('  Most likely: a COPY before `RUN pnpm install` no longer brings in')
-    console.error('  everything an install-time script needs, or a source a later RUN')
-    console.error('  reads is never copied. Re-run with the failing command above.')
+    if (err instanceof UnsupportedInstruction) {
+      // Still exit 1 — an unchecked stage 1 is not a passing stage 1 — but do
+      // not claim the build is broken, which sends the reader after a COPY.
+      console.error("✗ deploy stage-1 check could not replay stage 'web' — this is a gap in")
+      console.error('  scripts/check-deploy-stage1.mjs, NOT (necessarily) a broken Dockerfile.')
+      console.error(`  ${err.message}`)
+      console.error('')
+      console.error('  Teach the script that instruction, or set SKIP_DEPLOY_STAGE1_CHECK=1')
+      console.error('  and verify the image builds some other way before deploying.')
+    } else {
+      console.error("✗ deploy/Dockerfile stage 'web' does not build. `make deploy` would")
+      console.error('  fail the same way on the Fly builder, several minutes in.')
+      console.error(`  ${err.message.split('\n')[0]}`)
+      console.error('')
+      console.error('  Most likely: a COPY before `RUN pnpm install` no longer brings in')
+      console.error('  everything an install-time script needs, or a source a later RUN')
+      console.error('  reads is never copied. Re-run with the failing command above.')
+    }
     process.exitCode = 1
   } finally {
     rmSync(root, { recursive: true, force: true })
