@@ -256,7 +256,7 @@ class LocalProvider(SandboxProvider):
         (root / "project" / "results").mkdir(parents=True, exist_ok=True)
         (root / "meta.json").write_text(
             json.dumps({"labels": spec.labels, "model": spec.model, "template": spec.template})
-        )
+        , encoding="utf-8")
         return LocalSandbox(sandbox_id, root, self, spec.model)
 
     async def get(self, sandbox_id: str) -> Sandbox:
