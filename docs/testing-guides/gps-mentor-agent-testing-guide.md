@@ -436,16 +436,23 @@ Check that:
   If it would read the same for a blog post about anything, the wording
   needs another pass.
 - No axis name from §6.4 appears in the prose ("audience calibration",
-  "source-locatability"). Those are internal shorthand.
+  "context provision"). Those are internal shorthand.
+- The heading reads `# Mentor review: how this reads — <ps_id>`, not
+  `on-demand`.
 - Style findings land in `consider_addressing` with
   `standard: "Craft — …"`, and the verdict is **not** `address_first`
-  unless a source-locatability or real GPS problem surfaced.
+  unless the carried-over check (§6.3 check 3, narrative
+  self-containment) or a real GPS problem surfaced.
+- The verdict sidecar carries `"craft": true` — §12.3's supersession
+  rule has nothing to read without it.
 
 **Negative.** In a project with no proof summary written yet, ask the
 same question. The agent must refuse cleanly, naming
 `proof-conclusion` as the way to produce something to read — not
-improvise generic advice about writing. A refusal still writes a
-verdict file and an `ev_NNN` entry.
+improvise generic advice about writing. A refusal still writes a verdict
+file and an `ev_NNN` entry; check it recorded `target_id: "project"`,
+since there is no `ps_` to name and a fabricated one would fail
+validation and lose the refusal.
 
 ### What success looks like
 

@@ -507,6 +507,25 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
 
 ## Skills / tools
 
+- [ ] **Promote `gps-mentor`'s narrative-craft checks to their own `focus` value** —
+  deferred from #848, which landed them inside `on-demand` (spec §6.4) to avoid a
+  closed-enum change. Still open because the deferral has a measurable trigger, not a
+  taste question: a craft run and an evidentiary `on-demand` run share
+  `focus: "on-demand"`, so §10 (skip) and §12.3 (supersession) each needed a written
+  carve-out plus a `craft: true` sidecar flag to tell them apart, and both verdicts
+  still land at `evaluations/on-demand-<target>-<iso>.json`. A third carve-out is the
+  signal the enum change has become cheaper than the workarounds. Full cost note and
+  the two reasons for deferring: spec §17.2.
+
+- [ ] **`gps-mentor` has no eval coverage at all** — it is an agent, and the unit
+  harness keys every test to a skill directory, so nothing exercises any of its four
+  focus modes. #848 shipped a packaging test that pins the craft doctrine's *prose*
+  (`tests/packaging/gps-mentor-craft-doctrine.test.ts`) and a manual procedure in
+  `docs/testing-guides/gps-mentor-agent-testing-guide.md`, neither of which is a
+  behavioral test. The agent *is* staged into both harnesses' workspaces and is
+  observable in e2e run logs (spec §17.1), so this is a missing suite rather than an
+  impossible one — it needs a unit-harness path that can invoke an agent directly.
+
 - [ ] **Write `docs/specs/place-distance-tool-spec.md`** — `place_distance` is
   advertised in `tool-schemas.ts` but is the only live tool with **no spec**, so
   `spec-review` cannot check it. The 2026-05-07 timeline-distances design doc was the

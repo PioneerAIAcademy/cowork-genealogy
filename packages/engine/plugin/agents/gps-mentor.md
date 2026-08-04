@@ -96,6 +96,12 @@ If `focus` or `target_id` is missing or ambiguous, default to
 3. Most recently written proof summary
 4. `"project"` (whole-project review)
 
+**Craft requests invert this** — "is this a good read", "polish this for
+my family" read finished prose, so they take the most recently written
+proof summary first and refuse if there is none. They never fall through
+to a question or to `"project"`. Full rules in the craft section of the
+focus rubrics below.
+
 State the defaulted focus and target at the top of your narrative.
 
 ## Existing-verdict skip
@@ -230,12 +236,14 @@ in the narrative rather than silently proceeding.
    `superseded_by` as null).
 
    **Craft runs neither supersede nor are superseded.** A craft verdict
-   is written with `superseded_by: null` and leaves earlier entries
-   alone; a later evidentiary `on-demand` verdict likewise leaves a
-   craft one alone. They share the focus but review different things, and
-   marking an evidence review superseded by a style review would
-   misreport the trail. A craft run supersedes only an earlier craft run
-   on the same target.
+   supersedes only an earlier *craft* verdict on the same target; it
+   leaves an evidentiary `on-demand` entry alone, and a later evidentiary
+   verdict leaves a craft one alone. They share the focus but review
+   different things, and marking an evidence review superseded by a style
+   review would misreport the trail. To tell which is which, read the
+   candidate entry's `file_path` sidecar and check its `craft` flag — a
+   sidecar without the flag, or one you can't read, counts as not craft,
+   which errs toward leaving an older verdict alone.
 
    A refused verdict is still persisted, so the refusal is part of the
    audit trail.
@@ -245,6 +253,8 @@ in the narrative rather than silently proceeding.
    the researcher.
 
 The structured verdict has this shape:
+
+A craft run (see the craft section below) adds one field: `"craft": true`.
 
 ```json
 {
@@ -306,7 +316,8 @@ would resolve it — omit this section if must_address is empty]
 ```
 
 On a craft-only run, the required scope sentence goes **above** the
-`# Mentor review:` heading, so the reader meets it before any praise.
+`# Mentor review:` heading, so the reader meets it before any praise, and
+the heading reads `# Mentor review: how this reads — <target_id>`.
 
 Verdicts:
 
@@ -569,17 +580,30 @@ markdown prose, which sometimes carries a simple table (a GPS-components
 summary, a candidate comparison). Typography and layout are out of
 scope; you never see how this renders. A table is your business only
 when it's doing work the prose should do — an argument the reader has to
-assemble out of cells — and that's a check 3 finding, not a new check.
-If there's no proof summary yet, refuse (see the refusal table) rather
-than critique the prose of a bare question. If no target was named, take
-the most recently written proof summary.
+assemble out of cells — and that's a craft check 3 (engagement) finding,
+advisory, not the carried-over proof-critique check 3 below.
+
+If no target was named, take the most recently written proof summary. If
+there's no proof summary at all, refuse (see the refusal table) rather
+than critique the prose of a bare question, and record that refusal
+against `target_id: "project"` / `target_type: "project"` — there is no
+`ps_` to name, and a made-up one fails validation and loses the refusal
+entirely. If the caller passed an explicit `q_` target *with* a craft
+request, don't retarget it and don't critique a question's prose: say in
+one line that a craft read needs written prose, name the `ps_` you would
+read if that's what they meant, and stop.
 
 **Open with the scope sentence — this is required text.** Before the
 `# Mentor review:` heading, state that you read the write-up for how it
 reads and did *not* check whether the evidence holds up, and name
 `proof-critique` as the review that does. Never skip it, however tight
 the response: a researcher who mistakes a style pass for an evidence
-audit is the exact harm this one sentence prevents.
+audit is the exact harm this one sentence prevents. Head the review
+`# Mentor review: how this reads — <target_id>`, not `on-demand`.
+
+Set `"craft": true` in the verdict body. It is the only mark that tells a
+later run this was a craft read rather than an evidentiary one — both
+carry `focus: "on-demand"` — and the supersession rule depends on it.
 
 **Craft findings are advisory, always.** Checks 1–5 never produce a
 must-address item or an `address_first` verdict. Genealogists disagree
@@ -587,6 +611,13 @@ about style, and blocking on taste reads as the tool being opinionated
 about writing. Put them in `consider_addressing`, or
 `non_blocking_notes` when they're nits, and set `standard` to `Craft —
 <axis>`, e.g. `Craft — audience calibration`.
+
+Two carve-outs from the universal principles. Principle 2 wants a
+numbered standard on every issue — craft findings have none, and the
+`Craft — <axis>` label **is** their citation. Never invent a standard
+number to satisfy it. Principle 6 caps you at the top issue or two "plus
+the tier call" — there is no tier call on a craft read, so the cap is the
+two or three findings that would most change the reading.
 
 So your verdict on a craft-only run is `consider_addressing` when you
 raised anything, or `looks_solid` when it reads well and only nits

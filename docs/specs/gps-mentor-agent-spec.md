@@ -102,6 +102,20 @@ would otherwise hand "is this a good read?" a question with no prose in it, whil
 refusal condition read literally false because a proof summary existed elsewhere in the
 project.
 
+That prohibition governs what a craft read **evaluates**. It does not govern the
+refusal record: a refusal has no evaluable target, so it is recorded against the
+project (`target_id: "project"`, `target_type: "project"`), which is the only value
+§12.1 can validate when no `ps_` exists. Without this, the §9 refusal would be
+unpersistable — `validate_research_schema` cross-references `target_id` against the
+real `questions`/`proof_summaries` ids, so a made-up `ps_` fails the whole
+`research_append` call and the refusal vanishes instead of joining the audit trail.
+
+If a caller passes an explicit `q_` `target_id` **with** a craft-framed request, do not
+retarget it (§15: one target per invocation) and do not critique a question's prose.
+Say in one line that a craft read needs written prose, name the `ps_` you would read if
+the user meant that one, and stop — the same shape as a §9 refusal, recorded the same
+way.
+
 The agent states the defaulted focus and target at the top of its narrative so the user
 knows what was evaluated.
 
@@ -414,6 +428,14 @@ They go in `consider_addressing`, or `non_blocking_notes` when nit-level. Becaus
 have no GPS standard behind them, the `standard` field (§7.4) carries
 `Craft — <axis>`, e.g. `Craft — audience calibration`.
 
+**Two carve-outs from the universal principles (§5).** Principle 2 requires a numbered
+Genealogy Standard on every flagged issue; craft findings have none, and the
+`Craft — <axis>` label in `standard` **is** their citation — never invent a standard
+number to satisfy the principle. Principle 6 caps the deliverable at the highest-value
+issue or two "plus the tier call"; a craft read makes no tier call, so the cap is the
+two or three findings that would most change the reading, and the tier clause simply
+does not apply.
+
 So the verdict for a craft-only run is `consider_addressing` when any craft finding
 was raised, or `looks_solid` when the write-up reads well and only nits remain.
 `address_first` is reachable on a craft request **only** through the carried-over
@@ -509,9 +531,12 @@ in `YYYY-MM-DDTHH-MM-SS` format (colons replaced with hyphens for filesystem saf
 }
 ```
 
+A narrative-craft run (§6.4) adds one field: `"craft": true`.
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `focus` | string | yes | One of the four focus mode names |
+| `craft` | boolean | no | `true` on a narrative-craft run (§6.4). Absent or `false` otherwise. This is the **only** machine-readable mark that distinguishes a craft read from an evidentiary `on-demand` read — both carry `focus: "on-demand"` — so §12.3's supersession rule depends on it. Sidecar-only: it is deliberately *not* added to the `evaluations[]` pointer entry (§12.1), which is closed-schema and would cost a five-site change; the sidecar body is unvalidated, so this costs nothing. |
 | `target_id` | string | yes | The `q_` or `ps_` ID evaluated |
 | `target_type` | `"question"` \| `"proof_summary"` \| `"project"` | yes | Resolved type of `target_id` |
 | `verdict` | string | yes | See §7.2 |
@@ -590,7 +615,10 @@ user-facing output. It must follow this structure:
 ```
 
 For a craft-only `on-demand` run, the required scope sentence of §6.4 comes first —
-before the `# Mentor review:` heading — so the reader meets it before any praise.
+before the `# Mentor review:` heading — so the reader meets it before any praise. The
+heading then reads `# Mentor review: how this reads — <target_id>`, not `on-demand`:
+the generic mode name is the one label the user sees, and it tells them nothing about
+what was reviewed.
 
 ---
 
@@ -650,6 +678,10 @@ tell a craft read apart from an evidentiary `on-demand` read — both are
 `on-demand` — so honouring the skip here would answer "is this a good read?" with a
 verdict that never looked at the prose. The user asked for a craft read by name; give
 them one.
+
+This exempts the *skip*, not all reading of prior verdicts: §12.3 still has the craft
+run open the candidate entry's sidecar to check its `craft` flag before deciding
+supersession.
 
 ### 10.1 Interactive mode behavior
 
@@ -768,11 +800,18 @@ When a re-evaluation is written for the same focus + target_id (per §10), the a
 This preserves the full audit trail without deleting history.
 
 **Craft runs neither supersede nor are superseded.** A narrative-craft verdict (§6.4)
-is written with `superseded_by: null` and leaves every prior entry's `superseded_by`
-untouched; a later evidentiary `on-demand` verdict likewise does not supersede a craft
-one. They share the `on-demand` focus but review different things, and marking an
-evidence review superseded by a style review — or the reverse — would misreport the
-audit trail. A craft run supersedes only an earlier craft run on the same target.
+supersedes only an earlier craft verdict on the same target; it leaves an evidentiary
+`on-demand` entry's `superseded_by` untouched, and a later evidentiary verdict likewise
+leaves a craft one alone. They share the `on-demand` focus but review different things,
+and marking an evidence review superseded by a style review — or the reverse — would
+misreport the audit trail.
+
+**How to tell them apart.** Read the candidate entry's `file_path` sidecar and check
+its `craft` flag (§7.1). This is the one place a craft run must open a prior verdict,
+and it is why the flag exists: focus + target_id cannot discriminate. A sidecar written
+before the flag existed, or unreadable, counts as **not** craft — so an old evidentiary
+verdict is left alone, which is the safe direction. This costs one `Read`; it is not a
+reason to skip the check and supersede blindly.
 
 ### 12.4 research-schema-spec.md changes
 
@@ -918,7 +957,7 @@ These items are acknowledged but not specified here. They belong in future issue
 | Wiring into `/research` orchestrator skill | Depends on `/research` landing on main. DallanQ noted this explicitly in the implementation commit. |
 | Commit pending per-action approval | Not yet understood well enough to specify. Defer to DallanQ for clarification. |
 | Reducing per-gate mentor cost | Do not defer gates ad hoc to chase speed. Follow the staged sequence in §17.1. |
-| `narrative-craft` as its own `focus` value | Considered and deliberately not taken. See §17.2. |
+| `narrative-craft` as its own `focus` value | Deferred, not dropped — with a stated trigger for revisiting. See §17.2, and the queue entry under `docs/TODOs.md` § "Skills / tools". |
 
 ### 17.1 Reducing per-gate mentor cost (defer until measurable)
 
@@ -996,6 +1035,9 @@ for by name, and it is the concrete thing a real focus value would buy.
 
 Promote to a real focus value only if usage shows it should be a standing gate
 rather than something the user asks for — or if the carve-outs above start
-accumulating. That is a new spec delta on top of this one, not a reopening of it —
+accumulating. Two exist today (§10's skip exemption and §12.3's supersession rule,
+both leaning on the `craft` flag of §7.1); **a third is the trigger**, because at that
+point the enum change is cheaper than the workarounds. Queued in `docs/TODOs.md`
+§ "Skills / tools". That is a new spec delta on top of this one, not a reopening of it —
 keep the audit trail the way `evaluations[].superseded_by` already does for
 re-evaluations.

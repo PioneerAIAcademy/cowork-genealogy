@@ -40,13 +40,31 @@ describe("gps-mentor narrative-craft doctrine (spec §6.4)", () => {
 
   it("mandates the scope sentence as required text, not a suggestion", () => {
     expect(body).toMatch(/this is required text/i);
-    // And states where it goes: above the heading, so it is read before praise.
-    expect(body).toMatch(/above.*# Mentor review:/is);
+    // And states where it goes. Anchored to the sentence that says it — an
+    // unanchored /above.*# Mentor review:/s matches any "above" anywhere in the
+    // file followed by the heading 200 lines later, which is always true.
+    const positioning = body
+      .split("\n\n")
+      .find((p) => /scope sentence/i.test(p) && /# Mentor review:/.test(p));
+    expect(positioning, "no paragraph positions the scope sentence").toBeDefined();
+    expect(positioning).toMatch(/\babove\b/i);
   });
 
   it("keeps craft findings advisory and names the single must-address route", () => {
-    expect(body).toMatch(/craft findings are advisory, always/i);
+    // Pin the RULE, not just the bold label: a body rewritten to "checks 1-5 may
+    // produce a must-address item" under an unchanged heading must fail.
+    const severity = body
+      .split("\n\n")
+      .find((p) => /craft findings are advisory/i.test(p));
+    expect(severity, "no craft severity paragraph").toBeDefined();
+    expect(severity).toMatch(/never produce a\s+must-address item/i);
     expect(body).toMatch(/the one carry-over/i);
+  });
+
+  it("marks a craft verdict so supersession can identify it later", () => {
+    // focus is "on-demand" for both craft and evidentiary reads, so the sidecar
+    // flag is the only discriminator §12.3 has.
+    expect(body).toMatch(/"craft":\s*true/);
   });
 
   it("carries a refusal path for a craft request with nothing written yet", () => {
@@ -58,15 +76,16 @@ describe("gps-mentor narrative-craft doctrine (spec §6.4)", () => {
     expect(refusalRow).toMatch(/proof-conclusion/);
   });
 
-  it("does not leak an internal axis name into user-facing instructions", () => {
-    // §6.4 forbids the agent saying "audience calibration" to a researcher.
-    // The phrase may appear as a heading or in the `standard` convention, but
-    // never inside an instruction about what to tell the user.
-    const offending = body
-      .split("\n")
-      .filter((l) => /audience calibration/i.test(l))
-      .filter((l) => /\btell\b|\bsay\b|narrative_for_user/i.test(l))
-      .filter((l) => !/never|not|must not|don't/i.test(l));
-    expect(offending).toEqual([]);
+  it("carries the prohibition on speaking internal axis names to the user", () => {
+    // The earlier form of this test scanned for a *violating* instruction and
+    // so passed on any text that did not contain one — including a body with
+    // the whole craft section deleted. Assert the prohibition is PRESENT
+    // instead: that is the thing whose deletion is invisible at runtime.
+    const prohibition = body
+      .split("\n\n")
+      .find((p) => /axis names/i.test(p) && /\bnever\b|\bdo not\b|\bdon't\b/i.test(p));
+    expect(prohibition, "no paragraph forbids speaking the axis names").toBeDefined();
+    // And it must name the register to use instead, or it is unactionable.
+    expect(prohibition).toMatch(/cousin|out loud|colleague/i);
   });
 });
