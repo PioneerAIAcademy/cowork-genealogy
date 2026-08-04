@@ -49,7 +49,7 @@ def test_api_key_mode_when_no_subscription(monkeypatch, tmp_path):
 
 def test_loads_api_key_from_dotenv(monkeypatch, tmp_path):
     env_file = tmp_path / ".env"
-    env_file.write_text("ANTHROPIC_API_KEY=sk-from-dotenv\n")
+    env_file.write_text("ANTHROPIC_API_KEY=sk-from-dotenv\n", encoding="utf-8")
     monkeypatch.setattr(auth, "SUBSCRIPTION_DIRS", [tmp_path / "no-such-dir"])
     monkeypatch.setattr(auth, "ENV_FILE", env_file)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)

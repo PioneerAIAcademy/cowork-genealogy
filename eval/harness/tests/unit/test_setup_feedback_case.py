@@ -269,7 +269,7 @@ def test_force_overwrites_existing(tmp_path, monkeypatch):
 
     # Touch a marker file inside the dest to verify --force wipes it.
     dest = tmp_path / "home" / "feedback" / slug
-    (dest / "stale-marker").write_text("should be gone")
+    (dest / "stale-marker").write_text("should be gone", encoding="utf-8")
 
     second = _run_script(str(zip_path), "--force")
     assert second.returncode == 0, second.stderr

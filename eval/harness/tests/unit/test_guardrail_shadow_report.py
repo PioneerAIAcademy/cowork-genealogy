@@ -99,7 +99,7 @@ def test_scan_corpus_aggregates_across_multiple_windows_and_files(tmp_path):
 def test_scan_corpus_skips_unreadable_files_without_crashing(tmp_path, capsys):
     bad = tmp_path / "f1" / "run-bad.json"
     bad.parent.mkdir(parents=True)
-    bad.write_text("not json")
+    bad.write_text("not json", encoding="utf-8")
     good = _write_run(tmp_path / "f2", "run-good.json", [_unguarded_write()])
 
     by_window = scan_corpus([bad, good], windows=[40])
