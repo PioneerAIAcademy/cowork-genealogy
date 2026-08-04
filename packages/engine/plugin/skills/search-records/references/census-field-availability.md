@@ -53,9 +53,10 @@ relationship column.** Separate slave schedule again.
 
 ### 1870 — first post-emancipation census; still no relationships
 
-Adds: value of real and personal estate, **"father of foreign birth" and
+Carries over value of real estate (col 8, since 1850) and personal estate
+(col 9, since 1860). Genuinely new in 1870: **"father of foreign birth" and
 "mother of foreign birth"** — *yes/no flags only, not the parents'
-birthplaces*, month of birth if born within the year, month of marriage if
+birthplaces* — month of birth if born within the year, month of marriage if
 married within the year, and male citizenship 21+.
 
 **Still no relationship column.** 1870 is the last US federal census without
@@ -216,7 +217,12 @@ list together.
   foreign-birth flags (cols 11–12) vs. the 1880 parents' *birthplaces*
   (cols 25–26) and relationship-to-head; 1900 month-and-year of birth (col 7);
   children born/living on 1900 (cols 11–12) and 1910 (cols 10–11); 1920 year of
-  naturalization (col 15).
+  naturalization (col 15). Also that value of real property is col 8 on 1850,
+  1860 **and** 1870 alike — i.e. 1870 carried the estate-value columns over
+  rather than adding them.
+- **[IPUMS 1870 enumerator instructions](https://usa.ipums.org/usa/voliii/inst1870.shtml)**
+  — 1870 col 8 real estate, col 9 personal estate (the latter reported only
+  when $100 or more).
 - **[The 1930 Census Schedules](https://www.archives.gov/publications/prologue/2002/spring/1930-census-2.html)**
   and **[IPUMS 1930 enumerator instructions](https://usa.ipums.org/usa/voliii/inst1930.shtml)**
   — age at first marriage is 1930 col 15, asked of every married person.
