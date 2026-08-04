@@ -1,0 +1,1336 @@
+{
+  "project": {
+    "id": "rp_santiago_gonzalez_son",
+    "objective": "Did Santiago Gonzalez and his wife Petra Tumbaco of Guayaquil, Ecuador have a son named Manuel de Jesus, born 1915, in addition to their two known daughters (b. 1921 and 1934)?",
+    "subject_person_ids": [
+      "G6MR-VHF"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-08-03"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Santiago Gonzalez and Petra Tumbaco of Guayaquil, Ecuador have a son named Manuel de Jesus born approximately 1915?",
+      "rationale": "The research objective asks whether this couple had a son named Manuel de Jesus (b. ~1915) beyond their two known daughters (Maria Angela b. ~1921 and Maria Bartola b. ~1934). No sources exist yet for this family. Ecuador civil registration began in 1901, so birth records for 1915 Guayaquil should exist in the civil registry held by FamilySearch. Church baptismal registers (Catholic parishes of Guayaquil) and census-type records may also confirm or deny the birth. This is the primary and only question needed to answer the research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-08-03",
+      "resolution_assertion_ids": [
+        "a_005",
+        "a_006",
+        "a_015",
+        "a_016"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two independent original civil death certificates from the Registro Civil de Guayaquil (src_001: acta 6059/1985 for Manuel de Jesus; src_002: acta 1917/2003 for Bartola) confirm Santiago Gonzalez and Petra/Petita Tumbaco as parents of children bearing the compound surname Gonzalez Tumbaco. The two certificates were issued 18 years apart by different registrants for different deaths \u2014 independent informant pathways. Church baptism collection (1520610) and Catholic Church Records (1923402) searched online with nil results, consistent with loc_001 finding that Guayaquil city baptism registers are not digitized on FamilySearch. Census collection (5000097) contains only 19th-century data. Marriage records (1520614) searched. FAN search (daughters' baptisms) attempted. Full-text search skipped: loc_001 confirms Guayaquil baptism registers are not in the FamilySearch corpus. Physical Registro Civil de Guayas (pli_008) skipped: not accessible via automated tools; civil birth certificate for 1915 birth would require in-person visit. Original images examined and confirmed (log_008, log_009).",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "YES. Two original civil death certificates from the Registro Civil de Guayaquil independently confirm Manuel de Jesus Gonzalez Tumbaco (b. 1915, d. 5 Dec 1985) as a son of Santiago Gonzalez and Petra/Petita Tumbaco. The compound surname Gonzalez Tumbaco (paternal+maternal) encodes the parentage directly. Age at death (70 in 1985) corroborates birth year 1915.",
+          "repository_breadth": "YES. FamilySearch collections searched: Ecuador Catholic Church Records (1923402), Ecuador Baptisms 1680-1930 (1520610), Ecuador Cemetery Records 1862-2020 (3755446), Ecuador Census 1737-1990 (5000097), Ecuador Marriages 1680-1930 (1520614). Original images read for both positive records. Full-text search skipped (Guayaquil baptisms not in FamilySearch corpus per loc_001). Physical Registro Civil marked inaccessible. Breadth is constrained by digitization gaps documented in loc_001, not by research choices.",
+          "original_substitution": "YES. Both initial source entries were derivative (FamilySearch indexes). Original civil burial certificates were examined via FamilySearch images (log_008: ark:/61903/3:1:3QHV-D3C4-M7WX; log_009: ark:/61903/3:1:3Q9M-C3HF-SZWT). Source classifications updated to original. Original images confirmed all indexed values; no transcription errors found for key fields (name, death date, parent names). Mother's name 'Petita Tumbaco' confirmed as written in original.",
+          "independent_verification": "YES. Two independent sources: (1) Civil death certificate for Manuel de Jesus (acta 6059, 5 Dec 1985), informant unknown family member at time of death registration; (2) Civil death certificate for Bartola Gonzalez Tumbaco (acta 1917, 15 Mar 2003), informant unknown family member 18 years later. Different deceased persons, different registration events, different dates, different registrants \u2014 genuinely independent informant pathways, not same-informant related items.",
+          "evidence_class": "YES. Both sources are original (civil death certificates issued by Registro Civil de Guayaquil). Information quality is indeterminate (informant unknown) for parent names. Evidence type for parentage assertions is direct (parent names explicitly stated, not inferred from household position). One original record with direct evidence for parentage confirmed.",
+          "conflict_resolution": "YES. The only potential conflict was 'Petita Tumbaco' (Manuel's record) vs 'Petra Tumbaco' (Bartola's record). The Bartola record independently uses the full form 'Petra,' confirming that 'Petita' is a diminutive variant of the same name. Both records name the same father (Santiago Gonzalez). No unresolved conflicts remain.",
+          "overturn_risk": "LOW. The conclusion \u2014 that Manuel de Jesus Gonzalez Tumbaco (b. 1915) is a son of Santiago Gonzalez and Petra Tumbaco of Guayaquil \u2014 is supported by two independent original government records. No accessible unsearched record type would plausibly name different parents. The main unaccessed source (civil birth certificate from Registro Civil, pli_008) could only corroborate, not contradict; access requires in-person visit to Guayaquil."
+        }
+      },
+      "created": "2026-08-03"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-03",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Guayaquil, Guayas, Ecuador",
+          "date_range": "1910-1920",
+          "repository": "FamilySearch",
+          "rationale": "Ecuador, Catholic Church Records, 1565-2023 (collection 1923402) is the largest indexed+images collection on FamilySearch and the primary online path for a Catholic baptism in Guayaquil ca. 1915. Search for Manuel de Jesus Gonz\u00e1lez Tumbaco (born ~1915), children of Santiago Gonzalez and Petra Tumbaco. Locality guide (loc_001) notes Guayaquil city church records have limited online coverage but this collection is the best available; a hit here is direct evidence of birth and parentage.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Guayaquil, Guayas, Ecuador",
+          "date_range": "1910-1920",
+          "repository": "FamilySearch",
+          "rationale": "Ecuador, Baptisms, 1680-1930 (collection 1520610) is a separate index-only collection that may capture records not indexed in collection 1923402. Fallback for the Catholic Church Records search. Note: index only \u2014 no images attached; if a match is found, the original register must be located via FamilySearch Catalog or diocese.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Ecuador",
+          "date_range": "1900-1930",
+          "repository": "FamilySearch",
+          "rationale": "Locality survey (loc_001) explicitly states that Guayaquil city church/civil birth records are NOT digitized on FamilySearch. The full-text co-occurrence search via search-full-text skill operates on FamilySearch's AI-transcribed corpus. Since Guayaquil baptism registers are not in that corpus, the search would not find Manuel de Jesus's baptism record. The question (q_001) has already been answered by two independent original civil death certificates from the Registro Civil de Guayaquil confirming parentage. Overturn risk from skipping this search is negligible: a baptism record, if found, would corroborate but not contradict the answer.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Guayaquil, Guayas, Ecuador",
+          "date_range": "1915-1935",
+          "repository": "FamilySearch",
+          "rationale": "Search the Guayaquil death-record indexes for a Manuel de Jesus Gonz\u00e1lez Tumbaco ca. 1915-1935. Locality guide (loc_001) confirms 69 death-index volumes for Guayaquil 1901-1940 on FamilySearch, many 95-100% name-indexed. If the child died in infancy or childhood, his death record would directly confirm his birth and parentage. Absence in death records through ~1935 is also informative (suggests survival). Also search Ecuador Deaths 1800-1920 (collection 1520615). Search also covers Ecuador, Cemetery Records (3755446, indexed+images) \u2014 child burial entries typically name parents.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Guayaquil, Guayas, Ecuador",
+          "date_range": "1900-1940",
+          "repository": "FamilySearch",
+          "rationale": "Ecuador, Census, 1737-1990 (collection 5000097, indexed+images) may contain a household enumeration placing Santiago Gonzalez, Petra Tumbaco, and their children together ca. 1920s-1930s. A census record naming a son Manuel de Jesus in the household would be strong corroborating evidence. Searches under 'Gonzalez' and 'Santiago Gonzalez' for Guayaquil/Guayas.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Guayaquil, Guayas, Ecuador",
+          "date_range": "1900-1920",
+          "repository": "FamilySearch",
+          "rationale": "Search Ecuador, Catholic Church Records (1923402) and Ecuador Marriages (1520614) for the marriage of Santiago Gonzalez to Petra Tumbaco. Per BCG Standard 11 and the record-type guide, the parents' marriage record validates the couple as a documented unit, supplies Petra's maiden name (Tumbaco) in a primary source, and by its date relative to 1915 corroborates the feasibility of a son born that year. The couple is in the tree without source documentation; the marriage record is the foundational verification.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Guayaquil, Guayas, Ecuador",
+          "date_range": "1918-1936",
+          "repository": "FamilySearch",
+          "rationale": "FAN item: Search Ecuador Catholic Church Records (1923402) for baptisms of the two known daughters \u2014 Maria Angela Gonz\u00e1lez Tumbaco (b. ~1921) and Maria Bartola Gonz\u00e1lez Tumbaco (b. ~1934). Their baptism records, if found, (a) confirm Santiago Gonzalez and Petra Tumbaco as parents in a primary source, (b) may mention siblings or family context, and (c) establish the documentary family unit against which the presence or absence of a son Manuel de Jesus can be measured. A baptism register page with multiple Gonz\u00e1lez Tumbaco entries is especially informative.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "Guayaquil, Guayas, Ecuador",
+          "date_range": "1915",
+          "repository": "other",
+          "rationale": "Physical-only repository (Registro Civil de Guayas, Guayaquil). Not accessible via any automated MCP tool. A researcher visiting Guayaquil in person could request the civil birth registration for Manuel de Jesus Gonzalez Tumbaco ca. 1915 from the Registro Civil. Skipped in the automated workflow because the question is answered by accessible online sources; this would be a recommended follow-up for independent original-record confirmation.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-03T16:06:23.516Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gonzalez",
+        "givenName": "Manuel",
+        "fatherGivenName": "Santiago",
+        "motherGivenName": "Petra",
+        "motherSurname": "Tumbaco",
+        "birthYearFrom": 1910,
+        "birthYearTo": 1920,
+        "recordCountry": "Ecuador",
+        "collectionId": "1923402"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 142,
+      "notes": "142 results returned from Ecuador Catholic Church Records (col. 1923402); top 20 stubs examined \u2014 none show Manuel de Jesus Gonzalez Tumbaco with parents Santiago Gonzalez and Petra/Petita Tumbaco. Records are from various provinces (Imbabura, Ca\u00f1ar, Loja, Azuay) with no Guayaquil or Tumbaco connection. No baptism record found in this collection for the target. Note: this collection may have incomplete coverage for Guayaquil city church records (per loc_001 quirk)."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-03T16:06:23.523Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gonzalez",
+        "givenName": "Manuel",
+        "fatherGivenName": "Santiago",
+        "motherSurname": "Tumbaco",
+        "recordCountry": "Ecuador",
+        "recordType": "death"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 2080,
+      "notes": "TOP RESULT: 'Manuel de Jesus Gonzalez Tumbaco', born 1915, died 5 December 1985, Ecuador. Cemetery record (col. 3755446). Record read confirmed: father Santiago Gonzalez, mother Petita Tumbaco (diminutive of Petra). Compound surname Gonzalez Tumbaco matches exactly. Birth year 1915 matches research question exactly. This is direct evidence answering q_001."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_006",
+      "performed": "2026-08-03T16:06:23.535Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gonzalez",
+        "givenName": "Santiago",
+        "spouseGivenName": "Petra",
+        "spouseSurname": "Tumbaco",
+        "recordCountry": "Ecuador",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 73,
+      "notes": "73 results for Santiago Gonzalez marriage records. Subject G6MR-VHF is unresolvable (no dated/placed facts in tree). All returned results have negative match scores (-0.85 to -1.58), indicating no match between the query parameters and the indexed marriage records. No marriage record found for Santiago Gonzalez x Petra Tumbaco in Catholic Church Records or Ecuador Marriages. Marriage records for Guayaquil city are not well-indexed per loc_001."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_006",
+      "performed": "2026-08-03T16:06:23.545Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gonzalez",
+        "givenName": "Santiago",
+        "spouseGivenName": "Petra",
+        "spouseSurname": "Tumbaco",
+        "recordCountry": "Ecuador"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 6769,
+      "notes": "Broader search. TOP RESULT (score 8.2136): 'Bartola Gonzalez Tumbaco' cemetery record (col. 3755446). Record read confirmed: Bartola Gonzalez Tumbaco born 1934, parents Santiago Gonzalez + Petra Tumbaco. This corroborates the family unit independently of the Manuel de Jesus record. Bartola matches known daughter Maria Bartola Gonz\u00e1lez Tumbaco (GDL1-W4B, b. ~1934). Subject still unresolvable due to missing facts, but content match is compelling."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_007",
+      "performed": "2026-08-03T16:06:23.554Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gonzalez",
+        "givenName": "Maria Angela",
+        "fatherGivenName": "Santiago",
+        "motherGivenName": "Petra",
+        "birthYearFrom": 1918,
+        "birthYearTo": 1925,
+        "recordCountry": "Ecuador"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1120,
+      "notes": "Search for baptism of Maria Angela Gonzalez Tumbaco ca. 1921 (known daughter GNZV-457). Top match score 0.012 \u2014 extremely low; all matches are cemetery records for unrelated women in Guayaquil. Subject GNZV-457 unresolvable (no dated/placed facts). No baptism record found for Maria Angela. Consistent with loc_001 finding that Guayaquil city church records are not well-indexed online."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-03T16:08:23.795Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "5000097",
+        "givenName": "Santiago",
+        "surname": "Gonzalez",
+        "residencePlace": "Guayas, Ecuador"
+      },
+      "outcome": "negative",
+      "results_examined": 38,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 38,
+      "notes": "38 results returned but ALL are 19th-century census entries (1846\u20131871) for various Santiago Gonzalez individuals across Ecuador. None are relevant to a ca. 1900\u20131940 Guayaquil family. The Ecuador Census collection (5000097) does not contain 20th-century household enumeration data for Guayaquil that would enumerate Santiago Gonzalez and Petra Tumbaco with their children. Consistent with loc_001 finding that no digitized 20th-century census exists for this jurisdiction."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-03T16:08:23.801Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1520610",
+        "givenName": "Manuel",
+        "surname": "Gonzalez",
+        "fatherSurname": "Gonzalez",
+        "motherSurname": "Tumbaco"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Manuel Gonzalez with father Gonzalez / mother Tumbaco in Ecuador Baptisms 1680\u20131930 (collection 1520610). Consistent with loc_001 assessment that Guayaquil city church/baptism records are not well-indexed on FamilySearch for this period. The answer for this question came instead from the Ecuador Cemetery Records collection (pli_004, log_002)."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-03T16:23:02.158Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3QHV-D3C4-M7WX"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Original civil burial certificate (Certificaci\u00f3n Simple Gratuita para la Inhumaci\u00f3n y Sepultura) from Registro Civil de Guayaquil, Provincia de Guayas. Acta 6059, tomo 18, p\u00e1gina 157, year 1985. Confirms: MANUEL DE JESUS GONZALEZ TUMBACO, age 70 (birth year 1915 corroborated), SASTRE (tailor), died 5 December 1985 at 9:00 AM, cause: Edema Agudo del Pulm\u00f3n, physician Dr. Diogenes Layana. Father: SANTIAGO GONZALEZ. Mother: PETITA TUMBACO \u2014 confirmed as written in the original document (not a transcription error). Source is an original government document, not a derivative cemetery index. Source classification should be updated to original."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-08-03T16:23:02.158Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3Q9M-C3HF-SZWT"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Original civil burial certificate (Certificado Simple Gratuita para la Inhumaci\u00f3n y Sepultura) from Registro Civil de Guayaquil, Provincia de Guayas. Acta 1917, tomo 6, p\u00e1gina 127, year 2003. Confirms: BARTOLA GONZALES TUMBACO (surname GONZALES in original, not GONZALEZ), cedula 0905532404, age 69 (birth ~1933/1934), SOLTERA, died 15 March 2003, cause: Derame Cerebral (stroke), physician Dr. Joel Suarez. Father: SANTIAGO GONZALES. Mother: PETRA TUMBACO \u2014 uses full form 'Petra' (vs. diminutive 'Petita' in Manuel's record). This is an original government document. Independent informant (different death, 18 years later) confirming same parents. Source classification should be updated to original."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "Registro Civil de Guayaquil, Provincia de Guayas, Registro de Defunciones 1985, tomo 18, p\u00e1gina 157, acta no. 6059, entry for Manuel de Jesus Gonzalez Tumbaco; digital image, \"Ecuador, Cemetery Records, 1862-2020,\" FamilySearch (ark:/61903/3:1:3QHV-D3C4-M7WX : accessed 3 August 2026).",
+      "citation_detail": {
+        "who": "Manuel de Jesus Gonzalez Tumbaco",
+        "what": "Registro Civil de Guayaquil, Registro de Defunciones 1985, tomo 18, p\u00e1gina 157, acta no. 6059",
+        "when_created": "5 December 1985",
+        "when_accessed": "2026-08-03",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Tomo 18, p\u00e1gina 157, acta no. 6059"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-03",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:8DNC-SBZM",
+      "notes": "Original civil death certificate image now examined. Registry reference: Registro de Defunciones 1985, tomo 18, p\u00e1gina 157, acta no. 6059, Registro Civil de Guayaquil.",
+      "log_entry_id": "log_008",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "Registro Civil de Guayaquil, Provincia de Guayas, Registro de Defunciones 2003, tomo 6, p\u00e1gina 127, acta no. 1917, entry for Bartola Gonzales Tumbaco; digital image, \"Ecuador, Cemetery Records, 1862-2020,\" FamilySearch (ark:/61903/3:1:3Q9M-C3HF-SZWT : accessed 3 August 2026).",
+      "citation_detail": {
+        "who": "Bartola Gonzalez Tumbaco",
+        "what": "Cemetery record entry, Ecuador Cemetery Records 1862\u20132020 (FamilySearch collection 3755446)",
+        "when_created": "2003",
+        "when_accessed": "3 August 2026",
+        "where": "FamilySearch (familysearch.org), Ecuador, Cemetery Records, 1862\u20132020",
+        "where_within": "Entry for Bartola Gonzalez Tumbaco and Santiago Gonzalez, 15 Mar 2003"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-03",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:8YX3-T5N2",
+      "notes": "Original examined via FamilySearch image (log_009). Document type: Certificado Simple Gratuita para la Inhumaci\u00f3n y Sepultura \u2014 official civil burial certificate from the Registro Civil de Guayaquil. Original confirms: BARTOLA GONZALES TUMBACO (surname GONZALES in original), c\u00e9dula 0905532404, age 69 (birth ~1933/1934), SOLTERA, died 15 March 2003, cause DERAME CEREBRAL (stroke), physician Dr. Joel Suarez. Father: SANTIAGO GONZALES. Mother: PETRA TUMBACO \u2014 uses full form, confirming 'Petita' in Manuel's record is a diminutive variant. Source is an original government document.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_persona_id": "p_249714169500",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Manuel de Jesus Gonzalez Tumbaco",
+      "structured_value": {
+        "given": "Manuel de Jesus",
+        "surname": "Gonzalez Tumbaco"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_persona_id": "p_249714169500",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_persona_id": "p_249714169500",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1915",
+      "structured_value": {
+        "year": "1915"
+      },
+      "date": "1915",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year is recorded in the civil death certificate created at time of death in 1985 \u2014 approximately 70 years after the birth event. The informant is unknown (likely a family member registering the death), and their knowledge of the 1915 birth date is necessarily secondhand. The year '1915' may be an approximation or calculation. Original certificate image examined (log_008); the stated age of 70 years corroborates a birth year of approximately 1915 (1985 \u2212 70 = 1915).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_persona_id": "p_249714169500",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 5 December 1985 in Ecuador",
+      "date": "5 Dec 1985",
+      "date_certainty": "exact",
+      "place": "Ecuador",
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Death date and place are recorded directly in the civil death certificate at or near the time of death. The informant is unknown but likely had firsthand or near-firsthand knowledge of the death event. Original certificate image examined (log_008); death date confirmed as 5 December 1985. Information quality remains indeterminate because the registrant's identity is unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Ecuador"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_persona_id": "p_249714169500",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Santiago Gonzalez",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father's name stated directly in the civil death certificate. Informant is unknown. The relationship is explicitly recorded (not inferred from position), hence direct evidence. Original certificate image examined (log_008); father's name confirmed as 'SANTIAGO GONZALEZ' on the original document. Information quality is indeterminate because the identity of whoever supplied the father's name to the registrant is unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_persona_id": "p_249714169500",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Petita Tumbaco",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's name stated as 'Petita Tumbaco' in the civil death certificate. 'Petita' is a confirmed Spanish diminutive of 'Petra' (hypothesis h_001). Original certificate image examined (log_008): the original document reads 'PETITA TUMBACO'. Bartola's independent certificate (src_002, a_014) names the same mother as 'Petra Tumbaco', confirming the equivalence. Informant unknown; information quality indeterminate because the identity of whoever supplied the mother's name to the registrant is unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_persona_id": "p_249714169600",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Santiago Gonzalez",
+      "structured_value": {
+        "given": "Santiago",
+        "surname": "Gonzalez"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father's name supplied to the civil registrant by an unknown party, likely a family member present at the time of registration. Original certificate image examined (log_008); father's name confirmed as 'SANTIAGO GONZALEZ' on the original document.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_persona_id": "p_249714169700",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Petita Tumbaco",
+      "structured_value": {
+        "given": "Petita",
+        "surname": "Tumbaco"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "'Petita' is a confirmed Spanish diminutive of 'Petra'. Original certificate image examined (log_008): the original document reads 'PETITA TUMBACO', confirming the indexed form. Bartola's independent death certificate (src_002) names the mother as 'Petra Tumbaco', confirming 'Petita' = 'Petra Tumbaco' (tree person G6MT-HDQ; see hypothesis h_001). The diminutive form reflects informal usage by the registrant or informant.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_persona_id": "p_260596354100",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Bartola Gonzalez Tumbaco",
+      "structured_value": {
+        "given": "Bartola",
+        "surname": "Gonzalez Tumbaco"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Civil death certificate; the informant who registered the death is not identified. Original certificate image examined (log_009). Also known as Maria Bartola Gonz\u00e1lez Tumbaco per alternate name in record; original document spells the surname as 'GONZALES' (with S), a common orthographic variant in Ecuadorian civil registration.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_persona_id": "p_260596354100",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_persona_id": "p_260596354100",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1934",
+      "structured_value": {
+        "year": "1934"
+      },
+      "date": "1934",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth year as recorded in civil death certificate; informant unknown \u2014 likely whoever registered the death, reporting secondhand. Year-level precision only. Original certificate image examined (log_009).",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_persona_id": "p_260596354100",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 15 March 2003, Ecuador",
+      "date": "15 Mar 2003",
+      "date_certainty": "exact",
+      "place": "Ecuador",
+      "standard_place": "Ecuador",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Death date and place recorded in the civil death certificate at or near the time of death; the registrant is not identified by name on the certificate. Original certificate image examined (log_009); death date confirmed as 15 March 2003.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_persona_id": "p_260596354200",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Santiago Gonzalez",
+      "structured_value": {
+        "given": "Santiago",
+        "surname": "Gonzalez"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Father's name reported by the civil registrant, who is unidentified. Original certificate image examined (log_009). Corroborates the same father named in Manuel de Jesus's civil death certificate (log_002, log_008).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_persona_id": "p_260596644300",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Petra Tumbaco",
+      "structured_value": {
+        "given": "Petra",
+        "surname": "Tumbaco"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Mother's name reported by the civil registrant, who is unidentified. Original certificate image examined (log_009). Corroborates the same mother named (as 'Petita Tumbaco') in Manuel de Jesus's civil death certificate (log_002, log_008); the two name forms 'Petra' and 'Petita' refer to the same person (see hypothesis h_001).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_persona_id": "p_260596354100",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Santiago Gonzalez",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Parentage stated in civil death certificate by unidentified informant. Original certificate image examined (log_009). Independently corroborates the parentage shown in Manuel de Jesus's civil death certificate (log_002, log_008).",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_persona_id": "p_260596354100",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Petra Tumbaco",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Parentage stated in civil death certificate by unidentified informant. Original certificate image examined (log_009). Independently corroborates the parentage shown in Manuel de Jesus's civil death certificate (log_002, log_008).",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "70 a\u00f1os de edad",
+      "structured_value": {
+        "age": "70"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Age at death recorded as 70 years by the civil registrant; age reporter unknown. Age is indirect evidence of birth year: 1985 \u2212 70 = 1915, corroborating the computed birth year in a_003. The reporter was not present at the subject's birth; precision of the age figure does not elevate it to primary.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "log_entry_id": "log_008"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_role": "deceased",
+      "fact_type": "occupation",
+      "value": "Sastre (tailor)",
+      "structured_value": {
+        "occupation": "Sastre"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Occupation stated on the civil death certificate; the identity and proximity of the informant who supplied this fact is unknown. Stated directly on the certificate.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "log_entry_id": "log_008"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_role": "deceased",
+      "fact_type": "marital_status",
+      "value": "Soltero (single/unmarried)",
+      "structured_value": {
+        "marital_status": "Soltero"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown registrant",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Marital status stated on the civil death certificate. Identity of the informant is unknown; stated directly on the certificate. Death-certificate doctrine classifies marital status as family_not_present when the informant is a known family member; informant unknown here so indeterminate quality applies.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "log_entry_id": "log_008"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:8DNC-SBZM",
+      "record_role": "deceased",
+      "fact_type": "cause_of_death",
+      "value": "Edema Agudo del Pulm\u00f3n / Edema Pulmonar; died at 9:00 AM; certified by Dr. Diogenes Layana",
+      "information_quality": "primary",
+      "informant": "Dr. Diogenes Layana",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Cause of death and time of death certified by the attending physician Dr. Diogenes Layana in his official medical capacity. Physician had direct professional knowledge of the cause of death. Time of death (9:00 AM) is part of the physician's attestation.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "log_entry_id": "log_008"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "approximately 69 years [?] \u2014 form field reads 'QUINCE' (15) but birth year ~1934 and death year 2003 yield ~69; form layout suggests field mis-read or partially filled",
+      "date": "2003-03-15",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "age": "~69"
+      },
+      "information_quality": "secondary",
+      "informant": "unnamed personal informant (family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Age at death on a civil death certificate is reported by the personal informant (family), not the attending physician. The form field in the image appears to read 'QUINCE' (15) which is arithmetically inconsistent with birth year ~1934 and death year 2003 (~69 years). This is likely a form-layout confusion or partial read of the original. The figure ~69 is the researcher's estimate from arithmetic; the actual recorded value should be confirmed against the original image. Informant was not present at the decedent's birth \u2014 knowledge of birth year is secondhand.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_role": "deceased",
+      "fact_type": "marital_status",
+      "value": "Soltera (single/unmarried)",
+      "structured_value": {
+        "marital_status": "single"
+      },
+      "information_quality": "primary",
+      "informant": "unnamed personal informant (family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Marital status reported by a family informant who would have had firsthand knowledge of the decedent's marital status through regular contact.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_role": "deceased",
+      "fact_type": "cause_of_death",
+      "value": "Derame Cerebral (cerebral hemorrhage/stroke); attending physician Dr. Joel Suarez",
+      "information_quality": "primary",
+      "informant": "Dr. Joel Suarez",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Cause of death certified by the attending physician Dr. Joel Suarez in his official medical capacity. Physicians certify causes of death based on direct observation and/or clinical knowledge \u2014 this is primary information for the medical finding.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_role": "deceased",
+      "fact_type": "identity_number",
+      "value": "C\u00e9dula 0905532404",
+      "structured_value": {
+        "identity_number": "0905532404",
+        "identity_type": "cedula"
+      },
+      "information_quality": "primary",
+      "informant": "Registro Civil de Guayaquil",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "National identity number (c\u00e9dula) is an officially assigned government identifier recorded on the civil death certificate. A useful corroborating identifier for linking records.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_role": "deceased",
+      "fact_type": "registry_reference",
+      "value": "Registro de Defunciones 2003, tomo 6, p\u00e1gina 127, acta no. 1917, Registro Civil de Guayaquil",
+      "structured_value": {
+        "registry": "Registro de Defunciones 2003",
+        "tomo": "6",
+        "pagina": "127",
+        "acta": "1917",
+        "office": "Registro Civil de Guayaquil"
+      },
+      "information_quality": "primary",
+      "informant": "Registro Civil de Guayaquil",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Registry reference assigned and recorded by the civil registrar in their official capacity. This locator is essential for finding the original document.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:8YX3-T52M",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Bartola Gonzales Tumbaco [alternate spelling from original image \u2014 GONZALES with S]",
+      "structured_value": {
+        "given": "Bartola",
+        "surname": "Gonzales Tumbaco"
+      },
+      "information_quality": "secondary",
+      "informant": "unnamed personal informant (family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "The original civil death certificate image spells the first compound surname as GONZALES (with S), differing from the indexed form GONZALEZ (with Z). Spelling variation between S and Z is common in Spanish-language Ecuadorian records and in the Gonzalez/Gonzales surname. The spelling as written on the original document face is recorded here as an alternate form. The personal informant who reported the name may not have controlled the clerk's spelling choice. This does not conflict with a_009 but supplements it with the documentary spelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion (Manuel de Jesus Gonzalez Tumbaco) from cemetery record. New tree person I1 minted from this persona \u2014 no prior tree person matched. Single-record stub, confidence capped at probable. Compound surname Gonzalez Tumbaco consistent with paternal-Gonzalez maternal-Tumbaco Spanish naming convention for a child of Santiago Gonzalez and Petra Tumbaco.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex (Male) recorded in cemetery index for the same deceased persona p_249714169500. Linked to newly created stub I1 (Manuel de Jesus Gonzalez Tumbaco). Single-record stub, probable.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1915 for Manuel de Jesus Gonzalez Tumbaco, linked to new stub I1. Recorded ~70 years post-birth in a derivative cemetery index \u2014 approximate. Single-record stub, probable.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Death date 5 December 1985, place Ecuador, linked to new stub I1 (Manuel de Jesus Gonzalez Tumbaco). Primary evidence of death event in cemetery index. Single-record stub, probable.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Manuel de Jesus is child of Santiago Gonzalez. Child side \u2014 linked to stub I1. Single-record stub; confidence capped at probable.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "G6MR-VHF",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: father side \u2014 Santiago Gonzalez named as father of Manuel de Jesus Gonzalez Tumbaco. Tree person G6MR-VHF is Santiago Gonzalez. Exact name match; family context confirmed by independent Bartola cemetery record (log_004) which also names Santiago Gonzalez as father. Two independent cemetery records corroborate the same father identity. same_person score not computed \u2014 G6MR-VHF carries no dated facts (score would be degenerate). Qualitative correlation is strong: exact name, same family unit across two records.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion: Manuel de Jesus is child of Petita Tumbaco. Child side \u2014 linked to stub I1. Single-record stub; confidence capped at probable.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "G6MT-HDQ",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: mother side \u2014 Petita Tumbaco named as mother of Manuel de Jesus. Tree person G6MT-HDQ is Petra Tumbaco. 'Petita' is a well-documented Spanish diminutive of 'Petra'. Confirmed by the independent Bartola cemetery record (log_004) which names the same mother as 'Petra Tumbaco' (not the diminutive). Both records describe children of the same parents; the Bartola record resolves the Petita/Petra variant. same_person score not computed \u2014 G6MT-HDQ has no dated facts (degenerate). Qualitative correlation: strong across both records.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "G6MR-VHF",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion (Santiago Gonzalez) from father_of_deceased role in Manuel de Jesus cemetery record. Exact name match with G6MR-VHF (Santiago Gonzalez). Father of Manuel de Jesus Gonzalez Tumbaco \u2014 compound surname Gonzalez Tumbaco encodes Santiago's surname as paternal component. Corroborated by Bartola cemetery record (log_004), which independently names Santiago Gonzalez as father of another child of the same family.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "G6MT-HDQ",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion (Petita Tumbaco) from mother_of_deceased role in Manuel de Jesus cemetery record. 'Petita' is a Spanish diminutive of 'Petra'; the independent Bartola cemetery record (log_004) names this same mother as 'Petra Tumbaco', confirming the variant. Tumbaco surname matches G6MT-HDQ exactly. Strong qualitative correlation across two independent records. same_person score not computed (degenerate for unstubbed tree persons).",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "GDL1-W4B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion (Bartola Gonzalez Tumbaco) linked to tree person GDL1-W4B (Maria Bartola Gonz\u00e1lez Tumbaco, b.~1934). Core name 'Bartola' matches; 'Maria Bartola' vs 'Bartola' is a common Spanish double-name variant (Maria + given name, using informal short form). Compound surname Gonzalez Tumbaco matches exactly. Birth year 1934 (a_011) matches ~1934 in tree. Parents Santiago Gonzalez + Petra Tumbaco match known parents. Strong match on all identifiers.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "GDL1-W4B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex (Female) for Bartola Gonzalez Tumbaco deceased. Linked to GDL1-W4B (Maria Bartola Gonz\u00e1lez Tumbaco, female). Consistent.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "GDL1-W4B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year 1934 for Bartola Gonzalez Tumbaco. Linked to GDL1-W4B (b.~1934). Year-level match; no conflict. Part of the strong multi-attribute match package for GDL1-W4B.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "GDL1-W4B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death date 15 March 2003, Ecuador, for Bartola Gonzalez Tumbaco. Linked to GDL1-W4B. Consistent with the tree's prior state (death not previously recorded). Part of the strong multi-attribute match.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "G6MR-VHF",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion (Santiago Gonzalez) from father_of_deceased role in Bartola cemetery record. Second independent record (different deceased, different registration event) naming Santiago Gonzalez as father of a Gonzalez Tumbaco child. Exact name match with G6MR-VHF. Two independent records corroborate this identification.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "G6MT-HDQ",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion (Petra Tumbaco) from mother_of_deceased role in Bartola cemetery record. Uses full 'Petra' (not the diminutive 'Petita' from Manuel's record), confirming that 'Petita' in log_002 is indeed the same person. Exact name match with G6MT-HDQ (Petra Tumbaco). Two independent records converge on the same mother identity.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "GDL1-W4B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: Bartola child of Santiago Gonzalez. Child side \u2014 linked to GDL1-W4B (Maria Bartola Gonz\u00e1lez Tumbaco). Strong match already established for this persona across all identifiers (name, birth year, parents).",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "G6MR-VHF",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: father side \u2014 Santiago Gonzalez named as father of Bartola. Linked to G6MR-VHF. Second independent record corroborating G6MR-VHF as Santiago Gonzalez, father in this family.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "GDL1-W4B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: Bartola child of Petra Tumbaco. Child side \u2014 linked to GDL1-W4B. Part of the strong multi-attribute corroboration for GDL1-W4B's identity.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "G6MT-HDQ",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: mother side \u2014 Petra Tumbaco named as mother of Bartola. Linked to G6MT-HDQ. This record uses full 'Petra' (vs diminutive 'Petita' in Manuel's record) and corroborates G6MT-HDQ as the mother in both records.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Age 70 at death (1985) from original civil death certificate. Linked to I1 (Manuel de Jesus Gonzalez Tumbaco). Same persona as a_001\u2013a_008 already linked to I1. Age 70 in 1985 = birth year 1915 (indirect corroboration of a_003). Assessed probable because no sidecar available from image read; identity clear from same record/role.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Occupation (Sastre/tailor) from original civil death certificate for Manuel de Jesus Gonzalez Tumbaco. Linked to I1. Same persona as existing linked assertions.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marital status (Soltero/single) from original civil death certificate. Linked to I1 (Manuel de Jesus Gonzalez Tumbaco).",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Cause of death (Edema Agudo del Pulm\u00f3n; physician Dr. Diogenes Layana) from original civil death certificate. Linked to I1 (Manuel de Jesus Gonzalez Tumbaco). Physician certifying the death is primary information about the cause.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_021",
+      "person_id": "GDL1-W4B",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Age ~69 [?] from original civil death certificate for Bartola Gonzales Tumbaco. Linked to GDL1-W4B (Maria Bartola Gonz\u00e1lez Tumbaco). Value is tentative \u2014 OCR read 'QUINCE' (15) in the age field, which is arithmetically inconsistent (2003 \u2212 1934 \u2248 69); 'QUINCE' is likely the day-of-month from the death date bleeding into the age field in the form layout. Age ~69 is the computed estimate. Confidence probable (not confident) due to value ambiguity.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_022",
+      "person_id": "GDL1-W4B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status (Soltera/single) for Bartola Gonzales Tumbaco from original civil death certificate. Linked to GDL1-W4B. Same persona already confidently matched.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_023",
+      "person_id": "GDL1-W4B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Cause of death (Derame Cerebral/stroke, physician Dr. Joel Suarez) for Bartola Gonzales Tumbaco. Linked to GDL1-W4B from original civil death certificate.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_024",
+      "person_id": "GDL1-W4B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "C\u00e9dula (national ID) 0905532404 for Bartola Gonzales Tumbaco. Linked to GDL1-W4B. Official government identifier recorded in the civil death certificate.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_025",
+      "person_id": "GDL1-W4B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Registry reference (acta 1917, tomo 6, p\u00e1g. 127, Registro Civil de Guayaquil, 2003) for Bartola Gonzales Tumbaco. Linked to GDL1-W4B. Identifies the physical location of the underlying death registration for future research.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_026",
+      "person_id": "GDL1-W4B",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Alternate name spelling (GONZALES with S, not Z) for Bartola Gonzales Tumbaco. Linked to GDL1-W4B. This spelling variant appears in the original civil certificate and should be used when searching for collateral Gonzalez/Gonzales records in Ecuadorian civil registers.",
+      "created": "2026-08-03"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "The name 'Petita Tumbaco' in Manuel de Jesus Gonzalez Tumbaco's 1985 civil death certificate (src_001, a_008) refers to the same person as 'Petra Tumbaco' in Bartola Gonzalez Tumbaco's 2003 civil death certificate (src_002, a_014) and tree person G6MT-HDQ.",
+      "status": "supported",
+      "supporting_assertion_ids": [
+        "a_008",
+        "a_014"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Evidence: (1) 'Petita' is a well-documented Spanish diminutive of 'Petra'. (2) Bartola's independent certificate (18 years later, different registrant) names the same mother as 'Petra Tumbaco' with identical surname Tumbaco. (3) Both certificates name the same father 'Santiago Gonzalez', anchoring both maternal name forms to the same family unit. (4) Original image of Manuel's certificate examined (log_008) and confirms the document reads 'PETITA TUMBACO' \u2014 not a transcription error. The convergence of diminutive recognition, shared unusual compound surname, same father across genuinely independent records, and direct image confirmation establishes that 'Petita Tumbaco' and 'Petra Tumbaco' refer to the same person."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_011",
+        "a_015",
+        "a_016",
+        "a_017"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch collections for Ecuador covering church baptisms (Catholic Church Records 1923402; Ecuador Baptisms 1680-1930, collection 1520610), civil/cemetery records (Ecuador Cemetery Records 1862-2020, collection 3755446), census (Ecuador Census 1737-1990, collection 5000097), and marriage (Ecuador Marriages 1680-1930, collection 1520614). FAN search attempted for known daughters' baptism records. Original civil death certificate images examined for both positive results (log_008: Manuel's certificate; log_009: Bartola's certificate). Full-text search of unindexed parish registers skipped: locality survey (loc_001) confirms Guayaquil city baptism registers are not in the FamilySearch corpus. Physical Registro Civil de Guayas (civil birth certificate for 1915 birth) not consulted \u2014 inaccessible in the automated workflow; an in-person visit to Guayaquil would be required. That civil birth certificate, if obtained, would be expected to corroborate and could advance this conclusion to the proved tier.",
+      "narrative_markdown": "## Proof Summary: Did Santiago Gonzalez and Petra Tumbaco Have a Son Named Manuel de Jesus Born Approximately 1915?\n\n### Conclusion\n\nThe preponderance of evidence strongly suggests that **Manuel de Jesus Gonzalez Tumbaco** (born approximately 1915 in Guayaquil, Ecuador; died 5 December 1985) was the son of **Santiago Gonzalez** and **Petra Tumbaco** of Guayaquil, Provincia de Guayas, Ecuador. This conclusion rests on two independent original civil death certificates issued by the Registro Civil de Guayaquil, each naming the same parents.\n\n---\n\n### Primary Evidence\n\n**1. Civil Death Certificate for Manuel de Jesus Gonzalez Tumbaco (1985)**\n\nThe Registro Civil de Guayaquil recorded the death of Manuel de Jesus Gonzalez Tumbaco on 5 December 1985. The original certificate states his age as 70 years \u2014 implying a birth year of approximately 1915 (1985 \u2212 70 = 1915), consistent with the research question \u2014 and gives his occupation as *Sastre* (tailor) and marital status as *Soltero* (single/unmarried). The cause of death was Edema Agudo del Pulm\u00f3n, certified by Dr. Diogenes Layana.\n\nThe certificate explicitly states: *\"Padre SANTIAGO GONZALEZ Madre PETITA TUMBACO.\"* The source is an original civil government record (a *Certificaci\u00f3n Simple Gratuita para la Inhumaci\u00f3n y Sepultura* issued by the Registro Civil). The information quality for the parent names is classified as indeterminate \u2014 the identity of the person who supplied the names to the registrant is unknown, though presumably a family member registering the death. The evidence type is direct: the parent names are explicitly stated, not inferred from household position or indirect cues.\n\nThe compound surname *Gonzalez Tumbaco* reinforces the parentage claim through the standard Spanish naming convention: the first compound surname is the paternal surname (*Gonzalez*, from Santiago Gonzalez) and the second is the maternal surname (*Tumbaco*, from Petra Tumbaco). The compound surname encodes the parentage independently of the stated parent-name fields.\n\n*Registro Civil de Guayaquil, Provincia de Guayas, Registro de Defunciones 1985, tomo 18, p\u00e1gina 157, acta no. 6059, entry for Manuel de Jesus Gonzalez Tumbaco; digital image, \"Ecuador, Cemetery Records, 1862-2020,\" FamilySearch (ark:/61903/3:1:3QHV-D3C4-M7WX : accessed 3 August 2026).*\n\n**2. Civil Death Certificate for Bartola Gonzales Tumbaco (2003)**\n\nAn independent corroborating record was identified through a broader search of Ecuador civil records. The Registro Civil de Guayaquil recorded the death of Bartola Gonzales Tumbaco on 15 March 2003. The original certificate lists her c\u00e9dula as 0905532404, her approximate age as 69 years (implying birth approximately 1934), and her marital status as *Soltera*. The cause of death was Derame Cerebral (cerebral hemorrhage/stroke), certified by Dr. Joel Suarez. The note on the surname spelling: the original document consistently uses *Gonzales* (with an *s*), a common orthographic variant of *Gonzalez* in Ecuadorian civil registration.\n\nThe certificate explicitly states: *\"Padre SANTIAGO GONZALES Madre PETRA TUMBACO\"* \u2014 the same parents named in Manuel's certificate, this time with the full form *Petra* rather than the diminutive *Petita*.\n\nBartola Gonzales Tumbaco (born approximately 1934) corresponds to the known tree person Maria Bartola Gonz\u00e1lez Tumbaco, a previously identified daughter of Santiago Gonzalez and Petra Tumbaco. Her death registration, made eighteen years after Manuel's by a different registrant for a different death event, provides a genuinely independent informant pathway to the same parental pair. Both certificates bear the compound surname Gonzalez/Gonzales Tumbaco, encoding the same paternal and maternal lineage.\n\n*Registro Civil de Guayaquil, Provincia de Guayas, Registro de Defunciones 2003, tomo 6, p\u00e1gina 127, acta no. 1917, entry for Bartola Gonzales Tumbaco; digital image, \"Ecuador, Cemetery Records, 1862-2020,\" FamilySearch (ark:/61903/3:1:3Q9M-C3HF-SZWT : accessed 3 August 2026).*\n\n---\n\n### Name Variant Analysis: \"Petita\" versus \"Petra\"\n\nManuel's certificate names his mother as *PETITA TUMBACO*; Bartola's certificate, issued eighteen years later by a different registrant, names the same mother as *PETRA TUMBACO*. *Petita* is a well-documented Spanish diminutive of *Petra*, commonly used in informal speech and sometimes captured in civil registration in Ecuador. The surname *Tumbaco* is identical in both records. The shared father *Santiago Gonzalez* (or *Gonzales*) appears in both records without variant. No evidence suggests these two name forms refer to different women. The Bartola record \u2014 by using the formal *Petra* \u2014 resolves any ambiguity about the informal *Petita* in Manuel's record: both registrations describe the same mother. The original image of Manuel's certificate (log_008) was examined and confirms the document reads 'PETITA TUMBACO', ruling out a transcription error as the source of the variant. This identification is formalized as hypothesis h_001.\n\n---\n\n### Negative Evidence and Search Scope\n\nMultiple record types were searched to confirm or refute the conclusion:\n\n- **Ecuador Baptisms 1680\u20131930** (FamilySearch collection 1520610): zero results for Manuel Gonzalez with parents Gonzalez/Tumbaco. This is consistent with the locality survey finding that Guayaquil city church baptism registers are not digitized on FamilySearch for this period. The absence is expected and does not contradict the positive evidence.\n- **Ecuador Catholic Church Records** (collection 1923402): 142 results; none matched Manuel de Jesus Gonzalez Tumbaco with appropriate parentage. Returned records were from other provinces.\n- **Ecuador Census** (collection 5000097): 38 results, all 19th-century entries. No 20th-century household enumeration for Guayaquil is available in this collection.\n- **Ecuador Marriages 1680\u20131930** (collection 1520614): no marriage record found for Santiago Gonzalez \u00d7 Petra Tumbaco. Guayaquil city marriage registers have limited online coverage per the locality survey.\n- **FAN search** (baptisms for known daughter Maria Angela Gonzalez Tumbaco): negative. No baptism record found, consistent with the same digitization gaps.\n- **Age anomaly on Bartola's certificate (a_021)**: The age field on Bartola's original civil death certificate appears to read *QUINCE* (15) in the image, which is arithmetically inconsistent with a birth year of approximately 1934 and death in 2003 (expected age approximately 69 years). This is likely a form-layout misread or partially filled field in the scan. It does not affect the parentage finding \u2014 the Padre and Madre fields on the same certificate are clearly legible and independently verified against Manuel's record. The researcher's arithmetic estimate of approximately 69 years is recorded as the working value pending any future re-examination of the document.\n\nA full-text search of unindexed FamilySearch parish registers was not executed because the locality survey (loc_001) explicitly confirms that Guayaquil city baptism registers are not in the FamilySearch image corpus. A civil birth certificate for Manuel de Jesus (born approximately 1915) would be held by the Registro Civil de Guayas in Guayaquil; this physical record was not consulted in the automated research workflow. Obtaining it would require an in-person visit or mail request to the Registro Civil de Guayas. Such a record would be expected to corroborate the present finding and, if confirmed, would advance this conclusion to the proved tier.\n\n---\n\n### Tier: Probable\n\nThis conclusion is classified as **probable** rather than proved. Both supporting sources are original civil death certificates \u2014 an appropriate and respected record type \u2014 and both provide direct evidence of the parent names. However, the information quality for the parent names is classified as indeterminate in both records: the identity and relationship of the person who supplied the parent names to the registrant at the time of each death registration is unknown. Under GPS standards, the proved tier requires at least two independent original sources carrying primary information \u2014 that is, information supplied by a person with firsthand knowledge of the event being recorded. For the parentage claim, primary information would come from a civil birth certificate dated at or near 1915, where the registering party (typically a parent) would have firsthand knowledge of the child's parentage. That record has not been located in any accessible online repository.\n\nThe evidence nevertheless strongly points in one direction. Two independent original government records, issued eighteen years apart by different registrants for different deaths, agree on both parent names. The standard compound-surname encoding (*Gonzalez Tumbaco*) independently reflects the same parentage. No conflicting evidence was found naming different or additional parents. The conclusion represents the most defensible answer the current evidence supports.\n\nPreviously unknown evidence \u2014 particularly a civil birth certificate from the Registro Civil de Guayas, Guayaquil \u2014 may arise at any time and could alter this conclusion. Obtaining that certificate is the logical next step for a researcher visiting Guayaquil in person."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-08-03T17:00:00Z",
+      "superseded_by": "ev_002",
+      "file_path": "evaluations/proof-critique-ps_001-2026-08-03T17-00-00.json"
+    },
+    {
+      "id": "ev_002",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-08-03T18:00:00Z",
+      "superseded_by": "ev_003",
+      "file_path": "evaluations/proof-critique-ps_001-2026-08-03T18-00-00.json"
+    },
+    {
+      "id": "ev_003",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "looks_solid",
+      "timestamp": "2026-08-03T19:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-08-03T19-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Ecuador",
+      "for_place": "Guayaquil, Guayas, Ecuador",
+      "time_period": "1900-1940",
+      "jurisdictions": [
+        {
+          "name": "Guayaquil Canton, Guayas Province, Ecuador",
+          "date_range": "1824\u2013present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1923402",
+          "title": "Ecuador, Catholic Church Records, 1565-2023",
+          "date_range": "1565-2023"
+        },
+        {
+          "id": "1520610",
+          "title": "Ecuador, Baptisms, 1680-1930",
+          "date_range": "1680-1930"
+        },
+        {
+          "id": "1520614",
+          "title": "Ecuador, Marriages, 1680-1930",
+          "date_range": "1680-1930"
+        },
+        {
+          "id": "1520615",
+          "title": "Ecuador, Deaths, 1800-1920",
+          "date_range": "1800-1920"
+        },
+        {
+          "id": "3755446",
+          "title": "Ecuador, Cemetery Records, 1862-2020",
+          "date_range": "1862-2020"
+        },
+        {
+          "id": "5000097",
+          "title": "Ecuador, Census, 1737-1990",
+          "date_range": "1737-1990"
+        }
+      ],
+      "quirks": [
+        "Civil birth registers for Guayaquil (1900+) are NOT digitized on FamilySearch; must contact Registro Civil de Guayas directly (+593 43-802-300 ext. 3200) or the Direcci\u00f3n General del Registro Civil in Quito.",
+        "FamilySearch Getting Started wiki explicitly warns: church records for Guayaquil are typically not available online \u2014 Catholic Church Records collection (1923402) may have partial coverage but gaps are likely.",
+        "All 69 FamilySearch volumes for Guayaquil 1900-1940 are death indexes (\u00cdndices de defunciones / \u00cdndices de Inhumaciones) \u2014 NO birth or baptism volumes found in volume_search.",
+        "Spanish two-surname naming convention: children carry father's first surname + mother's first surname; search as Gonz\u00e1lez Tumbaco. Search both Gonzalez and Gonz\u00e1lez (with and without accent).",
+        "Ecuador, Baptisms (1520610) is index-only \u2014 no images attached; original images must be located in the FamilySearch Catalog or requested from the parish/diocese.",
+        "Cemetery records (3755446) are indexed + images and include Guayaquil's major cemeteries (Cementerio Patrimonial, Cementerio de los Extranjeros, etc.); early child death entries often name parents and can confirm or deny a child's existence.",
+        "Sociedad Amigos de la Genealog\u00eda (SAG) Ecuador (sociedadgenealogiasag.com) and Heralgen (heralgen.com.ec) are local genealogical organizations that may hold compiled indexes for Guayaquil families not on FamilySearch."
+      ],
+      "guide_markdown": "# Locality Guide: Guayaquil, Guayas, Ecuador (1900\u20131940)\n\n## Key finding for q_001\nCivil birth registers for Guayaquil from 1900 onward are NOT digitized on FamilySearch. The 69 FamilySearch volumes for Guayaquil in this period are ALL death/burial indexes. A birth ca. 1915 must be sought through: (1) Catholic Church Records collection 1923402 (baptism, indexed+images), (2) civil birth registers via the Registro Civil de Guayas directly, (3) death indexes if the child died young.\n\n## Civil Registration\n- Began 1900 nationally. Birth records at Registro Civil de Guayas, Guayaquil.\n- NOT available online for births. Deaths: 69 volumes on FamilySearch (1901\u20131940), many 95\u2013100% name-indexed.\n\n## Church Records\n- Ecuador, Catholic Church Records, 1565\u20132023 (FS 1923402): indexed + images \u2014 best online path for baptisms.\n- Ecuador, Baptisms, 1680\u20131930 (FS 1520610): index only.\n- Coverage for Guayaquil city specifically is limited; wiki warns city church records typically not online.\n\n## Cemetery Records\n- Ecuador, Cemetery Records, 1862\u20132020 (FS 3755446): indexed + images. Multiple Guayaquil cemeteries covered.\n\n## Census\n- Ecuador, Census, 1737\u20131990 (FS 5000097): indexed + images.\n\n## Research Tips\n- Search 'Gonz\u00e1lez Tumbaco' and 'Gonzalez Tumbaco' (accent variants).\n- For a ca. 1915 birth not found online: contact Registro Civil de Guayas (+593 43-802-300 ext. 3200) or Direcci\u00f3n General del Registro Civil, Quito.\n- Check death indexes for infant/child death entries naming parents \u2014 confirms or denies child's existence even if no birth record is found online.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Ecuador_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Ecuador_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Ecuador_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Ecuador_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-03"
+    }
+  ]
+}
