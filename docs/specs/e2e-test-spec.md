@@ -259,7 +259,7 @@ stripped starting tree, then reviewed and pruned by the author.
 | `description` | string | yes | Plain-language description of the finding |
 | `details` | object | yes | Structured data — shape varies by `type` |
 | `polarity` | enum | no | `recover` (default) or `avoid` — see §3.4.1. Omit for normal recall findings |
-| `supporting_sources` | array of strings | no | Source citations from the original tree that support this finding, for the judge to reference (not strict-matched) |
+| `supporting_sources` | array of strings | no | Source citations from the original tree that support this finding, for the judge to reference (not strict-matched). For a resolved record-hint negative, see the disproving-record/absence split in §3.6.1 |
 | `required` | boolean | yes | `true` = missing this finding fails the test; `false` = bonus |
 
 Most findings should be `required: true` for v1. The `false` lever
@@ -355,6 +355,42 @@ stripped:
   assert, plus a `required` recover finding that the agent documented
   the negative conclusion (§3.4.1). Say in the fixture README which
   state the fixture is in.
+
+#### 3.6.1 Citation shape for documented negatives (decision, issue #1025)
+
+A resolved-negative (outcome (c) above) makes two different claims,
+and they do not take the same citation:
+
+- **The disproving record** — whatever real record makes the hint
+  implausible or contradicted (an age impossibility, a date that
+  postdates a marriage, a directly-examined record that turns out to
+  be someone else). This is a real, ark-able record.
+- **The absence** — "no record in the collection establishes X." By
+  definition there is nothing to point an ark at.
+
+Once a resolvable ark is required on record-hint resolutions (issue
+#970), that requirement attaches to the **disproving record only**.
+Write it into the `avoid` finding's or the paired required finding's
+`supporting_sources` as a literal `ark:/61903/...`. The absence claim
+itself is written as plain prose — ideally naming the collection and
+date range searched — and is not required to carry an ark; none
+exists to cite. A fixture satisfies the ark requirement as long as
+*some* `supporting_sources` entry, on some finding in the fixture,
+carries the disproving record's ark — the absence sentence riding
+alongside it with no ark is not a gap.
+
+**The ark must be the full `ark:/61903/...` path — not the bare
+`XXXX-XXXX` id** (decision, issue #970, 2026-08-02). A naive
+`\b[A-Z0-9]{4}-[A-Z0-9]{2,4}\b` id-shaped token matches on collection
+date ranges alone (`Czech Republic, Church Books, 1552-1981` reads as
+one), and a FamilySearch tree PID is shape-identical to a record ark
+id — so the cheapest way to satisfy a bare-id lint is pasting the
+fixture's own `source_pid`, which carries zero record provenance.
+`validate_fixture.py`'s `record_hint_citation_errors` enforces the
+full-path form for this reason; it cannot verify the ark actually
+resolves to the record claimed (CI holds no FamilySearch token) —
+what it buys is that a false citation becomes checkable in one click
+by a human reviewer instead of invisible.
 
 ---
 
@@ -767,7 +803,7 @@ into one boolean made a correct run and a wrong one read identically
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
 | `outcome` | `pass` \| `partial` \| `fail` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
-| `harness_schema_version` | integer | `1` for the shape above. Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
+| `harness_schema_version` | integer | `2` for the shape above. `1` is the same shape with a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
@@ -985,7 +1021,8 @@ validation. The `.ann.json` is committed when a run is graded. To investigate
 a regression — a test that previously passed and now fails
 — diff the old and new `tool_calls` arrays: each entry's `response_summary`
 captures the FS result inline, so collection-hit changes, hint-count shifts, or
-record-visibility changes show up directly.
+record-visibility changes show up directly. (Note the one-time capture-format
+change before diffing across it — see §15, "Evidence to read, in order", step 4.)
 
 ---
 
@@ -1190,6 +1227,32 @@ changing anything, because the fix differs completely by cause.
    - different hit counts on the same search → FS may have reindexed;
    - **same calls, different `response_summary` → likely an agent or skill
      regression.**
+
+   > **One-time exception: `response_summary` changed format.**
+   > `_summarize_tool_response` stopped head-truncating at 497 chars and now
+   > summarizes by key (`eval/harness/e2e/orchestrator.py`). Measured against the
+   > six committed `jimmie-jewel-neal` runs, **741 of 1544 captures (48%) differ
+   > from what the old code would have produced** — so the first run after that
+   > change shows a changed `response_summary` on roughly half of all calls
+   > against **every** earlier baseline. That is a capture-format change, not an
+   > agent or skill regression. Do not read the third bullet above across that
+   > boundary; compare runs on the same side of it.
+   >
+   > **Which side a run log sits on is read from `harness_schema_version`, not
+   > from its timestamp.** `2` or higher is the key-preserving capture; `1` and
+   > below is the old head-truncation. A wall-clock date cannot answer this: the
+   > change was authored days before it merged, so v1 logs exist with timestamps
+   > later than the authoring date, and a date-based rule inverts for exactly
+   > those.
+   >
+   > Two format details that matter when diffing or grepping. Captures at or under
+   > 500 chars are passed through verbatim, so they keep the raw MCP envelope in
+   > which the tool's document is an **escaped** string; larger ones have the
+   > document unwrapped into real JSON keys. So (a) a call whose payload crosses
+   > 500 chars between runs flips representation and shows a diff that means
+   > nothing, and (b) grepping a *quoted* key (`'"ranked"'`) misses the escaped
+   > form while grepping the bare name (`ranked`) also matches agent prose and
+   > `Grep` patterns. Neither form is reliable alone — read the surrounding entry.
 
 ### The run log has no `skills_invoked` field
 

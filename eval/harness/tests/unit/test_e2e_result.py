@@ -15,10 +15,26 @@ from e2e.result import (
     axes_from_runlog,
     detector_era_runlog,
     is_committable_run,
+    overall_outcome,
     runlog_prefix,
     timestamp_slug,
     write_result_files,
 )
+from e2e.runlog_selection import all_result_jsons
+
+
+def committed_e2e_runlogs() -> list[tuple[Path, dict]]:
+    """Every committed e2e run log, paired with its parsed payload.
+
+    Discovery goes through `runlog_selection.all_result_jsons` — the same
+    filter every corpus reader uses — so a change to what counts as a
+    committed result reaches these tests instead of leaving a private glob
+    behind to drift.
+    """
+    paths = all_result_jsons()
+    if not paths:
+        pytest.skip("no committed e2e runlogs in this checkout")
+    return [(p, json.loads(p.read_text(encoding="utf-8"))) for p in paths]
 
 
 def test_timestamp_slug_is_filesystem_safe():
@@ -360,15 +376,9 @@ def test_the_known_detector_era_runlogs_are_still_identified():
     here fails on an unrelated PR (it did, on this one). What must not change
     is that these six stop being recognized.
     """
-    runlogs = Path(__file__).resolve().parents[3] / "runlogs" / "e2e"
-    if not runlogs.is_dir():
-        pytest.skip("no committed e2e runlogs in this checkout")
-
     fingerprinted = set()
-    for path in runlogs.glob("*/run-*.json"):
-        if ".final-" in path.name or path.name.endswith(".ann.json"):
-            continue
-        if detector_era_runlog(json.loads(path.read_text(encoding="utf-8"))):
+    for path, data in committed_e2e_runlogs():
+        if detector_era_runlog(data):
             fingerprinted.add(path.parent.name)
 
     known_detector_era = {
@@ -382,43 +392,84 @@ def test_the_known_detector_era_runlogs_are_still_identified():
     assert known_detector_era <= fingerprinted
 
 
-def test_no_committed_runlog_is_reported_compliance_pass():
+def test_no_pre_v1_runlog_is_reported_compliance_pass():
     """Corollary of the above, and the correction that matters most: every
-    pre-v1 log resolves to `fail` or `not_checked`, never a bare `pass`. The
-    only run that could have claimed `pass` (bagley-father-1884) is one we can
-    demonstrate was non-compliant."""
-    runlogs = Path(__file__).resolve().parents[3] / "runlogs" / "e2e"
-    if not runlogs.is_dir():
-        pytest.skip("no committed e2e runlogs in this checkout")
+    **pre-v1** log resolves to `fail` or `not_checked`, never a bare `pass`.
+    The only run that could have claimed `pass` (bagley-father-1884) is one we
+    can demonstrate was non-compliant.
 
-    for path in runlogs.glob("*/run-*.json"):
-        if ".final-" in path.name or path.name.endswith(".ann.json"):
+    Scoped to pre-v1 logs deliberately: a v1+ log (`harness_schema_version`
+    present) is allowed to report a genuine `compliance == "pass"` — that's
+    the whole point of separating compliance from the pre-v1 conflation this
+    test is about. Skip those here rather than asserting something false
+    about them.
+    """
+    for path, data in committed_e2e_runlogs():
+        if "harness_schema_version" in data:
             continue
-        data = json.loads(path.read_text(encoding="utf-8"))
         _verdict, compliance, _outcome = axes_from_runlog(data)
         assert compliance in {"fail", "not_checked"}, path
 
 
-def test_the_gate_reproduces_todays_fused_verdict_across_the_whole_corpus():
-    """Behavior-preservation proof for the exit-code change.
+def test_the_gate_reproduces_todays_fused_verdict_across_the_pre_v1_corpus():
+    """Behavior-preservation proof for the exit-code change, scoped to the
+    **pre-v1** corpus that existed when the split landed.
 
     Before the split, a guardrail bypass forced `verdict = "fail"` and the
     exit code keyed on that. Now it forces `outcome = "fail"` and the exit
-    code keys on THAT. Over every committed run the two distributions must be
-    identical — otherwise this refactor silently changed which runs fail CI.
-    """
-    runlogs = Path(__file__).resolve().parents[3] / "runlogs" / "e2e"
-    if not runlogs.is_dir():
-        pytest.skip("no committed e2e runlogs in this checkout")
+    code keys on THAT. Over every committed PRE-V1 run the two distributions
+    must be identical — otherwise this refactor silently changed which runs
+    fail CI.
 
-    for path in runlogs.glob("*/run-*.json"):
-        if ".final-" in path.name or path.name.endswith(".ann.json"):
+    Deliberately excludes v1+ logs (`harness_schema_version` present): for
+    those, `verdict` and `outcome` are SUPPOSED to diverge whenever compliance
+    fails but the judge's own verdict is `pass`/`partial` — that divergence is
+    the entire reason `verdict`/`compliance`/`outcome` were split apart in the
+    first place. Asserting `outcome == verdict` for v1+ data would re-impose
+    the pre-split conflation on the very data the split exists to distinguish.
+    v1+ logs get their own fusing-correctness proof in
+    `test_v1_plus_runlogs_have_an_internally_consistent_outcome` below,
+    instead of no proof at all.
+    """
+    for path, data in committed_e2e_runlogs():
+        if "harness_schema_version" in data:
             continue
-        data = json.loads(path.read_text(encoding="utf-8"))
         _verdict, _compliance, outcome = axes_from_runlog(data)
         assert outcome == data["verdict"], (
             f"{path}: gate disagrees with the pre-split fused verdict"
         )
+
+
+def test_v1_plus_runlogs_have_an_internally_consistent_outcome():
+    """The v1+ counterpart to the proof above.
+
+    `outcome` is never checked against the raw `verdict` field here — for
+    v1+ logs the two are allowed to differ by design (see the previous
+    test's docstring). What must always hold instead is that `outcome` is
+    the correct FUSION of `verdict` and `compliance`: `fail` whenever
+    compliance failed, else the verdict, exactly as `overall_outcome`
+    defines it. This is what would catch a future regression in the fusing
+    logic itself (e.g. `E2eResult.__post_init__` computing it wrong before
+    a log is written).
+
+    The persisted `data["outcome"]` is compared, NOT the one
+    `axes_from_runlog` returns. That function falls back to
+    `overall_outcome(...)` when the key is missing or empty, so asserting
+    against its return value would compare the fallback to itself and pass
+    unconditionally on exactly the malformed log this test exists to catch.
+    """
+    checked = 0
+    for path, data in committed_e2e_runlogs():
+        if "harness_schema_version" not in data:
+            continue
+        verdict, compliance, _derived = axes_from_runlog(data)
+        assert data.get("outcome") == overall_outcome(verdict, compliance), path
+        checked += 1
+
+    # This test is meaningless if it silently checked zero logs — if that
+    # ever happens, the premise (v1+ logs exist in the committed corpus) has
+    # changed and this test needs a second look, not a silent pass.
+    assert checked > 0, "no v1+ runlogs found in the committed corpus"
 
 
 # ---- narration (replaced .transcript.md, 2026-08-03) ----------------------

@@ -260,7 +260,10 @@ These are the regression causes:
 - **FamilySearch data drift** — same tool calls, different results.
   FS may have reindexed or a contributor may have edited the live
   tree. Pointer: `tool_calls[].response_summary` differs from the prior
-  run. The agent isn't at fault.
+  run. The agent isn't at fault. First compare `harness_schema_version`
+  on both runs: `1` vs `2` means the capture format changed, not the
+  data — roughly half of all captures differ across that boundary. Only
+  compare runs with the same version.
 - **Single-run jitter** — Anthropic models are non-deterministic and
   this harness can't pin `temperature=0`. A single finding flipping
   recovered / not-recovered may just be variance. Recommend a re-run

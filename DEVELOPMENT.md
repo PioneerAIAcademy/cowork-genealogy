@@ -161,8 +161,28 @@ gh issue create --label developer --title "…" --body "…"
   next person will be standing, and nobody re-reads an issue body after triage.
   If there's no spec to write it into, the item is spec-shaped, not queue-shaped.
   Git history keeps the prose either way.
+- **Add a `**Touches:**` line naming the files the work would change**, when you
+  know them — repo-relative, comma-separated, one line, near the top:
+
+  ```
+  **Touches:** eval/harness/e2e/orchestrator.py, docs/specs/e2e-test-spec.md
+  ```
+
+  Overlap in this repo is almost never same-title; it is two issues wanting
+  different lines in one file. Five open PRs once converged on a single statement
+  in `orchestrator.py` and each body named only the collision that existed the day
+  it was written. This line is what makes that visible in a grep instead of a
+  three-hour read. Best guess is fine and being wrong costs nothing — it is read
+  by the weekly audit, not by a gate.
 - **Mention the number in your PR description** so the reviewer can see what you
   chose not to do.
+
+**File it even if you think it might be a duplicate.** Deciding how a new issue
+fits against the ~180 already open is not your job and cannot be done well from
+inside one PR — the overlap is usually at a line number, not a title. File it;
+the lead's weekly `/audit-board` pass merges, rewrites and drops issues across the
+whole pool, which is the only vantage point from which duplicates are visible. A
+duplicate costs one comment to close. An unfiled finding costs a rediscovery.
 
 **Do not park these in a to-do file, under any name.** That was tried:
 `docs/TODOs.md`, retired 2026-08-02 as issues #1117–#1157. Its exit event — "an

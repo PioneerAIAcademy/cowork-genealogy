@@ -41,6 +41,7 @@ from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
 )
+from harness.judge import _summarize_response
 from harness.skill_invocation import (
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
@@ -434,19 +435,162 @@ def _render_user_message(fixture: Fixture) -> str:
     )
 
 
-def _summarize_tool_response(content: Any) -> str:
-    """Short stringification of a tool result for the run log.
+def _unwrap_mcp_text_blocks(content: Any) -> Any:
+    """Parse the JSON document an MCP tool result carries inside a text block.
 
-    We don't need the full response in the runlog — just enough to
-    diff across runs when investigating drift. ~500 chars is plenty.
+    MCP results arrive as `[{"type": "text", "text": "<a whole JSON document>"}]`,
+    so to any generic summarizer the entire response is one very long *string*.
+    Bounding strings then keeps the head and hides every key, which is the
+    mechanism behind the `record_search` blindness described below. Parsing the
+    inner document first is what lets the summarizer work on real structure.
+
+    Anything that does not parse is passed through untouched — a plain-text tool
+    result stays a plain-text tool result.
+
+    Only an object or array is unwrapped. A bare JSON scalar is left as the string
+    it arrived as, because `json.loads` would otherwise coerce a tool result of
+    `"1"` to `1`, `"true"` to `True`, `"null"` to `None` and `"NaN"` to a float
+    nan — changing what the run log says the tool returned, which is the one thing
+    this artifact exists to record faithfully.
+    """
+    if not isinstance(content, list):
+        return content
+    out: list[Any] = []
+    for block in content:
+        text = (
+            block.get("text")
+            if isinstance(block, dict)
+            else getattr(block, "text", None)
+        )
+        if isinstance(text, str) and text.lstrip()[:1] in ("{", "["):
+            try:
+                out.append(json.loads(text))
+                continue
+            except (ValueError, RecursionError):
+                # RecursionError is not a ValueError: a deeply nested payload
+                # would otherwise escape to the run-level handler and abort a
+                # run that costs $7-25. The old code could not raise at all
+                # because it never parsed, so this must not either.
+                pass
+        out.append(block)
+    return out
+
+
+# The old head-truncation's threshold. A response at or under this was captured
+# whole before, so it is passed through whole now — the guarantee that this
+# function can only ever widen the artifact, never narrow it.
+_RUNLOG_VERBATIM_MAX = 500
+# Must not sit below the 497 content chars the old head-truncation kept, or this
+# function REGRESSES the artifact it exists to widen: a string-valued result
+# (`Read`, `Glob`, `Grep`, and a `record_search` that came back as the MCP
+# over-limit error) is one long string with no keys to preserve, so the string
+# bound is the whole budget for it.
+#
+# What this constant is and is NOT responsible for, since a first draft of this
+# comment credited it with the whole regression: at 200, 112 of the 284 tool
+# results in `run-2026-07-31_13-02-13` captured less than the old head cut, but
+# only **12** of those are string-valued (9 of them losing exactly 237 chars).
+# The other 100 are list-valued, losing 52.8 chars on average to
+# `_summarize_response`'s list sampling, which no string bound can fix — that is
+# what the verbatim passthrough below is for. Raising 200 -> 500 fixes 23 of the
+# 112 and introduces 2 new ones (the bound is not monotone: for a string of
+# length just over 200, truncating at 200 plus the ~61-char marker is LONGER than
+# leaving it whole at 500), for a net of 21. The passthrough fixes the rest.
+#
+# Still far under the judge tier's 2000, because that copy is a throwaway prompt
+# and this one is committed to git.
+_RUNLOG_STRING_MAX = 500
+# Backstop for the widest tail: 11 of the 1544 tool results across the six
+# committed jimmie-jewel-neal runs (0.7%) reach it. Kept at 4000 rather than
+# raised, because at that hit rate a bigger cap grows a git-committed artifact for
+# the long tail alone. Must stay ABOVE _RUNLOG_VERBATIM_MAX or the never-shorter
+# floor at the end of _summarize_tool_response silently defeats it. Note what
+# happens for those 11: the output degrades to a head cut *of a summary*, which
+# reintroduces the un-reasonable-about bound this function otherwise rejects —
+# acceptable at 0.7%, but that is the trade, not an absence of one.
+_RUNLOG_MAX_CHARS = 4000
+
+
+def _summarize_tool_response(content: Any) -> str:
+    """Key-preserving summary of a tool result for the run log.
+
+    This head-truncated at 497 chars before `HARNESS_SCHEMA_VERSION` 2, which
+    made exactly the
+    fields worth diffing invisible. `record_search` leads with `results`, its
+    largest field by far, so every field serialized after it was cut: across the
+    46 `record_search` calls in `run-2026-07-31_13-02-13`, `ranked` appears in
+    the run log **0 times**, even though 18 of those calls supplied `subjectId`
+    and 14 of them were ranked. The run log is the artifact we assert tool
+    behavior from, and it was silently dropping the evidence — a head bound
+    cannot be reasoned about, because whether a field survives depends on how
+    much data happened to precede it.
+
+    So summarize by KEY instead, reusing the unit tier's `_summarize_response`
+    rather than growing a second summarizer: dicts keep every key, long lists
+    keep their length plus a sample, long strings are bounded with an explicit
+    marker. An overall cap stays as a backstop, since run logs are committed.
+
+    Responses that already fit are passed through VERBATIM rather than summarized.
+    That is not an optimization, it is what makes this strictly non-regressive:
+    `_summarize_response` samples any list past three entries, so summarizing
+    unconditionally *lost* content for 91 of the 284 tool results in
+    `run-2026-07-31_13-02-13` — short responses made of many small items, which
+    the old bound captured whole. Summarize only what the old code would have cut.
+
+    KNOWN CONSEQUENCE of that passthrough: `response_summary` now has two shapes.
+    Under the threshold it keeps the raw MCP envelope, where the tool's document is
+    an escaped string (`[{"type": "text", "text": "{\\"totalMatches\\": 0}"}]`);
+    over it, the document is unwrapped and its keys are real JSON keys. Two things
+    follow. A call whose payload crosses the threshold between runs flips
+    representation and shows a spurious diff, which matters because
+    `docs/specs/e2e-test-spec.md` tells readers to diff `response_summary` across
+    runs. And grepping a quoted key (`'"rankingSkipped"'`) undercounts, because the
+    escaped form does not contain it — grep the bare name, which matches both.
     """
     try:
-        text = content if isinstance(content, str) else json.dumps(content)
+        raw = content if isinstance(content, str) else json.dumps(content)
     except (TypeError, ValueError):
-        text = repr(content)
-    if len(text) > 500:
-        text = text[:497] + "..."
-    return text
+        raw = repr(content)
+    except RecursionError:
+        # NOT `repr(content)`: repr recurses too, so on the only input class that
+        # can raise here the fallback raises identically and the guard is a no-op.
+        # (Measured: a 20,000-deep nested list raises in json.dumps AND in repr.)
+        # Letting it escape aborts a run costing $7-25, so degrade to a marker
+        # instead. Unreachable today — `ToolResultBlock.content` is a str or a
+        # shallow list of dicts — but this function had no `json.dumps` of caller
+        # data at all before, so the exposure is new.
+        raw = f"<unserializable {type(content).__name__}: nesting too deep>"
+    if len(raw) <= _RUNLOG_VERBATIM_MAX:
+        return raw
+
+    summary = _summarize_response(
+        _unwrap_mcp_text_blocks(content), string_max=_RUNLOG_STRING_MAX
+    )
+    try:
+        text = summary if isinstance(summary, str) else json.dumps(summary)
+    except (TypeError, ValueError):
+        text = repr(summary)
+    if len(text) > _RUNLOG_MAX_CHARS:
+        text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
+
+    # Never emit a SHORTER capture than the old head-truncation would have. A
+    # key-preserving summary can come out shorter on a long list of small items —
+    # 14 of the 284 tool results in `run-2026-07-31_13-02-13` — and in those cases
+    # it is arguably the better record, since `_full_length: 26` beats an arbitrary
+    # 497-char prefix that never says how many entries there were. But "arguably
+    # better" is a judgement a reader takes on trust, whereas "never shorter" is a
+    # property they can check, and its absence is exactly what made the first cut
+    # of this change a regression.
+    #
+    # It is a LENGTH floor, not a content guarantee: a payload can clear it on one
+    # wide key while a sampled list drops entries the head cut happened to include.
+    # Zero of the 1544 tool results across the six committed runs do that, but do
+    # not restate this as "captures everything it used to".
+    #
+    # `_RUNLOG_MAX_CHARS` must stay above `_RUNLOG_VERBATIM_MAX`, or this floor
+    # silently defeats the cap applied just above it.
+    head = raw[: _RUNLOG_VERBATIM_MAX - 3] + "..."  # raw > _RUNLOG_VERBATIM_MAX here
+    return text if len(text) >= len(head) else head
 
 
 def _timeline_tool_label(tool: str, args: dict | None) -> str:
