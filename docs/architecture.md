@@ -1125,6 +1125,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
 | `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
 | `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
+| `prompt-budget.test.ts` | nothing. It **reports** the byte delta a PR introduces to every `SKILL.md` and agent body, one test name per changed file, and is **warn-only — it never fails** (§9.4). Its unit half does assert, over the delta arithmetic only |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
 `check_skill_frontmatter.py` (for **skills and agents**: description length and
@@ -1167,6 +1168,7 @@ tools — what happens after you grant one). And
 | **No unit suite for `research`** (the orchestrator) or `forget-and-rederive`. | The component that fails most is exercised only by live e2e. | critique §3 P1 |
 | **`validation-protocol.md` (12 copies, 10 distinct) and `research-log-protocol.md` (3 copies, 3 distinct) are unlinted** and already drifted. | Nothing records which divergences are deliberate. | #1112 |
 | **The `places-guidance.md` exemption is existence-only.** | A regression inside `research-plan`'s copy passes silently. | #1112 |
+| **Nothing blocks prompt-body growth.** `prompt-budget.test.ts` reports the per-file byte delta on every `SKILL.md` and agent body and always passes; the deltas live only in each PR's `vitest` job log, so there is no history to set a ceiling from. | A PR can add 7 KB to the largest prompt in the repo with CI green, which is how `search-records/SKILL.md` reached 54 KB unnoticed. | #1275 |
 | **Nothing checks `README.md`'s tool/skill catalog** against the code. | Already rotted: **13 of 47 tools appear nowhere in it** — the entire structured-persistence writer surface plus both projection tools. Skills and agents are clean (27/27, 4/4). | #1137 |
 | **No unit-side judge calibration.** `calibrate_judge` is e2e-only. | The unit judge's accuracy is unmeasured. | critique §2.8 |
 | **No production telemetry.** `apps/server/app/obs.py` is PII-free stdout logging; `sandbox_server.py` keeps a capped in-memory *replay* buffer for reconnects, not a tool ledger. Every compliance rate, cost figure, and guardrail measurement in this repo is computed over `eval/runlogs/`. | You cannot answer "is this getting better for a real user?" | #1054 |
