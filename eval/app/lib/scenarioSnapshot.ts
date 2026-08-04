@@ -32,11 +32,11 @@ function tryParseObject(s: string | undefined): Record<string, unknown> | null {
  * research-only sections.
  */
 export function findScenarioData(
-  snapshot: Record<string, string>,
+  files: Record<string, string>,
   scenarioName: string,
 ): ScenarioSnapshotData | null {
   const base = `eval/fixtures/scenarios/${scenarioName}`;
-  const research = tryParseObject(snapshot[`${base}/research.json`]);
+  const research = tryParseObject(files[`${base}/research.json`]);
   if (!research) return null;
-  return { research, gedcomx: tryParseObject(snapshot[`${base}/tree.gedcomx.json`]) };
+  return { research, gedcomx: tryParseObject(files[`${base}/tree.gedcomx.json`]) };
 }
