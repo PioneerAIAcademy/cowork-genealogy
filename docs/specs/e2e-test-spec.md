@@ -259,7 +259,7 @@ stripped starting tree, then reviewed and pruned by the author.
 | `description` | string | yes | Plain-language description of the finding |
 | `details` | object | yes | Structured data — shape varies by `type` |
 | `polarity` | enum | no | `recover` (default) or `avoid` — see §3.4.1. Omit for normal recall findings |
-| `supporting_sources` | array of strings | no | Source citations from the original tree that support this finding, for the judge to reference (not strict-matched) |
+| `supporting_sources` | array of strings | no | Source citations from the original tree that support this finding, for the judge to reference (not strict-matched). For a resolved record-hint negative, see the disproving-record/absence split in §3.6.1 |
 | `required` | boolean | yes | `true` = missing this finding fails the test; `false` = bonus |
 
 Most findings should be `required: true` for v1. The `false` lever
@@ -355,6 +355,42 @@ stripped:
   assert, plus a `required` recover finding that the agent documented
   the negative conclusion (§3.4.1). Say in the fixture README which
   state the fixture is in.
+
+#### 3.6.1 Citation shape for documented negatives (decision, issue #1025)
+
+A resolved-negative (outcome (c) above) makes two different claims,
+and they do not take the same citation:
+
+- **The disproving record** — whatever real record makes the hint
+  implausible or contradicted (an age impossibility, a date that
+  postdates a marriage, a directly-examined record that turns out to
+  be someone else). This is a real, ark-able record.
+- **The absence** — "no record in the collection establishes X." By
+  definition there is nothing to point an ark at.
+
+Once a resolvable ark is required on record-hint resolutions (issue
+#970), that requirement attaches to the **disproving record only**.
+Write it into the `avoid` finding's or the paired required finding's
+`supporting_sources` as a literal `ark:/61903/...`. The absence claim
+itself is written as plain prose — ideally naming the collection and
+date range searched — and is not required to carry an ark; none
+exists to cite. A fixture satisfies the ark requirement as long as
+*some* `supporting_sources` entry, on some finding in the fixture,
+carries the disproving record's ark — the absence sentence riding
+alongside it with no ark is not a gap.
+
+**The ark must be the full `ark:/61903/...` path — not the bare
+`XXXX-XXXX` id** (decision, issue #970, 2026-08-02). A naive
+`\b[A-Z0-9]{4}-[A-Z0-9]{2,4}\b` id-shaped token matches on collection
+date ranges alone (`Czech Republic, Church Books, 1552-1981` reads as
+one), and a FamilySearch tree PID is shape-identical to a record ark
+id — so the cheapest way to satisfy a bare-id lint is pasting the
+fixture's own `source_pid`, which carries zero record provenance.
+`validate_fixture.py`'s `record_hint_citation_errors` enforces the
+full-path form for this reason; it cannot verify the ark actually
+resolves to the record claimed (CI holds no FamilySearch token) —
+what it buys is that a false citation becomes checkable in one click
+by a human reviewer instead of invisible.
 
 ---
 
