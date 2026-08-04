@@ -45,6 +45,31 @@ Two labels carry the routing:
 | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
 | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose, prepared doctrine questions |
 
+**`feedback` items are fixed in Ready, and they displace.** An issue labelled
+`feedback` is a user's bug report, filed automatically into Ready by
+`add-to-project.yml`. It counts toward the ~10 unassigned `genealogist` target
+exactly like any other `genealogist` item, and you never move it — never promote
+one from Backlog, never return one to Backlog, never unassign one. **Anyone on
+the roster may claim a `feedback` item**, so a developer holding one is not a
+mis-route.
+
+Because a `feedback` item cannot be the loser of a swap, **every return to
+Backlog comes from the non-`feedback` members of the pool.** Over target, return
+the lowest-ranked non-`feedback` genealogist items until the pool is at target —
+and when `feedback` alone reaches ~10, that means all of them. Ten feedback items
+and four `test <slug>` items in Ready is fourteen against a target of ten: the
+four go back. Name them and say why, as with any swap.
+
+**Under target, nothing about `feedback` changes how you promote.** Six feedback
+items in Ready is a pool of six against a target of ten, so promote the best four
+genealogist items out of Backlog as usual. A quiet feedback week is when the rest
+of the genealogist queue moves.
+
+§7 may close a `feedback` item — a duplicate submission, one that doesn't
+reproduce, junk — and that is the only way one leaves Ready. Never propose
+closing one on age or body length; a four-line body and a Drive link is what
+every one of them looks like.
+
 **Exclude `label:icebox` from the Backlog when ranking.** Those are candidates
 with no decision behind them, filed there deliberately; `/review-icebox` owns
 that pool and promotes one by removing the label, at which point it ranks here
@@ -466,7 +491,8 @@ gh project item-edit --id "$ITEM_ID" --project-id "$PROJ_ID" \
 
 Verify with a fresh `gh project item-list`. New issues land in Backlog via an
 auto-add workflow that sets nothing else — a freshly filed issue that belongs in
-Ready still needs this move.
+Ready still needs this move. (The exception is a `feedback` item, which the same
+workflow files directly into Ready and which you never move at all.)
 
 **Gate the unassigned `developer` shortlist through `/review-ready` before you
 promote it.** Your seniority test (§1) is a pre-filter read off the issue body;
