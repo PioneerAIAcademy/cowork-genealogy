@@ -54,13 +54,13 @@ def _make_fixture_dir(tmp_path: Path, *, caps: dict | None = None) -> Path:
     }
     if caps is not None:
         fixture_json["caps"] = caps
-    (fixture_dir / "fixture.json").write_text(json.dumps(fixture_json))
+    (fixture_dir / "fixture.json").write_text(json.dumps(fixture_json), encoding="utf-8")
     (fixture_dir / "starting-research.json").write_text(
-        json.dumps({"project": {"objective": "Find John's parents"}})
+        json.dumps({"project": {"objective": "Find John's parents"}}), encoding="utf-8"
     )
-    (fixture_dir / "starting-tree.gedcomx.json").write_text(json.dumps({"persons": []}))
+    (fixture_dir / "starting-tree.gedcomx.json").write_text(json.dumps({"persons": []}), encoding="utf-8")
     (fixture_dir / "expected-findings.json").write_text(
-        json.dumps({"findings": [{"id": "f1", "description": "...", "required": True}]})
+        json.dumps({"findings": [{"id": "f1", "description": "...", "required": True}]}), encoding="utf-8"
     )
     return fixture_dir
 
@@ -118,7 +118,7 @@ def test_build_workspace_copies_starting_state(tmp_path: Path):
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
     (skills_dir / "fake-skill").mkdir()
-    (skills_dir / "fake-skill" / "SKILL.md").write_text("---\nname: fake\n---\nbody")
+    (skills_dir / "fake-skill" / "SKILL.md").write_text("---\nname: fake\n---\nbody", encoding="utf-8")
 
     workspace = tmp_path / "ws"
     workspace.mkdir()
