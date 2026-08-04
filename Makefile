@@ -588,6 +588,12 @@ deploy-preflight:
 	  echo "    'genealogy-agent' image is current. If you changed the agent, MCP tools, or skills,"; \
 	  echo "    run 'make sandbox-image' first or new sessions run STALE code (advisory)."; \
 	fi
+	# Stage 1 of deploy/Dockerfile, replayed locally in ~10s. BLOCKING, unlike
+	# the advisory above: this one is a real build of the thing about to ship, so
+	# a failure here is a failure on the Fly builder minutes later. Nothing in CI
+	# builds this image — `make deploy` is the only path, so this is the check.
+	# SKIP_DEPLOY_STAGE1_CHECK=1 to bypass.
+	@node scripts/check-deploy-stage1.mjs
 
 .PHONY: deploy
 deploy: deploy-preflight ## Deploy the control plane to Fly (builds web+server image; single always-on machine)
