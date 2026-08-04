@@ -111,11 +111,15 @@ class E2eResult:
     # Every tool call the agent attempted, in order — not just mcp__-prefixed
     # ones (Skill, Agent, Read, … are included too; the entry-construction
     # code has no such filter). Each entry is {tool, args, response_summary,
-    # agent_id, agent_type}; the last two come from the PreToolUse hook's own
-    # payload (docs/specs/guardrail-enforcement-spec.md §11) and are only
-    # set once a ToolResultBlock arrives for that call — None on the main
-    # thread, the subagent's identifiers otherwise. A call still in-flight
-    # when the run aborts mid-stream never gets any of the last three keys.
+    # is_error, agent_id, agent_type}. `is_error` is the SDK's
+    # ToolResultBlock.is_error (see HARNESS_SCHEMA_VERSION 3); the last two come
+    # from the PreToolUse hook's own payload
+    # (docs/specs/guardrail-enforcement-spec.md §11) — None on the main thread,
+    # the subagent's identifiers otherwise. All three are set only once a
+    # ToolResultBlock arrives for that call, so a call still in-flight when the
+    # run aborts mid-stream never gets any of the last three keys.
+    # `response_summary` is the exception: the entry literal initializes it to
+    # None, so it is present-but-null on such an entry rather than absent.
     # Critical for diffing across runs when investigating drift.
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
 
@@ -137,8 +141,13 @@ class E2eResult:
     #               it's worth a reviewer's eye.
     #   "fixture" — blocked by the fixture's own `blocked_tools`.
     #
-    # In every case the call was denied, so it never reaches `tool_calls` —
-    # this list is the only record that it was attempted.
+    # In every case the call was denied, so nothing executed — but it DOES
+    # reach `tool_calls` (32 of the 33 denials in the committed corpus have a
+    # matching entry there, carrying the deny reason as `response_summary` and,
+    # from HARNESS_SCHEMA_VERSION 3, `is_error: true`). This list is the
+    # structured record — read `blocked_by` from here rather than pattern-
+    # matching the summary — and it is what tells a §15 reader that an
+    # `is_error: true` entry is a policy denial, not an upstream failure.
     blocked_tree_reads: list[dict[str, Any]] = field(default_factory=list)
 
     # The agent's prose between tool calls, plus the two harness-side events

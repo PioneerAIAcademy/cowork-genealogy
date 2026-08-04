@@ -303,3 +303,29 @@ def test_errored_same_person_does_not_score_the_identity(tmp_path, monkeypatch):
     assert len(violations) == 1
     assert "I1" in violations[0]
     assert "never scored" in violations[0]
+
+
+def test_unresolved_tool_call_carries_no_is_error_key(tmp_path, monkeypatch):
+    """A call whose ToolResultBlock never arrived must leave the key ABSENT.
+
+    HARNESS_SCHEMA_VERSION 3's whole justification is that `"is_error" in entry`
+    is not a usable version tell, because an aborted or wall-clock-capped run
+    leaves unresolved entries keyless in v3 exactly as in v2. That invariant is a
+    side effect of the entry literal in `_run_agent` not naming `is_error`:
+    "tidying" it to `"is_error": False` would make every unresolved call read as
+    a success to the five gates AND silently invalidate the documented tell,
+    without failing any other test here.
+    """
+    steps = [
+        (0.0, _sys()),
+        (0.0, _tool_turn("tu_1", _SAME_PERSON, {"primaryId1": "p_9", "primaryId2": "I1"})),
+        # No _tool_result — the stream ends with the call still in flight.
+        (0.0, _result()),
+    ]
+    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    tool_calls, *_ = _run(_fixture(tmp_path), tmp_path)
+    assert len(tool_calls) == 1
+    assert "is_error" not in tool_calls[0]
+    # response_summary is the documented exception: initialized by the entry
+    # literal, so present-but-null rather than absent (e2e-test-spec.md §8).
+    assert tool_calls[0]["response_summary"] is None
