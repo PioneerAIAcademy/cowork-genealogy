@@ -131,8 +131,17 @@ mocks (no E2B/Anthropic/OAuth needed).
 
   ```sh
   gh issue create --label developer|genealogist [--label icebox] \
-    --title "…" --body "…"
+    --title "…" --body "**Touches:** path/one.ts, path/two.py
+
+  …"
   ```
+
+  Open the body with a `**Touches:**` line naming the files the work would
+  change, when you know them. Overlap between issues here is almost never
+  same-title — it is two issues wanting different lines in one file — and that
+  line is what makes it greppable. Best guess is fine; the weekly `/audit-board`
+  pass reads it, no gate does. **File even when you suspect a duplicate**: judging
+  fit against ~180 open issues is that pass's job, not the filer's.
 
   | Label | Use for |
   |---|---|
