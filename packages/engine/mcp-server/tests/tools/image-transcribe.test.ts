@@ -131,6 +131,63 @@ describe("imageTranscribeTool — request + happy path", () => {
   });
 });
 
+describe("imageTranscribeTool — ark URL query-param forwarding", () => {
+  // Mirrors image-read.test.ts's coverage of the same shared
+  // resolveFsImageInput/arkToImageUrl behavior (fs-image-fetch.ts) — some
+  // 3:1:/3:2: ARKs are waypoints into a multi-image film/register, and the
+  // bare ARK can resolve to the wrong image within that group. FamilySearch's
+  // own browser URL disambiguates with i=/cc=/groupId= query params, which
+  // must be forwarded onto the resolved URL image_transcribe actually fetches.
+  it("forwards i/cc/groupId from a full page URL onto the resolver URL", async () => {
+    mockOpenRouterOk("some text");
+    const url =
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=112&cc=1858355&groupId=1858355";
+
+    await imageTranscribeTool({ ark: url });
+
+    const [fetchedUrl] = fetchFsImageBytesMock.mock.calls[0] as [string];
+    expect(fetchedUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112&cc=1858355&groupId=1858355"
+    );
+  });
+
+  it("drops irrelevant query params, keeping only i/cc/groupId", async () => {
+    mockOpenRouterOk("some text");
+    const url =
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=112";
+
+    await imageTranscribeTool({ ark: url });
+
+    const [fetchedUrl] = fetchFsImageBytesMock.mock.calls[0] as [string];
+    expect(fetchedUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112"
+    );
+  });
+
+  it("adds no query string when a full URL carries no image-context params", async () => {
+    mockOpenRouterOk("some text");
+    const url = "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en";
+
+    await imageTranscribeTool({ ark: url });
+
+    const [fetchedUrl] = fetchFsImageBytesMock.mock.calls[0] as [string];
+    expect(fetchedUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X"
+    );
+  });
+
+  it("adds no query string for a bare ARK (no URL to carry context)", async () => {
+    mockOpenRouterOk("some text");
+
+    await imageTranscribeTool({ ark: "ark:/61903/3:1:9392-9ZVZ-X" });
+
+    const [fetchedUrl] = fetchFsImageBytesMock.mock.calls[0] as [string];
+    expect(fetchedUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X"
+    );
+  });
+});
+
 describe("imageTranscribeTool — lookingFor", () => {
   it("sets found=FOUND from the marker and keeps the full transcription", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family\nFOUND");
