@@ -23,10 +23,30 @@
 
 ## Plan
 
-<!-- Normal: paste PLAN.md. Trivial: delete this section.
-     If you hit the step-4 stop rule (schema, auth, plugin-agent binding,
-     an ADR reversal, or anything hard to undo), say so here and name the
-     message where you raised it. -->
+<!-- Normal: the two parts of PLAN.md nothing else here carries. Trivial:
+     delete this section. Don't paste PLAN.md whole — its file list is the
+     diff, its deferrals are "Follow-on issues", and by the time you open
+     the PR it may be a plan you knowingly deviated from (step 4).
+
+     Didn't change — the tempting adjacent thing you left alone, so a
+     reviewer reads it as a decision rather than an omission.
+
+     Acceptance check — the named test that fails on `main` and passes on
+     this branch. Not "the tests pass"; they passed before.
+
+     Deviated from the plan — anything you re-planned mid-flight (step 4).
+     "Nothing" is the common answer. PLAN.md is gitignored, so this line is
+     the only way a deviation reaches your reviewer.
+
+     Hit the step-4 stop rule (schema, auth, plugin-agent binding, an ADR
+     reversal, anything hard to undo)? Say so here and name the message
+     where you raised it. -->
+
+**Didn't change:**
+
+**Acceptance check:**
+
+**Deviated from the plan:**
 
 ## Test plan
 
@@ -34,9 +54,8 @@
       <!-- No Windows equivalent exists (issue #1185): `eval\RunTests.bat` is the
            paid per-skill eval run, not this gate. On Windows, say so here and
            lean on CI, which runs the same suites. -->
-      <!-- Note: this runs the harness's e2e-marked contract test, which makes a
-           real (billed) Anthropic call. It skips itself when no key is
-           reachable; CI never runs it. -->
+      <!-- Note: every suite in it is offline and free — nothing here calls a
+           model, which is what keeps it around 30s. Keep it that way. -->
 
 - [ ] For every skill whose **run-log snapshot** I changed (anything under its
       skill dir, an agent it delegates to, its `eval/tests/unit/<skill>/`, or a
