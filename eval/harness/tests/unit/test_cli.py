@@ -177,7 +177,7 @@ def _run_with_stubbed_outcomes(tmp_path, monkeypatch, outcomes):
                                         else "unmatched_tool_call" if outcome == "aborted_umc"
                                         else None)
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text("{}")
@@ -281,7 +281,7 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
             "totals": {"total_cost_usd": 0.40},
         }
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text("{}")
@@ -365,7 +365,7 @@ def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):
             "totals": {"total_cost_usd": c},
         }
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text("{}")
@@ -444,7 +444,7 @@ def test_suite_wall_clock_cap_stops(tmp_path, monkeypatch):
             "totals": {"total_cost_usd": 0.0},
         }
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text("{}")
@@ -612,7 +612,7 @@ def test_concurrency_runs_every_test_and_preserves_order(tmp_path, monkeypatch):
 
     captured_logs: list[dict] = []
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         captured_logs.append(log)
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -701,7 +701,7 @@ def test_multi_skill_runs_both_and_writes_one_runlog_each(tmp_path, monkeypatch)
 
     captured_logs: list[dict] = []
 
-    def fake_write(log, *, runlogs_root, filename):
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
         captured_logs.append(log)
         out = Path(runlogs_root) / "unit" / log["skill"] / filename
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -763,7 +763,7 @@ def test_longest_first_scheduling_submits_heaviest_test_earliest(tmp_path, monke
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(
         run_tests, "write_run_log",
-        lambda log, *, runlogs_root, filename: Path(runlogs_root),
+        lambda log, *, runlogs_root, filename, **kwargs: Path(runlogs_root),
     )
     _stub_partial(monkeypatch)
 
@@ -851,7 +851,7 @@ def test_longest_first_uses_actual_durations_over_caps(tmp_path, monkeypatch):
 
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(run_tests, "write_run_log",
-                        lambda log, *, runlogs_root, filename: Path(runlogs_root))
+                        lambda log, *, runlogs_root, filename, **kwargs: Path(runlogs_root))
     _stub_partial(monkeypatch)
 
     rc = run_tests.main([
@@ -996,7 +996,7 @@ def test_preflight_allows_negative_only_selection(tmp_path, monkeypatch, capsys)
     monkeypatch.setattr(run_tests, "run_one_test",
                         lambda spec, **k: _stub_log(spec.id, spec.skill, "pass"))
     monkeypatch.setattr(run_tests, "write_run_log",
-                        lambda log, *, runlogs_root, filename: Path(runlogs_root) / filename)
+                        lambda log, *, runlogs_root, filename, **kwargs: Path(runlogs_root) / filename)
     monkeypatch.setattr(
         run_tests, "write_partial_runlog",
         lambda log, *, runlogs_root, skill, timestamp:
@@ -1020,7 +1020,7 @@ def test_preflight_override_flag_proceeds(tmp_path, monkeypatch):
     monkeypatch.setattr(run_tests, "run_one_test",
                         lambda spec, **k: _stub_log(spec.id, spec.skill, "pass"))
     monkeypatch.setattr(run_tests, "write_run_log",
-                        lambda log, *, runlogs_root, filename: Path(runlogs_root) / filename)
+                        lambda log, *, runlogs_root, filename, **kwargs: Path(runlogs_root) / filename)
     monkeypatch.setattr(
         run_tests, "write_partial_runlog",
         lambda log, *, runlogs_root, skill, timestamp:
