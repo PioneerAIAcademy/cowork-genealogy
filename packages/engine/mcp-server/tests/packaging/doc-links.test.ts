@@ -101,23 +101,6 @@ const BUILT_INS: Record<string, string> = {
 };
 
 /**
- * Tokens shaped like a slash command (`/word`) that are not one — an absolute
- * filesystem path (`/tmp`, `/etc`), a REST route (`/search`), a directory-tree
- * line in a fenced example. `citedSlashCommands` cannot tell these apart from a
- * real command by syntax alone (`/search` vs `/research`), so without this a
- * doc that shows one in a code span or fenced block would fail the lint below
- * claiming a broken command, and the only escapes would be to misuse BUILT_INS
- * or reword the doc. Listed by name with a reason, the same shape and
- * self-cleaning guarantee as BUILT_INS/KNOWN_ABSENT — an entry the prose stops
- * naming fails the suite below, so this cannot quietly widen into a regex
- * escape hatch that would also swallow the repo's own rotting commands.
- */
-// Empty today — no linted doc yet cites a slash-shaped non-command. Populate
-// when one does (e.g. `"tmp": "absolute path in a fenced example"`); the
-// staleness guard below deletes any entry the prose stops naming.
-const KNOWN_NON_COMMANDS: Record<string, string> = {};
-
-/**
  * Where a repo-defined slash command's body lives. A command resolves if any
  * root has it: `.claude/commands/` and `.claude/skills/` are this repo's own
  * Claude Code tooling, and `packages/engine/plugin/skills/` is the shipped
@@ -132,9 +115,11 @@ const COMMAND_ROOTS = [
 
 /**
  * Own-property membership. `name in obj` walks the prototype chain, so a cited
- * `/constructor`, `/tostring`, or `/valueof` would match an inherited
- * Object.prototype key and be silently treated as exempt — defeating the very
- * staleness check this file exists to run.
+ * `/constructor` would match an inherited Object.prototype key and be silently
+ * treated as exempt — defeating the very staleness check this file exists to
+ * run. `constructor` is the only reachable one: `citedSlashCommands` extracts
+ * with a lowercase-only pattern, and every other Object.prototype key
+ * (`toString`, `valueOf`, `hasOwnProperty`) is camelCase.
  */
 const has = (obj: Record<string, string>, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(obj, key);
@@ -171,8 +156,8 @@ describe("doc and .claude/ tooling links", () => {
   // file, so re-reading it inside the per-file it.each below was redundant work
   // that grew linearly with LINTED_DIRS.
   const makeTargets = makefileTargets(projectRoot);
-  // Every slash command the corpus cites — the input both exemption-staleness
-  // guards below filter against. Built once, not per guard.
+  // Every slash command the corpus cites — the input the BUILT_INS staleness
+  // guard below filters against. Built once, alongside the Makefile parse.
   const citedCommands = new Set(
     files.flatMap((f) => citedSlashCommands(readFileSync(join(projectRoot, f), "utf8"))),
   );
@@ -248,9 +233,7 @@ describe("doc and .claude/ tooling links", () => {
 
   it.each(files)("%s names only slash commands that still exist", (file) => {
     const body = readFileSync(join(projectRoot, file), "utf8");
-    const missing = citedSlashCommands(body).filter(
-      (c) => !slashCommandResolves(c) && !has(KNOWN_NON_COMMANDS, c),
-    );
+    const missing = citedSlashCommands(body).filter((c) => !slashCommandResolves(c));
 
     expect(
       missing,
@@ -258,20 +241,16 @@ describe("doc and .claude/ tooling links", () => {
         `${missing.map((c) => `/${c}`).join(", ")}\n` +
         `A repo command is .claude/commands/<name>.md, .claude/skills/<name>/SKILL.md, ` +
         `or packages/engine/plugin/skills/<name>/SKILL.md. If it ships with Claude Code, ` +
-        `add it to BUILT_INS in this test with the reason. If it is not a command at all ` +
-        `(a filesystem path, a REST route), add it to KNOWN_NON_COMMANDS with the reason.`,
+        `add it to BUILT_INS in this test with the reason.`,
     ).toEqual([]);
   });
 
-  it.each([
-    ["BUILT_INS", BUILT_INS],
-    ["KNOWN_NON_COMMANDS", KNOWN_NON_COMMANDS],
-  ] as const)("keeps no %s entry the prose has stopped naming", (label, map) => {
-    const stale = Object.keys(map).filter((name) => !citedCommands.has(name));
+  it("keeps no BUILT_INS entry the prose has stopped naming", () => {
+    const stale = Object.keys(BUILT_INS).filter((name) => !citedCommands.has(name));
 
     expect(
       stale.map((c) => `/${c}`),
-      `these ${label} entries are no longer cited anywhere, so they are exemptions ` +
+      `these BUILT_INS entries are no longer cited anywhere, so they are exemptions ` +
         `nobody can see: ${stale.map((c) => `/${c}`).join(", ")}\n` +
         `Delete them from ${relative(projectRoot, fileURLToPath(import.meta.url))}.`,
     ).toEqual([]);
