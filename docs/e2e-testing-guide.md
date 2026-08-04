@@ -66,8 +66,11 @@ the agent does sound, verifiable GPS research. Full framing: spec §1.
 ## Setup
 
 **Run the preflight first** — it green-lights FamilySearch auth, the built MCP
-server, the Anthropic API key, and the harness deps in one shot, so a setup gap
-fails here instead of deep inside an expensive run:
+server, the Anthropic API key, the harness deps, and **a live MCP connection**,
+so a setup gap fails here instead of deep inside an expensive run. Budget
+**~30 seconds**: the last check starts a real CLI session and waits for the
+genealogy server to report `connected`, because a green light on the *config*
+was what let three runs die with no tools at all (issue #941):
 
 ```bash
 make e2e-preflight                # Windows: eval\CheckSetup.bat
@@ -83,6 +86,13 @@ If it flags something:
 - **MCP server not built** — `make mcpb` (Windows: `eval\BuildMcpb.bat`). It
   compiles the server *and* packs the `.mcpb`, which is what you install in
   Cowork for the live-debugging loop in Step 4.
+- **MCP server connects** — this one quotes the server's *own* error text, so
+  read it before doing anything else. It means the server is built but does not
+  start or does not speak MCP on stdio; `make engine-build` and try again. **Do
+  not start a run while this is red** — the agent would have no genealogy tools
+  at all and would improvise for an hour, which is the failure that filed #941.
+  A WARN here means the connection could not be *proved* (no credential, or the
+  server was still handshaking); green is not implied.
 - **Harness deps** — `cd eval/harness && uv sync`.
 
 ---

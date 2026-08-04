@@ -1263,7 +1263,10 @@ changing anything, because the fix differs completely by cause.
    reasoning in order. Each narration entry is
    `{tool_calls_before, kind, text}` with `kind` one of `assistant` (the
    agent's own prose), `blocked` (a denied tool), or `harness` (a
-   continue-nudge). `tool_calls_before` is how many tool calls had already
+   continue-nudge, or a harness-side status note — every run carries one at
+   `tool_calls_before: 0` recording whether the genealogy MCP surface was
+   present at session start; see §6's `mcp_unavailable` row).
+   `tool_calls_before` is how many tool calls had already
    happened — N means the entry sits between `tool_calls[N-1]` and
    `tool_calls[N]`, 0 means before any tool call — so the two replay as one
    trace. Most failures are obvious here: it stopped, looped, or made the

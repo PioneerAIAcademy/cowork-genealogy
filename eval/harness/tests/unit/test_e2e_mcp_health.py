@@ -292,8 +292,18 @@ def _replay(runlog: Path) -> tuple[int | None, int, int]:
 def test_backstop_fires_on_each_lost_run(filename: str, expected_call: int):
     """The three runs #941 was filed for: abort in the first fifth of the run."""
     runlog = FERBER / filename
-    if not runlog.exists():
-        pytest.skip(f"incident run log not present: {runlog}")
+    # A hard failure, NOT a skip. These four committed run logs are this arm's
+    # only acceptance evidence: CONSECUTIVE_TOOL_SEARCH_MISSES is calibrated
+    # against them and against nothing else. Run-log pruning is automated as of
+    # #1238, so a skip would let a prune turn the one test that proves the
+    # backstop fires into a silent green — which is precisely the class of
+    # failure #941 exists to end. If these ever must go, inline the sequences
+    # here first (the plan's original shape) and delete this assert.
+    assert runlog.exists(), (
+        f"missing #941 acceptance evidence: {runlog}. The backstop threshold is "
+        "calibrated against this run log — do not prune it without first "
+        "inlining its ToolSearch sequence into this test."
+    )
     fired_at, total_calls, mcp_calls = _replay(runlog)
     assert mcp_calls == 0, "this run's premise is that no genealogy call succeeded"
     assert fired_at == expected_call
@@ -304,8 +314,14 @@ def test_backstop_fires_on_each_lost_run(filename: str, expected_call: int):
 def test_backstop_never_fires_on_the_healthy_run():
     """Same fixture, same night, verdict `pass` — must not be touched."""
     runlog = FERBER / HEALTHY_RUN
-    if not runlog.exists():
-        pytest.skip(f"control run log not present: {runlog}")
+    # Hard failure for the same reason as above: this is the ONLY evidence that
+    # the threshold cannot false-abort a working run. Losing it silently would
+    # leave the false-positive side of the calibration unproven.
+    assert runlog.exists(), (
+        f"missing #941 control evidence: {runlog}. This is the only proof the "
+        "backstop does not fire on a healthy run — do not prune it without "
+        "first inlining its ToolSearch sequence into this test."
+    )
     fired_at, _total_calls, mcp_calls = _replay(runlog)
     assert mcp_calls > 0
     assert fired_at is None
