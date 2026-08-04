@@ -3,18 +3,35 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Rafael Reyes and Serapia Benavides Cueva had a daughter, Rita Reyes, born and died in January 1913 (death registered 22 July 1932, Santa Elena, Usulután — the registration itself dated decades after the death).",
+      "description": "The agent should establish that Rita Reyes is a daughter of Rafael Reyes (PID MTNY-RXQ) and Serapia Benavides Cueva, based on the original civil death register (Parte N°75, Santa Elena, Usulután, 22 July 1932), which states directly that Rita was 'hija legítima' (legitimate daughter) 'de Manuel Rafael Reyes y Serapia Benavides.' The FamilySearch derivative index alone should not suffice — it omits the filiation statement and mis-records a birth date — so the finding expects the agent to have examined the original register image. Pass = the final tree contains Rita Reyes as a child of Rafael Reyes (MTNY-RXQ) and Serapia Benavides Cueva, sourced to the original register image (not the index alone).",
       "details": {
         "subject_person": "Rafael Reyes (MTNY-RXQ)",
         "relation": "child",
         "target_person": {
           "name": "Rita Reyes",
-          "birth": "January 1913",
-          "death": "January 1913, Usulután, El Salvador"
+          "birth": "unknown (not established by any located record)",
+          "death": "January 1913, Santa Elena, Usulután, El Salvador (died in childbirth, as an adult)"
         }
       },
       "supporting_sources": [
-        "El Salvador, Civil Registration, 1704-2001 — death registration, 22 Jul 1932, Santa Elena, Usulután, naming parents Manuel Rafael Reyes and Serapia Benavides"
+        "El Salvador, Civil Registration, 1704-2001 — death registration (reposición de defunción), Parte N°75, Santa Elena, Usulután, 22 July 1932, original register image ark:/61903/3:1:33S7-9TRR-4T4: 'la señora Rita Reyes ... hija legítima de Manuel Rafael Reyes y Serapia Benavides, falleció de parto en el mes de Enero de año mil novecientos trece'"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "The agent should correct the research question's premise — that a birth registration exists for an infant named Rita born and died in 1913 — by establishing, from the original register image, that Rita Reyes was an adult woman ('la señora', soltera, oficios domésticos) who died in childbirth ('de parto') in January 1913, not an infant, and that the FamilySearch index's 'birth: January 1913' entry was a data-entry error duplicating the death date. No 1913 birth registration exists for her because she was not born that year. Pass = the final tree/research does not carry forward the infant-birth premise as fact, and documents that no birth date for Rita is established by the located evidence.",
+      "details": {
+        "subject_person": "Rita Reyes",
+        "relation": "vital correction",
+        "target_person": {
+          "name": "corrected conclusion: Rita Reyes was an adult who died in childbirth, not an infant born and died in 1913",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Original register image ark:/61903/3:1:33S7-9TRR-4T4, Parte N°75: describes Rita as 'la señora Rita Reyes, quien fué soltera, de oficios domésticos'; no birth date recorded"
       ],
       "required": true
     }

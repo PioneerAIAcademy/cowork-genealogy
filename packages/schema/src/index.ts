@@ -4,18 +4,23 @@
 // research.json enums
 // ============================================================
 
-export type QuestionStatus = 'open' | 'in_progress' | 'exhaustive_declared' | 'resolved'
-export type PlanStatus = 'active' | 'completed' | 'superseded'
-export type PlanItemStatus = 'planned' | 'in_progress' | 'completed' | 'skipped'
-export type LogOutcome = 'positive' | 'negative' | 'partial' | 'error'
-export type SourceClassification = 'original' | 'derivative' | 'authored'
-export type InformationQuality = 'primary' | 'secondary' | 'indeterminate'
-export type EvidenceType = 'direct' | 'indirect' | 'negative'
-export type ConflictType = 'fact' | 'identity'
-export type ConflictStatus = 'unresolved' | 'resolved' | 'moot'
-export type HypothesisStatus = 'active' | 'supported' | 'ruled_out'
-export type ProofTier = 'proved' | 'probable' | 'possible' | 'not_proved' | 'disproved'
-export type ProofVehicle = 'statement' | 'summary' | 'argument'
+// The closed enums defined in enums.schema.json are generated — see
+// scripts/gen-enums.mjs, run by this package's `build` and `typecheck`.
+// `export *` re-exports for consumers but does not bind the names locally, so
+// the ones this file's own interfaces reference are imported as well. A missing
+// entry is a compile error, not silent drift.
+export * from './enums.generated.js'
+import type {
+  ConflictStatus, ConflictType, DateCertainty, EvidenceType, HoldingConfidence,
+  HoldingType, HypothesisStatus, InformantProximity, InformationQuality,
+  LogOutcome, PersonEvidenceConfidence, PlanItemStatus, PlanStatus, Priority,
+  ProjectStatus, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
+  SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
+} from './enums.generated.js'
+
+// These are defined inline in research.schema.json rather than in
+// enums.schema.json, so the generator does not see them. They stay here until
+// they move (issue #1015).
 export type EvaluationFocus =
   | 'pre-exhaustiveness'
   | 'conclusion-readiness'
@@ -27,46 +32,6 @@ export type EvaluationVerdict =
   | 'consider_addressing'
   | 'address_first'
   | 'refused'
-export type PersonEvidenceConfidence = 'confident' | 'probable' | 'speculative'
-export type ProjectStatus = 'active' | 'paused' | 'completed'
-export type Priority = 'high' | 'medium' | 'low'
-export type HoldingType =
-  | 'document'
-  | 'prior_research'
-  | 'oral_knowledge'
-  | 'gedcom'
-  | 'photo'
-  | 'artifact'
-  | 'other'
-export type HoldingConfidence = 'confident' | 'unsure'
-
-export type SelectionBasis =
-  | 'timeline_gap'
-  | 'unresolved_conflict'
-  | 'fan_pivot'
-  | 'hypothesis_test'
-  | 'objective_decomposition'
-  | 'new_evidence'
-  | 'record_found_incidentally'
-  | 'user_directed'
-
-export type InformantProximity =
-  | 'self'
-  | 'witness'
-  | 'household_member'
-  | 'family_not_present'
-  | 'researcher'
-  | 'official_duty'
-  | 'unknown'
-
-export type DateCertainty =
-  | 'exact'
-  | 'approximate'
-  | 'estimated'
-  | 'calculated'
-  | 'before'
-  | 'after'
-  | 'between'
 
 export type ExperienceLevel = 'novice' | 'intermediate' | 'experienced' | 'professional'
 
@@ -158,8 +123,8 @@ export interface Plan {
   items: PlanItem[]
 }
 
-export interface ExternalSite {
-  site: string
+export interface ExternalSiteDetail {
+  site: ExternalSite
   url_generated: string
   capture_received: boolean
   capture_filename: string | null
@@ -176,7 +141,7 @@ export interface LogEntry {
   results_ref?: string | null
   results_available?: number | null
   notes: string | null
-  external_site: ExternalSite | null
+  external_site: ExternalSiteDetail | null
 }
 
 export interface CitationDetail {
@@ -269,12 +234,11 @@ export interface Hypothesis {
 
 export interface TimelineEvent {
   date: string
-  date_certainty: string
+  date_certainty: DateCertaintyTimeline
   event_type: string
   place: string | null
   /** Standardized place-name sidecar of `place`, resolved via place_search. */
   standard_place?: string | null
-  place_id?: string | null
   description: string
   assertion_ids: string[]
   distance_from_previous_km?: number | null
@@ -286,7 +250,7 @@ export interface TimelineGap {
   start: string
   end: string
   expected_events: string[]
-  severity: 'high' | 'medium' | 'low'
+  severity: Severity
   notes?: string | null
 }
 

@@ -22,8 +22,8 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": 2,
-      "description": "Bumped when the envelope changes shape."
+      "const": 3,
+      "description": "Bumped when the envelope changes shape. 3 = snapshot values are sha256 digests, not file content."
     },
     "skill": { "type": "string" },
     "version": {
@@ -60,7 +60,7 @@
     "snapshot": {
       "type": "object",
       "additionalProperties": { "type": "string" },
-      "description": "{repo-relative-path: normalized-content} of all skill-side files needed to reproduce this run. Includes packages/engine/plugin/skills/<skill>/**, eval/tests/unit/<skill>/**, and referenced scenarios + fixtures."
+      "description": "{repo-relative-path: sha256-of-normalized-content} of all skill-side files needed to reproduce this run. Values are digests, not content — git holds the bytes; the snapshot only answers whether the run still matches the working tree. Includes packages/engine/plugin/skills/<skill>/**, eval/tests/unit/<skill>/**, and referenced scenarios + fixtures."
     },
     "tests": {
       "type": "array",
