@@ -412,6 +412,21 @@ def test_the_gate_reproduces_todays_fused_verdict_across_the_whole_corpus():
     exit code keyed on that. Now it forces `outcome = "fail"` and the exit
     code keys on THAT. Over every committed run the two distributions must be
     identical — otherwise this refactor silently changed which runs fail CI.
+
+    That equality is a claim about PRE-split run logs only, and the absence of
+    a `compliance` field is what identifies them: in those, a bypass had
+    already collapsed `verdict` to "fail", so `outcome == verdict` holds
+    trivially. It cannot hold post-split and was never meant to — there
+    `verdict` carries the genealogy alone while `outcome` fuses compliance in,
+    so a run that researched well and skipped a guardrail is legitimately
+    `verdict: partial` + `outcome: fail`.
+
+    Until 2026-08-04 this scoping was implicit, because every committed
+    post-split log happened to have `verdict: fail` as well and satisfied the
+    assertion by luck. `susanna-szljacsan-spouse/run-2026-08-03_22-34-20`
+    (verdict partial, compliance fail, 5 bypasses) is the first that does not,
+    and it made the latent over-reach fail CI. Post-split logs are still
+    checked here, against the rule that actually applies to them.
     """
     runlogs = Path(__file__).resolve().parents[3] / "runlogs" / "e2e"
     if not runlogs.is_dir():
@@ -421,7 +436,18 @@ def test_the_gate_reproduces_todays_fused_verdict_across_the_whole_corpus():
         if ".final-" in path.name or path.name.endswith(".ann.json"):
             continue
         data = json.loads(path.read_text(encoding="utf-8"))
-        _verdict, _compliance, outcome = axes_from_runlog(data)
-        assert outcome == data["verdict"], (
-            f"{path}: gate disagrees with the pre-split fused verdict"
-        )
+        verdict, _compliance, outcome = axes_from_runlog(data)
+        if data.get("compliance") is None:
+            assert outcome == data["verdict"], (
+                f"{path}: gate disagrees with the pre-split fused verdict"
+            )
+        elif data["compliance"] == "fail":
+            assert outcome == "fail", (
+                f"{path}: compliance failed but the gate did not fuse it into "
+                f"outcome"
+            )
+        else:
+            assert outcome == verdict, (
+                f"{path}: compliance passed, so outcome must track the "
+                f"genealogical verdict"
+            )
