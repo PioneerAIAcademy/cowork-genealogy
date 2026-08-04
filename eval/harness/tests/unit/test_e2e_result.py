@@ -406,12 +406,22 @@ def test_no_committed_runlog_is_reported_compliance_pass():
 
 
 def test_the_gate_reproduces_todays_fused_verdict_across_the_whole_corpus():
-    """Behavior-preservation proof for the exit-code change.
+    """Behavior-preservation proof for the exit-code change, scoped to the
+    PRE-SPLIT corpus.
 
     Before the split, a guardrail bypass forced `verdict = "fail"` and the
     exit code keyed on that. Now it forces `outcome = "fail"` and the exit
-    code keys on THAT. Over every committed run the two distributions must be
+    code keys on THAT. For every log that PREDATES the split the two must be
     identical — otherwise this refactor silently changed which runs fail CI.
+
+    Post-split logs (`harness_schema_version` present) are excluded: they store
+    `outcome` explicitly rather than reconstructing it, and there is no
+    "pre-split fused verdict" to reproduce for them. A post-split run that is
+    recall-`pass` but compliance-`fail` legitimately has `verdict = "pass"`
+    while `outcome = "fail"` — the whole point of the #1027 split — so the
+    equality below cannot and should not hold for it. The pre-split corpus is
+    permanent (committed logs are never rewritten), so this proof keeps
+    covering its actual subject forever.
     """
     runlogs = Path(__file__).resolve().parents[3] / "runlogs" / "e2e"
     if not runlogs.is_dir():
@@ -421,6 +431,8 @@ def test_the_gate_reproduces_todays_fused_verdict_across_the_whole_corpus():
         if ".final-" in path.name or path.name.endswith(".ann.json"):
             continue
         data = json.loads(path.read_text(encoding="utf-8"))
+        if "harness_schema_version" in data:
+            continue  # post-split: outcome is stored, not reconstructed (see docstring)
         _verdict, _compliance, outcome = axes_from_runlog(data)
         assert outcome == data["verdict"], (
             f"{path}: gate disagrees with the pre-split fused verdict"
