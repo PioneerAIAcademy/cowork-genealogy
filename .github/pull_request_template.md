@@ -34,6 +34,10 @@
      Acceptance check — the named test that fails on `main` and passes on
      this branch. Not "the tests pass"; they passed before.
 
+     Deviated from the plan — anything you re-planned mid-flight (step 4).
+     "Nothing" is the common answer. PLAN.md is gitignored, so this line is
+     the only way a deviation reaches your reviewer.
+
      Hit the step-4 stop rule (schema, auth, plugin-agent binding, an ADR
      reversal, anything hard to undo)? Say so here and name the message
      where you raised it. -->
@@ -41,6 +45,8 @@
 **Didn't change:**
 
 **Acceptance check:**
+
+**Deviated from the plan:**
 
 ## Test plan
 

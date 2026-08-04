@@ -631,6 +631,12 @@ explicitly with the Agent tool.
   and rejects plans with no falsifiable acceptance check. Step 3 of
   [`docs/task-lifecycle.md`](./docs/task-lifecycle.md), capped at two rounds
   (ADR-0007). `/critique-plan [path]`.
+- **`drift-critic`** — read-only. The step-6 counterpart: reads the plan and the
+  branch's full diff (including untracked files) and reports what the
+  implementation did that the plan didn't call for, what the plan called for
+  that isn't there, and what contradicts it. Not a bug finder — `/code-review`
+  owns correctness. A deviation recorded in `PLAN.md` or the PR body is not
+  drift. `/check-drift [path]`.
 - **`rubric-critic`** — read-only. Audits a skill's eval rubric and judge
   quality from its run logs; flags non-discriminating, flaky, and unexercised
   dimensions. `/audit-rubric <skill>`.
