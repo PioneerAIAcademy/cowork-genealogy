@@ -1028,6 +1028,20 @@ async def _run_agent(
         # preflight that proves a *different* config than the run uses is the
         # bug class that issue was filed about.
         mcp_servers=genealogy_mcp_config(mcp_server_entry),
+        # ...and `strict_mcp_config` is what makes that sharing mean anything:
+        # without it the CLI merges file/user-scoped MCP config over the block
+        # above, so preflight (which sets it) and the run (which did not) could
+        # resolve the same `genealogy` key to different servers — reopening the
+        # gap from the other side.
+        #
+        # Measured, not assumed: a run's own init message listed the operator's
+        # claude.ai connectors (`needs-auth`) even though `build_workspace`
+        # stages no `.mcp.json` and `cwd` is a fresh tempdir — user scope leaks
+        # in. Nothing usable is lost by dropping them: `allowed_tools` below is
+        # `BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"]`, so a foreign MCP tool
+        # was never callable in an e2e run; this only stops one from being
+        # advertised, and removes a way to shadow the server under test.
+        strict_mcp_config=True,
         # Allow all genealogy MCP tools + baseline filesystem/Skill tools.
         # Wildcard form on the mcp__<server>__ prefix. NOTE: the tree-reading
         # tools (BLOCKED_TREE_TOOLS) are advertised here but denied at call
