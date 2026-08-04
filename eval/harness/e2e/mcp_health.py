@@ -51,17 +51,27 @@ GENEALOGY_SERVER_NAME = "genealogy"
 TOOL_SEARCH_NAME = "ToolSearch"
 
 # What ToolSearch says when it can find no tool matching the query. Matched
-# case-insensitively against the run log's `response_summary`, which is a
-# head-kept 500-char truncation (orchestrator._summarize_tool_response) — this
-# marker is the whole payload in practice, so truncation cannot hide it.
+# case-insensitively against `response_summary`
+# (orchestrator._summarize_tool_response).
+#
+# That summarizer was rewritten by #1241 while this was in review, and the
+# marker survives both of its shapes — checked against the merged
+# implementation, not the PR: a result that fits under the verbatim threshold is
+# passed through untouched, and a larger one is summarized BY KEY rather than
+# head-truncated. This marker is a 32-char whole payload, so it takes the
+# verbatim path. Confirmed against the incident artifact, where the recorded
+# value is exactly `"No matching deferred tools found"`
+# (run-2026-07-29_12-16-49.json:1674).
 #
 # Considered and not used: the CLI's ToolSearch reply schema also carries
 # `pending_mcp_servers` ({matches, query, total_deferred_tools,
 # pending_mcp_servers?}), which would name the unready server directly and could
-# fire on the FIRST miss instead of the third. Rejected because it reaches this
-# code only through that 500-char truncation, so depending on it means depending
-# on truncation luck — and the marker below is measured to work (see the
-# threshold note). Revisit only if the truncation is widened.
+# fire on the FIRST miss instead of the third. It is unreachable, and NOT for the
+# truncation reason an earlier draft of this comment gave: the tool result
+# carries the CLI's *rendered text*, not its structured reply — that is why the
+# recorded value is a bare string rather than a JSON envelope — so those fields
+# never reach this code under any summarizer. Widening the bound would not
+# expose them; only the CLI emitting the structured reply would.
 NO_MATCH_MARKER = "no matching deferred tools"
 
 # Consecutive no-match ToolSearch results (with zero successful `mcp__` calls)
