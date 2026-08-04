@@ -202,20 +202,14 @@ def main(argv: list[str] | None = None) -> int:
     # blocked on absence.
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if api_key and not args.skip_judge:
-        try:
-            import anthropic
-            from e2e.judge import DEFAULT_JUDGE_MODEL
+        from e2e.judge import DEFAULT_JUDGE_MODEL
+        from harness.auth import verify_judge_key
 
-            client = anthropic.Anthropic(api_key=api_key)
-            client.messages.create(
-                model=DEFAULT_JUDGE_MODEL,
-                max_tokens=1,
-                messages=[{"role": "user", "content": "ping"}],
-            )
-        except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as e:
+        rejected_status = verify_judge_key(api_key, DEFAULT_JUDGE_MODEL)
+        if rejected_status is not None:
             print(
                 f"Judge preflight failed: ANTHROPIC_API_KEY is set but the API "
-                f"rejected it ({e.status_code}).\n"
+                f"rejected it ({rejected_status}).\n"
                 f"A $7+ e2e run would complete and then silently discard the "
                 f"result because the judge can't grade it.\n"
                 f"\n"
@@ -225,9 +219,6 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
-        except (anthropic.OverloadedError, anthropic.RateLimitError,
-                anthropic.APIConnectionError):
-            pass  # transient — let the run proceed
 
     kwargs = {
         "runlog_root": args.runlog_root,

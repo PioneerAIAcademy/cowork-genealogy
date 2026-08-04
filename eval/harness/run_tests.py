@@ -570,22 +570,14 @@ def main(argv: list[str] | None = None) -> int:
     # regression rather than an auth error. Catch it with a cheap 1-token
     # liveness call before spending anything.
     if auth.api_key and needs_judge and not args.allow_missing_judge:
-        # Lazy import — only needed when key validation fires.
-        import anthropic
+        from harness.auth import verify_judge_key
         from harness.judge import DEFAULT_JUDGE_MODEL
 
-        try:
-            client = anthropic.Anthropic(api_key=auth.api_key)
-            client.messages.create(
-                model=DEFAULT_JUDGE_MODEL,
-                max_tokens=1,
-                messages=[{"role": "user", "content": "ping"}],
-            )
-        except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as e:
-            # 401/403 — bad credential. Abort before spending anything.
+        rejected_status = verify_judge_key(auth.api_key, DEFAULT_JUDGE_MODEL)
+        if rejected_status is not None:
             print(
                 f"Judge preflight failed: ANTHROPIC_API_KEY is set but the API "
-                f"rejected it ({e.status_code}).\n"
+                f"rejected it ({rejected_status}).\n"
                 f"A duplicated or revoked key passes the presence check but fails "
                 f"every judge call, wasting the entire suite.\n"
                 f"\n"
@@ -597,11 +589,6 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
-        except (anthropic.OverloadedError, anthropic.RateLimitError,
-                anthropic.APIConnectionError):
-            # 429/529/connection — transient Anthropic outage. Let the suite run;
-            # the judge has its own retry loop for these.
-            pass
     # Large-suite variance warning: the judge is temperature-pinned, but the
     # *skill run* is not — claude-agent-sdk exposes no temperature field, so
     # model nondeterminism still leaks into single-run outcomes. Mostly fine

@@ -1074,68 +1074,42 @@ def _stub_keyed_auth(monkeypatch, key="sk-test-key"):
     )
 
 
-def test_preflight_aborts_when_judge_key_invalid(tmp_path, monkeypatch, capsys):
-    """A present-but-invalid API key must exit 2 before running anything —
-    a duplicated or revoked key passes the presence check, then fails every
-    judge call, wasting the entire suite."""
+def _stub_anthropic_error(monkeypatch, exc_cls, status_code=None):
+    """Monkeypatch ``anthropic.Anthropic`` so ``messages.create`` raises *exc_cls*.
+
+    For ``APIConnectionError`` (no HTTP response), pass *status_code* as None.
+    For every other ``APIStatusError`` subclass, pass the HTTP status code.
+    """
     import anthropic
     import httpx
 
-    root = _preflight_tree(tmp_path, ["positive", "negative"])
-    _stub_keyed_auth(monkeypatch, key="sk-bad-key")
-
-    # Mock the Anthropic client so messages.create raises AuthenticationError.
-    mock_response = httpx.Response(
-        401, request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"),
-    )
+    if issubclass(exc_cls, anthropic.APIConnectionError):
+        exc = exc_cls(
+            request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"),
+        )
+    else:
+        exc = exc_cls(
+            message="test error",
+            response=httpx.Response(
+                status_code,
+                request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"),
+            ),
+            body=None,
+        )
 
     class _FakeMessages:
         def create(self, **kwargs):
-            raise anthropic.AuthenticationError(
-                message="invalid key", response=mock_response, body=None,
-            )
+            raise exc
 
     class _FakeClient:
         def __init__(self, **kwargs):
             self.messages = _FakeMessages()
 
     monkeypatch.setattr(anthropic, "Anthropic", _FakeClient)
-    ran = {"n": 0}
-    monkeypatch.setattr(run_tests, "run_one_test",
-                        lambda *a, **k: ran.__setitem__("n", ran["n"] + 1))
-
-    rc = run_tests.main(["--skill", "skill-a", "--tests-dir", str(root)])
-
-    assert rc == 2
-    assert ran["n"] == 0, "preflight must abort before any test executes"
-    err = capsys.readouterr().err
-    assert "rejected it (401)" in err
 
 
-def test_preflight_passes_on_transient_529(tmp_path, monkeypatch):
-    """A transient 529 (overloaded) should let the suite proceed — the judge
-    has its own retry loop for these."""
-    import anthropic
-    import httpx
-
-    root = _preflight_tree(tmp_path, ["positive"])
-    _stub_keyed_auth(monkeypatch)
-
-    mock_response = httpx.Response(
-        529, request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"),
-    )
-
-    class _FakeMessages:
-        def create(self, **kwargs):
-            raise anthropic.OverloadedError(
-                message="overloaded", response=mock_response, body=None,
-            )
-
-    class _FakeClient:
-        def __init__(self, **kwargs):
-            self.messages = _FakeMessages()
-
-    monkeypatch.setattr(anthropic, "Anthropic", _FakeClient)
+def _stub_run_through(monkeypatch, tmp_path):
+    """Wire up stubs so the suite runs past the preflight into test execution."""
     monkeypatch.setattr(run_tests, "run_one_test",
                         lambda spec, **k: _stub_log(spec.id, spec.skill, "pass"))
     monkeypatch.setattr(run_tests, "write_run_log",
@@ -1147,6 +1121,102 @@ def test_preflight_passes_on_transient_529(tmp_path, monkeypatch):
     )
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
+    return runlogs
+
+
+def test_preflight_aborts_when_judge_key_invalid(tmp_path, monkeypatch, capsys):
+    """A present-but-invalid API key (401) must exit 2 before running anything."""
+    import anthropic
+
+    root = _preflight_tree(tmp_path, ["positive", "negative"])
+    _stub_keyed_auth(monkeypatch, key="sk-bad-key")
+    _stub_anthropic_error(monkeypatch, anthropic.AuthenticationError, 401)
+    ran = {"n": 0}
+    monkeypatch.setattr(run_tests, "run_one_test",
+                        lambda *a, **k: ran.__setitem__("n", ran["n"] + 1))
+
+    rc = run_tests.main(["--skill", "skill-a", "--tests-dir", str(root)])
+
+    assert rc == 2
+    assert ran["n"] == 0, "preflight must abort before any test executes"
+    assert "rejected it (401)" in capsys.readouterr().err
+
+
+def test_preflight_aborts_on_403(tmp_path, monkeypatch, capsys):
+    """A key with insufficient permissions (403) must also abort."""
+    import anthropic
+
+    root = _preflight_tree(tmp_path, ["positive"])
+    _stub_keyed_auth(monkeypatch, key="sk-wrong-scope")
+    _stub_anthropic_error(monkeypatch, anthropic.PermissionDeniedError, 403)
+    ran = {"n": 0}
+    monkeypatch.setattr(run_tests, "run_one_test",
+                        lambda *a, **k: ran.__setitem__("n", ran["n"] + 1))
+
+    rc = run_tests.main(["--skill", "skill-a", "--tests-dir", str(root)])
+
+    assert rc == 2
+    assert ran["n"] == 0
+    assert "rejected it (403)" in capsys.readouterr().err
+
+
+def test_preflight_passes_on_transient_529(tmp_path, monkeypatch):
+    """A transient 529 (overloaded) should let the suite proceed."""
+    import anthropic
+
+    root = _preflight_tree(tmp_path, ["positive"])
+    _stub_keyed_auth(monkeypatch)
+    _stub_anthropic_error(monkeypatch, anthropic.OverloadedError, 529)
+    runlogs = _stub_run_through(monkeypatch, tmp_path)
+
+    rc = run_tests.main([
+        "--skill", "skill-a", "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+    ])
+
+    assert rc == 0
+
+
+def test_preflight_passes_on_transient_429(tmp_path, monkeypatch):
+    """A transient 429 (rate limit) should let the suite proceed."""
+    import anthropic
+
+    root = _preflight_tree(tmp_path, ["positive"])
+    _stub_keyed_auth(monkeypatch)
+    _stub_anthropic_error(monkeypatch, anthropic.RateLimitError, 429)
+    runlogs = _stub_run_through(monkeypatch, tmp_path)
+
+    rc = run_tests.main([
+        "--skill", "skill-a", "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+    ])
+
+    assert rc == 0
+
+
+def test_preflight_passes_on_connection_error(tmp_path, monkeypatch):
+    """A connection error (DNS, timeout) should let the suite proceed."""
+    import anthropic
+
+    root = _preflight_tree(tmp_path, ["positive"])
+    _stub_keyed_auth(monkeypatch)
+    _stub_anthropic_error(monkeypatch, anthropic.APIConnectionError)
+    runlogs = _stub_run_through(monkeypatch, tmp_path)
+
+    rc = run_tests.main([
+        "--skill", "skill-a", "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+    ])
+
+    assert rc == 0
+
+
+def test_preflight_passes_on_unexpected_status(tmp_path, monkeypatch):
+    """An unexpected status (e.g. 400 bad request from a deprecated model)
+    is not a key problem — let the suite proceed."""
+    import anthropic
+
+    root = _preflight_tree(tmp_path, ["positive"])
+    _stub_keyed_auth(monkeypatch)
+    _stub_anthropic_error(monkeypatch, anthropic.BadRequestError, 400)
+    runlogs = _stub_run_through(monkeypatch, tmp_path)
 
     rc = run_tests.main([
         "--skill", "skill-a", "--tests-dir", str(root), "--runlogs-root", str(runlogs),
@@ -1158,41 +1228,32 @@ def test_preflight_passes_on_transient_529(tmp_path, monkeypatch):
 def test_preflight_invalid_key_bypassed_by_flag(tmp_path, monkeypatch):
     """--allow-missing-judge bypasses the key-validity check too."""
     import anthropic
-    import httpx
 
     root = _preflight_tree(tmp_path, ["positive"])
     _stub_keyed_auth(monkeypatch, key="sk-bad-key")
-
-    mock_response = httpx.Response(
-        401, request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"),
-    )
-
-    class _FakeMessages:
-        def create(self, **kwargs):
-            raise anthropic.AuthenticationError(
-                message="invalid key", response=mock_response, body=None,
-            )
-
-    class _FakeClient:
-        def __init__(self, **kwargs):
-            self.messages = _FakeMessages()
-
-    monkeypatch.setattr(anthropic, "Anthropic", _FakeClient)
-    monkeypatch.setattr(run_tests, "run_one_test",
-                        lambda spec, **k: _stub_log(spec.id, spec.skill, "pass"))
-    monkeypatch.setattr(run_tests, "write_run_log",
-                        lambda log, *, runlogs_root, filename: Path(runlogs_root) / filename)
-    monkeypatch.setattr(
-        run_tests, "write_partial_runlog",
-        lambda log, *, runlogs_root, skill, timestamp:
-            Path(runlogs_root) / f".partial_{timestamp}.json",
-    )
-    runlogs = tmp_path / "runlogs"
-    runlogs.mkdir()
+    _stub_anthropic_error(monkeypatch, anthropic.AuthenticationError, 401)
+    runlogs = _stub_run_through(monkeypatch, tmp_path)
 
     rc = run_tests.main([
         "--skill", "skill-a", "--allow-missing-judge",
         "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+    ])
+
+    assert rc == 0
+
+
+def test_preflight_skips_check_for_negative_only(tmp_path, monkeypatch):
+    """A bad key with only negative tests should not trigger the liveness
+    check — negative tests don't need the judge."""
+    import anthropic
+
+    root = _preflight_tree(tmp_path, ["negative", "negative"])
+    _stub_keyed_auth(monkeypatch, key="sk-bad-key")
+    _stub_anthropic_error(monkeypatch, anthropic.AuthenticationError, 401)
+    runlogs = _stub_run_through(monkeypatch, tmp_path)
+
+    rc = run_tests.main([
+        "--skill", "skill-a", "--tests-dir", str(root), "--runlogs-root", str(runlogs),
     ])
 
     assert rc == 0
