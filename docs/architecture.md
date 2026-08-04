@@ -125,6 +125,7 @@ routing surface — find your task, then open that ADR.
 | [0005](adrs/ADR-0005-ship-the-write-lockdown-as-a-plugin-hook.md) | Ship the write lockdown as a plugin `PreToolUse` hook | add a guardrail · restrain the main thread · try to stop the agent doing something with an allow-list · change `PROTECTED_PROJECT_FILES` |
 | [0006](adrs/ADR-0006-restrict-capability-by-tool-identity.md) | Restrict capability by tool identity, not by prompt or parameter | need a delegated agent to do *part* of what a tool can do · write "you must only use this for X" in an agent body · add a `mode` parameter to scope a writer tool |
 | [0007](adrs/ADR-0007-attack-the-plan-before-writing-code.md) | Attack the plan before writing code and check the diff back against it, with read-only critics; settle task risk at triage (§2) | wonder why `/critique-plan` is a command and not a sentence · want a third critique round · want to skip `PLAN.md` because the plan is in the chat · want per-task plans filed under `docs/plan/` · want to add a "Risky" tier back to the lifecycle · are about to hand a schema, auth, or plugin-agent change to a junior · wonder why the drift check is a second agent instead of a `/code-review` flag |
+| [0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md) | Sync the schema copies by elimination, automatic generation, or lint — never by hand | see four copies of one enum and reach for codegen · add a generate step to a build · wonder why `packages/schema` generates its enums but the engine doesn't · propose defining the schema in Zod · add a fifth copy |
 
 Conventions, and how to add one: [`docs/adrs/README.md`](adrs/README.md).
 Not yet written: state and the writer/projection tools, self-contained agent
@@ -933,16 +934,18 @@ in `packages/schema/src/index.ts`, `CLOSED_ENUMS` in `validator.ts`, and the
 prose tables. `tests/packaging/enum-drift.test.ts` checks prose against the
 schema.
 
-> **Direction (critique §2.7, §3 P2; #1087/#1015/#1014).** These are **four-plus
-> hand-maintained copies of one source**, and the mirrors are slated to be
-> generated from `packages/schema` — which deletes the three-case table from
-> `CLAUDE.md`. **Don't add a fifth copy.** If your change would, say so in the PR.
+> **Direction (#1087/#1015/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
+> These are **four-plus hand-maintained copies of one source**, kept in sync by
+> elimination, automatic generation, or lint — never by a step a human has to
+> remember. `packages/schema`'s enum unions are generated; everything else is
+> linted. **Don't add a fifth copy.** If your change would, say so in the PR.
 
 **Add a field to the tree (simplified GedcomX).** Everything above, **plus** the
 closed per-object field allow-lists in `src/validation/tree-shape.ts`. The
 validator enforces `additionalProperties: false` from those sets, so an unlisted
-field makes **every writer tool reject the write.** Check whether the change
-needs a heal rule in `tree-sanitize.ts` for pre-change trees.
+field makes **every writer tool reject the write.** `tests/validation/tree-shape-drift.test.ts`
+diffs those sets against the schema. Check whether the change needs a heal rule
+in `tree-sanitize.ts` for pre-change trees.
 
 ---
 
@@ -1123,6 +1126,8 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `skill-description-length.test.ts` | the 1024-char cap |
 | `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
+| `tool-schema-enums.test.ts` | no MCP tool input schema re-types a closed enum's values, exactly **or stale**; two documented `sex` exemptions |
+| `research-append-examples.test.ts` | the worked `research_append` payloads ↔ their `research.schema.json` `$def` — field names, enum values, and one example per writable section |
 | `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
 | `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
 
@@ -1160,7 +1165,7 @@ tools — what happens after you grant one). And
 |---|---|---|
 | **No check proves a declared agent tool actually *binds* at runtime.** Every lint stops at spelling; the SDK handshake exposes only name/description/model. | `gps-mentor` read `research.json` front-to-back for 112 of 178 reads across 24 runs because its `tools:` — correct by every lint — lacked the projection tools. (Since granted; **the missing check is not**.) | #1084/#1085 |
 | **Nothing asserts an MCP tool's dispatch exists.** | A tool ships advertised and throws `Unknown tool` on first call, CI green. | #1164 |
-| **Nothing checks a `packages/schema` TypeScript interface against its JSON Schema.** | It had already drifted twice — `Assertion` and `TimelineEvent` were both missing `standard_place` (fixed in #1173; the missing *check* is not). | #1165 |
+| **Nothing checks a `packages/schema` TypeScript interface's *types* against its JSON Schema.** Field **names** are checked since #1271 (`schema-interface-drift.test.ts`, which caught a third drift), against `research.schema.json` and `tree-gedcomx.schema.json` both; optionality, `\| null`, and `date_certainty: string` where the union exists are not. | A type can advertise a required field as optional, or a closed enum as `string`, and nothing objects. | #1165 |
 | **Nothing checks that a new `research.json` field is rendered, taught, or written** (sites 6–8 in §6). | The field validates and is never used by anything. | #1166 |
 | **No test asserts the three write-lockdown copies agree.** | The next `PROTECTED_PROJECT_FILES` change can silently re-open the divergence. | critique §3 P3 |
 | **No automated suite exercises a plugin hook *as a bound runtime hook*.** `plugin-hooks.test.ts` runs the guard script directly and asserts its decisions; nothing checks that Cowork or the hosted path actually route a `Write` through it. And the unit harness's own hook carries no protected-file rule at all, so the write lockdown is absent from that tier in either form. | A binding regression surfaces only in Cowork, which no CI job touches. | #1160 |
@@ -1175,6 +1180,7 @@ tools — what happens after you grant one). And
 | **Nothing treats "the writer tools are absent" as a halt condition.** | Three runs once made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget. The raw-write path is closed since #984/#989; the silent failure is not. | #941 |
 | **A `Skill()` callee can bind toolless** in the unit-harness path. | A delegated skill runs with zero tools. | #1012 |
 | **Nothing exercises the live Agent SDK path.** Every harness test monkeypatches `run_skill`, so no gate constructs real SDK options or loads the plugin. | An SDK-options or plugin-loading break passes `make test-all` green and surfaces only on a paid `make eval-skill` run. | #1207 |
+| **Nothing checks that the deployed Apps Script's GitHub write works.** The script is edited in Google's console; CI cannot reach it. `doGet` reports `SCRIPT_VERSION`, so `curl <exec-url>` catches a stale or unpublished copy — but an ungranted `script.external_request` scope or a bad PAT still cannot be seen without submitting. | A submission produces a zip and no issue, and the client still returns `ok:true`. | Version check + smoke test in `apps/electron/server/feedback-endpoint/README.md`, run after every console edit |
 
 ### If you're asked to…
 
@@ -1189,7 +1195,8 @@ appears in §9.4, say so in the PR** rather than implying CI covered you.
 **Debug a failing e2e run.** Check the two setup gates first — `make e2e-preflight`
 and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly like
 an agent failure). Then `make e2e-view TEST=<slug>` loads the run into the viewer,
-`make e2e-corpus` gives three-axis totals across every committed run, and the
+`make e2e-corpus` gives three-axis totals across the last 14 days of committed
+runs — every run-log reader windows that way, `SINCE=all` to opt out — and the
 `/interpret-e2e-result` skill exists to read the log for you. Mechanics:
 `docs/e2e-testing-guide.md`. Before concluding the agent regressed, rule out the
 four other causes: an eval defect, FamilySearch data drift, single-run jitter, and

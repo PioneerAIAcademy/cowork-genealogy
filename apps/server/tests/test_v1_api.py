@@ -37,7 +37,7 @@ def _seed_active(sid: str):
         sandbox_id = s.get(Project, sid).sandbox_id
     proj = app.state.provider._root(sandbox_id) / "project"  # LocalProvider
     proj.mkdir(parents=True, exist_ok=True)
-    (proj / "research.json").write_text('{"project":{"id":"seed"}}')
+    (proj / "research.json").write_text('{"project":{"id":"seed"}}', encoding="utf-8")
 
 def _tokens_path(sid: str):
     """Path to the FS tokens.json injected for a /v1 session's sandbox (LocalProvider),

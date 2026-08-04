@@ -30,7 +30,7 @@ Which steps are yours depends on how you got here:
 | 4 Debug live | `make e2e-project`, then `/research` in Cowork with the Viewer open | 🖥️ Cowork + Viewer |
 | 5 Run | `make e2e-run TEST=<slug>` — one fixture, 20–60 min, $3–10 | ⌨️ Terminal |
 | 6 Read | `/interpret-e2e-result`; `make e2e-view` for the visual pass | 🤖 Claude Code |
-| 7 Attribute | read the transcript, fix in Step 4; `/mine-unit-test --e2e-run …` for a skill miss | 🤖 Claude Code |
+| 7 Attribute | read `narration[]` + `tool_calls[]`, fix in Step 4; `/mine-unit-test --e2e-run …` for a skill miss | 🤖 Claude Code |
 | 8 Grade | `/grade-e2e-run` → commit the `.ann.json` (CI-enforced) | 🤖 Claude Code |
 | 9 Land | commit fixture + run log + grade; open the PR | ⌨️ Terminal / GitHub |
 
@@ -78,7 +78,7 @@ If it flags something:
 - **FamilySearch login** — `make e2e-login` (Windows: `eval\Login.bat`). The
   token is host-global, shared by every e2e path, and lasts ~24h, so this is
   **once a day**, not once a run. Preflight warns when it's near expiry. If it
-  does expire mid-run, FS calls fail loudly in the transcript — re-login and
+  does expire mid-run, FS calls fail loudly in `tool_calls` — re-login and
   re-run; you won't get a silently bad result.
 - **MCP server not built** — `make mcpb` (Windows: `eval\BuildMcpb.bat`). It
   compiles the server *and* packs the `.mcpb`, which is what you install in
@@ -353,12 +353,11 @@ right afterwards with `/grade-e2e-run`, and seeing the judge's labels first
 would corrupt the calibration number. For the same reason `make e2e-run`
 prints only the stop reason and the compliance result when a run finishes.
 
-If you'd rather read the files yourself, each run writes four:
+If you'd rather read the files yourself, each run writes three:
 
 | File | What's in it |
 |---|---|
-| `run-<ts>.json` | The structured result: the three axes (`verdict` = genealogy, `compliance` = guardrails, `outcome` = the combined gate), stop reason, judge output, usage, tool calls, blocked tree-reads. If you are about to grade this run, read the two `final-*` files instead — this one holds the judge's grade |
-| `run-<ts>.transcript.md` | Readable transcript of the agent's turns |
+| `run-<ts>.json` | The structured result: the three axes (`verdict` = genealogy, `compliance` = guardrails, `outcome` = the combined gate), stop reason, judge output, usage, tool calls, `narration[]` (the agent's prose between tool calls), blocked tree-reads. If you are about to grade this run, read the two `final-*` files instead — this one holds the judge's grade |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — what the judge graded |
 | `run-<ts>.final-research.json` | The agent's final `research.json` |
 
@@ -381,7 +380,7 @@ for the Research Viewer (`make electron`, Windows: `eval\Viewer.bat`).
 |---|---|
 | `completed` | Happy path — proof-conclusion fired and set the project completed |
 | `natural_end` | The agent thought it was done; GPS may or may not agree |
-| `inactivity` / `timeout` | It stalled — the transcript shows where |
+| `inactivity` / `timeout` | It stalled — the last `narration` entry shows where |
 | `tool_cap` / `max_turns` | It may be looping — look for repeated tool calls near the end |
 | `cost_cap` | Hit the per-run cost limit |
 | `error` | SDK or harness exception; check `result.error` |
@@ -390,9 +389,10 @@ Full field reference: spec §8.
 
 ## Step 7 — When it fails ⌨️ / 🤖
 
-Read the transcript first — most failures are obvious from it. If something
-needs fixing, fix it in **Step 4** (Cowork + Viewer) and re-run, rather than
-guessing blind from the run log alone.
+Read `narration[]` alongside `tool_calls[]` first — most failures are obvious
+from them. Each narration entry carries `tool_calls_before` — the number of
+tool calls that preceded it — so the two replay as one trace. If something needs fixing, fix it in **Step 4** (Cowork +
+Viewer) and re-run, rather than guessing blind.
 
 One trap worth naming: if the agent found the right answer but recorded it
 *only* in `research.json` and not in the tree, that is an **agent failure, not
@@ -461,7 +461,7 @@ judgment call you should be able to defend in review.
 > something different there: there's no fact to recover, so what you're looking
 > for in the run is **restraint** — the agent searched, came up empty (or found
 > the same contradicting evidence you did), and documented that negative
-> conclusion instead of asserting the hint's claim. Read the transcript for
+> conclusion instead of asserting the hint's claim. Read `narration[]` for
 > restraint, not recall, before committing the run log.
 
 ---
