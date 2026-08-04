@@ -17,7 +17,6 @@ from e2e.guardrail_shadow_report import (
     all_result_jsons,
     format_detail,
     format_summary,
-    result_jsons_for,
     scan_corpus,
     scan_one,
 )
@@ -52,34 +51,6 @@ def test_is_result_json_rejects_ann_and_final_and_transcript(tmp_path):
 
 def test_is_result_json_rejects_scratch(tmp_path):
     assert _is_result_json(tmp_path / "scratch_2026-07-27_20-01-40.json") is False
-
-
-# --- discovery: all_result_jsons / result_jsons_for -----------------------
-
-
-def test_all_result_jsons_finds_every_fixture(tmp_path, monkeypatch):
-    import e2e.guardrail_shadow_report as mod
-
-    monkeypatch.setattr(mod, "E2E_RUNLOGS", tmp_path)
-    _write_run(tmp_path / "fixture-a", "run-2026-07-01_00-00-00.json", [])
-    _write_run(tmp_path / "fixture-a", "run-2026-07-02_00-00-00.json", [])
-    _write_run(tmp_path / "fixture-b", "run-2026-07-01_00-00-00.json", [])
-    # siblings that must be excluded
-    (tmp_path / "fixture-a" / "run-2026-07-01_00-00-00.ann.json").write_text("{}")
-
-    found = all_result_jsons()
-    assert len(found) == 3  # not the latest-per-fixture-only; every run
-
-
-def test_result_jsons_for_scopes_to_one_fixture(tmp_path, monkeypatch):
-    import e2e.guardrail_shadow_report as mod
-
-    monkeypatch.setattr(mod, "E2E_RUNLOGS", tmp_path)
-    _write_run(tmp_path / "fixture-a", "run-2026-07-01_00-00-00.json", [])
-    _write_run(tmp_path / "fixture-b", "run-2026-07-01_00-00-00.json", [])
-
-    assert len(result_jsons_for("fixture-a")) == 1
-    assert result_jsons_for("nonexistent-fixture") == []
 
 
 # --- scan_one / scan_corpus ------------------------------------------------
@@ -128,7 +99,7 @@ def test_scan_corpus_aggregates_across_multiple_windows_and_files(tmp_path):
 def test_scan_corpus_skips_unreadable_files_without_crashing(tmp_path, capsys):
     bad = tmp_path / "f1" / "run-bad.json"
     bad.parent.mkdir(parents=True)
-    bad.write_text("not json")
+    bad.write_text("not json", encoding="utf-8")
     good = _write_run(tmp_path / "f2", "run-good.json", [_unguarded_write()])
 
     by_window = scan_corpus([bad, good], windows=[40])

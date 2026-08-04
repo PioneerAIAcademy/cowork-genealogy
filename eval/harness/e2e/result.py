@@ -1,6 +1,6 @@
 """E2e result schema and persistence.
 
-A run produces four artifacts under eval/runlogs/e2e/<test-id>/, named by
+A run produces three artifacts under eval/runlogs/e2e/<test-id>/, named by
 outcome (see runlog_prefix):
 
 - a gradeable run (verdict pass / partial / fail) uses the committable
@@ -12,10 +12,10 @@ outcome (see runlog_prefix):
   tree, so there is nothing to grade) uses `scratch_<timestamp>.*`, which
   `.gitignore` keeps out of version control.
 
-The four files per run ({prefix} = `run-` or `scratch_`):
+The three files per run ({prefix} = `run-` or `scratch_`):
 
-- {prefix}<timestamp>.json — structured result (this module)
-- {prefix}<timestamp>.transcript.md — human-readable transcript
+- {prefix}<timestamp>.json — structured result (this module), including the
+  ordered `narration` stream that replaced the old `.transcript.md`
 - {prefix}<timestamp>.final-tree.gedcomx.json — agent's final tree
 - {prefix}<timestamp>.final-research.json — agent's final research.json
 
@@ -36,7 +36,56 @@ from typing import Any
 # `axes_from_runlog` has to do for pre-v1 logs (see that function).
 #   1 — the three-axis split: top-level `compliance` / `outcome` /
 #       `guardrail_bypass_violations` (GitHub issue #972).
-HARNESS_SCHEMA_VERSION = 1
+#   2 — `tool_calls[].response_summary` is key-preserving rather than
+#       head-truncated at 497 chars (GitHub issue #1073). A reader MUST branch on
+#       this: 48% of captures differ in format from a v1 log, so diffing a v1
+#       against a v2 log shows changes that are not agent or skill regressions.
+#       See `docs/specs/e2e-test-spec.md` §15 step 4. This is the field to read —
+#       a timestamp cannot answer it, because the change was authored days before
+#       it merged, so v1 logs exist with timestamps later than the authoring date.
+#   3 — `tool_calls[]` carries `is_error`, joined from `ToolResultBlock.is_error`
+#       by `apply_tool_result` in `e2e/orchestrator.py`. Before that join nothing
+#       set the key and the five `entry.get("is_error") is True` gates in
+#       `harness/skill_invocation.py` were dead, so an ERRORED call counted as a
+#       successful invocation everywhere.
+#
+#       READ THIS BEFORE TRUSTING A `2`. The join shipped in PR #1255 (main
+#       `4541a4c5`) WITHOUT a bump, on the argument that adding a key is additive.
+#       That left `2` meaning two different things — no `is_error` before
+#       `4541a4c5`, `is_error` after — which is precisely the "keeps its name
+#       while its meaning changes" case this counter exists for. `3` is what
+#       makes the distinction readable. So:
+#         - `3`             — has `is_error`. Unambiguous.
+#         - `2` after `4541a4c5`  — has `is_error`. Zero such logs are committed
+#                             as of this bump; the window is small but real, and
+#                             a reader who finds one must date it against that
+#                             commit, since the payload cannot tell them.
+#         - `2` before, and `1`, and absent — no `is_error`.
+#       `"is_error" in entry` is NOT a usable substitute tell in either
+#       direction: an entry whose `ToolResultBlock` never arrived (any aborted or
+#       wall-clock-capped run) carries no key at all, at `3` exactly as at `2`.
+#
+#       What moves across the boundary, and by how much. Both hard-fail arms of
+#       `check_guardrail_compliance` get strictly stricter —
+#       `find_effects_without_invocation` stops crediting a failed `Skill` call,
+#       and `find_person_evidence_missing_same_person` shrinks `scored_ids` — and
+#       both feed `guardrail_bypass_violations`, which sets `compliance: fail` ->
+#       `outcome: fail`. So a run that passed compliance before the join can
+#       hard-fail after it from an identical trace, and `compliance` / `outcome`
+#       are not comparable across it. Measured on the committed corpus, though,
+#       that is ~1 entry in 555 runs: see `docs/specs/e2e-test-spec.md` §7.5,
+#       which also explains why `e2e/guardrail_shadow_report.py` does not split
+#       its corpus by version (#911 / #1176 / #1231 read that number).
+#
+# A change readers can detect from the payload itself does NOT need a bump.
+# `narration` replacing `.transcript.md` is one: the field is a dataclass
+# `default_factory=list` and the writer emits `asdict(result)`, so every run
+# log written since carries the key and every earlier one lacks it. Branch on
+# `"narration" in data`, not on a version. Bump only when a key keeps its name
+# and type while its MEANING changes — that is the case with no structural tell,
+# and entry 2 above is exactly it: `response_summary` stays a string, and only
+# what that string means changes.
+HARNESS_SCHEMA_VERSION = 3
 
 
 @dataclass
@@ -70,11 +119,13 @@ class E2eResult:
     # Every tool call the agent attempted, in order — not just mcp__-prefixed
     # ones (Skill, Agent, Read, … are included too; the entry-construction
     # code has no such filter). Each entry is {tool, args, response_summary,
-    # agent_id, agent_type}; the last two come from the PreToolUse hook's own
-    # payload (docs/specs/guardrail-enforcement-spec.md §11) and are only
-    # set once a ToolResultBlock arrives for that call — None on the main
-    # thread, the subagent's identifiers otherwise. A call still in-flight
-    # when the run aborts mid-stream never gets any of the last three keys.
+    # is_error, agent_id, agent_type}; `is_error` (a bool, `block.is_error is
+    # True`) and the last two are all set together once a ToolResultBlock
+    # arrives for that call — agent_id/agent_type come from the PreToolUse
+    # hook's own payload (docs/specs/guardrail-enforcement-spec.md §11), None on
+    # the main thread and the subagent's identifiers otherwise. A call still
+    # in-flight when the run aborts mid-stream keeps response_summary: None and
+    # never gets is_error, agent_id, or agent_type.
     # Critical for diffing across runs when investigating drift.
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
 
@@ -96,9 +147,29 @@ class E2eResult:
     #               it's worth a reviewer's eye.
     #   "fixture" — blocked by the fixture's own `blocked_tools`.
     #
-    # In every case the call was denied, so it never reaches `tool_calls` —
-    # this list is the only record that it was attempted.
+    # In every case the call was denied, so nothing executed — but it DOES
+    # reach `tool_calls` (32 of the 33 denials in the committed corpus have a
+    # matching entry there, carrying the deny reason as `response_summary` and,
+    # from HARNESS_SCHEMA_VERSION 3, `is_error: true`). This list is the
+    # structured record — read `blocked_by` from here rather than pattern-
+    # matching the summary — and it is what tells a §15 reader that an
+    # `is_error: true` entry is a policy denial, not an upstream failure.
     blocked_tree_reads: list[dict[str, Any]] = field(default_factory=list)
+
+    # The agent's prose between tool calls, plus the two harness-side events
+    # that only mean anything in trace order (a denied tool, a continue-nudge).
+    # Entries are {tool_calls_before, kind, text} with kind in
+    # {assistant, blocked, harness}. `tool_calls_before` is how many tool calls
+    # had already happened: N means the entry sits between tool_calls[N-1] and
+    # tool_calls[N], and 0 means before any tool call. A count, not an index —
+    # so the stream replays against tool_calls without being interleaved into
+    # it, and without an off-by-one.
+    #
+    # This replaces the `.transcript.md` artifact (removed 2026-08-03). That
+    # file was 93% a re-render of tool_calls; the assistant prose was the only
+    # thing it held that lived nowhere else, and diagnosing a mid-loop yield or
+    # a stall needs that prose *in position* — see issue #1104.
+    narration: list[dict[str, Any]] = field(default_factory=list)
 
     # Compact per-subagent transcript summaries (agent_type, per-turn
     # stop_reason / output_tokens / block shape, and a `runaway_thinking` flag).
@@ -297,25 +368,22 @@ def write_result_files(
     *,
     result: E2eResult,
     runlog_dir: Path,
-    transcript: str,
     final_tree: dict[str, Any] | None,
     final_research: dict[str, Any] | None,
     timestamp: str | None = None,
 ) -> dict[str, Path]:
-    """Write the four committed artifacts. Returns the paths written."""
+    """Write the three committed artifacts. Returns the paths written."""
     runlog_dir.mkdir(parents=True, exist_ok=True)
     ts = timestamp or timestamp_slug()
     stem = f"{runlog_prefix(result.verdict)}{ts}"
 
     paths = {
         "result": runlog_dir / f"{stem}.json",
-        "transcript": runlog_dir / f"{stem}.transcript.md",
         "tree": runlog_dir / f"{stem}.final-tree.gedcomx.json",
         "research": runlog_dir / f"{stem}.final-research.json",
     }
 
     paths["result"].write_text(json.dumps(asdict(result), indent=2), encoding="utf-8")
-    paths["transcript"].write_text(transcript, encoding="utf-8")
     if final_tree is not None:
         paths["tree"].write_text(json.dumps(final_tree, indent=2), encoding="utf-8")
     if final_research is not None:

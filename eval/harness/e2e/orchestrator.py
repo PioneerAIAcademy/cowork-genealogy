@@ -41,6 +41,7 @@ from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
 )
+from harness.judge import _summarize_response
 from harness.skill_invocation import (
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
@@ -526,19 +527,179 @@ def _render_user_message(fixture: Fixture) -> str:
     )
 
 
-def _summarize_tool_response(content: Any) -> str:
-    """Short stringification of a tool result for the run log.
+def _unwrap_mcp_text_blocks(content: Any) -> Any:
+    """Parse the JSON document an MCP tool result carries inside a text block.
 
-    We don't need the full response in the runlog — just enough to
-    diff across runs when investigating drift. ~500 chars is plenty.
+    MCP results arrive as `[{"type": "text", "text": "<a whole JSON document>"}]`,
+    so to any generic summarizer the entire response is one very long *string*.
+    Bounding strings then keeps the head and hides every key, which is the
+    mechanism behind the `record_search` blindness described below. Parsing the
+    inner document first is what lets the summarizer work on real structure.
+
+    Anything that does not parse is passed through untouched — a plain-text tool
+    result stays a plain-text tool result.
+
+    Only an object or array is unwrapped. A bare JSON scalar is left as the string
+    it arrived as, because `json.loads` would otherwise coerce a tool result of
+    `"1"` to `1`, `"true"` to `True`, `"null"` to `None` and `"NaN"` to a float
+    nan — changing what the run log says the tool returned, which is the one thing
+    this artifact exists to record faithfully.
+    """
+    if not isinstance(content, list):
+        return content
+    out: list[Any] = []
+    for block in content:
+        text = (
+            block.get("text")
+            if isinstance(block, dict)
+            else getattr(block, "text", None)
+        )
+        if isinstance(text, str) and text.lstrip()[:1] in ("{", "["):
+            try:
+                out.append(json.loads(text))
+                continue
+            except (ValueError, RecursionError):
+                # RecursionError is not a ValueError: a deeply nested payload
+                # would otherwise escape to the run-level handler and abort a
+                # run that costs $7-25. The old code could not raise at all
+                # because it never parsed, so this must not either.
+                pass
+        out.append(block)
+    return out
+
+
+# The old head-truncation's threshold. A response at or under this was captured
+# whole before, so it is passed through whole now — the guarantee that this
+# function can only ever widen the artifact, never narrow it.
+_RUNLOG_VERBATIM_MAX = 500
+# Must not sit below the 497 content chars the old head-truncation kept, or this
+# function REGRESSES the artifact it exists to widen: a string-valued result
+# (`Read`, `Glob`, `Grep`, and a `record_search` that came back as the MCP
+# over-limit error) is one long string with no keys to preserve, so the string
+# bound is the whole budget for it.
+#
+# What this constant is and is NOT responsible for, since a first draft of this
+# comment credited it with the whole regression: at 200, 112 of the 284 tool
+# results in `run-2026-07-31_13-02-13` captured less than the old head cut, but
+# only **12** of those are string-valued (9 of them losing exactly 237 chars).
+# The other 100 are list-valued, losing 52.8 chars on average to
+# `_summarize_response`'s list sampling, which no string bound can fix — that is
+# what the verbatim passthrough below is for. Raising 200 -> 500 fixes 23 of the
+# 112 and introduces 2 new ones (the bound is not monotone: for a string of
+# length just over 200, truncating at 200 plus the ~61-char marker is LONGER than
+# leaving it whole at 500), for a net of 21. The passthrough fixes the rest.
+#
+# Still far under the judge tier's 2000, because that copy is a throwaway prompt
+# and this one is committed to git.
+_RUNLOG_STRING_MAX = 500
+# Backstop for the widest tail: 11 of the 1544 tool results across the six
+# committed jimmie-jewel-neal runs (0.7%) reach it. Kept at 4000 rather than
+# raised, because at that hit rate a bigger cap grows a git-committed artifact for
+# the long tail alone. Must stay ABOVE _RUNLOG_VERBATIM_MAX or the never-shorter
+# floor at the end of _summarize_tool_response silently defeats it. Note what
+# happens for those 11: the output degrades to a head cut *of a summary*, which
+# reintroduces the un-reasonable-about bound this function otherwise rejects —
+# acceptable at 0.7%, but that is the trade, not an absence of one.
+_RUNLOG_MAX_CHARS = 4000
+
+
+def _summarize_tool_response(content: Any) -> str:
+    """Key-preserving summary of a tool result for the run log.
+
+    This head-truncated at 497 chars before `HARNESS_SCHEMA_VERSION` 2, which
+    made exactly the
+    fields worth diffing invisible. `record_search` leads with `results`, its
+    largest field by far, so every field serialized after it was cut: across the
+    46 `record_search` calls in `run-2026-07-31_13-02-13`, `ranked` appears in
+    the run log **0 times**, even though 18 of those calls supplied `subjectId`
+    and 14 of them were ranked. The run log is the artifact we assert tool
+    behavior from, and it was silently dropping the evidence — a head bound
+    cannot be reasoned about, because whether a field survives depends on how
+    much data happened to precede it.
+
+    So summarize by KEY instead, reusing the unit tier's `_summarize_response`
+    rather than growing a second summarizer: dicts keep every key, long lists
+    keep their length plus a sample, long strings are bounded with an explicit
+    marker. An overall cap stays as a backstop, since run logs are committed.
+
+    Responses that already fit are passed through VERBATIM rather than summarized.
+    That is not an optimization, it is what makes this strictly non-regressive:
+    `_summarize_response` samples any list past three entries, so summarizing
+    unconditionally *lost* content for 91 of the 284 tool results in
+    `run-2026-07-31_13-02-13` — short responses made of many small items, which
+    the old bound captured whole. Summarize only what the old code would have cut.
+
+    KNOWN CONSEQUENCE of that passthrough: `response_summary` now has two shapes.
+    Under the threshold it keeps the raw MCP envelope, where the tool's document is
+    an escaped string (`[{"type": "text", "text": "{\\"totalMatches\\": 0}"}]`);
+    over it, the document is unwrapped and its keys are real JSON keys. Two things
+    follow. A call whose payload crosses the threshold between runs flips
+    representation and shows a spurious diff, which matters because
+    `docs/specs/e2e-test-spec.md` tells readers to diff `response_summary` across
+    runs. And grepping a quoted key (`'"rankingSkipped"'`) undercounts, because the
+    escaped form does not contain it — grep the bare name, which matches both.
     """
     try:
-        text = content if isinstance(content, str) else json.dumps(content)
+        raw = content if isinstance(content, str) else json.dumps(content)
     except (TypeError, ValueError):
-        text = repr(content)
-    if len(text) > 500:
-        text = text[:497] + "..."
-    return text
+        raw = repr(content)
+    except RecursionError:
+        # NOT `repr(content)`: repr recurses too, so on the only input class that
+        # can raise here the fallback raises identically and the guard is a no-op.
+        # (Measured: a 20,000-deep nested list raises in json.dumps AND in repr.)
+        # Letting it escape aborts a run costing $7-25, so degrade to a marker
+        # instead. Unreachable today — `ToolResultBlock.content` is a str or a
+        # shallow list of dicts — but this function had no `json.dumps` of caller
+        # data at all before, so the exposure is new.
+        raw = f"<unserializable {type(content).__name__}: nesting too deep>"
+    if len(raw) <= _RUNLOG_VERBATIM_MAX:
+        return raw
+
+    summary = _summarize_response(
+        _unwrap_mcp_text_blocks(content), string_max=_RUNLOG_STRING_MAX
+    )
+    try:
+        text = summary if isinstance(summary, str) else json.dumps(summary)
+    except (TypeError, ValueError):
+        text = repr(summary)
+    if len(text) > _RUNLOG_MAX_CHARS:
+        text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
+
+    # Never emit a SHORTER capture than the old head-truncation would have. A
+    # key-preserving summary can come out shorter on a long list of small items —
+    # 14 of the 284 tool results in `run-2026-07-31_13-02-13` — and in those cases
+    # it is arguably the better record, since `_full_length: 26` beats an arbitrary
+    # 497-char prefix that never says how many entries there were. But "arguably
+    # better" is a judgement a reader takes on trust, whereas "never shorter" is a
+    # property they can check, and its absence is exactly what made the first cut
+    # of this change a regression.
+    #
+    # It is a LENGTH floor, not a content guarantee: a payload can clear it on one
+    # wide key while a sampled list drops entries the head cut happened to include.
+    # Zero of the 1544 tool results across the six committed runs do that, but do
+    # not restate this as "captures everything it used to".
+    #
+    # `_RUNLOG_MAX_CHARS` must stay above `_RUNLOG_VERBATIM_MAX`, or this floor
+    # silently defeats the cap applied just above it.
+    head = raw[: _RUNLOG_VERBATIM_MAX - 3] + "..."  # raw > _RUNLOG_VERBATIM_MAX here
+    return text if len(text) >= len(head) else head
+
+
+def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: str) -> None:
+    """Populate the producer-side fields on a `tool_calls` entry when its
+    `ToolResultBlock` arrives: the response summary, and `is_error`.
+
+    Split out of `_consume` so the producer half is unit-testable — the
+    guardrail gates in `skill_invocation.py` skip an entry when
+    `entry.get("is_error") is True`, and until this set the field nothing did,
+    so every gate treated a failed Skill call as a success (#999). The existing
+    gate tests fabricate `is_error` themselves, so they can't catch that; this
+    helper can. `is True` normalizes the SDK's None-on-success (`is_error` is
+    `bool | None`, `None` when the call succeeded) into a clean bool the gates
+    and the acceptance test can rely on.
+    """
+    entry["response_summary"] = summary
+    entry["is_error"] = block.is_error is True
 
 
 def _timeline_tool_label(tool: str, args: dict | None) -> str:
@@ -656,12 +817,24 @@ async def _run_agent(
 ]:
     """Spawn the agent SDK and consume messages until done or capped.
 
-    Returns (tool_calls, transcript_chunks, usage, aborted_reason, error,
+    Returns (tool_calls, narration, usage, aborted_reason, error,
     blocked_tree_reads, guardrail_shadow_violations,
     unnamed_delegate_violations).
     """
     tool_calls: list[dict[str, Any]] = []
-    transcript: list[str] = []
+    # The agent's prose between tool calls, plus the two harness-side events
+    # that only make sense in trace order (a denied tool, a continue-nudge).
+    # Each entry carries `tool_calls_before` — how many tool calls had already
+    # happened. A value of N means the entry sits between tool_calls[N-1] and
+    # tool_calls[N]; 0 means before any tool call. That is a COUNT, not an
+    # index: naming it as an index would be off by one, and a negative index
+    # would silently wrap in Python. This is what makes the stream
+    # reconstructible against tool_calls without being interleaved *into* it — that would break the
+    # specced {tool, args, response_summary} entry shape and, worse, shift the
+    # index windows find_unguarded_protected_writes() and recently_succeeded()
+    # compute (skill_invocation.py), silently changing the §7 shadow-window
+    # violation rate between old and new runs.
+    narration: list[dict[str, Any]] = []
     pending_tool_uses: dict[str, dict[str, Any]] = {}
     # Seed-tree person ids for the issue-#963 same_person-provenance deny (in
     # pretool_hook), read once from the IMMUTABLE fixture file. None on a read
@@ -813,9 +986,15 @@ async def _run_agent(
                     "blocked_by": "tree",
                 }
             )
-            transcript.append(
-                f"\n**[BLOCKED]** `{bare}` denied — tree-reading tools are "
-                "disabled in e2e runs; recover the answer from records.\n"
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied — tree-reading tools are disabled in "
+                        "e2e runs; recover the answer from records."
+                    ),
+                }
             )
             _emit(f"[blocked tree-read] {bare}")
             return {
@@ -838,9 +1017,15 @@ async def _run_agent(
                     "blocked_by": "fixture",
                 }
             )
-            transcript.append(
-                f"\n**[BLOCKED]** `{bare}` denied — disabled by this fixture "
-                "(fixture.json `blocked_tools`).\n"
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied — disabled by this fixture "
+                        "(fixture.json `blocked_tools`)."
+                    ),
+                }
             )
             _emit(f"[blocked fixture tool] {bare}")
             return {
@@ -929,10 +1114,16 @@ async def _run_agent(
             return {}
         continue_nudges["n"] += 1
         last_nudge_activity_count["n"] = activity_count["n"]
-        transcript.append(
-            f"\n**[HARNESS]** continue-nudge {continue_nudges['n']}/"
-            f"{fixture.caps.max_continue_nudges}: agent yielded before "
-            "project.status=='completed'; instructing it to resume the loop.\n"
+        narration.append(
+            {
+                "tool_calls_before": len(tool_calls),
+                "kind": "harness",
+                "text": (
+                    f"continue-nudge {continue_nudges['n']}/"
+                    f"{fixture.caps.max_continue_nudges}: agent yielded before "
+                    "project.status=='completed'; instructing it to resume the loop."
+                ),
+            }
         )
         _emit(
             f"[continue-nudge {continue_nudges['n']}/"
@@ -1027,7 +1218,6 @@ async def _run_agent(
     )
 
     user_message = _render_user_message(fixture)
-    transcript.append(f"# E2e run: {fixture.id}\n\n## User message\n\n```\n{user_message}\n```\n\n## Trace\n")
 
     def _should_resume() -> bool:
         # Resume only in a provably-safe state: the flag is on, we have a session
@@ -1080,10 +1270,16 @@ async def _run_agent(
                     assistant_tool_names: list[str] = []
                     for block in message.content:
                         if isinstance(block, TextBlock):
-                            transcript.append(f"\n**assistant:** {block.text}\n")
-                            narration = " ".join(block.text.split())
-                            if narration:
-                                _emit(narration[:200])
+                            narration.append(
+                                {
+                                    "tool_calls_before": len(tool_calls),
+                                    "kind": "assistant",
+                                    "text": block.text,
+                                }
+                            )
+                            one_line = " ".join(block.text.split())
+                            if one_line:
+                                _emit(one_line[:200])
                             progressed = True
                         elif isinstance(block, ToolUseBlock):
                             entry = {
@@ -1095,10 +1291,6 @@ async def _run_agent(
                             pending_tool_uses[block.id] = entry
                             assistant_tool_names.append(
                                 _timeline_tool_label(block.name, block.input)
-                            )
-                            args_short = _summarize_tool_response(block.input)
-                            transcript.append(
-                                f"\n**tool_use** `{block.name}` — args: {args_short}\n"
                             )
                             if block.name == "Skill":
                                 _emit(f">> skill: {(block.input or {}).get('skill', '?')}")
@@ -1121,7 +1313,7 @@ async def _run_agent(
                                 entry = pending_tool_uses.pop(block.tool_use_id, None)
                                 summary = _summarize_tool_response(block.content)
                                 if entry is not None:
-                                    entry["response_summary"] = summary
+                                    apply_tool_result(entry, block, summary)
                                     # spec §11 Step 0 — join caller identity onto
                                     # this entry now that pretool_hook is
                                     # guaranteed to have already run for it
@@ -1140,7 +1332,6 @@ async def _run_agent(
                                     tool_result_names.append(
                                         _timeline_tool_label(entry["tool"], entry.get("args"))
                                     )
-                                transcript.append(f"\n**tool_result:** {summary}\n")
                                 progressed = True
                     timeline.append(
                         [round(now - run_started, 1), "tool_result", tool_result_names]
@@ -1317,7 +1508,7 @@ async def _run_agent(
 
     return (
         tool_calls,
-        transcript,
+        narration,
         usage,
         aborted_reason,
         error,
@@ -1334,7 +1525,7 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     to ``~/.claude/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
     the workspace tempdir, so it survives the TemporaryDirectory cleanup — but it
     is otherwise only discoverable by hand. It is strictly richer than the
-    runlog's own ``transcript.md`` (which is a lossy summary): only the JSONL has
+    runlog's own structured trace: only the JSONL has
     per-message timestamps, per-turn token/cache usage, thinking blocks, and
     untruncated tool payloads — everything needed to diagnose latency and cost.
 
@@ -1452,7 +1643,7 @@ async def run_e2e_test(
 
         (
             tool_calls,
-            transcript_chunks,
+            narration,
             usage,
             aborted,
             error,
@@ -1556,6 +1747,7 @@ async def run_e2e_test(
             error=error,
             tags=fixture.tags,
             blocked_tree_reads=blocked_tree_reads,
+            narration=narration,
             guardrail_bypass_violations=guardrail_bypass_violations,
             guardrail_shadow_violations=guardrail_shadow_violations,
             protected_writes_by_unnamed_delegate=unnamed_delegate_violations,
@@ -1566,14 +1758,13 @@ async def run_e2e_test(
         paths = write_result_files(
             result=result,
             runlog_dir=runlog_dir,
-            transcript="".join(transcript_chunks),
             final_tree=final_tree,
             final_research=final_research,
             timestamp=result.captured_at,
         )
 
-        # Copy the raw SDK session transcript next to the runlog. The runlog's
-        # transcript.md is a lossy summary; this JSONL carries per-message
+        # Copy the raw SDK session transcript next to the runlog. The runlog
+        # carries a summarized trace; this JSONL carries per-message
         # timestamps, per-turn token/cache usage, thinking, and untruncated
         # payloads. Best-effort — a missing session file never fails an
         # otherwise-successful run. Done inside the tempdir block so `workspace`

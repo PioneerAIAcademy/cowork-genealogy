@@ -13,6 +13,7 @@
  *
  * See docs/plan/eval-runlog-versioning.md §B3.
  */
+import { alignSnapshots } from './snapshot';
 import type {
   AnnotationCorrection,
   AnnotationFile,
@@ -161,10 +162,11 @@ function filesForTest(entry: TestEntry, skill: string): string[] {
 
 function testEdited(
   entry: TestEntry,
-  recentSnap: Record<string, string>,
-  previousSnap: Record<string, string>,
+  recentSnapRaw: Record<string, string>,
+  previousSnapRaw: Record<string, string>,
   skill: string,
 ): boolean {
+  const [recentSnap, previousSnap] = alignSnapshots(recentSnapRaw, previousSnapRaw);
   for (const file of filesForTest(entry, skill)) {
     const a = recentSnap[file];
     const b = previousSnap[file];
@@ -187,9 +189,10 @@ function testEdited(
 }
 
 function diffSnapshots(
-  recent: Record<string, string>,
-  previous: Record<string, string>,
+  recentRaw: Record<string, string>,
+  previousRaw: Record<string, string>,
 ): SnapshotDiffEntry[] {
+  const [recent, previous] = alignSnapshots(recentRaw, previousRaw);
   const out: SnapshotDiffEntry[] = [];
   const all = new Set([...Object.keys(recent), ...Object.keys(previous)]);
   for (const p of [...all].sort()) {

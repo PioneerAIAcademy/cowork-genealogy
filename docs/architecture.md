@@ -124,7 +124,8 @@ routing surface — find your task, then open that ADR.
 | [0004](adrs/ADR-0004-dual-spell-mcp-tool-names-in-agent-frontmatter.md) | Dual-spell every MCP tool name in agent frontmatter | grant or deny a tool to a plugin agent · write a `ToolSearch` query · rename the desktop extension |
 | [0005](adrs/ADR-0005-ship-the-write-lockdown-as-a-plugin-hook.md) | Ship the write lockdown as a plugin `PreToolUse` hook | add a guardrail · restrain the main thread · try to stop the agent doing something with an allow-list · change `PROTECTED_PROJECT_FILES` |
 | [0006](adrs/ADR-0006-restrict-capability-by-tool-identity.md) | Restrict capability by tool identity, not by prompt or parameter | need a delegated agent to do *part* of what a tool can do · write "you must only use this for X" in an agent body · add a `mode` parameter to scope a writer tool |
-| [0007](adrs/ADR-0007-attack-the-plan-before-writing-code.md) | Attack the plan before writing code, with a read-only critic; settle task risk at triage (§2) | wonder why `/critique-plan` is a command and not a sentence · want a third critique round · want to skip `PLAN.md` because the plan is in the chat · want per-task plans filed under `docs/plan/` · want to add a "Risky" tier back to the lifecycle · are about to hand a schema, auth, or plugin-agent change to a junior |
+| [0007](adrs/ADR-0007-attack-the-plan-before-writing-code.md) | Attack the plan before writing code and check the diff back against it, with read-only critics; settle task risk at triage (§2) | wonder why `/critique-plan` is a command and not a sentence · want a third critique round · want to skip `PLAN.md` because the plan is in the chat · want per-task plans filed under `docs/plan/` · want to add a "Risky" tier back to the lifecycle · are about to hand a schema, auth, or plugin-agent change to a junior · wonder why the drift check is a second agent instead of a `/code-review` flag |
+| [0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md) | Sync the schema copies by elimination, automatic generation, or lint — never by hand | see four copies of one enum and reach for codegen · add a generate step to a build · wonder why `packages/schema` generates its enums but the engine doesn't · propose defining the schema in Zod · add a fifth copy |
 
 Conventions, and how to add one: [`docs/adrs/README.md`](adrs/README.md).
 Not yet written: state and the writer/projection tools, self-contained agent
@@ -204,7 +205,8 @@ The four agents are `gps-mentor`, `record-extractor`, `image-reader`, and
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
 > (`.claude/agents/`, which are developer tooling for this repo — today
-> `plan-critic`, `rubric-critic`, `skill-improver`, and `task-reviewer`). The
+> `plan-critic`, `drift-critic`, `rubric-critic`, `skill-improver`, and
+> `task-reviewer`). The
 > dual-spelling rule in §5.2 applies to plugin agents only; these declare bare
 > tool names.
 
@@ -840,20 +842,23 @@ The principle, from `project-context-tool-spec.md`: the writer tools removed
 JSON to think." **Never design a flow that hands the LLM a large document to
 edit and re-emit.**
 
-> **Today:** `research_query` caps at 50 items with a `truncated` flag and **no
-> pagination**, and covers **11 of the 15** `research.json` sections — missing
-> `project`, `researcher_profile`, `known_holdings`, and `localities`. On the tree
-> side, `project_context` returns a fixed projection of tree persons (id, name,
-> gender, sourceRefs), but there is **no query surface over `tree.gedcomx.json`**
-> the way `research_query` gives one over `research.json` — which is why `Read` is
-> not revoked.
-> **Direction (#1031, critique §2.9, §3 P2).** The 50-item cap is a
-> **correctness** bug first: there is no way to fetch items 51+ when the filter
-> cannot be narrowed further, and proof-conclusion's "collect every assertion"
-> gate once saw 50 of 57. **If you consume `research_query`, check the `truncated`
-> flag** — a skill already ignored it once. `Read` is still the most-called tool
-> in the system (544 calls across 28 runs, against 246 `research_query` + 91
-> `project_context`).
+> **Today:** `research_query` returns 50 items per call with a `truncated` flag
+> and an `offset` parameter for paging past 50 (#1031 tool half), and covers
+> **11 of the 15** `research.json` sections — missing `project`,
+> `researcher_profile`, `known_holdings`, and `localities`. On the tree side,
+> `project_context` returns a fixed projection of tree persons (id, name, gender,
+> sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
+> `research_query` gives one over `research.json` — which is why `Read` is not
+> revoked.
+> **Direction (#1031, critique §2.9, §3 P2).** The tool half shipped: `offset`
+> makes items 51+ reachable, closing the "no way to fetch past 50" correctness bug
+> at the tool. What remains is the **skill half (#1183)** — the consumers must
+> actually page. `proof-conclusion/SKILL.md` still says "no offset/pagination
+> guessing," so its "collect every assertion" gate can under-read (it once saw 50
+> of 57) until that line is rewritten. **If you consume `research_query`, check the
+> `truncated` flag and page with `offset`** — a skill already ignored truncation
+> once. `Read` is still the most-called tool in the system (544 calls across 28
+> runs, against 246 `research_query` + 91 `project_context`).
 
 ### 6.4 The casing seam
 
@@ -929,16 +934,18 @@ in `packages/schema/src/index.ts`, `CLOSED_ENUMS` in `validator.ts`, and the
 prose tables. `tests/packaging/enum-drift.test.ts` checks prose against the
 schema.
 
-> **Direction (critique §2.7, §3 P2; #1087/#1015/#1014).** These are **four-plus
-> hand-maintained copies of one source**, and the mirrors are slated to be
-> generated from `packages/schema` — which deletes the three-case table from
-> `CLAUDE.md`. **Don't add a fifth copy.** If your change would, say so in the PR.
+> **Direction (#1087/#1015/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
+> These are **four-plus hand-maintained copies of one source**, kept in sync by
+> elimination, automatic generation, or lint — never by a step a human has to
+> remember. `packages/schema`'s enum unions are generated; everything else is
+> linted. **Don't add a fifth copy.** If your change would, say so in the PR.
 
 **Add a field to the tree (simplified GedcomX).** Everything above, **plus** the
 closed per-object field allow-lists in `src/validation/tree-shape.ts`. The
 validator enforces `additionalProperties: false` from those sets, so an unlisted
-field makes **every writer tool reject the write.** Check whether the change
-needs a heal rule in `tree-sanitize.ts` for pre-change trees.
+field makes **every writer tool reject the write.** `tests/validation/tree-shape-drift.test.ts`
+diffs those sets against the schema. Check whether the change needs a heal rule
+in `tree-sanitize.ts` for pre-change trees.
 
 ---
 
@@ -1119,8 +1126,10 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `skill-description-length.test.ts` | the 1024-char cap |
 | `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
+| `tool-schema-enums.test.ts` | no MCP tool input schema re-types a closed enum's values, exactly **or stale**; two documented `sex` exemptions |
+| `research-append-examples.test.ts` | the worked `research_append` payloads ↔ their `research.schema.json` `$def` — field names, enum values, and one example per writable section |
 | `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves (the frozen-history sections are exempt) |
-| `doc-links.test.ts` | every repo path, markdown link and `make` target cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
+| `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md` and by **`.claude/{agents,commands,skills}`** still resolves. These have no frozen-history half — every line is an instruction a model acts on. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
 `check_skill_frontmatter.py` (for **skills and agents**: description length and
@@ -1156,7 +1165,7 @@ tools — what happens after you grant one). And
 |---|---|---|
 | **No check proves a declared agent tool actually *binds* at runtime.** Every lint stops at spelling; the SDK handshake exposes only name/description/model. | `gps-mentor` read `research.json` front-to-back for 112 of 178 reads across 24 runs because its `tools:` — correct by every lint — lacked the projection tools. (Since granted; **the missing check is not**.) | #1084/#1085 |
 | **Nothing asserts an MCP tool's dispatch exists.** | A tool ships advertised and throws `Unknown tool` on first call, CI green. | #1164 |
-| **Nothing checks a `packages/schema` TypeScript interface against its JSON Schema.** | It had already drifted twice — `Assertion` and `TimelineEvent` were both missing `standard_place` (fixed in #1173; the missing *check* is not). | #1165 |
+| **Nothing checks a `packages/schema` TypeScript interface's *types* against its JSON Schema.** Field **names** are checked since #1271 (`schema-interface-drift.test.ts`, which caught a third drift), against `research.schema.json` and `tree-gedcomx.schema.json` both; optionality, `\| null`, and `date_certainty: string` where the union exists are not. | A type can advertise a required field as optional, or a closed enum as `string`, and nothing objects. | #1165 |
 | **Nothing checks that a new `research.json` field is rendered, taught, or written** (sites 6–8 in §6). | The field validates and is never used by anything. | #1166 |
 | **No test asserts the three write-lockdown copies agree.** | The next `PROTECTED_PROJECT_FILES` change can silently re-open the divergence. | critique §3 P3 |
 | **No automated suite exercises a plugin hook *as a bound runtime hook*.** `plugin-hooks.test.ts` runs the guard script directly and asserts its decisions; nothing checks that Cowork or the hosted path actually route a `Write` through it. And the unit harness's own hook carries no protected-file rule at all, so the write lockdown is absent from that tier in either form. | A binding regression surfaces only in Cowork, which no CI job touches. | #1160 |
@@ -1166,11 +1175,12 @@ tools — what happens after you grant one). And
 | **Nothing checks `README.md`'s tool/skill catalog** against the code. | Already rotted: **13 of 47 tools appear nowhere in it** — the entire structured-persistence writer surface plus both projection tools. Skills and agents are clean (27/27, 4/4). | #1137 |
 | **No unit-side judge calibration.** `calibrate_judge` is e2e-only. | The unit judge's accuracy is unmeasured. | critique §2.8 |
 | **No production telemetry.** `apps/server/app/obs.py` is PII-free stdout logging; `sandbox_server.py` keeps a capped in-memory *replay* buffer for reconnects, not a tool ledger. Every compliance rate, cost figure, and guardrail measurement in this repo is computed over `eval/runlogs/`. | You cannot answer "is this getting better for a real user?" | #1054 |
-| **The compliance detectors are uncalibrated.** Three open defects, two unnamed false-positive classes, one false-negative blind spot. `is_error` is never populated, so a *failed* `Skill` call counts as a success. | **Do not quote the 8-of-25 violation rate without that caveat**, and do not graduate a gate on it. | #998, #999, #1006 |
+| **The compliance detectors are uncalibrated.** Three open defects, two unnamed false-positive classes, one false-negative blind spot. `is_error` is populated from `harness_schema_version` 3, but it only observes *tool-level* failure: a `Skill` result is a launch acknowledgement (`Launching skill: <name>`), so "invoke the skill, let it fail, finish the write inline" still reads as a success, and a writer tool that returns `{ok:false}` without throwing (#1282) does too. | **Do not quote the 8-of-25 violation rate without that caveat**, and do not graduate a gate on it. | #998, #999, #1006, #1282 |
 | **No prompt-injection doctrine exists anywhere.** A grep of the whole plugin and MCP source returns **zero hits**, while untrusted free text reaches an agent holding `research_append` via `image_transcribe` OCR, `fulltext_search`, and every record the extractor reads. | Unmitigated, unmeasured. | #847 |
 | **Nothing treats "the writer tools are absent" as a halt condition.** | Three runs once made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget. The raw-write path is closed since #984/#989; the silent failure is not. | #941 |
 | **A `Skill()` callee can bind toolless** in the unit-harness path. | A delegated skill runs with zero tools. | #1012 |
 | **Nothing exercises the live Agent SDK path.** Every harness test monkeypatches `run_skill`, so no gate constructs real SDK options or loads the plugin. | An SDK-options or plugin-loading break passes `make test-all` green and surfaces only on a paid `make eval-skill` run. | #1207 |
+| **Nothing checks that the deployed Apps Script's GitHub write works.** The script is edited in Google's console; CI cannot reach it. `doGet` reports `SCRIPT_VERSION`, so `curl <exec-url>` catches a stale or unpublished copy — but an ungranted `script.external_request` scope or a bad PAT still cannot be seen without submitting. | A submission produces a zip and no issue, and the client still returns `ok:true`. | Version check + smoke test in `apps/electron/server/feedback-endpoint/README.md`, run after every console edit |
 
 ### If you're asked to…
 
@@ -1185,7 +1195,8 @@ appears in §9.4, say so in the PR** rather than implying CI covered you.
 **Debug a failing e2e run.** Check the two setup gates first — `make e2e-preflight`
 and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly like
 an agent failure). Then `make e2e-view TEST=<slug>` loads the run into the viewer,
-`make e2e-corpus` gives three-axis totals across every committed run, and the
+`make e2e-corpus` gives three-axis totals across the last 14 days of committed
+runs — every run-log reader windows that way, `SINCE=all` to opt out — and the
 `/interpret-e2e-result` skill exists to read the log for you. Mechanics:
 `docs/e2e-testing-guide.md`. Before concluding the agent regressed, rule out the
 four other causes: an eval defect, FamilySearch data drift, single-run jitter, and
@@ -1216,9 +1227,7 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
 1. **The `same_person` write-boundary gate** — direction settled, mechanism not;
    three discriminators have failed review. Details and the "don't re-derive"
    ledger: §5.3, and critique §3 P0 + §9.
-2. **`research_query` pagination past 50 items** (#1031) — the fix is known, the
-   shape of the API is not (§6.3).
-3. **Whether the compliance-detector doctrine should follow the router's
+2. **Whether the compliance-detector doctrine should follow the router's
    paraphrase or the owning skill's contract** (#1006). Until that is decided,
    "true or false positive" has no ground truth at all (critique §3 P0). **Do not
    quote "16 of 25" as the gate's *reach*** — critique §9 retracts that reading.
@@ -1226,12 +1235,16 @@ Things that are genuinely unsettled, as distinct from §9.4's missing guards.
    25 (≤14 of 45 on the full committed window). Note the critique carries two
    windows and two disjoint "9 of 25" figures — read its §0.2 before quoting
    either.
-4. **Why the 1024-character description cap exists** — two lint sites give
+3. **Why the 1024-character description cap exists** — two lint sites give
    contradictory reasons (§3.2). Treat it as hard either way.
-5. **`ENABLE_TOOL_SEARCH`** (#1110) — the polarity is settled as of 2026-08-02
+4. **`ENABLE_TOOL_SEARCH`** (#1110) — the polarity is settled as of 2026-08-02
    (§5.2) and all five inverted comments have been corrected. What remains is
    the **flip itself**, which changes behavior in both harnesses and the hosted
    path and requires re-measuring the tool mix before and after.
+
+*(`research_query` pagination past 50 items — #1031 — has left this list: the
+API shape is settled and the tool half shipped `offset`; the remaining skill
+adoption is tracked work, #1183, not an open question. See §6.3.)*
 
 ---
 

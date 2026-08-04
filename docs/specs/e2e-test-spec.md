@@ -259,7 +259,7 @@ stripped starting tree, then reviewed and pruned by the author.
 | `description` | string | yes | Plain-language description of the finding |
 | `details` | object | yes | Structured data — shape varies by `type` |
 | `polarity` | enum | no | `recover` (default) or `avoid` — see §3.4.1. Omit for normal recall findings |
-| `supporting_sources` | array of strings | no | Source citations from the original tree that support this finding, for the judge to reference (not strict-matched) |
+| `supporting_sources` | array of strings | no | Source citations from the original tree that support this finding, for the judge to reference (not strict-matched). For a resolved record-hint negative, see the disproving-record/absence split in §3.6.1 |
 | `required` | boolean | yes | `true` = missing this finding fails the test; `false` = bonus |
 
 Most findings should be `required: true` for v1. The `false` lever
@@ -355,6 +355,42 @@ stripped:
   assert, plus a `required` recover finding that the agent documented
   the negative conclusion (§3.4.1). Say in the fixture README which
   state the fixture is in.
+
+#### 3.6.1 Citation shape for documented negatives (decision, issue #1025)
+
+A resolved-negative (outcome (c) above) makes two different claims,
+and they do not take the same citation:
+
+- **The disproving record** — whatever real record makes the hint
+  implausible or contradicted (an age impossibility, a date that
+  postdates a marriage, a directly-examined record that turns out to
+  be someone else). This is a real, ark-able record.
+- **The absence** — "no record in the collection establishes X." By
+  definition there is nothing to point an ark at.
+
+Once a resolvable ark is required on record-hint resolutions (issue
+#970), that requirement attaches to the **disproving record only**.
+Write it into the `avoid` finding's or the paired required finding's
+`supporting_sources` as a literal `ark:/61903/...`. The absence claim
+itself is written as plain prose — ideally naming the collection and
+date range searched — and is not required to carry an ark; none
+exists to cite. A fixture satisfies the ark requirement as long as
+*some* `supporting_sources` entry, on some finding in the fixture,
+carries the disproving record's ark — the absence sentence riding
+alongside it with no ark is not a gap.
+
+**The ark must be the full `ark:/61903/...` path — not the bare
+`XXXX-XXXX` id** (decision, issue #970, 2026-08-02). A naive
+`\b[A-Z0-9]{4}-[A-Z0-9]{2,4}\b` id-shaped token matches on collection
+date ranges alone (`Czech Republic, Church Books, 1552-1981` reads as
+one), and a FamilySearch tree PID is shape-identical to a record ark
+id — so the cheapest way to satisfy a bare-id lint is pasting the
+fixture's own `source_pid`, which carries zero record provenance.
+`validate_fixture.py`'s `record_hint_citation_errors` enforces the
+full-path form for this reason; it cannot verify the ark actually
+resolves to the record claimed (CI holds no FamilySearch token) —
+what it buys is that a false citation becomes checkable in one click
+by a human reviewer instead of invisible.
 
 ---
 
@@ -767,14 +803,17 @@ into one boolean made a correct run and a wrong one read identically
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
 | `outcome` | `pass` \| `partial` \| `fail` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
-| `harness_schema_version` | integer | `1` for the shape above. Absent on pre-#972 logs. |
+| `harness_schema_version` | integer | `3` for the shape above. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
 corpus contains. Pre-detector runs (see §7.5) resolve to
 `compliance: not_checked` — an unknown, which is **never** counted as clean.
 
-`make e2e-corpus` prints the three axes across every committed run.
+`make e2e-corpus` prints the three axes across recent committed runs — the
+last 14 days by default, `SINCE=all` for the whole corpus. It names the window
+and the sample size in its own output, so a windowed number is never mistaken
+for a whole-corpus one.
 
 ### 7.3 Variance and Calibration
 
@@ -821,8 +860,8 @@ parameter.
 
 Before the suite grows beyond the first fixture, sanity-check the
 judge prompt against the first run trace: if the judge's verdict
-diverges from what eyeballing the transcript would say, fix the
-prompt before adding more tests.
+diverges from what eyeballing `narration` + `tool_calls` would say, fix
+the prompt before adding more tests.
 
 ### 7.4 Judge calibration
 
@@ -956,6 +995,59 @@ presence of the `guardrail_shadow_violations` key (the two shipped in the same
 commit). Retroactively scoring the corpus is tracked as issue #913, and needs
 the checks replayed at a pinned version to be meaningful.
 
+**`compliance` and `outcome` are not comparable across the `is_error` join.**
+Before it, `tool_calls[]` carried no `is_error` key, so the
+`entry.get("is_error") is True` gates in `skill_invocation.py` never fired and an
+**errored** tool call counted as a successful invocation. After it, both hard
+arms get strictly stricter: a failed `Skill` call no longer populates
+`find_effects_without_invocation`'s `invoked` set, and an errored `same_person`
+no longer enters `find_person_evidence_missing_same_person`'s `scored_ids`. Both
+feed `guardrail_bypass_violations`, so a run that reported `compliance: pass`
+before the join can report `fail` after it **from an identical trace**. That is
+the correct reading — an errored call was never a successful invocation — so a
+compliance delta across the boundary is not a regression signal.
+
+**The boundary is a commit, not cleanly a version — check both.** The join
+shipped in PR #1255 (main `4541a4c5`) with `harness_schema_version` left at `2`,
+on the argument that adding a key is additive. It is not, for a reader: `2` now
+means *no `is_error`* before `4541a4c5` and *`is_error` present* after it, which
+is exactly the keeps-its-name-while-its-meaning-changes case the counter exists
+for. `3` closes that. So:
+
+| Log reads | Has `is_error`? |
+|---|---|
+| `3` | yes — unambiguous |
+| `2`, committed after `4541a4c5` | yes — **date it against that commit; the payload cannot tell you** |
+| `2` before `4541a4c5`, `1`, or absent | no |
+
+Zero logs sit in that ambiguous row today — the 555 committed runs are
+`{absent: 551, 1: 4}`, and none carries `is_error` — but the window is open
+until this bump lands, so a run made in it would.
+
+`"is_error" in entry` does not rescue a reader either way: an entry whose
+`ToolResultBlock` never arrived (any aborted or wall-clock-capped run) carries no
+key at all, at `3` exactly as at `2`.
+
+**Measured blast radius, so nobody over-corrects for this.** Replaying the
+committed corpus: 164 of 23,056 `tool_calls` entries carry an error-shaped
+result, across 66 of the 555 runs — but **none is a `same_person`,
+`research_append`, or `extraction_append`**. They are `record_search` (68),
+`external_links_search` (24), `fulltext_search` (20), `Glob`, `Grep`, `Bash` —
+tools no gate keys on, which the detectors already skipped via `owning_skills`
+returning empty. Entries any of the five gates would actually shed: **one
+errored `Skill` and one errored `tree_edit`, corpus-wide.** So the caveat above
+is a correctness statement, not a warning of a large shift: the numbers issues
+#911, #1176 and #1231 read move by ~1 entry in 555 runs. `is_error` is also
+blind to a writer tool that returns `{ok:false}` without throwing (#1282) and to
+a skill that launches and then fails (`guardrail-enforcement-spec.md` §7), which
+is why the shift is this small.
+
+**`e2e/guardrail_shadow_report.py` deliberately does not split its corpus by
+version.** With the delta measured at ~1 entry, a v-split would add a column
+that always reads zero. Revisit only if #1282 lands (writer-tool failures become
+visible) or the corpus accumulates errored `same_person`/`Skill` calls; window
+calibration itself is #911's.
+
 Design rationale, the shadow-mode sibling check, and the production layers these
 three sit alongside: `docs/specs/guardrail-enforcement-spec.md` (§8 for these
 checks, §7 for the shadow-mode window).
@@ -966,8 +1058,7 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result. The three axes first — `verdict` (genealogical), `compliance`, `guardrail_bypass_violations`, `outcome` (the gate), and `harness_schema_version`; see §7.2.1. Then `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; **`usage_source`** — `result_message` when the SDK's `ResultMessage` arrived (authoritative), or `streamed_fallback` when it did not. Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts the stream before that message, which used to leave `usage` with no turns, duration or tokens at all — blinding exactly the runs worth investigating. The fallback reconstructs the block from the streamed assistant messages: token counts are **exact** (deduplicated by message id — the SDK re-emits one message per content block, each copy repeating that message's cumulative usage, so summing on arrival multiplies the totals), `duration_ms` comes from the monotonic clock, and the distinct-message count is reported as `assistant_messages`. `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** in a fallback block rather than synthesized — the SDK counts turns differently from distinct assistant messages, only it knows the API/local split, and a run spans several models so one price lookup would be wrong. Never compare a `streamed_fallback` cost against a clean run's; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
-| `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
+| `run-<timestamp>.json` | Structured result. The three axes first — `verdict` (genealogical), `compliance`, `guardrail_bypass_violations`, `outcome` (the gate), and `harness_schema_version`; see §7.2.1. Then `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary, is_error, agent_id, agent_type }`, where `is_error` is joined from the SDK's `ToolResultBlock.is_error` (present from `harness_schema_version` 3; an entry whose result never arrived, as on any aborted or wall-clock-capped run, carries none of `is_error` / `agent_id` / `agent_type` — `response_summary` is present but `null`, since the entry literal initializes it and only the result overwrites it). A PreToolUse **deny** does reach this list: the denied call appears here with the deny reason as its `response_summary` and, from `3`, `is_error: true`; `blocked_tree_reads` is the parallel record, not the only one — and `blocked_tree_reads` (denied live-tree reads; see §6.1); a `narration` array — each entry `{ tool_calls_before, kind, text }` with `kind` in `assistant` / `blocked` / `harness`, carrying the agent's prose between tool calls plus the two harness-side events that only mean anything in trace order, anchored by `tool_calls_before` — how many tool calls had already happened, so N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]` and 0 means before any tool call (a count, not an index). This replaced the `.transcript.md` artifact, removed 2026-08-03: that file was 87% a re-render of `tool_calls`, and the prose is the part that lived nowhere else. `usage` carries tokens / cost; **`usage_source`** — `result_message` when the SDK's `ResultMessage` arrived (authoritative), or `streamed_fallback` when it did not. Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts the stream before that message, which used to leave `usage` with no turns, duration or tokens at all — blinding exactly the runs worth investigating. The fallback reconstructs the block from the streamed assistant messages: token counts are **exact** (deduplicated by message id — the SDK re-emits one message per content block, each copy repeating that message's cumulative usage, so summing on arrival multiplies the totals), `duration_ms` comes from the monotonic clock, and the distinct-message count is reported as `assistant_messages`. `num_turns`, `duration_api_ms` and `total_cost_usd` are **null** in a fallback block rather than synthesized — the SDK counts turns differently from distinct assistant messages, only it knows the API/local split, and a run spans several models so one price lookup would be wrong. Never compare a `streamed_fallback` cost against a clean run's; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
 | `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
@@ -983,7 +1074,8 @@ validation. The `.ann.json` is committed when a run is graded. To investigate
 a regression — a test that previously passed and now fails
 — diff the old and new `tool_calls` arrays: each entry's `response_summary`
 captures the FS result inline, so collection-hit changes, hint-count shifts, or
-record-visibility changes show up directly.
+record-visibility changes show up directly. (Note the one-time capture-format
+change before diffing across it — see §15, "Evidence to read, in order", step 4.)
 
 ---
 
@@ -1012,8 +1104,8 @@ breakdowns exist for a shell loop that runs several fixtures back to back,
 but each iteration prints its own roll-up — the loop does not aggregate.
 
 For totals **across** runs, use `make e2e-corpus`
-(`eval/harness/e2e/corpus_report.py`), which reads every committed run log
-through `axes_from_runlog` and reports all three axes, holding `not_checked`
+(`eval/harness/e2e/corpus_report.py`), which reads each committed run log in
+the window through `axes_from_runlog` and reports all three axes, holding `not_checked`
 compliance separate from clean:
 
 ```
@@ -1167,28 +1259,76 @@ changing anything, because the fix differs completely by cause.
 
 ### Evidence to read, in order
 
-1. **`run-<ts>.transcript.md`** — the agent's reasoning and tool calls in
-   order. Most failures are obvious here: it stopped, looped, or made the
+1. **`run-<ts>.json::narration` alongside `::tool_calls`** — the agent's
+   reasoning in order. Each narration entry is
+   `{tool_calls_before, kind, text}` with `kind` one of `assistant` (the
+   agent's own prose), `blocked` (a denied tool), or `harness` (a
+   continue-nudge). `tool_calls_before` is how many tool calls had already
+   happened — N means the entry sits between `tool_calls[N-1]` and
+   `tool_calls[N]`, 0 means before any tool call — so the two replay as one
+   trace. Most failures are obvious here: it stopped, looped, or made the
    wrong call.
 2. **`run-<ts>.final-tree.gedcomx.json`** — what the agent actually built,
    compared against `expected-findings.json`. Note that an answer recorded
    *only* outside the tree is an **agent failure**, not a judge miss (§7.1).
 3. **`stop_reason`** — `inactivity` / `timeout` means the agent stalled;
-   the transcript shows where. `tool_cap` / `max_turns` means it may be
+   the last `narration` entry shows where. `tool_cap` / `max_turns` means it may be
    looping — look for repeated similar tool calls near the end.
 4. **For a regression, diff `run-<ts>.json::tool_calls` against the last
-   passing run.** Each entry carries `tool`, `args`, and `response_summary`:
+   passing run.** Each entry carries `tool`, `args`, `response_summary`,
+   `is_error`, `agent_id`, and `agent_type`:
    - different collection IDs touched → the agent took a different path;
    - different hit counts on the same search → FS may have reindexed;
    - **same calls, different `response_summary` → likely an agent or skill
      regression.**
+   - `is_error: true` on a call the passing run made cleanly → an upstream
+     failure, not a reasoning change — **unless the same call also appears in
+     `blocked_tree_reads`**, in which case it is a harness policy denial and
+     the agent trying to read the answer off the live tree *is* the reasoning
+     signal (§6.1). Absent entirely below `harness_schema_version` 3, so check
+     the version before reading it.
+
+   > **One-time exception: `response_summary` changed format.**
+   > `_summarize_tool_response` stopped head-truncating at 497 chars and now
+   > summarizes by key (`eval/harness/e2e/orchestrator.py`). Measured against the
+   > six committed `jimmie-jewel-neal` runs, **741 of 1544 captures (48%) differ
+   > from what the old code would have produced** — so the first run after that
+   > change shows a changed `response_summary` on roughly half of all calls
+   > against **every** earlier baseline. That is a capture-format change, not an
+   > agent or skill regression. Do not read the third bullet above across that
+   > boundary; compare runs on the same side of it.
+   >
+   > **Which side a run log sits on is read from `harness_schema_version`, not
+   > from its timestamp.** `2` or higher is the key-preserving capture; `1` and
+   > below is the old head-truncation. A wall-clock date cannot answer this: the
+   > change was authored days before it merged, so v1 logs exist with timestamps
+   > later than the authoring date, and a date-based rule inverts for exactly
+   > those.
+   >
+   > **A second boundary: `tool_calls[].is_error`.** Before it the key is absent
+   > and every call — including errored ones — read as successful to the
+   > guardrail detectors. Diffing `tool_calls` across it shows a new key on every
+   > entry; that is a capture change, not a regression. It also moves
+   > `compliance`/`outcome`, which the shadow/violation counts above do not —
+   > though by ~1 entry corpus-wide. The boundary is main `4541a4c5`, not
+   > cleanly a version number: see §7.5 "Historical runs" for the table and the
+   > measurement.
+   >
+   > Two format details that matter when diffing or grepping. Captures at or under
+   > 500 chars are passed through verbatim, so they keep the raw MCP envelope in
+   > which the tool's document is an **escaped** string; larger ones have the
+   > document unwrapped into real JSON keys. So (a) a call whose payload crosses
+   > 500 chars between runs flips representation and shows a diff that means
+   > nothing, and (b) grepping a *quoted* key (`'"ranked"'`) misses the escaped
+   > form while grepping the bare name (`ranked`) also matches agent prose and
+   > `Grep` patterns. Neither form is reliable alone — read the surrounding entry.
 
 ### The run log has no `skills_invoked` field
 
 Unlike the unit-test run log, the e2e run log records no structured list of
-which sub-skills ran. To reconstruct the chain, scan the transcript for
-`Skill` tool-use blocks. Stated here because an absence cannot be inferred
-from §8's field enumeration.
+which sub-skills ran. To reconstruct the chain, filter `tool_calls` for
+entries whose `tool` is `Skill` and read `args.skill`. Stated here because an
+absence cannot be inferred from §8's field enumeration.
 
 ### Recording what you learned
 
