@@ -248,6 +248,26 @@ describe("recordSearchTool input validation", () => {
     ).rejects.toThrow(/recordType must be one of/);
   });
 
+  // The guard used `recordType in RECORD_TYPE_TO_INT`, and `in` walks the
+  // prototype chain — so "constructor" passed validation and buildSearchUrl
+  // then indexed out `Object`, sending
+  // `f.recordType=function%20Object()%20{%20[native%20code]%20}` upstream.
+  // "constructor" is the only Object.prototype key that reaches here: it is the
+  // sole all-lowercase one, and the tool schema's enum is not a runtime guard.
+  it("13a. throws on an inherited Object.prototype key as recordType", () => {
+    expect(() =>
+      validateInput({ surname: "Lincoln", recordType: "constructor" as never })
+    ).toThrow(/recordType must be one of/);
+  });
+
+  it("13b. never emits a non-numeric f.recordType", () => {
+    const url = buildSearchUrl({
+      surname: "Lincoln",
+      recordType: "constructor" as never,
+    });
+    expect(url).not.toMatch(/f\.recordType=(?!\d+(&|$))/);
+  });
+
   it("rejects non-4-digit year inputs", () => {
     expect(() =>
       validateInput({
