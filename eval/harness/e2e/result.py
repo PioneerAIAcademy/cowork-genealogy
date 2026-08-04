@@ -44,30 +44,38 @@ from typing import Any
 #       a timestamp cannot answer it, because the change was authored days before
 #       it merged, so v1 logs exist with timestamps later than the authoring date.
 #   3 — `tool_calls[]` carries `is_error`, joined from `ToolResultBlock.is_error`
-#       by the message loop in `e2e/orchestrator.py`. Before this, nothing set the
-#       key and the five `entry.get("is_error") is True` gates in
+#       by `apply_tool_result` in `e2e/orchestrator.py`. Before that join nothing
+#       set the key and the five `entry.get("is_error") is True` gates in
 #       `harness/skill_invocation.py` were dead, so an ERRORED call counted as a
-#       successful invocation everywhere. Two reader consequences, and the second
-#       is why this is a bump rather than a payload-detectable change:
-#         - MEASUREMENT. `e2e/guardrail_shadow_report.py` replays
-#           `find_unguarded_protected_writes` over the whole corpus to calibrate
-#           the §7 window (GitHub issue #911, and #1176 which decides the
-#           canonical window; #1231 reads the resulting number). Identical agent
-#           behavior yields a different violation count either side of this
-#           boundary, so a blended v2+v3 corpus biases that calibration. The v3
-#           corpus starts at this commit; no historical number moves.
-#         - PASS/FAIL. Both hard-fail arms of `check_guardrail_compliance` get
-#           strictly stricter: `find_effects_without_invocation`'s gate sits over
-#           `skill_name_if_skill_call`, so a failed `Skill` call stops populating
-#           `invoked`; and `find_person_evidence_missing_same_person` shrinks
-#           `scored_ids`. Both feed `guardrail_bypass_violations`, which sets
-#           `compliance: fail` -> `outcome: fail`. A run that passed compliance on
-#           v2 can hard-fail on v3 from an identical trace. That is correct — an
-#           errored call was never a successful invocation — but `compliance` and
-#           `outcome` are NOT comparable across this boundary.
-#       `"is_error" in entry` is not a usable substitute tell: an entry whose
-#       `ToolResultBlock` never arrived (any aborted or wall-clock-capped run)
-#       carries no key at all, in v3 exactly as in v2.
+#       successful invocation everywhere.
+#
+#       READ THIS BEFORE TRUSTING A `2`. The join shipped in PR #1255 (main
+#       `4541a4c5`) WITHOUT a bump, on the argument that adding a key is additive.
+#       That left `2` meaning two different things — no `is_error` before
+#       `4541a4c5`, `is_error` after — which is precisely the "keeps its name
+#       while its meaning changes" case this counter exists for. `3` is what
+#       makes the distinction readable. So:
+#         - `3`             — has `is_error`. Unambiguous.
+#         - `2` after `4541a4c5`  — has `is_error`. Zero such logs are committed
+#                             as of this bump; the window is small but real, and
+#                             a reader who finds one must date it against that
+#                             commit, since the payload cannot tell them.
+#         - `2` before, and `1`, and absent — no `is_error`.
+#       `"is_error" in entry` is NOT a usable substitute tell in either
+#       direction: an entry whose `ToolResultBlock` never arrived (any aborted or
+#       wall-clock-capped run) carries no key at all, at `3` exactly as at `2`.
+#
+#       What moves across the boundary, and by how much. Both hard-fail arms of
+#       `check_guardrail_compliance` get strictly stricter —
+#       `find_effects_without_invocation` stops crediting a failed `Skill` call,
+#       and `find_person_evidence_missing_same_person` shrinks `scored_ids` — and
+#       both feed `guardrail_bypass_violations`, which sets `compliance: fail` ->
+#       `outcome: fail`. So a run that passed compliance before the join can
+#       hard-fail after it from an identical trace, and `compliance` / `outcome`
+#       are not comparable across it. Measured on the committed corpus, though,
+#       that is ~1 entry in 555 runs: see `docs/specs/e2e-test-spec.md` §7.5,
+#       which also explains why `e2e/guardrail_shadow_report.py` does not split
+#       its corpus by version (#911 / #1176 / #1231 read that number).
 #
 # A change readers can detect from the payload itself does NOT need a bump.
 # `narration` replacing `.transcript.md` is one: the field is a dataclass
@@ -111,15 +119,13 @@ class E2eResult:
     # Every tool call the agent attempted, in order — not just mcp__-prefixed
     # ones (Skill, Agent, Read, … are included too; the entry-construction
     # code has no such filter). Each entry is {tool, args, response_summary,
-    # is_error, agent_id, agent_type}. `is_error` is the SDK's
-    # ToolResultBlock.is_error (see HARNESS_SCHEMA_VERSION 3); the last two come
-    # from the PreToolUse hook's own payload
-    # (docs/specs/guardrail-enforcement-spec.md §11) — None on the main thread,
-    # the subagent's identifiers otherwise. All three are set only once a
-    # ToolResultBlock arrives for that call, so a call still in-flight when the
-    # run aborts mid-stream never gets any of the last three keys.
-    # `response_summary` is the exception: the entry literal initializes it to
-    # None, so it is present-but-null on such an entry rather than absent.
+    # is_error, agent_id, agent_type}; `is_error` (a bool, `block.is_error is
+    # True`) and the last two are all set together once a ToolResultBlock
+    # arrives for that call — agent_id/agent_type come from the PreToolUse
+    # hook's own payload (docs/specs/guardrail-enforcement-spec.md §11), None on
+    # the main thread and the subagent's identifiers otherwise. A call still
+    # in-flight when the run aborts mid-stream keeps response_summary: None and
+    # never gets is_error, agent_id, or agent_type.
     # Critical for diffing across runs when investigating drift.
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
 

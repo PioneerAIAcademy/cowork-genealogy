@@ -272,7 +272,7 @@ Design points that were paid for and should not be re-derived:
   `find_person_evidence_missing_same_person`, and
   `find_protected_writes_by_unnamed_delegate`. Those gates were written against a
   key nothing set, so success-gating was inert in all five until the join landed
-  at `harness_schema_version` 3.
+  (`apply_tool_result`, PR #1255, main `4541a4c5`).
 
   **What that buys, and what it does not.** `is_error` reports whether the *tool
   call* failed, which is not the same question as whether the *skill* succeeded:
@@ -296,8 +296,10 @@ Design points that were paid for and should not be re-derived:
     write in `find_unguarded_protected_writes`.
 
   Violation counts and the §8 `compliance`/`outcome` verdict are not comparable
-  below `harness_schema_version` 3 (`docs/specs/e2e-test-spec.md` §7.5), though
-  the measured delta on the committed corpus is two entries — see there.
+  across that join. The boundary is the commit, not cleanly a version number —
+  #1255 shipped it at `harness_schema_version` 2 and the bump to 3 came after, so
+  a `2` log means either thing depending on its date; `docs/specs/e2e-test-spec.md`
+  §7.5 has the table. The measured delta on the committed corpus is two entries.
 - **Keyed by `(skill, question_id)` where a question id is derivable**, not by
   skill name alone: in a multi-question project a `Skill(proof-conclusion)` for
   question A would otherwise cover an inline write for question B. Where no

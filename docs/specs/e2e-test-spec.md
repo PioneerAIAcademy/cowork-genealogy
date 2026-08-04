@@ -803,7 +803,7 @@ into one boolean made a correct run and a wrong one read identically
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
 | `outcome` | `pass` \| `partial` \| `fail` \| `skipped` | **The gate.** `fail` when `compliance` failed, else `verdict`. The process exit code keys on this, so a bypass still fails the run. |
-| `harness_schema_version` | integer | `3` for the shape above. `2` is the same shape without `tool_calls[].is_error` — below `3` that key is absent and an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across 2→3** (§7.5 "Historical runs"). `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
+| `harness_schema_version` | integer | `3` for the shape above. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped in #1255 without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance`, `outcome`, and the §7 shadow violation counts are not comparable across that boundary**. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on pre-#972 logs. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
@@ -995,23 +995,38 @@ presence of the `guardrail_shadow_violations` key (the two shipped in the same
 commit). Retroactively scoring the corpus is tracked as issue #913, and needs
 the checks replayed at a pinned version to be meaningful.
 
-**`compliance` and `outcome` are not comparable below `harness_schema_version`
-3.** Below `3`, `tool_calls[]` carried no `is_error` key, so the
+**`compliance` and `outcome` are not comparable across the `is_error` join.**
+Before it, `tool_calls[]` carried no `is_error` key, so the
 `entry.get("is_error") is True` gates in `skill_invocation.py` never fired and an
-**errored** tool call counted as a successful invocation. From `3` the key is
-joined from `ToolResultBlock.is_error`, and both hard arms get strictly stricter:
-a failed `Skill` call no longer populates `find_effects_without_invocation`'s
-`invoked` set, and an errored `same_person` no longer enters
-`find_person_evidence_missing_same_person`'s `scored_ids`. Both feed
-`guardrail_bypass_violations`, so a run that reported `compliance: pass` on a
-pre-3 log can report `fail` on `3` **from an identical trace**. That is the
-correct reading — an errored call was never a successful invocation — so a
+**errored** tool call counted as a successful invocation. After it, both hard
+arms get strictly stricter: a failed `Skill` call no longer populates
+`find_effects_without_invocation`'s `invoked` set, and an errored `same_person`
+no longer enters `find_person_evidence_missing_same_person`'s `scored_ids`. Both
+feed `guardrail_bypass_violations`, so a run that reported `compliance: pass`
+before the join can report `fail` after it **from an identical trace**. That is
+the correct reading — an errored call was never a successful invocation — so a
 compliance delta across the boundary is not a regression signal.
 
-*Say "below 3", not "2 → 3".* **No v2 log was ever committed.** The 555 run logs
-under `eval/runlogs/e2e/` are `{harness_schema_version absent: 551, 1: 4}` —
-version `2` landed and was superseded before any run written under it was
-checked in. The live boundary is absent/`1` → `3`.
+**The boundary is a commit, not cleanly a version — check both.** The join
+shipped in PR #1255 (main `4541a4c5`) with `harness_schema_version` left at `2`,
+on the argument that adding a key is additive. It is not, for a reader: `2` now
+means *no `is_error`* before `4541a4c5` and *`is_error` present* after it, which
+is exactly the keeps-its-name-while-its-meaning-changes case the counter exists
+for. `3` closes that. So:
+
+| Log reads | Has `is_error`? |
+|---|---|
+| `3` | yes — unambiguous |
+| `2`, committed after `4541a4c5` | yes — **date it against that commit; the payload cannot tell you** |
+| `2` before `4541a4c5`, `1`, or absent | no |
+
+Zero logs sit in that ambiguous row today — the 555 committed runs are
+`{absent: 551, 1: 4}`, and none carries `is_error` — but the window is open
+until this bump lands, so a run made in it would.
+
+`"is_error" in entry` does not rescue a reader either way: an entry whose
+`ToolResultBlock` never arrived (any aborted or wall-clock-capped run) carries no
+key at all, at `3` exactly as at `2`.
 
 **Measured blast radius, so nobody over-corrects for this.** Replaying the
 committed corpus: 164 of 23,056 `tool_calls` entries carry an error-shaped
@@ -1290,13 +1305,14 @@ changing anything, because the fix differs completely by cause.
    > later than the authoring date, and a date-based rule inverts for exactly
    > those.
    >
-   > **A second boundary, at `3`: `tool_calls[].is_error`.** Below `3` the key is
-   > absent and every call — including errored ones — read as successful to the
-   > guardrail detectors. Diffing `tool_calls` across that boundary shows a new
-   > key on every entry; that is a capture change, not a regression. It also
-   > moves `compliance`/`outcome`, which the shadow/violation counts above do
-   > not — though by ~1 entry corpus-wide: see §7.5 "Historical runs" for the
-   > measurement and for why there is no v2 side to this boundary.
+   > **A second boundary: `tool_calls[].is_error`.** Before it the key is absent
+   > and every call — including errored ones — read as successful to the
+   > guardrail detectors. Diffing `tool_calls` across it shows a new key on every
+   > entry; that is a capture change, not a regression. It also moves
+   > `compliance`/`outcome`, which the shadow/violation counts above do not —
+   > though by ~1 entry corpus-wide. The boundary is main `4541a4c5`, not
+   > cleanly a version number: see §7.5 "Historical runs" for the table and the
+   > measurement.
    >
    > Two format details that matter when diffing or grepping. Captures at or under
    > 500 chars are passed through verbatim, so they keep the raw MCP envelope in

@@ -593,6 +593,23 @@ def _summarize_tool_response(content: Any) -> str:
     return text if len(text) >= len(head) else head
 
 
+def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: str) -> None:
+    """Populate the producer-side fields on a `tool_calls` entry when its
+    `ToolResultBlock` arrives: the response summary, and `is_error`.
+
+    Split out of `_consume` so the producer half is unit-testable — the
+    guardrail gates in `skill_invocation.py` skip an entry when
+    `entry.get("is_error") is True`, and until this set the field nothing did,
+    so every gate treated a failed Skill call as a success (#999). The existing
+    gate tests fabricate `is_error` themselves, so they can't catch that; this
+    helper can. `is True` normalizes the SDK's None-on-success (`is_error` is
+    `bool | None`, `None` when the call succeeded) into a clean bool the gates
+    and the acceptance test can rely on.
+    """
+    entry["response_summary"] = summary
+    entry["is_error"] = block.is_error is True
+
+
 def _timeline_tool_label(tool: str, args: dict | None) -> str:
     """Human-legible label for a `timeline` entry's tool-names list.
 
@@ -1157,20 +1174,7 @@ async def _run_agent(
                                 entry = pending_tool_uses.pop(block.tool_use_id, None)
                                 summary = _summarize_tool_response(block.content)
                                 if entry is not None:
-                                    entry["response_summary"] = summary
-                                    # The five `entry.get("is_error") is True`
-                                    # gates in skill_invocation.py read this key;
-                                    # nothing set it until now, so an errored
-                                    # call counted as a successful invocation in
-                                    # every one of them. bool(), not the raw
-                                    # value: ToolResultBlock.is_error is
-                                    # `bool | None`, and a null here would put
-                                    # `"is_error": null` on every successful
-                                    # entry in the run log. An entry whose result
-                                    # never arrived (aborted / wall-clock-capped
-                                    # run) still carries no key at all — see
-                                    # HARNESS_SCHEMA_VERSION 3 in e2e/result.py.
-                                    entry["is_error"] = bool(block.is_error)
+                                    apply_tool_result(entry, block, summary)
                                     # spec §11 Step 0 — join caller identity onto
                                     # this entry now that pretool_hook is
                                     # guaranteed to have already run for it
