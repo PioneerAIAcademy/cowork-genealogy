@@ -40,6 +40,10 @@ _MCP_SRC_PREFIX = "packages/engine/mcp-server/src/"
 # tests/unit/test_snapshot.py + eval/app/tests/unit/snapshot.test.ts).
 _AGENT_REF_RE = re.compile(r"@plugin:([a-z0-9-]+)")
 
+# A snapshot value in `schema_version` >= 3 — sha256 hex. Shared shape with
+# `HASH_RE` in eval/app/lib/snapshot.ts.
+_HASH_RE = re.compile(r"^[a-f0-9]{64}$")
+
 _COSMETIC_TEST_FIELDS = ("name", "description", "tags")
 _JSON_EXTS = {".json"}
 _TEXT_EXTS = {
@@ -120,9 +124,15 @@ def build_snapshot(
     repo_root: Path,
     test_ids: Iterable[str] | None = None,
 ) -> dict[str, str]:
-    """Build a `{path: normalized content}` snapshot for a skill run.
+    """Build a `{path: sha256(normalized content)}` snapshot for a skill run.
 
-    Embeds:
+    Values are hashes, not content (run-log `schema_version` 3). Git already
+    holds every byte of every tracked path listed here; the snapshot's job is
+    to answer "does this run still match the working tree", which a digest
+    answers identically for a fraction of the size — the content form was 43%
+    of every unit run log. Anything needing the bytes reads the file.
+
+    Covers:
       - `packages/engine/plugin/skills/<skill>/**`
       - `packages/engine/plugin/agents/<name>.md` for each `@plugin:<name>`
         reference in the skill's SKILL.md (the agent prompt is part of the
@@ -173,13 +183,25 @@ def build_snapshot(
             rel = f"eval/fixtures/mcp/{fixture}.json"
             snapshot[rel] = normalize(rel, fixture_path.read_bytes())
 
-    return snapshot
+    return hash_snapshot(snapshot)
 
 
 def hash_snapshot(snapshot: dict[str, str]) -> dict[str, str]:
     """Return a `{path: sha256(normalized)}` mapping. Useful for the GH
     Action's snapshot-vs-working-tree diff."""
     return {p: hash_content(c) for p, c in snapshot.items()}
+
+
+def is_hashed_snapshot(snapshot: dict[str, str]) -> bool:
+    """True when every value is a sha256 hex digest (schema_version >= 3).
+
+    Detected by shape rather than by `schema_version` because the two callers
+    that hold the envelope (`check_runlogs.py`, `eval/app/lib/fs/runlogs.ts`)
+    pass only the map. Requiring *every* value to match — not any — keeps a
+    legacy content snapshot from being misread: it would take a run whose
+    every tracked file normalized to a bare 64-char hex string.
+    """
+    return bool(snapshot) and all(_HASH_RE.match(v) for v in snapshot.values())
 
 
 def diff_snapshot_vs_disk(snapshot: dict[str, str], repo_root: Path) -> dict[str, str]:
@@ -191,11 +213,18 @@ def diff_snapshot_vs_disk(snapshot: dict[str, str], repo_root: Path) -> dict[str
     Paths present on disk but absent from the snapshot are NOT flagged —
     the snapshot is the authority on what's tracked.
 
+    Accepts both snapshot shapes. `schema_version` 3 stores sha256 digests, so
+    the disk bytes are hashed before comparing; pre-3 run logs stored the
+    normalized content itself and are compared directly, which keeps every
+    in-flight branch and unmigrated worktree evaluating correctly. Drop the
+    content arm once no pre-3 run log remains.
+
     Keys under `packages/engine/mcp-server/src/` are skipped: MCP source is
     no longer a tracked dependency (see `_MCP_SRC_PREFIX` and
     `build_snapshot`), so legacy run logs that embedded it stay active
     through unrelated MCP-source churn instead of needing a re-run.
     """
+    hashed = is_hashed_snapshot(snapshot)
     out: dict[str, str] = {}
     for rel, expected in snapshot.items():
         if rel.startswith(_MCP_SRC_PREFIX):
@@ -205,6 +234,8 @@ def diff_snapshot_vs_disk(snapshot: dict[str, str], repo_root: Path) -> dict[str
             out[rel] = "missing-on-disk"
             continue
         actual = normalize(rel, abs_path.read_bytes())
+        if hashed:
+            actual = hash_content(actual)
         if actual != expected:
             out[rel] = "content-differs"
     return out

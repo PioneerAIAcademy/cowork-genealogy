@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at three standing depths — ~10 unassigned developer tasks, ~10 unassigned genealogist tasks, 3-5 items assigned to the lead — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: the team's developers are juniors working with Claude Code, so senior-required work goes to the lead. Gates the developer shortlist through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at three standing depths — ~10 unassigned developer tasks, ~10 unassigned genealogist tasks, 1-2 items assigned to the lead — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: the team's developers are juniors working with Claude Code, so senior-required work goes to the lead. Gates the developer shortlist through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -45,6 +45,31 @@ Two labels carry the routing:
 | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
 | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose, prepared doctrine questions |
 
+**`feedback` items are fixed in Ready, and they displace.** An issue labelled
+`feedback` is a user's bug report, filed automatically into Ready by
+`add-to-project.yml`. It counts toward the ~10 unassigned `genealogist` target
+exactly like any other `genealogist` item, and you never move it — never promote
+one from Backlog, never return one to Backlog, never unassign one. **Anyone on
+the roster may claim a `feedback` item**, so a developer holding one is not a
+mis-route.
+
+Because a `feedback` item cannot be the loser of a swap, **every return to
+Backlog comes from the non-`feedback` members of the pool.** Over target, return
+the lowest-ranked non-`feedback` genealogist items until the pool is at target —
+and when `feedback` alone reaches ~10, that means all of them. Ten feedback items
+and four `test <slug>` items in Ready is fourteen against a target of ten: the
+four go back. Name them and say why, as with any swap.
+
+**Under target, nothing about `feedback` changes how you promote.** Six feedback
+items in Ready is a pool of six against a target of ten, so promote the best four
+genealogist items out of Backlog as usual. A quiet feedback week is when the rest
+of the genealogist queue moves.
+
+§7 may close a `feedback` item — a duplicate submission, one that doesn't
+reproduce, junk — and that is the only way one leaves Ready. Never propose
+closing one on age or body length; a four-line body and a Drive link is what
+every one of them looks like.
+
 **Exclude `label:icebox` from the Backlog when ranking.** Those are candidates
 with no decision behind them, filed there deliberately; `/review-icebox` owns
 that pool and promotes one by removing the label, at which point it ranks here
@@ -78,7 +103,7 @@ picks his own work from it too. Three pools, three standing targets:
 |---|---|
 | Unassigned **`developer`** items in Ready | **~10** |
 | Unassigned **`genealogist`** items in Ready | **~10** |
-| Items assigned to **`DallanQ`** in Ready | **3–5** (§6) |
+| Items assigned to **`DallanQ`** in Ready | **1–2** (§6) |
 
 ```sh
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
@@ -466,7 +491,8 @@ gh project item-edit --id "$ITEM_ID" --project-id "$PROJ_ID" \
 
 Verify with a fresh `gh project item-list`. New issues land in Backlog via an
 auto-add workflow that sets nothing else — a freshly filed issue that belongs in
-Ready still needs this move.
+Ready still needs this move. (The exception is a `feedback` item, which the same
+workflow files directly into Ready and which you never move at all.)
 
 **Gate the unassigned `developer` shortlist through `/review-ready` before you
 promote it.** Your seniority test (§1) is a pre-filter read off the issue body;
@@ -480,10 +506,10 @@ pool (§6) instead, and it never enters the junior pool at all. Running the gate
 after promotion instead works, but pays for the same deep read twice — see
 `docs/specs/task-review-spec.md` §2.
 
-## 6. The lead's pool — 3–5 assigned, in Ready
+## 6. The lead's pool — 1–2 assigned, in Ready
 
 His pool is the third target from §1, and it works exactly like the other two:
-hold it at **3–5**, and add only by swapping.
+hold it at **1–2**, and add only by swapping.
 
 What qualifies is **cross-cutting development work that is unblocked** and
 either high-priority in its own right or unblocking other high-priority issues:
@@ -492,10 +518,16 @@ anything overriding someone else's work, security triage, and the Gate-2
 decisions from §3.
 
 **He is also the only senior developer**, so §1's seniority test routes here:
-every senior-required item is his or it is nobody's. That produces more senior
-work than five slots hold — which is fine. Senior work **waits in Backlog**; what
-it must never do is sit unassigned in Ready looking pickable. When his pool is
-full, say plainly which senior items are queued behind it and in what order.
+every senior-required item is his or it is nobody's. That produces far more
+senior work than two slots hold — which is fine, and is the point. Senior work
+**waits in Backlog**; what it must never do is sit unassigned in Ready looking
+pickable.
+
+Because the pool is two, **the queue behind it is where most senior work lives,
+and reporting it is not optional.** Whenever his pool is full, name the senior
+items queued behind it and the order you would take them in. At three pools
+totalling ~22, his is the one whose backlog is invisible unless you say it out
+loud — a junior pool running dry announces itself; his does not.
 
 Prefer, among equally-ranked candidates, the ones that **convert senior work into
 junior work** — a Gate-2 decision that unblocks a well-specified task is worth
@@ -510,9 +542,14 @@ doctrine call, a gate that is worse wrong than absent, a design spanning harness
 and hosted server — so it is his or it is nobody's, while the junior pools do
 alpha content work that cannot stop and does not burn these down.
 
-So: **at least 2 of the 3–5 are milestone-gating** — for the nearest milestone,
-or a long-lead item for the one after it. Below that, propose a swap that
-restores it and say which non-gating item you are returning.
+So: **at least 1 of the 1–2 is milestone-gating** — for the nearest milestone,
+or a long-lead item for the one after it — and at 2, prefer both gating. Below
+that, propose a swap that restores it and say which non-gating item you are
+returning.
+
+At this depth a single non-gating item is half the pool, so the bar for one is
+higher than it reads: it has to be something that cannot wait a week, not merely
+something worth doing.
 
 Two failure modes to name out loud when you see them:
 
@@ -524,7 +561,7 @@ Two failure modes to name out loud when you see them:
   report — ahead of the promotion table. Say which item has been sitting, for how
   long, and what it is waiting on.
 
-When he is at 5 with all five gating, that is the right shape; say so and
+When he is at 2 with both gating, that is the right shape; say so and
 propose zero.
 
 Rank by **how much each unblocks, not by its own size.** An issue that gates
@@ -541,15 +578,15 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --assignee DallanQ \
   --state open --limit 100 --json number,title
 ```
 
-At 5, propose a **swap** with the reason, never a silent addition:
+At 2, propose a **swap** with the reason, never a silent addition:
 
-> You hold 5. I'd return #987 to Backlog (waits on a decision in #976 anyway)
+> You hold 2. I'd return #987 to Backlog (waits on a decision in #976 anyway)
 > for #940 — a production path is shipping wrong conclusions with no signal today.
 
 The swap is the same shape as §1's: the loser goes **back to Backlog**, and it
-stays assigned to him unless it is no longer his to make. Below 3, top it up
+stays assigned to him unless it is no longer his to make. Below 1, top it up
 from Backlog best-first. If nothing new outranks what he holds and he is inside
-3–5, propose **zero**.
+1–2, propose **zero**.
 
 For each one, give the dependency chain: what must land first, and what it
 unblocks. His items are allowed to have blockers — that is often the point of
@@ -679,9 +716,10 @@ list it does not appear in. Add state when it matters.
    consequential first — and if any row's impact clause reduces to "small and
    unblocked", it is the one cheap slot, or it should not be in the table.
 4. **Return to Backlog** — what lost each swap, with the one-line reason.
-5. **Yours** — the 3–5 pool: what to add, what to return, each with what it
-   unblocks and its own dependency chain, and how many of the 3–5 are
-   milestone-gating (§6 wants at least 2).
+5. **Yours** — the 1–2 pool: what to add, what to return, each with what it
+   unblocks and its own dependency chain, how many of the 1–2 are
+   milestone-gating (§6 wants at least 1), and — whenever the pool is full —
+   the senior items queued behind it, in the order you would take them.
 6. **Held back, and why** — the items that failed a gate, named with the gate.
    This is the section that stops the lead re-asking about them tomorrow.
 7. **Grooming** — capped, with verdicts.
