@@ -4,11 +4,34 @@ from types import SimpleNamespace
 
 from harness.loader import load_test_from_dict
 from harness.orchestrator import (
+    _build_warnings,
     _compute_outcome,
     _negative_judge_context,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
 )
+
+
+# --- Skill-tool contract drift -----------------------------------------
+
+
+def test_no_unread_skill_warning_on_a_clean_run():
+    assert _build_warnings([], unread_skill_calls=[]) == []
+
+
+def test_unread_skill_call_warns_and_names_the_keys_seen():
+    """The only surface that reports Skill-tool drift. It has to name the
+    keys the SDK actually sent — that string is what tells whoever reads the
+    run log which key to add to SKILL_TOOL_NAME_KEYS."""
+    warnings = _build_warnings(
+        [],
+        unread_skill_calls=[["args", "skill_name"], ["skill_name"]],
+    )
+
+    assert [w["kind"] for w in warnings] == ["unread_skill_call"]
+    assert warnings[0]["observed_keys"] == ["args", "skill_name"]
+    assert "2 Skill tool call(s)" in warnings[0]["advisory"]
+    assert "skill_name" in warnings[0]["advisory"]
 
 
 # --- deterministic-validator deference ---------------------------------

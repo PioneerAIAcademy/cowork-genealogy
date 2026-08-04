@@ -997,6 +997,10 @@ describe("research_append (project singleton section)", () => {
   const conflictBase = () => ({
     id: "c_001",
     conflict_type: "identity",
+    // identity_question is the question's TEXT (schema: string|null), not a
+    // boolean flag — issue #1001. An identity conflict carrying a non-empty
+    // string here is what marks it "identity" for the completed-gate.
+    identity_question: "Is the 1857 death certificate the same John Wilkins as the profile?",
     description: "Certificate birth year contradicts the profile by 43 years.",
     competing_assertion_ids: ["a_001", "a_002"],
     status: "unresolved",
@@ -1012,7 +1016,10 @@ describe("research_append (project singleton section)", () => {
     researchAppend({ projectPath: dir, section: "project", op: "update", fields: { status: "completed" } });
 
   it("refuses completed while an unresolved identity conflict exists (even with empty blocks_question_ids)", async () => {
-    await writeProject(withConflict({ ...conflictBase(), identity_question: true }));
+    // #1001 regression: a string identity_question with empty blocks_question_ids
+    // must still block. The old gate keyed on `identity_question === true`, so
+    // this schema-valid (string) case slipped through.
+    await writeProject(withConflict(conflictBase()));
     const r = await complete();
     expect(r.ok).toBe(false);
     if (r.ok) return;
@@ -1036,7 +1043,6 @@ describe("research_append (project singleton section)", () => {
     await writeProject(
       withConflict({
         ...conflictBase(),
-        identity_question: true,
         status: "resolved",
         independence_analysis: "The two records have independent informants.",
         weighing_analysis: "The original register outweighs the derivative index.",
@@ -1052,7 +1058,6 @@ describe("research_append (project singleton section)", () => {
     await writeProject(
       withConflict({
         ...conflictBase(),
-        identity_question: true,
         status: "moot",
         resolution_rationale: "Superseded: the certificate was re-attributed to the correct person.",
       }),
@@ -1067,6 +1072,9 @@ describe("research_append (project singleton section)", () => {
         ...conflictBase(),
         conflict_type: "fact",
         disputed_attribute: "birth_date",
+        // A fact conflict carries no identity question; null here is what keeps
+        // the fixed identity predicate from treating it as blocking (#1001).
+        identity_question: null,
         description: "Minor date variance between two censuses; does not bear on any open question.",
       }),
     );

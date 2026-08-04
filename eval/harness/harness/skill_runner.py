@@ -183,22 +183,26 @@ def _classify_exception_abort_reason(exc: Exception) -> str:
     return "error"
 
 
-# Module-level set of Skill-tool input keys we've observed Claude using
-# across runs. Populated by the PreToolUse hook (see `run_skill`). Used by
-# `verify_skill_tool_key()` to surface SDK changes — if Claude starts
-# using a key we don't handle, this set will never include "skill" or
-# "name", which is the early-warning signal. Reset to empty per process.
-_observed_skill_keys: set[str] = set()
+# Input keys the Skill tool may carry the invoked skill's name under.
+# "skill" is the documented value as of claude-agent-sdk 0.1.81; "name"
+# is a fallback we've kept because the SDK spec doesn't pin it.
+SKILL_TOOL_NAME_KEYS = ("skill", "name")
 
 
-def get_observed_skill_keys() -> set[str]:
-    """Return the set of Skill-tool input keys observed this process.
+def read_skill_tool_input(tool_input: dict[str, Any]) -> tuple[str | None, list[str]]:
+    """Return `(skill_name, unread_keys)` for one Skill tool call.
 
-    The e2e test asserts this is exactly {"skill"} after a real-API run,
-    so we can drop the "name" fallback once we have a passing e2e on the
-    pinned SDK version.
+    `unread_keys` is empty when the name was found. When it isn't — the SDK
+    moved the name to a key we don't read — the caller gets the input's
+    actual keys to report, because the alternative is silent: `skills_invoked`
+    stays empty for a skill that really did run, every routing verdict reads
+    as "never activated", and nothing anywhere says why.
     """
-    return set(_observed_skill_keys)
+    for key in SKILL_TOOL_NAME_KEYS:
+        value = tool_input.get(key)
+        if value:
+            return value, []
+    return None, sorted(tool_input)
 
 
 @dataclass
@@ -233,6 +237,10 @@ class SkillRunResult:
     # denied call, and grading routing by transcript inference is what made
     # ut_015 detect the violation ~1-in-8.
     blocked_context_calls: list[dict[str, Any]] = field(default_factory=list)
+    # One entry per Skill call whose input carried the skill name under no key
+    # this harness reads, holding that input's actual keys. Non-empty means the
+    # SDK's Skill-tool contract moved and `skills_invoked` is undercounting.
+    unread_skill_calls: list[list[str]] = field(default_factory=list)
 
 
 async def run_skill(
@@ -317,23 +325,19 @@ async def run_skill(
     _stub_skills = stub_skills or {}
     # Main-thread calls to subagent-only tools, denied by the hook below.
     blocked_context_calls: list[dict[str, Any]] = []
+    # Skill calls whose name we couldn't read (see read_skill_tool_input).
+    unread_skill_calls: list[list[str]] = []
 
     async def pretool_hook(input_data, tool_use_id, ctx):
         tool_name = input_data.get("tool_name", "")
         # Track skill invocations so we can populate skills_invoked.
-        #
-        # The Skill tool's input key isn't fully pinned by the SDK spec —
-        # accept the two plausible names and record which one fired in a
-        # side-channel set so we can verify (and tighten) post-run.
-        # Documented value as of claude-agent-sdk 0.1.81: "skill".
         if tool_name == "Skill":
             tool_input = input_data.get("tool_input", {}) or {}
-            skill_name = tool_input.get("skill") or tool_input.get("name")
-            if skill_name:
+            skill_name, unread_keys = read_skill_tool_input(tool_input)
+            if not skill_name:
+                unread_skill_calls.append(unread_keys)
+            else:
                 skills_invoked.append(skill_name)
-                _observed_skill_keys.add(
-                    "skill" if "skill" in tool_input else "name"
-                )
                 # Negative-test routing short-circuit: the correct skill was
                 # invoked, so the routing verdict is decided. skills_invoked
                 # already holds it (recorded just above), so denying the
@@ -569,4 +573,5 @@ async def run_skill(
         attempted_mcp_calls=attempted_mcp_calls,
         blocked_context_calls=blocked_context_calls,
         registered_mcp_tools=set(tools_by_name.keys()),
+        unread_skill_calls=unread_skill_calls,
     )
