@@ -55,3 +55,21 @@ outcome requires the 1825 marriage hint to be rejected, and the agent did not
 provide evidence strong enough to disprove that adjudication. Therefore the
 1799 Houtkerque record is treated as an unresolved alternative hypothesis
 rather than confirmation that the groom belongs to the tree couple.
+
+**2026-08-03: added a real ark for the disproving record (issue #970).**
+`expected-findings.json`'s "full middle names" citation now points at the
+one child's birth registration this fixture's own committed run log
+(`eval/runlogs/e2e/pierre-tullier-son/run-2026-07-27_21-34-22.final-research.json`,
+src_001) actually verified live against FamilySearch: François Jaques
+Albert Tullier, baptized 7 April 1803, Bambecque (`ark:/61903/1:1:8NJ2-XNN2`),
+naming the father in full as "Pierre Albert Tullier." The run log does not
+independently confirm the previously-stated "François Cornil Albert,
+b. 1801" — that detail is left in as unverified rather than removed, since
+nothing found here contradicts a second child by a similar name existing.
+No ark was found for the couple's own 24 Sep 1800 marriage (indexed search
+came up empty; the act is in an unindexed browse-only volume per the run
+log's q_001 notes) or for the 1796 birth claim itself — per spec §3.6.1,
+neither needs one, since the ark requirement attaches to the disproving
+record, not to the absence. The 1799 Houtkerque record and its disclaimer
+above are unchanged; this note only concerns the citation added for the
+already-adjudicated "full names vs. bare names" argument.
