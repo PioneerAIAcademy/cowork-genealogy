@@ -36,7 +36,14 @@ from typing import Any
 # `axes_from_runlog` has to do for pre-v1 logs (see that function).
 #   1 — the three-axis split: top-level `compliance` / `outcome` /
 #       `guardrail_bypass_violations` (GitHub issue #972).
-HARNESS_SCHEMA_VERSION = 1
+#   2 — `tool_calls[].response_summary` is key-preserving rather than
+#       head-truncated at 497 chars (GitHub issue #1073). A reader MUST branch on
+#       this: 48% of captures differ in format from a v1 log, so diffing a v1
+#       against a v2 log shows changes that are not agent or skill regressions.
+#       See `docs/specs/e2e-test-spec.md` §15 step 4. This is the field to read —
+#       a timestamp cannot answer it, because the change was authored days before
+#       it merged, so v1 logs exist with timestamps later than the authoring date.
+HARNESS_SCHEMA_VERSION = 2
 
 
 @dataclass

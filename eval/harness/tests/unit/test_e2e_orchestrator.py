@@ -455,6 +455,21 @@ def test_summarize_tool_response_does_not_coerce_json_scalars():
         assert '"text"' in out, f"{wrong!r} case lost its text block"
 
 
+def test_unwrap_survives_a_pathologically_nested_json_string():
+    """The unwrap's own RecursionError arm, which `json.loads` is what raises.
+
+    Distinct from the `json.dumps` arm below: this one goes through the PARSE
+    path, so a test that only nests a Python object never reaches it.
+    """
+    inner = "[" * 20_000 + "]" * 20_000
+    wrapped = [{"type": "text", "text": inner}]
+    assert len(json.dumps(wrapped)) > 500
+
+    out = _summarize_tool_response(wrapped)  # must not raise
+    assert isinstance(out, str)
+    assert out
+
+
 def test_summarize_tool_response_survives_pathological_nesting():
     """RecursionError must not escape and abort a run.
 

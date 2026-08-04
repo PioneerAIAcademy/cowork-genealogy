@@ -466,7 +466,7 @@ def _unwrap_mcp_text_blocks(content: Any) -> Any:
             try:
                 out.append(json.loads(text))
                 continue
-            except (TypeError, ValueError, RecursionError):
+            except (ValueError, RecursionError):
                 # RecursionError is not a ValueError: a deeply nested payload
                 # would otherwise escape to the run-level handler and abort a
                 # run that costs $7-25. The old code could not raise at all
@@ -490,10 +490,12 @@ _RUNLOG_VERBATIM_MAX = 500
 # comment credited it with the whole regression: at 200, 112 of the 284 tool
 # results in `run-2026-07-31_13-02-13` captured less than the old head cut, but
 # only **12** of those are string-valued (9 of them losing exactly 237 chars).
-# The other 100 are list-valued, losing ~60 chars on average to
+# The other 100 are list-valued, losing 52.8 chars on average to
 # `_summarize_response`'s list sampling, which no string bound can fix — that is
-# what the verbatim passthrough below is for. Raising 200 -> 500 fixes 21 of the
-# 112; the passthrough fixes the rest.
+# what the verbatim passthrough below is for. Raising 200 -> 500 fixes 23 of the
+# 112 and introduces 2 new ones (the bound is not monotone: for a string of
+# length just over 200, truncating at 200 plus the ~61-char marker is LONGER than
+# leaving it whole at 500), for a net of 21. The passthrough fixes the rest.
 #
 # Still far under the judge tier's 2000, because that copy is a throwaway prompt
 # and this one is committed to git.
@@ -512,7 +514,8 @@ _RUNLOG_MAX_CHARS = 4000
 def _summarize_tool_response(content: Any) -> str:
     """Key-preserving summary of a tool result for the run log.
 
-    This head-truncated at 497 chars until 2026-08-03, which made exactly the
+    This head-truncated at 497 chars before `HARNESS_SCHEMA_VERSION` 2, which
+    made exactly the
     fields worth diffing invisible. `record_search` leads with `results`, its
     largest field by far, so every field serialized after it was cut: across the
     46 `record_search` calls in `run-2026-07-31_13-02-13`, `ranked` appears in

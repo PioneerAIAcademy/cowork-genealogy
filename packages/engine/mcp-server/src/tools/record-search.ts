@@ -599,10 +599,24 @@ export async function recordSearchTool(
   // and best-effort: a staging failure never fails a successful search.
   if (input.projectPath !== undefined) {
     try {
+      // `rankingSkipped` is withheld from what gets staged. The staged envelope
+      // becomes `results/<logId>.json` — shared project state that moves between
+      // machines, and a record of what the upstream search RETURNED. This field
+      // is neither: it is a model-facing instruction about how to call the tool
+      // better next time, and it would otherwise be retained in 112 of 171
+      // sidecars on a real run. Same reasoning as the `projectPath`/`subjectId`
+      // strip inside `finalizeStagedResults`.
+      //
+      // Withheld HERE and not inside `stageSearchResults`, which is shared by
+      // `record_search`, `fulltext_search` and `external_links_search` and should
+      // not know one caller's field names. Destructuring a copy also keeps `out`
+      // itself untouched, so the live response the model reads is unaffected and
+      // the key order (`rankingSkipped` before `results`) is preserved in both.
+      const { rankingSkipped: _advisory, ...persistable } = out;
       out.staged = await stageSearchResults({
         projectPath: input.projectPath,
         tool: "record_search",
-        response: out,
+        response: persistable,
       });
     } catch (error) {
       out.staged = null;

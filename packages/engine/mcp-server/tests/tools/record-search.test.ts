@@ -1076,8 +1076,18 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
     const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
 
     expect(out.rankingSkipped).toBeTruthy();
-    expect(out.rankingSkipped).toContain("subjectId");
     expect(out.ranked).toBeUndefined();
+
+    // Pin the wording, not just that a note exists. It rides two thirds of all
+    // searches, and it has already been wrong once — an earlier draft narrowed
+    // the schema's "omit it when" clause to a broad survey and dropped the
+    // second legitimate reason, which is the phrasing that then gets reinforced.
+    expect(out.rankingSkipped).toContain("subjectId");
+    expect(out.rankingSkipped).toContain("broad survey");
+    expect(out.rankingSkipped).toContain("not yet in the tree");
+    // Names what was actually given up, so the note is actionable.
+    expect(out.rankingSkipped).toContain("ranking");
+    expect(out.rankingSkipped).toContain("jurisdiction");
   });
 
   it("stays absent once a subject IS named", async () => {
@@ -1144,6 +1154,26 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
     // The note has to agree with it or it would report the opposite of what ran.
     expect(out.ranked).toBeUndefined();
     expect(out.rankingSkipped).toBeTruthy();
+  });
+
+  it("is withheld from the staged sidecar, but kept on the live response", async () => {
+    // The sidecar becomes results/<logId>.json: shared project state that moves
+    // between machines, recording what the search RETURNED. A model-facing
+    // instruction is not that, and would otherwise be retained on 112 of 171
+    // searches. The live response must still carry it — that is where it is read.
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    expect(out.rankingSkipped).toBeTruthy();
+    expect(out.staged).toBeTruthy();
+
+    const staged = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+    expect(staged.payload.rankingSkipped).toBeUndefined();
+    // Withholding must not disturb the rest of the payload, key order included.
+    expect(staged.payload.results).toHaveLength(1);
+    const text = JSON.stringify(staged.payload);
+    expect(text.indexOf('"query"')).toBeLessThan(text.indexOf('"results"'));
   });
 
   it("serializes BEFORE results, so a size-bounded runlog cannot drop it", async () => {

@@ -283,15 +283,19 @@ size bound drops. The motivating evidence: across the 46 `record_search` calls i
 ranked** (the other 4 were nil searches, where staging returns `null` so the
 `out.staged &&` half of the ranking gate never fires).
 
-**Be honest about how much of that argument survives the capture fix.** With the
-run-log capture now key-preserving, position no longer affects run-log visibility
-except for the 11 of 1544 results (0.7%) that hit `_RUNLOG_MAX_CHARS` and degrade
-to a head cut of the summary. The two halves of this change partly obviate each
-other. What still justifies the ordering is weaker and different: the model's own
-context window, and any other consumer that bounds this response without the
-harness's key preservation. #1073's Definition of Done requires the ordering
-regardless, so it stays — but do not cite the run log as the reason after this
-lands.
+**The capture fix does not obviate this, though a first draft of this section
+claimed it mostly did.** Key preservation only helps a capture that *has* keys. Of
+the 1544 tool results in the six committed runs, **434 arrive as a plain string,
+238 of them over the threshold** — for those `_summarize_response` applies only the
+string bound, there is nothing to preserve, and position is fully decisive. A
+further 11 hit `_RUNLOG_MAX_CHARS` and degrade to a head cut of the summary. So the
+ordering matters for roughly 16% of captures, not the 0.7% that draft asserted.
+`record_search` itself lands in the plain-string class whenever its response comes
+back as the MCP over-limit error.
+
+Two further consumers keep the ordering load-bearing regardless: the model's own
+context window, and anything else that bounds this response without the harness's
+key preservation. #1073's Definition of Done requires the ordering in any case.
 
 The capture side was widened in the same change
 (`eval/harness/e2e/orchestrator.py::_summarize_tool_response` now summarizes by
@@ -305,38 +309,40 @@ through verbatim, and where a key-preserving summary comes out shorter than a
 Both halves are needed: an unconditional summarize narrowed 91 of 284 real tool
 results, because `_summarize_response` samples any list past three entries.
 
-Note what that invariant is and is not. It is a **length** floor, not a content
-guarantee, and there are two ways a payload can clear it while still losing
-something the old head cut kept: a sampled list can drop entries, and
-`_summarize_response`'s depth cap replaces anything nested past 8 levels with a
-`_truncated_for_depth` marker. Zero of the 1544 tool results across the six
-committed runs hit either case, but do not restate this as "captures everything it
-used to".
+**The invariant is a LENGTH floor, not a content guarantee, and content loss does
+happen.** Two mechanisms can drop something the old head cut kept while the floor
+still holds: `_summarize_response` samples any list past three entries, and its
+depth cap replaces anything nested past 8 levels with a `_truncated_for_depth`
+marker. A verified instance, in `run-2026-07-31_13-02-13` — a 3928-char response
+whose old 500-char capture contained `"type":"Birth","date":"08 Nov 1919"` and
+whose new 2165-char capture does not, because that fact was the 4th entry of a
+7-entry list. So the honest claim is "never emits a *shorter* capture", full stop.
+Do not extend it to "captures everything it used to"; an earlier version of this
+section asserted zero content loss and was wrong.
 
-**Size cost, both callers.** `_summarize_tool_response` feeds two artifacts, and an
-earlier version of this section stated only the first. Measured across the six
-committed runs:
+**Size cost.** Captured response text grows **2.16x** across the 1544 tool results
+in the six committed runs. `run-<ts>.json` is committed to git, so that is the
+price of the change, stated rather than discovered later.
 
-| Artifact | Old | New | Growth |
-|---|---|---|---|
-| `response_summary` (1544 results, in `run-<ts>.json`) | 567,545 | 1,228,354 | +660,809 |
-| tool-call `args` (1545 calls, `transcript.md` only) | 343,403 | 584,489 | +241,086 |
-
-`run-<ts>.transcript.md` renders both, so it grows **+901,895 chars on a 1,434,248
-byte baseline (+62.9%)**. Both files are committed to git. That is the price of the
-change, stated rather than discovered later.
+`_summarize_tool_response` has a second caller — the tool-call `args` rendered into
+`run-<ts>.transcript.md` — which grows too. That figure is deliberately not pinned
+here: **open PR #1238 removes both the transcript and that call site**, so any
+number quoted for it is either stale or about to be. Whoever lands second should
+re-measure rather than trust a figure from the other side of that merge. #1073's
+own collision list predates #1238 and does not mention it.
 
 **`response_summary` now has two shapes.** Under the verbatim threshold it keeps
 the raw MCP envelope, in which the tool's document is an escaped string; over it,
 the document is unwrapped into real JSON keys. Consequences, and the reason
-`docs/specs/e2e-test-spec.md` §8 carries a matching caveat: **741 of the 1544
-captures (48%) differ from what the old code produced**, so the first run after
-this lands shows a changed `response_summary` on half of all calls against every
-earlier baseline — which that spec's triage rule would otherwise read as an agent
-regression. And grepping a *quoted* key misses the escaped form, while grepping the
-bare name over-matches agent prose (`ranked` appears 4 times in
-`run-2026-07-31_13-02-13` as narrative text and a `Grep` pattern, against 0
-occurrences of the actual field). Neither form is reliable alone.
+`docs/specs/e2e-test-spec.md` §15 ("Evidence to read, in order", step 4) carries a
+matching caveat: **741 of the 1544 captures (48%) differ from what the old code
+produced**, so the first run after this lands shows a changed `response_summary` on
+half of all calls against every earlier baseline — which that spec's triage rule
+would otherwise read as an agent regression. And grepping a *quoted* key misses the
+escaped form, while grepping the bare name over-matches agent prose (`ranked`
+appears 4 times in `run-2026-07-31_13-02-13` as narrative text and a `Grep`
+pattern, against 0 occurrences of the actual field). Neither form is reliable
+alone.
 
 #### What this does not do
 

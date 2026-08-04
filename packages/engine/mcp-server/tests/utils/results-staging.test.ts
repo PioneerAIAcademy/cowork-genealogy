@@ -42,50 +42,26 @@ describe("results-staging", () => {
       expect(typeof envelope.retrieved).toBe("string");
     });
 
-    it("strips the advisory rankingSkipped note from the persisted payload", async () => {
-      // The sidecar records what the upstream search RETURNED. `rankingSkipped`
-      // is a ~250-char instruction to the model about how to call the tool
-      // better next time, and it would otherwise be retained in 112 of 171
-      // sidecars on a real run. Same reasoning as the `projectPath`/`subjectId`
-      // strip on the echoed query: this file moves between machines.
+    it("persists the payload verbatim, key order included", async () => {
+      // Verbatim is the contract (search-result-staging-spec.md). Withholding a
+      // caller's advisory field is the CALLER's job — record_search does it by
+      // passing a copy — so this transport, shared by three tools, must not know
+      // one caller's field names.
+      //
+      // Key order asserted on the serialized text, not with toEqual, which is
+      // order-insensitive and would pass against a payload rebuilt in any order.
       const response = {
         query: { surname: "Smith" },
-        rankingSkipped: "No `subjectId`, so match-score ranking did not run.",
+        totalMatches: 1,
         results: [{ recordId: "R1" }],
       };
       const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response });
 
-      const envelope = JSON.parse(await readFile(join(dir, handle!.resultsRef), "utf-8"));
-      expect(envelope.payload.rankingSkipped).toBeUndefined();
-      // Everything else is still verbatim, including key order.
-      expect(envelope.payload).toEqual({
-        query: { surname: "Smith" },
-        results: [{ recordId: "R1" }],
-      });
-      // And the caller's own object is untouched — the strip must not mutate the
-      // live response the model is about to read.
-      expect(response.rankingSkipped).toBeTruthy();
-    });
-
-    it("keeps rankingSkipped out of the finalized sidecar too", async () => {
-      const response = {
-        query: { surname: "Smith" },
-        rankingSkipped: "No `subjectId`, so match-score ranking did not run.",
-        results: [{ recordId: "R1" }],
-      };
-      const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response });
-      const final = await finalizeStagedResults({
-        projectPath: dir,
-        logId: "log_001",
-        stagedResultsRef: handle!.resultsRef,
-        expectedTool: "record_search",
-      });
-
-      const sidecar = JSON.parse(
-        await readFile(join(dir, "results", "log_001.json"), "utf-8"),
-      );
-      expect(JSON.stringify(sidecar)).not.toContain("rankingSkipped");
-      expect(final.resultsRef).toBe("results/log_001.json");
+      const text = await readFile(join(dir, handle!.resultsRef), "utf-8");
+      const envelope = JSON.parse(text);
+      expect(envelope.payload).toEqual(response);
+      expect(text.indexOf('"query"')).toBeLessThan(text.indexOf('"totalMatches"'));
+      expect(text.indexOf('"totalMatches"')).toBeLessThan(text.indexOf('"results"'));
     });
 
     it("returns null and writes nothing for a nil search", async () => {
