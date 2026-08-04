@@ -112,8 +112,11 @@ class E2eResult:
     #               it's worth a reviewer's eye.
     #   "fixture" — blocked by the fixture's own `blocked_tools`.
     #
-    # In every case the call was denied, so it never reaches `tool_calls` —
-    # this list is the only record that it was attempted.
+    # The attempt itself DOES appear in `tool_calls` — that list is appended from
+    # the assistant message's ToolUseBlock, which the SDK streams before the
+    # PreToolUse decision, so an entry there means "the agent asked for this",
+    # not "this ran". This list is what records that the ask was DENIED, and the
+    # `blocked_by` reason why.
     blocked_tree_reads: list[dict[str, Any]] = field(default_factory=list)
 
     # Main-thread `extraction_append` calls the PreToolUse hook denied — the
@@ -121,8 +124,8 @@ class E2eResult:
     # extraction itself (#942). Each entry is {tool, args, blocked_by:"context"}.
     # Kept separate from `blocked_tree_reads` because this is a WRITE, not a
     # read, and a different guard (the per-context subagent-only policy, not the
-    # tree block) denied it. Like the list above, a denied call never reaches
-    # `tool_calls`, so this is its only trace.
+    # tree block) denied it. Same reading rule as the list above: the attempt is
+    # in `tool_calls`; this list is the record that it did not run.
     blocked_context_calls: list[dict[str, Any]] = field(default_factory=list)
 
     # The agent's prose between tool calls, plus the two harness-side events

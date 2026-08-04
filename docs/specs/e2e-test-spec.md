@@ -694,9 +694,14 @@ post-hoc by `find_protected_writes_by_unnamed_delegate`
 (guardrail-enforcement-spec §11, issue #1027). That detector lists a main-thread
 call among its "legitimate" cases, but only as an attribution class (a
 main-thread call is not an *unnamed-delegate* bypass); this hard deny is what
-actually forbids the router's main-thread call. Together the two layers mean the
-only caller that successfully writes via `extraction_append` is the
-`record-extractor` agent.
+actually forbids the router's main-thread call.
+
+The two halves are not enforced alike, and the difference matters when reading a
+run: the main-thread half is **denied**, the delegate half is only **logged**.
+`protected_writes_by_unnamed_delegate` is shadow-mode — deliberately not read by
+`E2eResult.__post_init__`, so it never moves the compliance axis until its
+false-positive rate is calibrated (#911). A non-`record-extractor` delegate's
+`extraction_append` therefore still succeeds today; it is recorded, not blocked.
 
 ### 6.2 Provided documents (bundled external evidence)
 

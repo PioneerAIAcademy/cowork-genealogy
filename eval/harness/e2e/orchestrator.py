@@ -169,16 +169,25 @@ def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
     the main thread (no `agent_id`) is the router substituting for a failed
     spawn and doing the extraction itself.
 
-    This is why the per-context policy binds in e2e for THIS tool where it
-    cannot for `image_read` (see `harness.context_policy` docstring): `image_read`
-    is declared by the `search-images` skill and called in-session, so e2e — which
-    can't attribute an in-session call to a skill — can't tell a legitimate browse
-    from a violation. `extraction_append` has no such in-session caller, so
-    `agent_id` presence alone is a sufficient discriminator. We deny the bare tool
-    directly rather than routing through `subagent_only_violation`, which guards the
-    whole set and would also deny a legitimate main-session `image_read` browse.
+    The policy binds in e2e for this tool because `agent_id` presence alone is a
+    sufficient discriminator — which is all e2e can see, since its sub-skills run
+    in the same session via the `Skill` tool with no `agent_id` to attribute them
+    (see `harness.context_policy` docstring). We deny the bare tool directly
+    rather than routing through `subagent_only_violation`, which guards the whole
+    set and takes a `declared_tools` argument e2e cannot supply; keeping the check
+    tool-specific also means a future skill that legitimately declares a guarded
+    tool is not denied here.
+
+    `image_read`, the set's other member, satisfies the same condition today — no
+    skill has declared it since `search-images` moved to `@plugin:image-reader`
+    (2026-07-17), and it lives only on `agents/image-reader-opus.md` — so it is
+    equally enforceable here and simply is not yet: that is outside #942's blast
+    radius, tracked as issue #1273.
     """
-    if not input_data.get("tool_name", "").startswith("mcp__"):
+    # `or ""` rather than a get() default: a present-but-None `tool_name` would
+    # raise AttributeError here, and a raising hook fails a call the agent was
+    # entitled to make (CLAUDE.md, "Plugin hooks"). Fail closed to "not blocked".
+    if not (input_data.get("tool_name") or "").startswith("mcp__"):
         return False
     return (
         _bare_tool_name(input_data["tool_name"]) == "extraction_append"

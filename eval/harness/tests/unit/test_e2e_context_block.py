@@ -6,11 +6,11 @@ spawn and doing the extraction itself (observed in production). The e2e
 orchestrator denies it there, mirroring the tree-read block, while leaving the
 subagent's own call (which carries `agent_id`) untouched.
 
-This is the one member of `context_policy.SUBAGENT_ONLY_TOOLS` e2e can enforce:
-`image_read` stays unit-only (a legitimate in-session `search-images` browse is
-indistinguishable from a violation), but that caveat does not transfer here —
-no skill declares `extraction_append`, so `agent_id` presence alone
-discriminates. See `e2e-test-spec.md` §6.1.1.
+This is the one member of `context_policy.SUBAGENT_ONLY_TOOLS` e2e enforces
+today. `image_read`, the other member, is equally enforceable here — no skill
+has declared it since `search-images` moved to `@plugin:image-reader`
+(2026-07-17) — and is simply outside #942's scope, tracked as issue #1273. See
+`e2e-test-spec.md` §6.1.1.
 """
 
 from __future__ import annotations
@@ -18,6 +18,8 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
+
+import pytest
 
 from claude_agent_sdk import ResultMessage, SystemMessage
 
@@ -85,9 +87,16 @@ def test_non_mcp_tools_are_never_blocked():
         assert is_main_thread_extraction_append(_main(name)) is False
 
 
-def test_missing_tool_name_does_not_raise():
-    """A malformed input must fail closed to 'not blocked', never crash the hook."""
-    assert is_main_thread_extraction_append({}) is False
+@pytest.mark.parametrize("malformed", [{}, {"tool_name": None}, {"tool_name": ""}])
+def test_malformed_tool_name_does_not_raise(malformed):
+    """A malformed input must fail closed to 'not blocked', never crash the hook.
+
+    `{"tool_name": None}` is the case a `.get("tool_name", "")` default does NOT
+    cover — the key is present, so the default never applies and `.startswith`
+    would raise on None. A raising PreToolUse hook fails a call the agent was
+    entitled to make.
+    """
+    assert is_main_thread_extraction_append(malformed) is False
 
 
 # --- integration: the recording path through the real hook closure ----------
