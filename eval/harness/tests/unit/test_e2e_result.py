@@ -15,6 +15,7 @@ from e2e.result import (
     axes_from_runlog,
     detector_era_runlog,
     is_committable_run,
+    is_v1_plus,
     overall_outcome,
     runlog_prefix,
     timestamp_slug,
@@ -405,7 +406,7 @@ def test_no_pre_v1_runlog_is_reported_compliance_pass():
     about them.
     """
     for path, data in committed_e2e_runlogs():
-        if "harness_schema_version" in data:
+        if is_v1_plus(data):
             continue
         _verdict, compliance, _outcome = axes_from_runlog(data)
         assert compliance in {"fail", "not_checked"}, path
@@ -432,7 +433,7 @@ def test_the_gate_reproduces_todays_fused_verdict_across_the_pre_v1_corpus():
     instead of no proof at all.
     """
     for path, data in committed_e2e_runlogs():
-        if "harness_schema_version" in data:
+        if is_v1_plus(data):
             continue
         _verdict, _compliance, outcome = axes_from_runlog(data)
         assert outcome == data["verdict"], (
@@ -460,7 +461,7 @@ def test_v1_plus_runlogs_have_an_internally_consistent_outcome():
     """
     checked = 0
     for path, data in committed_e2e_runlogs():
-        if "harness_schema_version" not in data:
+        if not is_v1_plus(data):
             continue
         verdict, compliance, _derived = axes_from_runlog(data)
         assert data.get("outcome") == overall_outcome(verdict, compliance), path

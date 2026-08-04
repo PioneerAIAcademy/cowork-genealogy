@@ -278,7 +278,7 @@ def axes_from_runlog(data: dict[str, Any]) -> tuple[str, str, str]:
     raised is committed but reports `verdict="skipped"`. The filename wins for
     "is this in the corpus", this function wins for "what does it say".
     """
-    if "harness_schema_version" in data:
+    if is_v1_plus(data):
         verdict = str(data.get("verdict") or "skipped")
         compliance = str(data.get("compliance") or "pass")
         # `.get` with a derivation fallback, not `data["outcome"]` — a
@@ -298,6 +298,15 @@ def axes_from_runlog(data: dict[str, Any]) -> tuple[str, str, str]:
     return verdict, "not_checked", verdict
 
 
+def is_v1_plus(data: dict[str, Any]) -> bool:
+    """Whether this persisted runlog dict was written by the post-#972
+    verdict/compliance/outcome split. `harness_schema_version` is the sole
+    vintage marker — `axes_from_runlog`, `detector_era_runlog`, and every
+    whole-corpus test in `test_e2e_result.py` must all key on this one
+    check so they can't drift out of sync with each other."""
+    return "harness_schema_version" in data
+
+
 def detector_era_runlog(data: dict[str, Any]) -> bool:
     """Whether the code that wrote this pre-v1 runlog carried the §4.4 detector.
 
@@ -312,7 +321,7 @@ def detector_era_runlog(data: dict[str, Any]) -> bool:
     `not_checked` rather than `pass`. Meaningless for v1+ logs, which carry
     `compliance` directly.
     """
-    return "harness_schema_version" not in data and "guardrail_shadow_violations" in data
+    return not is_v1_plus(data) and "guardrail_shadow_violations" in data
 
 
 def write_result_files(
