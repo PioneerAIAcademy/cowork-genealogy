@@ -7,13 +7,14 @@ e2e test.
 
 import asyncio
 import json
+import re
 import tempfile
 from pathlib import Path
 
 import pytest
 
 from harness.fixtures import InvalidFixtureError
-from harness.mock_mcp import create_mock_server
+from harness.mock_mcp import RANKING_SKIPPED_NOTE, create_mock_server
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -224,6 +225,62 @@ def test_record_search_omits_ranked_without_subject(tmp_path):
     )
     body = _extract_response_dict(result)
     assert "ranked" not in body
+    # ...and the mock says so, the way the real tool does. Without this the
+    # nudge is invisible to every unit test and cannot be graded at all.
+    assert body["rankingSkipped"] == RANKING_SKIPPED_NOTE
+    # Before `results`, which is the property that survives a size bound.
+    keys = list(body)
+    assert keys.index("rankingSkipped") < keys.index("results")
+
+
+def test_record_search_omits_ranking_skipped_once_a_subject_is_named(tmp_path):
+    """The note's contract is "no subject was named" — never "ranking ran"."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {
+            "surname": "Flynn",
+            "givenName": "Patrick",
+            "projectPath": str(tmp_path),
+            "subjectId": "I1",
+        },
+    )
+    assert "rankingSkipped" not in _extract_response_dict(result)
+
+
+def test_record_search_omits_ranking_skipped_without_a_project(tmp_path):
+    """No projectPath means nothing was on offer to skip."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {"surname": "Flynn", "givenName": "Patrick"},
+    )
+    assert "rankingSkipped" not in _extract_response_dict(result)
+
+
+def test_ranking_skipped_note_has_not_drifted_from_the_typescript_source():
+    """The mock's copy and the tool's must stay byte-identical.
+
+    They cannot share a definition — TypeScript on the host, Python in the
+    harness — and a stale copy is silent: the eval would grade the skill against
+    a nudge production no longer sends.
+    """
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/tools/record-search.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(r"const RANKING_SKIPPED_NOTE =(.*?);\n", src, re.DOTALL)
+    assert decl, "RANKING_SKIPPED_NOTE is gone from record-search.ts"
+    ts_note = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
+    assert ts_note, "parsed an empty note — the declaration's shape changed"
+    assert ts_note == RANKING_SKIPPED_NOTE
 
 
 def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path):
