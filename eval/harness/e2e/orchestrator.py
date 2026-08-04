@@ -1123,7 +1123,17 @@ async def _run_agent(
             mcp_state["unavailable"] = True
             aborted_reason = "mcp_unavailable"
             error = unavailable_message(entry, backstop=backstop)
-            transcript.append(f"\n**[HARNESS]** ABORT (mcp_unavailable)\n\n{error}\n")
+            # Recorded like every other harness-side event even though THIS path
+            # never persists it (the run writes no files at all — see
+            # run_e2e_test). Kept so the in-memory trace is complete and so a
+            # future change to the retention rule needs no new code here.
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "harness",
+                    "text": f"ABORT (mcp_unavailable) — {error}",
+                }
+            )
             _emit("[abort] genealogy MCP server unavailable — this run never happened")
 
         async def _shutdown(it) -> None:
@@ -1312,9 +1322,18 @@ async def _run_agent(
                             ),
                             "unavailable": "UNAVAILABLE — aborting",
                         }[health]
-                        transcript.append(
-                            f"\n**[HARNESS]** genealogy MCP server at session "
-                            f"start: {note}\n"
+                        # Persisted on every run, healthy ones included: `init`
+                        # arrives before any tool call, so this lands at
+                        # tool_calls_before 0 and tells a reader whether the
+                        # surface was there at all.
+                        narration.append(
+                            {
+                                "tool_calls_before": len(tool_calls),
+                                "kind": "harness",
+                                "text": (
+                                    f"genealogy MCP server at session start: {note}"
+                                ),
+                            }
                         )
                         if health == "unavailable":
                             _abort_mcp_unavailable(find_server_entry(servers))

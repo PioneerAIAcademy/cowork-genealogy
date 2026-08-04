@@ -510,7 +510,8 @@ Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
      `final_tree is None` guard does **not** catch this: `build_workspace` copies
      the fixture's starting tree into the workspace, so an aborted run *has* a
      tree.
-   - *Cost accepted:* no transcript survives for forensics. Root-causing **why** a
+   - *Cost accepted:* nothing survives for forensics — no `narration`, no
+     `tool_calls`, no run log at all. Root-causing **why** a
      server fails to start is deliberately out of scope; this reason exists to
      make the failure legible and cheap, so that the root cause can be chased
      against clean signal instead of a 90-minute ambiguous `fail`.

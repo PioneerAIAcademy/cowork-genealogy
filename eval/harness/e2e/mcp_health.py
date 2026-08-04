@@ -258,9 +258,11 @@ def unavailable_cause(entry: dict[str, Any] | None, *, backstop: bool = False) -
 def unavailable_message(entry: dict[str, Any] | None, *, backstop: bool = False) -> str:
     """What a genealogist reads when a RUN is aborted. Criterion 4 is these words.
 
-    Used by the orchestrator's abort (transcript + the run's `error` field) and
-    printed verbatim by run_e2e. The job of this text is to stop someone
-    re-researching a case that was never actually attempted.
+    Used by the orchestrator's abort (a `narration` entry + the run's `error`
+    field) and printed verbatim by run_e2e. On the abort path only the printed
+    copy is ever seen — that run writes no files — so these words are the whole
+    artifact. Their job is to stop someone re-researching a case that was never
+    actually attempted.
     """
     return (
         f"MCP UNAVAILABLE — {unavailable_cause(entry, backstop=backstop)}.\n"
