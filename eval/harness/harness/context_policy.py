@@ -23,30 +23,32 @@ The PreToolUse hook can express it, because `PreToolUseHookInput` carries
 Probe-verified against the pinned CLI + SDK 0.1.81 — see
 `docs/plan/image-read-context-policy.md` §3.1.
 
-Two scope limits, both forced by `search-images` (plan §4.1) — and both
-specific to `image_read`, NOT to `extraction_append` (issue #942):
+One scope limit (plan §4.1):
 
-- **Per-skill, not global.** `search-images` declares `image_read` in its own
-  `allowed-tools` and browses volumes page-by-page itself; a global guard would
-  deny every one of those calls and break the skill. The discriminator is the
-  skill's own declaration — *you may call what you declared; you may not call
-  what was granted only to your subagent*. Callers pass the pre-union set from
-  `allowed_tools.declared_skill_tools`. `extraction_append` needs no such
-  scoping: no skill declares it, so the exemption can never fire (see the
-  `SUBAGENT_ONLY_TOOLS` comment).
-- **Unit harness only — for `image_read`.** The e2e orchestrator cannot guard
-  `image_read`: its sub-skills run in the same session via the `Skill` tool with
-  no `agent_id` to attribute them, so a legitimate `search-images` browse is
-  indistinguishable from a record-extraction router violation. But this caveat
-  is argued *about `image_read`* and does **not** transfer to `extraction_append`
-  (#942): no skill declares `extraction_append`, so there is no in-session caller
-  to confuse it with — the only legitimate caller is the Task-spawned
-  record-extractor, whose call carries `agent_id`. So `agent_id` presence alone
-  discriminates, and the e2e orchestrator DOES enforce `extraction_append` on the
-  main thread — as a tool-specific block (`is_main_thread_extraction_append` in
-  `e2e/orchestrator.py`), not via `subagent_only_violation`, which would guard the
-  whole set and wrongly deny a main-session `image_read` browse. e2e imports
-  `bare_tool_name`, `is_subagent_call`, and `subagent_only_denial` from here.
+- **Per-skill, not global.** The discriminator is the skill's own declaration —
+  *you may call what you declared; you may not call what was granted only to
+  your subagent*. A skill that claims a guarded tool for itself may call it
+  directly; a global guard would deny those calls and break the skill. Callers
+  pass the pre-union set from `allowed_tools.declared_skill_tools`.
+
+  **No skill declares either guarded tool today**, so the exemption is currently
+  unreachable: `search-images` moved to delegating via `@plugin:image-reader`
+  (2026-07-17) and `image_read` lives only on `agents/image-reader-opus.md`;
+  `extraction_append` has only ever lived on `agents/record-extractor.md`. Both
+  facts are pinned by tests in `tests/unit/test_context_policy.py`. The clause
+  stays because it is the mechanism a future skill would need, not because
+  anything depends on it firing.
+
+e2e enforcement is **partial, and only for `extraction_append`** (#942). Because
+no skill declares it, `agent_id` presence alone discriminates a legitimate
+record-extractor call from a router substitution, which is all e2e can see — its
+sub-skills run in the same session via the `Skill` tool with no `agent_id` to
+attribute them. The e2e block is therefore tool-specific
+(`is_main_thread_extraction_append` in `e2e/orchestrator.py`) rather than a call
+to `subagent_only_violation`, which guards the whole set and takes a
+`declared_tools` argument e2e cannot supply. `image_read` meets the same
+condition today and is enforceable there too — issue #1273. e2e imports
+`bare_tool_name`, `is_subagent_call`, and `subagent_only_denial` from here.
 
 (e2e imports from `harness.*`, never the reverse.)
 """
@@ -60,16 +62,15 @@ from typing import Any
 # the discriminator: a skill may call what it declared; it may not call what was
 # granted only to its subagent.
 #
-# - `image_read` — `search-images` declares it and browses pages itself, which
-#   is legitimate and must keep working; `record-extraction` does not declare it
-#   and holds it only via `@plugin:image-reader`, so its router must delegate.
-# - `extraction_append` — declared by NO skill's `allowed-tools`; it lives only
-#   in `agents/record-extractor.md`. So there is no legitimate main-thread caller
-#   to protect, and the guard is effectively unconditional: when the
-#   record-extractor fails to spawn, the router must report the failure and
-#   stop, not do the extraction and append itself (issue #942). The declared-
-#   tools exemption below still runs but can never fire, since no skill declares
-#   it — no special-casing needed.
+# - `image_read` — held only by `agents/image-reader-opus.md`. It returns a page
+#   scan as inline base64; in the router's context the bytes accumulate and
+#   overflow the transport buffer, so every caller must delegate.
+# - `extraction_append` — held only by `agents/record-extractor.md`. When that
+#   agent fails to spawn, the router must report the failure and stop, not do
+#   the extraction and append itself (issue #942).
+#
+# No skill declares either, so the declared-tools exemption below still runs but
+# can never fire — no special-casing needed.
 #
 # Keep this a plain set, not a policy engine — two entries still do not justify
 # machinery. Matched on the bare name, so it is transport-agnostic.

@@ -6,7 +6,7 @@
  * gets back the root path. Set `EVAL_DIR=<root>` so the data layer
  * modules use it.
  *
- * Schema v2 paths: `eval/runlogs/unit/<skill>/<filename>` (no model dir).
+ * Schema v3 paths: `eval/runlogs/unit/<skill>/<filename>` (no model dir).
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -129,7 +129,7 @@ export async function makeFixtureTree(spec: FixtureTreeSpec): Promise<FixtureTre
 }
 
 /**
- * Build a minimal multi-test run log envelope (schema v2) for tests.
+ * Build a minimal multi-test run log envelope (schema v3) for tests.
  */
 export function buildRunLog(opts: {
   skill: string;
@@ -212,7 +212,7 @@ export function buildRunLog(opts: {
     };
   });
   return {
-    schema_version: 2,
+    schema_version: 3,
     skill: opts.skill,
     version: opts.version,
     released: opts.released ?? false,

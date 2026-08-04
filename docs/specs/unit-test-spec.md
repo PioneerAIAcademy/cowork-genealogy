@@ -608,7 +608,7 @@ no validator can currently assert *what* crossed the seam.
 Optional boolean (default `false`). Set it on a test whose scenario files are **broken on purpose** — the case of a validator/guardrail skill (`validate-schema`) whose whole job is to detect invalid input. Every other skill operates on valid project state, so the harness assumes scenarios are schema-valid and gates on it in three places; this flag is the opt-out for the one skill that must see invalid input:
 
 - the **runnability gate** (Section 9) skips schema validation of the scenario instead of aborting the test as `not_runnable`;
-- the **post-run file-validity validators** (`test_research_json_validates_schema`, `test_tree_gedcomx_json_validates_schema`, `test_id_references_resolve`) are not counted against the test — the invalid state is expected. Behavioural validators (allowlist, append-only, …) still apply;
+- the **post-run file-validity validators** (`test_research_json_validates_schema`, `test_tree_gedcomx_json_validates_schema`, `test_id_references_resolve`, `test_project_files_pass_full_validation`, `test_no_duplicate_tree_ids`) are not counted against the test — the invalid state is expected. Behavioural validators (allowlist, append-only, …) still apply;
 - the **scenario-fixture lint** (`eval/harness/tests/unit/test_scenario_fixtures.py`) exempts the scenario the flagged test references, reading the flag from the test so the per-test field stays the single source of truth.
 
 Set it only when a test genuinely needs an invalid starting state; on every other test the schema gates are a valuable safety net against fixture drift.
@@ -719,6 +719,8 @@ See Section 8 for details. Validators check structural correctness at two scopes
 - Schema validity of the final output files
 - ID integrity (all referenced IDs exist)
 - ID format (correct prefixes)
+- Full reference integrity (dangling endpoints, cross-file refs, ancestry cycles — via the compiled TS validator)
+- No duplicate tree IDs
 - Append-only enforcement (log entries not modified)
 - No-delete enforcement (entries superseded, not removed)
 - Enum validation
@@ -984,6 +986,8 @@ Shared validation code in `eval/harness/validators/`. These run on every test re
 - **Append-only enforcement** — existing log entries were not modified or deleted. Operates on the diff.
 - **No-delete enforcement** — no entries were removed from any section. Operates on the diff.
 - **Enum validation** — all enum fields use values from research-schema-spec.md Section 2. Operates on the full output.
+- **Full reference-integrity validation** (`test_project_files_pass_full_validation`) — beyond jsonschema, drives the compiled TypeScript `validateParsed` (the single source of truth, `packages/engine/mcp-server/src/validation/validator.ts`, via `harness/ts_validator.py`) over `research.json` + `tree.gedcomx.json` together. Catches the integrity jsonschema cannot express: dangling `ParentChild`/`Couple` endpoints, cross-file id references (`subject_person_ids`, `known_holdings.relates_to_person_ids`, `gedcomx_source_description_id`), and ancestry cycles. This is what makes a from-scratch write via the `Write` tool (init-project) safe, where no writer tool ran to validate-before-persist (#987). Called **without** `projectPath`, so it runs research + gedcomx + cross-file checks on the parsed objects with no disk access and no sidecar-integrity blast radius. Drive the compiled validator rather than re-porting it to Python — reference integrity is real logic, and a second copy would drift. **Skips (never fails) only when the compiled `build/` is absent or `node` is not installed**: `build/` is not in the run-log snapshot, so a validation *failure* on an un-built machine would wrongly red the suite; but a validator *crash* (node ran and errored) is surfaced as a failure, never mistaken for a missing build. Operates on the full output.
+- **Duplicate-id detection** (`test_no_duplicate_tree_ids`) — no two tree `persons` / `relationships` / `sources` share an `id`. Kept **separate** from full validation because the TS `validateGedcomx` does not check it (it only adds ids to a set, never checks membership), and because it is pure Python it runs even when the compiled validator is unavailable. Operates on the full output.
 
 ### Skill-specific validators (per skill)
 
@@ -1608,7 +1612,7 @@ A skill that calls a tool not in its derived list is rejected by the SDK at call
 
 **The allowlist cannot express a per-*context* rule.** Because the union above makes the session set a superset of every delegated agent's set, the main session is granted every tool its subagents need — including ones only a subagent may safely call (`image_read` returns inline base64 that overflows the transport buffer if it lands in the caller's context). That policy lives in the **PreToolUse hook** instead, which can discriminate by context via `agent_id` — absent on the main thread, present inside a Task-spawned subagent.
 
-The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while `record-extraction` holds `image_read` only through `@plugin:image-reader` and must delegate. (`search-images` used to be the example of a skill declaring `image_read` directly; it has since moved to delegating via `@plugin:image-reader` too (2026-07-17) — so no skill currently declares it, though the exemption mechanism remains available for one that legitimately needs to.) `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
+The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while `record-extraction` holds `image_read` only through `@plugin:image-reader` and must delegate. **No skill declares either guarded tool today**, so that clause is currently unreachable: `search-images` used to declare `image_read` directly and moved to delegating via `@plugin:image-reader` (2026-07-17), and `extraction_append` — the set's second member, added for #942 — has only ever lived on `agents/record-extractor.md`. The exemption mechanism stays available for a skill that legitimately needs it; both facts are pinned by tests in `harness/tests/unit/test_context_policy.py`. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
 
 ### Capturing `skills_invoked` via PreToolUse
 
@@ -1899,7 +1903,7 @@ Two seed validators in `eval/harness/validators/`:
 
 | Validator | Path | Scope |
 |-----------|------|-------|
-| Universal | `eval/harness/validators/test_universal.py` | All skills. Checks: schema structure, enum values, ID prefixes, ID referential integrity, append-only log, no-delete enforcement. |
+| Universal | `eval/harness/validators/test_universal.py` | All skills. Checks: schema structure, enum values, ID prefixes, ID referential integrity, full reference integrity (dangling/cross-file/cycles, via the compiled TS `validateParsed`), duplicate tree IDs, append-only log, no-delete enforcement. |
 | Conflict-resolution | `eval/harness/validators/test_conflict_resolution.py` | One skill. Checks: ownership enforcement (only writes to `conflicts`), no MCP tool calls, fact conflicts have ≥2 competing assertions, resolved conflicts have required fields, preferred assertion is in competing list. |
 
 The universal validator demonstrates the pattern for general validators. The conflict-resolution validator demonstrates the pattern for skill-specific validators (ownership, tool allowlist, structural rules from SKILL.md). Use these as templates when writing validators for other skills.

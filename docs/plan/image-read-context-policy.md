@@ -215,6 +215,14 @@ untouched. `subagent_capture.py`'s copy is left alone (different concern, out of
 
 ### 4.1 The guard is per-skill, and unit-only — both forced by `search-images`
 
+> **Superseded as of 2026-08-04.** Everything below is the state at authoring
+> time. `search-images` no longer declares `image_read` — it moved to delegating
+> via `@plugin:image-reader` (2026-07-17), and the tool now lives only on
+> `agents/image-reader-opus.md`. So no skill declares it, the exemption below is
+> unreachable, and the "unit-only" conclusion no longer follows: `agent_id`
+> alone discriminates, exactly as it does for `extraction_append` (#942). See
+> `docs/specs/e2e-test-spec.md` §6.1.1 and issue #1273.
+
 The first cut of this policy was **global**: deny `image_read` on the main thread,
 always. That was wrong, and would have broken a shipping skill.
 

@@ -1,4 +1,5 @@
 {
+  "intentionally_invalid": true,
   "test": {
     "id": "ut_project_status_005",
     "skill": "project-status",

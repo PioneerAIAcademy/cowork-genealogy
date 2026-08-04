@@ -45,9 +45,10 @@ Two things worth knowing:
 
 ## The commands in this document
 
-Every slash command below ships with Claude Code, except `/critique-plan`, which
-lives in this repo at [`.claude/commands/`](../.claude/commands/). Nothing here
-needs a plugin you have to install.
+Every slash command below ships with Claude Code, except `/critique-plan` and
+`/check-drift`, which live in this repo at
+[`.claude/commands/`](../.claude/commands/). Nothing here needs a plugin you
+have to install.
 
 If you have a personal plugin that defines one of these names, **yours wins** —
 which is worth knowing before you wonder why `/review` did something else.
@@ -113,10 +114,12 @@ repeat unchecked reads like an established thing to whoever you hand it to.
 
 ### 4. Implement
 
-**If reality contradicts the plan, stop and re-plan.** Update the plan (a
-sentence in the PR body is enough), then continue — your reviewer is reviewing
-against the plan, so an undocumented deviation is invisible to exactly the
-person whose job is catching it.
+**If reality contradicts the plan, stop and re-plan.** Write the deviation into
+`PLAN.md` — a sentence is enough — then continue, and carry it into the PR's
+**Deviated from the plan** line at step 8. Both, because they have different
+readers: `PLAN.md` is what step 6's drift check reads, and it is gitignored, so
+it never reaches your reviewer. An undocumented deviation is invisible to
+exactly the person whose job is catching it.
 
 **Stop and go to the lead** — don't re-plan around it — if the change turns out
 to do any of these:
@@ -156,10 +159,10 @@ Plus whatever you actually touched:
 
 Then exercise the thing you built, once, by hand.
 
-### 6. Review your own diff, in a fresh session
+### 6. Review your own diff
 
-Not the session that wrote the code — it will agree with you. Open a new
-terminal tab in the same folder, start `claude`, and do both halves there.
+Two checks. The first needs a session that didn't write the code — open a new
+terminal tab in the same folder and start `claude`. The second brings its own.
 
 **Bugs.** In the fresh session:
 
@@ -178,15 +181,23 @@ Don't pass `--fix`: you have to be able to explain every line you ship, and
 those edits also land outside `/rewind`. Don't pass `--comment` either — review
 comments go up in your own words.
 
-**Drift.** No bug-finder checks this. You don't have to paste anything — the
-fresh session is on your branch and can read both sides off disk:
+**Drift.** No bug-finder checks this — `/code-review` asks whether the code is
+wrong, not whether it is the code you agreed to write. Normal tier only; Trivial
+tasks have no plan to drift from.
 
-> Read `PLAN.md`, then read my full diff against `main` — committed and
-> uncommitted. Where do they diverge? What did the implementation do that the
-> plan didn't call for, and what did the plan call for that isn't here?
+```
+/check-drift
+```
+
+It reads `PLAN.md` and your full diff against `main`, and reports what the
+implementation did that the plan didn't call for, what the plan called for that
+isn't there, and anything that contradicts it. Unlike `/code-review` it runs in
+a read-only subagent, so it starts fresh wherever you invoke it — the authoring
+session is fine.
 
 You are hunting **implement-vs-plan drift**: code that looks fine and isn't the
-code that was agreed. Fix what you find, then read the whole diff yourself.
+code that was agreed. Verify each finding as in step 3, fix what's real, then
+read the whole diff yourself.
 
 Arrive at step 9 with this done. A reviewer's round should go to whether the
 approach is right, not to what a free command would have caught.
@@ -317,9 +328,9 @@ make agent-smoke                     # plugin agent frontmatter / hooks / tool b
 make e2e-validate TEST=<slug>        # an e2e fixture changed
 /security-review                     # route, auth, token, or user state touched
 
-# 6. self-review, in a FRESH session — not the one that wrote the code
-/code-review high                    # bugs; verify each finding, no --fix/--comment
-#    → "Read PLAN.md and my full diff against main. Where do they diverge?"
+# 6. self-review
+/code-review high                    # bugs; in a FRESH session — it forks the one it runs in
+/check-drift                         # PLAN.md vs the diff; own subagent, so any session
 
 # 7. follow-on work — ask Claude to file it; don't run gh yourself
 #    → "File a GitHub issue for each thing we decided not to do. Label it

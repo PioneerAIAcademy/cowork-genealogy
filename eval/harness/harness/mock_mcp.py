@@ -179,6 +179,17 @@ def _load_build_tool_catalog() -> dict[str, dict[str, Any]]:
 # source to finalize and errors ("orphan sidecar" / staging error).
 STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search", "external_links_search"}
 
+# Verbatim copy of RANKING_SKIPPED_NOTE in
+# packages/engine/mcp-server/src/tools/record-search.ts. The two cannot share a
+# definition — one is TypeScript on the host, the other Python in the harness —
+# so grep RANKING_SKIPPED_NOTE to find both copies when editing either.
+RANKING_SKIPPED_NOTE = (
+    "No `subjectId`, so match-score ranking and marriage jurisdiction hints did "
+    "not run. Pass the tree person this search is about as `subjectId` to enable "
+    "both. Omit it only when the search is not about a specific tree person — a "
+    "broad survey, or a person not yet in the tree."
+)
+
 
 def _stage_search_results(
     workspace: Path, tool_name: str, response: dict[str, Any]
@@ -357,6 +368,32 @@ def create_mock_server(
                     if matches(predicate, args):
                         response = {**response, "ranked": rank_resp}
                         break
+
+            # The complement of the block above: when the caller gave a
+            # projectPath but named no subject, the real record_search says so
+            # instead of silently doing nothing. Mirrored here for the same
+            # reason `ranked` is — a skill graded against the mock has to see
+            # the response production would send it, or the nudge is untestable.
+            #
+            # `"projectPath" in args` (not truthiness) and `not subjectId`
+            # (truthiness) reproduce the real gate exactly; the two differ on
+            # purpose. Inserted BEFORE `results`, which is load-bearing: results
+            # is the largest field, so a trailing one is what a size bound drops
+            # first. Both the text and the ordering are pinned by
+            # tests/tools/record-search.test.ts.
+            if (
+                _name == "record_search"
+                and "projectPath" in args
+                and not args.get("subjectId")
+                and "error" not in response
+            ):
+                reordered = {}
+                for _key, _value in response.items():
+                    if _key == "results":
+                        reordered["rankingSkipped"] = RANKING_SKIPPED_NOTE
+                    reordered[_key] = _value
+                reordered.setdefault("rankingSkipped", RANKING_SKIPPED_NOTE)
+                response = reordered
 
             entry["response"] = response
             entry["response_fixture"] = source_name
