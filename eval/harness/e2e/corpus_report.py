@@ -37,7 +37,7 @@ from pathlib import Path
 from e2e.guardrail_shadow_report import all_result_jsons, result_jsons_for
 from e2e.result import axes_from_runlog
 
-VERDICT_ORDER = ("pass", "partial", "fail", "skipped")
+VERDICT_ORDER = ("pass", "partial", "fail", "ungraded", "skipped")
 
 
 def tally(paths: list[Path]) -> tuple[Counter, Counter, Counter, list[str]]:

@@ -1364,10 +1364,11 @@ async def run_e2e_test(
             except Exception as e:  # noqa: BLE001 — keep the run loggable
                 judge_output = {"error": f"{type(e).__name__}: {e}"}
                 # A run with a final tree is worth committing even when the judge
-                # failed — the tree can be re-graded later. "skipped" here meant
-                # "nothing to grade", but we reached this branch only because
-                # final_tree is not None (the None check is at line 1339).
-                verdict = "fail"
+                # failed — the tree can be re-graded later. "ungraded" is distinct
+                # from "fail" (the judge never reached a conclusion) and from
+                # "skipped" (no tree at all). The tree can be re-graded with
+                # /grade-e2e-run or by re-running the judge.
+                verdict = "ungraded"
             judge_seconds = time.monotonic() - judge_start
 
         # The COMPLIANCE axis (§4.4). Deliberately does not touch `verdict` —

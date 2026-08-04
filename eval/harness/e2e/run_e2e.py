@@ -76,7 +76,12 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"  stop_reason: {result.stop_reason}")
     _print_compliance(result)
     print(f"  result: {paths['result']}")
-    if not is_committable_run(result.verdict):
+    if result.verdict == "ungraded":
+        print(
+            "  (judge failed; run committed for re-grading — "
+            "re-run the judge or /grade-e2e-run manually)"
+        )
+    elif not is_committable_run(result.verdict):
         print(
             "  (scratch run — gitignored; the judge didn't run, so there's "
             "nothing to grade or commit)"
@@ -248,7 +253,7 @@ def main(argv: list[str] | None = None) -> int:
     # force `verdict = "fail"`, and now forces `outcome = "fail"` instead.
     # Verified against all 122 committed runs — the gate distribution is
     # byte-identical to the old fused verdict's.
-    failed = sum(1 for r in results if r.outcome in {"fail", "skipped"})
+    failed = sum(1 for r in results if r.outcome in {"fail", "skipped", "ungraded"})
     return 1 if failed else 0
 
 

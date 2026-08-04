@@ -8,6 +8,10 @@ outcome (see runlog_prefix):
   signal — "the system can't solve this yet; retry later" — exactly as a failing
   unit test is committed. Fixture *validity* is a separate axis: only a `pass`
   proves the fixture solvable (e2e-test-spec.md §14).
+- an `ungraded` run (the judge raised an exception — the tree exists but was
+  never graded) also uses the committable `run-<timestamp>.*` prefix. It is
+  distinct from `fail` (the judge never reached a conclusion) and can be
+  re-graded with /grade-e2e-run or by re-running the judge.
 - a `skipped` run (the judge never ran — the agent crashed before producing any
   tree, so there is nothing to grade) uses `scratch_<timestamp>.*`, which
   `.gitignore` keeps out of version control.
@@ -44,9 +48,9 @@ class E2eResult:
     test_id: str
     captured_at: str  # ISO-8601 UTC
 
-    # GENEALOGICAL verdict from the judge: "pass" | "partial" | "fail" — or
-    # "skipped" when the judge did not run (e.g. SDK crashed before producing
-    # any tree state).
+    # GENEALOGICAL verdict from the judge: "pass" | "partial" | "fail" |
+    # "ungraded" (judge raised an exception — tree exists but was never graded)
+    # | "skipped" (judge did not run — no tree to grade).
     #
     # This field is the judge's conclusion and NOTHING else. It used to be
     # overwritten to "fail" by the guardrail check below, which fused two
@@ -189,28 +193,31 @@ def timestamp_slug(now: datetime | None = None) -> str:
     return t.strftime("%Y-%m-%d_%H-%M-%S")
 
 
-_GRADED_VERDICTS = frozenset({"pass", "partial", "fail"})
+_COMMITTABLE_VERDICTS = frozenset({"pass", "partial", "fail", "ungraded"})
 
 
 def is_committable_run(verdict: str) -> bool:
-    """Whether a run produced a gradeable tree worth committing.
+    """Whether a run produced a tree worth committing.
 
-    A judge verdict of pass / partial / fail means the run produced a final
-    tree, so it is committed as `run-<ts>.*` and must be graded (§7.4) —
-    including a `fail`, which is retained signal: a capability gap to retry
-    later, exactly as a failing unit test is committed. Only a `skipped` (or
-    otherwise non-graded) run — the judge never ran, so there is no tree to
-    grade — stays a gitignored `scratch_` run.
+    "Committable" and "graded" are two different axes. A judge verdict of
+    pass / partial / fail means the run was graded. An `ungraded` run (the
+    judge raised an exception) produced a tree but was never graded — it is
+    still committable because the tree can be re-graded later. Both use the
+    `run-<ts>.*` prefix and are committed.
+
+    Only a `skipped` (or otherwise unrecognized) run — the agent crashed
+    before producing any tree, so there is nothing to grade or re-grade —
+    stays a gitignored `scratch_` run.
 
     Fixture *validity* is a separate axis (e2e-test-spec.md §14): only a `pass`
     proves the fixture solvable. A committed `fail` does NOT validate the
     fixture (validity is a recommended authoring practice, not a CI check).
     """
-    return verdict in _GRADED_VERDICTS
+    return verdict in _COMMITTABLE_VERDICTS
 
 
 def runlog_prefix(verdict: str) -> str:
-    """`run-` for a gradeable run (pass/partial/fail), else `scratch_` (skipped).
+    """`run-` for a committable run (pass/partial/fail/ungraded), else `scratch_`.
 
     Keyed on the GENEALOGICAL verdict, deliberately — not on `outcome`. A run
     whose judge never ran has nothing to grade no matter what the guardrail
