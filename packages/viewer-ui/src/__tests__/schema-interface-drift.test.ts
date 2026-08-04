@@ -82,7 +82,10 @@ const pascal = (s: string) => s.split('_').map((p) => p[0].toUpperCase() + p.sli
  * diagnosis, and the last is a false positive — which is how a lint gets
  * disabled. The compiler reads all four correctly.
  */
-function interfaceFields(path: string): Map<string, Set<string>> {
+function interfaceFields(path: string): {
+  fields: Map<string, Set<string>>
+  inheriting: string[]
+} {
   const sourceFile = ts.createSourceFile(
     path,
     readFileSync(path, 'utf8'),
@@ -90,8 +93,10 @@ function interfaceFields(path: string): Map<string, Set<string>> {
     /* setParentNodes */ true,
   )
   const out = new Map<string, Set<string>>()
+  const inheriting: string[] = []
   sourceFile.forEachChild((node) => {
     if (!ts.isInterfaceDeclaration(node)) return
+    if (node.heritageClauses?.length) inheriting.push(node.name.text)
     const fields = new Set<string>()
     for (const member of node.members) {
       // Index signatures and computed names have no plain identifier; no schema
@@ -103,10 +108,10 @@ function interfaceFields(path: string): Map<string, Set<string>> {
     }
     out.set(node.name.text, fields)
   })
-  return out
+  return { fields: out, inheriting }
 }
 
-const parsed = interfaceFields(sourcePath)
+const { fields: parsed, inheriting } = interfaceFields(sourcePath)
 
 /** One interface against one subschema's `properties`, by field name. */
 function expectMirrors(tsName: string, def: any, help: string) {
@@ -128,6 +133,19 @@ describe('@genealogy/schema interfaces mirror research.schema.json', () => {
   it('parsed a plausible number of interfaces', () => {
     // A parser that silently returns nothing reads exactly like a clean run.
     expect(parsed.size, 'interfaces parsed out of packages/schema/src/index.ts').toBeGreaterThan(25)
+  })
+
+  it('no interface inherits its fields', () => {
+    // `node.members` is directly-declared members only, so an `extends` would
+    // make every inherited field read as missing — drift that isn't there, on
+    // an interface that is fine. There is none today; fail here naming the
+    // interface rather than N lines away naming its parent's fields.
+    expect(
+      inheriting,
+      'this lint reads only directly-declared members, so an interface with ' +
+        '`extends` reports its inherited fields as drift — teach interfaceFields ' +
+        'to walk the heritage clause before adding one',
+    ).toEqual([])
   })
 
   const objectDefs = Object.entries<any>(schema.$defs).filter(

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import ts from "typescript";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 
 // Contract: docs/specs/mcpb-package-spec.md § "Manifest contract".
@@ -84,25 +85,50 @@ describe("mcpb manifest", () => {
  * model and the *first real call* throws `Unknown tool: <name>`. CI is green
  * the whole way, and on the `.mcpb`/Cowork path that surfaces after shipping.
  *
- * Read as text rather than imported: `index.ts` connects the stdio transport as
- * an import side effect, which is the same reason `tool-schemas.ts` exists as a
- * separate module for the check above. Regex-on-source is fragile in principle,
- * so `finds a dispatch chain at all` below fails loudly if the shape changes
- * instead of silently matching nothing and passing.
+ * Parsed rather than imported: `index.ts` connects the stdio transport as an
+ * import side effect, which is the same reason `tool-schemas.ts` exists as a
+ * separate module for the check above. `createSourceFile` only parses text, so
+ * none of that runs.
+ *
+ * Parsed rather than regex-matched for a second reason: a comment is not a
+ * node, so a **commented-out** dispatch cannot be counted as a live case. That
+ * is not hypothetical — block-commenting the whole `research_query` branch
+ * leaves `tsc --noEmit` at exit 0 and the tool still advertised by `ListTools`,
+ * so the regex version of this test reported 12/12 green while the first real
+ * call threw `Unknown tool`. The defect this lint exists to catch, inside the
+ * lint.
  */
 describe("tool dispatch", () => {
-  const indexSrc = readFileSync(join(mcpRoot, "src", "index.ts"), "utf8");
-  const dispatched = [
-    ...indexSrc.matchAll(/request\.params\.name === "([a-z0-9_]+)"/g),
-  ].map((m) => m[1]);
+  const indexPath = join(mcpRoot, "src", "index.ts");
+  const indexAst = ts.createSourceFile(
+    indexPath,
+    readFileSync(indexPath, "utf8"),
+    ts.ScriptTarget.Latest,
+    /* setParentNodes */ true,
+  );
 
-  it("finds a dispatch chain at all (guards the regex itself)", () => {
+  /** Every `request.params.name === "<tool>"` comparison, in source order. */
+  const dispatched: string[] = [];
+  const collect = (node: ts.Node): void => {
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken &&
+      ts.isStringLiteral(node.right) &&
+      node.left.getText(indexAst) === "request.params.name"
+    ) {
+      dispatched.push(node.right.text);
+    }
+    node.forEachChild(collect);
+  };
+  indexAst.forEachChild(collect);
+
+  it("finds a dispatch chain at all (guards the extraction itself)", () => {
     // If dispatch is ever refactored to a lookup map this fails, which is the
     // correct outcome: the replacement needs its own check, not a silent pass.
     expect(
       dispatched.length,
-      "no `request.params.name === \"…\"` cases found in src/index.ts — if dispatch " +
-        "was refactored, replace this test rather than deleting it",
+      "no `request.params.name === \"…\"` comparisons found in src/index.ts — if " +
+        "dispatch was refactored, replace this test rather than deleting it",
     ).toBeGreaterThan(0);
   });
 
