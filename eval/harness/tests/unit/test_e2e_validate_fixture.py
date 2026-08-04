@@ -502,6 +502,15 @@ def test_record_hint_citation_errors_requires_an_ark_on_resolution(tmp_path):
     assert any("ark:/61903/" in e for e in errors)
 
 
+def test_record_hint_citation_errors_rejects_a_bare_ark_prefix(tmp_path):
+    # An `ark:/61903/` with no record path resolves to nothing, so it would be
+    # an even cheaper shortcut than the bare id rejected below.
+    _write_record_hint_meta(tmp_path, resolved=True)
+    findings = _avoid_pair_findings({"f1": ["disproving record, ark:/61903/"]})
+    errors = record_hint_citation_errors(tmp_path, findings)
+    assert any("ark:/61903/" in e for e in errors)
+
+
 def test_record_hint_citation_errors_rejects_a_bare_id(tmp_path):
     # Issue #970's rejected shortcut: a bare id is shape-identical to a tree
     # PID and matches collection date ranges on their own — not discriminating.

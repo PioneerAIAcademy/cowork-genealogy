@@ -20,7 +20,7 @@
     {
       "id": "f2",
       "type": "relationship",
-      "description": "Pierre Henri Désobry and Clemence Sauselle had a son, Julien Désobri, born 5 September 1808 in Pecquencourt — between the tree's two known children (Philibert b. 1800, Jean Baptiste Aimé b. 1813). Direct evidence is the birth registration; his death in infancy is inferred at Probable tier from the absence of any later record (birth, marriage, or otherwise) for him in the same indexed collection that captures the family's other vital events, not from a located death registration — an exhaustive search (four query variants, 1808-1850) found none.",
+      "description": "Pierre Henri Désobry and Clemence Sauselle had a son, Julien Désobri, born 5 September 1808 in Pecquencourt — between the tree's two known children (Philibert b. 1800, Jean Baptiste Aimé b. 1813). Direct evidence is the birth registration; his death in infancy is inferred at Probable tier from the absence of any later record (birth, marriage, or otherwise) for him in the same indexed collection that captures the family's other vital events, not from a located death registration — an indexed search (four query variants, 1808-1850) found none.",
       "details": {
         "subject_person": "Pierre Henri DESOBRY (L6L3-BB8)",
         "relation": "child",
@@ -32,7 +32,7 @@
       },
       "supporting_sources": [
         "France, Nord, Parish and Civil Registration, 1524-1893 — birth registration (Act 53), 5 Sep 1808, Pecquencourt, of Julien Joseph Desbry, naming father Pierre Henri Desbry (ark:/61903/1:1:8NW1-RP6Z) — the confirming record for his existence and parentage",
-        "Absence of any later record (death, marriage, or other) for Julien Joseph Desbry/Désobri in the same collection across an exhaustive four-variant search, 1808-1850 — supports but does not directly document death in infancy"
+        "Absence of any later record (death, marriage, or other) for Julien Joseph Desbry/Désobri in the same collection across a four-variant indexed search, 1808-1850 — supports but does not directly document death in infancy"
       ],
       "required": true
     }

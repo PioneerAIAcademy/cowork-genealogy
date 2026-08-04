@@ -41,8 +41,11 @@ Accordingly `expected-findings.json` keeps both original findings: f1 (wife Clé
 **2026-08-03: corrected f2's cited record (issue #970).** Adding a real ark
 surfaced a discrepancy: this fixture's own committed run log
 (`eval/runlogs/e2e/pierre-desobry-spouse/run-2026-07-30_19-34-46.final-research.json`)
-ran an exhaustive live search (four query variants, 1808-1850, collection
-3216848) for Julien's death registration and found none — only his birth
+ran a live indexed search (four query variants, 1808-1850, collection
+3216848) for Julien's death registration and found none — the run log notes
+that a full-text search of the unindexed Pecquencourt register pages for
+1809-1813 was not executed, so the act may simply be unindexed. What the
+run did retrieve directly was his birth
 registration (Act 53, 5 Sep 1808, `ark:/61903/1:1:8NW1-RP6Z`), with death
 in infancy reached at **Probable** tier by inference from the absence of
 any later record, not from a located death registration. This note

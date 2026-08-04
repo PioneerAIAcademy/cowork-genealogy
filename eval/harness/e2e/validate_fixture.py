@@ -429,7 +429,12 @@ def finding_shape_errors(expected_findings: dict[str, Any]) -> list[str]:
 # and is shape-identical to a FamilySearch tree PID — so a bare id can be
 # satisfied by pasting the fixture's own `source_pid`, which carries zero
 # record provenance. Only a full `ark:/61903/...` path counts.
-_ARK_RE = re.compile(r"ark:/61903/")
+#
+# The record-path segment (`1:1:XXXX-XXXX`, `1:2:...` for a different
+# indexing) is required, not just the `ark:/61903/` prefix: a prefix on its
+# own resolves to nothing, so it would be a cheaper shortcut than the bare
+# id this check exists to reject.
+_ARK_RE = re.compile(r"ark:/61903/[0-9]+:[0-9]+:[\w-]{4,}")
 
 # The existing definition of "unresolved" for a record-hint fixture
 # (eval/harness/scripts/check_e2e_fixtures.py:58) — its presence in the
