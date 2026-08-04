@@ -44,7 +44,14 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from harness.since_window import add_since_arg, describe_window, filter_since
+from harness.since_window import (
+    add_since_arg,
+    describe_stale,
+    describe_window,
+    filter_since,
+    run_date,
+    staleness_cutoff,
+)
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -369,7 +376,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--after", help="explicit after run-log path (with --before)")
     ap.add_argument("--all", action="store_true", help="table of latest run log per skill")
     ap.add_argument("--markdown", action="store_true", help="emit a Markdown table (with --all)")
-    add_since_arg(ap)
+    add_since_arg(ap, default="all")
     args = ap.parse_args(argv)
 
     # Explicit / positional diff.
@@ -405,12 +412,21 @@ def main(argv: list[str] | None = None) -> int:
     if args.all:
         sls = []
         n_total = 0
+        stale_at = staleness_cutoff()
+        stale: list[tuple[str, Any]] = []
         for skill in all_skills():
             n_total += 1 if releasable_runlogs_for(skill) else 0
             logs = releasable_runlogs_for(skill, cutoff=args.since)
             if logs:
                 sls.append(analyze_runlog(_load(logs[-1]), str(logs[-1])))
-        print(describe_window(args.since, n_runs=len(sls), n_total=n_total))
+                d = run_date(logs[-1])
+                if d is not None and d < stale_at:
+                    stale.append((skill, d))
+        if args.since is not None:
+            print(describe_window(args.since, n_runs=len(sls), n_total=n_total))
+        if (note := describe_stale(stale)):
+            print(note)
+            print()
         if args.markdown:
             print(format_markdown_table(sls))
         else:

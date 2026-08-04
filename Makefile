@@ -353,9 +353,11 @@ eval-timings: ## Weekly timing review: scan the latest run log per skill, rank t
 	# Reads the timing instrumentation already in the run logs — does NOT
 	# re-run anything. Use it to spot makespan long poles and the stall tax
 	# week over week. TOP overrides how many slowest tests to list.
-	# Windowed to 14 days: a skill whose newest run log predates that is
-	# reporting timings for prose that has since changed. It is omitted, and
-	# the window line says how many were.
+	# Shows every skill and MARKS the stale ones (newest run log >14d), sorted
+	# last, with a named summary. It does not filter: this is one row per
+	# skill, so a date cut would delete the skill rather than narrow a sample —
+	# hiding the very thing to act on, that it needs a re-run. SINCE=N filters
+	# when you want it.
 	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: prune-runlogs

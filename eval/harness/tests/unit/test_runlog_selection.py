@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from harness.since_window import add_since_arg, describe_stale
 from e2e.runlog_selection import (
     DEFAULT_SINCE_DAYS,
     all_result_jsons,
@@ -182,3 +183,30 @@ def test_filter_since_mixes_both_corpora():
     ]
     kept = [p.name for p in filter_since(paths, date(2026, 7, 20))]
     assert kept == ["run-2026-07-25_00-00-00.json", "v1_2026-07-30_00-00-00.json"]
+
+
+# --- unit readers FLAG staleness rather than filtering it ------------------
+
+
+def test_describe_stale_names_the_subjects_and_their_age():
+    line = describe_stale([("assertion-classification", date(2026, 6, 29))])
+    assert "assertion-classification" in line
+    assert "STALE" in line
+    assert "re-run" in line
+
+
+def test_describe_stale_is_empty_when_nothing_is_stale():
+    assert describe_stale([]) == ""
+
+
+def test_unit_readers_default_to_no_cutoff():
+    """A date filter on a one-row-per-skill report deletes the skill instead of
+    narrowing a sample, hiding the fact that it needs a re-run. Those readers
+    pass default="all"; the aggregating e2e reports keep the 14-day default."""
+    unit = argparse.ArgumentParser()
+    add_since_arg(unit, default="all")
+    assert unit.parse_args([]).since is None
+
+    e2e = argparse.ArgumentParser()
+    add_since_arg(e2e)
+    assert e2e.parse_args([]).since == date.today() - timedelta(days=DEFAULT_SINCE_DAYS)
