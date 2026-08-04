@@ -456,6 +456,12 @@ def test_v1_plus_runlogs_have_an_internally_consistent_outcome():
     defines it. This is what would catch a future regression in the fusing
     logic itself (e.g. `E2eResult.__post_init__` computing it wrong before
     a log is written).
+
+    The persisted `data["outcome"]` is compared, NOT the one
+    `axes_from_runlog` returns. That function falls back to
+    `overall_outcome(...)` when the key is missing or empty, so asserting
+    against its return value would compare the fallback to itself and pass
+    unconditionally on exactly the malformed log this test exists to catch.
     """
     runlogs = Path(__file__).resolve().parents[3] / "runlogs" / "e2e"
     if not runlogs.is_dir():
@@ -468,8 +474,8 @@ def test_v1_plus_runlogs_have_an_internally_consistent_outcome():
         data = json.loads(path.read_text(encoding="utf-8"))
         if "harness_schema_version" not in data:
             continue
-        verdict, compliance, outcome = axes_from_runlog(data)
-        assert outcome == overall_outcome(verdict, compliance), path
+        verdict, compliance, _derived = axes_from_runlog(data)
+        assert data.get("outcome") == overall_outcome(verdict, compliance), path
         checked += 1
 
     # This test is meaningless if it silently checked zero logs — if that
