@@ -1642,6 +1642,28 @@ function mapValidationErrors(errors: string[], applied: AppliedOp[], isBatch: bo
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
 
+/**
+ * Writable `research.json` sections, declared once and spread into both the
+ * top-level `section` and the batch `ops[].section` enums below.
+ * Same pattern as `RESEARCH_QUERY_SECTIONS` in research-query.ts.
+ */
+export const RESEARCH_APPEND_SECTIONS = [
+  "sources",
+  "assertions",
+  "person_evidence",
+  "questions",
+  "plans",
+  "plan_items",
+  "conflicts",
+  "hypotheses",
+  "timelines",
+  "proof_summaries",
+  "evaluations",
+  "known_holdings",
+  "localities",
+  "project",
+] as const;
+
 export const researchAppendSchema = {
   name: "research_append",
   description:
@@ -1684,22 +1706,7 @@ export const researchAppendSchema = {
       },
       section: {
         type: "string",
-        enum: [
-          "sources",
-          "assertions",
-          "person_evidence",
-          "questions",
-          "plans",
-          "plan_items",
-          "conflicts",
-          "hypotheses",
-          "timelines",
-          "proof_summaries",
-          "evaluations",
-          "known_holdings",
-          "localities",
-          "project",
-        ],
+        enum: [...RESEARCH_APPEND_SECTIONS],
         description:
           "The research.json section to write. List sections take append/update " +
           "by id; `project` is the singleton metadata object — use op 'update' " +
@@ -1737,22 +1744,7 @@ export const researchAppendSchema = {
           properties: {
             section: {
               type: "string",
-              enum: [
-                "sources",
-                "assertions",
-                "person_evidence",
-                "questions",
-                "plans",
-                "plan_items",
-                "conflicts",
-                "hypotheses",
-                "timelines",
-                "proof_summaries",
-                "evaluations",
-                "known_holdings",
-                "localities",
-                "project",
-              ],
+              enum: [...RESEARCH_APPEND_SECTIONS],
               description: "The research.json section this op writes.",
             },
             op: { type: "string", enum: ["append", "update"], description: "append (tool assigns id) or update by id." },

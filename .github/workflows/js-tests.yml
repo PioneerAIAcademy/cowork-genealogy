@@ -17,10 +17,16 @@ name: JS workspace tests
 #   test       apps/electron + packages/viewer-ui vitest suites. apps/web has no
 #              tests, which is exactly why the next two matter.
 #   typecheck  the only coverage apps/web and packages/schema have.
-#   build      `pnpm --filter web build` is verbatim what deploy/Dockerfile runs
-#              to produce the production client. A Vite/plugin major can
+#   build      `pnpm --filter web build` is the same command deploy/Dockerfile
+#              runs to produce the production client. A Vite/plugin major can
 #              typecheck cleanly and still fail here, so this is the check that
 #              actually stands behind a @vitejs/plugin-react-shaped bump.
+#              Same command, NOT the same preconditions: here it inherits
+#              packages/schema's generated enums from the `typecheck` step above,
+#              and in the image only that stage's own COPY+install produce them.
+#              So this does not stand behind the Dockerfile — nothing in CI
+#              builds that image. `make deploy` runs scripts/check-deploy-stage1.mjs
+#              for it.
 #
 # `--frozen-lockfile` / `npm ci`: the committed lockfile is installed exactly as
 # written, never re-resolved. That is what makes this a real check on a
