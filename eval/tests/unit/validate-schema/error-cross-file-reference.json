@@ -1,4 +1,5 @@
 {
+  "intentionally_invalid": true,
   "test": {
     "id": "ut_validate_schema_008",
     "skill": "validate-schema",

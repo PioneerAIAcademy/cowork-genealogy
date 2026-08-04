@@ -29,7 +29,7 @@ def test_timestamp_slug_is_filesystem_safe():
     assert all(c.isalnum() or c in "-_" for c in slug)
 
 
-def test_write_result_files_creates_all_four_artifacts(tmp_path: Path):
+def test_write_result_files_creates_all_artifacts(tmp_path: Path):
     runlog_dir = tmp_path / "runlogs" / "smith-parents-1850"
     result = E2eResult(
         test_id="smith-parents-1850",
@@ -44,14 +44,12 @@ def test_write_result_files_creates_all_four_artifacts(tmp_path: Path):
     paths = write_result_files(
         result=result,
         runlog_dir=runlog_dir,
-        transcript="# transcript\n",
         final_tree={"persons": [{"id": "p1"}]},
         final_research={"project": {"status": "completed"}},
         timestamp="2026-05-26_14-30-45",
     )
 
     assert paths["result"].exists()
-    assert paths["transcript"].exists()
     assert paths["tree"].exists()
     assert paths["research"].exists()
 
@@ -66,7 +64,7 @@ def test_write_result_files_creates_all_four_artifacts(tmp_path: Path):
 
 def test_write_result_files_handles_missing_tree_and_research(tmp_path: Path):
     """If the agent crashed before producing tree/research, we still get
-    the result+transcript files."""
+    the result file."""
     runlog_dir = tmp_path / "runlogs" / "crashed-test"
     result = E2eResult(
         test_id="crashed-test",
@@ -78,13 +76,11 @@ def test_write_result_files_handles_missing_tree_and_research(tmp_path: Path):
     paths = write_result_files(
         result=result,
         runlog_dir=runlog_dir,
-        transcript="",
         final_tree=None,
         final_research=None,
         timestamp="2026-05-26_14-30-45",
     )
     assert paths["result"].exists()
-    assert paths["transcript"].exists()
     assert not paths["tree"].exists()
     assert not paths["research"].exists()
 
@@ -109,7 +105,7 @@ def test_passing_run_uses_committable_run_prefix(tmp_path: Path):
         verdict="pass", stop_reason="completed",
     )
     paths = write_result_files(
-        result=result, runlog_dir=tmp_path, transcript="",
+        result=result, runlog_dir=tmp_path,
         final_tree=None, final_research=None, timestamp="2026-05-26_14-30-45",
     )
     assert paths["result"].name == "run-2026-05-26_14-30-45.json"
@@ -125,7 +121,7 @@ def test_gradeable_non_pass_run_uses_committable_run_prefix(tmp_path: Path):
             verdict=verdict, stop_reason="natural_end",
         )
         paths = write_result_files(
-            result=result, runlog_dir=tmp_path, transcript="",
+            result=result, runlog_dir=tmp_path,
             final_tree=None, final_research=None, timestamp="2026-05-26_14-30-45",
         )
         assert paths["result"].name == "run-2026-05-26_14-30-45.json", verdict
@@ -139,11 +135,10 @@ def test_skipped_run_uses_gitignored_scratch_prefix(tmp_path: Path):
         verdict="skipped", stop_reason="error",
     )
     paths = write_result_files(
-        result=result, runlog_dir=tmp_path, transcript="",
+        result=result, runlog_dir=tmp_path,
         final_tree=None, final_research=None, timestamp="2026-05-26_14-30-45",
     )
     assert paths["result"].name == "scratch_2026-05-26_14-30-45.json"
-    assert paths["transcript"].name == "scratch_2026-05-26_14-30-45.transcript.md"
 
 
 def test_write_result_files_creates_runlog_dir(tmp_path: Path):
@@ -159,7 +154,6 @@ def test_write_result_files_creates_runlog_dir(tmp_path: Path):
     write_result_files(
         result=result,
         runlog_dir=runlog_dir,
-        transcript="",
         final_tree=None,
         final_research=None,
     )
@@ -230,7 +224,7 @@ def test_axes_are_persisted_and_judge_output_is_left_alone(tmp_path: Path):
         guardrail_bypass_violations=["'same_person' was never called for 'I1'"],
     )
     paths = write_result_files(
-        result=result, runlog_dir=tmp_path, transcript="",
+        result=result, runlog_dir=tmp_path,
         final_tree={"persons": []}, final_research={},
         timestamp="2026-05-26_14-30-45",
     )
@@ -257,7 +251,7 @@ def test_a_judgeless_run_with_violations_stays_a_scratch_run(tmp_path: Path):
     )
     assert result.outcome == "fail"
     paths = write_result_files(
-        result=result, runlog_dir=tmp_path, transcript="",
+        result=result, runlog_dir=tmp_path,
         final_tree=None, final_research=None,
         timestamp="2026-05-26_14-30-45",
     )
@@ -425,3 +419,82 @@ def test_the_gate_reproduces_todays_fused_verdict_across_the_whole_corpus():
         assert outcome == data["verdict"], (
             f"{path}: gate disagrees with the pre-split fused verdict"
         )
+
+
+# ---- narration (replaced .transcript.md, 2026-08-03) ----------------------
+
+
+def test_assistant_narration_persisted(tmp_path: Path):
+    """The agent's prose between tool calls survives into the committed run
+    log, in order, anchored to its position in `tool_calls`.
+
+    This is the whole reason the transcript could be dropped: 93% of that file
+    re-rendered `tool_calls`, but the narration lived nowhere else, and
+    diagnosing a mid-loop yield (issue #1104) needs it *in position*.
+    """
+    result = E2eResult(
+        test_id="t",
+        captured_at="2026-05-26_14-30-45",
+        verdict="pass",
+        stop_reason="completed",
+        tool_calls=[
+            {"tool": "a", "args": {}, "response_summary": "x"},
+            {"tool": "b", "args": {}, "response_summary": "y"},
+        ],
+        narration=[
+            {"tool_calls_before": 0, "kind": "assistant", "text": "routing to question-selection"},
+            {"tool_calls_before": 1, "kind": "blocked", "text": "`person_read` denied"},
+            {"tool_calls_before": 2, "kind": "harness", "text": "continue-nudge 1/20"},
+        ],
+    )
+    paths = write_result_files(
+        result=result, runlog_dir=tmp_path,
+        final_tree=None, final_research=None, timestamp="2026-05-26_14-30-45",
+    )
+    payload = json.loads(paths["result"].read_text(encoding="utf-8"))
+
+    assert [n["kind"] for n in payload["narration"]] == ["assistant", "blocked", "harness"]
+    assert [n["tool_calls_before"] for n in payload["narration"]] == [0, 1, 2]
+    assert payload["narration"][0]["text"] == "routing to question-selection"
+
+
+def test_narration_is_not_interleaved_into_tool_calls(tmp_path: Path):
+    """`tool_calls` keeps its specced {tool, args, response_summary} shape and
+    its length.
+
+    Interleaving narration into it would break two shipped skills that do
+    `tc['tool']` over every entry, inflate `n_tool_calls` in the latency
+    report, and — worst — shift the *index* windows
+    find_unguarded_protected_writes() and recently_succeeded() compute, which
+    would silently change the §7 shadow-window violation rate between old and
+    new runs.
+    """
+    result = E2eResult(
+        test_id="t",
+        captured_at="2026-05-26_14-30-45",
+        verdict="pass",
+        stop_reason="completed",
+        tool_calls=[{"tool": "a", "args": {}, "response_summary": "x"}],
+        narration=[{"tool_calls_before": 0, "kind": "assistant", "text": "hi"}],
+    )
+    paths = write_result_files(
+        result=result, runlog_dir=tmp_path,
+        final_tree=None, final_research=None, timestamp="2026-05-26_14-30-45",
+    )
+    payload = json.loads(paths["result"].read_text(encoding="utf-8"))
+
+    assert len(payload["tool_calls"]) == 1
+    assert set(payload["tool_calls"][0]) == {"tool", "args", "response_summary"}
+
+
+def test_no_transcript_artifact_is_written(tmp_path: Path):
+    result = E2eResult(
+        test_id="t", captured_at="2026-05-26_14-30-45",
+        verdict="pass", stop_reason="completed",
+    )
+    paths = write_result_files(
+        result=result, runlog_dir=tmp_path,
+        final_tree=None, final_research=None, timestamp="2026-05-26_14-30-45",
+    )
+    assert "transcript" not in paths
+    assert list(tmp_path.glob("*.transcript.md")) == []

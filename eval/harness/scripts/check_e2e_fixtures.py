@@ -64,8 +64,7 @@ DRAFT_MARKER = "DRAFT PENDING ADJUDICATION"
 
 def _is_primary_runlog(name: str) -> bool:
     """True for a ``run-<ts>.json`` result file, excluding its siblings
-    (``.ann.json``, ``.final-tree.gedcomx.json``, ``.final-research.json``,
-    ``.transcript.md``)."""
+    (``.ann.json``, ``.final-tree.gedcomx.json``, ``.final-research.json``)."""
     return (
         name.startswith("run-")
         and name.endswith(".json")
