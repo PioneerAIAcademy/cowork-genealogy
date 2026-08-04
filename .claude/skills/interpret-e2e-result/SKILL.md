@@ -19,6 +19,10 @@ Each run writes three files to `eval/runlogs/e2e/<test-id>/`:
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — the ground truth for what it recovered |
 | `run-<ts>.final-research.json` | The agent's final `research.json`, including the proof conclusion it wrote |
 
+- `narration[]` is absent on `harness_schema_version: 1` runs (before
+  2026-08-03). Read the `run-<ts>.transcript.md` sibling if present, otherwise
+  `tool_calls[]` alone.
+
 This skill reads files; it does not call any MCP tools.
 
 ## Stay blind to the judge
