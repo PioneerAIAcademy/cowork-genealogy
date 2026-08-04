@@ -33,9 +33,9 @@ corroboration that decided it.
 
 What confirmed it:
 - **The record names this couple.** The 1713 baptism names Elisabeth as daughter of Petrus Jansen and Gertrudis Geerts/Gerits — matching through the father's name, the mother's patronymic, the parish (Wanroij), and the timeframe.
-- **An original + a duplicate register.** The original register is partially obscured in one filming, but a contemporary **duplicate register preserves the full entry** and confirms the same parents.
+- **Read from the original register, not just an index.** The 1713 entry was read directly from the original Wanroij DTB register image and matches the FamilySearch derivative index of the same entry. (These are one evidence unit — the same parish entry, same informant — as pre-1811 Dutch Catholic baptisms typically have no independent second record; the corroboration below is what secures the identification.)
 - **The mother's patronymic is her documented naming, not a mismatch.** "Gerits" ("daughter of Gerit") is how this exact woman already appears in her own attached 1709 marriage record ("Geertrudis **Gerits** Hoffmans"); her father is Gerrit Gerrits Hoffmans. The **Geerts godparent** on the baptism is likewise consistent with her paternal family.
 - **No competing candidate.** No second Petrus Jansen–Gertrudis couple was found baptizing in the Wanroij parish in this period, so the record cannot belong to a same-named different family.
 - **A genuinely new record.** The hint (`QL69-3BLT`) is not among the four sources already attached to the tree person — it is not a re-index of an existing source, and the 1713 baptism fills a previously empty slot between the 1711 and 1717 sons.
 
-Together — the original register, the duplicate register, the naming/patronymic and godparent consistency, and the absence of a competing same-named couple — support identifying Elisabeth as a daughter of this family. `expected-findings.json` keeps its original finding.
+Together — the original register entry, the naming/patronymic and godparent consistency, and the absence of a competing same-named couple — support identifying Elisabeth as a daughter of this family. `expected-findings.json` keeps its original finding.
