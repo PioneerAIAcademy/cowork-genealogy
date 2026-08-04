@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 from pathlib import Path
 
 _SPEC = importlib.util.spec_from_file_location(
@@ -17,6 +18,10 @@ _SPEC = importlib.util.spec_from_file_location(
 )
 check_runlogs = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(check_runlogs)
+
+# check_runlogs puts the harness dir on sys.path, so this import must follow it.
+from harness.snapshot import build_snapshot  # noqa: E402
+
 
 
 def _log_with_one_dimension() -> dict:
@@ -441,3 +446,67 @@ def test_deleted_annotation_does_not_gate(monkeypatch, capsys, tmp_path):
     rc = check_runlogs.main()
     assert rc == 0
     assert "no run logs" not in capsys.readouterr().out
+
+
+# --- Rule 2 against a schema_version 3 (digest) snapshot -------------------
+
+
+def test_rule2_passes_on_hash_snapshot_when_disk_matches(tmp_path, monkeypatch, capsys):
+    """The gate itself, exercised on the shape the harness now writes.
+
+    The cosmetic-skip tests above all use a deliberately-missing path, so none
+    of them reaches the comparison at all. Without this, a `build_snapshot`
+    emitting digests while `diff_snapshot_vs_disk` still compared raw bytes
+    would have blocked *every* skill in CI and the unit suite would have stayed
+    green — the failure mode that motivated writing it.
+    """
+    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    skill_md = tmp_path / "packages/engine/plugin/skills/s1/SKILL.md"
+    skill_md.parent.mkdir(parents=True)
+    skill_md.write_text("---\nname: s1\n---\nbody\n", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+
+    log = {"snapshot": build_snapshot(skill="s1", repo_root=tmp_path)}
+    assert log["snapshot"], "fixture built no snapshot — the test would pass vacuously"
+    assert all(re.fullmatch(r"[a-f0-9]{64}", v) for v in log["snapshot"].values())
+
+    assert check_runlogs.rule2_active("s1", log, "v1.json") == 0
+
+    capsys.readouterr()  # drop anything emitted by the passing call above
+    skill_md.write_text("---\nname: s1\n---\nEDITED\n", encoding="utf-8")
+    assert check_runlogs.rule2_active("s1", log, "v1.json") == 1
+    out = capsys.readouterr().out
+    assert "NOT active" in out
+    assert "SKILL.md" in out  # names the drifted path, not just the count
+
+
+def test_rule2_tolerates_a_cosmetic_test_edit_under_hashing(tmp_path, monkeypatch):
+    """`normalize()` runs BEFORE hashing, so stripping test.{name,description,
+    tags} still makes a cosmetic edit a no-op.
+
+    Undocumented invariant otherwise: hashing the raw bytes instead would turn
+    every rename of a test's display name into a forced paid re-run, and
+    nothing else in the suite composes build_snapshot with rule 2.
+    """
+    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    (tmp_path / "packages/engine/plugin/skills/s1").mkdir(parents=True)
+    tests_dir = tmp_path / "eval/tests/unit/s1"
+    tests_dir.mkdir(parents=True)
+    body = {
+        "test": {"id": "ut_1", "skill": "s1", "name": "original",
+                 "description": "d", "tags": ["a"], "type": "positive"},
+        "input": {"user_message": "m"},
+    }
+    (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+
+    log = {"snapshot": build_snapshot(skill="s1", repo_root=tmp_path)}
+
+    body["test"]["name"] = "RENAMED"
+    body["test"]["tags"] = ["z"]
+    (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
+    assert check_runlogs.rule2_active("s1", log, "v1.json") == 0
+
+    body["input"]["user_message"] = "SUBSTANTIVE"
+    (tests_dir / "ut_1.json").write_text(json.dumps(body), encoding="utf-8")
+    assert check_runlogs.rule2_active("s1", log, "v1.json") == 1

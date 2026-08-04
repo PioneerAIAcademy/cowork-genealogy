@@ -99,8 +99,12 @@ genealogical consequences, not just procedural ones.
 
 **Scale.** Replaying the windowed check across 99 committed runs
 (`eval/harness/e2e/guardrail_shadow_report.py`, no API spend — `tool_calls` is
-persisted per run). The table below is a whole-corpus replay; the report now
-defaults to the last 14 days, so reproduce it with `SINCE=all`:
+persisted per run). The table below is a whole-corpus replay, which is what
+the report does by default — unlike `e2e-corpus` / `e2e-latency`, which window
+to 14 days. Step 1 of #911 is a maximum-sample replay, and step 4 answers its
+staleness ("the historical corpus predates several of today's skills") with
+*new* runs rather than a date filter on old ones. Narrow with `SINCE=N` if you
+want to see how the picture moves:
 
 | window | violations | runs affected |
 |---|---|---|
