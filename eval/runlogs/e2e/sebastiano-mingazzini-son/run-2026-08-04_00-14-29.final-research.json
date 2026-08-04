@@ -1,0 +1,1059 @@
+{
+  "project": {
+    "id": "rp_sebastiano_mingazzini_son",
+    "objective": "Did Sebastiano Mingazzini and his wife Lucia Silvestrini of Castel Bolognese, Ravenna, Italy have a son named Simone, born 1860, in addition to their three known children (b. 1849-1853)?",
+    "subject_person_ids": [
+      "GQSW-B3V"
+    ],
+    "status": "completed",
+    "created": "2026-07-24",
+    "updated": "2026-08-04"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Sebastiano Mingazzini and his wife Lucia Silvestrini have a son named Simone born circa 1860 in Castel Bolognese, Ravenna, Italy?",
+      "rationale": "The research objective asks whether a fourth child named Simone (born c. 1860) existed beyond the three known children (born 1849\u20131853). This question is directly and fully testable against Italian civil registration birth records (stato civile, beginning 1866 in post-unification Emilia-Romagna) and pre-unification Catholic parish baptismal registers (battesimi) for Castel Bolognese. A birth circa 1860 sits right at the boundary of both record regimes, making a two-pronged search necessary. The question is formulated as a single, bounded fact-question with named individuals and a specific place and approximate date, satisfying GPS question-formulation criteria.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-08-04",
+      "resolution_assertion_ids": [
+        "a_007",
+        "a_008"
+      ],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-08-03"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-03",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+          "date_range": "1866-1870",
+          "repository": "FamilySearch",
+          "rationale": "Italian civil registration (stato civile) began in Castel Bolognese in 1866 (loc_001). FamilySearch collection 1947700 (Italy, Ravenna, Ravenna, Civil Registration, Tribunale, 1866-1943) holds Nati (birth) volumes for 1866, 1867, 1868, 1869, and 1870 at 100% record-searchable. Searching for all births naming Sebastiano Mingazzini as father in Castel Bolognese will: (a) establish the family corpus after 1866 \u2014 confirming the couple is in the record set; (b) identify any child named Simone born 1866-1870 (the question asks about c.1860 but the actual birth year may be off); (c) provide crucial negative evidence if no Simone appears; and (d) surface other children who, when they later married, might have filed supporting documents (allegati) referencing a pre-1866 sibling Simone. This is the indexed, free primary search and must come first.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+          "date_range": "1850-1866",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1708706 (Italy Births and Baptisms, 1806-1900) is an indexed collection of Italian birth and baptismal records spanning both the civil registration and church record eras. It may include parish baptismal extracts for Castel Bolognese circa 1860 that were microfilmed and indexed separately from the civil registration volumes. Because a birth c.1860 falls in the Papal States ecclesiastical gap (loc_001) where only parish registers exist, this collection is the best indexed source for that period. Search for 'Simone Mingazzini' with father 'Sebastiano' and mother 'Lucia Silvestrini' in Castel Bolognese, and also a surname-only search for all Mingazzini in Castel Bolognese 1855-1865 to catch variant spellings or siblings.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+          "date_range": "1850-1866",
+          "repository": "FamilySearch",
+          "rationale": "Per the record-type guide, for unindexed parish registers the full-text co-occurrence search is the highest-yield approach when indexed search stalls. The pre-1866 parish baptismal registers (battesimi) for Castel Bolognese are not name-indexed on FamilySearch (loc_001 confirmed no parish volumes in volume_search for this period). A full-text search on the co-occurrence of 'Mingazzini' and 'Silvestrini' as two separate required terms across the FamilySearch full-text corpus may surface a baptismal entry, a marriage supporting document referencing both parents, or another record that mentions the couple together. Route to search-full-text skill. Do not scope to a specific collection ID \u2014 run unscoped across the whole corpus.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "military",
+          "jurisdiction": "Ravenna, Emilia-Romagna, Italy",
+          "date_range": "1878-1884",
+          "repository": "other",
+          "rationale": "Italy instituted universal male conscription under the Legge della leva militare (1865) after unification. Men born in 1860 would be called for military enrollment (leva) circa 1880-1882. The ruoli matricolari (military conscription rolls) list each conscript by name, birth date, birthplace, and typically the names of both parents \u2014 making them direct evidence that a man named Simone Mingazzini existed and was born to Sebastiano Mingazzini. These records are held at the Archivio di Stato di Ravenna (provincial level) and may be partially available on FamilySearch, Antenati, or other Italian digital archives. Search FamilySearch for Italian military records covering Ravenna province, circa 1878-1884 enrollment year. If a Simone Mingazzini born c.1860 in Castel Bolognese is present, his parentage line in the roll will confirm or deny Sebastiano as his father.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+          "date_range": "1866-1870",
+          "repository": "FamilySearch",
+          "rationale": "Allegati matrimoni (marriage supporting documents) for 1866 \u2014 image group 004876621_007 \u2014 are full-text searchable on FamilySearch (loc_001). When residents of Castel Bolognese married after 1866, the supporting documents filed with the civil registrar typically included an estratto di battesimo (baptismal extract) documenting the bride or groom's birth, even if that birth predated civil registration. If any of Sebastiano and Lucia's older children (born 1849-1853) or a son Simone (born c.1860) married in Castel Bolognese in the late 1860s-1870s, their marriage allegati would contain a baptismal extract referencing the pre-1866 birth. Use full-text search on 'Mingazzini' in this volume. Also search allegati nati 1866-1867 (image groups M93F-TB2 and M93F-TBV) which contain supporting documents for birth registrations \u2014 parents sometimes attached church certificates documenting prior-born children when registering a new birth.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+          "date_range": "1866-1870",
+          "repository": "other",
+          "rationale": "Antenati (antenati.cultura.gov.it), the Italian National Archives portal, independently digitized civil registration records from 1866 for Castel Bolognese. It may have image coverage not duplicated in FamilySearch's collection 1947700, or name indexes built from different transcription sources. Fallback for plan item 1 if FamilySearch's indexed search returns no Mingazzini births or if birth volumes are missing pages. Use 'Search by location' for Castel Bolognese. This is a free, authoritative external repository.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+          "date_range": "1806-1900",
+          "repository": "MyHeritage",
+          "rationale": "MyHeritage hosts 'Italy Births and Baptisms, 1806-1900' (collection 30210) with independent indexing of Italian church and civil records. This collection may have baptismal entries from Castel Bolognese parish registers that were transcribed differently or separately from FamilySearch collection 1708706 (plan item 2). A search for Simone Mingazzini (or all Mingazzini) in Castel Bolognese 1855-1865 may surface a record not found on FamilySearch. Accessible at a FamilySearch center for free. Fallback for plan item 2.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-03T23:49:36.855Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mingazzini",
+        "fatherGivenName": "Sebastiano",
+        "fatherSurname": "Mingazzini",
+        "birthPlace": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+        "collectionId": "1947700",
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1933,
+      "notes": "1933 total matches \u2014 fatherGivenName filter had minimal narrowing effect; results span 1866-1943 across all Mingazzini in Ravenna province. Top results include Maria Mingazzini (1879, Castel Bolognese) and Francesco Mingazzini (1925). Results too broad to triage without birth year constraint. Retrying with birth year range 1866-1875."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-03T23:50:18.718Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mingazzini",
+        "fatherGivenName": "Sebastiano",
+        "birthPlace": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+        "birthYearFrom": 1866,
+        "birthYearTo": 1875,
+        "collectionId": "1947700",
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1755,
+      "notes": "Adding birth year range 1866-1875 did not narrow results sufficiently (1755 matches). fatherGivenName filter appears to have minimal effect in this large provincial collection. Top hit is 'Antonio Francesco Sante Minguzzi' (variant surname, Castel Bolognese 1868) \u2014 possible transcription of Mingazzini. None of the top 20 stubs confirm father Sebastiano. Pivoting to direct search for 'Simone Mingazzini' and image-group-level search in the specific 100%-indexed Nati volumes."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-03T23:50:49.281Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Simone",
+        "surname": "Mingazzini",
+        "birthPlace": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+        "collectionId": "1947700"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 32,
+      "notes": "Top result: 'Simone Mingazzini', born 1859, Castel Bolognese, Ravenna \u2014 occupation Colono. Score 4.82. Record ark:/61903/1:1:XWTT-TBL8. Second result: 'Simone Mingazzini', born 1860, Faenza (different town). Third result: 'Simone Mingazzini' on a document about Angela Bassi. Reading top record now to confirm parentage (Sebastiano Mingazzini / Lucia Silvestrini)."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-04T00:03:45.515Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mingazzini",
+        "givenName": "Simone",
+        "birthYearFrom": 1854,
+        "birthYearTo": 1864,
+        "birthPlace": "Castel Bolognese, Ravenna, Italy",
+        "fatherGivenName": "Sebastiano",
+        "motherGivenName": "Lucia",
+        "motherSurname": "Silvestrini",
+        "collectionId": "1708706"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results from Italy Births and Baptisms 1806-1900 (collection 1708706) for Simone Mingazzini born 1854-1864 in Castel Bolognese with parents Sebastiano and Lucia Silvestrini. Expected negative \u2014 loc_001 survey confirmed that pre-1866 Papal States parish registers for Castel Bolognese are not name-indexed on FamilySearch. This is a genuine nil confirming the ecclesiastical gap, not an authentication or search error."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-04T00:05:08.355Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mingazzini +Silvestrini",
+        "count": 20
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 120,
+      "notes": "Full-text co-occurrence search '+Mingazzini +Silvestrini' across full FamilySearch corpus (no collection scope). 120 total hits; first 20 examined. No baptismal record for Simone Mingazzini (born ~1859) was found, confirming the pre-1866 parish registers for Castel Bolognese are not in the AI-transcribed corpus. However, three highly relevant contextual hits found: (1) ark:/61903/3:1:3Q9M-CSQT-53D6-S \u2014 Marriage Proclamation 1875, Castel Bolognese, names Giovanni Mingazzini + Lucia Silvestrini (likely Giovanni's bann naming his mother); (2) ark:/61903/3:1:3Q9M-CSXB-RSSZ \u2014 Marriage Supplement 1886, Solarolo, names Giovanni Mingazzini + Lucia Silvestrini + Sebastiano (Giovanni's marriage in the same municipality as Simone's 1887 bann, confirming the Solarolo family connection); (3) ark:/61903/3:1:3Q9M-CSQT-53X6-W \u2014 Marriage Proclamation 1870, Castel Bolognese, names Francesca Mingazzini + Sebastiano + Lucia Silvestrini (likely Francesca's bann naming her parents). These contextually corroborate that Sebastiano Mingazzini and Lucia Silvestrini are documented as parents of multiple children in civil records. No conflicts with the Simone identification. Partial outcome: no direct Simone baptismal record found, but strong family-context corroboration found."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Italia, Ravenna, Ravenna, Stato Civile (Tribunale), 1866-1943,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XWTT-TBL8 : accessed 2026-08-03), entry for Simone Mingazzini and Angela Bassi, marriage bann, 24 March 1887, Solarolo, Ravenna.",
+      "citation_detail": {
+        "who": "Simone Mingazzini (groom) and Angela Bassi (bride)",
+        "what": "Civil marriage bann (pubblicazione di matrimonio), 24 March 1887",
+        "when_created": "24 March 1887",
+        "when_accessed": "2026-08-03",
+        "where": "FamilySearch \u2014 Italy, Ravenna, Ravenna, Civil Registration (Tribunale), 1866-1943, collection 1947700",
+        "where_within": "Entry for Simone Mingazzini and Sebastiano, 24 Mar 1887; image ark:/61903/3:1:3Q9M-CSDJ-D3G6-L"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-03",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XWTT-TBL8",
+      "notes": "Indexed transcription of original civil marriage bann record from Solarolo, Ravenna. Original image not examined \u2014 indexed facts only. Source is a derivative (FamilySearch name index); the underlying original civil register was not consulted. Father of groom indexed as 'Sebastiano' with no surname; surname Mingazzini is implied from groom's surname but not confirmed by this index entry.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S1"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587841",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Simone Mingazzini",
+      "structured_value": {
+        "given": "Simone",
+        "surname": "Mingazzini"
+      },
+      "information_quality": "primary",
+      "informant": "Simone Mingazzini",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587841",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Simone Mingazzini",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587841",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born Castel Bolognese",
+      "place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+      "information_quality": "secondary",
+      "informant": "Simone Mingazzini",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Groom stated his own birthplace; he could not have firsthand cognitive knowledge of his own birth \u2014 information is secondary even though stated by the subject himself. Birthplace likely documented by a baptismal extract (estratto di battesimo) submitted as part of the marriage allegati, but the underlying document was not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587841",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "birth year approximately 1859",
+      "date": "~1859",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Simone Mingazzini",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birth year stated in the index as 1859. Groom could not have firsthand cognitive knowledge of his own birth \u2014 secondary even when stated by the subject. Likely derived from a baptismal extract in the marriage allegati; original document not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587841",
+      "record_role": "groom",
+      "fact_type": "occupation",
+      "value": "Colono",
+      "structured_value": {
+        "occupation": "Colono"
+      },
+      "information_quality": "primary",
+      "informant": "Simone Mingazzini",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587841",
+      "record_role": "groom",
+      "fact_type": "marriage_bann",
+      "value": "marriage bann published 24 March 1887, Solarolo, Ravenna",
+      "date": "1887-03-24",
+      "date_certainty": "exact",
+      "place": "Solarolo, Ravenna, Emilia-Romagna, Italy",
+      "information_quality": "primary",
+      "informant": "civil registrar, Solarolo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Solarolo, Ravenna, Emilia-Romagna, Italy"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587841",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Sebastiano Mingazzini",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Simone Mingazzini",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Groom stated his own father's identity. Civil marriage proceeding required the parties to declare their parentage. Father's surname not indexed \u2014 'Mingazzini' is implied from groom's surname but not confirmed in the index. Original image not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587841",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Lucia Silvestrini",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Simone Mingazzini",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587843",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Sebastiano [Mingazzini \u2014 surname not indexed]",
+      "structured_value": {
+        "given": "Sebastiano",
+        "surname": "[Mingazzini]"
+      },
+      "information_quality": "primary",
+      "informant": "Simone Mingazzini",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Groom declared his father's given name as Sebastiano. No surname was indexed; 'Mingazzini' is implied from the groom's own surname but is not confirmed by the index entry. Original image not examined \u2014 the surname may or may not appear in the original document.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587843",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Simone Mingazzini",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587845",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Lucia Silvestrini",
+      "structured_value": {
+        "given": "Lucia",
+        "surname": "Silvestrini"
+      },
+      "information_quality": "primary",
+      "informant": "Simone Mingazzini",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587845",
+      "record_role": "mother_of_groom",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Simone Mingazzini",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587847",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Angela Bassi",
+      "structured_value": {
+        "given": "Angela",
+        "surname": "Bassi"
+      },
+      "information_quality": "primary",
+      "informant": "Angela Bassi",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587847",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Angela Bassi",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587847",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born Faenza",
+      "place": "Faenza, Ravenna, Emilia-Romagna, Italy",
+      "information_quality": "secondary",
+      "informant": "Angela Bassi",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride stated her own birthplace; she could not have firsthand cognitive knowledge of her own birth. Likely documented by a baptismal extract submitted in the marriage allegati.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Faenza, Ravenna, Emilia-Romagna, Italy"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587847",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "birth year approximately 1864",
+      "date": "~1864",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Angela Bassi",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birth year stated in the index as 1864. Bride could not have firsthand cognitive knowledge of her own birth \u2014 secondary even when stated by the subject.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587847",
+      "record_role": "bride",
+      "fact_type": "occupation",
+      "value": "Contadina",
+      "structured_value": {
+        "occupation": "Contadina"
+      },
+      "information_quality": "primary",
+      "informant": "Angela Bassi",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587847",
+      "record_role": "bride",
+      "fact_type": "marriage_bann",
+      "value": "marriage bann published 24 March 1887, Solarolo, Ravenna",
+      "date": "1887-03-24",
+      "date_certainty": "exact",
+      "place": "Solarolo, Ravenna, Emilia-Romagna, Italy",
+      "information_quality": "primary",
+      "informant": "civil registrar, Solarolo",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Solarolo, Ravenna, Emilia-Romagna, Italy"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587847",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Giacomo [surname not indexed]",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Angela Bassi",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride declared her father's given name as Giacomo. No surname was indexed for him. Original image not examined.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587847",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Domenica Morini",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Angela Bassi",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587849",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Giacomo [surname not indexed]",
+      "structured_value": {
+        "given": "Giacomo",
+        "surname": "[not indexed]"
+      },
+      "information_quality": "primary",
+      "informant": "Angela Bassi",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Bride declared her father's given name as Giacomo. No surname indexed. Original image not examined \u2014 surname may appear in the original document.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587849",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Angela Bassi",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587850",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Domenica Morini",
+      "structured_value": {
+        "given": "Domenica",
+        "surname": "Morini"
+      },
+      "information_quality": "primary",
+      "informant": "Angela Bassi",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:XWTT-TBL8",
+      "record_persona_id": "p_311207587850",
+      "record_role": "mother_of_bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Angela Bassi",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Record retrieved by searching specifically for 'Simone Mingazzini' in Ravenna civil registration. The groom persona IS Simone Mingazzini \u2014 name, gender, birthplace, birth year, and parentage all match the research subject. No competing candidates. Obvious self-link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex (Male) matches I1 (Simone Mingazzini). Obvious self-link \u2014 groom persona is I1.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birthplace Castel Bolognese matches the research question's expected birthplace for Simone. Obvious self-link \u2014 groom persona is I1.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth year ~1859 (from index) is consistent with 'circa 1860' in the research question. Obvious self-link \u2014 groom persona is I1.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Occupation Colono for the groom. Obvious self-link \u2014 groom persona is I1.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage bann 24 Mar 1887, Solarolo \u2014 Simone Mingazzini is named groom. Obvious self-link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Marriage bann 24 Mar 1887, Solarolo \u2014 Angela Bassi is named bride alongside Simone Mingazzini (I1). This relationship assertion bears on I2 (Angela) as the other party to the bann.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Simone Mingazzini declared himself child of Sebastiano (father_of_groom). This assertion bears on I1 as the child in the parent-child relationship.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "GQSW-B3V",
+      "confidence": "confident",
+      "rationale": "Simone Mingazzini declared his father as 'Sebastiano' \u2014 given name matches GQSW-B3V (Sebastiano Mingazzini of Castel Bolognese). Surname not indexed in the bann but implied from the groom's own surname (Mingazzini). His co-named mother is 'Lucia Silvestrini' = GQS4-95W, the known wife of GQSW-B3V. The combination of given name + co-parent identity makes this a strong composite identifier. Confident despite absent indexed surname.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Simone Mingazzini declared himself child of Lucia Silvestrini (mother_of_groom). This assertion bears on I1 as the child in the parent-child relationship.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "GQS4-95W",
+      "confidence": "confident",
+      "rationale": "Simone Mingazzini named his mother as 'Lucia Silvestrini'. Full name matches GQS4-95W exactly; 'Silvestrini' is an uncommon and distinctive surname. GQS4-95W is the known wife of Sebastiano Mingazzini (GQSW-B3V), named co-parent in a_007. Strong multi-attribute match. Confident.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_009",
+      "person_id": "GQSW-B3V",
+      "confidence": "confident",
+      "rationale": "Father_of_groom persona named 'Sebastiano' (given name; surname not indexed). GQSW-B3V is Sebastiano Mingazzini of Castel Bolognese \u2014 research subject. Given name matches; gender matches; his known wife Lucia Silvestrini (GQS4-95W) is also named in this record (a_011). Composite match is strong. Confident despite missing indexed surname.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "GQSW-B3V",
+      "confidence": "confident",
+      "rationale": "Sex (Male) for father_of_groom persona. GQSW-B3V is male. Obvious self-link given identification via a_009.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "GQS4-95W",
+      "confidence": "confident",
+      "rationale": "Mother_of_groom persona named 'Lucia Silvestrini'. GQS4-95W is Lucia Silvestrini \u2014 exact full-name match including the uncommon surname 'Silvestrini'. Her co-named husband Sebastiano (GQSW-B3V) is identified via a_009. Confident.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "GQS4-95W",
+      "confidence": "confident",
+      "rationale": "Sex (Female) for mother_of_groom persona. GQS4-95W is female. Obvious self-link given identification via a_011.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Bride persona IS Angela Bassi; I2 was minted from this persona. Obvious self-link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Sex (Female) for bride persona. I2 is Angela Bassi. Obvious self-link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birthplace Faenza for bride persona. I2 is Angela Bassi. Obvious self-link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birth year ~1864 for bride persona. I2 is Angela Bassi. Obvious self-link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Occupation Contadina for bride persona. I2 is Angela Bassi. Obvious self-link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Marriage bann 24 Mar 1887, Solarolo \u2014 Angela Bassi (I2) is the bride. Obvious self-link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage bann 24 Mar 1887, Solarolo \u2014 this assertion from the bride's persona also bears on the groom Simone Mingazzini (I1) as the other party to the bann.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Angela Bassi declared herself child of Giacomo (father_of_bride). This assertion bears on I2 as the child.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Angela Bassi declared her father as 'Giacomo' (no surname indexed). I3 was minted from the father_of_bride persona \u2014 this is the obvious self-link for the newly created stub person. The co-named mother is Domenica Morini (I4), I3's known partner in this record.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_020",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Angela Bassi declared herself child of Domenica Morini (mother_of_bride). This assertion bears on I2 as the child.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_020",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Angela Bassi declared her mother as 'Domenica Morini'. I4 was minted from the mother_of_bride persona. Obvious self-link for the newly created stub person.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_021",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Father_of_bride persona named 'Giacomo' (no surname indexed). I3 minted from this persona. Obvious self-link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_022",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Sex (Male) for father_of_bride persona. I3 is Giacomo. Obvious self-link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_023",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Mother_of_bride persona named 'Domenica Morini'. I4 minted from this persona. Obvious self-link.",
+      "created": "2026-08-03"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_024",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Sex (Female) for mother_of_bride persona. I4 is Domenica Morini. Obvious self-link.",
+      "created": "2026-08-03"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "No second Sebastiano Mingazzini + Lucia Silvestrini couple existed in the Castel Bolognese / Ravenna area that could serve as an alternative candidate for the groom's declared parents in the 1887 Solarolo marriage bann.",
+      "status": "active",
+      "supporting_assertion_ids": [
+        "a_009",
+        "a_011"
+      ],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "A full-text co-occurrence search '+Mingazzini +Silvestrini' across the FamilySearch corpus (log_005) returned 120 results; the first 20 examined contained no alternative Sebastiano+Lucia Silvestrini couple. The remaining ~100 results are unreviewed \u2014 a residual uncertainty acknowledged in ps_001. The combination of surname Mingazzini, wife surname Silvestrini (uncommon/distinctive), and the Castel Bolognese birthplace is highly specific. No conflict entered for this hypothesis. Logged per gps-mentor ev_001 advisory to place the elimination-of-alternatives claim on a structural footing."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_011"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Three search strategies were executed: (1) FamilySearch collection 1947700 (Italy, Ravenna, Ravenna, Civil Registration, Tribunale, 1866-1943), the indexed civil registration corpus for Ravenna province \u2014 yielded the marriage bann for Simone Mingazzini, dated 24 March 1887, Solarolo, directly naming his parents (pli_001, log_003, positive). (2) FamilySearch collection 1708706 (Italy Births and Baptisms 1806-1900) for a baptismal record of Simone Mingazzini born 1854-1864 in Castel Bolognese \u2014 zero results (pli_002, log_004, negative), confirming the loc_001 finding that pre-1866 parish registers for Castel Bolognese are not name-indexed online. (3) Full-text co-occurrence search '+Mingazzini +Silvestrini' across the entire FamilySearch corpus \u2014 120 results, first 20 examined; no Simone baptismal record found, but contextual corroboration found in marriage records for siblings Francesca (1870, Castel Bolognese) and Giovanni (1875 and 1886, Castel Bolognese and Solarolo) naming the same parents (pli_003, log_005, partial). Unsearched sources that could corroborate or advance to proved: (a) pre-1866 parish baptismal registers for Castel Bolognese, held at the Archivio Diocesano di Imola (not consulted); (b) military conscription rolls (ruoli matricolari) for Ravenna province, Archivio di Stato di Ravenna, which would record Simone born 1859 circa 1879-1881 and list his parents (not consulted). Research exhaustiveness not formally declared because these repositories remain unsearched.",
+      "narrative_markdown": "## Proof Summary: Simone Mingazzini, Son of Sebastiano Mingazzini and Lucia Silvestrini\n\n**Research question:** Did Sebastiano Mingazzini and his wife Lucia Silvestrini have a son named Simone, born circa 1860 in Castel Bolognese, Ravenna, Italy?\n\n**Conclusion:** The preponderance of available evidence strongly suggests that Simone Mingazzini, born approximately 1859 in Castel Bolognese, was a son of Sebastiano Mingazzini (tree person GQSW-B3V) and Lucia Silvestrini (tree person GQS4-95W).\n\n---\n\n### Primary Evidence\n\nThe central document is an indexed transcription of a civil marriage bann (*pubblicazione di matrimonio*) dated 24 March 1887, published in Solarolo, Ravenna: \"Italia, Ravenna, Ravenna, Stato Civile (Tribunale), 1866-1943,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XWTT-TBL8 : accessed 2026-08-03), entry for Simone Mingazzini and Angela Bassi, marriage bann, 24 March 1887, Solarolo, Ravenna.\n\nThis source is a **derivative** record \u2014 a FamilySearch name-index transcription of the original civil register. The original image (ark:/61903/3:1:3Q9M-CSDJ-D3G6-L) was not examined; all facts below derive from the indexed transcription only.\n\nThe bann identifies the groom as **Simone Mingazzini**, born approximately 1859 in Castel Bolognese, occupation *Colono*, son of **Sebastiano** [Mingazzini \u2014 surname not indexed, implied from groom's surname] and **Lucia Silvestrini**.\n\nUnder the Italian *Codice Civile* of 1865, parties to a civil marriage proceeding were legally required to declare their parentage under oath to the registrar (*ufficiale dello stato civile*), and the allegati (supporting documents) typically included a baptismal extract. The groom's declaration of parentage was therefore both legally sworn and subject to registrar verification \u2014 though the underlying allegato was not examined.\n\n**Identity analysis \u2014 five matching identifiers:**\n\n1. **Given name:** \"Simone\" \u2014 matches the child named in the research question.\n2. **Surname:** \"Mingazzini\" \u2014 matches the father's family name.\n3. **Birth year:** approximately 1859 \u2014 consistent with \"circa 1860\" in the research question (the index records birth year, likely derived from a baptismal extract).\n4. **Birthplace:** Castel Bolognese, Ravenna \u2014 exact match with the expected birthplace.\n5. **Mother's surname:** \"Silvestrini\" \u2014 an uncommon and distinctive surname, exactly matching the known wife of Sebastiano Mingazzini (GQS4-95W in the tree).\n\nThe father's given name \"Sebastiano\" matches GQSW-B3V. No alternative candidate is known \u2014 no other Sebastiano Mingazzini with a wife named Lucia Silvestrini is documented in the Castel Bolognese area.\n\n**Source classification:** The birth-year and birthplace assertions are classified as **secondary information** \u2014 the groom cannot have firsthand cognitive knowledge of his own birth \u2014 reported by himself as informant, with likely derivation from a baptismal extract submitted with the allegati. The parentage assertion (\"son of Sebastiano and Lucia Silvestrini\") is classified as **primary information** \u2014 the groom himself is the informant, stating facts within his personal knowledge under legal oath. The evidence type for all parentage and identity facts is **direct** \u2014 the record explicitly names the persons and relationships sought.\n\n**Limitation:** The father's surname was not indexed in the bann. \"Mingazzini\" is implied from the groom's own surname and from the research context, but is not confirmed from the indexed transcription. Examination of the original image (ark:/61903/3:1:3Q9M-CSDJ-D3G6-L) would confirm whether the father's full surname appears in the original document.\n\n---\n\n### Corroborating Context\n\nA full-text co-occurrence search for \"+Mingazzini +Silvestrini\" across the FamilySearch corpus (log_005) identified three records that contextualize the family:\n\n- **1870 Marriage Proclamation, Castel Bolognese** (ark:/61903/3:1:3Q9M-CSQT-53X6-W): names \"Francesca Mingazzini,\" \"Sebastiano,\" and \"Lucia Silvestrini\" \u2014 likely the marriage bann for Francesca Mingazzini (GQSW-TJW), listing her parents as Sebastiano and Lucia Silvestrini.\n- **1875 Marriage Proclamation, Castel Bolognese** (ark:/61903/3:1:3Q9M-CSQT-53D6-S): names \"Giovanni Mingazzini\" and \"Lucia Silvestrini.\"\n- **1886 Marriage Supplement, Solarolo** (ark:/61903/3:1:3Q9M-CSXB-RSSZ): names \"Giovanni Mingazzini,\" \"Lucia Silvestrini,\" and \"Sebastia[no]\" \u2014 a sibling's civil marriage record from the same municipality where Simone published his 1887 bann, one year earlier.\n\nThese records were not extracted (they fall outside q_001's scope), but they corroborate that Sebastiano Mingazzini and Lucia Silvestrini are documented as parents of multiple children in Ravenna civil records, and that the family had genuine connections to Solarolo.\n\n---\n\n### Negative Findings\n\nA search of FamilySearch collection 1708706 (Italy Births and Baptisms 1806-1900) for Simone Mingazzini born 1854\u20131864 in Castel Bolognese returned zero results (log_004). This confirms the locality-guide finding (loc_001) that pre-1866 parish baptismal registers for Castel Bolognese \u2014 which would be the primary record type for a birth circa 1859, in the Papal States ecclesiastical gap before Italian civil registration reached this area \u2014 are not name-indexed in the FamilySearch corpus. The absence is a research gap, not evidence of non-existence.\n\n---\n\n### Research Scope and Limitations\n\nThe following sources remain unsearched:\n\n- **Pre-1866 parish baptismal registers** (*Libri dei battesimi*) for the parish of Castel Bolognese, held at the Archivio Diocesano di Imola. These would be the original record of Simone's birth and would directly confirm his parents.\n- **Military conscription rolls** (*ruoli matricolari*) for Ravenna province, held at the Archivio di Stato di Ravenna. Men born in 1859 were enrolled circa 1879\u20131881; these rolls list each conscript's birth date, birthplace, and parents' names, and would independently corroborate the parentage.\n\nBecause these repositories remain unsearched, research exhaustiveness has not been formally declared.\n\n---\n\n### Tier Assessment\n\nThe conclusion is assessed at **probable** rather than proved for four reasons: (1) only one formal source was found; (2) that source is a derivative record, not the original civil register; (3) the pre-1866 baptismal register was not consulted; and (4) research exhaustiveness has not been formally declared. The five matching identifiers \u2014 including the distinctive surname \"Silvestrini\" \u2014 and the absence of any conflicting evidence support a strong probable finding. Consultation of the original image (ark:/61903/3:1:3Q9M-CSDJ-D3G6-L), the parish baptismal registers at the Archivio Diocesano di Imola, or the military conscription rolls at the Archivio di Stato di Ravenna would advance this conclusion toward proved."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-08-04T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-08-04T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+      "for_place": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+      "time_period": "1850-1870",
+      "jurisdictions": [
+        {
+          "name": "Castel Bolognese, Ravenna, Emilia-Romagna, Italy",
+          "date_range": "+1861/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1947700",
+          "title": "Italy, Ravenna, Ravenna, Civil Registration (Tribunale), 1866-1943",
+          "date_range": "1866-1943"
+        },
+        {
+          "id": "1708706",
+          "title": "Italy Births and Baptisms",
+          "date_range": "1806-1900"
+        }
+      ],
+      "quirks": [
+        "CRITICAL: A birth circa 1860 falls entirely in the Papal States ecclesiastical gap. Civil registration in Castel Bolognese did NOT exist between 1816 and 1865. The only source for a 1860 birth is the Catholic parish baptismal register (battesimi). FamilySearch has NO indexed or browsable parish registers for Castel Bolognese in this period; no such volumes appeared in volume_search. Parish records for this period are held at the Diocesan Archive of Imola (the diocese covering Castel Bolognese historically) or possibly at the local parish \u2014 not online.",
+        "Napoleonic civil registration (1806-1815) exists as browse-only images: 'Italia, Ravenna, Castel Bolognese. Stato civile' at FamilySearch Catalog (catalog 3026019), held at Archivio di Stato di Bologna, sez. Imola \u2014 does not cover the 1850-1865 period.",
+        "Post-unification civil registration begins 1866. FamilySearch has Nati (birth) volumes for 1866, 1867, 1868, 1869, and 1870 at 100% record-searchable (name-indexed): search via collection 1947700 (Italy, Ravenna, Ravenna, Civil Registration, Tribunale, 1866-1943). Image groups: 004877944_073 (1866), _074 (1867), _075 (1868), _076 (1869), _077 (1870).",
+        "Marriage allegati (supporting documents, 'allegati matrimoni') for 1866+ contain pre-marriage extracts \u2014 if any Mingazzini child married after 1866, the bundle may include an estratto di battesimo (baptismal extract) documenting a pre-1866 birth. The 1866 allegati matrimoni volume (004876621_007) is full-text searchable.",
+        "Decennial name indexes (indici decennali) for births, deaths, and marriages 1866-1875 are browse-only (0% indexed, not full-text searchable) \u2014 image groups 007847845_054 (Nati), _064 (Morti), _059 (Matrimoni). These cover only the post-1866 period.",
+        "Antenati (antenati.cultura.gov.it) provides online civil registration images and name indexes from 1866 \u2014 it does NOT cover the 1816-1865 ecclesiastical period. Use 'Search by location' for Castel Bolognese.",
+        "Records are in Italian. Post-1866 civil registration uses standard printed forms; pre-1866 church records are handwritten Italian or Latin. FamilySearch wiki provides document translation guides for both periods.",
+        "Italian naming customs: paternal grandfather's name was commonly given to the first son, maternal grandfather's name to the second. A son named Simone could indicate a grandfather named Simone. This is context for evaluating any found record.",
+        "The FamilySearch wiki page for Castel Bolognese lists 'Church Records' and 'Census' sections but provides NO specific sources under either heading \u2014 both sections are empty as of the survey date."
+      ],
+      "guide_markdown": "## Castel Bolognese, Ravenna, Emilia-Romagna, Italy \u2014 Locality Guide (1850\u20131870)\n\n### Jurisdictional Context\nCastel Bolognese was part of the **Papal States** until 1860, when it joined the Kingdom of Sardinia; it became part of the unified **Kingdom of Italy** in 1861. This transition is the single most important fact for record availability in this period: **civil (stato civile) registration did not exist** in Castel Bolognese between 1816 and 1865. A birth in 1860 was recorded only in the Catholic parish baptismal register (*battesimi*).\n\n### Record Regimes, 1850\u20131870\n\n#### Pre-1866 (1850\u20131865): Ecclesiastical Records Only\n- **Primary source**: Catholic parish baptismal register (*battesimi*) kept by the local parish church in Castel Bolognese, under the Diocese of Imola.\n- **FamilySearch availability**: NONE found. No parish register volumes for Castel Bolognese appeared in volume_search for this period. The FamilySearch wiki page section for 'Church Records' for Castel Bolognese is empty.\n- **Where to look**: Diocesan Archive of Imola (*Archivio Diocesano di Imola*) or the local parish directly. Antenati does NOT cover this period.\n- **Napoleonic gap note**: Napoleonic civil registration (1806\u20131815) is available as browse-only images at FamilySearch Catalog (catalog 3026019, held at Archivio di Stato di Bologna, sez. Imola) \u2014 but this does not extend to 1860.\n\n#### Post-1866: Civil Registration \u2014 Well Digitized\n- **Italy, Ravenna, Ravenna, Civil Registration (Tribunale), 1866\u20131943** (FS collection 1947700) \u2014 **indexed & images**.\n  - Nati (births): 1866\u20131870 volumes all at **100% record-searchable** (name-indexed). Searchable via `record_search`.\n  - Matrimoni (marriages): 1866\u20131870 at 100% indexed.\n  - Morti (deaths): 1866\u20131870 at 60\u201386% indexed.\n- **Registri dello stato civile di Castel Bolognese (Ravenna) 1866\u20131929** (catalog 1315917) \u2014 images only.\n- **Italia, Ravenna, Castel Bolognese. Stato civile, Tribunale: 1869\u20131945** (catalog 2519721) \u2014 images.\n- **Antenati** (antenati.cultura.gov.it): civil registration images and indexes from 1866; search by location for Castel Bolognese.\n\n#### Allegati (Supporting Documents)\nMarriage and birth supporting document bundles (*allegati*) for 1866\u20131867 are digitized but largely browse-only (some full-text searchable). The 1866 *allegati matrimoni* (M93F-TBK) is **full-text searchable**. These bundles may contain baptismal extracts (*estratti di battesimo*) for children born before 1866 when they later married.\n\n#### Decennial Indexes (Indici Decennali)\nBrowse-only name indexes for births, deaths, and marriages 1866\u20131875 exist (image groups 007847845_054, _064, _059) but are not name-indexed or full-text searchable.\n\n### External Resources\n- **Antenati** (antenati.cultura.gov.it) \u2014 Italian National Archives civil registration portal, 1866+\n- **Italy Births and Baptisms 1806\u20131900** (FS collection 1708706 / MyHeritage) \u2014 may include church-extracted baptism records\n- **italianparishrecords.org** \u2014 external index of Italian parish records\n- **FamilySearch Research Guide for Italy** (BYU PDF) \u2014 covers ecclesiastical record strategy\n\n### Key Research Strategy Note\nFor a birth **circa 1860** in Castel Bolognese: the direct record (baptismal register) is not currently online. The practical research path is: (1) search the 1866\u20131870 indexed civil births for any Mingazzini births listing Sebastiano and Lucia as parents \u2014 this establishes the family corpus and may bracket the gap; (2) search marriage allegati for older Mingazzini children marrying after 1866, whose supporting documents may include a baptismal extract for a c. 1860 birth; (3) for a definitive answer on a pre-1866 birth, the Diocesan Archive of Imola must be consulted directly.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Italy_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Italy_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Italy_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Italy_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-03"
+    }
+  ]
+}
