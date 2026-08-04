@@ -397,6 +397,7 @@ Rules that sharpen the tree:
   `informant_proximity: witness`, `information_quality: primary` (see
   the census informant table below). Name, age, birthplace, and
   relationship on the same record remain governed by the rule above.
+
 **`informant` and `informant_proximity`** — required on every assertion,
 never omitted. **`informant_proximity`** ∈ `self` | `witness` |
 `household_member` | `family_not_present` | `researcher` |
@@ -496,6 +497,9 @@ the "who answered" record that would justify it.
   names on the license are `direct` evidence — the party stated them.
   A marriage-record party reporting their OWN parents' names is
   proximity `self` (`family_not_present` is death-certificate doctrine).
+  Information quality is `primary` — the party has firsthand, ongoing
+  knowledge of who their own parents are, the same basis as their
+  occupation below, not the death-certificate secondhand-relay case.
 - **Officiant / clerk:** informant for the marriage event itself (date,
   place, ceremony). Proximity `official_duty` (officiant) or `witness`
   (clerk who recorded the signed return).
