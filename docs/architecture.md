@@ -1171,6 +1171,7 @@ tools — what happens after you grant one). And
 | **Nothing treats "the writer tools are absent" as a halt condition.** | Three runs once made zero MCP calls, wrote `research.json` raw 33 times, and burned their full budget. The raw-write path is closed since #984/#989; the silent failure is not. | #941 |
 | **A `Skill()` callee can bind toolless** in the unit-harness path. | A delegated skill runs with zero tools. | #1012 |
 | **Nothing exercises the live Agent SDK path.** Every harness test monkeypatches `run_skill`, so no gate constructs real SDK options or loads the plugin. | An SDK-options or plugin-loading break passes `make test-all` green and surfaces only on a paid `make eval-skill` run. | #1207 |
+| **Nothing checks that the deployed Apps Script's GitHub write works.** The script is edited in Google's console; CI cannot reach it. `doGet` reports `SCRIPT_VERSION`, so `curl <exec-url>` catches a stale or unpublished copy — but an ungranted `script.external_request` scope or a bad PAT still cannot be seen without submitting. | A submission produces a zip and no issue, and the client still returns `ok:true`. | Version check + smoke test in `apps/electron/server/feedback-endpoint/README.md`, run after every console edit |
 
 ### If you're asked to…
 

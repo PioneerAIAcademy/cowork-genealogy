@@ -143,7 +143,8 @@ mocks (no E2B/Anthropic/OAuth needed).
   **Creating the issue is the whole job: do not call the Projects API yourself**
   (no `gh project` commands, no `addProjectV2ItemById`).
   `.github/workflows/add-to-project.yml` fires on `issues: opened` and puts the
-  card in Backlog. A `gh` token without the `project` scope — the default after
+  card in Backlog; the one exception is the `feedback` label, which routes to
+  Ready. A `gh` token without the `project` scope — the default after
   `gh auth login` — fails a board write *while still creating the issue*, which
   looks like success. Reference the number in the PR body.
 

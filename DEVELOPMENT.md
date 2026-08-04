@@ -149,7 +149,8 @@ gh issue create --label developer --title "…" --body "…"
   If you'd actually do it given a free afternoon, it isn't icebox.
 - **Creating the issue is all you do — the board takes care of itself.** A CI
   workflow (`add-to-project.yml`) adds the card to Backlog the moment the issue
-  opens, and the lead's `/fill-ready` pass moves it from there. Don't run
+  opens — the one exception is the `feedback` label, which routes to Ready — and
+  the lead's `/fill-ready` pass moves it from there. Don't run
   `gh project` commands to place it yourself: a `gh` token without the `project`
   scope (the default from `gh auth login`) fails a board write *while still
   creating the issue*, which looks like it worked.
