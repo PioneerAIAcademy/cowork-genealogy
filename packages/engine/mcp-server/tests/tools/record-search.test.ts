@@ -780,6 +780,53 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(out.rankingError).toBeUndefined();
   });
 
+  it("sets rankingSkipped when projectPath is supplied without subjectId (#1073)", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    // Both host-side features are gated on subjectId, so a projectPath search
+    // that omits it silently skips them — surface that.
+    expect(out.rankingSkipped).toBeTruthy();
+    expect(out.rankingSkipped).toContain("subjectId");
+    expect(out.ranked).toBeUndefined();
+    expect(out.rankingError).toBeUndefined();
+  });
+
+  it("emits rankingSkipped BEFORE results so it survives runlog head-truncation (#1073)", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+    const keys = Object.keys(out);
+    expect(keys.indexOf("rankingSkipped")).toBeGreaterThanOrEqual(0);
+    expect(keys.indexOf("rankingSkipped")).toBeLessThan(keys.indexOf("results"));
+  });
+
+  it("does not set rankingSkipped when subjectId is supplied", async () => {
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [{ id: "I1", names: [{ preferred: true, given: "A", surname: "B" }], facts: [{ type: "Birth", date: "1900", place: "X" }] }],
+      }),
+      "utf-8",
+    );
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" });
+
+    expect(out.rankingSkipped).toBeUndefined();
+  });
+
+  it("does not set rankingSkipped for a subject-less survey (no projectPath)", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln" });
+
+    // A broad survey legitimately has no subject — no nudge.
+    expect(out.rankingSkipped).toBeUndefined();
+  });
+
   it("drops treeMatches only when it is empty", async () => {
     const noHints = JSON.parse(JSON.stringify(lincolnEntry()));
     delete noHints.hints;

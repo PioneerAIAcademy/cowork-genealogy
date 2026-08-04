@@ -107,7 +107,7 @@ function placeParts(place: string): string[] {
  * predicate needs: its empty-fallback makes a country-only place look like any
  * other single-token place.
  */
-export function isSubCountryPlace(place: string | undefined): boolean {
+export function isSubCountryPlace(place: string | undefined): place is string {
   if (!place) return false;
   return placeParts(place).some((part) => !COUNTRY_TERMS.has(part));
 }

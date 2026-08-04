@@ -244,6 +244,7 @@ Strict surname + birth-place match:
 | `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). |
 | `results` | RecordSearchResult[] | The ranked results, best-scoring first. |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
+| `rankingSkipped` | string \| undefined | Present **only** when `projectPath` was supplied but `subjectId` was not. Both host-side features — match ranking and the marriage jurisdiction hints — are gated on `subjectId`, so without it they silently do nothing; this names the skip and how to enable it. Advisory nudge only: never an error, never changes `results`, and neither rejects the call nor blocks a downstream step. Fires on `projectPath && !subjectId` and nothing else — no tree read, no heuristic about whether the search "looked like" a tree-person lookup. Emitted **before** `results` in the response so it survives the e2e runlog's head-truncation. |
 
 ### `jurisdictionHints` — where else to look when a marriage search does not find the subject
 
@@ -294,7 +295,7 @@ read a run with low coverage as evidence about the trigger width.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `searchedPlace` | string \| undefined | Echo of the `marriagePlace` searched. |
+| `searchedPlace` | string | The place that was searched — the caller's `marriagePlace`, or `recordSubdivision` + `recordCountry` joined when `marriagePlace` is absent (the caller usually scopes with the latter pair; see "Place matching" below). Always present when `jurisdictionHints` is: `isSubCountryPlace()` gates the hint, so it cannot fire without a scoped place. |
 | `candidates` | JurisdictionCandidate[] | Other places these people are on record as having been, ordered by distance from the search's date window (see below). **Capped at 8** — the tail of a distance-ordered list is its least useful part, and this lands in a response whose assembly elsewhere strips `gedcomx` and hoists `collectionTitle` for context economy. The jurisdiction already searched is excluded, including differently-spelled and **narrower** forms of it; a **broader** place is kept, since a wider search reaches the other localities inside it. |
 | `note` | string | Plain-language statement of the rule, so the reason travels with the data — including that these are places to look, never evidence. |
 

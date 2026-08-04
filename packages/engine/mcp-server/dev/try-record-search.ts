@@ -104,6 +104,14 @@ function parseArgs(argv: string[]): RecordSearchInput {
       case "--offset":
         input.offset = parseInt(argv[++i], 10);
         break;
+      case "--project":
+        // projectPath enables host-side staging + ranking. Pair with --subject
+        // to rank; omit --subject to exercise the rankingSkipped nudge (#1073).
+        input.projectPath = argv[++i];
+        break;
+      case "--subject":
+        input.subjectId = argv[++i];
+        break;
       case "--help":
       case "-h":
         usage();

@@ -544,6 +544,23 @@ export async function recordSearchTool(
     returned: results.length,
     offset: data.index ?? input.offset ?? 0,
     hasMore: data.links?.next?.href != null,
+    // #1073: a projectPath search that omits subjectId silently skips BOTH
+    // host-side features (match ranking + marriage jurisdiction hints), which
+    // are gated on subjectId below. Surface the skip so the miss is visible in
+    // the response and the e2e runlog. Placed BEFORE `results` on purpose: the
+    // runlog head-truncates the response, so a field after the large `results`
+    // array is invisible. Fires on `projectPath && !subjectId` and nothing else
+    // — no tree read, no heuristic about whether the search "looked like" a
+    // tree-person lookup (that biases the very measurement this signal exists
+    // to produce).
+    ...(input.projectPath && !input.subjectId
+      ? {
+          rankingSkipped:
+            "ranking and marriage jurisdiction hints were skipped: no subjectId " +
+            "supplied. Pass subjectId (the tree person you are searching for) to " +
+            "enable host-side match-ranking and the marriage jurisdiction hints.",
+        }
+      : {}),
     results,
   };
 

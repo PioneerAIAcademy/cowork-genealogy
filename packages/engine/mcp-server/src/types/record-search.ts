@@ -265,6 +265,13 @@ export interface RecordSearchToolResponse {
   // succeeded, and `results` is usable unranked. Ranking degrading must never
   // take the search down with it (the reason the two stayed separate tools).
   rankingError?: string;
+  // Set only when `projectPath` was supplied but `subjectId` was not (#1073).
+  // Both host-side features — match ranking and the marriage jurisdiction
+  // hints — are gated on `subjectId`, so without it they silently do nothing.
+  // This names the skip and how to enable it. Purely a nudge; it neither
+  // rejects the call nor changes `results`. Emitted BEFORE `results` in the
+  // response so it survives the e2e runlog's head-truncation.
+  rankingSkipped?: string;
   // Present only when `projectPath` was supplied. The host-staged handle to pass
   // to research_log_append as `stagedResultsRef`; null for a nil search or when
   // staging failed (see `stagingError`).
@@ -281,7 +288,9 @@ export interface RecordSearchToolResponse {
   // a prompt to try the others, not a finding. Advisory only; nothing downstream
   // depends on it.
   jurisdictionHints?: {
-    searchedPlace?: string;
+    // Always a string when jurisdictionHints is present: isSubCountryPlace()
+    // (a type guard) gates the hint, so it cannot fire without a scoped place.
+    searchedPlace: string;
     candidates: JurisdictionCandidate[];
     note: string;
   };
