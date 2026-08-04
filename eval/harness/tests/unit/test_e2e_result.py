@@ -20,6 +20,21 @@ from e2e.result import (
     timestamp_slug,
     write_result_files,
 )
+from e2e.runlog_selection import all_result_jsons
+
+
+def committed_e2e_runlogs() -> list[tuple[Path, dict]]:
+    """Every committed e2e run log, paired with its parsed payload.
+
+    Discovery goes through `runlog_selection.all_result_jsons` — the same
+    filter every corpus reader uses — so a change to what counts as a
+    committed result reaches these tests instead of leaving a private glob
+    behind to drift.
+    """
+    paths = all_result_jsons()
+    if not paths:
+        pytest.skip("no committed e2e runlogs in this checkout")
+    return [(p, json.loads(p.read_text(encoding="utf-8"))) for p in paths]
 
 
 def test_timestamp_slug_is_filesystem_safe():
@@ -361,15 +376,9 @@ def test_the_known_detector_era_runlogs_are_still_identified():
     here fails on an unrelated PR (it did, on this one). What must not change
     is that these six stop being recognized.
     """
-    runlogs = Path(__file__).resolve().parents[3] / "runlogs" / "e2e"
-    if not runlogs.is_dir():
-        pytest.skip("no committed e2e runlogs in this checkout")
-
     fingerprinted = set()
-    for path in runlogs.glob("*/run-*.json"):
-        if ".final-" in path.name or path.name.endswith(".ann.json"):
-            continue
-        if detector_era_runlog(json.loads(path.read_text(encoding="utf-8"))):
+    for path, data in committed_e2e_runlogs():
+        if detector_era_runlog(data):
             fingerprinted.add(path.parent.name)
 
     known_detector_era = {
@@ -395,14 +404,7 @@ def test_no_pre_v1_runlog_is_reported_compliance_pass():
     test is about. Skip those here rather than asserting something false
     about them.
     """
-    runlogs = Path(__file__).resolve().parents[3] / "runlogs" / "e2e"
-    if not runlogs.is_dir():
-        pytest.skip("no committed e2e runlogs in this checkout")
-
-    for path in runlogs.glob("*/run-*.json"):
-        if ".final-" in path.name or path.name.endswith(".ann.json"):
-            continue
-        data = json.loads(path.read_text(encoding="utf-8"))
+    for path, data in committed_e2e_runlogs():
         if "harness_schema_version" in data:
             continue
         _verdict, compliance, _outcome = axes_from_runlog(data)
@@ -429,14 +431,7 @@ def test_the_gate_reproduces_todays_fused_verdict_across_the_pre_v1_corpus():
     `test_v1_plus_runlogs_have_an_internally_consistent_outcome` below,
     instead of no proof at all.
     """
-    runlogs = Path(__file__).resolve().parents[3] / "runlogs" / "e2e"
-    if not runlogs.is_dir():
-        pytest.skip("no committed e2e runlogs in this checkout")
-
-    for path in runlogs.glob("*/run-*.json"):
-        if ".final-" in path.name or path.name.endswith(".ann.json"):
-            continue
-        data = json.loads(path.read_text(encoding="utf-8"))
+    for path, data in committed_e2e_runlogs():
         if "harness_schema_version" in data:
             continue
         _verdict, _compliance, outcome = axes_from_runlog(data)
@@ -463,15 +458,8 @@ def test_v1_plus_runlogs_have_an_internally_consistent_outcome():
     against its return value would compare the fallback to itself and pass
     unconditionally on exactly the malformed log this test exists to catch.
     """
-    runlogs = Path(__file__).resolve().parents[3] / "runlogs" / "e2e"
-    if not runlogs.is_dir():
-        pytest.skip("no committed e2e runlogs in this checkout")
-
     checked = 0
-    for path in runlogs.glob("*/run-*.json"):
-        if ".final-" in path.name or path.name.endswith(".ann.json"):
-            continue
-        data = json.loads(path.read_text(encoding="utf-8"))
+    for path, data in committed_e2e_runlogs():
         if "harness_schema_version" not in data:
             continue
         verdict, compliance, _derived = axes_from_runlog(data)
