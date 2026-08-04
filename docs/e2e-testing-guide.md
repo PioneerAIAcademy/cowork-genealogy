@@ -384,6 +384,7 @@ for the Research Viewer (`make electron`, Windows: `eval\Viewer.bat`).
 | `tool_cap` / `max_turns` | It may be looping — look for repeated tool calls near the end |
 | `cost_cap` | Hit the per-run cost limit |
 | `error` | SDK or harness exception; check `result.error` |
+| `mcp_unavailable` | **The genealogy tools were not in the session — an environment failure, not your fixture. Re-run; do not re-research the case.** You will not find a run log for it: this one writes no files. Run `make e2e-preflight` for the server's own error text |
 
 Full field reference: spec §8.
 

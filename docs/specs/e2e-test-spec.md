@@ -480,12 +480,60 @@ Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
    | Cost cap | `cost_cap` | Final cost > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
    | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress) — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
+   | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` consecutive no-match `ToolSearch` results while zero `mcp__` calls have succeeded. **This run writes no files — see the retention rule below.** |
 
    The `caps.*` values are the harness defaults in
    `eval/harness/e2e/orchestrator.py` (`FixtureCaps`) — the same for every
    fixture, not authored per-fixture. A turn-cap hit the SDK reports as an
    error result (rather than a clean `max_turns`) is reclassified to
    `max_turns`.
+
+   **`mcp_unavailable` writes no run-log files at all** — the harness prints the
+   error and exits non-zero (`2`, matching the other "this run never happened"
+   exits, not `1` = "a test failed"). None of §8's artifacts is written, no
+   `E2eResult` is constructed, and **the judge is never called**. "This run never
+   happened."
+
+   *Why this retention rule, and not the two obvious alternatives* (settled
+   2026-08-02; issue #941). Every compliance, cost and recall figure in this repo
+   is computed over `eval/runlogs/`, so what a failed run leaves behind is a
+   load-bearing decision:
+
+   - *Rejected — write the log and mark it ungradeable.* This needs
+     `check_e2e_fixtures.py`'s grading exemption widened from *treeless* to
+     *treeless-or-`mcp_unavailable`* **and** a `corpus_report.py` filter: two
+     extra sites where a miss silently skews every number in the repo. Writing
+     nothing needs neither, which is precisely why it was chosen.
+   - *Rejected — treat it like any other run.* That books an environment failure
+     as a genealogical `fail`, which is the confusion this stop reason exists to
+     end, and still pays for an opus judge call. Note the judge's own
+     `final_tree is None` guard does **not** catch this: `build_workspace` copies
+     the fixture's starting tree into the workspace, so an aborted run *has* a
+     tree.
+   - *Cost accepted:* no transcript survives for forensics. Root-causing **why** a
+     server fails to start is deliberately out of scope; this reason exists to
+     make the failure legible and cheap, so that the root cause can be chased
+     against clean signal instead of a 90-minute ambiguous `fail`.
+
+   Detection targets **absence, not an error reply.** In the three runs this was
+   built from, the agent made zero `mcp__` calls out of 275 — the tools were
+   simply not in the session, so no "tool not found" was ever returned, and with
+   `ENABLE_TOOL_SEARCH` deferring the genealogy schemas the only visible symptom
+   was `ToolSearch` answering "No matching deferred tools found". Measured on the
+   same CLI: the init message advertises **0** `mcp__genealogy__*` tools even on a
+   perfectly healthy run, so a detector keyed on tool-name presence would fire on
+   every run — the server list is the only sound signal.
+
+   **`pending` is deliberately not an abort**, and that is measured rather than
+   cautious: a *healthy* server's init arrives at ~11s still reading `pending`
+   (it settles to `connected` at ~25s), while a server that died at startup has
+   already settled to `failed` by the time its init arrives. A
+   `status != "connected"` assert would therefore have aborted **every healthy
+   run**. A `pending` that never resolves, or a dead server that settles late,
+   falls through to the `ToolSearch` backstop. The check is also scoped to the
+   `genealogy` server by name: the same list carries the operator's own
+   claude.ai connectors, which routinely report `needs-auth`. Thresholds and
+   their calibration against the incident: `e2e/mcp_health.py`.
 
    **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
@@ -1015,7 +1063,11 @@ under the `run-<timestamp>.*` names above and must be graded (§7.4). A committe
 `fail` is deliberately retained signal: a capability gap to retry later, exactly
 as a failing unit test is committed. Only a `skipped` run (the judge never ran —
 no tree to grade) is written with a `scratch_<timestamp>.*` prefix that
-`.gitignore` keeps out of version control. Fixture *validity* is a separate axis
+`.gitignore` keeps out of version control. **A third category exists: a run that
+stops `mcp_unavailable` writes none of the files above** — not even a `scratch_`
+one — because the genealogy tools were absent and nothing it produced describes
+the fixture or the records (see the retention rule under §6's `stop_reason`
+table). Fixture *validity* is a separate axis
 (§14): only a `pass` validates a fixture, so a committed `fail` does not count as
 validation. The `.ann.json` is committed when a run is graded. To investigate
 a regression — a test that previously passed and now fails

@@ -200,6 +200,17 @@ Translate `stop_reason` into something a researcher can act on:
   conversational loop rather than a tool loop.
 - `error` — SDK or harness exception. Read `result.error` for the
   message and the last `narration` entries for the surrounding context.
+- `mcp_unavailable` — **an environment failure, not a research result.**
+  The genealogy MCP tools were absent from the session, so the agent had
+  no way to search anything. Tell the researcher to **re-run the test —
+  not to re-research the case**, and to run `make e2e-preflight` for the
+  server's own error text.
+  **You will not be handed a run log for this**: such a run writes no
+  files at all (e2e-test-spec.md §6, the retention rule under the
+  `stop_reason` table), so it reaches a genealogist as terminal output.
+  If you are asked to interpret one, the whole interpretation is the
+  paragraph above — do not go looking for missing findings, and do not
+  read the starting tree as the agent's output.
 
 ### Step 4 — Compare expected vs found (when the tree is missing some findings)
 

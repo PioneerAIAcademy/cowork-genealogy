@@ -50,6 +50,14 @@ from harness.skill_invocation import (
     find_unguarded_protected_writes,
 )
 
+from e2e.mcp_health import (
+    backstop_fired,
+    classify_server_status,
+    find_server_entry,
+    genealogy_mcp_config,
+    tool_search_miss_streak,
+    unavailable_message,
+)
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
     derive_stop_reason,
@@ -59,6 +67,20 @@ from e2e.stop_checker import (
 )
 from e2e.subagent_capture import collect_subagents
 from e2e import judge as judge_module
+
+
+class McpUnavailableError(RuntimeError):
+    """The genealogy MCP surface was absent, so this run never happened.
+
+    Issue #941. Raised by `run_e2e_test` *after* the agent stops and *before*
+    the judge or any file write, which is what implements the lead's retention
+    decision: an `mcp_unavailable` run writes no run-log files at all, makes no
+    judge call, and exits non-zero. Rationale and the rejected alternatives are
+    in docs/specs/e2e-test-spec.md beside the `stop_reason` table.
+
+    Carries the operator-facing text (e2e.mcp_health.unavailable_message) as
+    its message, so `run_e2e.py` can print it verbatim.
+    """
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -759,6 +781,12 @@ async def _run_agent(
     # should_continue_run) so a genuinely stuck run still ends and fails.
     continue_nudges = {"n": 0}
     last_nudge_activity_count = {"n": -1}
+    # #941 — the genealogy MCP surface's health. `unavailable` latches True on
+    # the first detector hit and is read by the Stop hook (so an in-flight
+    # nudge can't push the agent back into an empty tool set) and by the abort
+    # path. `misses` is the consecutive no-match ToolSearch streak feeding the
+    # mid-run backstop; see e2e.mcp_health for how it is calibrated.
+    mcp_state = {"unavailable": False, "misses": 0}
 
     run_started = time.monotonic()
 
@@ -954,6 +982,7 @@ async def _run_agent(
             max_nudges=fixture.caps.max_continue_nudges,
             tool_count=activity_count["n"],
             tool_count_at_last_nudge=last_nudge_activity_count["n"],
+            mcp_unavailable=mcp_state["unavailable"],
         ):
             return {}
         continue_nudges["n"] += 1
@@ -988,13 +1017,10 @@ async def _run_agent(
     options = ClaudeAgentOptions(
         cwd=str(workspace),
         setting_sources=["project"],
-        mcp_servers={
-            "genealogy": {
-                "type": "stdio",
-                "command": "node",
-                "args": [str(mcp_server_entry)],
-            },
-        },
+        # One definition, shared with preflight's connection check (#941) — a
+        # preflight that proves a *different* config than the run uses is the
+        # bug class that issue was filed about.
+        mcp_servers=genealogy_mcp_config(mcp_server_entry),
         # Allow all genealogy MCP tools + baseline filesystem/Skill tools.
         # Wildcard form on the mcp__<server>__ prefix. NOTE: the tree-reading
         # tools (BLOCKED_TREE_TOOLS) are advertised here but denied at call
@@ -1080,6 +1106,43 @@ async def _run_agent(
 
     async def _consume():
         nonlocal usage, error, aborted_reason
+
+        def _abort_mcp_unavailable(
+            entry: dict[str, Any] | None, *, backstop: bool = False
+        ) -> None:
+            """Latch the #941 abort. Callers `return` immediately after.
+
+            Travels as an `aborted_reason` sentinel rather than an exception on
+            purpose: a raise from inside this coroutine is swallowed by the
+            generic `except Exception` around `_consume()` below and relabelled
+            `error`, which is the very confusion this detector exists to end.
+            `run_e2e_test` turns the sentinel into `McpUnavailableError` after
+            `_run_agent` returns, before the judge or any file write.
+            """
+            nonlocal aborted_reason, error
+            mcp_state["unavailable"] = True
+            aborted_reason = "mcp_unavailable"
+            error = unavailable_message(entry, backstop=backstop)
+            transcript.append(f"\n**[HARNESS]** ABORT (mcp_unavailable)\n\n{error}\n")
+            _emit("[abort] genealogy MCP server unavailable — this run never happened")
+
+        async def _shutdown(it) -> None:
+            """Close the query stream so the CLI subprocess exits before we go.
+
+            This abort fires seconds into a run, while every other stop reason
+            takes minutes and then spends ~30s in the judge. That difference
+            matters on Windows: a live CLI child still holds handles inside the
+            workspace, so `TemporaryDirectory.__exit__` raises
+            `PermissionError [WinError 32]` — and because `__exit__` runs before
+            our exception propagates, that error *replaces* McpUnavailableError,
+            burying the operator message and returning the wrong exit code
+            (observed 2026-08-04). Mirrors the resume path's teardown below.
+            """
+            try:
+                await asyncio.wait_for(it.aclose(), timeout=15)
+            except Exception:  # noqa: BLE001 — teardown is best-effort
+                pass
+
         current_options = options
         current_prompt = user_message
         while True:  # session (re)start loop — re-entered only to resume a stall
@@ -1176,6 +1239,26 @@ async def _run_agent(
                                     tool_result_names.append(
                                         _timeline_tool_label(entry["tool"], entry.get("args"))
                                     )
+                                    # #941 backstop — for a server that dies
+                                    # AFTER init, when there is no init message
+                                    # left to read. Absence surfaces only as
+                                    # ToolSearch finding nothing (the genealogy
+                                    # schemas are deferred under
+                                    # ENABLE_TOOL_SEARCH), so count consecutive
+                                    # no-match lookups while not one `mcp__`
+                                    # call has ever succeeded. Threshold and
+                                    # reset rule are calibrated against the
+                                    # three lost runs in e2e.mcp_health.
+                                    mcp_state["misses"] = tool_search_miss_streak(
+                                        mcp_state["misses"],
+                                        tool=entry["tool"],
+                                        response_summary=summary,
+                                        mcp_call_count=tool_call_count["n"],
+                                    )
+                                    if backstop_fired(mcp_state["misses"]):
+                                        _abort_mcp_unavailable(None, backstop=True)
+                                        await _shutdown(iterator)
+                                        return
                                 progressed = True
                     timeline.append(
                         [round(now - run_started, 1), "tool_result", tool_result_names]
@@ -1194,6 +1277,49 @@ async def _run_agent(
                     timeline.append(
                         [round(now - run_started, 1), f"system:{message.subtype}", []]
                     )
+                    # #941 — the decisive check, and it costs nothing: the CLI's
+                    # init message lists every MCP server it tried to connect
+                    # (`mcp_servers: [{name, status}]`, a required field of its
+                    # own init schema). Three e2e runs were lost to a genealogy
+                    # server that never connected; the agent then improvised for
+                    # 35 minutes and two of the three declared success.
+                    #
+                    # Measured against this CLI (2026-08-04), which is why the
+                    # classification is three-way and not a `!= "connected"`
+                    # assert:
+                    #   - dead server  -> init at ~25s, status ALREADY "failed"
+                    #     (it settles in ~4s), so this aborts at ~25s.
+                    #   - healthy      -> init at ~11s, status still "pending"
+                    #     (it settles at ~25s). A "not connected -> abort" test
+                    #     would kill EVERY healthy run here.
+                    # So `pending` is the normal healthy reading at init, and a
+                    # dead server that settles late lands there too — which is
+                    # what the ToolSearch backstop below exists to catch.
+                    #
+                    # Scoped to the genealogy server by name on purpose: this
+                    # list also carries the operator's own claude.ai connectors
+                    # (observed: "claude.ai Google Drive"/"Slack" as
+                    # `needs-auth`), so an "any server unhealthy" test would
+                    # abort every run on such a machine.
+                    if message.subtype == "init":
+                        servers = data.get("mcp_servers")
+                        health = classify_server_status(servers)
+                        note = {
+                            "connected": "connected — tools available",
+                            "inconclusive": (
+                                "still connecting (normal at init); the "
+                                "ToolSearch backstop covers it from here"
+                            ),
+                            "unavailable": "UNAVAILABLE — aborting",
+                        }[health]
+                        transcript.append(
+                            f"\n**[HARNESS]** genealogy MCP server at session "
+                            f"start: {note}\n"
+                        )
+                        if health == "unavailable":
+                            _abort_mcp_unavailable(find_server_entry(servers))
+                            await _shutdown(iterator)
+                            return
                 elif isinstance(message, ResultMessage):
                     timeline.append([round(now - run_started, 1), "result", []])
                     usage = {
@@ -1474,7 +1600,15 @@ async def run_e2e_test(
 
     started_at = time.time()  # real clock (counts system sleep)
     started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
-    with tempfile.TemporaryDirectory(prefix=f"e2e-{fixture.id}-") as tmp:
+    # ignore_cleanup_errors: on Windows a CLI child that outlives the run keeps
+    # handles inside the workspace, and TemporaryDirectory.__exit__ then raises
+    # PermissionError [WinError 32] — which REPLACES whatever exception the block
+    # was already propagating (observed with #941's McpUnavailableError, where it
+    # buried the operator message and changed the exit code). A leaked temp dir is
+    # strictly better than a masked error; the OS reclaims it.
+    with tempfile.TemporaryDirectory(
+        prefix=f"e2e-{fixture.id}-", ignore_cleanup_errors=True
+    ) as tmp:
         workspace = build_workspace(
             fixture, Path(tmp), skills_dir, effort_level=effort_level, agent_model=agent_model
         )
@@ -1508,6 +1642,19 @@ async def run_e2e_test(
         stop_reason = derive_stop_reason(
             sdk_aborted_reason=aborted, research=final_research
         )
+
+        # #941 — bail out here, and only here. One raise, placed between the
+        # stop_reason and the judge, satisfies the whole retention decision:
+        # the judge below never fires (its `final_tree is None` guard would NOT
+        # have caught this — build_workspace copies the fixture's starting tree
+        # in, so an aborted run HAS a tree and would have paid for an opus
+        # call), and neither write_result_files nor the session.jsonl copy is
+        # reached, so no run-log files exist and no E2eResult is ever built.
+        # "This run never happened" — print the error, exit non-zero.
+        if stop_reason == "mcp_unavailable":
+            raise McpUnavailableError(
+                error or unavailable_message(None)
+            )
 
         judge_seconds = 0.0
         if skip_judge or final_tree is None:

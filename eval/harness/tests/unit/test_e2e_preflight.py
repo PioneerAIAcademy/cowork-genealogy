@@ -105,3 +105,144 @@ def test_main_returns_one_when_any_fail(monkeypatch, capsys):
         pf, "CHECKS", [("x", lambda: ("OK", "ok")), ("y", lambda: ("FAIL", "bad"))]
     )
     assert pf.main() == 1
+
+
+# --- check 5: the live MCP connection (#941) -------------------------
+#
+# Every arm below injects `status_getter`, so none of them spawns a CLI. The
+# real spawn is exercised by hand (task-lifecycle step 5) — these cover the
+# branch logic, which is where the misattribution risks live.
+
+
+def _prereqs_ok(monkeypatch, tmp_path):
+    """Make checks 2 and 3 pass so check 5 is actually attempted."""
+    build = tmp_path / "index.js"
+    build.write_text("//", encoding="utf-8")
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+
+
+def test_mcp_check_skips_when_build_missing(monkeypatch, tmp_path):
+    """No build → nothing could have connected. SKIP, and name the real cause.
+
+    Safe only because check 2 already FAILed, so the exit code is already 1.
+    """
+    monkeypatch.setattr(pf, "MCP_BUILD", tmp_path / "absent.js")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    status, detail = pf._check_mcp_connection(status_getter=_never_called)
+    assert status == "SKIP"
+    assert "Built MCP server" in detail
+
+
+def test_mcp_check_skips_when_api_key_missing(monkeypatch, tmp_path):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr(pf, "ENV_FILE", tmp_path / "absent.env")
+    build = tmp_path / "index.js"
+    build.write_text("//", encoding="utf-8")
+    monkeypatch.setattr(pf, "MCP_BUILD", build)
+    status, detail = pf._check_mcp_connection(status_getter=_never_called)
+    assert status == "SKIP"
+    assert "Anthropic API key" in detail
+
+
+def _never_called():
+    raise AssertionError("the live check must not be attempted without prerequisites")
+
+
+def test_mcp_check_ok_when_connected(monkeypatch, tmp_path):
+    _prereqs_ok(monkeypatch, tmp_path)
+    status, detail = pf._check_mcp_connection(
+        status_getter=lambda: [
+            {"name": "genealogy", "status": "connected", "tools": [{}, {}, {}]}
+        ]
+    )
+    assert status == "OK"
+    assert "3 tools" in detail
+
+
+def test_mcp_check_fails_and_quotes_the_servers_own_error(monkeypatch, tmp_path):
+    """Acceptance criterion 1: FAIL *quoting the server's own error text*."""
+    _prereqs_ok(monkeypatch, tmp_path)
+    status, detail = pf._check_mcp_connection(
+        status_getter=lambda: [
+            {"name": "genealogy", "status": "failed", "error": "spawn node ENOENT"}
+        ]
+    )
+    assert status == "FAIL"
+    assert "spawn node ENOENT" in detail
+
+
+def test_mcp_check_fails_when_the_server_is_absent_entirely(monkeypatch, tmp_path):
+    _prereqs_ok(monkeypatch, tmp_path)
+    status, detail = pf._check_mcp_connection(status_getter=lambda: [])
+    assert status == "FAIL"
+    assert "never registered" in detail
+
+
+def test_mcp_check_fails_on_timeout(monkeypatch, tmp_path):
+    """A server stuck 'pending' is what killed run-2026-07-29_02-31-20 60s into
+    init. _live_mcp_status polls until the status settles; exhausting the budget
+    means it never did."""
+    _prereqs_ok(monkeypatch, tmp_path)
+
+    def _hang():
+        raise TimeoutError
+
+    status, detail = pf._check_mcp_connection(status_getter=_hang)
+    assert status == "FAIL"
+    assert "never finished connecting" in detail
+
+
+def test_mcp_check_warns_rather_than_blaming_mcp_when_unprovable(monkeypatch, tmp_path):
+    """An auth/dependency problem is NOT an MCP failure — and must not read as
+    green either, or preflight breaks the promise #941 says it must keep."""
+    _prereqs_ok(monkeypatch, tmp_path)
+
+    def _no_credential():
+        raise pf._Unprovable("no usable Anthropic credential: none found")
+
+    status, detail = pf._check_mcp_connection(status_getter=_no_credential)
+    assert status == "WARN"
+    assert "UNPROVEN" in detail
+    assert "not an MCP failure" in detail
+
+
+def test_mcp_check_warns_on_pending_instead_of_failing(monkeypatch, tmp_path):
+    """`pending` is a real transient state; aborting on it would false-fail a
+    healthy server mid-handshake."""
+    _prereqs_ok(monkeypatch, tmp_path)
+    status, detail = pf._check_mcp_connection(
+        status_getter=lambda: [{"name": "genealogy", "status": "pending"}]
+    )
+    assert status == "WARN"
+    assert "still connecting" in detail
+
+
+def test_mcp_check_reports_an_unexpected_error_without_crashing(monkeypatch, tmp_path):
+    _prereqs_ok(monkeypatch, tmp_path)
+
+    def _boom():
+        raise RuntimeError("transport closed")
+
+    status, detail = pf._check_mcp_connection(status_getter=_boom)
+    assert status == "FAIL"
+    assert "transport closed" in detail
+
+
+def test_mcp_connection_check_is_last_in_checks():
+    """It spawns a process and depends on the three before it."""
+    assert pf.CHECKS[-1][1] is pf._check_mcp_connection
+
+
+def test_main_passes_skip_through_without_failing_or_warning(monkeypatch, capsys):
+    """SKIP is display-only. It can only arise when another check FAILed, so
+    main() must not treat it as a status of its own."""
+    monkeypatch.setattr(
+        pf,
+        "CHECKS",
+        [("x", lambda: ("FAIL", "bad")), ("y", lambda: ("SKIP", "not attempted"))],
+    )
+    assert pf.main() == 1
+    out = capsys.readouterr().out
+    assert "[SKIP]" in out
+    assert "warning" not in out.lower()

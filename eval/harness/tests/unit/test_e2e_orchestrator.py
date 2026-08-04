@@ -684,3 +684,38 @@ def test_check_guardrail_compliance_aggregates_all_three_checks():
     assert any("proof-critique" in v for v in violations)
     # ...and the proof-conclusion arm fires from the same call.
     assert any("proof-conclusion" in v for v in violations)
+
+
+# --- #941: the mcp_unavailable abort contract -------------------------
+#
+# `_run_agent`'s detectors are not reachable from a unit test (see this file's
+# module docstring — that path needs a live SDK), which is why the decision
+# logic lives in pure functions in e2e.mcp_health and is tested in
+# test_e2e_mcp_health.py. What IS testable here is the contract between the
+# orchestrator and run_e2e: the exception type they agree on.
+
+
+def test_mcp_unavailable_error_is_exported_and_is_a_runtime_error():
+    from e2e.orchestrator import McpUnavailableError
+
+    assert issubclass(McpUnavailableError, RuntimeError)
+
+
+def test_run_e2e_imports_the_same_exception_class():
+    """run_e2e's handler must catch the class the orchestrator raises — if these
+    ever diverge, an environment failure would fall through to the generic
+    handler and be reported as a harness ERROR."""
+    from e2e.orchestrator import McpUnavailableError
+    from e2e.run_e2e import McpUnavailableError as ImportedByRunner
+
+    assert ImportedByRunner is McpUnavailableError
+
+
+def test_mcp_unavailable_error_carries_the_operator_message():
+    """run_e2e prints the exception verbatim, so the guidance must live in it."""
+    from e2e.mcp_health import unavailable_message
+    from e2e.orchestrator import McpUnavailableError
+
+    text = str(McpUnavailableError(unavailable_message(None)))
+    assert "RE-RUN" in text
+    assert "re-research" in text
