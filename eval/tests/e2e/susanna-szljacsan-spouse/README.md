@@ -36,6 +36,19 @@ is true, so the findings are kept as originally transcribed: `f1` (husband
 Joannes Janeczky) and `f2` (daughter Susanna Janeczky, baptized about 1884 at
 Lisková). Nothing was added or edited.
 
+**Where this evidence came from — read this before comparing against the run
+log.** The case below is *hand research by the genealogist*, not a summary of
+any scored run. That is the intended workflow for this genre (`/resolve-record-hint`
+sends the genealogist to familysearch.org to work the question independently),
+but the two are easy to conflate, so: the committed run
+`run-2026-08-03_22-34-20` found the hint record and its register image and
+nothing else on this list. Its `research.json` never mentions Ludovica or any of
+the four corroborating baptism arks, it sat at tier *probable* by way of the
+Karlik marriage, it left `c_001` unresolved, and it says in its own words
+"Research is not declared exhaustive." A reviewer diffing the README against
+that run **should** find the gap — it is the difference between the answer and
+one agent's attempt at it, not an inconsistency.
+
 **The evidence that decided it.** The hint record (`1:1:KHQN-MSB`, mother's
 persona `1:1:KHQN-MSY`) is genuine and accurately transcribed. Four further
 indexed baptisms in the same parish, independent of the hint, document the same
