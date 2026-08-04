@@ -1,11 +1,13 @@
 #!/bin/sh
-# Symlink shared, gitignored dev files from the primary worktree into the
-# current linked worktree.
+# Make a freshly-added worktree usable: symlink the shared gitignored dev files
+# from the primary worktree, then install the pnpm workspace locally.
 #
 # Git worktrees deliberately do NOT share the working tree, so per-worktree
 # secrets (eval/.env, apps/server/.env) and installed deps (node_modules) are
-# absent in a freshly-added worktree. This links them to the primary worktree's
-# copies: one source of truth, nothing copied, no secrets in the environment.
+# absent in a freshly-added worktree. Whether the fix is a link or an install
+# turns on one question: does the directory contain a path back into the source
+# tree? The two .env files and the npm-managed engine do not, so they link. The
+# pnpm workspace does, so it installs — see the note above the install below.
 #
 # Idempotent and safe to re-run. A no-op in the primary worktree. Run by hand
 # (`make worktree-link`) or automatically from the post-checkout hook that
@@ -82,3 +84,29 @@ for rel in $SHARED_PATHS; do
   linked=$((linked + 1))
 done
 echo "link-worktree: done ($linked linked) in $here"
+
+# The pnpm workspace is INSTALLED here, never linked. Its node_modules holds
+# `@genealogy/schema` and `@genealogy/viewer-ui` as symlinks INTO packages/, so
+# a linked copy would resolve every workspace import to the PRIMARY worktree's
+# source: this worktree's tests would pass against whatever branch the primary
+# happens to have checked out. That is the same failure the Makefile already
+# refuses for packages/engine/mcp-server/build, and it is silent — nothing
+# errors, the wrong code just runs.
+#
+# Cheap because pnpm's store is content-addressed: a fresh worktree installs in
+# a couple of seconds with every package reused and nothing downloaded. Skipping
+# it is what made a fresh worktree fail `pnpm --filter @genealogy/viewer-ui exec
+# vitest` with "Command vitest not found", which reads like a broken checkout.
+if [ ! -f "$here/pnpm-workspace.yaml" ]; then
+  echo "link-worktree: no pnpm-workspace.yaml here — skipping the workspace install."
+elif ! command -v pnpm >/dev/null 2>&1; then
+  echo "link-worktree: pnpm is not on PATH — skipping the workspace install."
+  echo "link-worktree:   Run 'corepack enable' then 'make install' here before using pnpm targets."
+elif (cd "$here" && pnpm install --frozen-lockfile --prefer-offline); then
+  echo "link-worktree: pnpm workspace installed in $here"
+else
+  # Never fail the checkout: the hook that calls this runs during
+  # `git worktree add`, and a dependency problem must not leave a half-made
+  # worktree behind. Say what to run instead.
+  echo "link-worktree: pnpm install FAILED — run 'make install' in $here before using pnpm targets." >&2
+fi
