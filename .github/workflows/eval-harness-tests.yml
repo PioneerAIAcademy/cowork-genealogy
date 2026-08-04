@@ -106,6 +106,19 @@ jobs:
         working-directory: eval/harness
         run: uv sync --frozen
 
+      # Undefined names (ruff F821). Runs BEFORE pytest because it catches the
+      # one class of defect the suite structurally cannot: `actions/checkout`
+      # resolves `refs/pull/N/merge` on a pull_request event, so this lints the
+      # MERGE of the PR into main. Two branches editing different hunks of one
+      # function can merge with no conflict and leave a name bound in neither —
+      # green tests, NameError at runtime. Config (F821 only) is in
+      # eval/harness/pyproject.toml; keep it that way rather than adding rules
+      # here.
+      - name: Lint for undefined names (ruff F821)
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/harness
+        run: uv run --frozen ruff check .
+
       - name: Run harness unit tests (excludes live-API e2e)
         if: steps.scope.outputs.relevant == 'true'
         working-directory: eval/harness
