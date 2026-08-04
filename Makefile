@@ -314,6 +314,10 @@ engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-se
 harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest; uv auto-syncs the venv)
 	cd eval/harness && uv run pytest -q
 
+.PHONY: harness-lint
+harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a dangling reference left by a merge)
+	cd eval/harness && uv run ruff check .
+
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
