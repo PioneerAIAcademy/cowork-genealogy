@@ -70,11 +70,13 @@ class E2eResult:
     # Every tool call the agent attempted, in order — not just mcp__-prefixed
     # ones (Skill, Agent, Read, … are included too; the entry-construction
     # code has no such filter). Each entry is {tool, args, response_summary,
-    # agent_id, agent_type}; the last two come from the PreToolUse hook's own
-    # payload (docs/specs/guardrail-enforcement-spec.md §11) and are only
-    # set once a ToolResultBlock arrives for that call — None on the main
-    # thread, the subagent's identifiers otherwise. A call still in-flight
-    # when the run aborts mid-stream never gets any of the last three keys.
+    # is_error, agent_id, agent_type}; `is_error` (a bool, `block.is_error is
+    # True`) and the last two are all set together once a ToolResultBlock
+    # arrives for that call — agent_id/agent_type come from the PreToolUse
+    # hook's own payload (docs/specs/guardrail-enforcement-spec.md §11), None on
+    # the main thread and the subagent's identifiers otherwise. A call still
+    # in-flight when the run aborts mid-stream keeps response_summary: None and
+    # never gets is_error, agent_id, or agent_type.
     # Critical for diffing across runs when investigating drift.
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
 

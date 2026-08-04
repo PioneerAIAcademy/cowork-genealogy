@@ -11,7 +11,10 @@ from pathlib import Path
 
 import pytest
 
+from claude_agent_sdk import ToolResultBlock
+
 from e2e.orchestrator import (
+    apply_tool_result,
     check_guardrail_compliance,
     PROVIDED_DOCS_DIRNAME,
     FixtureCaps,
@@ -484,3 +487,36 @@ def test_check_guardrail_compliance_aggregates_all_three_checks():
     assert any("proof-critique" in v for v in violations)
     # ...and the proof-conclusion arm fires from the same call.
     assert any("proof-conclusion" in v for v in violations)
+
+
+# --- apply_tool_result (the #999 producer fix) -------------------------------
+# Before #999 the orchestrator set only `response_summary` on a `tool_calls`
+# entry and never `is_error`, so skill_invocation.py's
+# `entry.get("is_error") is True` gates were dead. These assert the producer now
+# populates `is_error` — a gap the consumer tests in test_skill_invocation.py
+# can't catch, because they fabricate `is_error` on the entry themselves.
+
+
+def test_apply_tool_result_marks_a_failed_call():
+    entry = {"tool": "Skill", "args": {"skill": "proof-conclusion"}, "response_summary": None}
+    block = ToolResultBlock(tool_use_id="tu_1", content="boom", is_error=True)
+    apply_tool_result(entry, block, "boom")
+    assert entry["is_error"] is True
+    assert entry["response_summary"] == "boom"
+
+
+def test_apply_tool_result_normalizes_none_success_to_false():
+    # A successful call: the SDK omits is_error, so it defaults to None (not
+    # False). The gates match on `is True` and the field must be a clean bool,
+    # so the producer normalizes None -> False.
+    entry = {"tool": "Skill", "args": {"skill": "proof-conclusion"}, "response_summary": None}
+    block = ToolResultBlock(tool_use_id="tu_1", content="ok")  # is_error defaults to None
+    apply_tool_result(entry, block, "ok")
+    assert entry["is_error"] is False
+
+
+def test_apply_tool_result_false_stays_false():
+    entry = {"tool": "mcp__genealogy__research_append", "args": {}, "response_summary": None}
+    block = ToolResultBlock(tool_use_id="tu_1", content="ok", is_error=False)
+    apply_tool_result(entry, block, "ok")
+    assert entry["is_error"] is False
