@@ -102,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
         help=f"comma-separated window sizes to compare (default: {','.join(str(w) for w in DEFAULT_WINDOWS)})",
     )
     ap.add_argument("--detail", action="store_true", help="also print every violation at the smallest window given")
-    add_since_arg(ap, default="all")
+    add_since_arg(ap)
     args = ap.parse_args(argv)
 
     windows = sorted({int(w) for w in args.windows.split(",") if w.strip()})

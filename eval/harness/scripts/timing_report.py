@@ -32,16 +32,20 @@ import json
 import sys
 from pathlib import Path
 
+from harness.since_window import add_since_arg, describe_window, run_date
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-def _latest_envelope_per_skill(unit_dir: Path) -> dict[str, dict]:
+def _latest_envelope_per_skill(unit_dir: Path, cutoff=None) -> dict[str, dict]:
     """Map skill -> the parsed envelope with the newest `timestamp`."""
     latest: dict[str, tuple[str, dict]] = {}
     if not unit_dir.exists():
         return {}
     for jf in sorted(unit_dir.glob("*/*.json")):
         if jf.name.endswith(".ann.json"):
+            continue
+        if cutoff is not None and (d := run_date(jf)) is not None and d < cutoff:
             continue
         try:
             env = json.loads(jf.read_text(encoding="utf-8"))
@@ -97,10 +101,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--top", type=int, default=20, help="How many slowest tests to list.")
     ap.add_argument("--long-seconds", type=float, default=300.0,
                     help="Flag tests at/above this duration as LONG.")
+    add_since_arg(ap)
     args = ap.parse_args(argv)
 
     unit_dir = args.runlogs_root / "unit"
-    envelopes = _latest_envelope_per_skill(unit_dir)
+    all_envelopes = _latest_envelope_per_skill(unit_dir)
+    envelopes = _latest_envelope_per_skill(unit_dir, cutoff=args.since)
+    print(describe_window(args.since, n_runs=len(envelopes), n_total=len(all_envelopes)))
     if not envelopes:
         print(f"No run logs found under {unit_dir}", file=sys.stderr)
         return 1

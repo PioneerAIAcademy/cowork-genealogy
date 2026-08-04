@@ -349,11 +349,14 @@ gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-
 	cd eval/harness && uv run python skill_gate.py --skill $(SKILL) --test $(TEST) $(if $(DIMENSION),--dimension "$(DIMENSION)",)
 
 .PHONY: eval-timings
-eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20]
+eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20] [SINCE=all|N|YYYY-MM-DD]
 	# Reads the timing instrumentation already in the run logs — does NOT
 	# re-run anything. Use it to spot makespan long poles and the stall tax
 	# week over week. TOP overrides how many slowest tests to list.
-	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),)
+	# Windowed to 14 days: a skill whose newest run log predates that is
+	# reporting timings for prose that has since changed. It is omitted, and
+	# the window line says how many were.
+	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: prune-runlogs
 prune-runlogs: ## Maintenance sweep over the committed unit run logs: make prune-runlogs [REHASH=1] [PRUNE=1|K] [DRY=1]
@@ -482,11 +485,11 @@ e2e-corpus: ## Three-axis totals (recall / compliance / gate) over recent commit
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over the WHOLE committed corpus (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=N to narrow
+e2e-guardrail-shadow: ## Retroactive §4.1 shadow-window calibration over committed runs (issue #911): make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD
 	# Also pure analysis, no API. Existed with no make target until #972.
-	# Unlike e2e-corpus / e2e-latency this defaults to the WHOLE corpus:
-	# calibration is choosing a window size, so a freshness cutoff would
-	# shrink the very sample it is measuring.
+	# Windowed to 14 days like every other reader. #911 step 1 wants a
+	# maximum-sample replay — pass SINCE=all for it; step 4 answers the
+	# staleness that motivates the window with *new* runs anyway.
 	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-latency
@@ -499,7 +502,7 @@ e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latenc
 	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: skill-latency
-skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json
+skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json [SINCE=all|N|YYYY-MM-DD]
 	# The cheap 2a feedback loop: a SKILL.md edit's effect on generated output
 	# tokens, read from the unit re-run the edit already forces — no e2e run.
 	# Diff leads with "concision" (both-active tests); tests going to 0 output
@@ -507,7 +510,8 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 	cd eval/harness && uv run python -m skill_latency_report \
 		$(if $(and $(BEFORE),$(AFTER)),--before $(BEFORE) --after $(AFTER),) \
 		$(if $(SKILL),--skill $(SKILL) $(if $(VS_PREV),--vs-prev,),) \
-		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,))
+		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,)) \
+		$(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-scratch
 e2e-scratch: $(ENGINE_BUILD) ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death

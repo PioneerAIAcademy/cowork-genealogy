@@ -153,3 +153,32 @@ def test_bad_since_is_a_usage_error_not_a_traceback():
     with pytest.raises(SystemExit) as exc:
         ap.parse_args(["--since", "2weeks"])
     assert exc.value.code == 2
+
+
+# --- the window now spans BOTH corpora (issue #985 follow-up) --------------
+
+
+def test_run_date_parses_a_unit_runlog_filename():
+    """Unit logs are `v{N}_<ts>.json`, e2e are `run-<ts>.json`. One window
+    serves both, so the parser must read either shape."""
+    assert run_date(Path("eval/runlogs/unit/citation/v1_2026-07-31_12-57-04.json")) == date(2026, 7, 31)
+    assert run_date(Path("eval/runlogs/unit/citation/v12_2026-06-01_00-00-00.json")) == date(2026, 6, 1)
+
+
+def test_run_date_is_none_for_a_released_runlog():
+    """A released `v{N}.json` carries no timestamp; filter_since must keep it
+    rather than age out the one tier the retention rule keeps forever."""
+    p = Path("eval/runlogs/unit/citation/v3.json")
+    assert run_date(p) is None
+    assert filter_since([p], date(2026, 7, 20)) == [p]
+
+
+def test_filter_since_mixes_both_corpora():
+    paths = [
+        Path("eval/runlogs/e2e/slug/run-2026-07-01_00-00-00.json"),
+        Path("eval/runlogs/e2e/slug/run-2026-07-25_00-00-00.json"),
+        Path("eval/runlogs/unit/s1/v1_2026-07-02_00-00-00.json"),
+        Path("eval/runlogs/unit/s1/v1_2026-07-30_00-00-00.json"),
+    ]
+    kept = [p.name for p in filter_since(paths, date(2026, 7, 20))]
+    assert kept == ["run-2026-07-25_00-00-00.json", "v1_2026-07-30_00-00-00.json"]

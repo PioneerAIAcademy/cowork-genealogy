@@ -100,6 +100,16 @@ Filenames classify into three kinds:
 
 A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anything else writes a `scratch_` file.
 
+**Reporting windows to the last 14 days.** Every reader over either run-log
+corpus — `make eval-timings`, `make skill-latency`, `make e2e-corpus`,
+`make e2e-guardrail-shadow`, `make e2e-latency` — shows only runs from the last
+14 days by default and prints the window plus how many runs it excluded.
+A run log older than that usually describes behaviour already fixed, so a
+whole-corpus average silently mixes eras. `SINCE=all` (or `SINCE=N` /
+`SINCE=YYYY-MM-DD`) opts back in; the shared implementation is
+`harness/since_window.py`. This is a *query* window and deletes nothing —
+retention is keyed on rank, not age, for the reason in the next paragraph.
+
 **Retention: the harness keeps the newest 5 candidates per skill.** `write_run_log` prunes older ones — with their `.ann.json` siblings — on every write (`harness/runlog.py::prune_old_candidates`, K in `versioning.DEFAULT_KEEP_CANDIDATES`). So a harness run produces deletions alongside the new candidate; commit them. Released `v{N}.json` are kept forever, a skill's newest candidate is never pruned (so this cannot move what rule 2 gates on), and scratch/partial logs are untouched. There is no CI rule for this — pruning at the writer is what keeps the cap holding without one; the versioning plan's manual candidate tier was never once performed and the corpus reached 312 candidates / 205 MB. `make prune-runlogs PRUNE=1` is the catch-up sweep, not part of the normal loop.
 
 The harness picks the next filename per `eval/harness/harness/versioning.py::next_filename_for`:

@@ -1189,7 +1189,7 @@ appears in §9.4, say so in the PR** rather than implying CI covered you.
 and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly like
 an agent failure). Then `make e2e-view TEST=<slug>` loads the run into the viewer,
 `make e2e-corpus` gives three-axis totals across the last 14 days of committed
-runs (`SINCE=all` for the whole corpus), and the
+runs — every run-log reader windows that way, `SINCE=all` to opt out — and the
 `/interpret-e2e-result` skill exists to read the log for you. Mechanics:
 `docs/e2e-testing-guide.md`. Before concluding the agent regressed, rule out the
 four other causes: an eval defect, FamilySearch data drift, single-run jitter, and

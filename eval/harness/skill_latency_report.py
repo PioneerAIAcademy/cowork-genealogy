@@ -43,6 +43,8 @@ import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from harness.since_window import add_since_arg, describe_window, filter_since
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -324,12 +326,18 @@ def _is_releasable_runlog(p: Path) -> bool:
     return n.startswith("v") and n.endswith(".json") and not n.endswith(".ann.json")
 
 
-def releasable_runlogs_for(skill: str) -> list[Path]:
-    """All releasable run logs for a skill, oldest-first (filename sorts by version+ts)."""
+def releasable_runlogs_for(skill: str, cutoff=None) -> list[Path]:
+    """All releasable run logs for a skill, oldest-first (filename sorts by version+ts).
+
+    Windowed by `cutoff` (see harness.since_window): a run log older than the
+    window describes prose that has since changed, so comparing against it
+    reports a delta nobody can act on.
+    """
     d = UNIT_RUNLOGS / skill
     if not d.is_dir():
         return []
-    return sorted((p for p in d.iterdir() if _is_releasable_runlog(p)), key=lambda p: p.name)
+    out = sorted((p for p in d.iterdir() if _is_releasable_runlog(p)), key=lambda p: p.name)
+    return filter_since(out, cutoff)
 
 
 def all_skills() -> list[str]:
@@ -361,6 +369,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--after", help="explicit after run-log path (with --before)")
     ap.add_argument("--all", action="store_true", help="table of latest run log per skill")
     ap.add_argument("--markdown", action="store_true", help="emit a Markdown table (with --all)")
+    add_since_arg(ap)
     args = ap.parse_args(argv)
 
     # Explicit / positional diff.
@@ -375,9 +384,14 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if args.skill:
-        logs = releasable_runlogs_for(args.skill)
+        logs = releasable_runlogs_for(args.skill, cutoff=args.since)
         if not logs:
-            print(f"No releasable run logs for skill '{args.skill}'.", file=sys.stderr)
+            print(
+                f"No releasable run logs for skill '{args.skill}' in the window "
+                f"({len(releasable_runlogs_for(args.skill))} outside it). "
+                f"Pass --since all to include them.",
+                file=sys.stderr,
+            )
             return 1
         if args.vs_prev:
             if len(logs) < 2:
@@ -390,10 +404,13 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.all:
         sls = []
+        n_total = 0
         for skill in all_skills():
-            logs = releasable_runlogs_for(skill)
+            n_total += 1 if releasable_runlogs_for(skill) else 0
+            logs = releasable_runlogs_for(skill, cutoff=args.since)
             if logs:
                 sls.append(analyze_runlog(_load(logs[-1]), str(logs[-1])))
+        print(describe_window(args.since, n_runs=len(sls), n_total=n_total))
         if args.markdown:
             print(format_markdown_table(sls))
         else:
