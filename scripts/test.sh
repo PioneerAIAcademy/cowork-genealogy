@@ -12,12 +12,11 @@
 # as five cryptic TS2307 "Cannot find module" errors instead of "deps not
 # installed".
 #
-# The harness suite stays a direct `uv run` — `make harness-test` deliberately
-# runs a NARROWER set (`-m 'not e2e'`), so delegating it would silently shrink
-# this gate's coverage. The e2e-marked harness test is the harness's own
-# contract test; it makes a real (billed) Anthropic call and skips itself when
-# no key is reachable. CI runs `-m 'not e2e'`, so this script is its only
-# execution path anywhere.
+# Every suite here is deterministic, offline, and free. Nothing in this gate
+# calls a model. That is a property to preserve: this script's whole value is
+# that it is cheap enough to run on every change, and a single billed
+# end-to-end test used to cost more wall-clock than all 1500+ other tests
+# combined, which is how a pre-PR gate stops being run at all.
 
 set -uo pipefail   # not -e: run every suite, then report all failures together
 
@@ -74,17 +73,13 @@ run_suite "Control-plane tests (pytest)" make -C "$ROOT" server-test
 run_suite "MCP server tests (vitest)"    make -C "$ROOT" engine-test
 run_suite "Eval app tests (vitest)"      make -C "$ROOT" eval-ui-test
 
-# The harness's mock MCP server shells out to the COMPILED
-# packages/engine/mcp-server/build/ for its live tool handlers, so the build is
-# a real dependency of this suite. build/ is gitignored and link-worktree.sh
-# does not link it, so a freshly-added worktree has none and the run fails on
-# "AssertionError: staging must still happen" — a missing build wearing the
-# costume of a code regression. `make engine-build` is a no-op once the build
-# is current.
-echo ""
-echo "=== Eval harness tests (pytest, incl. e2e-marked) ==="
-make -C "$ROOT" engine-build || failed=1
-(cd "$ROOT/eval/harness" && uv run --frozen pytest) || failed=1
+# harness-test carries the $(ENGINE_BUILD) prerequisite, and that build is a
+# real dependency: the harness's mock MCP server shells out to the COMPILED
+# packages/engine/mcp-server/build/ for its live tool handlers. build/ is
+# gitignored and link-worktree.sh does not link it, so a freshly-added worktree
+# has none and the run fails on "AssertionError: staging must still happen" — a
+# missing build wearing the costume of a code regression.
+run_suite "Eval harness tests (pytest)"  make -C "$ROOT" harness-test
 
 echo ""
 if [ "$failed" -ne 0 ]; then

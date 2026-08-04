@@ -18,6 +18,8 @@ from e2e.orchestrator import (
     _accumulate_usage,
     _fallback_usage,
     _render_user_message,
+    _RUNLOG_MAX_CHARS,
+    _RUNLOG_VERBATIM_MAX,
     _summarize_tool_response,
     _timeline_tool_label,
     build_workspace,
@@ -354,7 +356,205 @@ def test_summarize_tool_response_dict_is_json():
 def test_summarize_tool_response_truncates_long_content():
     long = "x" * 2000
     out = _summarize_tool_response(long)
-    assert len(out) <= 500
+    # The bound is now the judge tier's explicit marker rather than a bare "...",
+    # so a reader can tell a summary from a real response and knows what was lost.
+    assert "[truncated by harness" in out
+    assert "full length 2000 chars" in out
+    # TWO-SIDED, deliberately. This asserted only `len(out) <= 500` at first,
+    # which a *smaller* bound also satisfies — so it passed while a 200-char
+    # string bound quietly cut 112 of the 284 tool results in
+    # run-2026-07-31_13-02-13 below what the old 497-char head-truncation kept.
+    # Replacing it with a bare floor then had the mirror-image hole: nothing
+    # bounded the constants from ABOVE, so `_RUNLOG_STRING_MAX` could go to 50,000
+    # and the whole suite still passed, in a module that justifies both numbers by
+    # "this lands in a run log that is committed to git". Pin both ends.
+    assert 497 <= out.count("x") <= 600
+
+
+def test_summarize_tool_response_keeps_keys_after_a_huge_results_array():
+    """The #1073 regression: head-truncation hid every field after `results`.
+
+    `record_search` puts its largest field early, so a head bound dropped
+    `ranked` from all 46 calls in run-2026-07-31_13-02-13. Summarizing by key
+    means a trailing field survives no matter how much data precedes it.
+    """
+    response = {
+        "totalMatches": 900,
+        "rankingSkipped": "No `subjectId`, so match-score ranking ... did not run.",
+        "results": [{"recordId": f"ark:/61903/1:1:{i:06d}", "filler": "y" * 400} for i in range(200)],
+        "jurisdictionHints": {"searchedPlace": "Hill County, Texas"},
+    }
+    out = _summarize_tool_response(response)
+    assert "rankingSkipped" in out
+    # The point of the change: a field serialized AFTER the big array survives.
+    assert "jurisdictionHints" in out
+    assert "Hill County, Texas" in out
+
+
+def test_summarize_tool_response_unwraps_an_mcp_text_block():
+    """MCP results wrap the whole document in a text block, hiding its keys.
+
+    Two things this has to get right, both of which an earlier version got wrong:
+
+    The payload must exceed the verbatim-passthrough threshold, or
+    `_summarize_tool_response` returns at its `len(raw) <= 500` early exit and
+    `_unwrap_mcp_text_blocks` never runs at all — leaving the mechanism the whole
+    `record_search` legibility fix depends on with zero coverage.
+
+    And the assertion must be on the UNESCAPED key (`'"rankingSkipped"'`, with
+    quotes). The bare substring `rankingSkipped` is present either way, inside the
+    escaped `"text": "{\\"rankingSkipped\\": …}"` wrapper, so asserting on it
+    cannot tell an unwrapped document from a wrapped one.
+    """
+    inner = json.dumps(
+        {
+            "totalMatches": 0,
+            "rankingSkipped": "No `subjectId`, so ranking did not run. " + "pad " * 150,
+        }
+    )
+    wrapped = [{"type": "text", "text": inner}]
+    assert len(json.dumps(wrapped)) > 500, "fixture must clear the verbatim exit"
+
+    out = _summarize_tool_response(wrapped)
+
+    # Unescaped keys: only reachable if the inner document was actually parsed.
+    assert '"rankingSkipped"' in out
+    assert '"totalMatches"' in out
+    # And the escaped wrapper is gone.
+    assert '\\"rankingSkipped\\"' not in out
+
+
+def test_summarize_tool_response_passes_through_non_json_text():
+    """The unwrap's "anything that does not parse is left alone" branch.
+
+    The fixture must clear _RUNLOG_VERBATIM_MAX or this test pins nothing: under
+    it, `_summarize_tool_response` returns at its verbatim early exit and the
+    unwrap never runs. That is how the first version of this test survived every
+    mutation of the module, including replacing the unwrap with the identity.
+    """
+    body = "not json at all, " + "prose " * 120
+    wrapped = [{"type": "text", "text": body}]
+    assert len(json.dumps(wrapped)) > 500, "fixture must clear the verbatim exit"
+
+    out = _summarize_tool_response(wrapped)
+
+    assert "not json at all" in out
+    # Still a text block, not a parsed document: the wrapper survives.
+    assert '"type"' in out and '"text"' in out
+
+
+def test_summarize_tool_response_does_not_coerce_json_scalars():
+    """A tool result of "1" or "true" must stay the string the tool returned.
+
+    Only reachable above the verbatim threshold, which is why it needs padding —
+    a short scalar never reaches the unwrap at all.
+    """
+    for scalar, wrong in (("1" * 600, 1), ("true" + " " * 600, True)):
+        wrapped = [{"type": "text", "text": scalar}]
+        assert len(json.dumps(wrapped)) > 500
+        out = _summarize_tool_response(wrapped)
+        # The digits/word survive as text; no bare JSON value replaced them.
+        assert '"text"' in out, f"{wrong!r} case lost its text block"
+
+
+def test_unwrap_survives_a_pathologically_nested_json_string():
+    """The unwrap's own RecursionError arm, which `json.loads` is what raises.
+
+    Distinct from the `json.dumps` arm below: this one goes through the PARSE
+    path, so a test that only nests a Python object never reaches it.
+    """
+    inner = "[" * 20_000 + "]" * 20_000
+    wrapped = [{"type": "text", "text": inner}]
+    assert len(json.dumps(wrapped)) > 500
+
+    out = _summarize_tool_response(wrapped)  # must not raise
+    assert isinstance(out, str)
+    assert out
+
+
+def test_summarize_tool_response_survives_pathological_nesting():
+    """RecursionError must not escape and abort a run.
+
+    Note the fallback cannot be `repr()`: repr recurses too, so on this input it
+    raises identically and the guard becomes a no-op. That was the first version.
+    """
+    deep: list = []
+    node: list = deep
+    for _ in range(20_000):
+        child: list = []
+        node.append(child)
+        node = child
+
+    out = _summarize_tool_response(deep)  # must not raise
+    assert isinstance(out, str)
+    assert out
+
+
+def test_summarize_tool_response_never_emits_a_shorter_capture():
+    """The invariant that makes this change safe to land.
+
+    A key-preserving summary can be SHORTER than a 500-char head cut on a long
+    list of small items, which is how the first cut of this change silently
+    narrowed 91 of 284 real tool results. Whatever the summarizer decides, the
+    output is never shorter than head-truncating would have produced.
+
+    Note precisely what this is: a **length** floor, not a content guarantee. A
+    payload can clear it on one wide key while a sampled list drops entries the
+    old head cut happened to include. Measured across all 1544 tool results in the
+    six committed jimmie-jewel-neal runs, zero do — but the property asserted here
+    is the length one, and the docstring says so rather than implying more.
+    """
+    shapes = [
+        # long list of small items — samples to 3, so the summary is short
+        {"ok": True, "results": [{"entryId": f"pe_{i:03d}"} for i in range(40)]},
+        # long flat list of scalars
+        list(range(500)),
+        # one long string
+        "x" * 5000,
+        # many short keys
+        {f"k{i}": f"v{i}" for i in range(200)},
+        # nested
+        {"a": {"b": {"c": [{"d": "e" * 50} for _ in range(30)]}}},
+    ]
+    for shape in shapes:
+        raw = shape if isinstance(shape, str) else json.dumps(shape)
+        head = raw if len(raw) <= 500 else raw[:497] + "..."
+        out = _summarize_tool_response(shape)
+        assert len(out) >= len(head), (
+            f"regressed on {type(shape).__name__}: {len(out)} < {len(head)}"
+        )
+
+
+def test_summarize_tool_response_keeps_a_short_response_verbatim():
+    """Anything the old bound captured whole is still captured whole."""
+    shape = {"ok": True, "results": [{"entryId": f"pe_{i:03d}"} for i in range(8)]}
+    raw = json.dumps(shape)
+    assert len(raw) <= 500, "fixture must sit under the verbatim threshold"
+    assert _summarize_tool_response(shape) == raw
+    # No sampling marker, because nothing was sampled.
+    assert "_summary_truncated" not in _summarize_tool_response(shape)
+
+
+def test_summarize_tool_response_honours_the_overall_cap():
+    """The 4000-char backstop, which 11 of 1544 real tool results reach.
+
+    Untested until now, which is how a "backstop" quietly becomes decorative. The
+    shape is a dict of many wide keys: `_summarize_response` preserves every key
+    (that is the point), so key COUNT is the one axis the per-string bound and the
+    list sampling do not constrain.
+
+    Asserted against the CONSTANT, not the literal 4000. With the literal, the
+    module comment's "`_RUNLOG_MAX_CHARS` must stay ABOVE `_RUNLOG_VERBATIM_MAX`"
+    was documented and unenforced: drop the cap to 300 and the never-shorter floor
+    hands back a 500-char head cut, which satisfies `len(out) <= 4000` and ends in
+    "..." — green test, defeated cap. Against the constant it fails.
+    """
+    assert _RUNLOG_MAX_CHARS > _RUNLOG_VERBATIM_MAX, (
+        "the never-shorter floor silently defeats the cap when they invert"
+    )
+    shape = {f"key_{i:04d}": "v" * 120 for i in range(200)}
+    out = _summarize_tool_response(shape)
+    assert len(out) <= _RUNLOG_MAX_CHARS
     assert out.endswith("...")
 
 

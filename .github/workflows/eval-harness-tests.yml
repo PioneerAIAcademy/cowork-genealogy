@@ -10,10 +10,9 @@ name: Eval harness tests
 # §9 step 7 assumed a harness-test gate existed, but only the runlog
 # discipline check (check-runlogs.yml) was wired up.
 #
-# The single live-API end-to-end test (eval/harness/tests/e2e/, marked
-# `e2e` and additionally guarded by skipif on ANTHROPIC_API_KEY) is
-# excluded here via `-m 'not e2e'`: CI has no API key and must never bill
-# the Anthropic API.
+# Every test in this suite is offline and free. CI has no API key and must
+# never bill the Anthropic API, so nothing here may call a model — the same
+# invariant scripts/test.sh holds for the pre-PR gate.
 #
 # The CLI tests (test_cli.py) import run_tests.py, which refuses to run
 # against a missing/stale packages/engine/mcp-server/build/ (run_tests.py
@@ -107,7 +106,20 @@ jobs:
         working-directory: eval/harness
         run: uv sync --frozen
 
+      # Undefined names (ruff F821). Runs BEFORE pytest because it catches the
+      # one class of defect the suite structurally cannot: `actions/checkout`
+      # resolves `refs/pull/N/merge` on a pull_request event, so this lints the
+      # MERGE of the PR into main. Two branches editing different hunks of one
+      # function can merge with no conflict and leave a name bound in neither —
+      # green tests, NameError at runtime. Config (F821 only) is in
+      # eval/harness/pyproject.toml; keep it that way rather than adding rules
+      # here.
+      - name: Lint for undefined names (ruff F821)
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/harness
+        run: uv run --frozen ruff check .
+
       - name: Run harness unit tests (excludes live-API e2e)
         if: steps.scope.outputs.relevant == 'true'
         working-directory: eval/harness
-        run: uv run --frozen pytest -m 'not e2e'
+        run: uv run --frozen pytest

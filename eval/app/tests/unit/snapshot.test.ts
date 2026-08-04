@@ -10,6 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
+  isHashedSnapshot,
   agentRefsInText,
   diffSnapshotVsDisk,
   hashContent,
@@ -175,5 +176,54 @@ describe('diffSnapshotVsDisk', () => {
       'packages/engine/mcp-server/src/constants.ts': "export const UA = 'old';\n",
     };
     expect(await diffSnapshotVsDisk(snapshot, dir)).toEqual({});
+  });
+});
+
+describe('hashed snapshots (schema_version 3)', () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await fs.mkdtemp(path.join(os.tmpdir(), 'snap-hashed-'));
+  });
+  afterEach(async () => {
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  it('isHashedSnapshot needs every value to be a digest', () => {
+    const h = hashContent('body\n');
+    expect(isHashedSnapshot({ 'a.md': h })).toBe(true);
+    expect(isHashedSnapshot({ 'a.md': h, 'b.md': 'body\n' })).toBe(false);
+    expect(isHashedSnapshot({})).toBe(false);
+  });
+
+  it('compares clean against the tree it was built from, and flags drift', async () => {
+    await fs.writeFile(path.join(dir, 'skill.md'), 'body\n');
+    const snapshot = { 'skill.md': hashContent('body\n') };
+    expect(await diffSnapshotVsDisk(snapshot, dir)).toEqual({});
+
+    await fs.writeFile(path.join(dir, 'skill.md'), 'edited\n');
+    expect(await diffSnapshotVsDisk(snapshot, dir)).toEqual({ 'skill.md': 'content-differs' });
+  });
+
+  it('still reads a pre-3 content snapshot, so in-flight branches keep working', async () => {
+    await fs.writeFile(path.join(dir, 'skill.md'), 'body\n');
+    expect(await diffSnapshotVsDisk({ 'skill.md': 'body\n' }, dir)).toEqual({});
+  });
+
+  it('normalizes before hashing, so CRLF does not flap', async () => {
+    await fs.writeFile(path.join(dir, 'skill.md'), Buffer.from('hello\r\n'));
+    expect(await diffSnapshotVsDisk({ 'skill.md': hashContent('hello\n') }, dir)).toEqual({});
+  });
+});
+
+describe('mixed v2/v3 snapshot comparison', () => {
+  it('hashes the content side so a pre-3 log does not read as fully modified', () => {
+    // Exercised through compare.ts's alignSnapshots via diffSnapshots/testEdited;
+    // this pins the primitive both rely on.
+    const content = { 'a.md': 'body\n', 'b.md': 'other\n' };
+    const hashed = hashSnapshot(content);
+    expect(isHashedSnapshot(hashed)).toBe(true);
+    expect(isHashedSnapshot(content)).toBe(false);
+    // Same files, different shapes -> equal once aligned.
+    expect(hashSnapshot(content)).toEqual(hashed);
   });
 });

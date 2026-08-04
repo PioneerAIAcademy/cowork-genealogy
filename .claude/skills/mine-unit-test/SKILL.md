@@ -69,7 +69,7 @@ and mine it. Pass it as `--project <case-dir>`.
   placeholder rule (Decision rules).
 - **Recorded e2e run (secondary).** A committed run under
   `eval/runlogs/e2e/<slug>/` (`run-<ts>.final-tree.gedcomx.json`,
-  `…final-research.json`, `run-<ts>.transcript.md`, `run-<ts>.json`), plus
+  `…final-research.json`, `run-<ts>.json`), plus
   the fixture's `eval/tests/e2e/<slug>/expected-findings.json`. Here the
   failure is a `required: true` finding missing from the final tree, and
   localization leans on `/interpret-e2e-result` (Step 2).
@@ -107,8 +107,8 @@ This is the single most important input — it becomes the test's
 **On the recorded e2e path there is no human to ask** — reconstruct the three
 parts yourself: **Should** = the fixture's `expected-findings.json` (its `details`
 — exact date/place — and `supporting_sources`); **Did** = what the final tree
-actually holds; **Gap** = the transcript turn where the sub-skill's reasoning went
-wrong. And **do not trust the `.ann.json` label as the miss signal**: a run's
+actually holds; **Gap** = the `narration` entry (and the `tool_calls` index it
+sits after) where the sub-skill's reasoning went wrong. And **do not trust the `.ann.json` label as the miss signal**: a run's
 `.ann` may mark a finding `true` (recovered) while the tree holds only an
 *imprecise* version (a coarser date, fewer of the required sources). Re-derive the
 miss by diffing the final tree against the fixture's required `details` +
@@ -117,7 +117,7 @@ partial**, even when `.ann` says `true`. If the tree matches the fixture's requi
 precision there is nothing to mine; say so and stop.
 
 **Then classify — is this even a skill-body problem?** Using the project's
-`results/` sidecars (Cowork) or the run's `tool_calls[]` / transcript
+`results/` sidecars (Cowork) or the run's `tool_calls[]` / `narration[]`
 (recorded), place the cause. This is `docs/skill-lifecycle.md` §5's lane
 rule, applied at mining time:
 
@@ -149,7 +149,7 @@ You need the ONE plugin sub-skill that owns the mistake — the test's
   - **sub-skill regression** or **agent-reasoning regression** → mine a
     test for the implicated sub-skill. The run log already lists the
     sub-skills the agent ran, in order — read them from `run-<ts>.json`'s
-    `tool_calls` (the `Skill` entries' `args.skill`), no transcript scan:
+    `tool_calls` (the `Skill` entries' `args.skill`):
     ```
     uv run --directory eval/harness python -c "import json,sys; r=json.load(open(sys.argv[1])); print([tc['args'].get('skill') for tc in r.get('tool_calls',[]) if tc['tool']=='Skill'])" eval/runlogs/e2e/<slug>/run-<ts>.json
     ```
@@ -239,10 +239,13 @@ from a fixture at `$REPO/eval/fixtures/mcp/<name>.json`
   it as an empty-results response.)
 - **Recorded path.** Full payloads live only in `run-<ts>.session.jsonl`, which
   is **usually absent** from committed runs. `tool_calls[].response_summary` is a
-  short *truncated* summary (it can cut off inside the first fact) — usually **not
-  enough even for the fixture's shape**. So: if `session.jsonl` is present, copy
-  the verbatim payload and trim it; otherwise rebuild the `response` from the
-  transcript's inline tool-result blocks + the assistant narration, mark such
+  bounded summary: on a `harness_schema_version` 2 log it preserves every key, so
+  it usually **does** give you the fixture's shape, but lists past three entries
+  are sampled and long strings cut, so it is **not** the values. On a version 1
+  log it is a head truncation and gives you neither. So: if `session.jsonl` is
+  present, copy
+  the verbatim payload and trim it; otherwise rebuild the `response` from
+  `tool_calls[].response_summary` + `narration[].text`, mark such
   fixtures `RECONSTRUCTED` in their `description`, and where you can't rebuild a
   faithful payload, fall to the placeholder-fixture path (Decision rules) and flag
   it.
@@ -345,7 +348,7 @@ As the **last thing**, print to the session:
    don't live in the file):
    - The scenario is the state the sub-skill saw **before** the failure (the
      carve, Step 5) — the part most likely to need your hand.
-   - `judge_context` describes the **class** of mistake, not this one transcript.
+   - `judge_context` describes the **class** of mistake, not this one run.
    - Each fixture's `args` predicate and trimmed `response` are right.
    - The PII scrub is best-effort — review names/dates/places in the scenario.
 
