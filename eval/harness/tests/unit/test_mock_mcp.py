@@ -187,7 +187,16 @@ def test_live_tool_advertises_build_schema():
 def test_record_search_folds_in_ranked_when_subject_given(tmp_path):
     """record_search ranks host-side when given a subjectId, so the mock must
     compose the test's own rank fixture in — otherwise a skill that correctly
-    passes subjectId gets nothing to triage and grades badly for it."""
+    passes subjectId gets nothing to triage and grades badly for it.
+
+    Skips when the build is absent, like the two tests above: staging runs
+    through the COMPILED stager, so with no build `staged` is never set and
+    this fails for an environmental reason rather than a real one."""
+    from harness.mock_mcp import _load_build_tool_catalog
+
+    if not _load_build_tool_catalog().get("record_search"):
+        pytest.skip("mcp-server build not present; build catalog unavailable")
+
     server, call_log, tools_by_name = create_mock_server(
         ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
         FIXTURES_DIR,
