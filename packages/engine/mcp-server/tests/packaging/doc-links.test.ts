@@ -113,8 +113,19 @@ const COMMAND_ROOTS = [
   (name: string) => `packages/engine/plugin/skills/${name}/SKILL.md`,
 ];
 
+/**
+ * Own-property membership. `name in obj` walks the prototype chain, so a cited
+ * `/constructor` would match an inherited Object.prototype key and be silently
+ * treated as exempt — defeating the very staleness check this file exists to
+ * run. `constructor` is the only reachable one: `citedSlashCommands` extracts
+ * with a lowercase-only pattern, and every other Object.prototype key
+ * (`toString`, `valueOf`, `hasOwnProperty`) is camelCase.
+ */
+const has = (obj: Record<string, string>, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(obj, key);
+
 function slashCommandResolves(name: string): boolean {
-  if (name in BUILT_INS) return true;
+  if (has(BUILT_INS, name)) return true;
   return COMMAND_ROOTS.some((root) => existsSync(join(projectRoot, root(name))));
 }
 
@@ -141,6 +152,15 @@ function isExempt(file: string, path: string): boolean {
 
 describe("doc and .claude/ tooling links", () => {
   const files = lintedFiles();
+  // Parsed once for the suite — the Makefile is identical across every linted
+  // file, so re-reading it inside the per-file it.each below was redundant work
+  // that grew linearly with LINTED_DIRS.
+  const makeTargets = makefileTargets(projectRoot);
+  // Every slash command the corpus cites — the input the BUILT_INS staleness
+  // guard below filters against. Built once, alongside the Makefile parse.
+  const citedCommands = new Set(
+    files.flatMap((f) => citedSlashCommands(readFileSync(join(projectRoot, f), "utf8"))),
+  );
 
   it("covers every surface it claims to", () => {
     for (const doc of LINTED_DOCS) {
@@ -202,8 +222,7 @@ describe("doc and .claude/ tooling links", () => {
 
   it.each(files)("%s names only make targets that still exist", (file) => {
     const body = readFileSync(join(projectRoot, file), "utf8");
-    const targets = makefileTargets(projectRoot);
-    const missing = citedMakeTargets(body).filter((t) => !targets.has(t));
+    const missing = citedMakeTargets(body).filter((t) => !makeTargets.has(t));
 
     expect(
       missing,
@@ -227,10 +246,7 @@ describe("doc and .claude/ tooling links", () => {
   });
 
   it("keeps no BUILT_INS entry the prose has stopped naming", () => {
-    const cited = new Set(
-      files.flatMap((f) => citedSlashCommands(readFileSync(join(projectRoot, f), "utf8"))),
-    );
-    const stale = Object.keys(BUILT_INS).filter((name) => !cited.has(name));
+    const stale = Object.keys(BUILT_INS).filter((name) => !citedCommands.has(name));
 
     expect(
       stale.map((c) => `/${c}`),

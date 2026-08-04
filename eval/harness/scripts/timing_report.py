@@ -32,16 +32,36 @@ import json
 import sys
 from pathlib import Path
 
+from harness.since_window import (
+    add_since_arg,
+    describe_stale,
+    describe_window,
+    run_date,
+    staleness_cutoff,
+)
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-def _latest_envelope_per_skill(unit_dir: Path) -> dict[str, dict]:
+def _envelope_date(env: dict):
+    """The run's date from its `timestamp` field (YYYY-MM-DD_HH-MM-SS)."""
+    from datetime import datetime
+    ts = (env or {}).get("timestamp") or ""
+    try:
+        return datetime.strptime(ts[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def _latest_envelope_per_skill(unit_dir: Path, cutoff=None) -> dict[str, dict]:
     """Map skill -> the parsed envelope with the newest `timestamp`."""
     latest: dict[str, tuple[str, dict]] = {}
     if not unit_dir.exists():
         return {}
     for jf in sorted(unit_dir.glob("*/*.json")):
         if jf.name.endswith(".ann.json"):
+            continue
+        if cutoff is not None and (d := run_date(jf)) is not None and d < cutoff:
             continue
         try:
             env = json.loads(jf.read_text(encoding="utf-8"))
@@ -97,10 +117,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--top", type=int, default=20, help="How many slowest tests to list.")
     ap.add_argument("--long-seconds", type=float, default=300.0,
                     help="Flag tests at/above this duration as LONG.")
+    add_since_arg(ap, default="all")
     args = ap.parse_args(argv)
 
     unit_dir = args.runlogs_root / "unit"
-    envelopes = _latest_envelope_per_skill(unit_dir)
+    all_envelopes = _latest_envelope_per_skill(unit_dir)
+    envelopes = _latest_envelope_per_skill(unit_dir, cutoff=args.since)
+    if args.since is not None:
+        print(describe_window(args.since, n_runs=len(envelopes), n_total=len(all_envelopes)))
     if not envelopes:
         print(f"No run logs found under {unit_dir}", file=sys.stderr)
         return 1
@@ -114,7 +138,12 @@ def main(argv: list[str] | None = None) -> int:
     print("  " + "-" * 74)
     tot_work = tot_cost = 0.0
     tot_tests = tot_retries = 0
-    for skill in sorted(envelopes):
+    stale_at = staleness_cutoff()
+    skill_dates = {s: _envelope_date(e) for s, e in envelopes.items()}
+    stale = [(s, d) for s, d in skill_dates.items() if d is not None and d < stale_at]
+    # Stale rows sort last so a skim reaches the trustworthy numbers first.
+    ordered = sorted(envelopes, key=lambda s: (s in dict(stale), s))
+    for skill in ordered:
         tot = envelopes[skill].get("totals", {})
         skrows = [r for r in rows if r["skill"] == skill]
         work = sum(r["dur_s"] or 0 for r in skrows)
@@ -124,12 +153,16 @@ def main(argv: list[str] | None = None) -> int:
         retries = sum(max(0, (r["attempts"] or 1) - 1) for r in skrows)
         cost = _num(tot, "total_cost_usd") or 0.0
         tot_work += work; tot_cost += cost; tot_tests += len(skrows); tot_retries += retries
+        mark = "  STALE" if skill in dict(stale) else ""
         print(f"  {skill:24} {len(skrows):5} {_fmt(makespan,'9.0f')}s "
               f"{_fmt(work,'9.0f')}s {_fmt(api_pct,'5.0f')} {retries:7} "
-              f"{cost:7.2f}")
+              f"{cost:7.2f}{mark}")
     print("  " + "-" * 74)
     print(f"  {'TOTAL':24} {tot_tests:5} {'':>9} {tot_work:9.0f}s "
           f"{'':>5} {tot_retries:7} {tot_cost:7.2f}")
+    if (note := describe_stale(stale)):
+        print()
+        print(note)
 
     # --- Slowest tests, with the reason -----------------------------------
     timed = [r for r in rows if r["dur_s"] is not None]

@@ -46,9 +46,11 @@ Other entry points:
   those, in any column. This is also how a re-review is asked for.
 - **Bare `/review-ready`** — the standing pool: unassigned `developer`-labeled
   items in Ready. A first run, or a run after a gap.
-- **`--all`** — also include unassigned `genealogist` items. Off by default
-  because the three passes are developer-shaped; the reason and what would change
-  it are in the spec, §6. Say so if asked rather than re-arguing it.
+- **`--all`** — also include unassigned `genealogist` items, **except those
+  labelled `feedback`**, which are user bug reports rather than vetted tasks and
+  have nothing to review. Off by default because the three passes are
+  developer-shaped; the reason and what would change it are in the spec, §6. Say
+  so if asked rather than re-arguing it.
 
 ### Review on entry, not daily
 
