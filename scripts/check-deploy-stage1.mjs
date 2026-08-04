@@ -29,6 +29,11 @@ const dockerfile = join(repoRoot, 'deploy', 'Dockerfile')
 // silently running against the host.
 const SKIP_RUN_PREFIXES = ['corepack ']
 
+// …but never past a shell operator. `corepack enable && pnpm config set …`
+// matches the prefix, and skipping it whole would drop the second half without
+// a word — a prefix match is only safe on a single command.
+const skipsRun = (cmd) => !/[&;|]/.test(cmd) && SKIP_RUN_PREFIXES.some((p) => cmd.startsWith(p))
+
 /**
  * The Dockerfile uses something this replay cannot model — NOT a build failure.
  * Kept distinct so the operator is told to teach the script, rather than sent
@@ -133,13 +138,17 @@ function main() {
     for (const line of instructions) {
       const [, verb, rest] = line.match(/^(\w+)\s+(.*)$/) ?? []
       if (verb === 'WORKDIR') {
-        const rel = rest.trim() === IMAGE_ROOT ? '' : rest.trim().slice(IMAGE_ROOT.length + 1)
-        if (!rest.trim().startsWith(IMAGE_ROOT) || rel.startsWith('/')) {
+        // Boundary-checked, not prefix-checked: a bare startsWith would accept
+        // `/repos` (rebased onto the root itself) and `/repo-web` (onto
+        // <root>/web), both silently — the failure mode this whole class of
+        // change exists to remove.
+        const target = rest.trim()
+        if (target !== IMAGE_ROOT && !target.startsWith(`${IMAGE_ROOT}/`)) {
           throw new UnsupportedInstruction(
-            `WORKDIR ${rest.trim()} is outside ${IMAGE_ROOT}; the replay only rebases paths under it`,
+            `WORKDIR ${target} is outside ${IMAGE_ROOT}; the replay only rebases paths under it`,
           )
         }
-        workdir = join(root, rel)
+        workdir = join(root, target.slice(IMAGE_ROOT.length + 1))
         mkdirSync(workdir, { recursive: true })
         continue
       }
@@ -149,7 +158,7 @@ function main() {
       }
       if (verb === 'RUN') {
         const cmd = rest.replace(/\s+#.*$/, '').trim()
-        if (SKIP_RUN_PREFIXES.some((p) => cmd.startsWith(p))) continue
+        if (skipsRun(cmd)) continue
         console.log(`  $ ${cmd}`)
         execFileSync('sh', ['-c', cmd], { cwd: workdir, stdio: 'inherit' })
         continue

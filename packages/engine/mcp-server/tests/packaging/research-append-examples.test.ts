@@ -32,12 +32,27 @@ const enumsSchema = JSON.parse(
 );
 
 /**
+ * A local `#/$defs/…` ref followed one hop into research.schema.json.
+ *
+ * Without this the walk below stops at the ref and everything under it is
+ * unchecked — which is every nested entry type the sections reach by name:
+ * `plans.items[]`, `timelines.events[]`, `timelines.gaps[]`.
+ */
+function resolveRef(sub: any): any {
+  if (sub && typeof sub.$ref === "string" && sub.$ref.startsWith("#/$defs/")) {
+    return schema.$defs?.[sub.$ref.slice("#/$defs/".length)] ?? sub;
+  }
+  return sub;
+}
+
+/**
  * A subschema's closed value set, following a `$ref` into enums.schema.json.
  *
  * `null` for anything open: the `*_recommended` `$defs` carry `examples`, not
  * `enum`, and are deliberately not constrained.
  */
 function closedValues(sub: any): string[] | null {
+  sub = resolveRef(sub);
   if (!sub || typeof sub !== "object") return null;
   if (Array.isArray(sub.enum)) return sub.enum as string[];
   const ref = typeof sub.$ref === "string" ? /^enums\.schema\.json#\/\$defs\/(.+)$/.exec(sub.$ref) : null;
@@ -45,11 +60,20 @@ function closedValues(sub: any): string[] | null {
     const def = enumsSchema.$defs?.[ref[1]];
     if (Array.isArray(def?.enum)) return def.enum as string[];
   }
+  // `anyOf: [{ $ref: <enum> }, { type: "null" }]` is how EVERY nullable enum in
+  // this schema is written, so without this branch the closed half is invisible
+  // and a field like `assertion.date_certainty` goes unchecked entirely.
+  const branches = sub.anyOf ?? sub.oneOf;
+  if (Array.isArray(branches)) {
+    const sets = branches.filter((b: any) => b?.type !== "null").map(closedValues);
+    if (sets.length > 0 && sets.every(Boolean)) return sets.flat() as string[];
+  }
   return null;
 }
 
 /** Every enum-constrained value in `entry` that the schema would reject. */
 function enumViolations(value: unknown, sub: any, path: string, out: string[]): void {
+  sub = resolveRef(sub);
   if (!sub || typeof sub !== "object") return;
   const allowed = closedValues(sub);
   if (allowed && typeof value === "string" && !allowed.includes(value)) {
