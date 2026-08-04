@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "notes": {
+    "f1": "Fixture's f1 is a polarity:avoid finding (agent must NOT assert Rita as Rafael's daughter). The agent did assert it, via ParentChild relationships R5/R6 and a Filiation fact sourced to the original register image, which states directly 'hija legitima de Manuel Rafael Reyes y Serapia Benavides.' Labeled true (not the literal avoid-guard pass condition) because the genealogist judges the underlying match to be correct based on this evidence -- the fixture's guard needs revision, not the agent's output.",
+    "f2": "Fixture's f2 required a documented negative/exhausted-search conclusion. The agent instead wrote a positive 'probable' tier proof conclusion affirming the match. Labeled true because the genealogist judges the positive conclusion to be the correct outcome given the original document's direct filiation statement discovered during this run -- the fixture needs to be rewritten as a positive/required-match finding rather than a negative one."
+  }
+}
