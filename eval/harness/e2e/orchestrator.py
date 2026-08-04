@@ -51,10 +51,13 @@ from harness.skill_invocation import (
 )
 
 from e2e.mcp_health import (
+    CONSECUTIVE_TOOL_SEARCH_MISSES,
+    TOOL_SEARCH_NAME,
     backstop_fired,
     classify_server_status,
     find_server_entry,
     genealogy_mcp_config,
+    should_abort_at_init,
     tool_search_miss_streak,
     unavailable_message,
 )
@@ -786,7 +789,11 @@ async def _run_agent(
     # nudge can't push the agent back into an empty tool set) and by the abort
     # path. `misses` is the consecutive no-match ToolSearch streak feeding the
     # mid-run backstop; see e2e.mcp_health for how it is calibrated.
-    mcp_state = {"unavailable": False, "misses": 0}
+    # `queries` keeps only the last CONSECUTIVE_TOOL_SEARCH_MISSES ToolSearch
+    # queries, so a backstop abort can name what was searched: that path writes
+    # no run log, so the console is the only place a false positive could ever
+    # be spotted.
+    mcp_state: dict[str, Any] = {"unavailable": False, "misses": 0, "queries": []}
 
     run_started = time.monotonic()
 
@@ -1108,7 +1115,10 @@ async def _run_agent(
         nonlocal usage, error, aborted_reason
 
         def _abort_mcp_unavailable(
-            entry: dict[str, Any] | None, *, backstop: bool = False
+            entry: dict[str, Any] | None,
+            *,
+            backstop: bool = False,
+            queries: list[str] | None = None,
         ) -> None:
             """Latch the #941 abort. Callers `return` immediately after.
 
@@ -1122,7 +1132,7 @@ async def _run_agent(
             nonlocal aborted_reason, error
             mcp_state["unavailable"] = True
             aborted_reason = "mcp_unavailable"
-            error = unavailable_message(entry, backstop=backstop)
+            error = unavailable_message(entry, backstop=backstop, queries=queries)
             # Recorded like every other harness-side event even though THIS path
             # never persists it (the run writes no files at all — see
             # run_e2e_test). Kept so the in-memory trace is complete and so a
@@ -1265,8 +1275,17 @@ async def _run_agent(
                                         response_summary=summary,
                                         mcp_call_count=tool_call_count["n"],
                                     )
+                                    if entry["tool"] == TOOL_SEARCH_NAME:
+                                        q = (entry.get("args") or {}).get("query")
+                                        mcp_state["queries"] = (
+                                            mcp_state["queries"] + [str(q)]
+                                        )[-CONSECUTIVE_TOOL_SEARCH_MISSES:]
                                     if backstop_fired(mcp_state["misses"]):
-                                        _abort_mcp_unavailable(None, backstop=True)
+                                        _abort_mcp_unavailable(
+                                            None,
+                                            backstop=True,
+                                            queries=mcp_state["queries"],
+                                        )
                                         await _shutdown(iterator)
                                         return
                                 progressed = True
@@ -1314,13 +1333,40 @@ async def _run_agent(
                     if message.subtype == "init":
                         servers = data.get("mcp_servers")
                         health = classify_server_status(servers)
+                        # Only a run that has done NOTHING can be declared never
+                        # to have happened. This branch is NOT reachable only at
+                        # t=0: a resume after a stall (resume_on_stall, ON by
+                        # default) re-spawns the CLI — and with it the MCP server
+                        # — and emits a FRESH init. If that second spawn fails 40
+                        # minutes into a run that already did real, tool-backed
+                        # research, aborting would raise before
+                        # write_result_files and throw all of it away while
+                        # printing "no research was possible", which would be
+                        # false. So past the first genealogy call this degrades
+                        # to a recorded warning: the run keeps its artifacts and
+                        # ends on its own terms (natural_end / a cap), which is
+                        # the honest verdict for a run that did work and then
+                        # lost its tools.
+                        abort_now = should_abort_at_init(
+                            health, mcp_call_count=tool_call_count["n"]
+                        )
+                        nothing_attempted_yet = tool_call_count["n"] == 0
                         note = {
                             "connected": "connected — tools available",
                             "inconclusive": (
                                 "still connecting (normal at init); the "
                                 "ToolSearch backstop covers it from here"
                             ),
-                            "unavailable": "UNAVAILABLE — aborting",
+                            "unavailable": (
+                                "UNAVAILABLE — aborting"
+                                if nothing_attempted_yet
+                                else (
+                                    "UNAVAILABLE on this session, but "
+                                    f"{tool_call_count['n']} genealogy call(s) "
+                                    "already happened — NOT aborting; the run "
+                                    "keeps its artifacts and ends on its own"
+                                )
+                            ),
                         }[health]
                         # Persisted on every run, healthy ones included: `init`
                         # arrives before any tool call, so this lands at
@@ -1335,7 +1381,7 @@ async def _run_agent(
                                 ),
                             }
                         )
-                        if health == "unavailable":
+                        if abort_now:
                             _abort_mcp_unavailable(find_server_entry(servers))
                             await _shutdown(iterator)
                             return

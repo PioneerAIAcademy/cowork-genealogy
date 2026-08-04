@@ -196,6 +196,15 @@ def _live_mcp_status() -> Any:
     options = ClaudeAgentOptions(
         mcp_servers=genealogy_mcp_config(MCP_BUILD),
         env=agent_env,
+        # Prove THIS config and nothing else. Without it the CLI merges
+        # file/user/local-scoped MCP config on top of the block above, and this
+        # repo's own `.mcp.json` registers a server under the same `genealogy`
+        # key — so a check that looked green could be green about a DIFFERENT
+        # server than the run spawns. That is the exact bug class this module's
+        # docstring claims to close, which makes it the one place it must not be
+        # left to chance. (`strict_mcp_config` scopes MCP resolution only; it is
+        # not a settings-source switch.)
+        strict_mcp_config=True,
     )
 
     async def _ask() -> Any:
@@ -204,9 +213,14 @@ def _live_mcp_status() -> Any:
                 response = await client.get_mcp_status()
                 servers = (response or {}).get("mcpServers")
                 entry = find_server_entry(servers)
-                # Anything other than `pending` is a settled answer — including
-                # the server being absent from the list entirely.
-                if entry is None or entry.get("status") != "pending":
+                # A settled answer is a PRESENT entry reading something other
+                # than `pending`. An absent one is not settled: the CLI
+                # populates its server list asynchronously, so returning on the
+                # first read that lacks us races that population and FAILs a
+                # healthy server — telling the operator to rebuild something
+                # that works. Poll absence exactly like `pending`; a genuinely
+                # unregistered server still FAILs, via the ceiling below.
+                if entry is not None and entry.get("status") != "pending":
                     return servers
                 await asyncio.sleep(_MCP_POLL_INTERVAL_S)
 
@@ -252,10 +266,11 @@ def _check_mcp_connection(
     except (asyncio.TimeoutError, TimeoutError):
         return (
             "FAIL",
-            f"The genealogy MCP server never finished connecting within "
-            f"{_MCP_CHECK_TIMEOUT_S:.0f}s (it stayed 'pending'). A server that "
-            "hangs instead of failing blocks session start — an e2e run would "
-            "die on 'Control request timeout: initialize' after ~60s. Check that "
+            f"The genealogy MCP server never reported a settled status within "
+            f"{_MCP_CHECK_TIMEOUT_S:.0f}s — it stayed 'pending', or the CLI "
+            "never listed it at all. A server that hangs instead of failing "
+            "blocks session start: an e2e run would die on 'Control request "
+            "timeout: initialize' after ~60s. Check that "
             f"`node {MCP_BUILD}` starts and speaks MCP on stdio.",
         )
     except Exception as e:  # noqa: BLE001 — a preflight must report, never crash
@@ -285,10 +300,14 @@ def _check_mcp_connection(
             f"`node {MCP_BUILD}` starts and stays up, and rebuild with "
             "`make engine-build` if it doesn't.",
         )
+    # Report the status, NOT the payload. `servers` carries each connected
+    # server's full `tools` array — every name and description — so
+    # interpolating it buried the actionable sentence under ~47 tool schemas.
+    reported = (find_server_entry(servers) or {}).get("status") or "not listed"
     return (
         "WARN",
         f"The {GENEALOGY_SERVER_NAME!r} MCP server is still connecting "
-        f"(status not yet 'connected'): {servers!r}. Not a failure — but the "
+        f"(status {reported!r}, not yet 'connected'). Not a failure — but the "
         "connection is unproven, so re-run this check before a long run.",
     )
 

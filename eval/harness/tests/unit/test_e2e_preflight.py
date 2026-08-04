@@ -173,10 +173,29 @@ def test_mcp_check_fails_and_quotes_the_servers_own_error(monkeypatch, tmp_path)
 
 
 def test_mcp_check_fails_when_the_server_is_absent_entirely(monkeypatch, tmp_path):
+    # A REAL server list that simply does not name genealogy — the observed
+    # failure shape. (The list carrying someone else's connector is realistic:
+    # the operator's own claude.ai servers show up here.)
     _prereqs_ok(monkeypatch, tmp_path)
-    status, detail = pf._check_mcp_connection(status_getter=lambda: [])
+    status, detail = pf._check_mcp_connection(
+        status_getter=lambda: [{"name": "claude.ai Slack", "status": "needs-auth"}]
+    )
     assert status == "FAIL"
     assert "never registered" in detail
+
+
+def test_mcp_check_does_not_fail_on_an_unreadable_server_list(monkeypatch, tmp_path):
+    """An empty / unparseable list is not evidence the server is absent.
+
+    It means the CLI has not populated the list yet, so calling it a FAIL sends
+    the operator to rebuild a healthy server. Preflight still cannot go green on
+    a genuinely missing server: in the live path `_ask` polls an absent entry
+    like `pending` and exhausts the ceiling, which FAILs via the timeout arm.
+    """
+    _prereqs_ok(monkeypatch, tmp_path)
+    for payload in ([], ["nonsense", None, 7]):
+        status, _ = pf._check_mcp_connection(status_getter=lambda p=payload: p)
+        assert status == "WARN"
 
 
 def test_mcp_check_fails_on_timeout(monkeypatch, tmp_path):
@@ -190,7 +209,9 @@ def test_mcp_check_fails_on_timeout(monkeypatch, tmp_path):
 
     status, detail = pf._check_mcp_connection(status_getter=_hang)
     assert status == "FAIL"
-    assert "never finished connecting" in detail
+    # Covers both ways the budget can be exhausted: a status stuck 'pending',
+    # and an entry the CLI never lists at all (both are polled, not settled).
+    assert "never reported a settled status" in detail
 
 
 def test_mcp_check_warns_rather_than_blaming_mcp_when_unprovable(monkeypatch, tmp_path):

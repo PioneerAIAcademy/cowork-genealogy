@@ -166,6 +166,18 @@ def classify_server_status(
         return "inconclusive"
     entry = find_server_entry(entries, name)
     if entry is None:
+        # A list of server dicts that simply does not name us IS the observed
+        # failure: the tools were absent from the session. But a list with no
+        # dict members at all — or an empty one — is not evidence of absence,
+        # it is evidence we are reading a shape we do not understand. This is
+        # the one arm that aborts a run leaving NO artifact to diagnose from,
+        # so an unreadable payload must not reach it. (The CLI seeds every
+        # configured client as `pending` before connecting, so a genuinely
+        # configured server is present from the first init; an empty list means
+        # not-yet-populated, which the backstop covers.) Same reasoning as
+        # find_server_entry's tolerance of malformed members.
+        if not any(isinstance(e, dict) for e in entries):
+            return "inconclusive"
         return "unavailable"
     status = entry.get("status")
     if status == "connected":
@@ -173,6 +185,21 @@ def classify_server_status(
     if status in _UNAVAILABLE_STATUSES:
         return "unavailable"
     return "inconclusive"
+
+
+def should_abort_at_init(health: McpHealth, *, mcp_call_count: int) -> bool:
+    """Whether an `init` reading should end the run outright.
+
+    `unavailable` alone is not enough. The init branch is reachable more than
+    once: a resume after a no-progress stall re-spawns the CLI — and with it the
+    MCP server — and emits a fresh `init`. If that second spawn fails 40 minutes
+    into a run that already made genealogy calls, aborting would discard every
+    artifact of real research and print "no research was possible", which would
+    be false. Only a run that has attempted NOTHING can be declared never to
+    have happened; past that, losing the surface is a run that ends on its own
+    terms and keeps what it found.
+    """
+    return health == "unavailable" and mcp_call_count == 0
 
 
 def is_no_match_tool_search(tool: str, response_summary: str | None) -> bool:
@@ -205,9 +232,18 @@ def tool_search_miss_streak(
     reached the threshold. Unrelated tools therefore carry the streak
     unchanged; a ToolSearch that *matched* resets it.
 
-    `mcp_call_count` is the run's `mcp__`-only counter: once any genealogy call
-    has succeeded the surface demonstrably exists, so this arm is dead for the
-    rest of the run and every result resets the streak.
+    `mcp_call_count` is the run's `mcp__`-only counter, incremented in
+    `pretool_hook` — so it counts genealogy calls **attempted**, not ones that
+    returned successfully. An attempt is still proof of presence (the CLI only
+    dispatches a tool it advertised), which is what this gate needs.
+
+    KNOWN COVERAGE LIMIT, and it follows from the gate #941 specified ("while
+    the `mcp__` call count is still zero"): once one genealogy call has been
+    attempted this arm is dead for the rest of the run. So the backstop covers
+    a surface that NEVER worked, not one that died after working — despite
+    mid-run death being the case it was added for. Widening it (a windowed
+    "no successful genealogy call in the last N tool calls") is a spec change,
+    not a tidy-up, so it is not done here.
     """
     if tool != TOOL_SEARCH_NAME:
         return streak
@@ -221,7 +257,12 @@ def backstop_fired(streak: int) -> bool:
     return streak >= CONSECUTIVE_TOOL_SEARCH_MISSES
 
 
-def unavailable_cause(entry: dict[str, Any] | None, *, backstop: bool = False) -> str:
+def unavailable_cause(
+    entry: dict[str, Any] | None,
+    *,
+    backstop: bool = False,
+    queries: list[str] | None = None,
+) -> str:
     """Why the surface is judged absent — the half both callers share.
 
     Kept separate from the guidance below because the two contexts need
@@ -238,9 +279,16 @@ def unavailable_cause(entry: dict[str, Any] | None, *, backstop: bool = False) -
     if backstop:
         cause = (
             f"{CONSECUTIVE_TOOL_SEARCH_MISSES} consecutive ToolSearch lookups "
-            "found no matching tool and not one genealogy tool call has "
-            f"succeeded, so the {GENEALOGY_SERVER_NAME!r} MCP server is gone"
+            "found no matching tool and not one genealogy tool call has been "
+            f"attempted, so the {GENEALOGY_SERVER_NAME!r} MCP server is gone"
         )
+        # Name the queries. This arm writes no run log, so the console is the
+        # ONLY artifact — without them a false positive (a real streak of
+        # searches for tools that genuinely do not exist) is indistinguishable
+        # from a dead server, and being undiagnosable, it would repeat.
+        if queries:
+            shown = ", ".join(repr(q) for q in queries)
+            cause += f" (searched: {shown})"
     elif entry is None:
         cause = (
             f"the {GENEALOGY_SERVER_NAME!r} MCP server never registered with "
@@ -255,7 +303,12 @@ def unavailable_cause(entry: dict[str, Any] | None, *, backstop: bool = False) -
     return cause
 
 
-def unavailable_message(entry: dict[str, Any] | None, *, backstop: bool = False) -> str:
+def unavailable_message(
+    entry: dict[str, Any] | None,
+    *,
+    backstop: bool = False,
+    queries: list[str] | None = None,
+) -> str:
     """What a genealogist reads when a RUN is aborted. Criterion 4 is these words.
 
     Used by the orchestrator's abort (a `narration` entry + the run's `error`
@@ -265,7 +318,8 @@ def unavailable_message(entry: dict[str, Any] | None, *, backstop: bool = False)
     actually attempted.
     """
     return (
-        f"MCP UNAVAILABLE — {unavailable_cause(entry, backstop=backstop)}.\n"
+        "MCP UNAVAILABLE — "
+        f"{unavailable_cause(entry, backstop=backstop, queries=queries)}.\n"
         "The genealogy tools were absent from this session, so no research was "
         "possible and nothing about this run reflects the fixture or the "
         "records.\n"

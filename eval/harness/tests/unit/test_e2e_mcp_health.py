@@ -23,7 +23,9 @@ from e2e.mcp_health import (
     find_server_entry,
     genealogy_mcp_config,
     is_no_match_tool_search,
+    should_abort_at_init,
     tool_search_miss_streak,
+    unavailable_cause,
     unavailable_message,
 )
 
@@ -84,8 +86,22 @@ def test_absent_entry_is_unavailable():
     assert classify_server_status(_entries("connected", name="other")) == "unavailable"
 
 
-def test_empty_server_list_is_unavailable():
-    assert classify_server_status([]) == "unavailable"
+def test_empty_server_list_is_inconclusive_not_unavailable():
+    # The CLI seeds every configured client as `pending` before connecting, so a
+    # configured server is present from the first init. An EMPTY list therefore
+    # means "not populated yet", not "your server is gone" — and this is the one
+    # arm that kills a run leaving no artifact to diagnose from. The backstop
+    # covers a list that stays empty.
+    assert classify_server_status([]) == "inconclusive"
+
+
+def test_other_servers_listed_but_not_ours_is_unavailable():
+    # THIS is the observed failure: the CLI answered with a real server list and
+    # the genealogy server simply is not in it.
+    assert (
+        classify_server_status([{"name": "claude.ai Slack", "status": "needs-auth"}])
+        == "unavailable"
+    )
 
 
 def test_pending_is_inconclusive():
@@ -104,8 +120,40 @@ def test_missing_server_list_is_inconclusive_not_unavailable():
     assert classify_server_status({"mcp_servers": []}) == "inconclusive"
 
 
-def test_malformed_members_do_not_raise():
-    assert classify_server_status(["nonsense", None, 7]) == "unavailable"
+def test_malformed_members_do_not_raise_and_do_not_abort():
+    # A payload shape we cannot read is evidence we are reading the wrong shape,
+    # NOT evidence the server is absent. Fail open: this arm aborts a run with no
+    # run log to diagnose from, so an unparseable list must not reach it.
+    assert classify_server_status(["nonsense", None, 7]) == "inconclusive"
+
+
+def test_one_readable_member_is_enough_to_judge_absence():
+    # Mixed garbage plus at least one real entry: the list IS readable, ours is
+    # not in it, so this is the observed failure and must abort.
+    assert classify_server_status([None, 7, {"name": "other"}]) == "unavailable"
+
+
+def test_abort_at_init_only_before_the_first_genealogy_call():
+    assert should_abort_at_init("unavailable", mcp_call_count=0) is True
+    # A resume after a stall re-spawns the CLI and emits a fresh `init`. Aborting
+    # then would raise before write_result_files and discard real research while
+    # claiming none happened, so past the first call this must NOT abort.
+    assert should_abort_at_init("unavailable", mcp_call_count=1) is False
+    assert should_abort_at_init("unavailable", mcp_call_count=87) is False
+
+
+def test_abort_at_init_never_fires_on_a_healthy_or_unsettled_reading():
+    for health in ("connected", "inconclusive"):
+        assert should_abort_at_init(health, mcp_call_count=0) is False
+
+
+def test_backstop_message_names_the_queries_it_searched():
+    # This arm writes no run log, so the console is the only artifact: without
+    # the queries a false positive is indistinguishable from a dead server.
+    cause = unavailable_cause(None, backstop=True, queries=["+record_search", "+tree_edit"])
+    assert "+record_search" in cause and "+tree_edit" in cause
+    # And it must still read cleanly with none supplied.
+    assert "searched:" not in unavailable_cause(None, backstop=True)
 
 
 def test_find_server_entry_returns_the_matching_dict():
