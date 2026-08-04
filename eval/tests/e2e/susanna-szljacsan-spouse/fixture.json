@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 29, flags adds_spouse/adds_daughter, confidence 3). Draft transcribed from a Slovak church/synagogue record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 29, flags adds_spouse/adds_daughter, confidence 3). Resolved 2026-08-03: true match on content — the couple is corroborated by four further Lisková baptisms independent of the hint (1875, 1882, 1889, 1891) — but the identification of the mother as LDK6-6SH is probable, not proved, since no entry gives her age or parentage, no marriage record is indexed, and several same-named women appear in the parish. f3 requires the agent to qualify the identity link; that is the calibration point. See README 'Notes for reviewers'."
 }

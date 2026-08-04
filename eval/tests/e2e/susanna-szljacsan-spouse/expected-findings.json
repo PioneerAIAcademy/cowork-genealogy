@@ -33,6 +33,25 @@
         "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry, Lisková, Ružomberok"
       ],
       "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "The agent must qualify the identity link rather than assert it as proved. The 1884 baptismal entry names the mother only as \"Susanna Szliacsan\" — it records no age, parentage, or residence for her — so nothing in the hint record ties her to the specific woman christened 5 March 1850 at Lisková (LDK6-6SH) rather than to another parishioner of the same name. Pass = the final research/report states that the couple and the daughter are well corroborated but that the identification of the mother as LDK6-6SH remains unconfirmed (wording such as probable, likely, or not proved), and names what is missing — a marriage record or any entry giving the mother's age or parentage. Fail = the report asserts the match as established, proved, or confirmed, or attaches the record to LDK6-6SH with no stated reservation, even though f1 and f2 are otherwise correct. This is the calibration point of the fixture: the hint batch it came from is roughly half false matches, so unqualified confidence is the failure mode being measured.",
+      "details": {
+        "subject_person": "Susanna Szljacsan (LDK6-6SH)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented qualification: the mother named in the 1884 entry is not proved to be LDK6-6SH",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Slovakia, Church and Synagogue Books, 1592-1935 — the 1884 entry (and the couple's other four baptismal entries) give no age, parentage, or residence for the mother",
+        "Absence of any marriage record for Joannes Janeczky and Susanna Szliacsan, though the Liptó/Ružomberok marriage register is indexed across 1860-1893 and returns other Szliacsan marriages",
+        "Several contemporaneous women named Susanna Szliacsan appear in Lisková — the wife of Andreas Ňemcsek Hluchi (children 1861, 1867), the wife of Josephus Blaskó (children 1890, 1894, 1895), and Susanna Szliacsan Hlinka (b. 1858, d. 6 Dec 1892) — so the name alone does not identify her, and proof by exhaustion is unavailable"
+      ],
+      "required": true
     }
   ]
 }
