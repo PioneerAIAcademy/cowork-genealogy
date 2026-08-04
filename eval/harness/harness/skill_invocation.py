@@ -411,7 +411,10 @@ def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
     that side's `primaryId` equals the tree `person_id` (see
     `find_person_evidence_missing_same_person` for the confirmed-live basis of
     that equality), so this doubles as "which tree persons have been scored."
-    Errored calls don't count — the plan's success-gating (§4.1).
+    Errored calls don't count — the spec's §7 success-gating. That guard only
+    began to bind once #1255/#1289 made the e2e orchestrator populate
+    `is_error` on each entry; before that nothing set the key, so a failed
+    `same_person` still marked the identity scored.
 
     Ids are strings throughout: FamilySearch persona/tree ids (`primaryId1/2`
     and `person_evidence.person_id`) are always string identifiers. The
@@ -452,21 +455,31 @@ def unguarded_new_person_evidence_links(
     scored_ids: set[str],
     starting_ids: set[str],
 ) -> list[str]:
-    """Pre-write check (issue #963, plan §4.1/§9): the NEW tree person id(s)
-    this pending `research_append` would link via `person_evidence` that have
-    NOT been scored by `same_person` yet. Empty => allow the write.
+    """Pre-write check (issue #963, spec §8): the NEW tree person id(s) this
+    pending `research_append` would link via `person_evidence` that have NOT
+    been scored by `same_person` yet. Empty => nothing to report.
 
-    Scoped exactly like `find_person_evidence_missing_same_person`, so the
-    deny fires only where that post-run hard-fail already would — no NEW
-    false-positive class:
+    Scoped like `find_person_evidence_missing_same_person` on WHICH persons
+    count:
     - a person id already in the starting (seed) tree is never flagged
       (linking an assertion to a pre-existing person isn't a new identity);
     - a person id already scored by a prior successful `same_person` passes.
 
+    But it asks a STRICTER question than that post-run detector, and the two
+    are not equivalent. The post-run form is whole-run: a `same_person`
+    anywhere in the run, INCLUDING after the link, satisfies it. This one runs
+    before the write, so it can only see calls already made — link-then-score
+    is a hit here and a pass there. Rare but real: one occurrence across the
+    committed corpus (ferber-marriage 2026-07-21, person I5 linked at call #45
+    and scored at #68). Callers reading the hit count should treat it as
+    "unscored at write time", not as a preview of the post-run verdict.
+
     Fact-based, no proximity window (unlike `find_unguarded_protected_writes`)
     — `same_person` is a required tool call, so "was it called for this
-    person" is a fact, which is why the plan (§9) never gave it a shadow
-    period. Returns ids in first-seen order, de-duped.
+    person" is a fact rather than a window judgment. That is why the post-run
+    form (spec §8) went straight to a hard fail; the live pre-write form still
+    runs in shadow mode, because denying on it would fire in 65 of 81 fixtures
+    (issue #1231). Returns ids in first-seen order, de-duped.
 
     Keying the check on `research_append` is sound because it is the SOLE tool
     that creates `person_evidence` entries: `extraction_append` explicitly does

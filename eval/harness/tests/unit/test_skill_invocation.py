@@ -766,7 +766,7 @@ def test_scored_ids_ignores_non_same_person_tools():
     assert same_person_scored_ids(calls) == set()
 
 
-# --- unguarded_new_person_evidence_links (issue #963 pre-write deny) ----------
+# --- unguarded_new_person_evidence_links (issue #963 pre-write check) ---------
 
 
 def _pe_append(person_id):

@@ -28,7 +28,7 @@ from e2e.orchestrator import (
     build_workspace,
     load_fixture,
     load_seed_person_ids,
-    person_evidence_deny_reason,
+    person_evidence_provenance_gap,
     provided_documents,
 )
 
@@ -695,22 +695,29 @@ def test_check_guardrail_compliance_aggregates_all_three_checks():
 
 
 def test_load_seed_person_ids_reads_person_ids(tmp_path: Path):
+    """A person entry with no usable string `id` is DROPPED, not admitted as
+    None — the ids this set is compared against are always strings, so a None
+    member could never match and would only make the `set[str]` annotation
+    false."""
     p = tmp_path / "starting-tree.gedcomx.json"
     p.write_text(
-        json.dumps({"persons": [{"id": "A1"}, {"id": "B2"}, {"not_a_dict": True}]}),
+        json.dumps(
+            {"persons": [{"id": "A1"}, {"id": "B2"}, {"not_a_dict": True}, {"id": 7}]}
+        ),
         encoding="utf-8",
     )
-    assert load_seed_person_ids(p) == {"A1", "B2", None}  # None from the malformed entry is harmless
+    assert load_seed_person_ids(p) == {"A1", "B2"}
 
 
 def test_load_seed_person_ids_missing_file_fails_open_with_warning(tmp_path: Path, capsys):
-    """A read failure returns None (deny fails open) and prints a diagnosable
-    stderr warning — not an empty set (which would mass-deny) and not a crash."""
+    """A read failure returns None (the check fails open) and prints a
+    diagnosable stderr warning — not an empty set (which would log a shadow
+    entry for every legitimate seed-person link) and not a crash."""
     missing = tmp_path / "does-not-exist.json"
     assert load_seed_person_ids(missing) is None
     err = capsys.readouterr().err
     assert "could not read seed tree" in err
-    assert "same_person deny DISABLED" in err
+    assert "same_person check DISABLED" in err
 
 
 def test_load_seed_person_ids_malformed_json_fails_open(tmp_path: Path, capsys):
@@ -730,7 +737,7 @@ def test_load_fixture_points_seed_read_at_the_immutable_fixture_file(tmp_path: P
     assert fixture.starting_tree_path.exists()
 
 
-# --- person_evidence_deny_reason (issue #963 pretool decision) ---------------
+# --- person_evidence_provenance_gap (issue #963 shadow-mode check) -----------
 
 
 def _pe_append(person_id):
@@ -741,76 +748,74 @@ def _same_person(pid1, pid2):
     return {"tool": "mcp__genealogy__same_person", "args": {"primaryId1": pid1, "primaryId2": pid2}}
 
 
-def test_deny_reason_blocks_new_unscored_person():
-    reason = person_evidence_deny_reason(
+def test_provenance_gap_flags_new_unscored_person():
+    gap = person_evidence_provenance_gap(
         "mcp__genealogy__research_append",
         _pe_append("I1"),
         tool_calls=[],
-        pending_tool_uses={},
         starting_person_ids=set(),
     )
-    assert reason is not None
-    assert "I1" in reason
-    assert "same_person" in reason
+    assert gap is not None
+    assert "I1" in gap
+    assert "same_person" in gap
 
 
-def test_deny_reason_allows_when_same_person_committed_earlier():
-    reason = person_evidence_deny_reason(
+def test_provenance_gap_clean_when_same_person_already_in_tool_calls():
+    """The only state that clears the check: a same_person for this identity is
+    already visible in `tool_calls`. There is deliberately no pending/in-flight
+    escape hatch — the AssistantMessage branch appends one entry object to
+    `tool_calls` AND stores it in `pending_tool_uses`, so the latter is always a
+    subset and consulting it could never add an id."""
+    gap = person_evidence_provenance_gap(
         "mcp__genealogy__research_append",
         _pe_append("I1"),
         tool_calls=[_same_person("I1", "p_9")],
-        pending_tool_uses={},
         starting_person_ids=set(),
     )
-    assert reason is None
+    assert gap is None
 
 
-def test_deny_reason_allows_same_turn_in_flight_same_person():
-    """The exact same-turn transient the review flagged: same_person and the
-    person_evidence write land in ONE assistant turn, so same_person is only in
-    pending_tool_uses (no result yet), not the committed tool_calls list. Must
-    still be allowed — no spurious deny."""
-    pending = {"tu_1": _same_person("I1", "p_9")}  # in flight this turn
-    reason = person_evidence_deny_reason(
+def test_provenance_gap_ignores_errored_same_person():
+    """#1255/#1289 made the orchestrator populate `is_error`, so a FAILED
+    same_person no longer counts as scoring the identity."""
+    errored = _same_person("I1", "p_9") | {"is_error": True}
+    gap = person_evidence_provenance_gap(
         "mcp__genealogy__research_append",
         _pe_append("I1"),
-        tool_calls=[],           # not yet committed
-        pending_tool_uses=pending,
+        tool_calls=[errored],
         starting_person_ids=set(),
     )
-    assert reason is None
+    assert gap is not None
+    assert "I1" in gap
 
 
-def test_deny_reason_allows_seed_person_link():
-    reason = person_evidence_deny_reason(
+def test_provenance_gap_clean_for_seed_person_link():
+    gap = person_evidence_provenance_gap(
         "mcp__genealogy__research_append",
         _pe_append("KN19-Q19"),
         tool_calls=[],
-        pending_tool_uses={},
         starting_person_ids={"KN19-Q19"},  # pre-existing seed person
     )
-    assert reason is None
+    assert gap is None
 
 
-def test_deny_reason_none_for_non_research_append():
-    reason = person_evidence_deny_reason(
+def test_provenance_gap_none_for_non_research_append():
+    gap = person_evidence_provenance_gap(
         "mcp__genealogy__materialize_facts",
         _pe_append("I1"),
         tool_calls=[],
-        pending_tool_uses={},
         starting_person_ids=set(),
     )
-    assert reason is None
+    assert gap is None
 
 
-def test_deny_reason_caps_id_list_with_plus_more():
-    """A large batch can't produce an enormous permissionDecisionReason."""
+def test_provenance_gap_caps_id_list_with_plus_more():
+    """A large batch can't produce an enormous recorded detail string."""
     ops = {"ops": [_pe_append(f"I{i}") for i in range(15)]}
-    reason = person_evidence_deny_reason(
+    reason = person_evidence_provenance_gap(
         "mcp__genealogy__research_append",
         ops,
         tool_calls=[],
-        pending_tool_uses={},
         starting_person_ids=set(),
     )
     assert reason is not None
