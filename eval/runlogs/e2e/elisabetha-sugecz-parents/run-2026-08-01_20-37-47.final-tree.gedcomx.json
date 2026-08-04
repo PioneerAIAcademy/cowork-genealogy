@@ -1,0 +1,614 @@
+{
+  "persons": [
+    {
+      "id": "G4C9-Y6C",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Elisabetha",
+          "surname": "Sugecz",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N16",
+          "type": "BirthName",
+          "given": "Elisabeth\u00e6",
+          "surname": "Sugecz",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "2d04cbd6-18d2-4893-8c75-186ebaf05d80",
+          "type": "Death"
+        },
+        {
+          "id": "F1",
+          "type": "Christening",
+          "date": "1786-08-14",
+          "place": "Mad\u017earevo, Vara\u017edin, Croatia",
+          "standard_place": "Mad\u017earevo, Vara\u017edin, Croatia",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F2",
+          "type": "Religion",
+          "value": "Roman Catholic",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GWVL-BXC",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Andreas",
+          "surname": "Harmicar"
+        }
+      ],
+      "facts": [
+        {
+          "id": "924901fe-8ae0-4473-b5a3-a9c065e60733",
+          "type": "Christening",
+          "date": "8 October 1837",
+          "standard_date": "8 Oct 1837",
+          "place": "Remetinec, Vara\u017edin, Croatia",
+          "standard_place": "Remetinec, Vara\u017edin, Croatia"
+        },
+        {
+          "id": "e2a7c2dc-3920-4102-84fe-d81e02a47a80",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LKLZ-KQH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Catharina",
+          "surname": "Pofuk"
+        },
+        {
+          "id": "N14",
+          "type": "BirthName",
+          "given": "Chatarina",
+          "surname": "Pofuk",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "534bef7e-367f-4993-8aa9-edde5655157e",
+          "type": "Christening",
+          "date": "16 December 1816",
+          "standard_date": "16 Dec 1816",
+          "place": "Remetinec, Vara\u017edin, Croatia",
+          "standard_place": "Remetinec, Vara\u017edin, Croatia",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        },
+        {
+          "id": "F3",
+          "type": "Religion",
+          "value": "Roman Catholic",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GWVG-S43",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Stephanus",
+          "surname": "Pofuk"
+        }
+      ],
+      "facts": [
+        {
+          "id": "39199acf-36f3-4db0-806f-279ab03f007f",
+          "type": "Christening",
+          "date": "30 August 1824",
+          "standard_date": "30 Aug 1824",
+          "place": "Remetinec, Vara\u017edin, Croatia",
+          "standard_place": "Remetinec, Vara\u017edin, Croatia"
+        },
+        {
+          "id": "546d2a73-b7dd-4e94-a7b7-5b2bc370b543",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GWVK-WKJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Thomas",
+          "surname": "Pofuk-Harmicar"
+        },
+        {
+          "id": "N15",
+          "type": "BirthName",
+          "given": "Thom\u00e6",
+          "surname": "Pofuk",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "318d79ba-66fe-4402-8cbf-51c01b42377d",
+          "type": "Birth",
+          "date": "1793",
+          "standard_date": "1793",
+          "place": "Remetinec, Vara\u017edin, Croatia",
+          "standard_place": "Remetinec, Vara\u017edin, Croatia"
+        },
+        {
+          "id": "010ef6d3-daae-4050-aa64-51063efbd3c9",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LKL8-4VC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Dorothea",
+          "surname": "Poffuk"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "20 Jan 1820",
+          "standard_date": "20 Jan 1820",
+          "place": "Remetinec, Vara\u017edin, Croatia",
+          "standard_place": "Remetinec, Vara\u017edin, Croatia"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LKL8-H4L",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Helena",
+          "surname": "Poffuk"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "09 Feb 1821",
+          "standard_date": "9 Feb 1821",
+          "place": "Remetinec, Vara\u017edin, Croatia",
+          "standard_place": "Remetinec, Vara\u017edin, Croatia"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GWVL-RW9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Jacobus",
+          "surname": "Pofuk"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1dcd20d2-8060-491a-8db3-1d96c3bb0f97",
+          "type": "Christening",
+          "date": "8 June 1829",
+          "standard_date": "8 Jun 1829",
+          "place": "Remetinec, Vara\u017edin, Croatia",
+          "standard_place": "Remetinec, Vara\u017edin, Croatia"
+        },
+        {
+          "id": "1b7f4cd4-3b7f-4054-b5a8-f22fe319323f",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LKLH-YZX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Martinus",
+          "surname": "Harmicar"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5f76249a-853c-476f-862a-bfec3cdaf16b",
+          "type": "Christening",
+          "date": "2 October 1832",
+          "standard_date": "2 Oct 1832",
+          "place": "Remetinec, Vara\u017edin, Croatia",
+          "standard_place": "Remetinec, Vara\u017edin, Croatia"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GWVL-571",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Mathias",
+          "surname": "Pofuk"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d7fc93ae-6a33-4073-b3db-f6008238e759",
+          "type": "Christening",
+          "date": "18 February 1826",
+          "standard_date": "18 Feb 1826",
+          "place": "Remetinec, Vara\u017edin, Croatia",
+          "standard_place": "Remetinec, Vara\u017edin, Croatia"
+        },
+        {
+          "id": "501c38d9-e47b-462d-9597-bd4053829fe6",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LKLC-W74",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Sophia",
+          "surname": "Harmiczar"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "18 May 1836",
+          "standard_date": "18 May 1836",
+          "place": "Remetinec, Vara\u017edin, Croatia",
+          "standard_place": "Remetinec, Vara\u017edin, Croatia"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N12",
+          "type": "BirthName",
+          "given": "Thom\u00e6",
+          "surname": "Sugecz",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N13",
+          "type": "BirthName",
+          "given": "Susan\u00e6",
+          "surname": "Petrich",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GWVK-WKJ",
+      "person2": "G4C9-Y6C",
+      "facts": [
+        {
+          "id": "6591f8fd-829c-4f3a-ba82-2e38380b850b",
+          "type": "Marriage",
+          "date": "Abt 1814",
+          "standard_date": "Abt 1814",
+          "place": "Mad\u017earevo, Vara\u017edin, Croatia",
+          "standard_place": "Mad\u017earevo, Vara\u017edin, Croatia"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GWVK-WKJ",
+      "child": "LKLZ-KQH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "G4C9-Y6C",
+      "child": "LKLZ-KQH"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GWVK-WKJ",
+      "child": "LKL8-4VC"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G4C9-Y6C",
+      "child": "LKL8-4VC"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GWVK-WKJ",
+      "child": "LKL8-H4L",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "G4C9-Y6C",
+      "child": "LKL8-H4L",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GWVK-WKJ",
+      "child": "GWVG-S43",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "G4C9-Y6C",
+      "child": "GWVG-S43",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "GWVK-WKJ",
+      "child": "GWVL-571",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "G4C9-Y6C",
+      "child": "GWVL-571",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "GWVK-WKJ",
+      "child": "GWVL-RW9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "G4C9-Y6C",
+      "child": "GWVL-RW9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "GWVK-WKJ",
+      "child": "LKLH-YZX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "G4C9-Y6C",
+      "child": "LKLH-YZX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "GWVK-WKJ",
+      "child": "LKLC-W74",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "G4C9-Y6C",
+      "child": "LKLC-W74",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "GWVK-WKJ",
+      "child": "GWVL-BXC",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "G4C9-Y6C",
+      "child": "GWVL-BXC",
+      "subtype": "Biological"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "G4C9-Y6C",
+      "id": "R20",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "G4C9-Y6C",
+      "id": "R21",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S13H-P1R",
+      "title": "Elisabeth\u00e6 Sugecz, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMN-25C7 : Fri Mar 08 12:37:44 UTC 2024), Entry for Dorothea Poffuk and Thom\u00e6 Poffuk, 20 January 1820.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMN-25C4"
+    },
+    {
+      "id": "S13H-54V",
+      "title": "Elisabeth\u00e6 Sugecz, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMN-LN2B : Sat Mar 09 16:38:32 UTC 2024), Entry for Chatarina Pofuk and Thom\u00e6 Pofuk, 16 December 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMN-LNLM"
+    },
+    {
+      "id": "S13H-RGZ",
+      "title": "Elisabeth\u00e6 Sugecz, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMN-L8XH : Sat Mar 09 21:22:02 UTC 2024), Entry for Sophia Harmiczar and Thom\u00e6 Harmiczar, 18 May 1836.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMN-L8XZ"
+    },
+    {
+      "id": "SBJG-TKK",
+      "title": "Elizabeth\u00e6 Sugecz, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMN-LM5B : Sat Mar 09 20:45:17 UTC 2024), Entry for Andreas Harmiczar and Thom\u00e6 Harmiczar, 8 October 1837.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMN-LMRM"
+    },
+    {
+      "id": "S13H-57S",
+      "title": "Elisabeth\u00e6 Sugecz, \"Croatia, Church Books, 1516-1994\"",
+      "citation": "\"Croatia, Church Books, 1516-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKMN-LN6S : Fri Mar 08 22:26:44 UTC 2024), Entry for Martinus Harmiczar and Thom\u00e6 Harmiczar, 2 October 1832.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKMN-LN6Q"
+    },
+    {
+      "id": "S1",
+      "title": "Baptism of Elisabetha Sugecz, 14 August 1786, Mad\u017earevo, Vara\u017edin, Croatia \u2014 Croatia, Church Books, 1516-1994",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QKMN-XYBK"
+    },
+    {
+      "id": "S2",
+      "title": "Croatia, Church Books, 1516-1994, baptismal entry for Elisab Sugecz, 15 November 1795, Mad\u017earevo",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QKMN-XK63"
+    },
+    {
+      "id": "S3",
+      "title": "Croatia, Church Books, 1516-1994, Baptism of Chatarina Pofuk, 16 December 1816, Remetinec",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QKMN-LN2B"
+    }
+  ]
+}

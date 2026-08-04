@@ -3,6 +3,8 @@
 > **Status:** New (2026-07-26, tree-materialization latency follow-up). Read-only
 > sibling of `project_context` (`project-context-tool-spec.md`) — a second
 > read-side tool, not an extension of the first (see §3 for why).
+> **Updated 2026-08-03:** added `offset` pagination so items 51+ are reachable
+> (#1031, tool half; teaching the skills to page is the skill half, #1183).
 
 ```
 research_query({ projectPath, section, ...well-known filters }) -> { count, items, truncated }
@@ -50,6 +52,9 @@ research_query({
   status?: string,
   targetId?: string,
   focus?: string,
+  // pagination (NOT a filter): skip the first `offset` matches, then return up
+  // to 50. Applies to every section; absent ⇒ 0. See §2.2.
+  offset?: number,
 })
 ```
 
@@ -97,19 +102,26 @@ actionable error, not a confusingly-empty (or confusingly-unfiltered) result.
 {
   ok: true,
   section: string,
-  count: number,      // total matches, BEFORE the cap below
+  count: number,      // total matches, BEFORE the 50-item page cap and any offset
   items: any[],        // the section's native snake_case fields, verbatim — a
                         // read projection, not a persisted document, so no
                         // camelCase rename (contrast project_context, whose
                         // fixed shape IS a wire surface)
-  truncated: boolean,  // true when count > 50 and items was capped
+  truncated: boolean,  // true when matches remain beyond this page
+                        // (count > offset + items.length)
 }
 // on failure: { ok: false, errors: string[] }
 ```
 
-Capped at 50 items (`MAX_ITEMS` in `research-query.ts`) — a caller that hits
-`truncated: true` should narrow the filter, not assume `items` is everything.
-Omitting every filter returns the whole section, subject to the same cap.
+Each call returns at most 50 items (`MAX_ITEMS` in `research-query.ts`). A
+caller that hits `truncated: true` either narrows the filter or **pages**: set
+`offset` to 50, then 100, and so on, until `truncated: false`. `offset` skips
+the first N matches of the *filtered* set — it is pagination, not a filter, so
+it is absent from the §2.1 table and applies to every section uniformly.
+`count` stays the true total throughout, so the next page's `offset` is simply
+`offset + items.length`. `offset` must be a non-negative whole number and is
+rejected (not coerced) otherwise — see §4. Omitting every filter returns the
+whole section, one 50-item page at a time.
 
 ## 3. Decisions recorded
 
@@ -150,12 +162,31 @@ Omitting every filter returns the whole section, subject to the same cap.
   `research.json` re-reads specifically; tree re-reads were an order of
   magnitude lower in the same runs. Out of scope until evidence says
   otherwise.
-- **50-item cap, not a staged-to-disk fallback.** Unlike
-  `fulltext_search`/`external_links_search` (which stage oversized results to
-  disk because the source is a live, one-shot API response), the source of
-  truth here is already on disk in the project directory — a caller that
-  needs more than 50 matches should narrow the filter, not be handed a second
-  copy of data it already has file access to.
+- **50-item page cap + `offset` pagination — not a raised cap, a `fields`
+  projection, or a staged-to-disk fallback (#1031).** The page size stays 50
+  (`MAX_ITEMS`); `offset` reaches items 51+. This closes a silent-wrong-answer
+  path: proof-conclusion's "collect every assertion" gate once read 50 of 57
+  matches and could write a proof summary from the truncated set, with neither
+  the skill, the validator, nor the judge able to tell. Three alternatives were
+  weighed and rejected:
+  - **`limit` + `offset`** reopens "just raise the cap," which this section
+    already decided against — the source of truth is on disk, so an unbounded
+    page is only a second copy of data the caller already has file access to.
+    `offset` with a fixed page keeps that decision intact.
+  - **A `fields` projection** (return only some keys per item) is more elegant
+    but does not close the gate alone: proof-conclusion's Step 2 needs
+    `information_quality`, `evidence_type`, `informant`, and
+    `informant_proximity` per assertion — most of the body — so trimming fields
+    would not shrink the payload enough to fit 57 in one call.
+  - **A staged-to-disk fallback** (as `fulltext_search` / `external_links_search`
+    use, because *their* source is a live one-shot API response) is unwarranted
+    here for the same on-disk reason.
+
+  `offset` is typed `number` and rejected loudly when it is not a non-negative
+  whole number (§4). The **tool** now supports paging; teaching proof-conclusion
+  and the other consumers to actually page is the **skill half, #1183** — until
+  that lands the gate can still under-read, so a tool-only fix does not by itself
+  clear the reported symptom.
 
 ## 4. Errors / edge cases
 
@@ -165,6 +196,9 @@ Omitting every filter returns the whole section, subject to the same cap.
 | A supplied filter not in that section's allow-list (§2.1) | `{ ok: false, errors }` naming the filter and the section |
 | `research.json` missing or invalid JSON | `{ ok: false, errors }` |
 | The named section is missing or not an array | `{ ok: false, errors }` |
-| No filters supplied | the whole section, capped at 50 |
+| No filters supplied | the whole section, one 50-item page (page with `offset` for the rest) |
 | No items match | `{ ok: true, count: 0, items: [] }` — a legitimate answer, not an error |
-| More than 50 matches | `items` capped at 50; `count` is the true total; `truncated: true` |
+| More than 50 matches, no `offset` | `items` is the first 50; `count` is the true total; `truncated: true` |
+| `offset` present and not a non-negative whole number — **including a string like `"50"`** | `{ ok: false, errors }`, rejected loudly, **not coerced**. `index.ts` passes tool arguments through without type-coercion, so a model that sends `offset: "50"` (as one did — hannah-earnest-children idx 79) reaches the tool as a string and `Number.isInteger` rejects it. This mirrors `person_search.offset`'s validation. The old behavior silently ignored the unknown key and returned the *first* page — a wrong answer wearing `ok: true`; the loud rejection is the fix, and the caller (once #1183 teaches it) sends a real number. |
+| `offset` past the last match | `{ ok: true, count: <total>, items: [], truncated: false }` — a legitimate empty page, not an error |
+| `offset` set, matches remain beyond the returned page | `items` is the (≤50) slice at `[offset, offset+50)`; `count` is the true total; `truncated: true` |

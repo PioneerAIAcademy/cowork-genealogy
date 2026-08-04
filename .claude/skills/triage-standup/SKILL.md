@@ -204,6 +204,10 @@ Also flag, per row:
 - **Sequencing** — which tasks collide on the same files, or contend for the same
   paid run, or should go to one person as a pair. The lead will ask "can I do
   these in parallel?", so answer it before he asks.
+- **Icebox.** Mark any row that is a *candidate* rather than a decision — worth
+  not losing, but nothing the lead has committed to. He is approving the label,
+  not just the task, and a row he waves through as "sure, someday" filed without
+  it silently joins every morning's ranking.
 - **What you deliberately did NOT file, and why.** Over-filing is its own
   failure; a Backlog nobody can read is the same as no Backlog.
 
@@ -278,22 +282,37 @@ direct, no preamble, no praise sandwich.
 Only after the lead approves List 2.
 
 ```sh
-gh issue create --assignee <login> --title "..." --body "..."
+gh issue create --label developer|genealogist [--label icebox] \
+  --assignee <login> --title "..." --body "..."
 ```
 
-A workflow auto-adds new issues to the project board in **Backlog**. It does not
-set any other status and does not assign anyone, so set those yourself when the
-task belongs in **Ready** — which is where a prepared doctrine question goes,
-because it is ready for a genealogist to pick up:
+Add `--label icebox` to every row the lead approved as a candidate. That label is
+the only thing separating a task from an idea once both are cards in Backlog:
+`fill-ready` skips icebox items instead of re-ranking them every morning, and
+`review-icebox` sweeps them on their own cadence. An icebox body must state its
+**unblock condition** — the trigger to watch, the blocking issue, the gate that
+must land — because that is what the sweep reads. An icebox card with no stated
+trigger is the shape that rots.
 
-```sh
-PROJ_ID="PVT_kwDOC-DkVc4BUEYb"; STATUS_FIELD="PVTSSF_lADOC-DkVc4BUEYbzhBPBf8"
-# Backlog 0207fe08 / Ready f75ad846 / In Progress 47fc9ee4 / Review 4dc1cd86 / Done 98236657
-gh project item-edit --id "$ITEM" --project-id "$PROJ_ID" \
-  --field-id "$STATUS_FIELD" --single-select-option-id "f75ad846"
-```
+**Everything you file lands in Backlog and stays there. Never set Ready.**
+`.github/workflows/add-to-project.yml` fires on `issues: opened` and puts the
+card in Backlog; that is the finished state for a triage-filed issue. Do not
+call `gh project item-edit`, and do not move a card to Ready even for a fully
+prepared doctrine question — preparing it well is what makes it *rankable*, not
+what makes it started.
 
-Then verify placement with `gh project item-list 1 --owner PioneerAIAcademy`.
+Promotion is `fill-ready`'s job, and it is a separate decision made against the
+milestones with the whole Backlog in view. Triage cannot make that call from one
+morning's updates, and a card jumped straight to Ready skips the `review-ready`
+gate that vets work before a junior picks it up.
+
+Assignee and label are yours to set, and both matter: an issue with no label
+routes by whoever happens to pick it up. If the lane is genuinely undecided,
+leave it unlabeled **and say so in the body**, so the missing label reads as a
+decision rather than an oversight.
+
+Then verify placement with `gh project item-list 1 --owner PioneerAIAcademy` —
+every card you filed should read `Backlog`.
 
 Write issue bodies so a fresh session can act with no other context: the
 evidence, the file paths, the sequencing constraint, and what *not* to re-derive.
