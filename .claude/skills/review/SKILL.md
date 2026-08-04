@@ -17,9 +17,15 @@ Find what tests do not catch, then prove each finding by running something.
 **You report and fix; you never merge.** `gh pr merge` is the lead's. Push only
 what the author approves, and only to their branch.
 
+**Scope: one PR's diff.** For uncommitted work use `/code-review`; for a deep
+cloud pass use `/code-review ultra`. Anything the user adds after the number
+(`/review 1219 focus on the schema half`) is an instruction — honour it on top
+of the passes below, never instead of them.
+
 The checklist categories, the confidence gate and the fix-first split are
-adapted from gstack (MIT, © 2026 Garry Tan, https://github.com/garrytan/gstack).
-The rest is this repo's.
+adapted from gstack (MIT, © 2026 Garry Tan, https://github.com/garrytan/gstack);
+the PR-context fields and the no-checkout fallback from Claude Code's built-in
+`/review`. The rest is this repo's.
 
 ---
 
@@ -28,13 +34,23 @@ The rest is this repo's.
 **First, before reading any code.** Humans review here — four different people
 on the last five PRs — and their notes are not in the diff.
 
+With no PR number: `gh pr list` and ask which one. Do not guess from the
+current branch.
+
 ```sh
 PR=<number>; R=PioneerAIAcademy/cowork-genealogy
-gh pr view $PR --json title,body,baseRefName,headRefName,headRefOid,reviewDecision,isDraft
+gh pr view $PR --json title,body,author,state,isDraft,labels,baseRefName,headRefName,\
+headRefOid,reviewDecision,mergeStateStatus,isCrossRepository,additions,deletions,changedFiles
 gh api repos/$R/pulls/$PR/reviews  --jq '.[] | "\(.user.login) \(.state) @\(.commit_id[0:8])\n\(.body)\n---"'
 gh api repos/$R/pulls/$PR/comments --jq '.[] | "\(.user.login) \(.path):\(.line)\n\(.body)\n---"'
 gh api repos/$R/issues/$PR/comments --jq '.[] | "\(.user.login)\n\(.body)\n---"'
 ```
+
+`additions + deletions` and `changedFiles` size the passes below. `author` and
+`isCrossRepository` say whether this is a teammate's branch or a fork — a fork
+cannot be checked out as a local branch, see §2. `labels` carry this repo's
+routing (`developer` / `genealogist`, and `eval-cosmetic-skip`, which bypasses a
+run-log gate and is worth a second look when present).
 
 A review's `commit_id` is the commit it read. **Compare it to `headRefOid`.** If
 they differ, the review may be answering a diff that no longer exists — say so
@@ -47,9 +63,23 @@ Every existing note gets one of: **still stands** (fold into your findings),
 **already resolved** (say by which commit), or **no longer applies** (say what
 changed). Never silently drop one.
 
-## 2. Diff against the merge, not the branch
+## 2. Pick the depth, then get the diff
 
-A branch behind `main` can be green on its own head and red once merged.
+**Full pass** is the default. **Short pass** — §1, §3, §5, §6, §7, §8, skipping
+the worktree, the test-merge and the suites — when *all* of these hold:
+
+- under 50 changed lines, **and**
+- no file under `packages/`, `apps/`, `eval/harness/`, `scripts/` or
+  `.github/workflows/`, **and**
+- nothing that a lint or a test reads: no schema, no `manifest.json`, no
+  `SKILL.md`, no agent `.md`, no fixture, no run log.
+
+Prose-only and docs-only PRs are the case this exists for. **Say which pass you
+ran, in the report.** If any condition is unclear, run the full pass — the cost
+of being wrong here is a gate that did not fire.
+
+Anything else: a branch behind `main` can be green on its own head and red once
+merged, so review the merge.
 
 ```sh
 git fetch origin main --quiet
@@ -71,12 +101,34 @@ git merge --abort
 This is not optional caution. PR #1219 passed 261/261 on its own head while a
 lint it added went red against `main`.
 
-## 3. Scope check
+**A fork PR (`isCrossRepository: true`) has no local branch.** Fetch it into one
+rather than skipping the merge check:
 
-Read the PR body and `git log origin/main..HEAD --oneline`. State in two lines
-what was asked for and what the diff does, then name any file changed that the
-stated intent does not explain, and any stated requirement the diff does not
-address. Informational — it never blocks.
+```sh
+git fetch origin pull/$PR/head:pr-$PR && git worktree add .claude/worktrees/pr$PR pr-$PR
+```
+
+If even that is unavailable — no checkout of this repo to hand — fall back to
+`gh pr diff $PR` for the diff, and this for surrounding code (the API returns
+base64, so the decode is not optional):
+
+```sh
+gh api "repos/$R/contents/<path>?ref=<sha>" --jq '.content' | base64 -d
+```
+
+Then say plainly in the report that §2 and §4 did not run. An unverified review
+is worth having; one that hides that it is unverified is not.
+
+## 3. Say what it does, then what it was for
+
+Read the PR body and `git log origin/main..HEAD --oneline`, then open the report
+with one or two lines on **what this PR actually does** — written from the diff,
+not from the PR body. Getting that wrong in public is the cheapest possible
+signal that the rest of the review is unreliable, which is why it goes first.
+
+Then compare it to the stated intent: name any file changed that the intent does
+not explain, and any stated requirement the diff does not address. Informational
+— it never blocks.
 
 ## 4. Verify by running, not by reading
 
@@ -132,6 +184,12 @@ Read the whole diff first. Do not flag anything the diff already fixes.
 - Docs that describe changed behaviour and were not updated.
 - Duplicated logic where something equivalent already exists (CLAUDE.md
   § "Code reuse").
+- **Cost, in the two places it is real here.** An MCP tool called once per item
+  where a batched call exists — that is what regressed e2e latency when
+  `materialize_facts` shipped unbatched. And prose added to a `SKILL.md` or an
+  agent body, which is billed on every run of that skill forever; ~98% of e2e
+  wall-clock is model generation, so a paragraph is not free. Ordinary
+  application-code micro-performance is not worth a finding.
 
 **Do not flag:** harmless redundancy that aids readability; "add a comment
 explaining this threshold"; tightening an assertion that already covers the
@@ -166,12 +224,16 @@ force, and never merge.
 
 ## 8. Report
 
-```
-Review: PR #N — <branch>, <X> commits behind main
+Sections and bullets, in this order. A junior should be able to act on it
+without opening the diff.
 
+```
+Review: PR #N — <branch>, <full pass | short pass>, <X> commits behind main
+
+Does: <what the diff actually does, 1-2 lines>
+Intent: <what it was for> — <matches / drifts, how>
 Existing reviews: <who, state, @commit> — <stands / resolved / no longer applies>
-Scope: <asked for> → <delivered>
-Verified: <suites run, with counts>
+Verified: <suites run, with counts — or "not run", and why>
 
 [CRITICAL] (N/10) path:line — problem
   <the quoted line>
@@ -180,5 +242,6 @@ Verified: <suites run, with counts>
 [FIXED] path:line — what changed
 ```
 
-End with what you did not check and why. A review that lists no gaps is
-claiming a completeness it did not earn.
+End with what you did not check and why — a short pass, a skipped suite, a fork
+you could not check out, a finding you could not anchor. A review that lists no
+gaps is claiming a completeness it did not earn.
