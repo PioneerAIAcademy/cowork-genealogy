@@ -18,6 +18,8 @@ from e2e.orchestrator import (
     _accumulate_usage,
     _fallback_usage,
     _render_user_message,
+    _RUNLOG_MAX_CHARS,
+    _RUNLOG_VERBATIM_MAX,
     _summarize_tool_response,
     _timeline_tool_label,
     build_workspace,
@@ -540,10 +542,19 @@ def test_summarize_tool_response_honours_the_overall_cap():
     shape is a dict of many wide keys: `_summarize_response` preserves every key
     (that is the point), so key COUNT is the one axis the per-string bound and the
     list sampling do not constrain.
+
+    Asserted against the CONSTANT, not the literal 4000. With the literal, the
+    module comment's "`_RUNLOG_MAX_CHARS` must stay ABOVE `_RUNLOG_VERBATIM_MAX`"
+    was documented and unenforced: drop the cap to 300 and the never-shorter floor
+    hands back a 500-char head cut, which satisfies `len(out) <= 4000` and ends in
+    "..." — green test, defeated cap. Against the constant it fails.
     """
+    assert _RUNLOG_MAX_CHARS > _RUNLOG_VERBATIM_MAX, (
+        "the never-shorter floor silently defeats the cap when they invert"
+    )
     shape = {f"key_{i:04d}": "v" * 120 for i in range(200)}
     out = _summarize_tool_response(shape)
-    assert len(out) <= 4000
+    assert len(out) <= _RUNLOG_MAX_CHARS
     assert out.endswith("...")
 
 
